@@ -31,8 +31,8 @@ import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorListLoadingContext {
-  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
+private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): DescriptorListLoadingContext {
+  val context = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   context.usePluginClassLoader = true
 
   // constant order in tests
@@ -50,8 +50,8 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorList
   return context
 }
 
-private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber): PluginManagerState {
-  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber), UrlClassLoader.build().get(), false)
+private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): PluginManagerState {
+  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false)
 }
 
 class PluginDescriptorTest {
@@ -268,18 +268,8 @@ class PluginDescriptorTest {
   @Test
   fun `use first plugin if both versions the same`() {
     val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    writeDescriptor("foo_1-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>1.0</version>
-      </idea-plugin>""")
-    writeDescriptor("foo_another", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>1.0</version>
-      </idea-plugin>""")
+    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_1-0"))
+    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_another"))
 
     val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
     val plugins = result.sortedEnabledPlugins
@@ -296,18 +286,8 @@ class PluginDescriptorTest {
   @Test
   fun classLoader() {
     val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    writeDescriptor("foo", pluginDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends>bar</depends>
-      <vendor>JetBrains</vendor>
-    </idea-plugin>""")
-    writeDescriptor("bar", pluginDir, """
-    <idea-plugin>
-      <id>bar</id>
-      <vendor>JetBrains</vendor>
-    </idea-plugin>""")
-
+    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDir.resolve("foo"))
+    PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
     checkClassLoader(pluginDir)
   }
 
@@ -431,6 +411,40 @@ class PluginDescriptorTest {
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
     UsefulTestCase.assertOrderedEquals(arrayOf(PluginId.getId("com.intellij.modules.lang")), *descriptor.dependentPluginIds)
+  }
+
+  @Test
+  fun testLoadPluginWithDisabledDependency() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDir.resolve("foo"))
+    PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
+
+    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("bar")))
+    assertThat(result.sortedEnabledPlugins).isEmpty()
+  }
+
+  @Test
+  fun testLoadPluginWithDisabledTransitiveDependency() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    PluginBuilder()
+      .noDepends()
+      .id("org.jetbrains.plugins.gradle.maven")
+      .implementationDetail()
+      .depends("org.jetbrains.plugins.gradle")
+      .build(pluginDir.resolve("intellij.gradle.java.maven"))
+    PluginBuilder()
+      .noDepends()
+      .id("org.jetbrains.plugins.gradle")
+      .depends("com.intellij.gradle")
+      .implementationDetail()
+      .build(pluginDir.resolve("intellij.gradle.java"))
+    PluginBuilder()
+      .noDepends()
+      .id("com.intellij.gradle")
+      .build(pluginDir.resolve("intellij.gradle"))
+
+    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("com.intellij.gradle")))
+    assertThat(result.sortedEnabledPlugins).isEmpty()
   }
 }
 

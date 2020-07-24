@@ -1,11 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
@@ -13,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 
 import java.nio.file.Path;
@@ -30,9 +27,9 @@ public class SvnAuthenticationManager {
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";
-  private SvnVcs myVcs;
-  private Project myProject;
-  @NotNull private final Path myConfigDirectory;
+
+  private final @NotNull Project myProject;
+  private final @NotNull Path myConfigDirectory;
   private final NotNullLazyValue<Couple<IdeaSVNConfigFile>> myConfigFile = new NotNullLazyValue<Couple<IdeaSVNConfigFile>>() {
     @NotNull
     @Override
@@ -51,22 +48,11 @@ public class SvnAuthenticationManager {
       return Couple.of(systemConfig, userConfig);
     }
   };
-  private SvnConfiguration myConfig;
   private AuthenticationProvider myProvider;
 
-  public SvnAuthenticationManager(@NotNull SvnVcs vcs, @NotNull Path configDirectory) {
-    myVcs = vcs;
-    myProject = myVcs.getProject();
+  public SvnAuthenticationManager(@NotNull Project project, @NotNull Path configDirectory) {
+    myProject = project;
     myConfigDirectory = configDirectory;
-    myConfig = myVcs.getSvnConfiguration();
-    Disposer.register(myProject, () -> {
-      myVcs = null;
-      myProject = null;
-      if (myConfig != null) {
-        myConfig.clear();
-        myConfig = null;
-      }
-    });
   }
 
   public AuthenticationData requestFromCache(String kind, String realm) {
@@ -85,12 +71,6 @@ public class SvnAuthenticationManager {
     return myProvider;
   }
 
-  // since set to null during dispose and we have background processes
-  private SvnConfiguration getConfig() {
-    if (myConfig == null) throw new ProcessCanceledException();
-    return myConfig;
-  }
-
   @NotNull
   public HostOptions getHostOptions(@NotNull Url url) {
     return new HostOptions(url);
@@ -99,7 +79,7 @@ public class SvnAuthenticationManager {
   public void acknowledgeAuthentication(String kind, Url url, String realm, AuthenticationData authentication) {
     boolean authStorageEnabled = getHostOptions(url).isAuthStorageEnabled();
     AuthenticationData proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
-    getConfig().acknowledge(kind, realm, proxy);
+    SvnConfiguration.getInstance(myProject).acknowledge(kind, realm, proxy);
   }
 
   private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
@@ -121,7 +101,7 @@ public class SvnAuthenticationManager {
       return DEFAULT_READ_TIMEOUT;
     }
     if (SVN_SSH.equals(protocol)) {
-      return (int)getConfig().getSshReadTimeout();
+      return (int)SvnConfiguration.getInstance(myProject).getSshReadTimeout();
     }
     return 0;
   }
@@ -129,7 +109,7 @@ public class SvnAuthenticationManager {
   public int getConnectTimeout(@NotNull Url url) {
     String protocol = url.getProtocol();
     if (SVN_SSH.equals(protocol)) {
-      return (int)getConfig().getSshConnectionTimeout();
+      return (int)SvnConfiguration.getInstance(myProject).getSshConnectionTimeout();
     }
 
     return HTTP.equals(protocol) || HTTPS.equals(protocol) ? DEFAULT_CONNECT_TIMEOUT : 0;

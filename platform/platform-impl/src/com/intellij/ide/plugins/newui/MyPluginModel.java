@@ -498,6 +498,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
           listComponent.myPlugin = installedDescriptor;
         }
         listComponent.hideProgress(success, restartRequired);
+        listComponent.updateErrors();
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
@@ -730,8 +731,6 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       }
     }
 
-    vendors.put("JetBrains", Integer.MAX_VALUE);
-
     return ContainerUtil.sorted(vendors.keySet(), (v1, v2) -> {
       int result = vendors.get(v2) - vendors.get(v1);
       return result == 0 ? v2.compareToIgnoreCase(v1) : result;
@@ -826,7 +825,9 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       return;
     }
 
-    if (PluginManagerCore.isIncompatible(descriptor) || hasProblematicDependencies(pluginId)) {
+    if (PluginManagerCore.isIncompatible(descriptor) ||
+        PluginManagerCore.isBrokenPlugin(descriptor) ||
+        hasProblematicDependencies(pluginId)) {
       myErrorPluginsToDisable.add(pluginId);
     }
   }
@@ -971,6 +972,11 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
 
   @Nullable
   public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+    if (InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginDescriptor.getPluginId())) {
+      // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any error
+      return null;
+    }
+
     String message = PluginManagerCore.getLoadingError(pluginDescriptor);
 
     PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);

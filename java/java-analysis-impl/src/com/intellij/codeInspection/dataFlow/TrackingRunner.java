@@ -56,7 +56,7 @@ public class TrackingRunner extends DataFlowRunner {
                          PsiExpression expression,
                          boolean unknownMembersAreNullable,
                          boolean ignoreAssertions) {
-    super(context.getProject(), context, unknownMembersAreNullable, ignoreAssertions);
+    super(context.getProject(), context, unknownMembersAreNullable, ThreeState.fromBoolean(ignoreAssertions));
     myExpression = expression;
   }
 

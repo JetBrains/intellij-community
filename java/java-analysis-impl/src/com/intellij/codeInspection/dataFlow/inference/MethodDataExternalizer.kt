@@ -90,10 +90,12 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
   private fun readRange(input: DataInput) = ExpressionRange(readINT(input), readINT(input))
 
   private fun writePurity(out: DataOutput, purity: PurityInferenceResult) {
+    out.writeBoolean(purity.mutatesThis)
     writeRanges(out, purity.mutatedRefs)
     writeNullable(out, purity.singleCall) { writeRange(out, it) }
   }
   private fun readPurity(input: DataInput) = PurityInferenceResult(
+    input.readBoolean(),
     readRanges(input),
     readNullable(input) { readRange(input) })
 

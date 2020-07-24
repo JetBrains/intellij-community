@@ -28,7 +28,7 @@ public class MyClass {
   }
 
   void 'test regular import'() {
-    GrImportContributor.EP_NAME.getPoint(null).registerExtension({
+    GrImportContributor.EP_NAME.getPoint().registerExtension({
       [new RegularImport("foo.bar.MyClass")]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
@@ -38,7 +38,7 @@ public class MyClass {
   }
 
   void 'test static import method'() {
-    GrImportContributor.EP_NAME.getPoint(null).registerExtension({
+    GrImportContributor.EP_NAME.getPoint().registerExtension({
       [new StaticImport("foo.bar.MyClass", "foo")]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
@@ -48,7 +48,7 @@ public class MyClass {
   }
 
   void 'test static import field'() {
-    GrImportContributor.EP_NAME.getPoint(null).registerExtension({
+    GrImportContributor.EP_NAME.getPoint().registerExtension({
       [new StaticImport("foo.bar.MyClass", "BAR")]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
@@ -58,7 +58,7 @@ public class MyClass {
   }
 
   void 'test star import'() {
-    GrImportContributor.EP_NAME.getPoint(null).registerExtension({
+    GrImportContributor.EP_NAME.getPoint().registerExtension({
       [new StarImport("foo.bar")]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
@@ -68,7 +68,7 @@ public class MyClass {
   }
 
   void 'test static star import'() {
-    GrImportContributor.EP_NAME.getPoint(null).registerExtension({
+    GrImportContributor.EP_NAME.getPoint().registerExtension({
       [new StaticStarImport("foo.bar.MyClass")]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {

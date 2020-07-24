@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -171,7 +172,7 @@ class LegacyBridgeModuleLibraryTest {
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
       val template = "\$MODULE_DIR\$"
-      assertTrue(moduleFile.readText().contains("""<orderEntry type="module-library">
+      assertTrue(moduleFile.readText().replace("\r\n", "\n").contains("""<orderEntry type="module-library">
       <library name="$mavenLibraryName">
         <CLASSES>
           <root url="$template/$antLibraryName.jar" />
@@ -278,8 +279,9 @@ class LegacyBridgeModuleLibraryTest {
       rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)?.modifiableModel?.let {
         it.name = mavenLibraryName
         it.addRoot(File(project.basePath, "$mavenLibraryName.jar").path, OrderRootType.CLASSES)
-        it.dispose()
+        Disposer.dispose(it)
       }
+      rootModel.dispose()
     }
     StoreUtil.saveDocumentsAndProjectSettings(project)
     assertFalse(moduleFile.readText().contains(mavenLibraryName))

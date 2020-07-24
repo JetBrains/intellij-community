@@ -44,8 +44,6 @@
     <extensionPoint name="xmlStructureViewBuilderProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider" dynamic="true"/>
 
-    <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
-
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
     <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>0
 
@@ -62,7 +60,6 @@
     <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter" dynamic="true"/>
 
     <extensionPoint name="html.scriptContentProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -199,7 +196,6 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.XmlSettings"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager"/>
 
     <projectService serviceInterface="com.intellij.psi.XmlElementFactory"
                     serviceImplementation="com.intellij.psi.XmlElementFactoryImpl"/>
@@ -367,11 +363,6 @@
     <moveLeftRightHandler language="XML"
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
 
-    <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
-                        serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
-
-    <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher" serviceImplementation="com.intellij.ide.browsers.BrowserLauncherImpl"/>
-
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
 
     <lang.smartEnterProcessor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
@@ -488,6 +479,9 @@
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
+    <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserXmlService"
+                        serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlServiceImpl"
+                        overrides="true"/>
 
     <intentionAction>
       <category>XML</category>
@@ -593,15 +587,11 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
         implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReferenceQuickFixProvider"/>
 
-    <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
 
-    <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
-                             key="browsers.settings" bundle="messages.XmlBundle"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
     <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
 
-    <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
     <psi.symbolReferenceProvider hostLanguage="XML"
@@ -609,8 +599,5 @@
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
     <notificationWhitelist groupIds="URL does not respond notification"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains">
-    <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
 </idea-plugin>

@@ -11,7 +11,7 @@ import com.intellij.testFramework.TempFiles;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * test for building and processing tree of {@link FilePointerPartNode}s.
+ * test for building and processing tree of {@link FilePartNode}s.
  */
 public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;

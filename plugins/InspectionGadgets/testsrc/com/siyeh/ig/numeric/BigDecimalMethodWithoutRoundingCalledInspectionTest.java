@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
 public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
@@ -29,9 +30,9 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   public void testSetScale() {
     doTest("import java.math.BigDecimal;" +
            "class X {" +
-           "  void foo(BigDecimal value) {" +
-           "    value./*'BigDecimal.setScale()' called without a rounding mode argument*/setScale/**/(2);" +
-           "    value.setScale(2, 1);" +
+           "  static void foo(BigDecimal value) {" +
+           "    value = value./*'BigDecimal.setScale()' called without a rounding mode argument*/setScale/**/(2);" +
+           "    System.out.println(value.setScale(2, 1));" +
            "  }" +
            "}");
   }
@@ -39,9 +40,9 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   public void testDivide() {
     doTest("import java.math.BigDecimal;" +
            "class X {" +
-           "  void foo(BigDecimal value) {" +
-           "    value./*'BigDecimal.divide()' called without a rounding mode argument*/divide/**/(value);" +
-           "    value.divide(value, 1);" +
+           "  static void foo(BigDecimal value) {" +
+           "    value = value./*'BigDecimal.divide()' called without a rounding mode argument*/divide/**/(value);" +
+           "    System.out.println(value.divide(value, 1));" +
            "  }" +
            "}");
   }
@@ -50,7 +51,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
     doTest("import java.math.BigDecimal;\n" +
            "import java.math.RoundingMode;\n" +
            "class B {\n" +
-           "    public BigDecimal scaleValue(BigDecimal v) {\n" +
+           "    public static BigDecimal scaleValue(BigDecimal v) {\n" +
            "        return setScale(v);\n" +
            "    }\n" +
            "\n" +

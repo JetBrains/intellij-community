@@ -44,7 +44,14 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "pyspark" to "pyspark") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, true)
+    private val BALLOON_NOTIFICATIONS = NotificationGroup(
+      "Python Stub Packages Advertiser",
+      NotificationDisplayType.STICKY_BALLOON,
+      true,
+      null,
+      null,
+      PyBundle.message("code.insight.stub.package.advertiser.notifications.group.title"),
+      null)
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

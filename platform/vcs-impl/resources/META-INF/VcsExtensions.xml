@@ -52,7 +52,8 @@
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
+                    serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"
+                    overrides="true"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
 

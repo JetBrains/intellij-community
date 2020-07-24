@@ -30,7 +30,7 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
     super.setUp();
     Registry.get("idea.report.nullity.missing.in.generated.overriders").setValue(false, getTestRootDisposable());
     myFixture.enableInspections(NullableStuffInspection.class);
-    GeneratedSourcesFilter.EP_NAME.getPoint(null).registerExtension(myGeneratedSourcesFilter, getTestRootDisposable());
+    GeneratedSourcesFilter.EP_NAME.getPoint().registerExtension(myGeneratedSourcesFilter, getTestRootDisposable());
   }
 
   public void testAnnotateOverriddenMethod() {

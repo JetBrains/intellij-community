@@ -885,7 +885,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 

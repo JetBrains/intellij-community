@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -722,12 +721,12 @@ public class FindUtil {
       IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
 
       if (!model.isGlobal()) {
-        TextAttributes selectionAttributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         final RangeHighlighterEx segmentHighlighter = (RangeHighlighterEx)editor.getMarkupModel().addRangeHighlighter(
+          EditorColors.SEARCH_RESULT_ATTRIBUTES,
           result.getStartOffset(),
           result.getEndOffset(),
           HighlighterLayer.SELECTION + 1,
-          selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+          HighlighterTargetArea.EXACT_RANGE);
         MyListener listener = new MyListener(editor, segmentHighlighter);
         caretModel.addCaretListener(listener);
       }

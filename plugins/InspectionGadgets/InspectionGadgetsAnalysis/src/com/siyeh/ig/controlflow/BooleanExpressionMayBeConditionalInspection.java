@@ -23,6 +23,7 @@ import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -65,20 +66,20 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
         return;
       }
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
         return;
       }
       final PsiBinaryExpression lBinaryExpression = (PsiBinaryExpression)lhs;
       final PsiBinaryExpression rBinaryExpression = (PsiBinaryExpression)rhs;
-      final PsiExpression llhs = ParenthesesUtils.stripParentheses(lBinaryExpression.getLOperand());
-      final PsiExpression lrhs = ParenthesesUtils.stripParentheses(rBinaryExpression.getLOperand());
+      final PsiExpression llhs = PsiUtil.skipParenthesizedExprDown(lBinaryExpression.getLOperand());
+      final PsiExpression lrhs = PsiUtil.skipParenthesizedExprDown(rBinaryExpression.getLOperand());
       if (llhs == null || lrhs == null) {
         return;
       }
-      final PsiExpression thenExpression = ParenthesesUtils.stripParentheses(lBinaryExpression.getROperand());
-      final PsiExpression elseExpression = ParenthesesUtils.stripParentheses(rBinaryExpression.getROperand());
+      final PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(lBinaryExpression.getROperand());
+      final PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(rBinaryExpression.getROperand());
       if (thenExpression == null || elseExpression == null) {
         return;
       }
@@ -114,8 +115,8 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       if (!JavaTokenType.OROR.equals(tokenType)) {
         return;
       }
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
         return;
       }
@@ -126,8 +127,8 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       if (!JavaTokenType.ANDAND.equals(lTokenType) || !JavaTokenType.ANDAND.equals(rTokenType)) {
         return;
       }
-      final PsiExpression expression1 = ParenthesesUtils.stripParentheses(lBinaryExpression.getLOperand());
-      final PsiExpression expression2 = ParenthesesUtils.stripParentheses(rBinaryExpression.getLOperand());
+      final PsiExpression expression1 = PsiUtil.skipParenthesizedExprDown(lBinaryExpression.getLOperand());
+      final PsiExpression expression2 = PsiUtil.skipParenthesizedExprDown(rBinaryExpression.getLOperand());
       if (BoolUtils.areExpressionsOpposite(expression1, expression2) && !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }

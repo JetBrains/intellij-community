@@ -340,7 +340,7 @@ public class EditorModificationUtil {
   }
 
   /**
-   * This method is safe to run both in and out of {@link com.intellij.openapi.editor.CaretModel#runForEachCaret(CaretAction)} context.
+   * This method is safe to run both in and out of {@link CaretModel#runForEachCaret(CaretAction)} context.
    * It scrolls to primary caret in both cases, and, in the former case, avoids performing excessive scrolling in case of large number
    * of carets.
    */

@@ -11,6 +11,8 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 public interface XmlChildRole {
 
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
@@ -36,14 +38,9 @@ public interface XmlChildRole {
   RoleFinder ATTRIBUTE_NAME_FINDER = new DefaultRoleFinder(XmlTokenType.XML_NAME);
   RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
 
+
   RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(() -> {
-    return StartTagEndTokenProvider.EP_NAME.computeIfAbsent("the key", s -> {
-      IElementType[] elementTypes = new IElementType[]{XmlTokenType.XML_TAG_END};
-      for (StartTagEndTokenProvider tokenProvider : StartTagEndTokenProvider.EP_NAME.getExtensionList()) {
-        elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());
-      }
-      return elementTypes;
-    });
+    return StartTagEndTokenProvider.EP_NAME.computeIfAbsent("the key", Helper.START_TAG_END_FINDER);
   });
 
   RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
@@ -68,4 +65,14 @@ public interface XmlChildRole {
   int XML_TAG = 241;
   int XML_ATTRIBUTE_VALUE = 243;
   int HTML_DOCUMENT = 252;
+}
+
+final class Helper {
+  static final Function<String, IElementType[]> START_TAG_END_FINDER = s -> {
+    IElementType[] elementTypes = new IElementType[]{XmlTokenType.XML_TAG_END};
+    for (StartTagEndTokenProvider tokenProvider : StartTagEndTokenProvider.EP_NAME.getExtensionList()) {
+      elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());
+    }
+    return elementTypes;
+  };
 }

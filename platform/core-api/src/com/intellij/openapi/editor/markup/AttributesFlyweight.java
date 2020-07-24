@@ -20,6 +20,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,11 +59,11 @@ public class AttributesFlyweight {
       FlyweightKey key = (FlyweightKey)o;
 
       if (fontType != key.fontType) return false;
-      if (background != null ? !background.equals(key.background) : key.background != null) return false;
-      if (effectColor != null ? !effectColor.equals(key.effectColor) : key.effectColor != null) return false;
+      if (!Objects.equals(background, key.background)) return false;
+      if (!Objects.equals(effectColor, key.effectColor)) return false;
       if (effectType != key.effectType) return false;
-      if (errorStripeColor != null ? !errorStripeColor.equals(key.errorStripeColor) : key.errorStripeColor != null) return false;
-      if (foreground != null ? !foreground.equals(key.foreground) : key.foreground != null) return false;
+      if (!Objects.equals(errorStripeColor, key.errorStripeColor)) return false;
+      if (!Objects.equals(foreground, key.foreground)) return false;
       if (!myAdditionalEffects.equals(key.myAdditionalEffects)) return false;
 
       return true;
@@ -298,7 +299,7 @@ public class AttributesFlyweight {
   }
 
   /**
-   * @see TextAttributes#setAdditionalEffects(java.util.Map)
+   * @see TextAttributes#setAdditionalEffects(Map)
    */
   @ApiStatus.Experimental
   public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<EffectType, Color> additionalEffects) {
@@ -315,11 +316,11 @@ public class AttributesFlyweight {
     AttributesFlyweight that = (AttributesFlyweight)o;
 
     if (myFontType != that.myFontType) return false;
-    if (myBackground != null ? !myBackground.equals(that.myBackground) : that.myBackground != null) return false;
-    if (myEffectColor != null ? !myEffectColor.equals(that.myEffectColor) : that.myEffectColor != null) return false;
+    if (!Objects.equals(myBackground, that.myBackground)) return false;
+    if (!Objects.equals(myEffectColor, that.myEffectColor)) return false;
     if (myEffectType != that.myEffectType) return false;
-    if (myErrorStripeColor != null ? !myErrorStripeColor.equals(that.myErrorStripeColor) : that.myErrorStripeColor != null) return false;
-    if (myForeground != null ? !myForeground.equals(that.myForeground) : that.myForeground != null) return false;
+    if (!Objects.equals(myErrorStripeColor, that.myErrorStripeColor)) return false;
+    if (!Objects.equals(myForeground, that.myForeground)) return false;
     if (!myAdditionalEffects.equals(that.myAdditionalEffects)) return false;
 
     return true;

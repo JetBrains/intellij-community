@@ -2,14 +2,15 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
@@ -19,11 +20,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
                             private val itemComponentFactory: GHPRTimelineItemComponentFactory)
-  : JPanel(VerticalLayout(UI.scale(20))), ComponentWithEmptyText {
-
-  private val emptyText = object : StatusText(this) {
-    override fun isStatusVisible() = model.size == 0
-  }
+  : JPanel(VerticalLayout(UI.scale(20))) {
 
   private val timeLineColor = JBColor(ColorUtil.fromHex("#F2F2F2"), ColorUtil.fromHex("#3E3E3E"))
   private val timeLineValues = JBValue.JBValueGroup()
@@ -92,22 +89,4 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
                                           timeLineGap.get()
 
   private fun computeYEnd(item: Item) = item.y + (item.marker.y + item.marker.insets.top) - timeLineGap.get()
-
-  override fun getEmptyText() = emptyText
-
-  override fun getPreferredSize(): Dimension? {
-    if (model.size == 0 && !StringUtil.isEmpty(emptyText.text)) {
-      val s = emptyText.preferredSize
-      JBInsets.addTo(s, insets)
-      return s
-    }
-    else {
-      return super.getPreferredSize()
-    }
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    emptyText.paint(this, g)
-  }
 }

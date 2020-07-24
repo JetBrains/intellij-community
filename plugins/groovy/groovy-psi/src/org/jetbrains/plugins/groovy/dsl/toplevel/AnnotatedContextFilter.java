@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ProcessingContext;
@@ -30,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 
 import java.util.Collections;
 import java.util.Map;
-
-import static com.intellij.psi.impl.cache.impl.id.IdIndex.hasIdentifierInFile;
 
 /**
  * @author peter
@@ -56,7 +55,7 @@ public class AnnotatedContextFilter implements ContextFilter {
   private static Map<String, Boolean> getPossibleAnnotations(final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, Boolean> result = StringUtil.contains(file.getViewProvider().getContents(), "@")
-                                    ? ConcurrentFactoryMap.createMap(anno -> hasIdentifierInFile(file, anno))
+                                    ? ConcurrentFactoryMap.createMap(anno -> PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, anno))
                                     : Collections.emptyMap();
       return CachedValueProvider.Result.create(result, file);
     });

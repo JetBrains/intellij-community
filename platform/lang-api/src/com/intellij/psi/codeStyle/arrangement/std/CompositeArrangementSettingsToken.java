@@ -15,7 +15,7 @@ import java.util.*;
 public class CompositeArrangementSettingsToken {
 
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
-    token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
+    token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.emptyList());
 
   @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
 

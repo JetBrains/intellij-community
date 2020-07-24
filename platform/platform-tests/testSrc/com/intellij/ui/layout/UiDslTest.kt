@@ -72,6 +72,11 @@ abstract class UiDslTest {
   }
 
   @Test
+  fun `single vertical button`() {
+    doTest { withSingleVerticalButton() }
+  }
+
+  @Test
   fun `do not add visual paddings for titled border`() {
     doTest { commentAndPanel() }
   }

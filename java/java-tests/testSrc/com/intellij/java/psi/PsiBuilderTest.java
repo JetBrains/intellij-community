@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
@@ -66,7 +66,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     return createBuilder(text,null);
   }
   private PsiBuilderImpl createBuilder(final String text, ASTNode originalTree) {
-    final Language lang = StdFileTypes.JAVA.getLanguage();
+    final Language lang = JavaFileType.INSTANCE.getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assertNotNull(parserDefinition);
     PsiFile psiFile = createFile("x.java", text);

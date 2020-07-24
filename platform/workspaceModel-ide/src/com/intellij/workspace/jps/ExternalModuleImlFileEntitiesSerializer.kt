@@ -2,6 +2,7 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.module.impl.ModulePath
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
@@ -12,7 +13,12 @@ import org.jetbrains.jps.util.JpsPathUtil
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        internalEntitySource: JpsFileEntitySource)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, null) {
+  override val skipLoadingIfFileDoesNotExist: Boolean
+    get() = true
+
+  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {
     return entitySource is JpsImportedEntitySource && entitySource.storedExternally
@@ -20,7 +26,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun readExternalSystemOptions(reader: JpsFileContentReader,
                                          moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
-    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem") ?: return Pair(emptyMap(), null)
+    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem", getBaseDirPath()) ?: return Pair(emptyMap(), null)
     val options = componentTag.attributes.associateBy({ it.name }, { it.value })
     return Pair(options, options["externalSystem"])
   }
@@ -77,10 +83,17 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun createFacetSerializer(): FacetEntitiesSerializer {
     return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", true)
   }
+
+  override fun getBaseDirPath(): String? {
+    return modulePath.path
+  }
 }
 
-internal class ExternalModuleSerializersFactory(externalStorageRoot: VirtualFileUrl) :
-  ModuleSerializersFactory(externalStorageRoot.append("project/modules.xml").url) {
+internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, null) {
+  override val isExternalStorage: Boolean
+    get() = true
+
   override val componentName: String
     get() = "ExternalProjectModuleManager"
 
@@ -96,7 +109,14 @@ internal class ExternalModuleSerializersFactory(externalStorageRoot: VirtualFile
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl,
-                                                   internalSource)
+    val fileName = PathUtil.getFileName(fileUrl.url)
+    val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
+      externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
+    }
+    else {
+      fileUrl
+    }
+    val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, null), actualFileUrl, internalSource)
   }
 }

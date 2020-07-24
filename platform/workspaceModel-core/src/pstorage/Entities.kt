@@ -12,7 +12,7 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal lateinit var id: PId<TypedEntity>
+  internal lateinit var id: PId
 
   internal lateinit var snapshot: AbstractPEntityStorage
 
@@ -28,13 +28,14 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
   }
 
   override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
-    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<PTypedEntity, R>?
+    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass)
     if (connectionId == null) return emptySequence()
     return when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id as PId<PTypedEntity>)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild(connectionId, id as PId<PTypedEntity>)?.let { sequenceOf(it) } ?: emptySequence()
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id as PId<PTypedEntity>)
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id as PId<PTypedEntity>)
+      ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
+      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
+                                                ?: emptySequence()
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id)
     }
   }
 
@@ -74,50 +75,50 @@ abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), Modifi
   internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
 }
 
-internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
+internal data class PId(val arrayId: Int, val clazz: Int) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = clazz.simpleName + "-:-" + arrayId.toString()
+  override fun toString(): String = clazz.findEntityClass<TypedEntity>().simpleName + "-:-" + arrayId.toString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PId<*>
+    other as PId
 
     if (arrayId != other.arrayId) return false
-    if (clazz.java != other.clazz.java) return false
+    if (clazz != other.clazz) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = arrayId
-    result = 31 * result + clazz.java.hashCode()
+    result = 31 * result + clazz.hashCode()
     return result
   }
 }
 
 interface PSoftLinkable {
-  fun getLinks(): List<PersistentEntityId<*>>
+  fun getLinks(): Set<PersistentEntityId<*>>
   fun updateLink(oldLink: PersistentEntityId<*>,
                  newLink: PersistentEntityId<*>,
                  affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
 }
 
-abstract class PEntityData<E : TypedEntity>: Cloneable {
+abstract class PEntityData<E : TypedEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this::class))
+  internal fun createPid(): PId = PId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
 
   abstract fun createEntity(snapshot: TypedEntityStorage): E
 
   fun addMetaData(res: E, snapshot: TypedEntityStorage) {
     (res as PTypedEntity).entitySource = entitySource
-    (res as PTypedEntity).id = createPid() as PId<TypedEntity>
+    (res as PTypedEntity).id = createPid()
     (res as PTypedEntity).snapshot = snapshot as AbstractPEntityStorage
   }
 
@@ -127,7 +128,7 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff
-    res.id = createPid() as PId<TypedEntity>
+    res.id = createPid()
     res.entitySource = this.entitySource
     return res
   }
@@ -149,6 +150,12 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
       .onEach { it.isAccessible = true }
       .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
+  }
+
+  override fun toString(): String {
+    val fields = this.javaClass.declaredFields.toList().onEach { it.isAccessible = true }
+      .joinToString(separator = ", ") { f -> "${f.name}= ${f.get(this)}" }
+    return "${this::class.simpleName}($fields)"
   }
 
   /**

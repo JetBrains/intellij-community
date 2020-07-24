@@ -17,6 +17,8 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
@@ -136,14 +138,16 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     restoreEmptyStatus();
 
-    runOnProgressRelatedChange(this::updateProgressIcon, this);
+    runOnProgressRelatedChange(this::updateProgressIcon, this, true);
   }
 
-  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable) {
+  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable, boolean powerSaveMode) {
     synchronized (myOriginals) {
       if (!myDisposed) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
-        connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        if (powerSaveMode) {
+          connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        }
         connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
           @Override
           public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
@@ -618,7 +622,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
     }
 
-    MyInlineProgressIndicator inline = new MyInlineProgressIndicator(compact, info, original);
+    MyInlineProgressIndicator inline = compact ? new MyInlineProgressIndicator(true, info, original)
+                                               : new ProgressPanelProgressIndicator(info, original);
     myInlineToOriginal.put(inline, original);
     inlines.add(inline);
 
@@ -702,7 +707,88 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private final class MyInlineProgressIndicator extends InlineProgressIndicator {
+  private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
+    private final ProgressPanel myProgressPanel;
+    private final InplaceButton myCancelButton;
+    private final InplaceButton mySuspendButton;
+    private final Runnable mySuspendUpdateRunnable;
+
+    ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
+      super(false, task, original);
+
+      ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
+      builder.withText2();
+
+      builder.withCancel(this::cancelRequest);
+
+      Runnable suspendRunnable = createSuspendRunnable();
+      builder.withPause(suspendRunnable).withResume(suspendRunnable);
+
+      myComponent = builder.createPanel();
+      myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
+      UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
+
+      myCancelButton = Objects.requireNonNull(myProgressPanel.getCancelButton());
+      myCancelButton.setPainting(task.isCancellable());
+
+      mySuspendButton = Objects.requireNonNull(myProgressPanel.getSuspendButton());
+      mySuspendUpdateRunnable = createSuspendUpdateRunnable(mySuspendButton);
+
+      setProcessNameValue(task.getTitle());
+
+      // TODO: update javadoc for ProgressIndicator
+    }
+
+    @Override
+    protected boolean canCheckPowerSaveMode() {
+      return false;
+    }
+
+    @Override
+    protected void createComponent() {
+    }
+
+    @Override
+    protected @Nullable String getTextValue() {
+      return myProgressPanel.getCommentText();
+    }
+
+    @Override
+    protected void setTextValue(@NotNull String text) {
+      myProgressPanel.setCommentText(text);
+    }
+
+    @Override
+    protected void setTextEnabled(boolean value) {
+      myProgressPanel.setCommentEnabled(value);
+    }
+
+    @Override
+    protected void setText2Value(@NotNull String text) {
+      myProgressPanel.setText2(text);
+    }
+
+    @Override
+    protected void setText2Enabled(boolean value) {
+      myProgressPanel.setText2Enabled(value);
+    }
+
+    @Override
+    protected void setProcessNameValue(@NotNull String text) {
+      myProgressPanel.setLabelText(text);
+    }
+
+    @Override
+    public void updateProgressNow() {
+      super_updateProgressNow();
+      mySuspendUpdateRunnable.run();
+      boolean painting = getInfo().isCancellable() && !isStopping();
+      myCancelButton.setPainting(painting);
+      myCancelButton.setVisible(painting || !mySuspendButton.isVisible());
+    }
+  }
+
+  private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private ProgressIndicatorEx myOriginal;
     private PresentationModeProgressPanel myPresentationModeProgressPanel;
 
@@ -717,7 +803,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
           updateProgress();
         }
       });
-      runOnProgressRelatedChange(this::queueProgressUpdate, this);
+      runOnProgressRelatedChange(this::queueProgressUpdate, this, canCheckPowerSaveMode());
+    }
+
+    protected boolean canCheckPowerSaveMode() {
+      return true;
     }
 
     @Override
@@ -733,24 +823,32 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     private ProgressButton createSuspendButton() {
-      InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
+      InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> createSuspendRunnable().run()).setFillBg(false);
+      return new ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton));
+    }
+
+    @NotNull
+    protected Runnable createSuspendRunnable() {
+      return () -> {
         ProgressSuspender suspender = getSuspender();
         if (suspender == null) {
           return;
         }
-
         if (suspender.isSuspended()) {
           suspender.resumeProcess();
-        } else {
+        }
+        else {
           suspender.suspendProcess(null);
         }
-        UIEventLogger.logUIEvent(
-          suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed
-        );
-      }).setFillBg(false);
+        UIEventLogger.logUIEvent(suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed);
+      };
+    }
+
+    @NotNull
+    protected Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
       suspendButton.setVisible(false);
 
-      return new ProgressButton(suspendButton, () -> {
+      return () -> {
         ProgressSuspender suspender = getSuspender();
         suspendButton.setVisible(suspender != null);
         if (suspender != null) {
@@ -762,7 +860,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
             suspendButton.setToolTipText(toolTipText);
           }
         }
-      });
+      };
     }
 
     private void showPauseIcons(InplaceButton button) {
@@ -826,6 +924,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
           ApplicationManager.getApplication().invokeLater(update);
         }
       });
+    }
+
+    protected final void super_updateProgressNow() {
+      super.updateProgressNow();
     }
 
     @Override

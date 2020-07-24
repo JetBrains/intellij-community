@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -61,7 +62,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     super();
     myProperties = properties;
     JavaFxApplicationClassBrowser.appClassBrowser(project, artifact).setField(myAppClass);
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(PropertiesFileType.INSTANCE);
     myHtmlParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description"), project, descriptor);
     myParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
     myHtmlTemplate.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,

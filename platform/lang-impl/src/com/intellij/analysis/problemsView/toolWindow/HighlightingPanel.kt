@@ -1,40 +1,41 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.analysis.problemsView.AnalysisProblemBundle.message
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar.getSeverityRegistrar
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.renderSeverity
 import com.intellij.util.ui.tree.TreeUtil.promiseSelectFirstLeaf
 
-internal class HighlightingPanel(project: Project, state: ProblemsViewState) : ProblemsViewPanel(project, state) {
+internal class HighlightingPanel(project: Project, state: ProblemsViewState)
+  : ProblemsViewPanel(project, state), FileEditorManagerListener {
 
   init {
-    project.messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-      override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
-      override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
-    })
+    tree.showsRootHandles = false
+    project.messageBus.connect(this)
+      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
   }
 
-  public override fun getDisplayName() = message("problems.view.highlighting")
+  override fun getDisplayName() = ProblemsViewBundle.message("problems.view.highlighting")
+  override fun getSortFoldersFirst(): Option? = null
 
-  public override fun getShowErrors(): Option? = null
-
-  public override fun getSortFoldersFirst(): Option? = null
-
-  public override fun selectionChangedTo(selected: Boolean) {
+  override fun selectionChangedTo(selected: Boolean) {
     super.selectionChangedTo(selected)
     if (selected) updateCurrentFile()
   }
 
   fun selectHighlightInfo(info: HighlightInfo) {
     val root = treeModel.root as? HighlightingFileRoot
-    val node = root?.findProblemNode(info)
-    if (node != null) select(node)
+    root?.findProblemNode(info)?.let { select(it) }
   }
+
+  override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
+  override fun fileClosed(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
+  override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
 
   private fun updateCurrentFile() {
     val file = findCurrentFile()
@@ -48,7 +49,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState) : P
       treeModel.root = HighlightingFileRoot(this, file)
       promiseSelectFirstLeaf(tree)
     }
-    updateDisplayName()
+    updateToolWindowContent()
   }
 
   private fun findCurrentFile(): VirtualFile? {
@@ -59,4 +60,8 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState) : P
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)
   }
+
+  override fun getSeverityFilters() = getSeverityRegistrar(project).allSeverities.reversed()
+    .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
+    .map { Pair(ProblemsViewBundle.message("problems.view.highlighting.severity.show", renderSeverity(it)), it.myVal) }
 }

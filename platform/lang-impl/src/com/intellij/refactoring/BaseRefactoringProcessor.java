@@ -2,14 +2,18 @@
 
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelPatch;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,9 +29,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -57,10 +64,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -165,6 +169,16 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * Is called in a command and inside atomic action.
    */
   protected abstract void performRefactoring(UsageInfo @NotNull [] usages);
+
+  @ApiStatus.Experimental
+  protected boolean canPerformRefactoringInBranch() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
+    throw new UnsupportedOperationException();
+  }
 
   @NotNull
   protected abstract String getCommandName();
@@ -484,37 +498,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable,
                                                                         RefactoringBundle.message("refactoring.prepare.progress"), false, myProject);
 
-      Runnable performRefactoringRunnable = () -> {
-        final String refactoringId = getRefactoringId();
-        if (refactoringId != null) {
-          RefactoringEventData data = getBeforeData();
-          if (data != null) {
-            data.addUsages(usageInfoSet);
-          }
-          myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
-        }
-
-        try {
-          if (refactoringId != null) {
-            UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
-            UndoManager.getInstance(myProject).undoableActionPerformed(action1);
-          }
-
-          performRefactoring(writableUsageInfos);
-        }
-        finally {
-          if (refactoringId != null) {
-            myProject.getMessageBus()
-              .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
-          }
-        }
-      };
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
+      if (Registry.is("run.refactorings.in.model.branch") && canPerformRefactoringInBranch()) {
+        callPerformRefactoring(writableUsageInfos, () -> performInBranch(writableUsageInfos));
+      }
+      else if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                     indicator -> callPerformRefactoring(writableUsageInfos,
+                                                                                                         () -> performRefactoring(writableUsageInfos)));
       }
       else {
-        app.runWriteAction(performRefactoringRunnable);
+        app.runWriteAction(() -> callPerformRefactoring(writableUsageInfos, () -> performRefactoring(writableUsageInfos)));
       }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
@@ -542,6 +536,55 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
         StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
+      }
+    }
+  }
+
+  private void callPerformRefactoring(UsageInfo[] usageInfos, Runnable perform) {
+    final String refactoringId = getRefactoringId();
+    if (refactoringId != null) {
+      RefactoringEventData data = getBeforeData();
+      if (data != null) {
+        data.addUsages(Arrays.asList(usageInfos));
+      }
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+    }
+
+    try {
+      if (refactoringId != null) {
+        UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
+        UndoManager.getInstance(myProject).undoableActionPerformed(action1);
+      }
+
+      perform.run();
+    }
+    finally {
+      if (refactoringId != null) {
+        myProject.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(usageInfos));
+      }
+    }
+  }
+
+  private void performInBranch(UsageInfo[] usageInfos) {
+    ThrowableComputable<ModelPatch, RuntimeException> computable = () -> ReadAction.compute(() -> {
+      return ModelBranch.performInBranch(myProject, branch -> performRefactoringInBranch(usageInfos, branch));
+    });
+    ModelPatch patch = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      computable, getCommandName(), true, myProject);
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() && isPreviewUsages()) {
+      displayPreview(patch);
+    }
+    WriteAction.run(() -> patch.applyBranchChanges());
+  }
+
+  private void displayPreview(ModelPatch patch) throws ProcessCanceledException {
+    JComponent preview = VcsFacade.getInstance().createPatchPreviewComponent(myProject, patch);
+    if (preview != null) {
+      DialogBuilder builder = new DialogBuilder(myProject).title(RefactoringBundle.message("usageView.tabText")).centerPanel(preview);
+      if (builder.show() != DialogWrapper.OK_EXIT_CODE) {
+        throw new ProcessCanceledException();
       }
     }
   }
@@ -694,7 +737,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   @NotNull
   protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
-    return new ConflictsDialog(myProject, conflicts, usages == null ? null : (Runnable)() -> execute(usages), false, true);
+    return new ConflictsDialog(myProject, conflicts, usages == null ? null : () -> execute(usages), false, true);
   }
 
   @NotNull

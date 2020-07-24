@@ -43,6 +43,7 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @SuppressWarnings("EmptyFinallyBlock")
   public void testTryNoClose() {
     doTest("import java.io.*;" +
            "import java.net.*;" +

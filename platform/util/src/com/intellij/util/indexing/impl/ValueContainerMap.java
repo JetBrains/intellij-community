@@ -15,13 +15,15 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.nio.file.Path;
 
 /**
@@ -41,14 +43,9 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
-  @NotNull
-  Object getDataAccessLock() {
-    return myEnumerator;
-  }
-
   @Override
   protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       final ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
 
       // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files

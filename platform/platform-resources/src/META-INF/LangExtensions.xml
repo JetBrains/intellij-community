@@ -88,6 +88,9 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
+    <applicationService serviceInterface="com.intellij.model.BranchService"
+                        serviceImplementation="com.intellij.model.BranchServiceImpl"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
     <projectService serviceInterface="com.intellij.pom.PomModel"
@@ -652,6 +655,8 @@
                             id="filePath" order="before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor"
                             id="liveTemplates" order="first"/>
+    <completion.contributor id="reference" language="any" order="last"
+                            implementationClass="com.intellij.codeInsight.completion.ReferenceBasedCompletionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
 
@@ -821,6 +826,8 @@
     <editorActionHandler action="EditorUnSelectWord" implementationClass="com.intellij.codeInsight.editorActions.UnSelectWordHandler" id="psi.unselect.word"/>
     <editorActionHandler action="EditorPaste" implementationClass="com.intellij.codeInsight.editorActions.PasteHandler"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
+    <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderCopyHandler"
+                         id="docRender" order="first"/>
     <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler"/>
     <editorActionHandler action="EditorJoinLines" implementationClass="com.intellij.codeInsight.editorActions.JoinLinesHandler"/>
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler" id="backspace.lang"/>
@@ -969,6 +976,7 @@
     <statistics.counterUsagesCollector groupId="move.refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="package.management.ui" version="1"/>
+    <statistics.counterUsagesCollector groupId="completion" version="2"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
@@ -1005,7 +1013,6 @@
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring.dialog" version="1"/>
 
-    <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />
     <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence" />
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
@@ -1123,7 +1130,6 @@
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after readOnlyWidget"/>
     <statusBarWidgetFactory id="notificationsWidget" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory" order="after inspectionProfileWidget"/>
     <statusBarWidgetFactory id="fatalErrorWidget" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="after notificationsWidget"/>
-    <statusBarWidgetFactory id="buildNumberWidget" implementation="com.intellij.openapi.wm.impl.status.BuildNumberStatusWidgetFactory" order="after writeActionWidget"/>
     <statusBarWidgetFactory id="writeActionWidget" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="after fatalErrorWidget"/>
     <statusBarWidgetFactory id="memoryUsageWidget" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
 
@@ -1181,6 +1187,8 @@
                              order="before moveFileOrDir"/>
 
     <!-- Search everywhere services/objects -->
+    <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
+                    serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingManager"/>
@@ -1192,6 +1200,7 @@
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
@@ -1283,12 +1292,12 @@
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" canCloseContents="true"
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <experimentalFeature id="problems.view.enabled" percentOfUsers="0" internalFeature="true">
       <description>Allows to use the Problems View toolwindow.</description>
     </experimentalFeature>
-    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewState"/>
+    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <notificationWhitelist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;
     Parameter Name Hints;Print;Actions;Load Error;Project Template;Run Anything;Reformat changed text;Module Manager;Project Loading Error"/>
 

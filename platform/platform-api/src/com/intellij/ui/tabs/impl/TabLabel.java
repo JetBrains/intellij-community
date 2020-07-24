@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
@@ -560,7 +561,7 @@ public class TabLabel extends JPanel implements Accessible {
     if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
-        return toolTip;
+        return StringUtil.capitalize(toolTip);
       }
     }
     return super.getToolTipText(event);

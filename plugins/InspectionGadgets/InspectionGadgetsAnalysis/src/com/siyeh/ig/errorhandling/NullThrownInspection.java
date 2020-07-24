@@ -19,11 +19,11 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NullThrownInspection extends BaseInspection {
@@ -68,7 +68,7 @@ public class NullThrownInspection extends BaseInspection {
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception =
-        ParenthesesUtils.stripParentheses(statement.getException());
+        PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (!(exception instanceof PsiLiteralExpression)) {
         return;
       }

@@ -12,7 +12,7 @@
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
-                    beanClass="com.intellij.jps.impl.JpsPluginBean"/>
+                    beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
 
     <extensionPoint name="preloadingActivity"
                     interface="com.intellij.openapi.application.PreloadingActivity"
@@ -254,6 +254,8 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeExporter"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter" dynamic="true"/>
+    <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
 

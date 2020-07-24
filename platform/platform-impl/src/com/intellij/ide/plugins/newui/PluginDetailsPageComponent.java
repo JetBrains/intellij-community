@@ -37,6 +37,7 @@ import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -347,7 +348,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           @Override
           public View create(Element e) {
             View view = super.create(e);
-            if (view instanceof javax.swing.text.html.ImageView) {
+            if (view instanceof ImageView) {
               imageViewHandler.accept(view);
             }
             return view;
@@ -375,7 +376,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
-    if (myShowComponent == component) {
+    if (myShowComponent == component && (component == null || myUpdateDescriptor == component.myUpdateDescriptor)) {
       return;
     }
     myShowComponent = component;
@@ -498,7 +499,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       myVendor.show(vendor, () -> mySearchListener
-        .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
+        .linkSelected(null, SearchWords.ORGANIZATION.getValue() + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
     showLicensePanel();
@@ -544,12 +545,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showLicensePanel() {
-    if (myPlugin.isBundled()) {
+    String productCode = myPlugin.getProductCode();
+    if (myPlugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
+      myLicensePanel.hideWithChildren();
       return;
     }
-    String productCode = myPlugin.getProductCode();
     if (productCode == null) {
-      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
+          !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
         myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myLicensePanel.setVisible(true);
@@ -643,6 +646,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
 
       updateEnableForNameAndIcon();
+      updateIcon();
       updateErrors();
     }
   }

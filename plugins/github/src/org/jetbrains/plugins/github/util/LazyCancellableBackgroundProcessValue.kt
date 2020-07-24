@@ -22,6 +22,8 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
   private var overriddenFuture: CompletableFuture<T>? = null
 
+  var lastLoadedValue: T? = null
+
   override fun compute(): CompletableFuture<T> {
     val future = if (overriddenFuture != null) overriddenFuture!!
     else {
@@ -33,8 +35,11 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
     // avoid dropping the same value twice
     val currentComputationId = UUID.randomUUID()
     computationId = currentComputationId
-    return future.cancellationOnEdt {
-      if(computationId == currentComputationId) drop()
+    return future.successOnEdt {
+      lastLoadedValue = it
+      it
+    }.cancellationOnEdt {
+      if (computationId == currentComputationId) drop()
     }
   }
 

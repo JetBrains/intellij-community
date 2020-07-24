@@ -38,7 +38,7 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
 
   /**
    * True if the annotating function is a builtin, useful together with getName(). Implementation uses stub info.
-   * @see com.jetbrains.python.psi.PyElement#getName()
+   * @see PyElement#getName()
    */
   boolean isBuiltin();
 

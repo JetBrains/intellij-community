@@ -29,7 +29,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       LITERAL_CONDITION
         PsiElement(word)('a')
-      PsiErrorElement:<condition>, '\n', ']' or ']]' expected, got ';'
+      PsiErrorElement:'&&', <condition>, '\n', ']', ']]' or '||' expected, got ';'
         <empty list>
     PsiElement(;)(';')
     PsiWhiteSpace(' ')

@@ -24,40 +24,46 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
+public final class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
   private final Debugger.Variable myVariable;
 
   RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
     myVariable = variable;
   }
 
-  public String getURI() throws RemoteException {
+  @Override
+  public String getURI() {
     return myVariable.getURI();
   }
 
-  public int getLineNumber() throws RemoteException {
+  @Override
+  public int getLineNumber() {
     return myVariable.getLineNumber();
   }
 
+  @Override
   public boolean isGlobal() {
     return myVariable.isGlobal();
   }
 
-  public Debugger.Variable.Kind getKind() throws RemoteException {
+  @Override
+  public Debugger.Variable.Kind getKind() {
     return myVariable.getKind();
   }
 
+  @Override
   public String getName() {
     return myVariable.getName();
   }
 
+  @Override
   public Value getValue() {
     final Value value = myVariable.getValue();
     return new ValueImpl(value.getValue(), value.getType());
   }
 
-  static List<RemoteDebugger.Variable> convert(List<? extends Debugger.Variable> list) throws RemoteException {
-    final ArrayList<RemoteDebugger.Variable> variables = new ArrayList<RemoteDebugger.Variable>(list.size());
+  public static List<RemoteDebugger.Variable> convert(List<? extends Debugger.Variable> list) throws RemoteException {
+    List<RemoteDebugger.Variable> variables = new ArrayList<RemoteDebugger.Variable>(list.size());
     for (final Debugger.Variable variable : list) {
       variables.add(new RemoteVariableImpl(variable));
     }

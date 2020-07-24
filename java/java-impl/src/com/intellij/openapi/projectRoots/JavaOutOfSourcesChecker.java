@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -29,7 +29,7 @@ public class JavaOutOfSourcesChecker implements OutOfSourcesChecker {
   @Override
   @NotNull
   public FileType getFileType() {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 
   @Override

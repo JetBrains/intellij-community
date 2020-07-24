@@ -69,7 +69,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       doCheck(expression,
-              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false),
+              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get),
               psiMethod -> {
                 final PsiClass containingClass = psiMethod.getContainingClass();
                 if (containingClass == null) {
@@ -86,7 +86,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       doCheck(expression, 
-              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false),
+              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get),
               psiMethod -> {
                 final PsiClass containingClass = psiMethod.getContainingClass();
                 if (containingClass == null) {
@@ -175,7 +175,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethodReferenceExpression) {
         AssertHint assertHint =
-          AssertHint.create((PsiMethodReferenceExpression)element, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false);
+          AssertHint.create((PsiMethodReferenceExpression)element, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get);
         if (assertHint != null) {
           replaceQualifier(project, assertHint.getMethod().getName(), (PsiReferenceExpression)element);
         }
@@ -188,7 +188,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
 
       AssertHint assertHint =
-        AssertHint.create(methodCallExpression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false);
+        AssertHint.create(methodCallExpression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get);
       if (assertHint == null) {
         return;
       }

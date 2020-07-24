@@ -77,10 +77,10 @@ public interface LibraryTable {
     Library createLibrary(String name);
 
     @NotNull
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type);
+    Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type);
 
     @NotNull 
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
+    Library createLibrary(String name, @Nullable PersistentLibraryKind<?> type, @Nullable ProjectModelExternalSource externalSource);
 
     void removeLibrary(@NotNull Library library);
 
@@ -101,7 +101,16 @@ public interface LibraryTable {
     default void afterLibraryAdded(@NotNull Library newLibrary) {
     }
 
+    /**
+     * @deprecated override {@link #afterLibraryRenamed(Library, String)} instead
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     default void afterLibraryRenamed(@NotNull Library library) {
+    }
+
+    default void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
+      afterLibraryRenamed(library);
     }
 
     default void beforeLibraryRemoved(@NotNull Library library) {

@@ -2,7 +2,9 @@
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
+import com.intellij.diagnostic.logging.LogsFragment;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.project.Project;
@@ -13,7 +15,6 @@ import com.intellij.ui.RawCommandLineEditor;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -21,12 +22,13 @@ import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
 
-  public JavaApplicationSettingsEditor(Project project) {
-    myProject = project;
+  public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
+    super(configuration, JavaRunConfigurationExtensionManager.getInstance());
+    myProject = configuration.getProject();
   }
 
   @Override
-  protected Collection<SettingsEditorFragment<ApplicationConfiguration, ?>> createFragments() {
+  protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
 
     SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath = CommonJavaFragments.moduleClasspath(myProject);
@@ -71,12 +73,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
 
     ShortenCommandLineModeCombo combo =
       new ShortenCommandLineModeCombo(myProject, jrePathEditor, moduleClasspath.component().getComponent());
-    LabeledComponent<ShortenCommandLineModeCombo> component =
-      LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"));
-    component.setLabelLocation(BorderLayout.WEST);
     fragments.add(new SettingsEditorFragment<>("shorten.command.line",
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
-                                               group, component,
+                                               group, LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"), BorderLayout.WEST),
                                                (configuration, c) -> c.getComponent().setItem(configuration.getShortenCommandLine()),
                                                (configuration, c) -> configuration.setShortenCommandLine(c.getComponent().getSelectedItem()),
                                                configuration -> configuration.getShortenCommandLine() != null));
@@ -84,6 +83,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                    configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
 
+    fragments.add(new LogsFragment<>());
     fragments.addAll(BeforeRunFragment.createGroup());
     return fragments;
   }

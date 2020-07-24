@@ -10,10 +10,11 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.containers.ObjectIntHashMap
-import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.io.CharArrayWriter
@@ -33,13 +34,17 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
 }
 
 internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
-                                private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
+                                private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
                                 private val threadNameManager: ThreadNameManager) {
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  val publicStatMetrics = ObjectIntHashMap<String>()
+  val publicStatMetrics = Object2IntOpenHashMap<String>()
+
+  init {
+    publicStatMetrics.defaultReturnValue(-1)
+  }
 
   fun write(timeOffset: Long, items: List<ActivityImpl>, serviceActivities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
     stringWriter.write(logPrefix)
@@ -136,14 +141,16 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
       StartUpPerformanceReporter.sortItems(list)
 
       val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ObjectLongHashMap(), measureThreshold = measureThreshold, timeUnit = TimeUnit.MILLISECONDS)
+      val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
+      ownDurations.defaultReturnValue(-1)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold, timeUnit = TimeUnit.MILLISECONDS)
     }
   }
 
   private fun writeActivities(activities: List<ActivityImpl>,
                               startTime: Long, writer: JsonGenerator,
                               fieldName: String,
-                              ownDurations: ObjectLongHashMap<ActivityImpl>,
+                              ownDurations: Object2LongMap<ActivityImpl>,
                               measureThreshold: Long,
                               timeUnit: TimeUnit) {
     if (activities.isEmpty()) {
@@ -153,7 +160,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.array(fieldName) {
       var skippedDuration = 0L
       for (item in activities) {
-        val ownDuration = ownDurations.get(item)
+        val ownDuration = ownDurations.getLong(item)
         val ownOrTotalDuration = if (ownDuration == -1L) item.end - item.start else ownDuration
         item.pluginId?.let {
           StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", ownOrTotalDuration, pluginCostMap)

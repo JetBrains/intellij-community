@@ -23,12 +23,12 @@ class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRR
 
   override fun getReviewThreadsModel(reviewId: String): GHPRReviewThreadsModel {
     return threadsModelsByReview.getOrPut(reviewId) {
+      GHPRReviewThreadsModel()
+    }.apply {
       val loadedThreads = threadsByReview[reviewId]
       threadsUpdateRequired = true
       if (loadedThreads == null && !loading) requestUpdateReviewsThreads()
-      GHPRReviewThreadsModel().apply {
-        update(loadedThreads.orEmpty())
-      }
+      else update(loadedThreads.orEmpty())
     }
   }
 

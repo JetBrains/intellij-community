@@ -319,18 +319,49 @@ public class ShKeywordCompletionTest extends BasePlatformTestCase {
     myFixture.checkResult("[ $file1 -ot $file2 ]");
   }
 
-  public void testNoCompletionInArithmeticExpansions() {
+  public void testCommandCompletionInArithmeticExpansions() {
+    final String completionRule = "caller";
     myFixture.configureByText("a.sh", "(( <caret> ))");
+    completeByRule(completionRule);
+    myFixture.checkResult("(( caller ))");
+  }
+
+  public void testNoKeywordCompletionInArithmeticExpansions() {
+    myFixture.configureByText("a.sh", "(( cas<caret> ))");
     assertEmpty(myFixture.completeBasic());
   }
 
-  public void testNoCompletionInOldArithmeticExpansions() {
+  public void testCommandCompletionInOldArithmeticExpansions() {
+    final String completionRule = "caller";
     myFixture.configureByText("a.sh", "$[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("$[ caller ]");
+  }
+
+  public void testNoKeywordCompletionInOldArithmeticExpansions() {
+    myFixture.configureByText("a.sh", "$[ cas<caret> ]");
     assertEmpty(myFixture.completeBasic());
   }
 
-  public void testNoCompletionInParameterExpansion() {
+  public void testCommandCompletionInParameterExpansion() {
+    final String completionRule = "caller";
     myFixture.configureByText("a.sh", "${ <caret> }");
+    completeByRule(completionRule);
+    myFixture.checkResult("${ caller }");
+  }
+
+  public void testNoKeywordCompletionInParameterExpansion() {
+    myFixture.configureByText("a.sh", "${ cas<caret> }");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoKeywordCompletionInCommandSubstitution() {
+    myFixture.configureByText("a.sh", "` cas<caret> `");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoKeywordCompletionInSubshellCommand() {
+    myFixture.configureByText("a.sh", "$( cas<caret> )");
     assertEmpty(myFixture.completeBasic());
   }
 

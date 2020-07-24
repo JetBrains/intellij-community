@@ -32,7 +32,6 @@ public final class JetgroovyIcons {
     /** 13x13 */ public static final @NotNull Icon Groovy_13x13 = load("/icons/groovy/groovy_13x13.svg");
     /** 16x16 */ public static final @NotNull Icon Groovy_16x16 = load("/icons/groovy/groovy_16x16.svg");
     /** 16x16 */ public static final @NotNull Icon Groovy_outsideSources = load("/icons/groovy/groovy_outsideSources.svg");
-    /** 16x16 */ public static final @NotNull Icon GroovyDoc = load("/icons/groovy/GroovyDoc.svg");
     /** 16x16 */ public static final @NotNull Icon GroovyFile = load("/icons/groovy/groovyFile.svg");
     /** 16x16 */ public static final @NotNull Icon Interface = load("/icons/groovy/interface.svg");
     /** 16x16 */ public static final @NotNull Icon Method = load("/icons/groovy/method.svg");

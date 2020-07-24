@@ -3,20 +3,15 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import java.util.function.Consumer
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewController
 
 object GHPRActionKeys {
   @JvmStatic
   val ACTION_DATA_CONTEXT = DataKey.create<GHPRActionDataContext>("org.jetbrains.plugins.github.pullrequest.actiondatacontext")
 
   @JvmStatic
-  internal val DATA_CONTEXT = DataKey.create<GHPRDataContext>("org.jetbrains.plugins.github.pullrequest.datacontext")
+  val SELECTED_PULL_REQUEST = DataKey.create<GHPullRequestShort>("org.jetbrains.plugins.github.pullrequest.list.selected")
 
   @JvmStatic
-  internal val VIEW_PULL_REQUEST_EXECUTOR = DataKey.create<Consumer<GHPullRequestShort>>(
-    "org.jetbrains.plugins.github.pullrequest.view.executor")
-
-  @JvmStatic
-  internal val SELECTED_PULL_REQUEST = DataKey.create<GHPullRequestShort>("org.jetbrains.plugins.github.pullrequest.list.selected")
+  val PULL_REQUESTS_CONTROLLER = DataKey.create<GHPRViewController>("org.jetbrains.plugins.github.pullrequest.view.controller")
 }

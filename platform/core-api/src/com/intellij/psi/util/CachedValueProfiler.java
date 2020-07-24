@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,10 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class CachedValueProfiler {
+public final class CachedValueProfiler {
   private static final CachedValueProfiler ourInstance = new CachedValueProfiler();
 
-  private volatile ConcurrentMultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
+  private volatile MultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
 
   private final Object myLock = new Object();
   private final ConcurrentMap<CachedValueProvider.Result, ProfilingInfo> myTemporaryResults = new ConcurrentHashMap<>();
@@ -29,9 +28,9 @@ public class CachedValueProfiler {
   public void setEnabled(boolean value) {
     synchronized (myLock) {
       if (value) {
-        ConcurrentMultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
+        MultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
         if (storage == null) {
-          myStorage = new ConcurrentMultiMap<>();
+          myStorage = MultiMap.createConcurrent();
         }
       }
       else {
@@ -45,7 +44,7 @@ public class CachedValueProfiler {
   }
 
   public void createInfo(@NotNull CachedValueProvider.Result<?> result) {
-    ConcurrentMultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
+    MultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
     if (storage == null) return;
 
     StackTraceElement origin = findOrigin();

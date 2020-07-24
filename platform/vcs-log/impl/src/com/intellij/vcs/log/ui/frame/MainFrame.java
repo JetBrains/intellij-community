@@ -9,7 +9,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,7 +150,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     if (withDiffPreview) {
       myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
                                                                   myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                                                  Registry.is("vcs.log.diff.preview.vertical"), 0.7f) {
+                                                                  myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT), 0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
@@ -239,15 +238,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
     rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    DefaultActionGroup leftCornerGroup =
-      new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_LEFT_CORNER_ACTION_GROUP));
-    ActionToolbar leftCornerToolbar = createActionsToolbar(leftCornerGroup);
-    leftCornerToolbar.setReservePlaceAutoPopupIcon(false);
-    leftCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[]0[left]0[left, fill]push[right]", "center"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
     GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
-    panel.add(leftCornerToolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
     panel.add(rightCornerToolbar.getComponent());

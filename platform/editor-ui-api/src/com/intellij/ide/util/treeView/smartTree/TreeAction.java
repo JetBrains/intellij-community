@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A grouping, sorting or filtering action which can be applied to a generic tree.
  *
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getFilters()
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getGroupers()
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getSorters()
+ * @see TreeModel#getFilters()
+ * @see TreeModel#getGroupers()
+ * @see TreeModel#getSorters()
  */
 
 public interface TreeAction {

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
 
@@ -66,6 +67,28 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+        //todo make this more efficient by storing mapping between sdks and modules
+        val affectedModules = WorkspaceModel.getInstance(myProject).entityStore.current.entities(ModuleEntity::class.java)
+          .filter { module ->
+            module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.SdkDependency>().any {
+              it.sdkName == previousName && it.sdkType == jdk.sdkType.name
+            }
+          }.toList()
+        if (affectedModules.isNotEmpty()) {
+          WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
+            for (module in affectedModules) {
+              val updated = module.dependencies.map {
+                when {
+                  it is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                  else -> it
+                }
+              }
+              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+                dependencies = updated
+              }
+            }
+          }
+        }
       }
 
       override fun jdkRemoved(jdk: Sdk) {
@@ -75,7 +98,9 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
   }
 
   override fun getActionToRunWhenProjectJdkChanges(): Runnable {
-    return Runnable { if (hasModuleWithInheritedJdk()) makeRootsChange(EmptyRunnable.INSTANCE, false, true) }
+    return Runnable {
+      super.getActionToRunWhenProjectJdkChanges().run()
+      if (hasModuleWithInheritedJdk()) makeRootsChange(EmptyRunnable.INSTANCE, false, true) }
   }
 
   override fun projectClosed() {
@@ -168,6 +193,32 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
     override fun afterLibraryRemoved(library: Library) {
       if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+    }
+
+    override fun afterLibraryRenamed(library: Library, oldName: String?) {
+      val libraryTable = library.table
+      val newName = library.name
+      if (libraryTable != null && oldName != null && newName != null) {
+        val affectedModules = librariesPerModuleMap.getKeys(getLibraryIdentifier(libraryTable, oldName))
+        if (affectedModules.isNotEmpty()) {
+          val libraryTableId = toLibraryTableId(libraryTable.tableLevel)
+          WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
+            //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
+            affectedModules.mapNotNull { builder.resolve(it.persistentId()) }.forEach { module ->
+              val updated = module.dependencies.map {
+                when {
+                  it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId == libraryTableId && it.library.name == oldName ->
+                    it.copy(library = LibraryId(newName, libraryTableId))
+                  else -> it
+                }
+              }
+              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+                dependencies = updated
+              }
+            }
+          }
+        }
+      }
     }
 
     override fun rootSetChanged(wrapper: RootProvider) {

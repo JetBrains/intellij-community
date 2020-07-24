@@ -13,6 +13,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
@@ -50,7 +51,7 @@ internal object GHPRDetailsComponent {
   }
 
   private fun createPanel(model: GHPRDetailsModel, avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
-    val panel = JPanel(VerticalLayout(8)).apply {
+    val panel = JPanel(VerticalLayout(UI.scale(8))).apply {
       isOpaque = false
     }
     val directionPanel = GHPRDirectionPanel()

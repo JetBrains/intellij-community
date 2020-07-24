@@ -178,7 +178,7 @@ public final class ConsoleViewUtil {
         }
         Key<?> newKey = new Key<>(keyName.toString());
         textAttributeKeys.put(newKey, keys);
-        ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), HighlighterColors.TEXT) {
+        ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), new TextAttributes()) {
           @Override
           public TextAttributes getAttributes() {
             return mergedTextAttributes.get(newKey);

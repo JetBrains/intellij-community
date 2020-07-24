@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiConstructorCall extends PsiCall {
   /**
    * Resolves the reference to the called constructor and returns the constructor.
-   * Equivalent to {@link com.intellij.psi.PsiCall#resolveMethod()}.
+   * Equivalent to {@link PsiCall#resolveMethod()}.
    *
    * @return the called constructor, or null if the resolve failed.
    */

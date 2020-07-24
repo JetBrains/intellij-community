@@ -5,10 +5,7 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.MacUIUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.*
@@ -29,7 +26,7 @@ object GHPRReviewThreadCommentsPanel {
 
     if (commentsModel.size < 1) throw IllegalStateException("Thread cannot be empty")
 
-    val panel = JPanel(VerticalLayout(8)).apply {
+    val panel = JPanel(VerticalLayout(UI.scale(8))).apply {
       isOpaque = false
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
@@ -68,7 +65,7 @@ object GHPRReviewThreadCommentsPanel {
 
         override fun intervalAdded(e: ListDataEvent) {
           for (i in e.index0..e.index1) {
-            panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
+            panel.add(componentFactory(model.getElementAt(i)), i + 1)
           }
           panel.validate()
           panel.repaint()
@@ -81,11 +78,11 @@ object GHPRReviewThreadCommentsPanel {
       })
       foldModel.addValueChangedListener { updateFolding() }
 
-      panel.add(componentFactory(model.getElementAt(0)), VerticalLayout.FILL_HORIZONTAL)
-      panel.add(unfoldButtonPanel, VerticalLayout.FILL_HORIZONTAL)
+      panel.add(componentFactory(model.getElementAt(0)))
+      panel.add(unfoldButtonPanel)
 
       for (i in 1 until model.size) {
-        panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL)
+        panel.add(componentFactory(model.getElementAt(i)))
       }
       updateFolding()
     }

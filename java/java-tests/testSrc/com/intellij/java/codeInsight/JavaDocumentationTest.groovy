@@ -172,7 +172,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
         JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)
       }
     }
-    DocumentationDelegateProvider.EP_NAME.getPoint(null).registerExtension(provider, myFixture.testRootDisposable)
+    DocumentationDelegateProvider.EP_NAME.getPoint().registerExtension(provider, myFixture.testRootDisposable)
 
     configure '''\
 class Foo {

@@ -10,7 +10,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.toExternalSource
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -84,7 +86,9 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
     if (configurationXmlTag != null) {
       FacetUtil.loadFacetConfiguration(configuration, JDOMUtil.load(configurationXmlTag))
     }
-    return facetType.createFacet(legacyBridgeModule, entity.name, configuration, underlyingFacet)
+    val facet = facetType.createFacet(legacyBridgeModule, entity.name, configuration, underlyingFacet)
+    FacetManagerImpl.setExternalSource(facet, (entity.entitySource as? JpsImportedEntitySource)?.toExternalSource())
+    return facet
   }
 
   fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {

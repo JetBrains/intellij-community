@@ -4,6 +4,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,7 +43,12 @@ public class MisorderedAssertEqualsParametersInspectionTest extends LightJavaIns
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MisorderedAssertEqualsParametersInspection();
+    return new MisorderedAssertEqualsArgumentsInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/misordered_assert_equals_parameters";
   }
 
   @NotNull

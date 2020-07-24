@@ -100,6 +100,21 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     assertTrue(item instanceof PsiClass && CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)item).getQualifiedName()));
   }
 
+  public void testToStringInAnonymous() {
+    configureFromFileText("A.java", "class A {{" +
+                                    "       final Object o = new Object() {\n" +
+                                    "            @Override\n" +
+                                    "            public String toString() {\n" +
+                                    "                return super.toString();\n" +
+                                    "            }\n" +
+                                    "        };\n" +
+                                    "        o.to<caret>String();\n }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertInstanceOf(element, PsiMethod.class);
+    PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+    assertInstanceOf(containingClass, PsiAnonymousClass.class);
+  }
+
   public void testArrayIndexNotCovered() {
     configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());

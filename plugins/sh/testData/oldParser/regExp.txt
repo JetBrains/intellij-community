@@ -3,13 +3,13 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      EQUALITY_CONDITION
+      REGEX_CONDITION
         LITERAL_CONDITION
           PsiElement(word)('a')
         PsiWhiteSpace(' ')
         PsiElement(=~)('=~')
         PsiWhiteSpace(' ')
-        LITERAL_CONDITION
+        REGEX_PATTERN
           PsiElement(word)('abc')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
@@ -18,7 +18,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      EQUALITY_CONDITION
+      REGEX_CONDITION
         LITERAL_CONDITION
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -31,7 +31,7 @@ SHELL_SCRIPT
         PsiWhiteSpace(' ')
         PsiElement(=~)('=~')
         PsiWhiteSpace(' ')
-        LITERAL_CONDITION
+        REGEX_PATTERN
           PsiElement(word)('Denied')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
@@ -40,13 +40,13 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      EQUALITY_CONDITION
+      REGEX_CONDITION
         LITERAL_CONDITION
           PsiElement(word)('a')
         PsiWhiteSpace(' ')
         PsiElement(=~)('=~')
         PsiWhiteSpace(' ')
-        LITERAL_CONDITION
+        REGEX_PATTERN
           PsiElement(word)('..e*x')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
@@ -55,13 +55,13 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      EQUALITY_CONDITION
+      REGEX_CONDITION
         LITERAL_CONDITION
           PsiElement(word)('a')
         PsiWhiteSpace(' ')
         PsiElement(=~)('=~')
         PsiWhiteSpace(' ')
-        LITERAL_CONDITION
+        REGEX_PATTERN
           PsiElement(word)('^$')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')

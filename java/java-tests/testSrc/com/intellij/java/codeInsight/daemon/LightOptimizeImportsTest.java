@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -34,7 +34,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "            A2.class\n" +
                   "    };\n" +
                   "}\n";
-    myFixture.configureByText(StdFileTypes.JAVA, text);
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
@@ -77,7 +77,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "public class Optimize {\n" +
                   "  {f();g();}" +
                   "}\n";
-    myFixture.configureByText(StdFileTypes.JAVA, text);
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 0;
@@ -113,7 +113,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "        System.out.println(Field4);\n" +
                   "    }\n" +
                   "}";
-    myFixture.configureByText(StdFileTypes.JAVA, text);
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
@@ -163,7 +163,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "      m4();\n" +
                   "    }\n" +
                   "}";
-    myFixture.configureByText(StdFileTypes.JAVA, text);
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
@@ -193,18 +193,18 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                        "    public enum C { None, Some, All }\n" +
                        "    public static final int JUNK = 0;\n" +
                        "}");
-    myFixture.configureByText(StdFileTypes.JAVA, "package p.p2;\n" +
-                                                 "import p.p1.*;\n" +
-                                                 "import static p.p2.B.*;\n" +
-                                                 "import static p.p2.B.C;\n" +
-                                                 "public class A {\n" +
-                                                 "    public static void main( String[] args )\n" +
-                                                 "    {\n" +
-                                                 "        new D();\n" +
-                                                 "        System.out.println( C.None );\n" +
-                                                 "        System.out.println( JUNK );\n" +
-                                                 "    }\n" +
-                                                 "}");
+    myFixture.configureByText(JavaFileType.INSTANCE, "package p.p2;\n" +
+                                                     "import p.p1.*;\n" +
+                                                     "import static p.p2.B.*;\n" +
+                                                     "import static p.p2.B.C;\n" +
+                                                     "public class A {\n" +
+                                                     "    public static void main( String[] args )\n" +
+                                                     "    {\n" +
+                                                     "        new D();\n" +
+                                                     "        System.out.println( C.None );\n" +
+                                                     "        System.out.println( JUNK );\n" +
+                                                     "    }\n" +
+                                                     "}");
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "p", true));
 
@@ -235,7 +235,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "       ArrayList\n" +
                   "    }\n" +
                   "}";
-    myFixture.configureByText(StdFileTypes.JAVA, fileText);
+    myFixture.configureByText(JavaFileType.INSTANCE, fileText);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
     myFixture.checkResult(fileText);
   }

@@ -20,13 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public class RandomDoubleForRandomIntegerInspection
         return;
       }
       final PsiExpression lhs = multiplication.getLOperand();
-      final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
+      final PsiExpression strippedLhs = PsiUtil.skipParenthesizedExprDown(lhs);
       final PsiExpression multiplierExpression = call.equals(strippedLhs) ? multiplication.getROperand() : lhs;
       assert multiplierExpression != null;
       CommentTracker commentTracker = new CommentTracker();

@@ -175,24 +175,17 @@ public class LibraryScopeCache {
     return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
-  private static class LibrariesOnlyScope extends GlobalSearchScope {
-    private final GlobalSearchScope myOriginal;
+  private static class LibrariesOnlyScope extends DelegatingGlobalSearchScope {
     private final ProjectFileIndex myIndex;
 
     private LibrariesOnlyScope(@NotNull GlobalSearchScope original, @NotNull Project project) {
-      super(project);
+      super(original);
       myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myOriginal = original;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && myIndex.isInLibrary(file);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return myOriginal.compare(file1, file2);
+      return super.contains(file) && myIndex.isInLibrary(file);
     }
 
     @Override

@@ -391,7 +391,7 @@
   <action id="ActivateDatabaseToolWindow">
     <keyboard-shortcut first-keystroke="alt control 3"/>
   </action>
-  <action id="ActivateMessagesToolWindow"/>
+  <action id="ActivateCommitToolWindow"/>
   <action id="tasks.goto"/>
   <action id="ExpandRegion"/>
   <action id="CollapseRegion"/>

@@ -524,7 +524,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldUsedBeforeInitialization() { doTest(); }
 
   public void testImplicitlyInitializedField() {
-    ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
+    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
@@ -670,5 +670,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testStringContains() { doTest(); }
   public void testSwitchLabelNull() { doTest(); }
   public void testMutationContractInFlush() { doTest(); }
+  public void testMutationContractFromSource() { doTest(); }
   public void testDefaultConstructor() { doTest(); }
+  public void testInstanceOfUnresolved() { doTest(); }
 }

@@ -34,8 +34,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -89,7 +87,6 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -197,7 +194,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<? extends HighlightInfo> infos) {
     infos.sort((o1, o2) -> {
-      final int i = o2.startOffset - o1.startOffset;
+      final int i = o1.startOffset - o2.startOffset;
       return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
     });
     HighlightInfo prevInfo = null;
@@ -520,7 +517,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       assertNotNull(document);
       ExpectedHighlightingData datum =
-        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, psiFile, myMessageBundles);
+        new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
     })
@@ -567,8 +564,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
         ExpectedHighlightingData data =
-          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, getFile(),
-                                       myMessageBundles);
+          new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
         collectAndCheckHighlighting(data);
@@ -1184,7 +1180,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    TestApplicationManager.getInstance();
     EdtTestUtil.runInEdtAndWait(() -> {
       myProjectFixture.setUp();
       myTempDirFixture.setUp();
@@ -1201,7 +1196,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
-      ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivitiesRegisteredDynamically();
       CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
 
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
@@ -1484,7 +1478,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) {
     ExpectedHighlightingData data = new ExpectedHighlightingData(
-      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile(), myMessageBundles);
+      myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, myMessageBundles);
     data.init();
     return collectAndCheckHighlighting(data);
   }
@@ -1523,10 +1517,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //    ProfilingUtil.captureCPUSnapshot("testing");
     final long elapsed = System.currentTimeMillis() - start;
 
-    data.checkResult(infos, file.getText());
+    data.checkResult(file, infos, file.getText());
     if (data.hasLineMarkers()) {
       Document document = getDocument(getFile());
-      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
+      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
     }
     ObjectUtils.reachabilityFence(hardRefToFileElement);
     return elapsed;

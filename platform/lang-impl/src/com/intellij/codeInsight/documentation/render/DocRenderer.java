@@ -9,10 +9,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -21,8 +20,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -40,15 +42,16 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Element;
-import javax.swing.text.View;
+import javax.swing.text.*;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
 import java.awt.image.ImageObserver;
@@ -57,6 +60,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class DocRenderer implements EditorCustomElementRenderer {
+  private static final Logger LOG = Logger.getInstance(DocRenderer.class);
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
   private static final DocRenderImageManager IMAGE_MANAGER = new DocRenderImageManager();
 
@@ -158,7 +162,12 @@ class DocRenderer implements EditorCustomElementRenderer {
 
   @Override
   public ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return new DefaultActionGroup(myItem.createToggleAction(), new DocRenderItem.ChangeFontSize());
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new CopySelection());
+    group.addSeparator();
+    group.add(myItem.createToggleAction());
+    group.add(new DocRenderItem.ChangeFontSize());
+    return group;
   }
 
   private static int scale(int value) {
@@ -199,6 +208,7 @@ class DocRenderer implements EditorCustomElementRenderer {
       clearCachedComponent();
       myPane = new EditorPane();
       myPane.setEditable(false);
+      myPane.getCaret().setSelectionVisible(true);
       myPane.putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
       myPane.setEditorKit(createEditorKit(editor));
       myPane.setBorder(JBUI.Borders.empty());
@@ -207,7 +217,10 @@ class DocRenderer implements EditorCustomElementRenderer {
       // disable kerning for now - laying out all fragments in a file with it takes too much time
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
-      myPane.setForeground(getTextColor(editor.getColorsScheme()));
+      Color textColor = getTextColor(editor.getColorsScheme());
+      myPane.setForeground(textColor);
+      myPane.setSelectedTextColor(textColor);
+      myPane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
       UIUtil.enableEagerSoftWrapping(myPane);
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
@@ -329,8 +342,8 @@ class DocRenderer implements EditorCustomElementRenderer {
     }
   }
 
-  private static JBHtmlEditorKit createEditorKit(@NotNull Editor editor) {
-    JBHtmlEditorKit editorKit = new JBHtmlEditorKit();
+  private static EditorKit createEditorKit(@NotNull Editor editor) {
+    HTMLEditorKit editorKit = new MyEditorKit();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
   }
@@ -354,6 +367,7 @@ class DocRenderer implements EditorCustomElementRenderer {
         "ol {padding: 0 20 0 0}" +
         "ul {padding: 0 20 0 0}" +
         "li {padding: 1 0 2 0}" +
+        "li p {padding-top: 0}" +
         "table p {padding-bottom: 0}" +
         "th {text-align: left}" +
         "td {padding: 2 0 2 0}" +
@@ -417,6 +431,36 @@ class DocRenderer implements EditorCustomElementRenderer {
       return myItem.editor;
     }
 
+    void removeSelection() {
+      doWithRepaintTracking(() -> select(0, 0));
+    }
+
+    boolean hasSelection() {
+      return getSelectionStart() != getSelectionEnd();
+    }
+
+    @Nullable Point getSelectionPositionInEditor() {
+      if (myPane != this ||
+          myItem.inlay == null ||
+          myItem.inlay.getRenderer() != DocRenderer.this) {
+        return null;
+      }
+      Rectangle inlayBounds = myItem.inlay.getBounds();
+      if (inlayBounds == null) {
+        return null;
+      }
+      Rectangle boundsWithinInlay = getEditorPaneBoundsWithinInlay(myItem.inlay);
+      Rectangle locationInPane;
+      try {
+        locationInPane = modelToView(getSelectionStart());
+      }
+      catch (BadLocationException e) {
+        LOG.error(e);
+        locationInPane = new Rectangle();
+      }
+      return new Point(inlayBounds.x + boundsWithinInlay.x + locationInPane.x, inlayBounds.y + boundsWithinInlay.y + locationInPane.y);
+    }
+
     private void scheduleUpdate() {
       if (myUpdateScheduled.compareAndSet(false, true)) {
         SwingUtilities.invokeLater(() -> {
@@ -469,6 +513,124 @@ class DocRenderer implements EditorCustomElementRenderer {
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
+    }
+  }
+
+  private static class MyEditorKit extends JBHtmlEditorKit {
+    @Override
+    public ViewFactory getViewFactory() {
+      return MyViewFactory.INSTANCE;
+    }
+  }
+
+  private static class MyViewFactory extends JBHtmlEditorKit.JBHtmlFactory {
+    private static final MyViewFactory INSTANCE = new MyViewFactory();
+
+    @Override
+    public View create(Element elem) {
+      View view = super.create(elem);
+      return view instanceof ImageView ? new MyScalingImageView(elem) : view;
+    }
+  }
+
+  private static class MyScalingImageView extends ImageView {
+    private int myAvailableWidth;
+
+    private MyScalingImageView(Element element) {
+      super(element);
+    }
+
+    @Override
+    public int getResizeWeight(int axis) {
+      return 1;
+    }
+
+    @Override
+    public float getMaximumSpan(int axis) {
+      return getPreferredSpan(axis);
+    }
+
+    @Override
+    public float getPreferredSpan(int axis) {
+      float baseSpan = super.getPreferredSpan(axis);
+      if (axis == View.X_AXIS) {
+        return baseSpan;
+      }
+      else {
+        int availableWidth = getAvailableWidth();
+        if (availableWidth <= 0) return baseSpan;
+        float baseXSpan = super.getPreferredSpan(View.X_AXIS);
+        if (baseXSpan <= 0) return baseSpan;
+        if (availableWidth > baseXSpan) {
+          availableWidth = (int)baseXSpan;
+        }
+        if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
+          preferenceChanged(null, false, true);
+        }
+        myAvailableWidth = availableWidth;
+        return baseSpan * availableWidth / baseXSpan;
+      }
+    }
+
+    private int getAvailableWidth() {
+      for (View v = this; v != null;) {
+        View parent = v.getParent();
+        if (parent instanceof FlowView) {
+          int childCount = parent.getViewCount();
+          for (int i = 0; i < childCount; i++) {
+            if (parent.getView(i) == v) {
+              return ((FlowView)parent).getFlowSpan(i);
+            }
+          }
+        }
+        v = parent;
+      }
+      return 0;
+    }
+
+    @Override
+    public void paint(Graphics g, Shape a) {
+      Rectangle targetRect = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
+      Graphics scalingGraphics = new Graphics2DDelegate((Graphics2D)g) {
+        @Override
+        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+          int maxWidth = Math.max(0, targetRect.width - 2 * (x - targetRect.x)); // assuming left and right insets are the same
+          int maxHeight = Math.max(0, targetRect.height - 2 * (y - targetRect.y)); // assuming top and bottom insets are the same
+          if (width > maxWidth) {
+            height = height * maxWidth / width;
+            width = maxWidth;
+          }
+          if (height > maxHeight) {
+            width = width * maxHeight / height;
+            height = maxHeight;
+          }
+          return super.drawImage(img, x, y, width, height, observer);
+        }
+      };
+      super.paint(scalingGraphics, a);
+    }
+  }
+
+  private class CopySelection extends DumbAwareAction {
+    CopySelection() {
+      super(CodeInsightBundle.messagePointer("doc.render.copy.action.text"), AllIcons.Actions.Copy);
+      AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
+      if (copyAction != null) {
+        copyShortcutFrom(copyAction);
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setVisible(myPane != null && myPane.hasSelection());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String text = myPane == null ? null : myPane.getSelectedText();
+      if (!StringUtil.isEmpty(text)) {
+        CopyPasteManager.getInstance().setContents(new StringSelection(text));
+      }
     }
   }
 }

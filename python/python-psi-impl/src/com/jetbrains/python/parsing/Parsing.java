@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python.parsing;
 
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class Parsing {
   protected ParsingContext myContext;
-  protected PsiBuilder myBuilder;
+  protected SyntaxTreeBuilder myBuilder;
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.Parsing");
 
   protected Parsing(ParsingContext context) {
@@ -71,7 +72,7 @@ public class Parsing {
       return true;
     }
     else {
-      final PsiBuilder.Marker nameExpected = myBuilder.mark();
+      final SyntaxTreeBuilder.Marker nameExpected = myBuilder.mark();
       if (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK && !atAnyOfTokens(validSuccessiveTokens)) {
         myBuilder.advanceLexer();
       }
@@ -125,7 +126,7 @@ public class Parsing {
     }
   }
 
-  protected static void advanceIdentifierLike(@NotNull PsiBuilder builder) {
+  protected static void advanceIdentifierLike(@NotNull SyntaxTreeBuilder builder) {
     if (isFalseIdentifier(builder)) {
       String tokenText = builder.getTokenText();
       advanceError(builder, "'" + tokenText + "' keyword can't be used as identifier in Python 2");
@@ -135,23 +136,23 @@ public class Parsing {
     }
   }
 
-  protected static void advanceError(@NotNull PsiBuilder builder, @NotNull String message) {
-    final PsiBuilder.Marker err = builder.mark();
+  protected static void advanceError(@NotNull SyntaxTreeBuilder builder, @NotNull String message) {
+    final SyntaxTreeBuilder.Marker err = builder.mark();
     builder.advanceLexer();
     err.error(message);
   }
 
-  protected static boolean isIdentifier(@NotNull PsiBuilder builder) {
+  protected static boolean isIdentifier(@NotNull SyntaxTreeBuilder builder) {
     return builder.getTokenType() == PyTokenTypes.IDENTIFIER || isFalseIdentifier(builder);
   }
 
-  private static boolean isFalseIdentifier(@NotNull PsiBuilder builder) {
+  private static boolean isFalseIdentifier(@NotNull SyntaxTreeBuilder builder) {
     return builder.getTokenType() == PyTokenTypes.EXEC_KEYWORD ||
            builder.getTokenType() == PyTokenTypes.PRINT_KEYWORD;
   }
 
-  protected static void buildTokenElement(IElementType type, PsiBuilder builder) {
-    final PsiBuilder.Marker marker = builder.mark();
+  protected static void buildTokenElement(IElementType type, SyntaxTreeBuilder builder) {
+    final SyntaxTreeBuilder.Marker marker = builder.mark();
     advanceIdentifierLike(builder);
     marker.done(type);
   }

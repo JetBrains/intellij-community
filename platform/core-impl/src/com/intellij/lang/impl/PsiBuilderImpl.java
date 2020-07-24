@@ -1,31 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
-import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
-
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.ForeignLeafType;
-import com.intellij.lang.ITokenTypeRemapper;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.LighterLazyParseableNode;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.TokenWrapper;
-import com.intellij.lang.WhitespaceSkippedCallback;
-import com.intellij.lang.WhitespacesAndCommentsBinder;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UnprotectedUserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -35,26 +18,10 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.LazyParseableElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.CustomLanguageASTComparator;
-import com.intellij.psi.tree.ICustomParsingType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.ILazyParseableElementTypeBase;
-import com.intellij.psi.tree.ILeafElementType;
-import com.intellij.psi.tree.ILightLazyParseableElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
@@ -66,12 +33,15 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.AbstractList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
@@ -211,7 +181,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return fromParent;
     }
 
-    return new TokenSequence.Builder(myText, myLexer).performLexing();
+    return TokenSequence.performLexing(myText, myLexer);
   }
 
   private static boolean doLexingOptimizationCorrectionCheck() {
@@ -632,7 +602,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
       System.arraycopy(getBuilder().myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
 
-      return new TokenSequence(lexStarts, lexTypes, tokenCount);
+      return new TokenSequence(lexStarts, lexTypes, tokenCount, getText());
     }
   }
 
@@ -1067,7 +1037,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (curDepth > maxDepth) maxDepth = curDepth;
       }
       else if (item instanceof ErrorItem) {
-        ((ErrorItem)item).myParent = curNode;
+        item.myParent = curNode;
         int curToken = item.myLexemeIndex;
         if (curToken == lastErrorIndex) continue;
         lastErrorIndex = curToken;
@@ -1250,7 +1220,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       else if (item instanceof ErrorItem) {
         final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildrenWithoutNotifications(errorElement);
-        item = ((ErrorItem)item).myNext;
+        item = item.myNext;
         itemDone = false;
       }
 
@@ -1293,7 +1263,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         types[i - startMarker.myLexemeIndex] = myLexTypes[i];
       }
       relativeStarts[length] = end - start;
-      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length));
+      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length, leaf.getChars()));
     }
     ast.rawAddChildrenWithoutNotifications(leaf);
     return startMarker.getEndIndex();

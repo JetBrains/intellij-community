@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
@@ -167,8 +168,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
-    if (DumbService.getInstance(getProject()).isDumb()) {
-      return getCachedClassInDumbMode(name, scope);
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb()) {
+      return dumbService.isAlternativeResolveEnabled() ? getCachedClassesInDumbMode(name, scope) : PsiClass.EMPTY_ARRAY;
+    }
+
+    if (ModelBranchImpl.hasBranchedFilesInScope(scope)) {
+      return findAllClasses(name, scope);
     }
 
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
@@ -180,13 +186,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return classes;
     }
 
-    final String qName = getQualifiedName();
-    final String classQName = !qName.isEmpty() ? qName + "." + name : name;
-    map.put(name, classes = getFacade().findClasses(classQName, new EverythingGlobalScope(getProject())));
+    map.put(name, classes = findAllClasses(name, new EverythingGlobalScope(getProject())));
     return classes;
   }
 
-  private PsiClass @NotNull [] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
+  private PsiClass[] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
+    String qName = getQualifiedName();
+    String classQName = !qName.isEmpty() ? qName + "." + shortName : shortName;
+    return getFacade().findClasses(classQName, scope);
+  }
+
+  private PsiClass[] getCachedClassesInDumbMode(String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {
       myDumbModeFullCache = new SoftReference<>(scopeMap = new ConcurrentHashMap<>());
@@ -225,7 +235,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
-        Collections.addAll(fastClasses, CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY)));
+        PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
+        for (PsiClass aClass : classes) {
+          if (name.equals(aClass.getName())) {
+            fastClasses.add(aClass);
+          }
+        }
       }
       if (!fastClasses.isEmpty()) {
         partial.put(Pair.create(scope, name), result = fastClasses.toArray(PsiClass.EMPTY_ARRAY));
@@ -381,7 +396,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
 
       PsiCompositeModifierList result = modifiers.isEmpty() ? null : new PsiCompositeModifierList(getManager(), modifiers);
-      return new Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new Result<>(result, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 

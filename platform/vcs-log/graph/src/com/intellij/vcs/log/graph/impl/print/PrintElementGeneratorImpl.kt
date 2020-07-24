@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.impl.print
 
@@ -19,11 +19,11 @@ import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
+internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
                                                       private val printElementManager: PrintElementManager,
                                                       private val longEdgeSize: Int,
                                                       private val visiblePartSize: Int,
@@ -50,7 +50,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
       var sum = 0.0
       var sumSquares = 0.0
       var edgesCount = 0
-      val currentNormalEdges = THashSet<NormalEdge>()
+      val currentNormalEdges = ObjectOpenHashSet<NormalEdge>()
 
       for (i in 0 until n) {
         val adjacentEdges = linearGraph.getAdjacentEdges(i, EdgeFilter.ALL)

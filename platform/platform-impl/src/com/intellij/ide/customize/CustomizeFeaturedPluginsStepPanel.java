@@ -32,7 +32,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -55,10 +54,10 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
   }
 
   private void onPluginGroupsLoaded() {
-    Map<String, IdeaPluginDescriptor> pluginsFromRepository = ContainerUtil.map2Map(myPluginGroups.getPluginsFromRepository(),
-                                                                                    descriptor ->
-                                                                                      Pair.create(descriptor.getPluginId().getIdString(),
-                                                                                                  descriptor));
+    Map<String, IdeaPluginDescriptor> pluginsFromRepository = ContainerUtil.map2Map(
+      myPluginGroups.getPluginsFromRepository(),
+      descriptor -> Pair.create(descriptor.getPluginId().getIdString(), descriptor)
+    );
     if (pluginsFromRepository.isEmpty()) {
       myInProgressLabel.setText(IdeBundle.message("label.cannot.get.featured.plugins.description.online"));
       return;
@@ -82,21 +81,16 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
       String topic = s.substring(0, i);
       int j = s.indexOf(':', i + 1);
       String description = s.substring(i + 1, j);
-      final String pluginId = s.substring(j + 1);
+      final String pluginId = PluginGroups.parsePluginId(s);
       IdeaPluginDescriptor foundDescriptor = pluginsFromRepository.get(pluginId);
       if (foundDescriptor == null || PluginManagerCore.isBrokenPlugin(foundDescriptor)) {
         continue;
       }
       final IdeaPluginDescriptor descriptor = foundDescriptor;
 
-      List<PluginId> dependentPluginIds;
-      if (descriptor instanceof PluginNode) {
-        dependentPluginIds = ContainerUtil
-          .filter(ContainerUtil.notNullize(((PluginNode)descriptor).getDepends()), id -> !id.getIdString().startsWith("(optional)"));
-      }
-      else {
-        dependentPluginIds = Arrays.asList(descriptor.getDependentPluginIds());
-      }
+      List<PluginId> dependentPluginIds = ContainerUtil
+        .filter(ContainerUtil.notNullize(((PluginNode)descriptor).getDepends()), id -> !id.getIdString().startsWith("(optional)"));
+
       List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>(dependentPluginIds.size());
       boolean failedToFindDependencies = false;
       for (PluginId id : dependentPluginIds) {

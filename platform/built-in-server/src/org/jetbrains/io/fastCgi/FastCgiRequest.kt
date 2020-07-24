@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -9,10 +9,10 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import org.jetbrains.builtInWebServer.PathInfo
-import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
 import java.nio.CharBuffer
 import java.util.*
+import kotlin.math.min
 
 private const val PARAMS = 4
 private const val BEGIN_REQUEST = 1
@@ -71,14 +71,12 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     val remote = clientChannel.remoteAddress() as InetSocketAddress
     addHeader("REMOTE_ADDR", remote.address.hostAddress)
-    addHeader("REMOTE_PORT", Integer.toString(remote.port))
+    addHeader("REMOTE_PORT", remote.port.toString())
 
     val local = clientChannel.localAddress() as InetSocketAddress
-    addHeader("SERVER_SOFTWARE", serverHeaderValue)
-    addHeader("SERVER_NAME", serverHeaderValue)
 
     addHeader("SERVER_ADDR", local.address.hostAddress)
-    addHeader("SERVER_PORT", Integer.toString(local.port))
+    addHeader("SERVER_PORT", local.port.toString())
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1")
     addHeader("SERVER_PROTOCOL", request.protocolVersion().text())
@@ -132,7 +130,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
         var position = content.readerIndex()
         var toWrite = content.readableBytes()
         while (toWrite > 0) {
-          val length = Math.min(MAX_CONTENT_LENGTH, toWrite)
+          val length = min(MAX_CONTENT_LENGTH, toWrite)
 
           val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
           writeHeader(headerBuffer, STDIN, length)

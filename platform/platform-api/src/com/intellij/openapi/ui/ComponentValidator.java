@@ -185,7 +185,7 @@ public class ComponentValidator {
       public void documentChanged(com.intellij.openapi.editor.event.@NotNull DocumentEvent event) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
-    });
+    }, parentDisposable);
     return this;
   }
 

@@ -1,23 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.*;
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
-import com.intellij.find.FindUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.BlockInlayPriority;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -29,6 +25,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -38,7 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.HINTS_ID;
 
 public class ProjectProblemPassUtils {
 
@@ -56,15 +53,14 @@ public class ProjectProblemPassUtils {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
     SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
-    InlayPresentation textPresentation = factory.smallText(JavaErrorBundle.message("project.problems.broken.usages", brokenUsages.size()));
-    TextAttributes errorAttrs = editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ -> errorAttrs);
+    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.broken.usages", brokenUsages.size()));
+    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
+      editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
     InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
 
     JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaErrorBundle.message("project.problems.settings"));
-    item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE,
-                                                                                     model -> model.getId().equals(HINTS_ID)));
+    JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
+    item.addActionListener(e -> JavaLensProvider.openSettings(JavaLanguage.INSTANCE, project));
     popupMenu.add(item);
 
     InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {
@@ -83,8 +79,20 @@ public class ProjectProblemPassUtils {
     }
     else {
       String memberName = Objects.requireNonNull(member.getName());
-      FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                               JavaErrorBundle.message("project.problems.window.title", memberName), project);
+
+      UsageViewPresentation presentation = new UsageViewPresentation();
+      String title = JavaBundle.message("project.problems.window.title", memberName);
+      presentation.setCodeUsagesString(title);
+      presentation.setTabName(title);
+      presentation.setTabText(title);
+
+      PsiElement[] primary = new PsiElement[]{member};
+      Usage[] usages = ContainerUtil.map2Array(brokenUsages, new Usage[brokenUsages.size()],
+                                               e -> UsageInfoToUsageConverter.convert(primary, new UsageInfo(e)));
+
+      UsageTarget[] usageTargets = new UsageTarget[]{new BrokenUsageTargetAdapter(member)};
+      UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
+      usageViewManager.showUsages(usageTargets, usages, presentation);
     }
   }
 
@@ -119,7 +127,7 @@ public class ProjectProblemPassUtils {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
-      .descriptionAndTooltip(JavaErrorBundle.message("project.problems.fix.description", identifier.getText()))
+      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
       .createUnconditionally();
 
     QuickFixAction.registerQuickFixAction(info, new ShowBrokenUsagesAction(brokenUsages));
@@ -142,6 +150,10 @@ public class ProjectProblemPassUtils {
     return false;
   }
 
+  static boolean hintsEnabled() {
+    return JavaLensProvider.getSettings().isShowBrokenUsages();
+  }
+
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
     return ContainerUtil.map2Map(getEditorInfos(editor).entrySet(), e -> Pair.create(e.getKey(), e.getValue().myInlay));
   }
@@ -150,10 +162,23 @@ public class ProjectProblemPassUtils {
     Map<SmartPsiElementPointer<PsiMember>, EditorInfo> oldInfos = editor.getUserData(EDITOR_INFOS_KEY);
     Map<PsiMember, EditorInfo> editorInfos = new SmartHashMap<>();
     if (oldInfos == null) return editorInfos;
+    InlayModel inlayModel = editor.getInlayModel();
     oldInfos.forEach((pointer, info) -> {
       PsiMember member = pointer.getElement();
-      if (member == null) Disposer.dispose(info.myInlay);
-      else editorInfos.put(member, info);
+      Inlay<?> inlay = info.myInlay;
+      if (member == null) {
+        Disposer.dispose(inlay);
+      }
+      else {
+        int curOffset = inlay.getOffset();
+        int memberOffset = getMemberOffset(member);
+        if (curOffset != memberOffset) {
+          EditorCustomElementRenderer renderer = inlay.getRenderer();
+          info.myInlay = inlayModel.addBlockElement(memberOffset, true, true, BlockInlayPriority.PROBLEMS, renderer);
+          Disposer.dispose(inlay);
+        }
+        editorInfos.put(member, info);
+      }
     });
     return editorInfos;
   }
@@ -186,7 +211,7 @@ public class ProjectProblemPassUtils {
 
   static class EditorInfo {
 
-    final Inlay<?> myInlay;
+    Inlay<?> myInlay;
     final HighlightInfo myHighlightInfo;
 
     EditorInfo(@NotNull Inlay<?> inlay, @NotNull HighlightInfo info) {
@@ -219,7 +244,7 @@ public class ProjectProblemPassUtils {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return ProjectProblemInlaySettingsProvider.hintsEnabled();
+      return hintsEnabled();
     }
 
     @Override
@@ -235,8 +260,13 @@ public class ProjectProblemPassUtils {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public @NotNull String getFamilyName() {
-      return JavaErrorBundle.message("project.problems.fix.text");
+      return JavaBundle.message("project.problems.fix.text");
     }
   }
 }

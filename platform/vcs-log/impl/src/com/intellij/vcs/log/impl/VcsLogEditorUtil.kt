@@ -76,7 +76,7 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
   for ((logEditor, ids) in editorsToIdsMap) {
     val logFile = logEditor.file ?: continue
 
-    (logEditor as? VcsLogEditor)?.beforeEditorClose()
+    (logEditor as? VcsLogEditor)?.beforeEditorClose(true)
     ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logFile) }, ModalityState.NON_MODAL, { project.isDisposed })
     tabsToClose.removeAll(ids)
   }

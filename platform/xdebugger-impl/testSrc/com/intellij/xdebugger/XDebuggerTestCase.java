@@ -35,7 +35,7 @@ public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
   protected void initApplication() throws Exception {
     super.initApplication();
 
-    final ExtensionPoint<XBreakpointType> point = XBreakpointType.EXTENSION_POINT_NAME.getPoint(null);
+    final ExtensionPoint<XBreakpointType> point = XBreakpointType.EXTENSION_POINT_NAME.getPoint();
     point.registerExtension(MY_LINE_BREAKPOINT_TYPE, getTestRootDisposable());
     point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE, getTestRootDisposable());
   }

@@ -3,6 +3,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ipp.base.Intention;
@@ -35,7 +36,7 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
   }
 
   static int getPercentSCount(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiLiteralExpression || expression instanceof PsiPolyadicExpression)
           || !ExpressionUtils.hasStringType(expression)) {
       return -1;

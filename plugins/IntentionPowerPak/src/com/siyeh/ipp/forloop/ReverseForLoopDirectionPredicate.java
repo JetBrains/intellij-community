@@ -17,9 +17,9 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
     final PsiExpressionStatement expressionStatement =
       (PsiExpressionStatement)statement;
     PsiExpression expression = expressionStatement.getExpression();
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpression =
         (PsiPrefixExpression)expression;
@@ -131,12 +131,12 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
       final IElementType tokenType =
         assignmentExpression.getOperationTokenType();
       PsiExpression lhs = assignmentExpression.getLExpression();
-      lhs = ParenthesesUtils.stripParentheses(lhs);
+      lhs = PsiUtil.skipParenthesizedExprDown(lhs);
       if (!ExpressionUtils.isReferenceTo(lhs, variable)) {
         return false;
       }
       PsiExpression rhs = assignmentExpression.getRExpression();
-      rhs = ParenthesesUtils.stripParentheses(rhs);
+      rhs = PsiUtil.skipParenthesizedExprDown(rhs);
       if (tokenType == JavaTokenType.EQ) {
         if (!(rhs instanceof PsiBinaryExpression)) {
           return false;
@@ -147,9 +147,9 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
           return false;
         }
         PsiExpression lOperand = binaryExpression.getLOperand();
-        lOperand = ParenthesesUtils.stripParentheses(lOperand);
+        lOperand = PsiUtil.skipParenthesizedExprDown(lOperand);
         PsiExpression rOperand = binaryExpression.getROperand();
-        rOperand = ParenthesesUtils.stripParentheses(rOperand);
+        rOperand = PsiUtil.skipParenthesizedExprDown(rOperand);
         return ExpressionUtils.isReferenceTo(rOperand, variable) || ExpressionUtils.isReferenceTo(lOperand, variable);
       }
       else if (tokenType == JavaTokenType.PLUSEQ || tokenType == JavaTokenType.MINUSEQ) {

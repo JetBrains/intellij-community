@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
@@ -57,14 +57,14 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
+  public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
                                            @NotNull FindSymbolParameters parameters,
                                            @NotNull ProgressIndicator indicator,
                                            @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
     return ProgressManager.getInstance().computePrioritized(() -> doFilterElements(base, parameters, indicator, consumer));
   }
 
-  private boolean doFilterElements(@NotNull ChooseByNameBase base,
+  private boolean doFilterElements(@NotNull ChooseByNameViewModel base,
                                    @NotNull FindSymbolParameters parameters,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
@@ -93,7 +93,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
-  private boolean processItemsForPattern(@NotNull ChooseByNameBase base,
+  private boolean processItemsForPattern(@NotNull ChooseByNameViewModel base,
                                          @NotNull FindSymbolParameters parameters,
                                          @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                          @NotNull ProgressIndicator indicator) {
@@ -300,7 +300,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     @Nullable
-    SuffixMatches nextGroup(@NotNull ChooseByNameBase base) {
+    SuffixMatches nextGroup(@NotNull ChooseByNameViewModel base) {
       if (index >= namePattern.length()) return null;
       
       SuffixMatches matches = new SuffixMatches(namePattern, index, indicator);
@@ -343,7 +343,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
              '}';
     }
 
-    boolean matchName(@NotNull ChooseByNameBase base, String name) {
+    boolean matchName(@NotNull ChooseByNameViewModel base, String name) {
       MatchResult result = matches(base, patternSuffix, matcher, name);
       if (result != null) {
         matchingNames.add(result);

@@ -216,8 +216,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), project, false);
       for (RangeHighlighter tokenMarker : model.getAllHighlighters()) {
         ConsoleViewContentType contentType = tokenMarker.getUserData(CONTENT_TYPE);
-        if (contentType != null && tokenMarker instanceof RangeHighlighterEx)
+        if (contentType != null && contentType.getAttributesKey() == null && tokenMarker instanceof RangeHighlighterEx) {
           ((RangeHighlighterEx)tokenMarker).setTextAttributes(contentType.getAttributes());
+        }
       }
     });
   }
@@ -813,12 +814,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                                            int startOffset,
                                            int endOffset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    TextAttributes attributes = contentType.getAttributes();
-    MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
-    RangeHighlighter tokenMarker = model.addRangeHighlighter(startOffset, endOffset, layer,
-                                                             attributes, HighlighterTargetArea.EXACT_RANGE);
-    tokenMarker.putUserData(CONTENT_TYPE, contentType);
+    model.addRangeHighlighterAndChangeAttributes(
+      contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
+      ex -> {
+        // fallback for contentTypes which provide only attributes
+        if (ex.getTextAttributesKey() == null) {
+          ex.setTextAttributes(contentType.getAttributes());
+        }
+        ex.putUserData(CONTENT_TYPE, contentType);
+      });
   }
 
   private boolean isDisposed() {
@@ -1073,7 +1079,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         startLine > 0 ? myEditor.getFoldingModel().getCollapsedRegionAtOffset(document.getLineStartOffset(startLine - 1)) : null;
       String lastFoldingFqn = USED_FOLDING_FQN_KEY.get(existingRegion);
       ConsoleFolding lastFolding = lastFoldingFqn != null
-                                   ? ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, consoleFolding -> consoleFolding.getClass().getName())
+                                   ? ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class, consoleFolding -> consoleFolding.getClass().getName())
                                    : null;
       int lastStartLine = lastFolding == null ? Integer.MAX_VALUE :
                           existingRegion.getStartOffset() == 0 ? 0 :

@@ -10,14 +10,12 @@ import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -90,8 +88,8 @@ public class InplaceChangeSignature implements DocumentListener {
     TextRange highlightingRange = myDetector.getHighlightingRange(myStableChange);
 
     HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    highlightManager.addRangeHighlight(editor, highlightingRange.getStartOffset(), highlightingRange.getEndOffset(), attributes, false, myHighlighters);
+    highlightManager.addRangeHighlight(editor, highlightingRange.getStartOffset(), highlightingRange.getEndOffset(), 
+                                       EditorColors.LIVE_TEMPLATE_ATTRIBUTES, false, myHighlighters);
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.setGreedyToRight(true);
       highlighter.setGreedyToLeft(true);
@@ -185,17 +183,13 @@ public class InplaceChangeSignature implements DocumentListener {
 
     myPreview.getMarkupModel().removeAllHighlighters();
     WriteCommandAction.writeCommandAction(null).run(() -> myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature));
-    TextAttributes deprecatedAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     for (TextRange range : deleteRanges) {
-      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                     deprecatedAttributes, HighlighterTargetArea.EXACT_RANGE);
+      myPreview.getMarkupModel().addRangeHighlighter(CodeInsightColors.DEPRECATED_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     HighlighterTargetArea.EXACT_RANGE);
     }
-    TextAttributes todoAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
     for (TextRange range : newRanges) {
-      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                     todoAttributes, HighlighterTargetArea.EXACT_RANGE);
+      myPreview.getMarkupModel().addRangeHighlighter(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     HighlighterTargetArea.EXACT_RANGE);
     }
   }
 

@@ -5,11 +5,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
 
@@ -124,9 +126,9 @@ public abstract class JavaCodeStyleManager {
    * Generates compiled parameter name for given type.
    * Should not access indices due to performance reasons (e.g. see IDEA-116803)
    */
-  @NotNull
-  public SuggestedNameInfo suggestCompiledParameterName(@NotNull PsiType type) {
-    return suggestVariableName(VariableKind.PARAMETER, null, null, type, true);
+  public @Nullable String suggestCompiledParameterName(@NotNull PsiType type) {
+    SuggestedNameInfo info = suggestVariableName(VariableKind.PARAMETER, null, null, type, true);
+    return ContainerUtil.getFirstItem(Arrays.asList(info.names));
   }
 
 

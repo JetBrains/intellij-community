@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -32,8 +31,8 @@ class MethodParameterAugmenter : TypeAugmenter() {
     }
 
     private fun computeInferredMethod(method: GrMethod, scope : SearchScope): InferenceResult? =
-      RecursionManager.doPreventingRecursion(method, true) {
-        CachedValuesManager.getCachedValue(method) {
+      CachedValuesManager.getCachedValue(method) {
+        RecursionManager.doPreventingRecursion(method, true) {
           val options = SignatureInferenceOptions(scope, true, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
           val typedMethod = runInferenceProcess(method, options)
           val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)

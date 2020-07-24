@@ -30,6 +30,7 @@ internal class LegacyBridgeModifiableModuleModel(
 
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
+  private val myUncommittedModulesToDispose = ArrayList<LegacyBridgeModule>()
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
@@ -131,7 +132,7 @@ internal class LegacyBridgeModifiableModuleModel(
 
     if (myModulesToAdd.inverse().remove(module) != null) {
       (ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent).removeUncommittedModule(module.name)
-      Disposer.dispose(module)
+      myUncommittedModulesToDispose.add(module)
     }
 
     myNewNameToModule.inverse().remove(module)
@@ -160,6 +161,9 @@ internal class LegacyBridgeModifiableModuleModel(
     for (moduleToAdd in myModulesToAdd.values) {
       moduleManager.removeUncommittedModule(moduleToAdd.name)
       Disposer.dispose(moduleToAdd)
+    }
+    for (module in myUncommittedModulesToDispose) {
+      Disposer.dispose(module)
     }
 
     myModulesToAdd.clear()
@@ -191,12 +195,8 @@ internal class LegacyBridgeModifiableModuleModel(
       diff.removeEntity(moduleEntity)
     }
 
-    for (entry in myNewNameToModule.entries) {
-      val entity = storage.resolve(entry.value.moduleEntityId) ?:
-        error("Unable to resolve module by id: ${entry.value.moduleEntityId}")
-      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
-        name = entry.key
-      }
+    for (module in myUncommittedModulesToDispose) {
+      Disposer.dispose(module)
     }
 
     return diff
@@ -210,10 +210,25 @@ internal class LegacyBridgeModifiableModuleModel(
     myNewNameToModule.inverse().remove(module)
     myNewNameToModule.remove(newName)
 
-    if (module.name != newName) { // if renaming to itself, forget it altogether
-      myNewNameToModule[newName] = module
-    }
     removeUnloadedModule(newName)
+    val oldName = module.name
+    val oldId = module.moduleEntityId
+    if (oldName != newName) { // if renaming to itself, forget it altogether
+      val moduleToAdd = myModulesToAdd.remove(oldName)
+      if (moduleToAdd != null) {
+        moduleManager.removeUncommittedModule(oldName)
+        moduleToAdd.rename(newName, false)
+        moduleManager.addUncommittedModule(moduleToAdd)
+        myModulesToAdd[newName] = moduleToAdd
+      }
+      else {
+        myNewNameToModule[newName] = module
+      }
+      val entity = entityStoreOnDiff.current.resolve(oldId) ?: error("Unable to resolve module by id: $oldId")
+      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+        name = newName
+      }
+    }
 
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)

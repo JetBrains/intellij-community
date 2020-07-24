@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -42,7 +42,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.*;
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction;
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.WelcomeScreenOpenAction;
 
 public class OpenFileAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
@@ -103,7 +104,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         return;
       }
       else if (canAttach) {
-        openedProject = PlatformProjectOpenProcessor.doOpenProject(filePath, new OpenProjectTask(false, project));
+        openedProject = PlatformProjectOpenProcessor.doOpenProject(filePath, OpenProjectTask.withProjectToClose(project));
       }
       else {
         openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
@@ -127,7 +128,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         return;
       }
     }
-    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file); 
+    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file);
 
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
     if (type == null) return;

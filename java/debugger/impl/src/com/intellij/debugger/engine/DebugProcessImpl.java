@@ -87,6 +87,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -115,7 +116,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
   // we use null key here
-  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
+  private final Map<Type, Object> myNodeRenderersMap = new HashMap<>();
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
@@ -194,25 +195,75 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myReturnValueWatcher != null;
   }
 
+  /**
+   * @deprecated use {@link #getAutoRendererAsync(Type)}
+   */
+  @Deprecated
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
     Type type = descriptor.getType();
-
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
     if (!isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
 
     try {
-      return myNodeRenderersMap.computeIfAbsent(type, t ->
-        myRenderers.stream().
-          filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
-          findFirst().orElseGet(() -> getDefaultRenderer(type)));
+      Object res = myNodeRenderersMap.get(type);
+      if (res instanceof NodeRenderer) {
+        return (NodeRenderer)res;
+      }
+      NodeRenderer renderer = myRenderers.stream().
+        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
+        findFirst().orElseGet(() -> getDefaultRenderer(type));
+      myNodeRenderersMap.put(type, renderer);
+      return renderer;
     }
     catch (ClassNotPreparedException e) {
       LOG.info(e);
       // use default, but do not cache
       return getDefaultRenderer(type);
+    }
+  }
+
+  @NotNull
+  public CompletableFuture<NodeRenderer> getAutoRendererAsync(@Nullable Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    // in case evaluation is not possible, force default renderer
+    if (!isEvaluationPossible()) {
+      return CompletableFuture.completedFuture(getDefaultRenderer(type));
+    }
+
+    try {
+      Object renderer = myNodeRenderersMap.get(type);
+      if (renderer instanceof NodeRenderer) {
+        return CompletableFuture.completedFuture((NodeRenderer)renderer);
+      }
+      else if (renderer instanceof CompletableFuture) {
+        //noinspection unchecked
+        return (CompletableFuture<NodeRenderer>)renderer;
+      }
+      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type)
+        .handle((renderers, throwable) -> {
+          DebuggerManagerThreadImpl.assertIsManagerThread();
+          NodeRenderer r = ContainerUtil.getFirstItem(renderers);
+          if (r == null || throwable != null) {
+            r = getDefaultRenderer(type); // do not cache the fallback renderer
+            myNodeRenderersMap.remove(type);
+          }
+          else {
+            // TODO: may add a new (possibly incorrect) value after the cleanup in reloadRenderers
+            myNodeRenderersMap.put(type, r);
+          }
+        return r;
+      });
+      // check if future is already done
+      myNodeRenderersMap.putIfAbsent(type, res);
+      return res;
+    }
+    catch (ClassNotPreparedException e) {
+      LOG.info(e);
+      // use default, but do not cache
+      return CompletableFuture.completedFuture(getDefaultRenderer(type));
     }
   }
 

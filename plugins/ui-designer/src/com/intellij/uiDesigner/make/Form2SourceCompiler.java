@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -18,6 +17,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -75,7 +75,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final CompileScope scope = context.getCompileScope();
       final CompileScope projectScope = context.getProjectCompileScope();
 
-      final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+      final VirtualFile[] formFiles = projectScope.getFiles(GuiFormFileType.INSTANCE, true);
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       final BindingsCache bindingsCache = new BindingsCache(project);
 

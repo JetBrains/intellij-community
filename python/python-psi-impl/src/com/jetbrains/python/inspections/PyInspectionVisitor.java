@@ -108,7 +108,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   /**
    * The most full-blown version.
    *
-   * @see com.intellij.codeInspection.ProblemDescriptor
+   * @see ProblemDescriptor
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,

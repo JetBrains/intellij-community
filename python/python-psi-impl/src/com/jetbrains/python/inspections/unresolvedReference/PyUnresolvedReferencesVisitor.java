@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
+import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -185,7 +186,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       final PyQualifiedExpression qExpr = (PyQualifiedExpression)node;
       final PyExpression qualifier = qExpr.getQualifier();
       final String name = node.getName();
-      if (qualifier != null && name != null && isGuardedByHasattr(qualifier, name)) {
+      if (qualifier != null && name != null && PyHasAttrHelper.INSTANCE.getNamesFromHasAttrs(node, qualifier).contains(name)) {
         return;
       }
     }
@@ -684,45 +685,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
     }
     return null;
-  }
-
-  private static boolean isGuardedByHasattr(@NotNull final PyElement node, @NotNull final String name) {
-    final String nodeName = node.getName();
-    if (nodeName != null) {
-      final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, nodeName);
-      PyElement e = PsiTreeUtil.getParentOfType(node, PyConditionalStatementPart.class, PyConditionalExpression.class);
-      while (e != null && PsiTreeUtil.isAncestor(owner, e, true)) {
-        final ArrayList<PyCallExpression> calls = new ArrayList<>();
-        PyExpression cond = null;
-        if (e instanceof PyConditionalStatementPart) {
-          cond = ((PyConditionalStatementPart)e).getCondition();
-        }
-        else if (e instanceof PyConditionalExpression && PsiTreeUtil.isAncestor(((PyConditionalExpression)e).getTruePart(), node, true)) {
-          cond = ((PyConditionalExpression)e).getCondition();
-        }
-        if (cond instanceof PyCallExpression) {
-          calls.add((PyCallExpression)cond);
-        }
-        if (cond != null) {
-          final PyCallExpression[] callExpressions = PsiTreeUtil.getChildrenOfType(cond, PyCallExpression.class);
-          if (callExpressions != null) {
-            calls.addAll(Arrays.asList(callExpressions));
-          }
-          for (PyCallExpression call : calls) {
-            final PyExpression callee = call.getCallee();
-            final PyExpression[] args = call.getArguments();
-            // TODO: Search for `node` aliases using aliases analysis
-            if (callee != null && "hasattr".equals(callee.getName()) && args.length == 2 &&
-                nodeName.equals(args[0].getName()) && args[1] instanceof PyStringLiteralExpression &&
-                ((PyStringLiteralExpression)args[1]).getStringValue().equals(name)) {
-              return true;
-            }
-          }
-        }
-        e = PsiTreeUtil.getParentOfType(e, PyConditionalStatementPart.class);
-      }
-    }
-    return false;
   }
 
   private static boolean isContainingFileImportAllowed(PyElement node, PsiFile target) {

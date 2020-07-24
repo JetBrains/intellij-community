@@ -19,11 +19,9 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -734,12 +732,10 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         editor != null && editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(containingFile);
       try {
         if (highlight) { //do not highlight for batch inspections
-          final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-          final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
           final TextRange textRange = highlightElement.getTextRange();
           HighlightManager.getInstance(project).addRangeHighlight(editor,
                                                                   textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                  attributes, true, highlighters);
+                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
           final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
           editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.CENTER);
         }

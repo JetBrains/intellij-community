@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
@@ -53,13 +52,13 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-public class GroovyDslFileIndex {
+public final class GroovyDslFileIndex {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
   private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
-    new ConcurrentMultiMap<>();
+    MultiMap.createConcurrent();
 
   private static final ExecutorService ourPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("GroovyDSLIndex Pool", 4);
 

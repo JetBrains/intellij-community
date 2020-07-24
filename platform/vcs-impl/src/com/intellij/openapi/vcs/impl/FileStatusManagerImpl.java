@@ -86,10 +86,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::fileStatusesChanged);
 
     if (!project.isDefault()) {
-      StartupManager startManager = StartupManager.getInstance(project);
-      if (!startManager.postStartupActivityPassed()) {
-        startManager.registerPostStartupDumbAwareActivity(this::fileStatusesChanged);
-      }
+      StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
     }
 
     FileStatusProvider.EP_NAME.addChangeListener(myProject, this::fileStatusesChanged, project);

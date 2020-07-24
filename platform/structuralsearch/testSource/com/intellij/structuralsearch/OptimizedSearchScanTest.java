@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -111,10 +111,10 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
  }
 
   private void doTest(String query, String plan) {
-    assertEquals(plan, getSearchPlan(query, StdFileTypes.JAVA));
+    assertEquals(plan, getSearchPlan(query, JavaFileType.INSTANCE));
   }
 
   private void doTest(String message, String query, String plan) {
-    assertEquals(message, plan, getSearchPlan(query, StdFileTypes.JAVA));
+    assertEquals(message, plan, getSearchPlan(query, JavaFileType.INSTANCE));
   }
 }

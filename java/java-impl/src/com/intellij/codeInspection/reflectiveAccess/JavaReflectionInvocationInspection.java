@@ -7,7 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +115,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   private static List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
                                                                 int argumentOffset,
                                                                 @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
-    final PsiExpression definition = findDefinition(ParenthesesUtils.stripParentheses(qualifier));
+    final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
     if (definition instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
       if (methodPredicate.test(definitionCall)) {

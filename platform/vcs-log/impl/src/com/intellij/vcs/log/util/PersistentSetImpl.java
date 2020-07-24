@@ -17,8 +17,8 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.util.Processor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   public PersistentSetImpl(@NotNull Path file,
                            @NotNull KeyDescriptor<T> dataDescriptor,
                            int initialSize,
-                           @Nullable PagedFileStorage.StorageLockContext lockContext, int version) throws IOException {
+                           @Nullable StorageLockContext lockContext, int version) throws IOException {
     super(file, dataDescriptor, initialSize, lockContext, version);
   }
 
@@ -55,7 +55,7 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   }
 
   @Override
-  public synchronized void markCorrupted() {
+  public void markCorrupted() {
     super.markCorrupted();
   }
 }

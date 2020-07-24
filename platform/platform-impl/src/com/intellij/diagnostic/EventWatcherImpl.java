@@ -223,7 +223,7 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
     String pluginId = loader instanceof PluginClassLoader ?
-                      ((PluginClassLoader)loader).getPluginIdString() :
+                      ((PluginClassLoader)loader).getPluginId().getIdString() :
                       PluginManagerCore.CORE_PLUGIN_ID;
 
     StartUpMeasurer.addPluginCost(

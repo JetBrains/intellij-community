@@ -204,8 +204,7 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
-    //noinspection deprecation
-    return ContainerUtilRt.newArrayList(iterable);
+    return ContainerUtilRt.copy(new ArrayList<>(), iterable);
   }
 
   /**
@@ -334,7 +333,6 @@ public class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(T @NotNull ... elements) {
-    //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(elements));
   }
 
@@ -422,6 +420,7 @@ public class ContainerUtil {
   /**
    * @deprecated Use {@link THashSet#THashSet(Collection, TObjectHashingStrategy)}
    */
+  @Deprecated
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... elements) {
@@ -442,6 +441,10 @@ public class ContainerUtil {
     return new THashSet<>(elements);
   }
 
+  /**
+   * @deprecated Use {@link it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet}.
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K> THashSet<K> newIdentityTroveSet() {
     return new THashSet<>(identityStrategy());
@@ -481,7 +484,7 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
-    return Collections.newSetFromMap(new ConcurrentHashMap<T, Boolean>());
+    return Collections.newSetFromMap(new ConcurrentHashMap<>());
   }
 
   /**
@@ -634,7 +637,7 @@ public class ContainerUtil {
     }
   }
 
-  private static class ImmutableListBackedByList<E> extends ImmutableList<E> {
+  private static final class ImmutableListBackedByList<E> extends ImmutableList<E> {
     private final List<? extends E> myStore;
 
     private ImmutableListBackedByList(@NotNull List<? extends E> list) {
@@ -1921,7 +1924,9 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<? extends T> list) {
-    return sorted(list, Comparator.naturalOrder());
+    List<T> result = new ArrayList<>(list);
+    result.sort(null);
+    return result;
   }
 
   /**
@@ -2039,7 +2044,7 @@ public class ContainerUtil {
    * @return read-only list consisting of the elements from the iterable converted by mapping with nulls filtered out
    */
   @Contract(pure = true)
-  public static @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Iterable<? extends T> iterable, 
+  public static @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Iterable<? extends T> iterable,
                                                             @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     List<V> result = new ArrayList<>();
     for (T t : iterable) {
@@ -2057,7 +2062,7 @@ public class ContainerUtil {
    * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
    */
   @Contract(pure = true)
-  public static @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Collection<? extends T> collection, 
+  public static @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Collection<? extends T> collection,
                                                             @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     if (collection.isEmpty()) {
       return emptyList();
@@ -2932,20 +2937,12 @@ public class ContainerUtil {
 
   public static final class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
+      super(new TreeMap<>());
     }
 
     public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
-      super(toCopy);
-    }
-
-    @Override
-    protected @NotNull Map<K, Collection<V>> createMap() {
-      return new TreeMap<>();
-    }
-
-    @Override
-    protected @NotNull Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-      return new TreeMap<>();
+      super(new TreeMap<>());
+      putAllValues(toCopy);
     }
 
     public @NotNull NavigableSet<K> navigableKeySet() {

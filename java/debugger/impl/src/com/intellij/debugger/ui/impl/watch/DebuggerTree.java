@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerTree
@@ -6,8 +6,8 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -30,7 +30,6 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -503,20 +502,22 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void threadAction(@NotNull SuspendContextImpl suspendContext) {
       final DebuggerTreeNodeImpl node = getNode();
       ValueDescriptorImpl descriptor = (ValueDescriptorImpl)node.getDescriptor();
-      try {
-        final NodeRenderer renderer = descriptor.getRenderer(suspendContext.getDebugProcess());
-        renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
-      }
-      catch (ObjectCollectedException e) {
-        final String message = e.getMessage();
-        DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
-          node.removeAllChildren();
-          node.add(getNodeFactory().createMessageNode(
-            new MessageDescriptor(JavaDebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
-          );
-          node.childrenChanged(false);
+      descriptor.getRenderer(suspendContext.getDebugProcess())
+        .thenAccept(renderer -> {
+          try {
+            renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
+          }
+          catch (ObjectCollectedException e) {
+            final String message = e.getMessage();
+            DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+              node.removeAllChildren();
+              node.add(getNodeFactory().createMessageNode(
+                new MessageDescriptor(JavaDebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
+              );
+              node.childrenChanged(false);
+            });
+          }
         });
-      }
     }
 
     @Override

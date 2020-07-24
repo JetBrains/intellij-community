@@ -48,7 +48,7 @@ public class FileReferenceUtil {
    * @param references references, typically from PsiElement.getReferences()
    * @return PsiFile if the last FileReference resolves into a real file.
    * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
-   * @see com.intellij.psi.PsiElement#getReferences() 
+   * @see PsiElement#getReferences() 
    */
   @Nullable
   public static PsiFile findFile(PsiReference...references) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
@@ -72,11 +73,14 @@ class ModuleModelTest {
       model.renameModule(module, "b")
       assertThat(model.isChanged).isTrue()
       assertThat(model.modules).containsExactly(module)
-      assertThat(model.findModuleByName("a")).isEqualTo(module)
-      assertThat(model.findModuleByName("b")).isNull()
       assertThat(model.getModuleToBeRenamed("a")).isNull()
-      assertThat(model.getNewName(module)).isEqualTo("b")
-      assertThat(module.name).isEqualTo("a")
+      assertThat(model.getActualName(module)).isEqualTo("b")
+      if (Registry.`is`("ide.new.project.model")) {
+        //in the old model newly added module doesn't get the new name until commit; it looks like a bug
+        assertThat(model.findModuleByName("a")).isNull()
+        assertThat(model.findModuleByName("b")).isEqualTo(module)
+        assertThat(module.name).isEqualTo("b")
+      }
       module
     }
 
@@ -105,7 +109,6 @@ class ModuleModelTest {
     val a = edit { model ->
       val a = projectModel.createModule("a", model)
       model.disposeModule(a)
-      assertThat(model.isChanged).isFalse()
       assertThat(model.modules).isEmpty()
       assertThat(model.findModuleByName("a")).isNull()
       a
@@ -143,9 +146,11 @@ class ModuleModelTest {
     val moduleModel = createModifiableModuleModel()
     val module = projectModel.createModule("a", moduleModel)
     val model = createModifiableModel(module)
-    model.addLibraryEntry(library)
+    val entry = model.addLibraryEntry(library)
+    assertThat(entry.ownerModule).isEqualTo(module)
     val committed = commitModifiableRootModel(model)
     val libraryEntry = dropModuleSourceEntry(committed, 1).single() as LibraryOrderEntry
+    assertThat(libraryEntry.ownerModule).isEqualTo(module)
     assertThat(libraryEntry.library).isEqualTo(library)
     runWriteActionAndWait { moduleModel.commit() }
     val libraryEntryForCommitted = dropModuleSourceEntry(ModuleRootManager.getInstance(module), 1).single() as LibraryOrderEntry
@@ -182,6 +187,28 @@ class ModuleModelTest {
     }
     assertThat(moduleManager.findModuleByName("a")).isEqualTo(a)
     assertThat(ModuleRootManager.getInstance(a).dependencies.single()).isEqualTo(b)
+  }
+
+  @Test
+  fun `commit multiple modules with module-level libraries`() {
+    val moduleModel = createModifiableModuleModel()
+    val a = projectModel.createModule("a", moduleModel)
+    val b = projectModel.createModule("b", moduleModel)
+    val modelA = createModifiableModel(a)
+    val libraryAModel = modelA.moduleLibraryTable.createLibrary().modifiableModel
+    val aRoot = projectModel.baseProjectDir.newVirtualDirectory("a-classes")
+    libraryAModel.addRoot(aRoot, OrderRootType.CLASSES)
+    libraryAModel.commit()
+    val modelB = createModifiableModel(b)
+    val libraryBModel = modelB.moduleLibraryTable.createLibrary().modifiableModel
+    val bRoot = projectModel.baseProjectDir.newVirtualDirectory("b-classes")
+    libraryBModel.addRoot(bRoot, OrderRootType.CLASSES)
+    libraryBModel.commit()
+    runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(modelA, modelB), moduleModel) }
+    val moduleManager = projectModel.moduleManager
+    assertThat(moduleManager.modules).containsExactlyInAnyOrder(a, b)
+    assertThat((ModuleRootManager.getInstance(a).orderEntries[1] as LibraryOrderEntry).library!!.getFiles(OrderRootType.CLASSES)).containsExactly(aRoot)
+    assertThat((ModuleRootManager.getInstance(b).orderEntries[1] as LibraryOrderEntry).library!!.getFiles(OrderRootType.CLASSES)).containsExactly(bRoot)
   }
 
   @Test

@@ -81,9 +81,17 @@ public class Patch {
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized());
-    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false);
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
+
+    Set<String> ignored = new HashSet<>(spec.getIgnoredFiles());
+    Set<String> critical = new HashSet<>(spec.getCriticalFiles());
+    Set<String> optional = new HashSet<>(spec.getOptionalFiles());
+
+    Map<String, Long> oldChecksums = digestFiles(olderDir, ignored, isNormalized());
+    Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, critical, optional, true);
+
+    Runner.logger().info("Preparing actions...");
+    ui.startProcess("Preparing actions...");
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -113,16 +121,13 @@ public class Patch {
       }
     }
 
-    Runner.logger().info("Preparing actions...");
-    ui.startProcess("Preparing actions...");
-
     List<PatchAction> actions = new ArrayList<>();
     for (PatchAction action : tempActions) {
       Runner.logger().info(action.getPath());
       if (action.calculate(olderDir, newerDir)) {
         actions.add(action);
-        action.setCritical(spec.getCriticalFiles().contains(action.getPath()));
-        action.setOptional(spec.getOptionalFiles().contains(action.getPath()));
+        action.setCritical(critical.contains(action.getPath()));
+        action.setOptional(optional.contains(action.getPath()));
       }
     }
     addRenameRootDirectoryActionIfNeeded(spec, actions);
@@ -368,8 +373,6 @@ public class Patch {
     }
 
     List<PatchAction> appliedActions = new ArrayList<>(actionsToApply.size());
-    List<File> createdDirectories = new ArrayList<>();
-    Set<File> createdOptionalFiles = new HashSet<>();
 
     try {
       File _backupDir = backupDir;
@@ -383,16 +386,6 @@ public class Patch {
         else {
           appliedActions.add(action);
           action.apply(patchFile, _backupDir, toDir);
-
-          if (action instanceof CreateAction) {
-            File file = action.getFile(toDir);
-            if (file.isDirectory()) {
-              createdDirectories.add(0, file);
-            }
-            else if (action.isOptional()) {
-              createdOptionalFiles.add(file);
-            }
-          }
         }
       });
     }
@@ -403,19 +396,6 @@ public class Patch {
     catch (Throwable t) {
       Runner.logger().error("apply failed", t);
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
-    }
-
-    for (File directory : createdDirectories) {
-      File[] children = directory.listFiles();
-      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
-        Runner.logger().info("Pruning empty directory: " + directory);
-        try {
-          Utils.delete(directory);
-        }
-        catch (IOException e) {
-          Runner.logger().warn("pruning: " + directory, e);
-        }
-      }
     }
 
     try {
@@ -470,14 +450,19 @@ public class Patch {
     }
   }
 
-  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize) throws IOException {
+  public Map<String, Long> digestFiles(File dir, Set<String> ignoredFiles, boolean normalize) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir.toPath());
-    for (String each : paths) {
-      if (!ignoredFiles.contains(each)) {
-        result.put(each, digestFile(new File(dir, each), normalize));
+    Utils.collectRelativePaths(dir.toPath()).parallelStream().forEachOrdered(path -> {
+      if (!ignoredFiles.contains(path)) {
+        try {
+          long hash = digestFile(new File(dir, path), normalize);
+          synchronized (result) {
+            result.put(path, hash);
+          }
+        }
+        catch (IOException e) { throw new UncheckedIOException(e); }
       }
-    }
+    });
     return result;
   }
 

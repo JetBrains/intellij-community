@@ -46,28 +46,16 @@ public abstract class ByteBufferWrapper {
 
   public abstract ByteBuffer getBuffer() throws IOException;
 
-  public abstract void unmap();
-
   public abstract void flush();
 
-  public void dispose() {
-    unmap();
-  }
+  public abstract void release();
 
   public static ByteBufferWrapper readWriteDirect(Path file, final long offset, final int length) {
     return new ReadWriteDirectBufferWrapper(file, offset, length);
   }
 
-  public static ByteBufferWrapper readOnly(Path file, final int offset) throws IOException {
-    return new ReadOnlyMappedBufferWrapper(file, offset);
-  }
-
   @Override
   public String toString() {
     return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
-  }
-
-  public int allocationSize() {
-    return (int)myLength;
   }
 }

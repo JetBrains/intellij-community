@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.execution.filters.LineNumbersMapping
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
@@ -12,12 +13,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -26,7 +27,6 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
-import com.intellij.util.ArrayUtil
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
@@ -84,8 +84,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     val connection = app.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-        if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
-          myFutures[file] = app.executeOnPooledThread(Callable<CharSequence> { decompile(file) })
+        if (!myLegalNoticeAccepted && file.fileType === JavaClassFileType.INSTANCE && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
+          myFutures[file] = app.executeOnPooledThread(Callable { decompile(file) })
 
           val title = IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.path, 40, true))
           val message = IdeaDecompilerBundle.message("legal.notice.text")
@@ -139,7 +139,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     try {
       val mask = "${file.nameWithoutExtension}$"
-      val files = listOf(file) + file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === StdFileTypes.CLASS }
+      val files = listOf(file) + file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE }
 
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {
@@ -168,13 +168,13 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     catch (e: Exception) {
       if (e is IdeaLogger.InternalException && e.cause is IOException) {
         Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
-        return ArrayUtil.EMPTY_CHAR_SEQUENCE
+        return Strings.EMPTY_CHAR_SEQUENCE
       }
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw AssertionError(file.url, e)
       }
       else {
-        throw ClassFileDecompilers.Light.CannotDecompileException(e)
+        throw CannotDecompileException(e)
       }
     }
   }

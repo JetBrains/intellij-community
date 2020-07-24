@@ -18,6 +18,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
+@SuppressWarnings({"EmptySynchronizedStatement", "NestedSynchronizedStatement", "SynchronizeOnThis"})
 public class NestedSynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
@@ -38,7 +39,7 @@ public class NestedSynchronizedStatementInspectionTest extends LightJavaInspecti
 
   public void testInsideLambda() {
     doTest("class C {\n" +
-           "  void m() {\n" +
+           "  static void m() {\n" +
            "   synchronized (C.class){\n" +
            "     new Thread(() -> {synchronized (C.class) {}});\n" +
            "   }\n" +

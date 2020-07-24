@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.text.DateFormatUtil;
@@ -149,5 +150,10 @@ public class LicensePanel extends NonOpaquePanel {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
       }
     });
+  }
+
+  public static boolean isEA2Product(@Nullable String productCode) {
+    LicensingFacade instance = LicensingFacade.getInstance();
+    return productCode != null && instance != null && instance.isEA2Product(productCode);
   }
 }

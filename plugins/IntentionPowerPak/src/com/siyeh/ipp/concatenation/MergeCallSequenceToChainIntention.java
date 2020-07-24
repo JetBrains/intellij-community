@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +72,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
 
   private static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+    final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
       return getRootMethodCallExpression(methodCallExpression);

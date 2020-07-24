@@ -11,8 +11,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -89,8 +87,6 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final TextAttributes writeAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
 
     final String localName = local.getName();
     final ScopeOwner containerBlock = getContext(local);
@@ -107,7 +103,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     if (def instanceof PyAssignmentStatement && ((PyAssignmentStatement)def).getTargets().length > 1) {
-      highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{def}, writeAttributes, true, null);
+      highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{def}, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, true, null);
       final String message =
         RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.inline.local.multiassignment", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
@@ -121,10 +117,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       return;
     }
 
-    final TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      highlightManager.addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
+      highlightManager.addOccurrenceHighlights(editor, refsToInline, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       final int occurrencesCount = refsToInline.length;
       final String occurrencesString = RefactoringBundle.message("occurrences.string", occurrencesCount);
       final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + " " + occurrencesString;
@@ -158,8 +152,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         isSameDefinition &= isSameDefinition(def, otherDef);
       }
       if (!isSameDefinition) {
-        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
-        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, defs, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, true, null);
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
         final String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
@@ -210,7 +204,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         CodeStyleManager.getInstance(project).reformatText(workingFile, ranges);
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
+          highlightManager.addOccurrenceHighlights(editor, exprs, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
           WindowManager.getInstance().getStatusBar(project)
             .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }

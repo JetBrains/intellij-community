@@ -51,7 +51,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project, new ArtifactStructureConfigurableState());
-    PackagingElementType.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<PackagingElementType>() {
+    PackagingElementType.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<PackagingElementType>() {
       @Override
       public void extensionRemoved(@NotNull PackagingElementType extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (extension instanceof ComplexPackagingElementType && myDefaultSettings.getTypesToShowContent().contains(extension)) {

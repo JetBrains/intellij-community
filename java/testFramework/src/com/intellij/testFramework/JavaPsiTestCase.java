@@ -41,7 +41,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
+    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(myProject);
   }
 
   @Override

@@ -61,7 +61,7 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
   
   @Override
   protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
-    JavaExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), false, false, false, true, getFile());
+    JavaExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), false, false, false, true);
     data.checkSymbolNames();
     return data;
   }

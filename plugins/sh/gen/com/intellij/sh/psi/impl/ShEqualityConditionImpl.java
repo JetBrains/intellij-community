@@ -43,10 +43,4 @@ public class ShEqualityConditionImpl extends ShConditionImpl implements ShEquali
     return findChildByType(NE);
   }
 
-  @Override
-  @Nullable
-  public PsiElement getRegexp() {
-    return findChildByType(REGEXP);
-  }
-
 }

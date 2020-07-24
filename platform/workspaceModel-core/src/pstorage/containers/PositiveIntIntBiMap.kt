@@ -4,6 +4,7 @@ package com.intellij.workspace.api.pstorage.containers
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntMaps
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
 class ImmutablePositiveIntIntBiMap(
@@ -74,6 +75,9 @@ sealed class PositiveIntIntBiMap {
 
   protected abstract val key2Value: Int2IntMap
   protected abstract val value2Keys: PositiveIntIntMultiMap
+
+  val keys: IntSet
+    get() = key2Value.keys
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
     Int2IntMaps.fastForEach(`access$key2Value`, Consumer { action(it.intKey, it.intValue) })

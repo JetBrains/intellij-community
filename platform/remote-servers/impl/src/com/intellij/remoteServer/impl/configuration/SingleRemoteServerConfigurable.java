@@ -8,7 +8,6 @@ import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.util.CloudDataLoader;
 import com.intellij.remoteServer.util.DelayedRunner;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -37,8 +36,6 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   private boolean myAppliedButNeedsCheck;
 
   private boolean myConnected;
-
-  private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
 
   public <C extends ServerConfiguration> SingleRemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
     super(true, treeUpdater);
@@ -101,31 +98,13 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   }
 
   private void setConnectionStatus(boolean error, boolean connected, String text) {
-    boolean changed = myConnected != connected;
     myConnected = connected;
     setConnectionStatusText(error, text);
-    if (changed) {
-      notifyDataLoader();
-    }
   }
 
   protected void setConnectionStatusText(boolean error, String text) {
     myConnectionStatusLabel.setText(UIUtil.toHtml(text));
     myConnectionStatusLabel.setVisible(StringUtil.isNotEmpty(text));
-  }
-
-  public void setDataLoader(CloudDataLoader dataLoader) {
-    myDataLoader = dataLoader;
-    notifyDataLoader();
-  }
-
-  private void notifyDataLoader() {
-    if (myConnected) {
-      myDataLoader.loadCloudData();
-    }
-    else {
-      myDataLoader.clearCloudData();
-    }
   }
 
   @Override

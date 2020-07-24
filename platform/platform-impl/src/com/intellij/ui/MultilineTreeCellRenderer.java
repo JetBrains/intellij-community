@@ -16,6 +16,7 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
@@ -323,8 +324,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   private int getChildIndent(JTree tree) {
     TreeUI newUI = tree.getUI();
-    if (newUI instanceof javax.swing.plaf.basic.BasicTreeUI) {
-      javax.swing.plaf.basic.BasicTreeUI btreeui = (javax.swing.plaf.basic.BasicTreeUI)newUI;
+    if (newUI instanceof BasicTreeUI) {
+      BasicTreeUI btreeui = (BasicTreeUI)newUI;
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
     }
     else {

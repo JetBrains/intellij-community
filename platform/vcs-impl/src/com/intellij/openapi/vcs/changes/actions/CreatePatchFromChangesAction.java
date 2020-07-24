@@ -37,6 +37,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.calculateBaseForWritingPatch;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
 public abstract class CreatePatchFromChangesAction extends ExtendableAction implements DumbAware {
@@ -77,7 +78,8 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
     ShelvedChangeList shelvedChangeList = getOnlyItem(ShelvedChangesViewManager.getShelvedLists(e.getDataContext()));
     if (shelvedChangeList != null) {
-      List<String> selectedPaths = ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
+      boolean entireList = getOnlyItem(ShelvedChangesViewManager.getExactlySelectedLists(e.getDataContext())) != null;
+      List<String> selectedPaths = entireList ? emptyList() : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
       patchBuilder = new CreatePatchCommitExecutor.ShelfPatchBuilder(project, shelvedChangeList, selectedPaths);
     }
     else {

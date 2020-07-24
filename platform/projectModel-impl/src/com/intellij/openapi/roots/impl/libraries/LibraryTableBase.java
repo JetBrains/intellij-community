@@ -136,9 +136,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return createLibrary(null);
   }
 
-  void fireLibraryRenamed(@NotNull LibraryImpl library) {
+  void fireLibraryRenamed(@NotNull LibraryImpl library, String oldName) {
     incrementModificationCount();
-    myDispatcher.getMulticaster().afterLibraryRenamed(library);
+    myDispatcher.getMulticaster().afterLibraryRenamed(library, oldName);
   }
 
   private void incrementModificationCount() {
@@ -285,13 +285,13 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @NotNull
     @Override
-    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> kind) {
       return createLibrary(name, kind, null);
     }
 
     @NotNull
     @Override
-    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> kind, @Nullable ProjectModelExternalSource externalSource) {
       assertWritable();
       final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null, externalSource);
       myLibraries.add(library);
@@ -352,7 +352,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public void afterLibraryRenamed(@NotNull Library library) {
+    public void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
       myLibraryByNameCache = null;
     }
 

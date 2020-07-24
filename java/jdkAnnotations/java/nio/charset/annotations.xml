@@ -50,4 +50,22 @@
   <item name='java.nio.charset.CharsetEncoder java.nio.ByteBuffer encode(java.nio.CharBuffer) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.charset.StandardCharsets ISO_8859_1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.charset.StandardCharsets US_ASCII'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.charset.StandardCharsets UTF_16'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item name='java.nio.charset.StandardCharsets UTF_16BE'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.charset.StandardCharsets UTF_16LE'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.charset.StandardCharsets UTF_8'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

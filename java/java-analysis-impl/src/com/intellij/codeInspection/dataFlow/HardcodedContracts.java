@@ -462,34 +462,43 @@ public class HardcodedContracts {
     return Collections.singletonList(failContract);
   }
 
-  public static boolean isHardcodedPure(PsiMethod method) {
+  /**
+   * Returns the mutation signature for the methods that have hardcoded contracts
+   * 
+   * @param method method that has hardcoded contracts (that is, {@link #getHardcodedContracts(PsiMethod, PsiMethodCallExpression)}
+   *               returned non-empty list for this method)
+   * @return a mutation signature for the given method. Result is unspecified if method has no hardcoded contract.
+   */
+  public static MutationSignature getHardcodedMutation(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return false;
+    if (aClass == null) return MutationSignature.unknown();
     String className = aClass.getQualifiedName();
-    if (className == null) return false;
+    if (className == null) return MutationSignature.unknown();
     String name = method.getName();
 
     if ("java.util.Objects".equals(className) && "requireNonNull".equals(name)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
-        return false;
+        return MutationSignature.unknown();
       }
     }
 
     if ("remove".equals(name)) {
-      return false;
+      return MutationSignature.pure().alsoMutatesThis();
     }
 
     if ("java.lang.System".equals(className)) {
-      return false;
+      return MutationSignature.unknown();
     }
     if (JAVA_UTIL_ARRAYS.equals(className)) {
-      return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+      return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream") ? MutationSignature.pure() :
+      // else: fill, parallelPrefix, parallelSort, sort       
+             MutationSignature.pure().alsoMutatesArg(0);
     }
     if (QUEUE_POLL.methodMatches(method)) {
-      return false;
+      return MutationSignature.pure().alsoMutatesThis();
     }
-    return true;
+    return MutationSignature.pure();
   }
 
   public static boolean hasHardcodedContracts(@Nullable PsiElement element) {

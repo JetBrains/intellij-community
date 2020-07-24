@@ -37,7 +37,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final String STORAGE = "storage"; // NON-NLS
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
-  public static final int VERSION = 7;
+  public static final int VERSION = 8;
   public static final int NO_INDEX = -1;
   private static final int REFS_VERSION = 2;
 

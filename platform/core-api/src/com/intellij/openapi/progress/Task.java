@@ -227,7 +227,7 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 

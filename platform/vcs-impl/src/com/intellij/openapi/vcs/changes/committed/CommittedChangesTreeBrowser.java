@@ -1,11 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
-import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
-
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
@@ -13,18 +8,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
@@ -42,31 +26,21 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.TreeCopyProvider;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -76,9 +50,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.List;
+import java.util.*;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 /**
  * @author yole
@@ -326,7 +307,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
 
     // key - after path (nullable)
-    LinkedMultiMap<FilePath, Change> map = new LinkedMultiMap<>();
+    MultiMap<FilePath, Change> map = MultiMap.createLinked();
 
     for (Change change : changes) {
       ContentRevision bRev = change.getBeforeRevision();

@@ -23,11 +23,16 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
@@ -413,6 +418,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param fileAfter  result file to be checked against.
    * @param newName    new name for the element.
    * @see #testRename(String, String)
+   * @see #renameElementAtCaretUsingHandler(String)
    */
   void testRenameUsingHandler(@NotNull @TestDataFile String fileBefore,
                               @NotNull @TestDataFile String fileAfter,
@@ -428,6 +434,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * launches the rename refactoring using the rename handler (using the high-level rename API, as opposed to
    * retrieving the PSI element at caret and invoking the PSI rename on it) and checks the result.
+   *
+   * @see #renameElementAtCaretUsingHandler(String)
    */
   void testRenameUsingHandler(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
@@ -552,16 +560,33 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   PsiElement getElementAtCaret();
 
+  /**
+   * Renames element at caret using direct call of {@link RenameProcessor#run()}
+   *
+   * @param newName new name for the element.
+   * @apiNote method {@link #renameElementAtCaretUsingHandler(String)} is more generic
+   * because it does some pre-processing work before calling {@link RenameProcessor#run()}
+   */
   void renameElementAtCaret(@NotNull String newName);
 
   /**
-   * Renames element at caret using injected {@link com.intellij.refactoring.rename.RenameHandler}s.
+   * Renames element at caret using injected {@link RenameHandler}
    * Very close to {@link #renameElementAtCaret(String)} but uses handlers.
    *
    * @param newName new name for the element.
+   * @apiNote if the handler suggest some substitutions for the element with a dialog
+   * you can use {@link Messages#setTestDialog(TestDialog)} to provide YES/NO answer.
+   * Also makes sure that your rename handler properly processing name from {@link PsiElementRenameHandler#DEFAULT_NAME}
+   * @see CodeInsightTestUtil#doInlineRename for more sophisticated in-place refactorings 
    */
   void renameElementAtCaretUsingHandler(@NotNull String newName);
 
+  /**
+   * Renames element using direct call of {@link RenameProcessor#run()}
+   *
+   * @param element element to rename
+   * @param newName new name for the element
+   */
   void renameElement(@NotNull PsiElement element, @NotNull String newName);
 
   void allowTreeAccessForFile(@NotNull VirtualFile file);

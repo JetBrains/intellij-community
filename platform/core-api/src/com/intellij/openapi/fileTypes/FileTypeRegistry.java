@@ -167,6 +167,10 @@ public abstract class FileTypeRegistry {
       return 1024;
     }
 
+    /**
+     * @deprecated Do not use
+     */
+    @Deprecated
     default int getVersion() { return 0; }
   }
 }

@@ -92,7 +92,7 @@ public class PyImportReference extends PyReferenceImpl {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);
       if (type != null) {
-        Object[] variants = getTypeCompletionVariants(myElement, type);
+        Object[] variants = type.getCompletionVariants(myElement.getName(), myElement, new ProcessingContext());
         if (!alreadyHasImportKeyword()) {
           replaceInsertHandler(variants, ImportKeywordHandler.INSTANCE);
         }

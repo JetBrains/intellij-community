@@ -325,7 +325,7 @@ Android Studio: exclude intellij.statsCollector */
 
       // from AOSP's plugin("intellij.android.layoutlib"). Force layoutlib-standard. //
       withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "")
-      withModuleLibrary("layoutlib-jre11-26.6.0.2.jar", "intellij.android.layoutlib", "")
+      withModuleLibrary("layoutlib-jre11-26.6.0.3.jar", "intellij.android.layoutlib", "")
       //////////////////////////////////////////////////////
 
       withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "")
@@ -448,7 +448,6 @@ Android Studio: exclude intellij.statsCollector */
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
       withResource("groovy-psi/resources/conf", "lib")
-      withProjectLibrary("org.codehaus.groovy:groovy-ant")
       additionalModules.each {
         withModule(it)
       }

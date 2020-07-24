@@ -11,30 +11,35 @@ import java.io.File
 class EventLogResultParserTest : UsefulTestCase() {
 
   fun test_parse_start_event() {
-    assertEquals(deserialize("1583419425124 STARTED"), ExternalUploadStartedEvent(1583419425124))
-    assertEquals(deserialize("1583317425114 STARTED"), ExternalUploadStartedEvent(1583317425114))
+    assertEquals(ExternalUploadStartedEvent(1583419425124), deserialize("1583419425124 STARTED"))
+    assertEquals(ExternalUploadStartedEvent(1583317425114), deserialize("1583317425114 STARTED"))
   }
 
   fun test_parse_send_event() {
-    assertEquals(deserialize("1583419435214 SEND 2 1 10"), ExternalUploadSendEvent(1583419435214, 2, 1, 10))
-    assertEquals(deserialize("1583419435214 SEND 6 0 15"), ExternalUploadSendEvent(1583419435214, 6, 0, 15))
-    assertEquals(deserialize("1583419435214 SEND 2 a 5"), ExternalUploadSendEvent(1583419435214, 2, -1, 5))
-    assertEquals(deserialize("1583419435214 SEND a b b"), ExternalUploadSendEvent(1583419435214, -1, -1, -1))
-    assertEquals(deserialize("1583419435214 SEND 12a 34 50"), ExternalUploadSendEvent(1583419435214, -1, 34, 50))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 6, 0, 15, emptyList()), deserialize("1583419435214 SEND 6 0 15"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, -1, 5, emptyList()), deserialize("1583419435214 SEND 2 a 5"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, -1, -1, -1, emptyList()), deserialize("1583419435214 SEND a b b"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, -1, 34, 50, emptyList()), deserialize("1583419435214 SEND 12a 34 50"))
+  }
+
+  fun test_parse_send_event_with_files_hashes() {
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, listOf("path_to_file1", "path_to_file2")), deserialize("1583419435214 SEND 2 1 10 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 []"))
   }
 
   fun test_parse_finished_event() {
-    assertEquals(deserialize("1583419435214 FINISHED no-arguments"), ExternalUploadFinishedEvent(1583419435214, "no-arguments"))
-    assertEquals(deserialize("1583419435214 FINISHED no-files"), ExternalUploadFinishedEvent(1583419435214, "no-files"))
-    assertEquals(deserialize("1583419435214 FINISHED"), ExternalUploadFinishedEvent(1583419435214, null))
-    assertEquals(deserialize("1583419435214 FINISHED        "), ExternalUploadFinishedEvent(1583419435214, null))
-    assertEquals(deserialize("1583419435214 FINISHED multi word message"), ExternalUploadFinishedEvent(1583419435214, "multi"))
+    assertEquals(ExternalUploadFinishedEvent(1583419435214, "no-arguments"), deserialize("1583419435214 FINISHED no-arguments"))
+    assertEquals(ExternalUploadFinishedEvent(1583419435214, "no-files"), deserialize("1583419435214 FINISHED no-files"))
+    assertEquals(ExternalUploadFinishedEvent(1583419435214, null), deserialize("1583419435214 FINISHED"))
+    assertEquals(ExternalUploadFinishedEvent(1583419435214, null), deserialize("1583419435214 FINISHED        "))
+    assertEquals(ExternalUploadFinishedEvent(1583419435214, "multi"), deserialize("1583419435214 FINISHED multi word message"))
   }
 
   fun test_parse_error_event() {
     assertEquals(
-      deserialize("1583419435214 ERROR event.failed com.jetbrains.SomeException"),
-      ExternalSystemErrorEvent(1583419435214, "event.failed", "com.jetbrains.SomeException")
+      ExternalSystemErrorEvent(1583419435214, "event.failed", "com.jetbrains.SomeException"),
+      deserialize("1583419435214 ERROR event.failed com.jetbrains.SomeException")
     )
   }
 
@@ -49,11 +54,16 @@ class EventLogResultParserTest : UsefulTestCase() {
     assertNull(deserialize("1583419435214 SEND"))
     assertNull(deserialize("1583419435214 SEND 2"))
     assertNull(deserialize("1583419435214 SEND 2 3"))
-    assertNull(deserialize("1583419435214 SEND 2 3 4 5"))
+    assertNull(deserialize("1583419435214 SEND 2 3 4 5 6"))
     assertNull(deserialize("1583419435214 SEND 2,3,5"))
     assertNull(deserialize("1583419435214 SEND,2,3,5"))
     assertNull(deserialize("SEND 2 3 4 5"))
     assertNull(deserialize("SEND 2 3 4"))
+  }
+
+  fun test_parse_send_event_if_files_hashes_incorrect() {
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 qwerty"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 [']"))
   }
 
   fun test_parse_error_event_failed() {
@@ -83,56 +93,48 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_serialize_start_event() {
-    assertEquals(serialize(ExternalUploadStartedEvent(1583419435214)), "1583419435214 STARTED")
+    assertEquals("1583419435214 STARTED", serialize(ExternalUploadStartedEvent(1583419435214)))
   }
 
   fun test_serialize_send_event() {
-    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3)), "1583419435214 SEND 1 2 3")
-    assertEquals(serialize(ExternalUploadSendEvent(1583419435214, 5, -1, 12)), "1583419435214 SEND 5 -1 12")
+    assertEquals("1583419435214 SEND 1 2 3 [cGF0aF90b19maWxl]", serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3, listOf("path_to_file"))))
+    assertEquals("1583419435214 SEND 2 -1 12 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]", serialize(ExternalUploadSendEvent(1583419435214, 2, -1, 12, listOf("path_to_file1", "path_to_file2"))))
   }
 
   fun test_serialize_failed_event() {
-    assertEquals(serialize(
-      ExternalUploadFinishedEvent(1583419435214, "error-on-send")),
-      "1583419435214 FINISHED error-on-send"
+    assertEquals("1583419435214 FINISHED error-on-send",
+      serialize(ExternalUploadFinishedEvent(1583419435214, "error-on-send"))
     )
 
-    assertEquals(serialize(
-      ExternalUploadFinishedEvent(1583419435214, "message")),
-      "1583419435214 FINISHED message"
+    assertEquals("1583419435214 FINISHED message",
+      serialize(ExternalUploadFinishedEvent(1583419435214, "message"))
     )
 
-    assertEquals(serialize(
-      ExternalUploadFinishedEvent(1583419435214, "multi word message")),
-      "1583419435214 FINISHED multi_word_message"
+    assertEquals("1583419435214 FINISHED multi_word_message",
+      serialize(ExternalUploadFinishedEvent(1583419435214, "multi word message"))
     )
 
-    assertEquals(serialize(
-      ExternalUploadFinishedEvent(1583419435214, "")),
-      "1583419435214 FINISHED"
+    assertEquals("1583419435214 FINISHED",
+      serialize(ExternalUploadFinishedEvent(1583419435214, ""))
     )
 
-    assertEquals(serialize(
-      ExternalUploadFinishedEvent(1583419435214, null)),
-      "1583419435214 FINISHED"
+    assertEquals("1583419435214 FINISHED",
+      serialize(ExternalUploadFinishedEvent(1583419435214, null))
     )
   }
 
   fun test_serialize_error_event() {
-    assertEquals(serialize(
-      ExternalSystemErrorEvent(1583419435214, "loading.config.failed", "com.jetbrains.SomeException")),
-      "1583419435214 ERROR loading.config.failed com.jetbrains.SomeException"
+    assertEquals("1583419435214 ERROR loading.config.failed com.jetbrains.SomeException",
+      serialize(ExternalSystemErrorEvent(1583419435214, "loading.config.failed", "com.jetbrains.SomeException"))
     )
 
-    assertEquals(serialize(
-      ExternalSystemErrorEvent(1583419435214, "loading", "SomeException")),
-      "1583419435214 ERROR loading SomeException"
+    assertEquals("1583419435214 ERROR loading SomeException",
+      serialize(ExternalSystemErrorEvent(1583419435214, "loading", "SomeException"))
     )
 
     val ex = MockEventLogCustomException()
-    assertEquals(serialize(
-      ExternalSystemErrorEvent(1583419435214, "event.failed", ex)),
-      "1583419435214 ERROR event.failed com.intellij.internal.statistics.uploader.MockEventLogCustomException"
+    assertEquals("1583419435214 ERROR event.failed com.intellij.internal.statistics.uploader.MockEventLogCustomException",
+      serialize(ExternalSystemErrorEvent(1583419435214, "event.failed", ex))
     )
   }
 
@@ -141,9 +143,9 @@ class EventLogResultParserTest : UsefulTestCase() {
     try {
       FileUtil.writeToFile(File(directory, "idea_statistics_uploader_events.log"), fileText)
       val actual = ExternalEventsLogger.parseEvents(directory)
-      assertEquals(actual.size, expectedEvents.size)
+      assertEquals(expectedEvents.size, actual.size)
       for ((index, expectedEvent) in expectedEvents.withIndex()) {
-        assertEquals(actual[index], expectedEvent)
+        assertEquals(expectedEvent, actual[index])
       }
     }
     finally {
@@ -161,7 +163,7 @@ class EventLogResultParserTest : UsefulTestCase() {
   fun test_parse_external_send_succeed_result_file() {
     doTestParseFile(
       "1583419435214 STARTED\n1583419435234 SEND 1 2 3",
-      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3)
+      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3, emptyList())
     )
   }
 

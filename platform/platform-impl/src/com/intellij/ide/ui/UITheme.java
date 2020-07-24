@@ -34,10 +34,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -220,12 +218,12 @@ public class UITheme {
     return theme;
   }
 
-  private static String toColorString(String fillValue, boolean darkTheme) {
-    if (darkTheme && fillValue.startsWith("Actions.") && !fillValue.endsWith(".Dark")) {
-      fillValue += ".Dark";
+  private static String toColorString(String key, boolean darkTheme) {
+    if (darkTheme && colorPalette.get(key + ".Dark") != null) {
+      key += ".Dark";
     }
-    String color = colorPalette.get(fillValue);
-    return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(fillValue);
+    String color = colorPalette.get(key);
+    return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(key);
   }
 
   private static final @NonNls Map<String, String> colorPalette = new HashMap<>();
@@ -275,6 +273,8 @@ public class UITheme {
     colorPalette.put("Checkbox.Foreground.Selected.Dark", "#A7A7A7");
     colorPalette.put("Checkbox.Focus.Thin.Selected", "#ACCFF7");
     colorPalette.put("Checkbox.Focus.Thin.Selected.Dark", "#466D94");
+    colorPalette.put("Tree.iconColor", "#808080");
+    colorPalette.put("Tree.iconColor.Dark", "#AFB1B3");
   }
 
   public String getId() {
@@ -533,6 +533,7 @@ public class UITheme {
     final PaletteScope ui = new PaletteScope();
     final PaletteScope checkBoxes = new PaletteScope();
     final PaletteScope radioButtons = new PaletteScope();
+    final PaletteScope trees = new PaletteScope();
 
     PaletteScopeManager() {
     }
@@ -540,6 +541,7 @@ public class UITheme {
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;
       if (colorKey.startsWith("Radio.")) return radioButtons;
+      if (colorKey.startsWith("Tree.iconColor")) return trees;
       if (colorKey.startsWith("Objects.")) return ui;
       if (colorKey.startsWith("Actions.")) return ui;
       if (colorKey.startsWith("#")) return ui;
@@ -555,6 +557,7 @@ public class UITheme {
         String file = path.substring(path.lastIndexOf('/') + 1);
 
         if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
+          if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
           if (file.startsWith("check")) return checkBoxes;
           if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
           return null;

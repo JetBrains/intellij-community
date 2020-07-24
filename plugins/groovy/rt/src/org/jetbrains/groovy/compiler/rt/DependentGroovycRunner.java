@@ -540,7 +540,7 @@ public class DependentGroovycRunner {
               aClass = super.loadClass(name, lookupScriptFiles, preferClassOverScript);
             }
             catch (NoClassDefFoundError e) {
-              throw new ClassNotFoundException(name);
+              throw new ClassNotFoundException(name, e);
             }
             catch (LinkageError e) {
               throw new RuntimeException("Problem loading class " + name, e);

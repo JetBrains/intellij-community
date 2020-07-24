@@ -62,7 +62,9 @@ public class TagPanel extends NonOpaquePanel {
   }
 
   public void setFirstTagTooltip(@Nullable @Tooltip String text) {
-    ((JComponent)getComponent(0)).setToolTipText(text);
+    if (getComponentCount() > 0) {
+      ((JComponent)getComponent(0)).setToolTipText(text);
+    }
   }
 
   @Override

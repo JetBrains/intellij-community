@@ -23,7 +23,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
     if (range.isEmpty()) return;
 
     int offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
-    if(offset < 0 ) {
+    if (offset < 0) {
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
     }

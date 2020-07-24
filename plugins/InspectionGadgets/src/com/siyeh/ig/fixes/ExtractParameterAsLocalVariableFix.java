@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -35,7 +36,7 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     if (!(element instanceof PsiExpression)) {
       return;
     }
-    final PsiExpression expression = ParenthesesUtils.stripParentheses((PsiExpression)element);
+    final PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
     if (!(expression instanceof PsiReferenceExpression)) {
       return;
     }
@@ -129,12 +130,12 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     if (!JavaTokenType.EQ.equals(tokenType)) {
       return null;
     }
-    final PsiExpression lExpression = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+    final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
     if (!reference.equals(lExpression)) {
       return null;
     }
     final PsiExpression rExpression = assignmentExpression.getRExpression();
-    if (ParenthesesUtils.stripParentheses(rExpression) instanceof PsiAssignmentExpression) {
+    if (PsiUtil.skipParenthesizedExprDown(rExpression) instanceof PsiAssignmentExpression) {
       return null;
     }
     final PsiElement grandParent = parent.getParent();

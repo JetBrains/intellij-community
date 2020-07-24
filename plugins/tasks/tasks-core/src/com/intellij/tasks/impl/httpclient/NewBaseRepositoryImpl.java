@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * This alternative base implementation of {@link com.intellij.tasks.impl.BaseRepository} should be used
+ * This alternative base implementation of {@link BaseRepository} should be used
  * for new connectors that use httpclient-4.x instead of legacy httpclient-3.1.
  *
  * @author Mikhail Golubev
@@ -147,7 +147,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
 
   private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
     @Override
-    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+    public void process(HttpRequest request, HttpContext context) throws HttpException {
       final CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
       final Credentials credentials = provider.getCredentials(BASIC_AUTH_SCOPE);
       if (credentials != null) {

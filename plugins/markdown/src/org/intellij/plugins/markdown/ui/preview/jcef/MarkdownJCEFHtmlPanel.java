@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.jcef.JBCefJSQuery;
+import com.intellij.ui.jcef.JBCefPsiNavigationUtils;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,6 +73,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
 
     if (Registry.is("markdown.open.link.in.external.browser")) {
       myJSQueryOpenInBrowser.addHandler((link) -> {
+          if (JBCefPsiNavigationUtils.INSTANCE.navigateTo(link)) return null;
           MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
           return null;
         });

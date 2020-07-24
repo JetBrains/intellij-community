@@ -1,28 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.rename.RenameProcessor;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 public class RenamePropertyTest extends MultiFileTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
-  }
-
   public void testBundle() {
     doTest("xxx.properties","a.b","c.d");
   }
@@ -33,7 +23,7 @@ public class RenamePropertyTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("New property name 'c.d' hides existing property", e.getMessage());
+      assertEquals("New property name 'c.d' hides existing property", e.getMessage());
       return;
     }
     fail("Conflict was not detected");

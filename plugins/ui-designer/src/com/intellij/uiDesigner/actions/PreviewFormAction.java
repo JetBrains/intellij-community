@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -43,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -116,7 +116,7 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.GUI_DESIGNER_FORM)
+      FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE)
     );
   }
 

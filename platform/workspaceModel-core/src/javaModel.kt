@@ -12,10 +12,11 @@ interface JvmSourceSet {
   val sourceRoots: List<JvmSourceRoot>
   val outputRoots: List<FilePointer>
   val dependencies: List<JvmDependency>
-  
+
   enum class Mode {
     /** The actual code is available as sources, they are compiled to output roots during build (corresponds to Module in old model) */
     SOURCE,
+
     /** The actual code is available in compiled form under [outputRoots], [sourceRoots] (corresponds to Library/SDK in the old model) */
     COMPILED
   }
@@ -25,6 +26,7 @@ interface JvmSourceRoot {
   val type: Type
   val file: FilePointer
   val generated: Boolean
+
   /** Corresponds to package prefix for source roots */
   val relativeOutputPath: String?
 
@@ -41,6 +43,7 @@ interface FilePointer {
 interface Reference<T> {
   /** Not whether we need to store unresolvable references in the model, maybe there is a better way to store incorrect elements */
   val resolved: T?
+
   /** This name is used to show error message if the reference cannot be resolved */
   val displayName: String
 }

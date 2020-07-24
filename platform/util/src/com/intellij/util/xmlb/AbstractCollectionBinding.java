@@ -112,16 +112,16 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     return null;
   }
 
-  abstract @NotNull Collection<Object> getIterable(@NotNull Object o);
+  abstract @NotNull Collection<?> getIterable(@NotNull Object o);
 
   @Override
   public @Nullable Object serialize(@NotNull Object object, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Collection<Object> collection = getIterable(object);
+    Collection<?> collection = getIterable(object);
 
     String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
     if (tagName == null) {
       List<Object> result = new SmartList<>();
-      if (!ContainerUtil.isEmpty(collection)) {
+      if (!collection.isEmpty()) {
         for (Object item : collection) {
           ContainerUtil.addAllNotNull(result, serializeItem(item, result, filter));
         }
@@ -130,7 +130,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     }
     else {
       Element result = new Element(tagName);
-      if (!ContainerUtil.isEmpty(collection)) {
+      if (!collection.isEmpty()) {
         for (Object item : collection) {
           Content child = (Content)serializeItem(item, result, filter);
           if (child != null) {

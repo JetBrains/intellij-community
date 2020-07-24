@@ -1,15 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
+import org.jetbrains.idea.svn.api.Repository;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.api.UrlMappingRepositoryProvider;
 
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class CommandParametersResolutionModule extends BaseCommandRuntimeModule {
 
@@ -44,12 +49,10 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
 
   @NotNull
   private File resolveWorkingDirectory(@NotNull Command command) {
-    Target target = command.getTarget();
-    File workingDirectory = target.isFile() ? target.getFile() : null;
-    // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = CommandUtil.findExistingParent(workingDirectory);
+    File file = command.getTarget().getFile();
+    RootUrlInfo root = file != null ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file)) : null;
 
-    return workingDirectory != null ? workingDirectory : getDefaultWorkingDirectory(myVcs.getProject());
+    return root != null ? root.getIoFile() : getDefaultWorkingDirectory(myVcs.getProject());
   }
 
   @NotNull

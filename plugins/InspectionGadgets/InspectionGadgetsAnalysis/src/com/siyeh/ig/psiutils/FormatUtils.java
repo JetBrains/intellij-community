@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,9 @@ import java.util.List;
 import java.util.Set;
 
 public class FormatUtils {
+  public static final CallMatcher STRING_FORMATTED = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "formatted")
+    .parameterTypes("java.lang.Object...");
+  
 
   /**
    */

@@ -26,7 +26,10 @@ data class ClientId(val value: String) {
     }
 
     companion object {
-        private val defaultLocalId = ClientId("Host")
+        /**
+         * Default client id for local application
+         */
+        val defaultLocalId = ClientId("Host")
 
         /**
          * Specifies behavior for ClientId.current

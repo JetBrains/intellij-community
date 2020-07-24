@@ -20,8 +20,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -191,10 +189,9 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   private static void highlightError(Project project, Editor editor, PsiElement errorElement) {
     if (editor != null) {
-      final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final TextRange textRange = errorElement.getTextRange();
-      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true,
-                                                              new ArrayList<>());
+      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(),
+                                                              EditorColors.SEARCH_RESULT_ATTRIBUTES, true, new ArrayList<>());
     }
   }
 

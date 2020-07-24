@@ -37,6 +37,15 @@ private class EventDataNotExistsValidator(vararg fields: String) : SimpleTestSta
   }
 }
 
+private class EventDataValidator(val name: String, val value: Any, val condition: ((LogEvent) -> Boolean)? = null) : SimpleTestStatisticsEventValidator() {
+  override fun validate(event: LogEvent) {
+    if (condition == null || condition.invoke(event)) {
+      val actual = event.event.data[name]
+      assert(value == actual) { "Event data value is different from expected, expected: '$value', actual: $actual" }
+    }
+  }
+}
+
 private class EventIdValidator(val eventId: String) : SimpleTestStatisticsEventValidator() {
   override fun validate(event: LogEvent) {
     val actual = event.event.id
@@ -67,6 +76,11 @@ class TestStatisticsEventValidatorBuilder {
 
   fun hasEventId(eventId: String): TestStatisticsEventValidatorBuilder {
     validators.add(EventIdValidator(eventId))
+    return this
+  }
+
+  fun hasField(name: String, value: Any, condition: ((LogEvent) -> Boolean)? = null): TestStatisticsEventValidatorBuilder {
+    validators.add(EventDataValidator(name, value, condition))
     return this
   }
 

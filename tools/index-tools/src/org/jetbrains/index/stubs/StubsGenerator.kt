@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
@@ -71,7 +71,7 @@ private fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: St
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
   TestApplicationManager.getInstance()
-  ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
+  PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath))
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   val stubExternalizer = GeneratingFullStubExternalizer()
@@ -81,7 +81,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     storageFile.delete()
   }
 
-  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile.toPath(), HashCodeDescriptor.instance, stubExternalizer)
+  val storage = PersistentHashMap(storageFile.toPath(), HashCodeDescriptor.instance, stubExternalizer)
 
   val stringEnumeratorFile = File(stubsFilePath, "$stubsFileName.names")
   if (stringEnumeratorFile.exists()) {
@@ -98,7 +98,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     println("Reading stubs from $path")
     var count = 0
     val fromStorageFile = File(path, "$stubsFileName.input")
-    val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile, HashCodeDescriptor.instance, stubExternalizer)
+    val fromStorage = PersistentHashMap(fromStorageFile, HashCodeDescriptor.instance, stubExternalizer)
 
     val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names").toPath(), true)
     try {

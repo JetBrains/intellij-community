@@ -31,17 +31,28 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public boolean checkBytesAreTheSame(int addr, Data value) throws IOException {
+  public boolean checkBytesAreTheSame(int addr, Data value) {
     return false;
   }
 
+
   @Override
-  public void lock() {
+  public void lockRead() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void unlock() {
+  public void unlockRead() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void lockWrite() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void unlockWrite() {
     throw new UnsupportedOperationException();
   }
 

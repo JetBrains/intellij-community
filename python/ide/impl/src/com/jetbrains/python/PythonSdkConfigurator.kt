@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -73,11 +74,13 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug { "Input: $sdk, $newProject" }
     if (sdk != null || newProject) return
 
-    ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, PyBundle.message("configuring.python.interpreter"), true) {
-        override fun run(indicator: ProgressIndicator) = configureSdk(project, indicator)
-      }
-    )
+    StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      ProgressManager.getInstance().run(
+        object : Task.Backgroundable(project, PyBundle.message("configuring.python.interpreter"), true) {
+          override fun run(indicator: ProgressIndicator) = configureSdk(project, indicator)
+        }
+      )
+    }
   }
 
   private fun configureSdk(project: Project, indicator: ProgressIndicator) {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * Represents the class body attached to a constant in a Java enum type.
  *
  * @author dsl
- * @see com.intellij.psi.PsiEnumConstant#getInitializingClass()
+ * @see PsiEnumConstant#getInitializingClass()
  */
 public interface PsiEnumConstantInitializer extends PsiAnonymousClass {
   /**

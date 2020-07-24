@@ -289,16 +289,15 @@ public class JUnitUtil {
 
     if (psiClass.isAnnotationType()) return false;
 
-    if (JavaPsiFacade.getInstance(psiClass.getProject())
-          .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) == null) {
-      return false;
-    }
-
     if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
       return true;
     }
 
     if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+      return true;
+    }
+
+    if (MetaAnnotationUtil.isMetaAnnotated(psiClass, TEST5_ANNOTATIONS)) {
       return true;
     }
 

@@ -64,7 +64,8 @@ public class MarkupModelStressTest extends AbstractEditorTest {
       it1.dispose();
     }
     List<RangeHighlighterEx> list2 = new ArrayList<>();
-    MarkupIterator<RangeHighlighterEx> it2 = markupModel.overlappingIterator(0, Integer.MAX_VALUE, true, false);
+    MarkupIterator<RangeHighlighterEx> it2 =
+      markupModel.overlappingIterator(0, Integer.MAX_VALUE, true);
     try {
       while (it2.hasNext()) {
         list2.add(it2.next());
@@ -82,8 +83,8 @@ public class MarkupModelStressTest extends AbstractEditorTest {
       int bound = getEditor().getDocument().getTextLength() + 1;
       int offset1 = myRandom.nextInt(bound);
       int offset2 = myRandom.nextInt(bound);
-      getEditor().getMarkupModel()
-        .addRangeHighlighter(Math.min(offset1, offset2), Math.max(offset1, offset2), 0, null, HighlighterTargetArea.EXACT_RANGE);
+      getEditor().getMarkupModel().addRangeHighlighter(null, Math.min(offset1, offset2), Math.max(offset1, offset2), 0,
+                                                       HighlighterTargetArea.EXACT_RANGE);
     }
   }
 

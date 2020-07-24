@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -40,14 +26,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GuessManagerImpl extends GuessManager {
-
+public final class GuessManagerImpl extends GuessManager {
   private final MethodPatternMap myMethodPatternMap = new MethodPatternMap();
 
   {
@@ -475,7 +461,7 @@ public class GuessManagerImpl extends GuessManager {
       return !mySpecificType.equals(rawType);
     }
   }
-  private static class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
+  private static final class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
     private final TypeConstraint myInitial;
     private MultiMap<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
@@ -584,9 +570,10 @@ public class GuessManagerImpl extends GuessManager {
 
     private void addToResult(MultiMap<PsiExpression, PsiType> map) {
       if (myResult == null) {
-        myResult = MultiMap.createSet(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
+        myResult = MultiMap.createSet(new Object2ObjectOpenCustomHashMap<>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY));
         myResult.putAllValues(map);
-      } else {
+      }
+      else {
         final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
         while (iterator.hasNext()) {
           PsiExpression psiExpression = iterator.next();

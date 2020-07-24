@@ -172,7 +172,7 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   override fun getAllLibraries(): Array<Library> {
     return bridgeProjectLibraryTable.libraries +
            legacyBridgeModuleManagerComponent.modules.map { LegacyBridgeModuleRootComponent(it) }
-             .flatMap { it.legacyBridgeModuleLibraryTable().libraries.asIterable() }
+             .flatMap { it.getModuleLibraryTable().libraries.asIterable() }
   }
 
   override fun removeLibrary(library: Library?) {

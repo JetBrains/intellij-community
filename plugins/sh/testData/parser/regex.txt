@@ -7,7 +7,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          EQUALITY_CONDITION
+          REGEX_CONDITION
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')
@@ -17,7 +17,7 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             PsiElement(=~)('=~')
             PsiWhiteSpace(' ')
-            LITERAL_CONDITION
+            REGEX_PATTERN
               PsiElement(word)('javac\ (1\.([789]|[1-9][0-9])).*$')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
@@ -70,15 +70,18 @@ SHELL_SCRIPT
             PARENTHESES_CONDITION
               PsiElement(()('(')
               LOGICAL_OR_CONDITION
-                EQUALITY_CONDITION
+                REGEX_CONDITION
                   LITERAL_CONDITION
                     VARIABLE
                       PsiElement(var)('$1')
                   PsiWhiteSpace(' ')
                   PsiElement(=~)('=~')
                   PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    PsiElement(word)('"b   "')
+                  REGEX_PATTERN
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('b   ')
+                      PsiElement(CLOSE_QUOTE)('"')
                 PsiWhiteSpace(' ')
                 PsiElement(||)('||')
                 PsiWhiteSpace(' ')

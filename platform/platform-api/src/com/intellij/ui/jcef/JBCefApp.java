@@ -47,7 +47,7 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 80;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 77;
 
   @NotNull private final CefApp myCefApp;
 
@@ -65,6 +65,9 @@ public final class JBCefApp {
   private static final List<JBCefCustomSchemeHandlerFactory> ourCustomSchemeHandlerFactoryList =
     Collections.synchronizedList(new ArrayList<>());
 
+  //fixme use addCefCustomSchemeHandlerFactory method if possible
+  private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
+
   private JBCefApp(@NotNull JCefAppConfig config) {
     CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
     CefSettings settings = config.getCefSettings();
@@ -72,8 +75,9 @@ public final class JBCefApp {
     settings.log_severity = getLogLevel();
     Color bg = JBColor.background();
     settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    if (ApplicationManager.getApplication().isInternal()) {
-      settings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
+    int port = Registry.intValue("ide.browser.jcef.debug.port");
+    if (ApplicationManager.getApplication().isInternal() && port > 0) {
+      settings.remote_debugging_port = port;
     }
     CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
     myCefApp = CefApp.getInstance(settings);
@@ -167,7 +171,12 @@ public final class JBCefApp {
       };
       // warn: do not change to Registry.is(), the method used at startup
       if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
-        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled'");
+        return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
+      }
+      if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
+      {
+        return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
       String version;
       try {
@@ -264,6 +273,7 @@ public final class JBCefApp {
       for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
       }
+      ourSourceSchemeHandlerFactory.registerCustomScheme(registrar);
     }
 
     @Override
@@ -273,6 +283,8 @@ public final class JBCefApp {
       }
       ourCustomSchemeHandlerFactoryList.clear(); // no longer needed
 
+      getInstance().myCefApp.registerSchemeHandlerFactory(
+        ourSourceSchemeHandlerFactory.getSchemeName(), ourSourceSchemeHandlerFactory.getDomainName(), ourSourceSchemeHandlerFactory);
       getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {

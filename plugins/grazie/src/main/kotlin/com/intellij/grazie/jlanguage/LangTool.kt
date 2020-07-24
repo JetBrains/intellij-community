@@ -5,13 +5,15 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicClassBroker
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.UppercaseMatchFilter
 import java.util.concurrent.ConcurrentHashMap
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
-  private val rulesToLanguages = HashMap<String, MutableSet<Lang>>()
+  private val rulesToLanguages = Object2ObjectOpenHashMap<String, MutableSet<Lang>>()
 
   init {
     JLanguageTool.dataBroker = GrazieDynamicDataBroker
@@ -32,7 +34,7 @@ object LangTool : GrazieStateLifecycle {
         state.userEnabledRules.forEach { id -> enableRule(id) }
 
         allRules.distinctBy { it.id }.onEach { rule ->
-          rulesToLanguages.getOrPut(rule.id, ::HashSet).add(lang)
+          rulesToLanguages.getOrPut(rule.id, ::ObjectOpenHashSet).add(lang)
         }
       }
     }

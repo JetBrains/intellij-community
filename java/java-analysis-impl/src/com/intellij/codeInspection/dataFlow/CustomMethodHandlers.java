@@ -113,7 +113,11 @@ class CustomMethodHandlers {
       staticCall(JAVA_UTIL_LIST, "of"),
       staticCall(JAVA_UTIL_SET, "of"),
       staticCall(JAVA_UTIL_MAP, "of", "ofEntries"),
-      staticCall(JAVA_UTIL_ARRAYS, "asList")), CustomMethodHandlers::collectionFactory);
+      staticCall(JAVA_UTIL_ARRAYS, "asList")), CustomMethodHandlers::collectionFactory)
+    .register(anyOf(
+      instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
+      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
+      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt);
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -337,5 +341,21 @@ class CustomMethodHandlers {
     Object constant = DfConstantType.getConstantOfType(type, Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;
+  }
+
+  private static @NotNull DfType randomNextInt(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    DfaValue[] values = arguments.myArguments;
+    if (values == null) return TOP;
+    LongRangeSet fromLowerBound;
+    LongRangeSet fromUpperBound;
+    if (values.length == 1) {
+      fromLowerBound = LongRangeSet.range(0, Integer.MAX_VALUE - 1);
+      fromUpperBound = DfIntType.extractRange(state.getDfType(values[0])).fromRelation(RelationType.LT);
+    } else if (values.length == 2){
+      fromLowerBound = DfIntType.extractRange(state.getDfType(values[0])).fromRelation(RelationType.GE);
+      fromUpperBound = DfIntType.extractRange(state.getDfType(values[1])).fromRelation(RelationType.LT);
+    } else return TOP;
+    LongRangeSet intersection = fromLowerBound.intersect(fromUpperBound);
+    return DfTypes.intRangeClamped(intersection);
   }
 }

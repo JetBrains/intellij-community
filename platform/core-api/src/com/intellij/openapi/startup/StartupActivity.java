@@ -14,14 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
  */
 public interface StartupActivity {
-  ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
+  ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.postStartupActivity");
 
   /**
    * Please see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
    */
-  ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
-
-  ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.requiredForSmartModeStartupActivity");
+  ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.backgroundPostStartupActivity");
 
   void runActivity(@NotNull Project project);
 

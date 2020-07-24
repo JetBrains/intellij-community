@@ -22,7 +22,7 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Recursive visitor with multimap, to be used for {@link com.jetbrains.python.refactoring.classes.membersManager.MembersManager#getDependencies(com.jetbrains.python.psi.PyElement)}
+ * Recursive visitor with multimap, to be used for {@link MembersManager#getDependencies(PyElement)}
  */
 class PyRecursiveElementVisitorWithResult extends PyRecursiveElementVisitor {
   @NotNull

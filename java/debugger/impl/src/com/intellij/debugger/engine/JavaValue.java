@@ -175,7 +175,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         if (!myContextSet) {
           myValueDescriptor.setContext(myEvaluationContext);
         }
-        myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
+        myValueDescriptor.updateRepresentationNoNotify(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
             Icon nodeIcon = place == XValuePlace.TOOLTIP
@@ -293,94 +293,97 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         myValueDescriptor.getChildrenRenderer(myEvaluationContext.getDebugProcess())
-          .buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
-          @Override
-          public NodeDescriptorFactory getDescriptorManager() {
-            return myNodeManager;
-          }
+          .thenAccept(r -> {
+            r.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
+              @Override
+              public NodeDescriptorFactory getDescriptorManager() {
+                return myNodeManager;
+              }
 
-          @Override
-          public NodeManager getNodeManager() {
-            return myNodeManager;
-          }
+              @Override
+              public NodeManager getNodeManager() {
+                return myNodeManager;
+              }
 
-          @Override
-          public ValueDescriptor getParentDescriptor() {
-            return myValueDescriptor;
-          }
+              @Override
+              public ValueDescriptor getParentDescriptor() {
+                return myValueDescriptor;
+              }
 
-          @Override
-          public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
-            renderer.START_INDEX = 0;
-            if (myChildrenRemaining >= 0) {
-              renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
-            }
-          }
-
-          @Override
-          public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
-            XValueChildrenList childrenList = XValueChildrenList.EMPTY;
-            if (!nodes.isEmpty()) {
-              childrenList = new XValueChildrenList(nodes.size());
-              for (DebuggerTreeNode treeNode : nodes) {
-                NodeDescriptor descriptor = treeNode.getDescriptor();
-                if (descriptor instanceof ValueDescriptorImpl) {
-                  // Value is calculated already in NodeManagerImpl
-                  childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
-                }
-                else if (descriptor instanceof MessageDescriptor) {
-                  childrenList.add(
-                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
+              @Override
+              public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
+                renderer.START_INDEX = 0;
+                if (myChildrenRemaining >= 0) {
+                  renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
                 }
               }
-            }
-            node.addChildren(childrenList, last);
-          }
 
-          @Override
-          public void setChildren(List<? extends DebuggerTreeNode> nodes) {
-            addChildren(nodes, true);
-          }
+              @Override
+              public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
+                XValueChildrenList childrenList = XValueChildrenList.EMPTY;
+                if (!nodes.isEmpty()) {
+                  childrenList = new XValueChildrenList(nodes.size());
+                  for (DebuggerTreeNode treeNode : nodes) {
+                    NodeDescriptor descriptor = treeNode.getDescriptor();
+                    if (descriptor instanceof ValueDescriptorImpl) {
+                      // Value is calculated already in NodeManagerImpl
+                      childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
+                    }
+                    else if (descriptor instanceof MessageDescriptor) {
+                      childrenList.add(
+                        new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(),
+                                                                 DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
+                    }
+                  }
+                }
+                node.addChildren(childrenList, last);
+              }
 
-          @Override
-          public void setMessage(@NotNull String message,
-                                 @Nullable Icon icon,
-                                 @NotNull SimpleTextAttributes attributes,
-                                 @Nullable XDebuggerTreeNodeHyperlink link) {
-            node.setMessage(message, icon, attributes, link);
-          }
+              @Override
+              public void setChildren(List<? extends DebuggerTreeNode> nodes) {
+                addChildren(nodes, true);
+              }
 
-          @Override
-          public void addChildren(@NotNull XValueChildrenList children, boolean last) {
-            node.addChildren(children, last);
-          }
+              @Override
+              public void setMessage(@NotNull String message,
+                                     @Nullable Icon icon,
+                                     @NotNull SimpleTextAttributes attributes,
+                                     @Nullable XDebuggerTreeNodeHyperlink link) {
+                node.setMessage(message, icon, attributes, link);
+              }
 
-          @Override
-          public void tooManyChildren(int remaining) {
-            myChildrenRemaining = remaining;
-            node.tooManyChildren(remaining);
-          }
+              @Override
+              public void addChildren(@NotNull XValueChildrenList children, boolean last) {
+                node.addChildren(children, last);
+              }
 
-          @Override
-          public void setAlreadySorted(boolean alreadySorted) {
-            node.setAlreadySorted(alreadySorted);
-          }
+              @Override
+              public void tooManyChildren(int remaining) {
+                myChildrenRemaining = remaining;
+                node.tooManyChildren(remaining);
+              }
 
-          @Override
-          public void setErrorMessage(@NotNull String errorMessage) {
-            node.setErrorMessage(errorMessage);
-          }
+              @Override
+              public void setAlreadySorted(boolean alreadySorted) {
+                node.setAlreadySorted(alreadySorted);
+              }
 
-          @Override
-          public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
-            node.setErrorMessage(errorMessage, link);
-          }
+              @Override
+              public void setErrorMessage(@NotNull String errorMessage) {
+                node.setErrorMessage(errorMessage);
+              }
 
-          @Override
-          public boolean isObsolete() {
-            return node.isObsolete();
-          }
-        }, myEvaluationContext);
+              @Override
+              public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
+                node.setErrorMessage(errorMessage, link);
+              }
+
+              @Override
+              public boolean isObsolete() {
+                return node.isObsolete();
+              }
+            }, myEvaluationContext);
+          });
       }
     });
   }
@@ -497,7 +500,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       return Promises.resolvedPromise(evaluationExpression);
     }
     else {
-      final AsyncPromise<XExpression> res = new AsyncPromise<>();
+      final AsyncPromise<XExpression> result = new AsyncPromise<>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -506,31 +509,44 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          evaluationExpression = ReadAction.compute(() -> {
-            try {
-              PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
-              if (psiExpression != null) {
-                XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
-                // add runtime imports if any
-                Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
-                if (imports != null && res != null) {
-                  if (res.getCustomInfo() != null) {
-                    imports.add(res.getCustomInfo());
-                  }
-                  res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+          try {
+            getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext())
+              .whenComplete((psiExpression, ex) -> {
+                if (ex != null) {
+                  result.setError(ex);
                 }
-                return res;
-              }
-            }
-            catch (EvaluateException e) {
-              LOG.info(e);
-            }
-            return null;
-          });
-          res.setResult(evaluationExpression);
+                else if (psiExpression != null) {
+                  ReadAction.run(() -> {
+                    XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                    // add runtime imports if any
+                    Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
+                    if (imports != null && res != null) {
+                      if (res.getCustomInfo() != null) {
+                        imports.add(res.getCustomInfo());
+                      }
+                      res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+                    }
+                    evaluationExpression = res;
+                    result.setResult(res);
+                  });
+                }
+                else {
+                  result.setError("Null");
+                }
+              });
+          }
+          catch (EvaluateException e) {
+            LOG.info(e);
+            result.setError(e);
+          }
+        }
+
+        @Override
+        protected void commandCancelled() {
+          result.setError("Cancelled");
         }
       });
-      return res;
+      return result;
     }
   }
 

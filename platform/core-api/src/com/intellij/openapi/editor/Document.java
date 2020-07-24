@@ -103,8 +103,8 @@ public interface Document extends UserDataHolder {
   /**
    * Returns the line number (0-based) corresponding to the specified offset in the document.
    *
-   * @param offset the offset to get the line number for (must be in the range from 0 to
-   *               getTextLength()-1)
+   * @param offset the offset to get the line number for (must be in the range from 0 (inclusive)
+   *               to {@link #getTextLength()} (inclusive)).
    * @return the line number corresponding to the offset.
    */
   @Contract(pure = true)

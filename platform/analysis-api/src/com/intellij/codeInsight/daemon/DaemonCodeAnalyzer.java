@@ -2,6 +2,9 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -84,6 +87,13 @@ public abstract class DaemonCodeAnalyzer {
     }
 
     default void daemonCancelEventOccurred(@NotNull String reason) {
+    }
+
+    @ApiStatus.Internal
+    default void daemonProducedFirstAnnotation(@NotNull AnnotationSession session,
+                                               @NotNull Annotator annotator,
+                                               @NotNull Annotation annotation,
+                                               @NotNull PsiFile file) {
     }
   }
 

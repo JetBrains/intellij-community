@@ -11,9 +11,11 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.configurations.coverage.CoverageFragment;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,6 +57,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Nullable
   public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return new CoverageConfigurable(configuration);
+  }
+
+  @Override
+  protected <P extends RunConfigurationBase<?>> List<SettingsEditorFragment<P, ?>> createFragments(@NotNull P configuration) {
+    return Collections.singletonList(new CoverageFragment<P>(configuration));
   }
 
   @Override

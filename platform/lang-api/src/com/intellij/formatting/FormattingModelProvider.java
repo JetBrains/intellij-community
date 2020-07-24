@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Allows plugins to create an instance of the standard {@link FormattingModel} implementation.
  *
- * @see FormattingModelBuilder#createModel(com.intellij.psi.PsiElement, com.intellij.psi.codeStyle.CodeStyleSettings)
+ * @see FormattingModelBuilder#createModel(com.intellij.psi.PsiElement, CodeStyleSettings)
  */
 public final class FormattingModelProvider {
   /**

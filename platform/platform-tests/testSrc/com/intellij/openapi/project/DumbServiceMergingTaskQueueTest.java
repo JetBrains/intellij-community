@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
@@ -24,9 +25,10 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   private void runAllTasks() {
     while(true) {
-      @Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask();
-      if (nextTask == null) return;
-      nextTask.executeTask();
+      try (@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
+        if (nextTask == null) return;
+        nextTask.executeTask();
+      }
     }
   }
 
@@ -254,6 +256,8 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
       Assert.fail();
     } catch (ProcessCanceledException ignore) {
       //OK
+    } finally {
+      task.close();
     }
     Assert.assertEquals(Boolean.TRUE, isDisposed.get());
   }
@@ -273,8 +277,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     });
 
     Thread th = new Thread(() -> {
-      try {
-        QueuedDumbModeTask nextTask = myQueue.extractNextTask();
+      try (QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
         nextTask.executeTask();
       } catch (Exception e) {
         LOG.error(e);
@@ -322,6 +325,68 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
     LeakHunter.checkLeak(myQueue, ProgressIndicator.class);
     LeakHunter.checkLeak(myQueue, DumbModeTask.class);
+  }
+
+  public void testNoDisposeLeaksOnClose() {
+    final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
+    DumbModeTask task = new DumbModeTask(this) {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      }
+
+      @Override
+      public void dispose() {
+        myDisposeFlag.set(true);
+      }
+    };
+
+    myQueue.addTask(task);
+    myQueue.disposePendingTasks();
+
+    Assert.assertTrue(Disposer.isDisposed(task));
+    Assert.assertTrue(myDisposeFlag.get());
+  }
+
+  public void testNoDisposeLeaksOnClose2() {
+    final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
+    DumbModeTask task = new DumbModeTask(this) {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      }
+
+      @Override
+      public void dispose() {
+        myDisposeFlag.set(true);
+      }
+    };
+
+    myQueue.addTask(task);
+    myQueue.cancelAllTasks();
+    myQueue.disposePendingTasks();
+
+    Assert.assertTrue(Disposer.isDisposed(task));
+    Assert.assertTrue(myDisposeFlag.get());
+  }
+
+  public void testNoDisposeLeaksOnClose3() {
+    final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
+    DumbModeTask task = new DumbModeTask(this) {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      }
+
+      @Override
+      public void dispose() {
+        myDisposeFlag.set(true);
+      }
+    };
+
+    myQueue.addTask(task);
+    myQueue.cancelTask(task);
+    myQueue.disposePendingTasks();
+
+    Assert.assertTrue(Disposer.isDisposed(task));
+    Assert.assertTrue(myDisposeFlag.get());
   }
 
   private static void await(@NotNull CyclicBarrier b) {

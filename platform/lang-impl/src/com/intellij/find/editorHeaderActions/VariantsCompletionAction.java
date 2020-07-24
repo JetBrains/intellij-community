@@ -54,7 +54,7 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
       }
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
-      final JList list = new JBList(array) {
+      final JList<String> list = new JBList<String>(array) {
         @Override
         protected void paintComponent(final Graphics g) {
           GraphicsUtil.setupAntialiasing(g);

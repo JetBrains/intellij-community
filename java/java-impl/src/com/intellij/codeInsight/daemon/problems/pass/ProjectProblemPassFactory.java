@@ -12,6 +12,7 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
@@ -20,7 +21,7 @@ public class ProjectProblemPassFactory implements TextEditorHighlightingPassFact
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiJavaFile javaFile = tryCast(file, PsiJavaFile.class);
-    if (javaFile == null || !ProjectProblemInlaySettingsProvider.hintsEnabled()) return null;
+    if (javaFile == null || !hintsEnabled()) return null;
     return new ProjectProblemPass(editor, javaFile);
   }
 

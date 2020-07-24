@@ -49,7 +49,8 @@
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
 
-    <fileType name="GithubPullRequest" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRFileType"/>
+    <virtualFileSystem key="ghpr" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileSystem"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile$IconProvider" order="first"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
 
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"

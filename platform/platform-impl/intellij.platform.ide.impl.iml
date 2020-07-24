@@ -84,6 +84,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-jsr223" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
   </component>

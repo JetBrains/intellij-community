@@ -15,8 +15,6 @@ import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
 
-class AlreadyDisposedException(message: String) : IllegalStateException(message)
-
 internal abstract class BaseComponentAdapter(internal val componentManager: ComponentManagerImpl,
                                              val pluginDescriptor: PluginDescriptor,
                                              @field:Volatile private var initializedInstance: Any?,

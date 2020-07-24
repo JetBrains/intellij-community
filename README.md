@@ -40,14 +40,16 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
+JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition. Note that IntelliJ IDEA depends
+on JavaFX classes so the JDK distribution must include jfxrt.jar. You may use for example Oracle JDK or Amazon Corretto (the latter can be 
+downloaded directly from Project Structure dialog since IntelliJ IDEA 2020.1).  
 1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
 2. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to `<JDK_16_HOME>`. If you don’t want to install JDK 1.6
    then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
    * If not already present, add the corresponding path for tools.jar to the Classpath for "**IDEA jdk**" JDK.
-3. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/working-with-projects.html#path-variables)
+3. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 4. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)

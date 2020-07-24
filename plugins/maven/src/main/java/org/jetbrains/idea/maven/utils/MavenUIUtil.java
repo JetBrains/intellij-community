@@ -98,13 +98,12 @@ public class MavenUIUtil {
         if (row >= 0) {
           TreePath path = tree.getPathForRow(row);
           if (!isCheckboxEnabledFor(path, handler)) return;
-
           Rectangle checkBounds = checkbox.getBounds();
           checkBounds.setLocation(tree.getRowBounds(row).getLocation());
           if (checkBounds.contains(e.getPoint())) {
+            tree.setSelectionRow(row);
             handler.toggle(path, e);
             e.consume();
-            tree.setSelectionRow(row);
           }
         }
       }

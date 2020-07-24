@@ -23,8 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -1032,9 +1030,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (editor == null) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlights(editor, replacedOccurrences, attributes, true, null);
+    highlightManager.addOccurrenceHighlights(editor, replacedOccurrences, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
     WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 

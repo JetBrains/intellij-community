@@ -32,6 +32,7 @@ internal class LegacyBridgeModuleImpl(
   override var diff: TypedEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
   private val directoryPath: String? = filePath?.let { File(it).parent }
+  private var vfsRefreshWasCalled = false
 
   init {
     // default project doesn't have modules
@@ -55,22 +56,34 @@ internal class LegacyBridgeModuleImpl(
   override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
     super.registerComponents(plugins, null)
 
-    val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
-                           ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
+    val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }
 
-    registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, pluginDescriptor, true)
-    registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, pluginDescriptor, true)
-    (picoContainer as MutablePicoContainer).unregisterComponent(DeprecatedModuleOptionManager::class.java)
+    if (corePlugin != null) {
+      registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, corePlugin, true)
+      registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, corePlugin, true)
+      (picoContainer as MutablePicoContainer).unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
-    registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, pluginDescriptor, false)
-    registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, pluginDescriptor, true)
-    registerService(ExternalSystemModulePropertyManager::class.java, ExternalSystemModulePropertyManagerForWorkspaceModel::class.java, pluginDescriptor, true)
-    (picoContainer as MutablePicoContainer).unregisterComponent(FacetFromExternalSourcesStorage::class.java.name)
+      registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, corePlugin, false)
+      registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, corePlugin, true)
+      registerService(ExternalSystemModulePropertyManager::class.java, ExternalSystemModulePropertyManagerForWorkspaceModel::class.java, corePlugin, true)
+      (picoContainer as MutablePicoContainer).unregisterComponent(FacetFromExternalSourcesStorage::class.java.name)
+    }
   }
 
   override fun getModuleFile(): VirtualFile? {
     if (directoryPath == null) return null
-    return LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
+    val localFileSystem = LocalFileSystem.getInstance()
+    val moduleFile = File(moduleFilePath)
+    val fileWithoutRefresh = localFileSystem.findFileByIoFile(moduleFile)
+    // Call refreshAndFind only once if simple find's result was null on first call
+    return if (fileWithoutRefresh != null) {
+      vfsRefreshWasCalled = true
+      fileWithoutRefresh
+    } else {
+      if (vfsRefreshWasCalled) return null
+      vfsRefreshWasCalled = true
+      localFileSystem.refreshAndFindFileByIoFile(moduleFile)
+    }
   }
 
   override fun getOptionValue(key: String): String? {

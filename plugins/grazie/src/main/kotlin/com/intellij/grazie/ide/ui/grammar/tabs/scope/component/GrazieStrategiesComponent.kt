@@ -10,6 +10,7 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
   override val component by lazy { ScrollPaneFactory.createScrollPane(list) }
@@ -20,8 +21,8 @@ class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
     }
   }
 
-  private val myEnabledStrategyIDs = HashSet<String>()
-  private val myDisabledStrategyIDs = HashSet<String>()
+  private val myEnabledStrategyIDs = ObjectOpenHashSet<String>()
+  private val myDisabledStrategyIDs = ObjectOpenHashSet<String>()
 
   override fun checkBoxSelectionChanged(index: Int, selected: Boolean) {
     val strategy = list.getItemAt(index) ?: return

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -39,6 +25,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private final XmlFormattingPolicy myXmlFormattingPolicy;
+  @Nullable
   private Indent myIndent;
   private BlockWithParent myParent;
   private boolean myContainsErrorElements = false;
@@ -49,7 +36,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
                                   @Nullable Alignment alignment,
                                   CodeStyleSettings settings,
                                   XmlFormattingPolicy xmlFormattingPolicy,
-                                  Indent indent) {
+                                  @Nullable Indent indent) {
     super(node, wrap, alignment);
     myNode = node;
     mySettings = settings;
@@ -169,7 +156,15 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   protected void addBlocksForNonMarkupChild(List<Block> result, ASTNode child) {
-    Block templateLanguageBlock = myBuilder.createTemplateLanguageBlock(
+    Block templateLanguageBlock = createTemplateLanguageBlock(child);
+    if (templateLanguageBlock instanceof BlockWithParent) {
+      ((BlockWithParent)templateLanguageBlock).setParent(this);
+    }
+    result.add(templateLanguageBlock);
+  }
+
+  protected Block createTemplateLanguageBlock(ASTNode child) {
+    return myBuilder.createTemplateLanguageBlock(
       child,
       mySettings,
       myXmlFormattingPolicy,
@@ -177,12 +172,12 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
       getChildAlignment(child),
       getChildWrap(child)
     );
-    if (templateLanguageBlock instanceof BlockWithParent) {
-      ((BlockWithParent)templateLanguageBlock).setParent(this);
-    }
-    result.add(templateLanguageBlock);
   }
 
+  @NotNull
+  protected AbstractXmlTemplateFormattingModelBuilder getBuilder() {
+    return myBuilder;
+  }
 
   private static boolean isScriptBlock(Block block) {
     if (block instanceof TemplateXmlTagBlock) {
@@ -197,7 +192,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
@@ -215,7 +210,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Override
-  public void setIndent(Indent indent) {
+  public void setIndent(@Nullable Indent indent) {
     myIndent = indent;
   }
 

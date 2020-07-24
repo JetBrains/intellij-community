@@ -3,12 +3,17 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Comparator;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
@@ -19,6 +24,16 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   int getAffectedAreaStartOffset();
 
   int getAffectedAreaEndOffset();
+
+  @ApiStatus.Internal
+  default @Nullable TextAttributes getForcedTextAttributes() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable Color getForcedErrorStripeMarkColor() {
+    return null;
+  }
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
 
@@ -38,8 +53,8 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   /**
    * If {@code true}, this highlighter is persistent and is retained between code analyzer runs and IDE restarts.
    *
-   * @see MarkupModelEx#addPersistentLineHighlighter(int, int, TextAttributes)
-   * @see MarkupModelEx#addRangeHighlighterAndChangeAttributes(int, int, int, TextAttributes, HighlighterTargetArea, boolean, Consumer)
+   * @see MarkupModelEx#addPersistentLineHighlighter(TextAttributesKey, int, int)
+   * @see MarkupModelEx#addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)
    */
   default boolean isPersistent() {
     return false;
@@ -49,8 +64,41 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
   }
 
+  /**
+   * @deprecated Use {@link #getErrorStripeMarkColor(EditorColorsScheme)} directly,
+   * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
+   */
+  @Deprecated
   default boolean isRenderedInScrollBar() {
-    return getErrorStripeMarkColor() != null;
+    return getErrorStripeMarkColor(null) != null;
+  }
+
+  default void copyFrom(@NotNull RangeHighlighterEx other) {
+    setAfterEndOfLine(other.isAfterEndOfLine());
+    setGreedyToLeft(other.isGreedyToLeft());
+    setGreedyToRight(other.isGreedyToRight());
+    setVisibleIfFolded(other.isVisibleIfFolded());
+
+    if (other.getForcedTextAttributes() != null) {
+      setTextAttributes(other.getForcedTextAttributes());
+    }
+    if (other.getTextAttributesKey() != null) {
+      setTextAttributesKey(other.getTextAttributesKey());
+    }
+
+    setLineMarkerRenderer(other.getLineMarkerRenderer());
+    setCustomRenderer(other.getCustomRenderer());
+    setGutterIconRenderer(other.getGutterIconRenderer());
+
+    setErrorStripeMarkColor(other.getForcedErrorStripeMarkColor());
+    setErrorStripeTooltip(other.getErrorStripeTooltip());
+    setThinErrorStripeMark(other.isThinErrorStripeMark());
+
+    setLineSeparatorColor(other.getLineSeparatorColor());
+    setLineSeparatorPlacement(other.getLineSeparatorPlacement());
+    setLineSeparatorRenderer(other.getLineSeparatorRenderer());
+
+    setEditorFilter(other.getEditorFilter());
   }
 
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);

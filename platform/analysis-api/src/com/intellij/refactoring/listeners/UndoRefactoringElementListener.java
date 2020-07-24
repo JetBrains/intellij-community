@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@linkplain com.intellij.refactoring.listeners.RefactoringElementListenerProvider} receives a notification on undo.
+ * {@linkplain RefactoringElementListenerProvider} receives a notification on undo.
  * @author dsl
  */
 public interface UndoRefactoringElementListener {

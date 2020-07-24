@@ -14,36 +14,29 @@ internal class ImmutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - emptySlotsSize
 
-  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
-    var emptySlotsCounter = 0
-
-    entities.forEachIndexed { idx, entity ->
-      if (entity == null) {
-        emptySlotsCounter++
-      }
-      else {
-        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
-        entityAssertion(entity)
-      }
-    }
+  override fun familyCheck() {
+    val emptySlotsCounter = entities.count { it == null }
     assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
 }
 
 internal class MutableEntityFamily<E : TypedEntity>(
   override var entities: ArrayList<PEntityData<E>?>,
+
+  // if [freezed] is true, [entities] array MUST BE copied before modifying it.
   private var freezed: Boolean
 ) : EntityFamily<E>() {
 
   // This set contains empty slots at the moment of MutableEntityFamily creation
-  //   New empty slots MUST NOT be added this this set.
-  // TODO Fill the reason
+  //   New empty slots MUST NOT be added this this set, otherwise it would be impossible to distinguish (remove + add) and (replace) events
   private val availableSlots: IntSet = IntOpenHashSet().also {
     entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
   }
 
+  // Current amount of nulls in entities
   private var amountOfGapsInEntities = availableSlots.size
 
+  // Indexes of entity data that are copied for modification. These entities can be safely modified.
   private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
@@ -55,6 +48,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
     amountOfGapsInEntities++
   }
 
+  /**
+   * This method adds entityData and changes it's id to the actual one
+   */
   fun add(other: PEntityData<E>) {
     startWrite()
 
@@ -80,14 +76,17 @@ internal class MutableEntityFamily<E : TypedEntity>(
     copiedToModify.add(id)
   }
 
-  fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
-    val entity = entities[id.arrayId] ?: error("Nothing to modify")
-    if (copiedToModify.contains(id.arrayId)) return entity
+  /**
+   * Get entity data that can be modified in a save manne
+   */
+  fun getEntityDataForModification(arrayId: Int): PEntityData<E> {
+    val entity = entities[arrayId] ?: error("Nothing to modify")
+    if (arrayId in copiedToModify) return entity
     startWrite()
 
     val clonedEntity = entity.clone()
-    entities[id.arrayId] = clonedEntity
-    copiedToModify.add(id.arrayId)
+    entities[arrayId] = clonedEntity
+    copiedToModify.add(arrayId)
     return clonedEntity
   }
 
@@ -99,6 +98,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - amountOfGapsInEntities
 
+  override fun familyCheck() {}
+
+  /** This method should always be called before any modification */
   private fun startWrite() {
     if (!freezed) return
 
@@ -115,7 +117,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   companion object {
-    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(ArrayList(), false)
+    // Do not remove parameter. Kotlin fails with compilation without it
+    @Suppress("RemoveExplicitTypeArguments")
+    fun createEmptyMutable() = MutableEntityFamily<TypedEntity>(ArrayList(), false)
   }
 }
 
@@ -124,7 +128,34 @@ internal sealed class EntityFamily<E : TypedEntity> {
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
   fun exists(id: Int) = get(id) != null
-  fun isEmpty() = entities.isEmpty()
   fun all() = entities.asSequence().filterNotNull()
+  fun isEmpty(): Boolean = entities.isEmpty()
   abstract fun size(): Int
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is EntityFamily<*>) return false
+
+    if (entities != other.entities) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = entities.hashCode()
+
+  override fun toString(): String {
+    return "EntityFamily(entities=$entities)"
+  }
+
+  protected abstract fun familyCheck()
+
+  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
+    entities.forEachIndexed { idx, entity ->
+      if (entity != null) {
+        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        entityAssertion(entity)
+      }
+    }
+    familyCheck()
+  }
 }

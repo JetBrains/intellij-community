@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.JBUI;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @NotNull
   @Override
   protected JPanel createOptionsPanel() {
-    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push to non-protected branches, preview commits before push");
+    myDontShowAgainCheckbox = new JCheckBox(GitBundle.message("push.dialog.preview.commits.before.push"));
     myDontShowAgainCheckbox.setSelected(GitVcsSettings.getInstance(myProject).shouldPreviewPushOnCommitAndPush());
 
     JPanel basePanel = super.createOptionsPanel();

@@ -207,7 +207,6 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     contentPanel.addTemplatesVisibilityListener(visible -> {
       // The re-layout should be delayed since we are in the middle of model changes processing and not all components updated their states
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> popup.pack(false, true));
     });
 

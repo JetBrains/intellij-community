@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -189,7 +190,7 @@ public final class FileManagerImpl implements FileManager {
       return Objects.requireNonNull(tempMap.get(file), "Recursive file view provider creation");
     }
 
-    viewProvider = createFileViewProvider(file, true);
+    viewProvider = createFileViewProvider(file, ModelBranch.getFileBranch(file) == null);
     if (file instanceof LightVirtualFile) {
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }

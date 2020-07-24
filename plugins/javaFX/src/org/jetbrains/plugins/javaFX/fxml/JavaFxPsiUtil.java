@@ -19,10 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -1202,8 +1202,8 @@ public class JavaFxPsiUtil {
         final PsiMethod[] injectControllerMethods = fxmlLoader.findMethodsByName("setController", false);
         if (injectControllerMethods.length == 1) {
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
-            .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), StdFileTypes.JAVA);
-          final VirtualFile[] virtualFiles = CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(
+            .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), JavaFileType.INSTANCE);
+          final VirtualFile[] virtualFiles = CacheManager.getInstance(project).getVirtualFilesWithWord(
             ClassUtil.extractClassName(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER), UsageSearchContext.IN_CODE, globalSearchScope, true);
           if (virtualFiles.length == 0) {
             return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);

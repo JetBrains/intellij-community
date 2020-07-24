@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * @author dsl
  *
- * @see com.intellij.refactoring.RefactoringFactory#createRename(com.intellij.psi.PsiElement, String)
+ * @see RefactoringFactory#createRename(PsiElement, String)
  */
 public interface RenameRefactoring extends Refactoring {
 

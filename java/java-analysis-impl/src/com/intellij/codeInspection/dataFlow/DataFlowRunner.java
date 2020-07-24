@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -50,7 +51,7 @@ public class DataFlowRunner {
   private Instruction[] myInstructions;
   private final @NotNull MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   private final @NotNull DfaValueFactory myValueFactory;
-  private final boolean myIgnoreAssertions;
+  private final @NotNull ThreeState myIgnoreAssertions;
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
@@ -61,7 +62,7 @@ public class DataFlowRunner {
   }
 
   public DataFlowRunner(@NotNull Project project, @Nullable PsiElement context) {
-    this(project, context, false, false);
+    this(project, context, false, ThreeState.NO);
   }
 
   /**
@@ -71,10 +72,10 @@ public class DataFlowRunner {
    * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
    * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
    */
-  public DataFlowRunner(@NotNull Project project, 
+  public DataFlowRunner(@NotNull Project project,
                         @Nullable PsiElement context,
                         boolean unknownMembersAreNullable,
-                        boolean ignoreAssertions) {
+                        @NotNull ThreeState ignoreAssertions) {
     myValueFactory = new DfaValueFactory(project, context, unknownMembersAreNullable);
     myIgnoreAssertions = ignoreAssertions;
   }
@@ -431,11 +432,10 @@ public class DataFlowRunner {
                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
                                    @NotNull ControlFlow flow) {
     List<DfaVariableValue> vars = flow.accessedVariables().collect(Collectors.toList());
-    DfaVariableValue assertionStatus =
-      ContainerUtil.find(vars, v -> v.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor);
-    if (assertionStatus != null) {
+    DfaVariableValue assertionStatus = myValueFactory.getAssertionDisabled();
+    if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
       for (DfaMemoryState state : initialStates) {
-        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions)));
+        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean())));
       }
     }
     if (psiBlock instanceof PsiClass) {

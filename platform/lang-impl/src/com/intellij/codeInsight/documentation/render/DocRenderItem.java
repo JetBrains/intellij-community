@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
@@ -33,7 +34,6 @@ import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -146,9 +146,13 @@ public class DocRenderItem {
         }, connection);
         editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
 
-        DocRenderMouseEventBridge mouseEventBridge = new DocRenderMouseEventBridge();
+        DocRenderSelectionManager selectionManager = new DocRenderSelectionManager(editor);
+        Disposer.register(connection, selectionManager);
+
+        DocRenderMouseEventBridge mouseEventBridge = new DocRenderMouseEventBridge(selectionManager);
         editor.addEditorMouseListener(mouseEventBridge, connection);
         editor.addEditorMouseMotionListener(mouseEventBridge, connection);
+
         IconVisibilityController iconVisibilityController = new IconVisibilityController();
         editor.addEditorMouseListener(iconVisibilityController, connection);
         editor.addEditorMouseMotionListener(iconVisibilityController, connection);
@@ -169,7 +173,8 @@ public class DocRenderItem {
     if (task.getAsBoolean()) keeper.restorePosition(false);
   }
 
-  static DocRenderItem getItemAroundOffset(@NotNull Editor editor, int offset) {
+  @Nullable
+  public static DocRenderItem getItemAroundOffset(@NotNull Editor editor, int offset) {
     Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
     if (items == null || items.isEmpty()) return null;
     Document document = editor.getDocument();
@@ -224,7 +229,7 @@ public class DocRenderItem {
     this.editor = editor;
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+      .addRangeHighlighter(null, textRange.getStartOffset(), textRange.getEndOffset(), 0, HighlighterTargetArea.EXACT_RANGE);
     updateIcon();
   }
 
@@ -323,7 +328,7 @@ public class DocRenderItem {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
       if (file != null) {
-        return PsiTreeUtil.getParentOfType(file.findElementAt(highlighter.getStartOffset()), PsiDocCommentBase.class, false);
+        return DocumentationManager.getProviderFromElement(file).findDocComment(file, TextRange.create(highlighter));
       }
     }
     return null;
@@ -378,6 +383,11 @@ public class DocRenderItem {
   private void repaintGutter(int startY) {
     JComponent gutter = (JComponent)editor.getGutter();
     gutter.repaint(0, startY, gutter.getWidth(), startY + editor.getLineHeight());
+  }
+
+  @Nullable
+  public String getTextToRender() {
+    return textToRender;
   }
 
   private static class RelevantOffsets {

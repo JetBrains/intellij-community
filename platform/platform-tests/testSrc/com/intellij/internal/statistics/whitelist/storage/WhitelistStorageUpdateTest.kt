@@ -3,8 +3,6 @@ package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType
-import com.intellij.internal.statistics.whitelist.TestWhitelistStorage
-import com.intellij.internal.statistics.whitelist.WhitelistStorageBuilder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -51,8 +49,8 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     return File(getTestDataRoot() + "/default_whitelist_storage_test." + extension)
   }
 
-  private fun newBuilder(withDefaultFiles: Boolean = true): WhitelistStorageBuilder {
-    val builder = WhitelistStorageBuilder()
+  private fun newBuilder(withDefaultFiles: Boolean = true): TestWhitelistStorageBuilder {
+    val builder = TestWhitelistStorageBuilder()
     val cached = getTestDataFileOrDefault(withDefaultFiles, "cached.json")
     if (cached.exists()) {
       builder.withCachedContent(FileUtil.loadFile(cached))

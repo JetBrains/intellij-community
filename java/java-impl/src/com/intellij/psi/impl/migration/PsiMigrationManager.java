@@ -44,7 +44,7 @@ public class PsiMigrationManager {
 
   /**
    * Initiates a migrate refactoring. The refactoring is finished when
-   * {@link com.intellij.psi.PsiMigration#finish()} is called.
+   * {@link PsiMigration#finish()} is called.
    *
    * @return the migrate operation object.
    */

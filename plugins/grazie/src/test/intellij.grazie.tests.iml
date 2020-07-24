@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.grazie" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library" scope="TEST">
       <library name="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.10" type="repository">
         <properties maven-id="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.10">

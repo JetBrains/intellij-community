@@ -122,7 +122,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   @TestFor(issues = "IDEA-236153")
   public void testItIgnoresSameSnapshot() {
     AtomicInteger lookupCalls = new AtomicInteger();
-    UnknownSdkResolver.EP_NAME.getPoint(null).registerExtension(new UnknownSdkResolver() {
+    UnknownSdkResolver.EP_NAME.getPoint().registerExtension(new UnknownSdkResolver() {
       @Override
       public boolean supportsResolution(@NotNull SdkTypeId sdkTypeId) {
         return true;

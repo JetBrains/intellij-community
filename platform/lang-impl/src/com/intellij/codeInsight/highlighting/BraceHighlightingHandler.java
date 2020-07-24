@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -331,15 +330,10 @@ public class BraceHighlightingHandler {
   }
 
   private void highlightBrace(@NotNull TextRange braceRange, boolean matched) {
-    EditorColorsScheme scheme = myEditor.getColorsScheme();
-    final TextAttributes attributes =
-        matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
-        : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
-
-
+    TextAttributesKey attributesKey = matched ? CodeInsightColors.MATCHED_BRACE_ATTRIBUTES : CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES;
     RangeHighlighter rbraceHighlighter =
-        myEditor.getMarkupModel().addRangeHighlighter(
-          braceRange.getStartOffset(), braceRange.getEndOffset(), LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
+        myEditor.getMarkupModel().addRangeHighlighter(attributesKey, braceRange.getStartOffset(), braceRange.getEndOffset(),
+                                                      LAYER, HighlighterTargetArea.EXACT_RANGE);
     rbraceHighlighter.setGreedyToLeft(false);
     rbraceHighlighter.setGreedyToRight(false);
     registerHighlighter(rbraceHighlighter);
@@ -442,7 +436,7 @@ public class BraceHighlightingHandler {
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
 
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighterAndChangeAttributes(startOffset, endOffset, 0, null, HighlighterTargetArea.LINES_IN_RANGE, false,
+      .addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, 0, HighlighterTargetArea.LINES_IN_RANGE, false,
                                               h -> h.setLineMarkerRenderer(renderer));
     editor.putUserData(LINE_MARKER_IN_EDITOR_KEY, highlighter);
   }

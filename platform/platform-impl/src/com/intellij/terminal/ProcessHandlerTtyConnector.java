@@ -52,6 +52,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
         }
       }
       else {
+        assert myPtyProcess instanceof PtyBasedProcess;
         ((PtyBasedProcess)myPtyProcess).resizePtyWindow(termSize.width, termSize.height, pixelSize.width, pixelSize.height);
       }
     }

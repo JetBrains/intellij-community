@@ -3,52 +3,16 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.openapi.util.Ref
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiableSecondSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-internal class PSampleEntityData : PEntityData<PSampleEntity>() {
-  var booleanProperty: Boolean = false
-  lateinit var stringProperty: String
-  lateinit var stringListProperty: List<String>
-  lateinit var fileProperty: VirtualFileUrl
-  override fun createEntity(snapshot: TypedEntityStorage): PSampleEntity {
-    return PSampleEntity(booleanProperty, stringProperty, stringListProperty.toList(), fileProperty).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class PSampleEntity(
-  val booleanProperty: Boolean,
-  val stringProperty: String,
-  val stringListProperty: List<String>,
-  val fileProperty: VirtualFileUrl
-) : PTypedEntity()
-
-internal class ModifiablePSampleEntity : PModifiableTypedEntity<PSampleEntity>() {
-  var booleanProperty: Boolean by EntityDataDelegation()
-  var stringProperty: String by EntityDataDelegation()
-  var stringListProperty: MutableList<String> by EntityDataDelegation()
-  var fileProperty: VirtualFileUrl by EntityDataDelegation()
-}
-
-internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
-                                                        source: EntitySource = PSampleEntitySource("test"),
-                                                        booleanProperty: Boolean = false,
-                                                        stringListProperty: MutableList<String> = ArrayList(),
-                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-                                                        fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
-                                                          "file:///tmp")): PSampleEntity {
-  return addEntity(ModifiablePSampleEntity::class.java, source) {
-    this.booleanProperty = booleanProperty
-    this.stringProperty = stringProperty
-    this.stringListProperty = stringListProperty
-    this.fileProperty = fileProperty
-  }
-}
-
 internal fun TypedEntityStorage.singlePSampleEntity() = entities(PSampleEntity::class.java).single()
-
-internal data class PSampleEntitySource(val name: String) : EntitySource
 
 class PSimplePropertiesInProxyBasedStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -83,7 +47,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
     val original = builder.addPSampleEntity("hello")
     val modified = builder.modifyEntity(ModifiablePSampleEntity::class.java, original) {
       stringProperty = "foo"
-      stringListProperty.add("first")
+      stringListProperty = stringListProperty + "first"
       booleanProperty = true
       fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }

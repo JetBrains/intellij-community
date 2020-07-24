@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.PSerializer
 import com.intellij.workspace.bracket
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -30,7 +31,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
   private val cacheFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = KryoEntityStorageSerializer(PluginAwareEntityTypesResolver, virtualFileManager)
+  private val serializer: EntityStorageSerializer = PSerializer(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {
     Disposer.register(parentDisposable, this)

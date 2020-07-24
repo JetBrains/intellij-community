@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -43,6 +43,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DETAILS), "details");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DIFF_PREVIEW), "diffPreview");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(DIFF_PREVIEW_VERTICAL_SPLIT), "diffPreviewOnTheBottom");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_CHANGES_FROM_PARENTS), "parentChanges");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), "onlyAffectedChanges");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), "long.edges");

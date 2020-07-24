@@ -281,7 +281,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
-    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint(null);
+    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint();
 
     UISettings uiSettings = UISettings.getInstance();
     boolean oldUse = uiSettings.getOverrideConsoleCycleBufferSize();
@@ -496,7 +496,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         return Collections.singletonList(Pair.create("+!" + text + "-!", contentType));
       }
     };
-    ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getPoint(null).registerExtension(crazyProvider, getTestRootDisposable());
+    ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getPoint().registerExtension(crazyProvider, getTestRootDisposable());
     myConsole = createConsole();
     StringBuilder expectedText = new StringBuilder();
     List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();
@@ -679,7 +679,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   private static void assertMarkerEquals(@NotNull ExpectedHighlighter expected, @NotNull RangeHighlighter actual) {
     assertEquals(expected.myStartOffset, actual.getStartOffset());
     assertEquals(expected.myEndOffset, actual.getEndOffset());
-    assertEquals(expected.myContentType.getAttributes(), actual.getTextAttributes());
+    assertEquals(expected.myContentType.getAttributes(), actual.getTextAttributes(null));
+    assertEquals(expected.myContentType.getAttributesKey(), actual.getTextAttributesKey());
   }
 
   private static class ExpectedHighlighter {

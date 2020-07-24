@@ -30,7 +30,7 @@ import java.io.OutputStream;
 /**
  * @author yole
  */
-public class CoreJarVirtualFile extends VirtualFile {
+class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarHandler myHandler;
   private final CharSequence myName;
   private final long myLength;
@@ -38,11 +38,11 @@ public class CoreJarVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   private VirtualFile[] myChildren = VirtualFile.EMPTY_ARRAY;
 
-  public CoreJarVirtualFile(@NotNull CoreJarHandler handler,
-                            @NotNull CharSequence name,
-                            long length,
-                            long timestamp,
-                            @Nullable CoreJarVirtualFile parent) {
+  CoreJarVirtualFile(@NotNull CoreJarHandler handler,
+                     @NotNull CharSequence name,
+                     long length,
+                     long timestamp,
+                     @Nullable CoreJarVirtualFile parent) {
     myHandler = handler;
     myName = name;
     myLength = length;
@@ -123,7 +123,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
-    Couple<String> pair = ((CoreJarFileSystem)getFileSystem()).splitPath(getPath());
+    Couple<String> pair = CoreJarFileSystem.splitPath(getPath());
     return myHandler.contentsToByteArray(pair.second);
   }
 

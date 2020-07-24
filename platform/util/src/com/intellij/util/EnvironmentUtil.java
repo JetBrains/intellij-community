@@ -407,17 +407,16 @@ public final class EnvironmentUtil {
 
   /**
    * @param timeoutMillis the time-out (in milliseconds) for {@code process} to terminate.
-   * @return the exit code of the process, or {@code null} if the time-out expires or {@code timeoutMillis} is zero or negative.
+   * @return the exit code of the process if it has already terminated, or it has terminated within the timeout; or {@code null} otherwise
    */
   private static @Nullable Integer waitFor(@NotNull Process process, final long timeoutMillis) {
-    long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
-    while (System.nanoTime() < stop) {
-      TimeoutUtil.sleep(100);
-      try {
+    try {
+      if (process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
         return process.exitValue();
       }
-      catch (IllegalThreadStateException ignore) {
-      }
+    }
+    catch (InterruptedException e) {
+      LOG.info("Interrupted while waiting for process", e);
     }
     return null;
   }

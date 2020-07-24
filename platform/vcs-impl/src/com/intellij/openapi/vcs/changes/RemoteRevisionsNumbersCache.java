@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -16,12 +15,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.vcsUtil.VcsUtil.*;
 
 /**
  * for vcses where it is reasonable to ask revision of each item separately
@@ -32,14 +31,12 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   // every hour (time unit to check for server commits)
   // default, actual in settings
   private static final long ourRottenPeriod = 3600 * 1000;
-  private final Map<String, Pair<VcsRoot, VcsRevisionNumber>> myData;
-  private final Map<VcsRoot, LazyRefreshingSelfQueue<String>> myRefreshingQueues;
-  private final Map<String, VcsRevisionNumber> myLatestRevisionsMap;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final LocalFileSystem myLfs;
+  private final @NotNull Map<String, Pair<VcsRoot, VcsRevisionNumber>> myData = new HashMap<>();
+  private final @NotNull Map<VcsRoot, LazyRefreshingSelfQueue<String>> myRefreshingQueues = Collections.synchronizedMap(new HashMap<>());
+  private final @NotNull Map<String, VcsRevisionNumber> myLatestRevisionsMap = new HashMap<>();
   private boolean mySomethingChanged;
 
-  private final Object myLock;
+  private final @NotNull Object myLock = new Object();
 
   public static final VcsRevisionNumber NOT_LOADED = new VcsRevisionNumber() {
     @NotNull
@@ -65,18 +62,10 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       return o == this ? 0 : -1;
     }
   };
-  private final VcsConfiguration myVcsConfiguration;
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  RemoteRevisionsNumbersCache(final Project project) {
+  RemoteRevisionsNumbersCache(@NotNull Project project) {
     myProject = project;
-    myLock = new Object();
-    myData = new HashMap<>();
-    myRefreshingQueues = Collections.synchronizedMap(new HashMap<>());
-    myLatestRevisionsMap = new HashMap<>();
-    myLfs = LocalFileSystem.getInstance();
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
   @Override
@@ -117,8 +106,8 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     // collect new vcs for scheduled files
     final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<>();
     for (String key : keys) {
-      final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
-      final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
+      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(key));
+      final AbstractVcs newVcs = (vf == null) ? null : getVcsFor(myProject, vf);
       vFiles.put(key, vf == null ? Pair.create(null, null) : Pair.create(vf, newVcs));
     }
     synchronized (myLock) {
@@ -132,7 +121,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
         }
         final VirtualFile vf = pair.getFirst();
         final AbstractVcs newVcs = pair.getSecond();
-        final VirtualFile newRoot = newVcs != null ? myVcsManager.getVcsRootFor(vf) : null;
+        final VirtualFile newRoot = newVcs != null ? getVcsRootFor(myProject, vf) : null;
 
         if (newRoot == null) {
           myData.remove(key);
@@ -163,7 +152,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     // does not support
     if (vcs.getDiffProvider() == null) return;
 
-    final VirtualFile root = getRootForPath(path);
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
 
     final VcsRoot vcsRoot = new VcsRoot(vcs, root);
@@ -198,16 +187,11 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   }
 
-  @Nullable
-  private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
-  }
-
   @Override
   public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
     if (vcs.getDiffProvider() == null) return;
-    final VirtualFile root = getRootForPath(path);
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
 
     final LazyRefreshingSelfQueue<String> queue;
@@ -225,9 +209,14 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;
 
-      queue = new LazyRefreshingSelfQueue<>(() -> myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
-             ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000L
-             : ourRottenPeriod, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
+      queue = new LazyRefreshingSelfQueue<>(
+        () -> {
+          int interval = VcsConfiguration.getInstance(myProject).CHANGED_ON_SERVER_INTERVAL;
+          return interval > 0 ? interval * 60000L : ourRottenPeriod;
+        },
+        new MyShouldUpdateChecker(vcsRoot),
+        new MyUpdater(vcsRoot)
+      );
       myRefreshingQueues.put(vcsRoot, queue);
       return queue;
     }
@@ -245,12 +234,12 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LOG.debug("update for: " + s);
       //todo check canceled - check VCS's ready for asynchronous queries
       // get last remote revision for file
-      final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(s));
+      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(s));
       final ItemLatestState state;
       final DiffProvider diffProvider = myVcsRoot.getVcs().getDiffProvider();
       if (vf == null) {
         // doesnt matter if directory or not
-        state = diffProvider.getLastRevision(VcsUtil.getFilePath(s, false));
+        state = diffProvider.getLastRevision(getFilePath(s, false));
       } else {
         state = diffProvider.getLastRevision(vf);
       }

@@ -90,7 +90,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testCustomPackageIdentifier() {
-    PyCustomPackageIdentifier.EP_NAME.getPoint(null).registerExtension(new PyCustomPackageIdentifier() {
+    PyCustomPackageIdentifier.EP_NAME.getPoint().registerExtension(new PyCustomPackageIdentifier() {
       @Override
       public boolean isPackage(PsiDirectory directory) {
         return true;
@@ -515,7 +515,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
       final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
       PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-      PyImportResolver.EP_NAME.getPoint(null).registerExtension(foreignResolver, getTestRootDisposable());
+      PyImportResolver.EP_NAME.getPoint().registerExtension(foreignResolver, getTestRootDisposable());
 
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);

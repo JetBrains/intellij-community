@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      final PsiExpression lockExpression = ParenthesesUtils.stripParentheses(statement.getLockExpression());
+      final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
       if (lockExpression instanceof PsiThisExpression) {
         registerError(lockExpression, Boolean.FALSE);
       }
@@ -61,7 +60,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
       if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression) && !ThreadingUtils.isWaitCall(expression)) {
         return;
       }
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (qualifier == null || (qualifier instanceof PsiThisExpression)) {
         registerMethodCallError(expression, Boolean.FALSE);
       }

@@ -13,6 +13,7 @@ import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
@@ -91,6 +92,17 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
     assert actionMatches('restart', action) == (ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE)
     assert actionMatches('invcach', action) == MatchMode.NAME
+  }
+
+  void "test fixing layout match"() {
+    def action = ActionManager.instance.getAction("InvalidateCaches")
+    assert actionMatches('штм', action) == MatchMode.NAME
+    assert actionMatches('штм сфср', action) == MatchMode.NAME
+    assert actionMatches('привет мир', new DumbAwareAction("привет, мир") {
+      @Override
+      void actionPerformed(@NotNull AnActionEvent e) {
+      }
+    }) == MatchMode.NAME
   }
 
   void "test CamelCase text in action names"() {
@@ -270,7 +282,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     patterns.forEach { String pattern ->
       def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue) matchedValue).value)
+      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value)
       }
     }
   }

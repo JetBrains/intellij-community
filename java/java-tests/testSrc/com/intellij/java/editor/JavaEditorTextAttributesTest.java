@@ -168,7 +168,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
     assertEquals(
       "ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
       "ABSTRACT_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #d0d0ff;  font-style: normal; }\n" +
+      "ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
       "ANNOTATION_NAME_ATTRIBUTES { color: #bbb529;  font-style: normal; }\n" +
       "ANONYMOUS_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
       "CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -248,7 +248,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected LanguageFileType getFileType() {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 
   @NotNull

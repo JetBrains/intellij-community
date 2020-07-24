@@ -714,7 +714,13 @@ def is_able_to_format_number(format):
     return True
 
 
-TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml, "DataFrame": dataframe_to_xml, "Series": dataframe_to_xml}
+TYPE_TO_XML_CONVERTERS = {
+    "ndarray": array_to_xml,
+    "DataFrame": dataframe_to_xml,
+    "Series": dataframe_to_xml,
+    "GeoDataFrame": dataframe_to_xml,
+    "GeoSeries": dataframe_to_xml
+}
 
 
 def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):

@@ -13,7 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
-import com.intellij.util.indexing.caches.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -58,7 +58,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext(false);
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 

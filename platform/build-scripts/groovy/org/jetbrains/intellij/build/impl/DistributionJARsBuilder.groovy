@@ -110,83 +110,98 @@ class DistributionJARsBuilder {
       }
 
     platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
+
+      BaseLayoutSpec.metaClass.addModule = { String moduleName ->
+        if (!productLayout.excludedModuleNames.contains(moduleName)) {
+          withModule(moduleName)
+        }
+      }
+      BaseLayoutSpec.metaClass.addModule = { String moduleName, String relativeJarPath ->
+        if (!productLayout.excludedModuleNames.contains(moduleName)) {
+          withModule(moduleName, relativeJarPath)
+        }
+      }
+
       productLayout.additionalPlatformJars.entrySet().each {
         def jarName = it.key
         it.value.each {
-          withModule(it, jarName)
+          addModule(it, jarName)
         }
       }
       CommunityRepositoryModules.PLATFORM_API_MODULES.each {
-        withModule(it, "platform-api.jar")
+        addModule(it, "platform-api.jar")
       }
       CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES.each {
-        withModule(it, "platform-impl.jar")
+        addModule(it, "platform-impl.jar")
       }
       productLayout.productApiModules.each {
-        withModule(it, "openapi.jar")
+        addModule(it, "openapi.jar")
       }
 
       productLayout.productImplementationModules.each {
-        withModule(it, productLayout.mainJarName)
+        addModule(it, productLayout.mainJarName)
       }
 
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putValues(it.key, it.value)
       }
-      withModule("intellij.platform.util")
-      withModule("intellij.platform.util.rt", "util.jar")
-      withModule("intellij.platform.util.classLoader", "util.jar")
-      withModule("intellij.platform.util.ui")
-      withModule("intellij.platform.util.ex")
-      withModule("intellij.platform.rd.community")
+      addModule("intellij.platform.util")
+      addModule("intellij.platform.util.rt", "util.jar")
+      addModule("intellij.platform.util.classLoader", "util.jar")
+      addModule("intellij.platform.util.text.matching", "util.jar")
+      addModule("intellij.platform.util.collections", "util.jar")
+      addModule("intellij.platform.util.strings", "util.jar")
+      addModule("intellij.platform.util.ui")
+      addModule("intellij.platform.util.ex")
+      addModule("intellij.platform.rd.community")
 
-      withModule("intellij.platform.diagnostic")
-      withModule("intellij.platform.ide.util.io")
+      addModule("intellij.platform.diagnostic")
+      addModule("intellij.platform.ide.util.io")
 
-      withModule("intellij.platform.concurrency")
-      withModule("intellij.platform.core.ui")
+      addModule("intellij.platform.concurrency")
+      addModule("intellij.platform.core.ui")
 
-      withModule("intellij.platform.builtInServer.impl")
-      withModule("intellij.platform.credentialStore")
-      withModule("intellij.json")
-      withModule("intellij.spellchecker")
-      withModule("intellij.platform.statistics")
-      withModule("intellij.platform.statistics.uploader")
-      withModule("intellij.platform.statistics.devkit")
+      addModule("intellij.platform.builtInServer.impl")
+      addModule("intellij.platform.credentialStore")
+      addModule("intellij.json")
+      addModule("intellij.spellchecker")
+      addModule("intellij.platform.statistics")
+      addModule("intellij.platform.statistics.uploader")
+      addModule("intellij.platform.statistics.devkit")
 
-      withModule("intellij.relaxng", "intellij-xml.jar")
-      withModule("intellij.xml.analysis.impl", "intellij-xml.jar")
-      withModule("intellij.xml.psi.impl", "intellij-xml.jar")
-      withModule("intellij.xml.structureView.impl", "intellij-xml.jar")
-      withModule("intellij.xml.impl", "intellij-xml.jar")
+      addModule("intellij.relaxng", "intellij-xml.jar")
+      addModule("intellij.xml.analysis.impl", "intellij-xml.jar")
+      addModule("intellij.xml.psi.impl", "intellij-xml.jar")
+      addModule("intellij.xml.structureView.impl", "intellij-xml.jar")
+      addModule("intellij.xml.impl", "intellij-xml.jar")
 
-      withModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
 
-      withModule("intellij.platform.objectSerializer.annotations")
-      withModule("intellij.platform.objectSerializer")
-      withModule("intellij.platform.configurationStore.impl")
+      addModule("intellij.platform.objectSerializer.annotations")
+      addModule("intellij.platform.objectSerializer")
+      addModule("intellij.platform.configurationStore.impl")
 
-      withModule("intellij.platform.extensions")
-      withModule("intellij.platform.serviceContainer")
-      withModule("intellij.platform.bootstrap")
-      withModule("intellij.java.guiForms.rt")
-      withModule("intellij.platform.icons")
-      withModule("intellij.platform.boot", "bootstrap.jar")
-      withModule("intellij.platform.resources", "resources.jar")
-      withModule("intellij.platform.colorSchemes", "resources.jar")
-      withModule("intellij.platform.resources.en", "resources.jar")
-      withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
-      withModule("intellij.platform.jps.model.impl", "jps-model.jar")
+      addModule("intellij.platform.extensions")
+      addModule("intellij.platform.serviceContainer")
+      addModule("intellij.platform.bootstrap")
+      addModule("intellij.java.guiForms.rt")
+      addModule("intellij.platform.icons")
+      addModule("intellij.platform.boot", "bootstrap.jar")
+      addModule("intellij.platform.resources", "resources.jar")
+      addModule("intellij.platform.colorSchemes", "resources.jar")
+      addModule("intellij.platform.resources.en", "resources.jar")
+      addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
+      addModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
-      withModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
+      addModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
 
-      withModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
+      addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
 
       if (allProductDependencies.contains("intellij.platform.coverage")) {
-        withModule("intellij.platform.coverage")
+        addModule("intellij.platform.coverage")
       }
 
       projectLibrariesUsedByPlugins.each {
@@ -705,16 +720,13 @@ class DistributionJARsBuilder {
 Android Studio: This attempts to read a non-existent file. */
 
       pluginsToPublish.each { plugin ->
-        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins
-
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
         def targetDirectory = whiteList.contains(plugin.mainModule)
           ? "$nonBundledPluginsArtifacts/auto-uploading"
           : nonBundledPluginsArtifacts
-        def destFile = "$targetDirectory/$directory${suffix}.zip"
+        def destFile = "$targetDirectory/$directory-${pluginVersion}.zip"
 
-        if (includeInCustomRepository) {
+        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           def pluginXmlPath = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule/META-INF/plugin.xml"
           if (!new File(pluginXmlPath).exists()) {
             buildContext.messages.error("patched plugin.xml not found for $plugin.mainModule module: $pluginXmlPath")
@@ -870,12 +882,11 @@ Android Studio: This attempts to read a non-existent file. */
 
   private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
     // Don't check modules which are not direct children of lib/ directory
-    List<String> moduleNamesInLib = moduleJars.entrySet()
-      .findAll { !it.key.contains("/") }
-      .collect { it.value }
-      .flatten() as List<String>
-    def modulesWithPluginXml = moduleNamesInLib
-      .findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+    def modulesWithPluginXml = moduleJars.entrySet().stream()
+      .filter { !it.key.contains("/") }
+      .flatMap { it.value.stream() }
+      .filter { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+      .collect(Collectors.toList()) as List<String>
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -1012,18 +1023,22 @@ Android Studio: This attempts to read a non-existent file. */
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
-                             .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
-          def excluded = layout.excludedModuleLibraries.get(moduleName)
-          findModule(moduleName).dependenciesList.dependencies.
-            findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
-            findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
-            collect { ((JpsLibraryDependency)it).library }.
-            findAll { !excluded.contains(getLibraryName(it)) }.
-            each {
-              jpsLibrary(it)
-            }
-        }
+        actualModuleJars.entrySet()
+          .stream()
+          .filter { !it.key.contains("/") }
+          .flatMap { it.value.stream() }
+          .filter { !layout.modulesWithExcludedModuleLibraries.contains(it) }
+          .forEach { moduleName ->
+            def excluded = layout.excludedModuleLibraries.get(moduleName)
+            findModule(moduleName).dependenciesList.dependencies.stream()
+              .filter { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }
+              .filter { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }
+              .map { ((JpsLibraryDependency)it).library }
+              .filter { !excluded.contains(getLibraryName(it)) }
+              .forEach {
+                jpsLibrary(it)
+              }
+          }
 
         layout.includedModuleLibraries.each { data ->
           dir(data.relativeOutputPath) {

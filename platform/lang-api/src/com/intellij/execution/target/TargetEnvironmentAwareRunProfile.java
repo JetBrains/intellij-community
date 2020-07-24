@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * As soon as a run configuration implements the interface, its Run configuration
  * editor gets `Run on` combobox with the list of targets to run on.
  * <p>
- * Target environment to run on can be retrieve via {@link com.intellij.execution.target.TargetEnvironmentsManager}.
+ * Target environment to run on can be retrieve via {@link TargetEnvironmentsManager}.
  *
  * @see com.intellij.execution.RunOnTargetComboBox
  * @see TargetEnvironment

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -696,7 +695,6 @@ class Bar {
 
   void "test prefer top-level List"() {
     myFixture.addClass("package foo; public interface Restore { interface List {}}")
-    def juList = myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST)
 
     myFixture.configureByText 'a.java', 'class F implements Lis<caret>t {}'
     importClass()
@@ -704,5 +702,19 @@ class Bar {
 import java.util.List;
 
 class F implements List {}'''
+  }
+
+  void "test type_use annotation"() {
+    myFixture.addClass("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface AssertTrue {}")
+    myFixture.configureByText 'test.java', '''import java.util.List;
+class IntellijBugTest {
+    final List<?> list = new @AssertTrue Array<caret>List<Object>();
+}'''
+    importClass()
+    myFixture.checkResult '''import java.util.ArrayList;
+import java.util.List;
+class IntellijBugTest {
+    final List<?> list = new @AssertTrue ArrayList<Object>();
+}'''
   }
 }

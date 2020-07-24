@@ -19,8 +19,10 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -69,8 +71,8 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
     if (importProvider != null && importProvider.isProjectFile(virtualFile)) return true;
     FileType fileType = virtualFile.getFileType();
     return
-      fileType == StdFileTypes.IDEA_PROJECT
-      || fileType == StdFileTypes.IDEA_MODULE
-      || fileType == StdFileTypes.IDEA_WORKSPACE;
+      fileType == ProjectFileType.INSTANCE
+      || fileType == ModuleFileType.INSTANCE
+      || fileType == WorkspaceFileType.INSTANCE;
   }
 }

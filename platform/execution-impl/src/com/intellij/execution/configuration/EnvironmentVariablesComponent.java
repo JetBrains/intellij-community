@@ -19,7 +19,7 @@ import javax.swing.event.ChangeListener;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton>
-  implements UserActivityProviderComponent, SettingsEditorFragment.Component<CommonProgramRunConfigurationParameters> {
+  implements UserActivityProviderComponent, SettingsEditorFragment.FragmentComponent<CommonProgramRunConfigurationParameters> {
   @NonNls private static final String ENVS = "envs";
   @NonNls public static final String ENV = "env";
   @NonNls public static final String NAME = "name";

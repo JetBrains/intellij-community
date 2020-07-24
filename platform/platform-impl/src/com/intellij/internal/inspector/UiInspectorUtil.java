@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class UiInspectorUtil {
+public final class UiInspectorUtil {
   private static final String PROPERTY_KEY = "UiInspectorContextProvider.Key";
 
   public static void registerProvider(@NotNull JComponent component, @NotNull UiInspectorContextProvider provider) {
@@ -74,7 +74,7 @@ public class UiInspectorUtil {
 
     final ClassLoader classLoader = action.getClass().getClassLoader();
     if (classLoader instanceof PluginClassLoader) {
-      result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginIdString(), true));
+      result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginId().getIdString(), true));
     }
     return result;
   }

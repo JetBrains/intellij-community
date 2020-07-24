@@ -23,19 +23,19 @@ object LegacyBridgeTestFrameworkUtils {
 
     WriteAction.runAndWait<RuntimeException> {
       for (module in ModuleManager.getInstance(project).modules) {
-        (LegacyBridgeFilePointerProvider.getInstance(module) as LegacyBridgeFilePointerProviderImpl).disposeAndClearCaches()
+        (LegacyBridgeFilePointerProvider.getInstance(module) as LegacyBridgeFilePointerProviderImpl).clearCaches()
         for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
           if (orderEntry is LibraryOrderEntry) {
             if (orderEntry.isModuleLevel) {
-              (orderEntry.library as LegacyBridgeLibraryImpl).filePointerProvider.disposeAndClearCaches()
+              (orderEntry.library as LegacyBridgeLibraryImpl).filePointerProvider.clearCaches()
             }
           }
         }
         (ModuleRootManager.getInstance(module) as LegacyBridgeModuleRootComponent).dropCaches()
       }
-      (LegacyBridgeFilePointerProvider.getInstance(project) as LegacyBridgeFilePointerProviderImpl).disposeAndClearCaches()
+      (LegacyBridgeFilePointerProvider.getInstance(project) as LegacyBridgeFilePointerProviderImpl).clearCaches()
       for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries) {
-        (library as LegacyBridgeLibraryImpl).filePointerProvider.disposeAndClearCaches()
+        (library as LegacyBridgeLibraryImpl).filePointerProvider.clearCaches()
       }
     }
   }

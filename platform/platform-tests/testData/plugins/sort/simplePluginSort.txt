@@ -7,6 +7,7 @@
   cycle5
 + duplicate
 + duplicate0
++ incompatible_with_unknown_module
   missing1
   missing2
 + incompatible_with_disabled_module

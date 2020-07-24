@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool, LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), InspectionEP::getShortName));
+    super(tool, LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), LocalInspectionToolWrapper.class, InspectionEP::getShortName));
   }
 
   public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {

@@ -22,7 +22,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
 
   public void testActionPluginName() {
     myFixture.testHighlighting("pluginXmlCapitalization_ActionPluginName.xml",
-                               "MyBundle.properties", "MyAction.java");
+                               "MyBundle.properties", "MyAction.java", "AnotherBundle.properties");
   }
 
   public void testExtensionPoint() {

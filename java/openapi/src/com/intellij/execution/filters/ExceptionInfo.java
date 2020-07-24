@@ -90,7 +90,7 @@ public class ExceptionInfo {
     String message = colonPos == -1 ? null : line.substring(colonPos + 1).trim();
     message = StringUtil.notNullize(message);
     int absoluteOffset = textEndOffset - line.length();
-    String exceptionName = line.substring(classRange.getStartOffset(), classRange.getEndOffset());
+    String exceptionName = classRange.substring(line);
     int startOffset = classRange.getStartOffset() + absoluteOffset;
     return createExceptionInfo(message, exceptionName, startOffset);
   }

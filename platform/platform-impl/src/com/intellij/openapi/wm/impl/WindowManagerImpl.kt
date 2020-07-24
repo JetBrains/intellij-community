@@ -224,6 +224,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
+  override fun isNotSuggestAsParent(window: Window): Boolean = windowWatcher.isNotSuggestAsParent(window)
+
   override fun doNotSuggestAsParent(window: Window) {
     windowWatcher.doNotSuggestAsParent(window)
   }

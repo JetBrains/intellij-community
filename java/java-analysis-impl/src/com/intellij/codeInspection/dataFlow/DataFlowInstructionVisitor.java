@@ -417,7 +417,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     @Override
     public String toString() {
       String text = myExpression.getText();
-      return myRange == null ? text : text.substring(myRange.getStartOffset(), myRange.getEndOffset());
+      return myRange == null ? text : myRange.substring(text);
     }
   }
   

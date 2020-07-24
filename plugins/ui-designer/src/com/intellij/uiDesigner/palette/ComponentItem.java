@@ -57,7 +57,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private Icon mySmallIcon;
   /**
    * @see #getIconPath()
-   * @see #setIconPath(java.lang.String)
+   * @see #setIconPath(String)
    */
   private String myIconPath;
   /**

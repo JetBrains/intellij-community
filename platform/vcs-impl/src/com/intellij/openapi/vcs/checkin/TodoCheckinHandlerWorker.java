@@ -241,7 +241,7 @@ public class TodoCheckinHandlerWorker {
   }
 
   private static String getTodoPartText(String content, TextRange textRange) {
-    final String fragment = content.substring(textRange.getStartOffset(), textRange.getEndOffset());
+    final String fragment = textRange.substring(content);
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 

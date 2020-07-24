@@ -17,6 +17,8 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -25,8 +27,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -139,7 +139,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
       if (profiles.contains(profileName)) {
         selectNodeInTree(profileName);
-        throw new ConfigurationException("Duplicate copyright profile name: '" + profileName + "'");
+        throw new ConfigurationException(CopyrightBundle.message("dialog.message.duplicate.copyright.profile.name", profileName));
       }
       profiles.add(profileName);
     }
@@ -209,7 +209,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         }
 
         CopyrightProfile clone = new CopyrightProfile();
-        clone.copyFrom((CopyrightProfile)getSelectedObject());
+        clone.copyFrom((CopyrightProfile)Objects.requireNonNull(getSelectedObject()));
         clone.setName(profileName);
         addProfileNode(clone);
       }
@@ -228,7 +228,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
           .withFileFilter(file -> {
             final FileType fileType = file.getFileType();
-            return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
+            return fileType == ModuleFileType.INSTANCE || fileType == XmlFileType.INSTANCE;
           })
           .withTitle(CopyrightBundle.message("dialog.file.chooser.title.choose.file.containing.copyright.notice"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
@@ -242,7 +242,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
               JBPopupFactory.getInstance()
                 .createListPopup(new BaseListPopupStep<CopyrightProfile>(CopyrightBundle.message("popup.title.choose.profile.to.import"), profiles) {
                   @Override
-                  public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                  public PopupStep<?> onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
                     return doFinalStep(() -> importProfile(selectedValue));
                   }
 

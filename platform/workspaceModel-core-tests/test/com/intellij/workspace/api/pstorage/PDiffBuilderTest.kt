@@ -1,40 +1,15 @@
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.pstorage.references.ManyToOne
-import com.intellij.workspace.api.pstorage.references.MutableManyToOne
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildSampleEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PChildSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
-
-internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: TypedEntityStorage): PChildSampleEntity {
-    return PChildSampleEntity(data).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class PChildSampleEntity(
-  val data: String
-) : PTypedEntity() {
-  val parent: PSampleEntity? by ManyToOne.Nullable(PSampleEntity::class)
-}
-
-internal class ModifiablePChildSampleEntity : PModifiableTypedEntity<PChildSampleEntity>() {
-  var data: String by EntityDataDelegation()
-  var parent: PSampleEntity? by MutableManyToOne.Nullable(PChildSampleEntity::class, PSampleEntity::class)
-}
-
-internal fun TypedEntityStorageBuilder.addPChildSampleEntity(stringProperty: String,
-                                                             parent: PSampleEntity?,
-                                                             source: EntitySource = PSampleEntitySource("test")): PChildSampleEntity {
-  return addEntity(ModifiablePChildSampleEntity::class.java, source) {
-    this.data = stringProperty
-    this.parent = parent
-  }
-}
 
 private fun TypedEntityStorageBuilder.applyDiff(anotherBuilder: TypedEntityStorageBuilder): TypedEntityStorage {
   val builder = PEntityStorageBuilder.from(this)

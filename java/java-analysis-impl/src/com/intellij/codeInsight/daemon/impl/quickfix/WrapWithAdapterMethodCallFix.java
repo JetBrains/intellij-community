@@ -24,6 +24,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -40,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
+
+import static com.intellij.pom.java.LanguageLevel.JDK_11;
 
 public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   static class Wrapper extends ArgumentFixerActionFactory {
@@ -147,9 +150,12 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     new Wrapper("new java.io.File({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
                 outType -> outType.equalsToText(CommonClassNames.JAVA_IO_FILE)),
+    new Wrapper("java.nio.file.Path.of({0})",
+                inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
+                outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isAtLeast(JDK_11))),
     new Wrapper("java.nio.file.Paths.get({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
-                outType -> outType.equalsToText("java.nio.file.Path")),
+                outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isLessThan(JDK_11))),
     new Wrapper("java.util.Arrays.asList({0})",
                 inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
@@ -167,6 +173,11 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 inType -> inType instanceof PsiArrayType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))
   };
+
+  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<LanguageLevel> level) {
+    if (!(psiType instanceof PsiClassType)) return true;
+    return level.test(((PsiClassType)psiType).getLanguageLevel());
+  }
 
   @SafeFieldForPreview
   @Nullable private final PsiType myType;

@@ -1,15 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -195,5 +194,18 @@ public class WSLUtil {
       .map(WSLDistribution::getUNCRoot)
       .filter(File::exists)
       .collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static ThreeState isWsl1(@NotNull WSLDistribution distribution) {
+    try {
+      ProcessOutput output = distribution.executeOnWsl(10_000, "uname", "-v");
+      if (output.getExitCode() != 0) return ThreeState.UNSURE;
+      return ThreeState.fromBoolean(output.getStdout().contains("Microsoft"));
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      return ThreeState.UNSURE;
+    }
   }
 }

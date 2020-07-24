@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.notification.Notification;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +103,7 @@ public class GitExecutableProblemsNotifier {
       if (exception.getCause() != null) {
         Throwable cause = exception.getCause();
         if (cause instanceof NoSuchFileException) {
-          errorMessage = "File not found: " + cause.getMessage();
+          errorMessage = GitBundle.message("git.executable.error.file.not.found", cause.getMessage());
         }
         else {
           errorMessage = cause.getMessage();
@@ -119,5 +120,4 @@ public class GitExecutableProblemsNotifier {
     }
     return errorMessage;
   }
-
 }

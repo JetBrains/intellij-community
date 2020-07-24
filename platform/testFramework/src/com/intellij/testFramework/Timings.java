@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import org.jetbrains.annotations.Range;
 
 /**
  * @author peter
@@ -41,7 +42,7 @@ public class Timings {
    * @param isParallelizable true if the test load is scalable with the CPU cores
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
-  public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
+  public static @Range(from = 1, to = Integer.MAX_VALUE) int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
     return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.getJobPoolParallelism() : 1));
   }
 

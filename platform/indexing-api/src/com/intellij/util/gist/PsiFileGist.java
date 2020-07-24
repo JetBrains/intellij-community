@@ -16,6 +16,7 @@
 package com.intellij.util.gist;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * Please note that VirtualFileGist is used inside, so using PsiFileGist has the same performance implications (see {@link VirtualFileGist} documentation).
  * @author peter
  */
+@ApiStatus.NonExtendable
 public interface PsiFileGist<Data> {
 
   /**

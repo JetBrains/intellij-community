@@ -588,7 +588,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (row < 0) {
       super.collapsePath(path);
     }
-    else {
+    else if (!isAlwaysExpanded(path)) {
       ArrayDeque<TreePath> deque = new ArrayDeque<>();
       deque.addFirst(path);
       while (++row < getRowCount()) {
@@ -598,6 +598,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       deque.forEach(super::collapsePath);
     }
+  }
+
+  private boolean isAlwaysExpanded(TreePath path) {
+    return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
 
   private static class MySelectionModel extends DefaultTreeSelectionModel {

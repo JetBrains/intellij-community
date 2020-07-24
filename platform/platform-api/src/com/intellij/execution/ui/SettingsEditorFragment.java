@@ -7,8 +7,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -17,7 +20,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   /**
    * Should be implemented by a JComponent
    */
-  public interface Component<Settings> {
+  public interface FragmentComponent<Settings> {
     void reset(Settings s);
     void apply(Settings s);
     boolean isVisible(Settings s);
@@ -26,7 +29,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final String myId;
   private final String myName;
   private final String myGroup;
-  private final C myComponent;
+  protected C myComponent;
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
@@ -59,11 +62,28 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
+  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, FragmentComponent<? super S> component) {
     return new SettingsEditorFragment<>(id, name, group, (JComponent)component,
                                         (settings, c) -> component.reset(settings),
                                         (settings, c) -> component.apply(settings),
                                         s -> component.isVisible(s));
+  }
+
+  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, String name, String group, @NotNull SettingsEditor<S> inner) {
+    JComponent component = inner.getComponent();
+    SettingsEditorFragment<S, JComponent> fragment = new SettingsEditorFragment<>(id, name, group, component,
+                                                                                  (settings, c) -> inner.resetFrom(settings),
+                                                                                  (settings, c) -> {
+                                                                                    try {
+                                                                                      inner.applyTo(settings);
+                                                                                    }
+                                                                                    catch (ConfigurationException e) {
+                                                                                      throw new RuntimeException(e);
+                                                                                    }
+                                                                                  },
+                                                                                  s -> false);
+    Disposer.register(fragment, inner);
+    return fragment;
   }
 
   public static <Settings> SettingsEditorFragment<Settings, JButton> createTag(String id, String name, String group,
@@ -124,6 +144,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myCommandLinePosition;
   }
 
+  public int getMenuPosition() { return 0; }
   @Override
   protected void resetEditorFrom(@NotNull Settings s) {
     myReset.accept(s, myComponent);
@@ -138,6 +159,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected @NotNull JComponent createEditor() {
     myComponent.setVisible(isSelected());
     return myComponent;
+  }
+
+  public List<SettingsEditorFragment<Settings, ?>> getChildren() {
+    return Collections.emptyList();
+  }
+
+  public @Nullable String getChildrenGroupName() {
+    return null;
   }
 
   @Override

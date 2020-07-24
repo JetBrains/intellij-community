@@ -270,8 +270,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @Override
   public PsiAnnotation @NotNull [] getAnnotations() {
-    final PsiAnnotation[] own = getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
-    final List<PsiAnnotation> ext = PsiAugmentProvider.collectAugments(this, PsiAnnotation.class);
+    PsiAnnotation[] own = getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
+    List<PsiAnnotation> ext = PsiAugmentProvider.collectAugments(this, PsiAnnotation.class, null);
     return ArrayUtil.mergeArrayAndCollection(own, ext, PsiAnnotation.ARRAY_FACTORY);
   }
 

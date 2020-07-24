@@ -1,12 +1,16 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
+import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -28,9 +33,9 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.toVirtualFileUrl
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.jps.model.module.UnknownSourceRootType
+import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
@@ -402,7 +407,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
@@ -437,7 +442,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -453,6 +458,8 @@ class LegacyBridgeModulesTest {
 
   @Test
   fun `test custom source root loading`() {
+    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(),
+                                                                            disposableRule.disposable)
     val tempDir = temporaryDirectoryRule.newPath().toFile()
     val moduleImlFile = File(tempDir, "my.iml")
     Files.createDirectories(moduleImlFile.parentFile.toPath())
@@ -517,8 +524,8 @@ class LegacyBridgeModulesTest {
       val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
       val sourceFolder = contentEntry.sourceFolders.single()
 
-      assertSame(JavaSourceRootType.SOURCE, sourceFolder.rootType)
-      assertTrue(sourceFolder.jpsElement.properties is JavaSourceRootProperties)
+      assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type"), sourceFolder.rootType)
+      assertTrue(sourceFolder.jpsElement.properties is UnknownSourceRootTypeProperties<*>)
 
       val customRoot = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList().single()
@@ -531,6 +538,7 @@ class LegacyBridgeModulesTest {
   @Test
   fun `test custom source root saving`() {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
+    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(), disposableRule.disposable)
 
     val moduleImlFile = File(tempDir, "my.iml")
     Files.createDirectories(moduleImlFile.parentFile.toPath())
@@ -578,17 +586,17 @@ class LegacyBridgeModulesTest {
       val tempDir = temporaryDirectoryRule.newPath().toFile()
       val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
       val contentEntry = model.addContentEntry(url)
-      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
     StoreUtil.saveDocumentsAndProjectSettings(project)
     assertTrue(moduleFile.readText().contains(antLibraryFolder))
     val entityStore = WorkspaceModel.getInstance(project).entityStore
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
-    assertEquals(1, entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).count())
+    assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
 
     ModuleManager.getInstance(project).disposeModule(module)
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
-    assertEmpty(entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).toList())
+    assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
   }
 
   @Test
@@ -607,7 +615,7 @@ class LegacyBridgeModulesTest {
       val tempDir = temporaryDirectoryRule.newPath().toFile()
       val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
       val contentEntry = model.addContentEntry(url)
-      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
     val entityStore = WorkspaceModel.getInstance(project).entityStore
@@ -623,15 +631,34 @@ class LegacyBridgeModulesTest {
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(SourceRootEntity::class.java).toList())
   }
+
+  @Test
+  fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    project.messageBus.connect(disposableRule.disposable).subscribe(PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        val modules = ModuleManager.getInstance(event.project).modules
+        assertEmpty(modules)
+      }
+    })
+
+    ModuleManager.getInstance(project).disposeModule(module)
+  }
 }
 
-internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
-                                    disposableRule: DisposableRule): Project {
-  val projectDir = temporaryDirectory.newPath("project").toFile()
+internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
+  val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
-    ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
+    ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
   }
-  invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+  invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
   disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
   return project
 }

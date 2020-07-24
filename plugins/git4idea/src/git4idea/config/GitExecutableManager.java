@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +22,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
+import java.nio.file.NoSuchFileException;
 import java.text.ParseException;
 import java.util.Collections;
 
@@ -39,7 +39,9 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @Nullable private String myDetectedExecutable;
+  @Nullable private volatile String myDetectedExecutable;
+  private boolean myDetectionComplete;
+
   @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
@@ -78,9 +80,16 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit(@Nullable Project project) {
+    String pathToGit = getPathToGit(project, true);
+    if (pathToGit == null) pathToGit = GitExecutableDetector.getDefaultExecutable();
+    return pathToGit;
+  }
+
+  @Nullable
+  private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
     String path = project != null ? GitVcsSettings.getInstance(project).getPathToGit() : null;
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) path = getDetectedExecutable();
+    if (path == null) path = getDetectedExecutable(detectIfNeeded);
     return path;
   }
 
@@ -98,9 +107,13 @@ public class GitExecutableManager {
     return new GitExecutable.Local(pathToGit);
   }
 
+  public static boolean supportWslExecutable() {
+    return WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
+  }
+
   @Nullable
   private static GitExecutable.Wsl getWslExecutable(@NotNull String pathToGit) {
-    if (!SystemInfo.isWin10OrNewer || !Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) return null;
+    if (!supportWslExecutable()) return null;
     if (!pathToGit.startsWith(WSLDistribution.UNC_PREFIX)) return null;
 
     pathToGit = StringUtil.trimStart(pathToGit, WSLDistribution.UNC_PREFIX);
@@ -117,17 +130,29 @@ public class GitExecutableManager {
 
   @NotNull
   public String getDetectedExecutable() {
-    synchronized (DETECTED_EXECUTABLE_LOCK) {
-      if (myDetectedExecutable == null) {
-        myDetectedExecutable = new GitExecutableDetector().detect();
+    String executable = getDetectedExecutable(true);
+    return executable != null ? executable : GitExecutableDetector.getDefaultExecutable();
+  }
+
+  @Nullable
+  private String getDetectedExecutable(boolean detectIfNeeded) {
+    if (!detectIfNeeded) return myDetectedExecutable;
+
+    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
+      synchronized (DETECTED_EXECUTABLE_LOCK) {
+        if (!myDetectionComplete) {
+          myDetectedExecutable = new GitExecutableDetector().detect();
+          myDetectionComplete = true;
+        }
+        return myDetectedExecutable;
       }
-      return myDetectedExecutable;
-    }
+    });
   }
 
   public void dropExecutableCache() {
     synchronized (DETECTED_EXECUTABLE_LOCK) {
       myDetectedExecutable = null;
+      myDetectionComplete = false;
     }
   }
 
@@ -139,7 +164,11 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    return getVersion(getExecutable(project));
+    String pathToGit = getPathToGit(project, false);
+    if (pathToGit == null) return GitVersion.NULL;
+
+    GitExecutable executable = getExecutable(pathToGit);
+    return getVersion(executable);
   }
 
   /**
@@ -197,7 +226,7 @@ public class GitExecutableManager {
     });
   }
 
-  private static <T> T runUnderProgressIfNeeded(@NotNull Project project,
+  private static <T> T runUnderProgressIfNeeded(@Nullable Project project,
                                                 @NotNull String title,
                                                 @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -208,11 +237,15 @@ public class GitExecutableManager {
     }
   }
 
+  @CalledInBackground
+  @NotNull
+  public GitVersion identifyVersion(@NotNull String pathToGit) throws GitVersionIdentificationException {
+    return identifyVersion(getExecutable(pathToGit));
+  }
+
   /**
    * Try to identify version of git executable
    *
-   * @param pathToGit path to executable file
-   * @return version of git executable
    * @throws GitVersionIdentificationException if there is a problem running executable or parsing version output
    */
   @CalledInBackground
@@ -220,7 +253,11 @@ public class GitExecutableManager {
   public GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
     CachingFileTester<GitVersion>.TestResult result = myVersionCache.getResultFor(executable);
     if (result.getResult() == null) {
-      throw new GitVersionIdentificationException("Cannot identify version of git executable " + executable, result.getException());
+      Exception e = result.getException();
+      if (e instanceof NoSuchFileException && executable.getExePath().equals(GitExecutableDetector.getDefaultExecutable())) {
+        throw new GitNotInstalledException("Git not installed", e);
+      }
+      throw new GitVersionIdentificationException("Cannot identify version of git executable " + executable, e);
     }
     else {
       return result.getResult();

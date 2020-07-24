@@ -400,4 +400,5 @@ public class CodeStyle {
   public static CodeStyleSettings createTestSettings() {
     return CodeStyleSettingsManager.createTestSettings(null);
   }
+
 }

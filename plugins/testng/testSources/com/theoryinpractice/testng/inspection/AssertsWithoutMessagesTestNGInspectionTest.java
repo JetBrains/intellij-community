@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
+import com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.DataProvider;
 
@@ -28,7 +29,7 @@ import org.testng.annotations.DataProvider;
 public class AssertsWithoutMessagesTestNGInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testInspection() {
-    myFixture.enableInspections(AssertsWithoutMessagesTestNGInspection.class);
+    myFixture.enableInspections(AssertWithoutMessageInspection.class);
     myFixture.testHighlighting("AssertsWithoutMessages.java");
   }
 

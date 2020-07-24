@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -386,8 +386,11 @@ public class ExecutionHelper {
     }
   }
 
-  private static Runnable createCancelableExecutionProcess(final ProcessHandler processHandler,
-                                                           final BooleanSupplier cancelableFun) {
+  /**
+   * @param cancelableFun supplier indicating that process should be terminated
+   */
+  private static Runnable createCancelableExecutionProcess(@NotNull ProcessHandler processHandler,
+                                                           @Nullable BooleanSupplier cancelableFun) {
     return new Runnable() {
       private ProgressIndicator myProgressIndicator;
       private final Semaphore mySemaphore = new Semaphore();

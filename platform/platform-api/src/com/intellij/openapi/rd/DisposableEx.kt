@@ -52,7 +52,7 @@ internal fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisp
   return d
 }
 
-@Suppress("ObjectLiteralToLambda") // non-object lambdas fuck up the disposer
+@Suppress("ObjectLiteralToLambda")
 fun Disposable.attach(disposable: () -> Unit) {
   Disposer.register(this, object : Disposable {
     override fun dispose() {

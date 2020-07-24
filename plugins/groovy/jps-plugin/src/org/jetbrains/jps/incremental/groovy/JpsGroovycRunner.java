@@ -265,7 +265,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                                                                    String compilerOutput,
                                                                    List<GroovycOutputParser.OutputItem> successfullyCompiled)
     throws IOException {
-    final MultiMap<T, GroovycOutputParser.OutputItem> compiled = MultiMap.createObjectLinkedOpenHashSet();
+    final MultiMap<T, GroovycOutputParser.OutputItem> compiled = MultiMap.createLinkedSet();
     for (final GroovycOutputParser.OutputItem item : successfullyCompiled) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("compiled=" + item);

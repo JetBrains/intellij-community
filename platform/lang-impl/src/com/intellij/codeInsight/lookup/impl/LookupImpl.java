@@ -100,6 +100,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
   private final FontPreferences myFontPreferences = new FontPreferencesImpl();
 
+  private final long myCreatedTimestamp;
   private long myStampShown = 0;
   private boolean myShown = false;
   private boolean myDisposed = false;
@@ -116,7 +117,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private boolean myFinishing;
   boolean myUpdating;
   private LookupUi myUi;
-  private Integer myLastVisibleIndex;
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
@@ -158,6 +158,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     updateListHeight(model);
 
     addListeners();
+
+    myCreatedTimestamp = System.currentTimeMillis();
   }
 
   private CollectionListModel<LookupElement> getListModel() {
@@ -664,6 +666,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
+    LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
+
     myAdComponent.showRandomText();
     if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
       myAdComponent.clearAdvertisements();
@@ -1023,9 +1027,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public int getLastVisibleIndex() {
-    if (myLastVisibleIndex != null) {
-      return myLastVisibleIndex;
-    }
     return myList.getLastVisibleIndex();
   }
 
@@ -1077,12 +1078,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     hide();
   }
 
-  private static Throwable staticDisposeTrace = null;
   private Throwable disposeTrace = null;
-
-  public static String getLastLookupDisposeTrace() {
-    return ExceptionUtil.getThrowableText(staticDisposeTrace);
-  }
 
   @Override
   public void dispose() {
@@ -1099,8 +1095,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (LOG.isDebugEnabled()) {
       LOG.debug("Disposing lookup:", disposeTrace);
     }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    staticDisposeTrace = disposeTrace;
   }
 
   private String formatDisposeTrace() {
@@ -1187,6 +1181,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void addPrefixChangeListener(PrefixChangeListener listener, Disposable parentDisposable) {
     ContainerUtil.add(listener, myPrefixChangeListeners, parentDisposable);
+  }
+
+
+  /**
+   * see {@link LookupCellRenderer.ItemPresentationCustomizer}
+   */
+  @ApiStatus.Internal
+  public void addPresentationCustomizer(@NotNull LookupCellRenderer.ItemPresentationCustomizer customizer) {
+    myCellRenderer.addPresentationCustomizer(customizer);
   }
 
   FontPreferences getFontPreferences() {

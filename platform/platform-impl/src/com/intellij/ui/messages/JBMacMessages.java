@@ -149,6 +149,10 @@ public class JBMacMessages extends MacMessagesEmulation {
       _window = _window.getOwner();
     }
 
+    while (_window != null && _window.getParent() != null && WindowManager.getInstance().isNotSuggestAsParent(_window)) {
+      _window = _window.getOwner();
+    }
+
     return _window;
   }
 

@@ -1,3 +1,7 @@
+# 22
+
+* `project dumb post-startup` -> `project post-startup`
+
 # 21
 
 * `tasks waiting` removed. No such activity anymore.

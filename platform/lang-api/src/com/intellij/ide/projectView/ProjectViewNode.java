@@ -74,7 +74,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return mySettings;
   }
 
-  public static List<AbstractTreeNode<?>> wrap(Collection objects,
+  public static List<AbstractTreeNode<?>> wrap(Collection<?> objects,
                                             Project project,
                                             Class<? extends AbstractTreeNode<?>> nodeClass,
                                             ViewSettings settings) {
@@ -139,8 +139,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
 
     Collection<? extends AbstractTreeNode<?>> kids = getChildren();
-    for (final AbstractTreeNode kid : kids) {
-      ProjectViewNode node = (ProjectViewNode)kid;
+    for (final AbstractTreeNode<?> kid : kids) {
+      ProjectViewNode<?> node = (ProjectViewNode<?>)kid;
       if (node.contains(file)) return true;
     }
     return false;

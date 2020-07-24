@@ -100,6 +100,27 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "    }\n" +
            "}");
   }
+  
+  public void testToArrayGeneric() {
+    doTest("import java.util.*;\n" +
+           "class Test {\n" +
+           "  static <A extends CharSequence> A[] toArray(List<CharSequence> cs) {\n" +
+           "    //noinspection unchecked\n" +
+           "    return (A[]) cs.stream().filter(Objects::nonNull).toArray(CharSequence[]::new);\n" +
+           "  }\n" +
+           "}");
+  }
+  
+  public void testToArrayGeneric2() {
+    doTest("import java.util.*;\n" +
+           "class Test {\n" +
+           "\n" +
+           "    static <A extends CharSequence> A[] toArray2(List<CharSequence> cs) {\n" +
+           "        //noinspection unchecked\n" +
+           "        return (A[]) cs.toArray(new CharSequence[0]);\n" +
+           "    }\n" +
+           "}");
+  }
 
   @NotNull
   @Override

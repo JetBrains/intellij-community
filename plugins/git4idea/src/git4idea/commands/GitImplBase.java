@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -343,26 +345,31 @@ public abstract class GitImplBase implements Git {
   }
 
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {
+    if (handler.isSilent()) return;
+
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
       GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
+
+      String workingDir = stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory());
+      vcsConsoleWriter.showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
+
       handler.addLineListener(new GitLineHandlerListener() {
+        private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+
         @Override
         public void onLineAvailable(String line, Key outputType) {
-          if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {
-            if (outputType == ProcessOutputTypes.STDOUT && !handler.isStdoutSuppressed()) {
-              vcsConsoleWriter.showMessage(line);
-            }
-            else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
-              if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
-            }
-          }
+          if (StringUtil.isEmptyOrSpaces(line)) return;
+          if (outputType == ProcessOutputTypes.SYSTEM) return;
+          if (outputType == ProcessOutputTypes.STDOUT && handler.isStdoutSuppressed()) return;
+          if (outputType == ProcessOutputTypes.STDERR && handler.isStderrSuppressed()) return;
+          if (outputType == ProcessOutputTypes.STDERR && looksLikeProgress(line)) return;
+
+          List<Pair<String, Key>> lineChunks = new ArrayList<>();
+          myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
+          vcsConsoleWriter.showMessage(lineChunks);
         }
       });
-      if (!handler.isSilent()) {
-        vcsConsoleWriter.showCommandLine("[" + stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory()) + "] "
-                                         + handler.printableCommandLine());
-      }
     }
   }
 
@@ -394,10 +401,12 @@ public abstract class GitImplBase implements Git {
 
   public static final String[] PROGRESS_INDICATORS = {
     "Counting objects:",
+    "Enumerating objects:",
     "Compressing objects:",
     "Writing objects:",
     "Receiving objects:",
-    "Resolving deltas:"
+    "Resolving deltas:",
+    "Finding sources:"
   };
 
   private static boolean looksLikeError(@NotNull final String text) {

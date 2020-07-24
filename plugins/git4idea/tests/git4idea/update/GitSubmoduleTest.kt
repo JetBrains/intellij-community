@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtil
 import git4idea.config.UpdateMethod.MERGE
@@ -28,8 +29,12 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
   private lateinit var main2: RepositoryAndParent
   private lateinit var sub2: File
 
+  private lateinit var dirtyScopeManager: VcsDirtyScopeManager
+
   override fun setUp() {
     super.setUp()
+
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
     // prepare second clone & parent.git
     main2 = createPlainRepo("main")
@@ -151,6 +156,24 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     }
     finally {
       settings.setUpdateAllRootsIfPushRejected(updateAllRootsIfPushRejected)
+    }
+  }
+
+  // IDEA-234159
+  fun `test modified submodule is visible in local changes`() {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    echo("a", "content\n")
+    addCommit("in submodule")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    cd(projectPath)
+    assertChanges {
+      modified("sub")
     }
   }
 

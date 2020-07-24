@@ -246,11 +246,12 @@ public class SmartListTest {
     assertThat(list).isEqualTo(list);
   }
 
+  @SuppressWarnings({"EqualsBetweenInconvertibleTypes", "MismatchedQueryAndUpdateOfCollection"})
   @Test
   public void testEqualsNonListCollection() {
     List<Integer> list = new SmartList<>();
 
-    assertThat(list).isNotEqualTo(new HashSet<>());
+    assertThat(list.equals(new HashSet<>())).isFalse();
   }
 
   @Test

@@ -2,6 +2,7 @@
   <actions>
     <group id="LookupActions">
       <!-- these must be declared before standard EnterAction and TabAction -->
+      <action id="SelectVirtualTemplateElement" class="com.intellij.refactoring.rename.inplace.SelectVirtualTemplateElement" />
       <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
       <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"
@@ -51,7 +52,7 @@
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
-      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
+      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
     </group>
 
@@ -85,15 +86,7 @@
               icon="AllIcons.Actions.PreviewDetails"
               class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
       <separator/>
-      <action id="ProblemsView.ShowErrors"
-              icon="AllIcons.General.Error"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowErrors"/>
-      <action id="ProblemsView.ShowWarnings"
-              icon="AllIcons.General.Warning"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowWarnings"/>
-      <action id="ProblemsView.ShowInformation"
-              icon="AllIcons.General.Information"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowInformation"/>
+      <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
       <separator/>
       <action id="ProblemsView.SortFoldersFirst"
               icon="AllIcons.ObjectBrowser.SortByType"
@@ -108,20 +101,26 @@
 
     <group id="ProblemsView.ToolWindow.Toolbar">
       <group id="ProblemsView.Filter" icon="AllIcons.Actions.Show" popup="true">
-        <reference ref="ProblemsView.ShowErrors"/>
-        <reference ref="ProblemsView.ShowWarnings"/>
-        <reference ref="ProblemsView.ShowInformation"/>
-      </group>
-      <group id="ProblemsView.Comparator" icon="AllIcons.ObjectBrowser.SortByType" popup="true">
+        <reference ref="ProblemsView.SeverityFilters"/>
+        <separator/>
         <reference ref="ProblemsView.SortFoldersFirst"/>
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.QuickFix"
-              icon="AllIcons.Actions.IntentionBulb"
-              use-shortcut-of="ShowIntentionActions"
-              class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixAction"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.TreePopup">
+      <action id="ProblemsView.CopyProblemDescription"
+              icon="AllIcons.Actions.Copy"
+              use-shortcut-of="$Copy"
+              class="com.intellij.analysis.problemsView.toolWindow.CopyProblemDescriptionAction"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <group id="ProblemsView.QuickFixes"
+             icon="AllIcons.Actions.IntentionBulb"
+             use-shortcut-of="ShowIntentionActions"
+             class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixes"/>
     </group>
   </actions>
 

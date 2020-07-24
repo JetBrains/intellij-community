@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -151,7 +151,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
   private fun findDomain(domainName: String): Any? {
     val testDomain = this.testDomain
     if (testDomain != null && testDomain.first == domainName) return testDomain.second
-    return JsonRpcDomainBean.EP_NAME.getByKey(domainName, JsonRpcDomainBean::name)?.instance
+    return JsonRpcDomainBean.EP_NAME.getByKey(domainName, JsonRpcServer::class.java, JsonRpcDomainBean::name)?.instance
   }
 
   private fun processClientError(client: Client, error: String, messageId: Int) {

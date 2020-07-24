@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class IdempotenceChecker {
+public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);

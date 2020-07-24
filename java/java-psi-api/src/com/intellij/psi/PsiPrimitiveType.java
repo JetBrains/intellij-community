@@ -191,6 +191,34 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
   }
 
   /**
+   * @param descriptor one letter JVM type descriptor ('B' for byte, 'J' for long, etc.)
+   * @return corresponding primitive type, null if the supplied character is not a valid JVM type descriptor
+   */
+  @Contract(pure = true)
+  public static @Nullable PsiPrimitiveType fromJvmTypeDescriptor(char descriptor) {
+    switch (descriptor) {
+      case 'B':
+        return PsiType.BYTE;
+      case 'C':
+        return PsiType.CHAR;
+      case 'D':
+        return PsiType.DOUBLE;
+      case 'F':
+        return PsiType.FLOAT;
+      case 'Z':
+        return PsiType.BOOLEAN;
+      case 'I':
+        return PsiType.INT;
+      case 'J':
+        return PsiType.LONG;
+      case 'S':
+        return PsiType.SHORT;
+      default:
+        return null;
+    }
+  }
+
+  /**
    * This method is nullable since {@link PsiType#NULL} has no FQN.<br/>
    * Consider using {@link JvmPrimitiveTypeKind#getBoxedFqn()} if you know the type you need to get FQN of,
    * e.g. instead of {@code PsiType.INT.getBoxedTypeName()} use {@code JvmPrimitiveTypeKind.INT.getBoxedFqn()}.

@@ -10,7 +10,7 @@ import java.awt.*;
  * @author Vassiliy Kudryashov
  * @author Konstantin Bulenkov
  *
- * @deprecated use {@link com.intellij.util.ui.ColorsIcon} instead
+ * @deprecated use {@link ColorsIcon} instead
  */
 @Deprecated
 public class TwoColorsIcon extends ColorsIcon {

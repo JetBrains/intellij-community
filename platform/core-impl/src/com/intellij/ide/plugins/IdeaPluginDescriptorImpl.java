@@ -849,7 +849,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myLoader != null ? myLoader : getClass().getClassLoader();
   }
 
-  public boolean getUseIdeaClassLoader() {
+  public boolean isUseIdeaClassLoader() {
     return myUseIdeaClassLoader;
   }
 
@@ -946,6 +946,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String toString() {
-    return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + path + ")";
+    return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + path + ", version=" + myVersion + ")";
   }
 }

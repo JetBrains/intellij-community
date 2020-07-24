@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredicate {
@@ -33,7 +32,7 @@ class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredi
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final PsiExpression strippedLhs =
-      ParenthesesUtils.stripParentheses(lhs);
+      PsiUtil.skipParenthesizedExprDown(lhs);
     if (!(strippedLhs instanceof PsiReferenceExpression)) {
       return false;
     }

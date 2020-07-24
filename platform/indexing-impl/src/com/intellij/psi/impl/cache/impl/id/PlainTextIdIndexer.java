@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IdDataConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

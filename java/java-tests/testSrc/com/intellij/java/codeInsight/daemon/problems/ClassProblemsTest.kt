@@ -88,6 +88,41 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
     assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
   }
 
+  fun testInheritedMethodUsage() {
+    myFixture.addClass("""
+        package foo;
+        
+        public class Parent {
+          public void foo() {}
+        }
+      """.trimIndent())
+
+    val aClass = myFixture.addClass("""
+        package foo;
+        
+        public class A extends Parent {
+        }
+      """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+        package foo;
+        
+        public class Usage {
+          void test() {
+            (new A()).foo();
+          }
+        }
+    """.trimIndent())
+
+    doTest(aClass) {
+      changeClass(aClass) { psiClass, factory ->
+        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+
+      assertTrue(hasReportedProblems<PsiClass>(aClass, refClass))
+    }
+  }
+
   private fun doNestedClassTest(isStatic: Boolean) {
     val staticModifier = if (isStatic) "static" else ""
     val targetClass = myFixture.addClass("""

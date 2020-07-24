@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -606,9 +607,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkMustBeThrowable(type, expression, true));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkConstantExpression(expression));
-    if (!myHolder.hasErrorResults() && parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
+    if (!myHolder.hasErrorResults() && shouldReportForeachNotApplicable(expression)) {
       myHolder.add(GenericsHighlightUtil.checkForeachExpressionTypeIsIterable(expression));
     }
+  }
+
+  private static boolean shouldReportForeachNotApplicable(@NotNull final PsiExpression expression) {
+    if (!(expression.getParent() instanceof PsiForeachStatement)) return false;
+
+    @NotNull final PsiForeachStatement parentForEach = (PsiForeachStatement)expression.getParent();
+    final PsiExpression iteratedValue = parentForEach.getIteratedValue();
+    if (iteratedValue != expression) return false;
+
+    // Ignore if the type the value of which that is being iterated over is not resolved yet
+    final PsiType iteratedValueType = iteratedValue.getType();
+    return !(iteratedValueType instanceof PsiClassReferenceType) || ((PsiClassReferenceType)iteratedValueType).resolve() != null;
   }
 
   @Override

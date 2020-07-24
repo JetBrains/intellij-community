@@ -41,6 +41,10 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public String getInformationHint(@NotNull PsiExpression element) {
+    return StringUtil.escapeXmlEntities(getTypePresentation(element));
+  }
+
+  private static @NotNull String getTypePresentation(@NotNull PsiExpression element) {
     PsiType type = element.getType();
     if (type instanceof PsiLambdaExpressionType) {
       type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
@@ -48,8 +52,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     else if (type instanceof PsiMethodReferenceType) {
       type = ((PsiMethodReferenceType)type).getExpression().getFunctionalInterfaceType();
     }
-    String text = type == null ? "<unknown>" : type.getPresentableText();
-    return StringUtil.escapeXmlEntities(text);
+    return type == null ? "<unknown>" : type.getPresentableText();
   }
 
   @NotNull
@@ -88,7 +91,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     if (expression == null) return "<unknown>";
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     List<Pair<String, String>> infoLines = new ArrayList<>();
-    String basicTypeEscaped = getInformationHint(expression);
+    String basicType = getTypePresentation(expression);
     if (result != null) {
       DfType dfType = result.getDfType(expression);
       PsiType type = expression.getType();
@@ -131,16 +134,16 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     }
     infoLines.removeIf(pair -> pair.getSecond().isEmpty());
     if (!infoLines.isEmpty()) {
-      infoLines.add(0, Pair.create("Type", basicTypeEscaped));
+      infoLines.add(0, Pair.create("Type", basicType));
       return StreamEx.of(infoLines).map(pair -> makeHtmlRow(pair.getFirst(), pair.getSecond())).joining("", "<table>", "</table>");
     }
-    return basicTypeEscaped;
+    return basicType;
   }
 
-  private static String makeHtmlRow(@NotNull String titleText, String contentHtml) {
+  private static String makeHtmlRow(@NotNull String titleText, String contentText) {
     String titleCell = "<td align='left' valign='top' style='color:" +
                        ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXmlEntities(titleText) + ":</td>";
-    String contentCell = "<td>" + contentHtml + "</td>";
+    String contentCell = "<td>" + StringUtil.escapeXmlEntities(contentText) + "</td>";
     return "<tr>" + titleCell + contentCell + "</tr>";
   }
 }

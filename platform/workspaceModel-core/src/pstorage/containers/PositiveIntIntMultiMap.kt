@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.function.IntConsumer
 
 /**
- * @author Alex Plate
+ * Int to Int multimap that can hold *ONLY* non-negative integers and optimized for memory and reading.
  *
  * See:
  *  - [ImmutablePositiveIntIntMultiMap.ByList]
@@ -15,6 +15,8 @@ import java.util.function.IntConsumer
  * and
  *  - [MutablePositiveIntIntMultiMap.ByList]
  *  - [MutablePositiveIntIntMultiMap.BySet]
+ *
+ * @author Alex Plate
  */
 
 sealed class ImmutablePositiveIntIntMultiMap(

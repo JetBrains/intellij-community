@@ -63,7 +63,7 @@ public class RollbackUtil {
 
   /**
    * Finds the appropriate name for the "rollback" operation, looking through all VCSs registered in the project.
-   * @see #getRollbackOperationName(java.util.Collection)
+   * @see #getRollbackOperationName(Collection)
    */
   @NotNull
   public static String getRollbackOperationName(@NotNull Project project) {

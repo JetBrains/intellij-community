@@ -6,12 +6,13 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.PathUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.util.PathUtilRt
 import junit.framework.TestCase
 
 internal class FilePredictionTestProjectBuilder(mainPath: String? = null, imports: String? = null) {
@@ -136,20 +137,20 @@ internal class FilePredictionTestProjectBuilder(mainPath: String? = null, import
     val name = getFileName(path)
     if (FileUtilRt.extensionEquals(path, "java")) {
       val builder = StringBuilder()
-      PathUtil.getParent(path)?.replace("/", ".")?.let { builder.append("package $it;\n") }
+      OSAgnosticPathUtil.getParent(path)?.replace("/", ".")?.let { builder.append("package $it;\n") }
       builder.append("\n")
 
       imports?.let { builder.append(imports).append("\n") }
       builder.append("class $name {}")
       return builder.toString()
     }
-    return name!!
+    return name
   }
 
   private fun isMainFile(path: String) = StringUtil.equals(DEFAULT_MAIN_FILE, getFileName(path))
 
-  private fun getFileName(path: String) =
-    FileUtilRt.getRelativePath(PathUtil.getParent(path)!!, FileUtilRt.getNameWithoutExtension(path), '/')
+  private fun getFileName(path: String): String =
+    FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(path))
 }
 
 private data class FileAction(val filePath: String, val actionType: FileActionType)

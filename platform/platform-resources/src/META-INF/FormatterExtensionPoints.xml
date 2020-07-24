@@ -4,6 +4,10 @@
       <with attribute="implementationClass" implements="com.intellij.formatting.FormattingModelBuilder"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.formatter.newLineIndentMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.formatter.restriction" interface="com.intellij.lang.LanguageFormattingRestriction" dynamic="true"/>
     <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ImportOptimizer"/>

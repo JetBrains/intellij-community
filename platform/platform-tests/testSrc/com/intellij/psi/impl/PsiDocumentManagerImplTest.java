@@ -197,13 +197,9 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   public void testDocumentFromAlienProjectDoesNotEndUpInMyUncommittedList() throws Exception {
     PsiFile file = findFile(createFile());
 
-    final Document document = getDocument(file);
+    Document document = getDocument(file);
 
-    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
-    boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
-    assertTrue(succ2);
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
-
+    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"));
     try {
       PsiManager alienManager = PsiManager.getInstance(alienProject);
       final String alienText = "alien";
@@ -345,11 +341,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     final Document document = getDocument(file);
 
-    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
-    boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
-    assertTrue(succ2);
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
-
+    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"));
     try {
       PsiManager alienManager = PsiManager.getInstance(alienProject);
 
@@ -928,8 +920,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     })).get();
   }
 
-  public void test_performWhenAllCommitted_does_not_race_with_background_light_commits_resulting_in_exceptions(){
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+  public void testPerformWhenAllCommittedDoesNotRaceWithBackgroundLightCommitsResultingInExceptions(){
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getTestName(false), 10);
 
     PsiFile mainFile = findFile(createFile());
     Document mainDoc = getDocument(mainFile);

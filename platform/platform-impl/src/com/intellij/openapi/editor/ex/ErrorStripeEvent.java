@@ -17,6 +17,8 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -25,21 +27,21 @@ public class ErrorStripeEvent extends EventObject {
   private final MouseEvent myMouseEvent;
   private final RangeHighlighter myHighlighter;
 
-  public ErrorStripeEvent(Editor editor, MouseEvent mouseEvent, RangeHighlighter highlighter) {
+  public ErrorStripeEvent(@NotNull Editor editor, @Nullable MouseEvent mouseEvent, @NotNull RangeHighlighter highlighter) {
     super(editor);
     myMouseEvent = mouseEvent;
     myHighlighter = highlighter;
   }
 
-  public Editor getEditor() {
-    return (Editor) getSource();
+  public @NotNull Editor getEditor() {
+    return (Editor)getSource();
   }
 
-  public MouseEvent getMouseEvent() {
+  public @Nullable MouseEvent getMouseEvent() {
     return myMouseEvent;
   }
 
-  public RangeHighlighter getHighlighter() {
+  public @NotNull RangeHighlighter getHighlighter() {
     return myHighlighter;
   }
 }

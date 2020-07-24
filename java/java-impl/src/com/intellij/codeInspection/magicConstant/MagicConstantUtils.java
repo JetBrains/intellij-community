@@ -6,10 +6,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -239,7 +239,9 @@ public class MagicConstantUtils {
 
   private static boolean containsBeanInfoText(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
-      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo"), file));
+      CachedValueProvider.Result.create(PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "beaninfo") &&
+                                        PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "enum"),
+                                        file));
   }
 
   static boolean same(@NotNull PsiElement e1, @NotNull PsiElement e2, @NotNull PsiManager manager) {

@@ -91,5 +91,4 @@ public class UnsignedBitSetTest {
     bitSet.set(-3, 1, true);
     assertEquals("00111110000", toStr(bitSet));
   }
-
 }

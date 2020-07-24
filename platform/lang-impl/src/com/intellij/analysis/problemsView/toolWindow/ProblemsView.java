@@ -30,8 +30,8 @@ import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   private static final String ID = "Problems View";
 
-  public static @Nullable ToolWindow getToolWindow(@NotNull Project project) {
-    return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
+  public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
+    return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
   public static void showCurrentFileProblems(@NotNull Project project) {
@@ -57,7 +57,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static @Nullable Content getSelectedContent(@Nullable Project project) {
-    ToolWindow window = project == null ? null : getToolWindow(project);
+    ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();
     return manager == null ? null : manager.getSelectedContent();
   }
@@ -95,7 +95,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(isToolbarVisible(window, PropertiesComponent.getInstance(project)));
     ContentManager manager = window.getContentManager();
     createContent(manager, new HighlightingPanel(project, state));
-    //TODO:createContent(manager, new ProjectProblemsViewPanel(project, state));
+    createContent(manager, new ProjectErrorsPanel(project, state));
     selectContent(manager, state.getSelectedIndex());
     selectionChanged(true, manager.getSelectedContent());
     manager.addContentManagerListener(new ContentManagerListener() {

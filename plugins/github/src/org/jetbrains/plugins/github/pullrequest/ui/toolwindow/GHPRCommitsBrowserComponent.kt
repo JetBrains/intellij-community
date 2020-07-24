@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
@@ -101,7 +102,7 @@ internal object GHPRCommitsBrowserComponent {
       font = FontUtil.getCommitMetadataFont()
     }
 
-    val commitDetailsPanel = ScrollablePanel(VerticalLayout(CommitDetailsPanel.INTERNAL_BORDER)).apply {
+    val commitDetailsPanel = ScrollablePanel(VerticalLayout(UI.scale(CommitDetailsPanel.INTERNAL_BORDER))).apply {
       border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER)
       background = getCommitDetailsBackground()
 

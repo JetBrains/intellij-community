@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Consumer
 import com.intellij.util.net.HttpConfigurable
 import gnu.trove.THash
-import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling
 import org.gradle.internal.impldep.com.google.common.collect.Multimap
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.idea.IdeaModule
@@ -53,10 +52,9 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
       Init::class.java,  // gradle-tooling-extension-impl jar
       Multimap::class.java, // repacked gradle guava
       GsonBuilder::class.java,
-      ShortTypeHandling::class.java,
       THash::class.java,  // trove4j jar
       IonType::class.java,  // ion-java jar
-      SystemInfoRt::class.java // util-rt jat, !!! do not replace it with SystemInfo.class from util module
+      SystemInfoRt::class.java // util-rt jar, !!! do not replace it with SystemInfo.class from util module
     )
   }
 

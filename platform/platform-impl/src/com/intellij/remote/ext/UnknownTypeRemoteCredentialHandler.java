@@ -15,7 +15,7 @@ public class UnknownTypeRemoteCredentialHandler extends RemoteCredentialsHandler
 
   @Override
   public @NotNull String getId() {
-    return getCredentials().getInterpreterPath();
+    return getCredentials().getSdkId();
   }
 
   @Override

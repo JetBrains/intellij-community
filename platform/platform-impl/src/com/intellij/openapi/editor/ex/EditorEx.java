@@ -270,7 +270,7 @@ public interface EditorEx extends Editor {
 
   /**
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
-   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
    */
   void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
 

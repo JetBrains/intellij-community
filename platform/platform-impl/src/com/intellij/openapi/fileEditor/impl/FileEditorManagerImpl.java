@@ -1266,20 +1266,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
-      return Pair.create(composite.getEditors(), composite.getProviders());
+      return new Pair<>(composite.getEditors(), composite.getProviders());
     }
 
     List<EditorWithProviderComposite> composites = getEditorComposites(file);
     if (!composites.isEmpty()) {
-      return Pair.create(composites.get(0).getEditors(), composites.get(0).getProviders());
+      return new Pair<>(composites.get(0).getEditors(), composites.get(0).getProviders());
     }
-    return Pair.create(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
+    return new Pair<>(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
   }
 
   @Override
   public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof VirtualFileWindow) {
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
     file = BackedVirtualFile.getOriginFileIfBacked(file);
 
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
@@ -1403,7 +1405,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     // extends/cuts number of opened tabs. Also updates location of tabs
     connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
 
-    StartupManager.getInstance(myProject).registerPostStartupDumbAwareActivity(() -> {
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
       if (myProject.isDisposed()) {
         return;
       }
@@ -1470,8 +1472,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(SoftReference.dereference(myLastSelectedComposite));
     Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);
-    boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
-    boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
+    boolean filesEqual = Objects.equals(oldData.first, newData.first);
+    boolean editorsEqual = Objects.equals(oldData.second, newData.second);
     if (!filesEqual || !editorsEqual) {
       if (oldData.first != null && newData.first != null) {
         for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
@@ -1546,11 +1548,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (int i = editors.length - 1; i >= 0; i--) {
       FileEditor editor1 = editors[i];
       FileEditorProvider provider = providers[i];
-      if (!editor.equals(selectedEditor)) {
-        // we already notified the myEditor (when fire event)
-        if (selectedEditor.equals(editor1)) {
-          editor1.deselectNotify();
-        }
+      // we already notified the myEditor (when fire event)
+      if (selectedEditor.equals(editor1)) {
+        editor1.deselectNotify();
       }
       editor1.removePropertyChangeListener(myEditorPropertyChangeListener);
       provider.disposeEditor(editor1);

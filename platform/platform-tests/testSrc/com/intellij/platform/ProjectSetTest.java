@@ -38,7 +38,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
 
   public void testProjectSetReader() throws IOException {
     final Ref<List<? extends Pair<String, String>>> ref = Ref.create();
-    ProjectSetProcessor.EXTENSION_POINT_NAME.getPoint(null).registerExtension(new ProjectSetProcessor() {
+    ProjectSetProcessor.EXTENSION_POINT_NAME.getPoint().registerExtension(new ProjectSetProcessor() {
       @Override
       public String getId() {
         return "test";
@@ -62,7 +62,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
 
   public void testVcsCheckoutProcessor() throws IOException {
     final List<Pair<String, String>> pairs = new ArrayList<>();
-    VcsCheckoutProcessor.EXTENSION_POINT_NAME.getPoint(null).registerExtension(new VcsCheckoutProcessor() {
+    VcsCheckoutProcessor.EXTENSION_POINT_NAME.getPoint().registerExtension(new VcsCheckoutProcessor() {
       @NotNull
       @Override
       public String getId() {

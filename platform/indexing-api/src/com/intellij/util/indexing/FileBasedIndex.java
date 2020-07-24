@@ -40,7 +40,7 @@ public abstract class FileBasedIndex {
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
   @ApiStatus.Internal
-  @ApiStatus.Experimental
+  @Nullable
   public DumbModeAccessType getCurrentDumbModeAccessType() {
     throw new UnsupportedOperationException();
   }

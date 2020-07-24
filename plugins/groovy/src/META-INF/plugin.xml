@@ -1298,12 +1298,6 @@
       <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="JavaGenerateGroup1"/>
     </group>
 
-    <action id="Groovy.Doc.Generating"
-            class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            icon="JetgroovyIcons.Groovy.GroovyDoc">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
@@ -1322,9 +1316,6 @@
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <action id="groovy.scripting.shell"
-            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"/>
   </actions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

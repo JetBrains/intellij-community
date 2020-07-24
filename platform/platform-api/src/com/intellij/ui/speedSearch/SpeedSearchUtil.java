@@ -89,12 +89,7 @@ public final class SpeedSearchUtil {
     if (speedSearch != null) {
       final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
       if (fragments != null) {
-        final Color fg = attributes.getFgColor();
-        Color bg = UIUtil.getTreeBackground(selected, true);
-        final int style = attributes.getStyle();
-        final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
-        final SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
-        appendColoredFragments(simpleColoredComponent, text, fragments, plain, highlighted);
+        appendSpeedSearchColoredFragments(simpleColoredComponent, text, fragments, attributes, selected);
         return;
       }
     }
@@ -123,6 +118,19 @@ public final class SpeedSearchUtil {
     else {
       component.append(text, attributes);
     }
+  }
+
+  public static void appendSpeedSearchColoredFragments(@NotNull SimpleColoredComponent simpleColoredComponent,
+                                                       @NotNull String text,
+                                                       @NotNull Iterable<? extends TextRange> colored,
+                                                       @NotNull SimpleTextAttributes attributes,
+                                                       boolean selected) {
+    final Color fg = attributes.getFgColor();
+    final Color bg = UIUtil.getTreeBackground(selected, true);
+    final int style = attributes.getStyle();
+    final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
+    final SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
+    appendColoredFragments(simpleColoredComponent, text, colored, plain, highlighted);
   }
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,

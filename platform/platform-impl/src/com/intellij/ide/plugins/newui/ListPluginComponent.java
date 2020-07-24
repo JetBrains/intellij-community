@@ -276,7 +276,7 @@ public class ListPluginComponent extends JPanel {
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled()) {
+    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
       return;
     }
 
@@ -343,7 +343,8 @@ public class ListPluginComponent extends JPanel {
       if (myVersion != null) {
         myVersion.setText(PluginManagerConfigurable.getVersion(myPlugin, descriptor));
       }
-      if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null) {
+      if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null &&
+          !myPlugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode())) {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));

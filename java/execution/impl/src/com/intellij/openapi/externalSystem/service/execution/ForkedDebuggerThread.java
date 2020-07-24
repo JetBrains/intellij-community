@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
@@ -297,8 +297,8 @@ class ForkedDebuggerThread extends Thread {
               EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
               int startOffset = myHyperlink.getStartOffset();
               int endOffset = myHyperlink.getEndOffset();
-              TextAttributes inactiveTextAttributes = myHyperlink.getTextAttributes() != null
-                                                      ? myHyperlink.getTextAttributes().clone() : TextAttributes.ERASE_MARKER.clone();
+              TextAttributes attributes = myHyperlink.getTextAttributes(mainConsoleView.getEditor().getColorsScheme());
+              TextAttributes inactiveTextAttributes = attributes != null ? attributes.clone() : TextAttributes.ERASE_MARKER.clone();
               inactiveTextAttributes.setForegroundColor(UIUtil.getInactiveTextColor());
               inactiveTextAttributes.setEffectColor(UIUtil.getInactiveTextColor());
               inactiveTextAttributes.setFontType(Font.ITALIC);

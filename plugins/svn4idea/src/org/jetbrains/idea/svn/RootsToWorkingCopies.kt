@@ -1,39 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ZipperUpdater
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Alarm
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
-class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
+@Service
+class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposable {
   private val myLock = Any()
-  private val myProject = myVcs.project
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
   private val myUnversioned = mutableSetOf<VirtualFile>()
-  private val myQueue = BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker")
-  private val myZipperUpdater = ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, myProject)
+  private val myQueue = BackgroundTaskQueue(project, "SVN VCS roots authorization checker")
+  private val myZipperUpdater = ZipperUpdater(200, this)
   private val myRechecker = Runnable {
     clear()
-    val roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)
+    val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)
     for (root in roots) {
       addRoot(root)
     }
   }
 
+  private val vcs: SvnVcs get() = SvnVcs.getInstance(project)
+
+  init {
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, this)
+  }
+
   private fun addRoot(root: VirtualFile) {
-    myQueue.run(object : Task.Backgroundable(myProject, "Looking for '${root.path}' working copy root", false) {
+    myQueue.run(object : Task.Backgroundable(project, "Looking for '${root.path}' working copy root", false) {
       override fun run(indicator: ProgressIndicator) {
         calculateRoot(root)
       }
@@ -45,7 +56,7 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
     assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
     if (url == null) return null
 
-    val roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject))
+    val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)
     synchronized(myLock) {
       for (root in roots) {
         val wcRoot = getWcRoot(root)
@@ -74,7 +85,7 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
     var workingCopy: WorkingCopy? = null
 
     if (workingCopyRoot != null) {
-      val svnInfo = myVcs.getInfo(workingCopyRoot)
+      val svnInfo = vcs.getInfo(workingCopyRoot)
 
       if (svnInfo != null && svnInfo.url != null) {
         workingCopy = WorkingCopy(workingCopyRoot, svnInfo.url)
@@ -98,18 +109,28 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
     return resolvedWorkingCopy
   }
 
+  override fun dispose() = clearData()
+
   fun clear() {
+    clearData()
+    myZipperUpdater.stop()
+  }
+
+  private fun clearData() =
     synchronized(myLock) {
       myRootMapping.clear()
       myUnversioned.clear()
     }
-    myZipperUpdater.stop()
-  }
 
   override fun directoryMappingChanged() {
     // todo +- here... shouldnt be
-    myVcs.authNotifier.clear()
+    SvnAuthenticationNotifier.getInstance(project).clear()
 
     myZipperUpdater.queue(myRechecker)
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): RootsToWorkingCopies = project.service()
   }
 }

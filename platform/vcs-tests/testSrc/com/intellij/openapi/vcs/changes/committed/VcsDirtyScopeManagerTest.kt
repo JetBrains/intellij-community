@@ -16,13 +16,13 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
  */
 class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
-  private lateinit var dirtyScopeManager: VcsDirtyScopeManager
+  private lateinit var dirtyScopeManager: VcsDirtyScopeManagerImpl
   private lateinit var vcs: MockAbstractVcs
   private lateinit var basePath: FilePath
 
   override fun setUp() {
     super.setUp()
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+    dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project)
     vcs = MockAbstractVcs(project)
     basePath = getFilePath(projectRoot)
 
@@ -128,7 +128,11 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     assertTrue(otherVcsScope.recursivelyDirtyDirectories.contains(subRoot))
   }
 
-  private fun retrieveDirtyScopes() = dirtyScopeManager.retrieveScopes()!!
+  private fun retrieveDirtyScopes(): VcsInvalidated {
+    val scopes = dirtyScopeManager.retrieveScopes()!!
+    dirtyScopeManager.changesProcessed()
+    return scopes
+  }
 
   private fun disableVcsDirtyScopeVfsListener() {
     project.service<VcsDirtyScopeVfsListener>().setForbid(true)
@@ -151,6 +155,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
     dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
+    dirtyScopeManager.changesProcessed()
   }
 
   private fun createFile(parentDir: FilePath, name: String): FilePath {

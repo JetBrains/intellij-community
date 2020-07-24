@@ -2,22 +2,23 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Open project with {@code project.ipr}.
  */
 public class ProjectCheckoutListener implements CheckoutListener {
-  public ProjectCheckoutListener() { }
-
   @Override
-  public boolean processCheckedOutDirectory(Project project, File directory) {
-    File[] files = directory.listFiles((dir, name) -> dir.isFile() && name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION));
+  public boolean processCheckedOutDirectory(@NotNull Project project, @NotNull Path directory) {
+    File[] files = directory.toFile().listFiles((dir, name) -> dir.isFile() && name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (files != null && files.length > 0) {
-      ProjectUtil.openProject(files[0].getPath(), project, false);
+      ProjectUtil.openProject(files[0].toPath(), OpenProjectTask.withProjectToClose(project));
       return true;
     }
     return false;

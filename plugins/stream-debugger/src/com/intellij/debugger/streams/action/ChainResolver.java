@@ -80,8 +80,8 @@ class ChainResolver {
     return chains;
   }
 
-  private static List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
-    return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), LibrarySupportProvider::getLanguageId);
+  private static @NotNull List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
+    return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), ChainResolver.class, LibrarySupportProvider::getLanguageId);
   }
 
   enum ChainStatus {

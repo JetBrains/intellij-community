@@ -16,9 +16,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.DomIconProvider;
+import com.intellij.pom.PomIconProvider;
+import com.intellij.pom.PomTarget;
+import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,10 +26,12 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class DefaultDomTargetIconProvider extends DomIconProvider implements DumbAware {
+public class DefaultDomTargetIconProvider extends PomIconProvider implements DumbAware {
   @Override
-  public Icon getIcon(@NotNull DomElement element, int flags) {
-    Icon icon = element.getPresentation().getIcon();
-    return icon == null ? ElementPresentationManager.getIconOld(element) : icon;
+  public Icon getIcon(@NotNull PomTarget target, int flags) {
+    if (target instanceof DomTarget) {
+      return ((DomTarget)target).getDomElement().getPresentation().getIcon();
+    }
+    return null;
   }
 }

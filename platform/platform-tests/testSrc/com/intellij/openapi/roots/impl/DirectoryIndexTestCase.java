@@ -62,10 +62,10 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
     assertNull(info.toString(), info.getUnloadedModuleName());
   }
 
-  protected void assertExcluded(VirtualFile file, Module module) {
+  protected void assertExcluded(@NotNull VirtualFile file, Module module) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(info.toString(), info.isExcluded(file));
-    assertNull(info.toString(), info.getUnloadedModuleName());
+    assertTrue(file + " " + info, info.isExcluded(file));
+    assertNull(file + " " + info, info.getUnloadedModuleName());
     assertEquals(module, info.getModule());
     assertFalse(myFileIndex.isInSource(file));
     assertFalse(myFileIndex.isInSourceContent(file));

@@ -100,7 +100,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     if (Registry.is("ide.new.run.config", false)) {
-      return new JavaApplicationSettingsEditor(getProject());
+      return new JavaApplicationSettingsEditor(this);
     }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));

@@ -80,7 +80,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     assertProviderChanges(listOf(newMasterFile, newFeatureFile), listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
     assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED),
                            Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED),
-                           Conflict("a.txt", Status.DELETED, Status.DELETED, false))
+                           Conflict("a.txt", Status.DELETED, Status.DELETED))
   }
   
   private fun modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
@@ -129,7 +129,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   private fun assertManagerConflicts(vararg expectedConflicts: Conflict) {
     updateChangeListManager()
 
-    val actualConflicts = repo.conflictsHolder.conflicts.map {
+    val actualConflicts = repo.stagingAreaHolder.allConflicts.map {
       Conflict(it.filePath.name,
                it.getStatus(ConflictSide.OURS),
                it.getStatus(ConflictSide.THEIRS))
@@ -139,7 +139,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     val actualLocalChangesConflicts = changeListManager.allChanges
       .filter { it.fileStatus == FileStatus.MERGED_WITH_CONFLICTS }
       .map { ChangesUtil.getFilePath(it).name }
-    val expectedLocalChangesConflicts = expectedConflicts.filter { it.visibleInLocalChanges }.map { it.name }
+    val expectedLocalChangesConflicts = expectedConflicts.map { it.name }
     assertSameElements(actualLocalChangesConflicts, expectedLocalChangesConflicts)
   }
 
@@ -149,8 +149,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
 
   private class Conflict(val name: String,
                          val ourStatus: Status,
-                         val theirsStatus: Status,
-                         val visibleInLocalChanges: Boolean = true) {
+                         val theirsStatus: Status) {
     override fun hashCode(): Int = name.hashCode()
     override fun equals(other: Any?): Boolean = other is Conflict &&
                                                 name == other.name &&

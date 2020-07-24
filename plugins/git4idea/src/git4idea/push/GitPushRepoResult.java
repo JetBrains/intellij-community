@@ -32,7 +32,7 @@ import java.util.List;
  * Includes information about the number of pushed commits (or -1 if undefined),
  * and tells whether the repository was updated after the push was rejected.
  *
- * @see git4idea.push.GitPushNativeResult
+ * @see GitPushNativeResult
  */
 public class GitPushRepoResult {
 

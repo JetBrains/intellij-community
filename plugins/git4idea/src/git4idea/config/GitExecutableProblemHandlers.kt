@@ -11,6 +11,7 @@ import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
@@ -61,7 +62,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun hideProgress()
 
-  @CalledInAny
+  @CalledInBackground
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
     GitExecutableManager.getInstance().dropExecutableCache()
@@ -97,8 +98,17 @@ internal fun getErrorTitle(text: String, description: String?) =
 
 internal fun getErrorMessage(text: String, description: String?) = description ?: text
 
+internal fun getHumanReadableErrorFor(exception: Throwable): String? {
+  if (exception is GitNotInstalledException) {
+    return null
+  }
+  return getPrettyErrorMessage(exception)
+}
+
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
-    errorNotifier.showError(getPrettyErrorMessage(exception), getLinkToConfigure(project))
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            getHumanReadableErrorFor(exception),
+                            getLinkToConfigure(project))
   }
 }

@@ -156,7 +156,9 @@ internal class SquashAction(table: GitRebaseCommitsTableView) : ChangeEntryState
 
   override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
     val root = rebaseTodoModel.unite(getIndicesToUnite(selection, rebaseTodoModel)!!)
-    rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
+    if (root.type !is GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
+      rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
+    }
     reword(root.index)
   }
 }

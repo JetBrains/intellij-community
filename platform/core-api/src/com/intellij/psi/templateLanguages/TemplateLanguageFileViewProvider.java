@@ -17,7 +17,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ public interface TemplateLanguageFileViewProvider extends FileViewProvider {
 
   /**
    * e.g. JSP
-   * @return instanceof {@link com.intellij.psi.templateLanguages.TemplateLanguage}
+   * @return instanceof {@link TemplateLanguage}
    */
   @Override
   @NotNull

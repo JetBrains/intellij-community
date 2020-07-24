@@ -26,7 +26,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -69,8 +72,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
@@ -78,7 +79,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
 
-  private final Queue<Notification> myEarlyNotifications = new LinkedBlockingQueue<>();
+  private final List<Notification> myEarlyNotifications = new ArrayList<>();
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -94,14 +95,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appUiReady() {
-        if (!myEarlyNotifications.isEmpty()) {
-          Condition<?> disposed = ApplicationManager.getApplication().getDisposed();
-          Notification notification;
-          while ((notification = myEarlyNotifications.poll()) != null) {
-            Notification _notification = notification;
-            GuiUtils.invokeLaterIfNeeded(() -> showNotification(_notification, null), ModalityState.any(), disposed);
+        GuiUtils.invokeLaterIfNeeded(() -> {
+          if (!myEarlyNotifications.isEmpty()) {
+            myEarlyNotifications.forEach(notification -> showNotification(notification, null));
+            myEarlyNotifications.clear();
           }
-        }
+        }, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
     });
   }

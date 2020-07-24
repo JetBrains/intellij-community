@@ -328,10 +328,10 @@ public abstract class ResourceInspection extends BaseInspection {
     }
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      if (ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression()) != resourceCreationExpression) {
+      if (PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression()) != resourceCreationExpression) {
         return true; // non-sensical code
       }
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
       if (lhs instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();

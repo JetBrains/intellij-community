@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.SystemInfo
@@ -14,14 +14,13 @@ import com.intellij.vcs.log.graph.asTestGraphString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
-import gnu.trove.THashMap
 import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
 import org.junit.Test
 
 class FileHistoryTest {
-
   fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileHistoryData, result: TestGraphBuilder.() -> Unit) {
     val permanentGraphInfo = TestPermanentGraphInfo(this)
     val baseController = BaseController(permanentGraphInfo)
@@ -423,8 +422,8 @@ class FileHistoryTest {
 
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
-    THashMap(FILE_PATH_HASHING_STRATEGY)
-  private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap.createSmart()
+    Object2ObjectOpenCustomHashMap(FILE_PATH_HASHING_STRATEGY)
+  private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
     renamesMap.putValue(EdgeData(parent, child), EdgeData(beforePath, afterPath))

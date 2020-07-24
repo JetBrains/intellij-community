@@ -220,19 +220,26 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public static class MatchedValue {
     @NotNull public final Object value;
     @NotNull final String pattern;
+    final int matchingDegree;
 
     public MatchedValue(@NotNull Object value, @NotNull String pattern) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
+      matchingDegree = calcMatchingDegree();
+    }
+
+    public MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
+      assert value instanceof OptionDescription || value instanceof ActionWrapper;
+      this.value = value;
+      this.pattern = pattern;
+      matchingDegree = degree;
     }
 
     @Nullable
     @VisibleForTesting
     public String getValueText() {
-      if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-      if (value instanceof ActionWrapper) return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
-      return null;
+      return GotoActionItemProvider.getActionText(value);
     }
 
     @Nullable
@@ -241,7 +248,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return getMatchingDegree() + " " + getValueText();
     }
 
-    private int getMatchingDegree() {
+    public int getMatchingDegree() {
+      return matchingDegree;
+    }
+
+    private int calcMatchingDegree() {
       String text = getValueText();
       if (text != null) {
         int degree = getRank(text);

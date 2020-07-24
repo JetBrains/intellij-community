@@ -2,6 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -17,8 +18,9 @@ object ExtensionTestUtil {
   fun <T> maskExtensions(pointName: ExtensionPointName<T>,
                          newExtensions: List<T>,
                          parentDisposable: Disposable,
-                         fireEvents: Boolean = true) {
-    (pointName.point as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
+                         fireEvents: Boolean = true,
+                         areaInstance: AreaInstance? = null) {
+    (pointName.getPoint(areaInstance) as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
   }
 
   @JvmStatic

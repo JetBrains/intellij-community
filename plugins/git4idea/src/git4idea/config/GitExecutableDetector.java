@@ -3,10 +3,13 @@ package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +39,7 @@ public class GitExecutableDetector {
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
 
-  @NotNull
+  @Nullable
   public String detect() {
     File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
     if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
@@ -45,6 +48,11 @@ public class GitExecutableDetector {
   }
 
   @NotNull
+  public static String getDefaultExecutable() {
+    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+  }
+
+  @Nullable
   private static String detectForUnix() {
     for (String p : UNIX_PATHS) {
       File f = new File(p, UNIX_EXECUTABLE);
@@ -52,10 +60,10 @@ public class GitExecutableDetector {
         return f.getPath();
       }
     }
-    return UNIX_EXECUTABLE;
+    return null;
   }
 
-  @NotNull
+  @Nullable
   private String detectForWindows() {
     String exec = checkProgramFiles();
     if (exec != null) {
@@ -67,7 +75,12 @@ public class GitExecutableDetector {
       return exec;
     }
 
-    return WIN_EXECUTABLE;
+    exec = checkWsl();
+    if (exec != null) {
+      return exec;
+    }
+
+    return null;
   }
 
   @Nullable
@@ -104,6 +117,27 @@ public class GitExecutableDetector {
       File file = new File(getWinRoot(), otherPath);
       if (file.exists()) {
         return file.getPath();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String checkWsl() {
+    if (!GitExecutableManager.supportWslExecutable()) return null;
+
+    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
+    if (distributions.size() != 1) return null;
+
+    WSLDistribution distribution = distributions.get(0);
+    if (WSLUtil.isWsl1(distribution) != ThreeState.NO) return null;
+
+    File root = distribution.getUNCRoot();
+    for (String p : UNIX_PATHS) {
+      File d = new File(root, p);
+      File f = new File(d, UNIX_EXECUTABLE);
+      if (f.exists()) {
+        return f.getPath();
       }
     }
     return null;

@@ -76,7 +76,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
 
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     return null;
   }
 

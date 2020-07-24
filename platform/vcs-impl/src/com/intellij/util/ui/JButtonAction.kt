@@ -21,6 +21,7 @@ abstract class JButtonAction(text: String?, description: String? = null, icon: I
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = createButton().apply {
       isFocusable = false
+      font = JBUI.Fonts.toolbarFont()
     }.also { button ->
       button.addActionListener {
         val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)

@@ -33,7 +33,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   @Deprecated public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
   public static final Key<Boolean> TERMINATION_REQUESTED = Key.create("TERMINATION_REQUESTED");
 
-  private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<@NotNull ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private enum State {INITIAL, RUNNING, TERMINATING, TERMINATED}
   private final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
@@ -157,7 +157,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     return myExitCode;
   }
 
-  public void addProcessListener(final ProcessListener listener) {
+  public void addProcessListener(final @NotNull ProcessListener listener) {
     myListeners.add(listener);
   }
 
@@ -171,7 +171,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     });
   }
 
-  public void removeProcessListener(final ProcessListener listener) {
+  public void removeProcessListener(final @NotNull ProcessListener listener) {
     myListeners.remove(listener);
   }
 

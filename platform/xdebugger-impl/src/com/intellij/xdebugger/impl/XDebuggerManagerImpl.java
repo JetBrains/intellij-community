@@ -27,14 +27,12 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -420,11 +418,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         return;
       }
 
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES);
       Editor editor = e.getEditor();
-      myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(lineNumber,
-                                                                        DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                        attributes);
+      myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES,
+                                                                        lineNumber,
+                                                                        DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
 
       HintHint hint = new HintHint(e.getMouseEvent()).setAwtTooltip(true).setPreferredPosition(Balloon.Position.above);
       String text = UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR));

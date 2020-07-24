@@ -123,7 +123,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       for (IdeaPluginDescriptor loadedPlugin : compatibleUpdates) {
         IdeaPluginDescriptor existingPlugin = PluginManagerCore.getPlugin(loadedPlugin.getPluginId());
         if (existingPlugin != null &&
-            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(existingPlugin, loadedPlugin.getVersion()) < 0) {
+            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.getVersion(), existingPlugin) < 0) {
           continue;
         }
         PluginId pluginId = loadedPlugin.getPluginId();
@@ -219,7 +219,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       }
     }
     final String addressedFeaturesPresentation = StringUtil.join(addressedFeatures.entrySet(),
-                                                                           entry -> entry.getKey() + "[" + StringUtil.join(entry.getValue(), ", ") + "]", ", ");
+            entry -> entry.getKey() + ": " + StringUtil.join(entry.getValue(), ", "), "; ");
     final int addressedFeaturesNumber = addressedFeatures.keySet().size();
     final int pluginsNumber = ids.size();
     return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +

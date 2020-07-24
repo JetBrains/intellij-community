@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -82,8 +82,13 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
-      initial = findFile("/usr/share/groovy");
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
+      if (SystemInfo.isLinux) {
+        initial = findFile("/usr/share/groovy");
+      }
+      else if (SystemInfo.isMac) {
+        initial = findFile("/usr/local/opt/groovy/libexec"); // homebrew
+      }
     }
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {

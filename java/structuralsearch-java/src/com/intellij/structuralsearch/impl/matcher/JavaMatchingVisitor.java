@@ -587,31 +587,32 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     final PsiElement other = myMatchingVisitor.getElement();
+    final PsiElement unwrapped = unwrap(other, context);
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        if (myMatchingVisitor.setResult(matchWithinHierarchy(reference, other, handler))) {
+        if (myMatchingVisitor.setResult(matchWithinHierarchy(reference, unwrapped, handler))) {
           handler.addResult(other, myMatchingVisitor.getMatchContext());
         }
       }
-      else {
-        final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
-                                           PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : other;
-        if (myMatchingVisitor.setResult(handler.validate(deparenthesized, context))) {
-          handler.addResult(other, context);
-        }
+      else if (myMatchingVisitor.setResult(handler.validate(unwrapped, context))) {
+        handler.addResult(other, context);
       }
       return;
     }
 
-    final boolean multiMatch = other != null && reference.getContainingFile() == other.getContainingFile();
-    if (!(other instanceof PsiReferenceExpression)) {
-      myMatchingVisitor.setResult(multiMatch && myMatchingVisitor.matchText(reference, other));
+    final boolean multiMatch = unwrapped != null && reference.getContainingFile() == unwrapped.getContainingFile();
+    if (!(unwrapped instanceof PsiReferenceExpression)) {
+      // when the same variable is used multiple times in a pattern, we need to check if they are the same,
+      // but sometimes they are not normally comparable. In this case we fall back to a text comparison.
+      // For example in the pattern `boolean equals(Object $x$) { return super.equals($x$); }`
+      // the PsiReferenceExpression argument will be compared to the PsiIdentifier of the parameter.
+      myMatchingVisitor.setResult(multiMatch && myMatchingVisitor.matchText(reference, unwrapped));
       return;
     }
 
-    final PsiReferenceExpression reference2 = (PsiReferenceExpression)other;
+    final PsiReferenceExpression reference2 = (PsiReferenceExpression)unwrapped;
 
     final PsiExpression qualifier2 = reference2.getQualifierExpression();
     if (multiMatch &&
@@ -641,8 +642,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       if (!myMatchingVisitor.setResult(qualifier instanceof PsiThisExpression && qualifier2 == null ||
                                        myMatchingVisitor.matchOptionally(qualifier, qualifier2))) return;
-      if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, other, context));
+      if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, unwrapped, context));
     }
+  }
+
+  /** Removes parentheses from the element if it is a parenthesized expression. */
+  private static PsiElement unwrap(PsiElement element, MatchContext context) {
+    return context.getOptions().isLooseMatching() && element instanceof PsiExpression
+           ? PsiUtil.skipParenthesizedExprDown((PsiExpression)element)
+           : element;
   }
 
   private static int getArrayDimensions(PsiElement element) {
@@ -1582,9 +1590,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
     final PsiNewExpression new2 = (PsiNewExpression)other;
 
+    final PsiJavaCodeReferenceElement otherClassReference = new2.getClassReference();
     if (classReference != null) {
-      if (new2.getClassReference() != null) {
-        if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, new2.getClassReference()))) {
+      if (otherClassReference != null) {
+        if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, otherClassReference))) {
           matchArrayOrArguments(expression, new2);
         }
         return;
@@ -1604,7 +1613,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
-    if (classReference == new2.getClassReference()) {
+    if (classReference == otherClassReference) {
       // probably anonymous class or array of primitive type
       myMatchingVisitor.setResult(myMatchingVisitor.matchSons(expression, new2));
     }
@@ -1645,25 +1654,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
     final PsiElement other = myMatchingVisitor.getElement();
-    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
-    if (annotations != null) {
-      final PsiAnnotation[] otherAnnotations = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
-      if (!myMatchingVisitor.setResult(otherAnnotations != null && myMatchingVisitor.matchInAnyOrder(annotations, otherAnnotations))) {
-        return;
-      }
-    }
-    myMatchingVisitor.setResult(matchType(ref, other));
+    myMatchingVisitor.setResult(matchAnnotations(ref, other) && matchType(ref, other));
   }
 
   @Override
   public void visitTypeElement(PsiTypeElement typeElement) {
     final PsiElement other = myMatchingVisitor.getElement(); // might not be a PsiTypeElement
-
-    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(typeElement, PsiAnnotation.class);
-    // can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
-    if (annotations != null) {
-      final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
-      if (!myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2))) return;
+    if (!myMatchingVisitor.setResult(matchAnnotations(typeElement, other))) {
+      return;
     }
     final PsiTypeElement[] typeElementChildren = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
     if (typeElementChildren != null && typeElementChildren.length > 1) {
@@ -1675,6 +1673,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else {
       myMatchingVisitor.setResult(matchType(typeElement, other));
     }
+  }
+
+  private boolean matchAnnotations(PsiElement pattern, PsiElement matched) {
+    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(pattern, PsiAnnotation.class);
+    if (annotations == null) {
+      return true;
+    }
+    final PsiAnnotation[] otherAnnotations = PsiTreeUtil.getChildrenOfType(matched, PsiAnnotation.class);
+    return otherAnnotations != null && myMatchingVisitor.matchInAnyOrder(annotations, otherAnnotations);
   }
 
   @Override

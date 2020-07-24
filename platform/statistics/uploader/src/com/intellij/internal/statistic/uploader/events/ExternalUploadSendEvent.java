@@ -1,18 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.uploader.events;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 import java.util.Objects;
 
 public class ExternalUploadSendEvent extends ExternalSystemEvent {
   private final int mySucceed;
   private final int myFailed;
   private final int myTotal;
+  @NotNull private final List<String> mySuccessfullySentFiles;
 
-  public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total) {
+  public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total, @NotNull List<String> successfullySentFiles) {
     super(ExternalSystemEventType.SEND, timestamp);
     mySucceed = succeed;
     myFailed = failed;
     myTotal = total;
+    mySuccessfullySentFiles = successfullySentFiles;
   }
 
   public int getSucceed() {
@@ -27,6 +32,10 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
     return myTotal;
   }
 
+  public @NotNull List<String> getSuccessfullySentFiles() {
+    return mySuccessfullySentFiles;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -35,11 +44,12 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
     ExternalUploadSendEvent event = (ExternalUploadSendEvent)o;
     return mySucceed == event.mySucceed &&
            myFailed == event.myFailed &&
-           myTotal == event.myTotal;
+           myTotal == event.myTotal &&
+           Objects.equals(mySuccessfullySentFiles, event.mySuccessfullySentFiles);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), mySucceed, myFailed, myTotal);
+    return Objects.hash(super.hashCode(), mySucceed, myFailed, myTotal, mySuccessfullySentFiles);
   }
 }

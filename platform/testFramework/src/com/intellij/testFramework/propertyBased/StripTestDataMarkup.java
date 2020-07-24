@@ -41,7 +41,7 @@ public class StripTestDataMarkup extends ActionOnFile {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = getDocument();
       try {
-        new ExpectedHighlightingData(document, true, true, true, true, getFile()).init();
+        new ExpectedHighlightingData(document, true, true, true, true).init();
       }
       catch (AssertionError ignore) {
         // can fail on unpaired markups

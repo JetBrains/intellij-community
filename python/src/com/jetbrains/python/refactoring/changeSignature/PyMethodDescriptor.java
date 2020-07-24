@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,15 +52,7 @@ public class PyMethodDescriptor implements MethodDescriptor<PyParameterInfo, Str
       final PyExpression defaultValue = parameter.getDefaultValue();
       final String name;
       if (parameter instanceof PyNamedParameter) {
-        if (((PyNamedParameter)parameter).isPositionalContainer()) {
-          name = "*" + parameter.getName();
-        }
-        else if (((PyNamedParameter)parameter).isKeywordContainer()) {
-          name = "**" + parameter.getName();
-        }
-        else {
-          name = parameter.getName();
-        }
+        name = ParamHelper.getNameInSignature((PyNamedParameter)parameter);
       }
       else {
         name = parameter.getText();

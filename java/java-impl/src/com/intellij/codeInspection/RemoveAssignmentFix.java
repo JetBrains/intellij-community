@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoveAssignmentFix extends RemoveInitializerFix {
   @NotNull
@@ -42,36 +43,55 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
       parent = element;
     }
     if (!(parent instanceof PsiAssignmentExpression)) return;
-    final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
-    PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
-    if (JavaTokenType.EQ != operationSign && rExpression != null ) {
-      rExpression = DeclarationJoinLinesHandler.getInitializerExpression(((PsiAssignmentExpression)parent).getLExpression(), 
-                                                                         (PsiAssignmentExpression)parent);
-    }
-    final PsiElement gParent = parent.getParent();
-    if ((gParent instanceof PsiExpression || gParent instanceof PsiExpressionList || gParent instanceof PsiReturnStatement) && rExpression != null) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;
-      PsiExpression finalRExpr = rExpression;
+
+    PsiAssignmentExpression parentExpr = (PsiAssignmentExpression)parent;
+    PsiElement gParentExpr = parentExpr.getParent();
+    PsiExpression initializer = getInitializer(parentExpr);
+    if (initializer == null) return;
+    if (mayBeFixedWithoutSideEffect(gParentExpr)) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(gParentExpr.getContainingFile())) return;
       WriteAction.run(() -> {
-        if (gParent instanceof PsiParenthesizedExpression) {
-          gParent.replace(finalRExpr);
+        if (gParentExpr instanceof PsiParenthesizedExpression) {
+          gParentExpr.replace(initializer);
         } else {
-          parent.replace(finalRExpr);
+          parentExpr.replace(initializer);
         }
       });
       return;
     }
 
-    PsiElement resolve = null;
-    if (element instanceof PsiReferenceExpression) {
-      resolve = ((PsiReferenceExpression)element).resolve();
+    PsiElement resolve = resolveExpression(element, parentExpr);
+    if (!(resolve instanceof PsiVariable)) return;
+
+    sideEffectAwareRemove(project, initializer, parent, (PsiVariable)resolve);
+  }
+
+  @Nullable
+  private static PsiExpression getInitializer(@NotNull PsiAssignmentExpression assignmentExpr) {
+    final IElementType operationSign = assignmentExpr.getOperationTokenType();
+    PsiExpression result = assignmentExpr.getRExpression();
+    if (JavaTokenType.EQ != operationSign && result != null) {
+      result = DeclarationJoinLinesHandler.getInitializerExpression(assignmentExpr.getLExpression(), assignmentExpr);
+    }
+    return result;
+  }
+
+  private static boolean mayBeFixedWithoutSideEffect(@NotNull PsiElement expr) {
+    return expr instanceof PsiExpression || expr instanceof PsiExpressionList || expr instanceof PsiReturnStatement
+            || expr instanceof PsiLocalVariable;
+  }
+
+  @Nullable
+  private static PsiElement resolveExpression(@NotNull PsiElement expr, @NotNull PsiAssignmentExpression parentExpr) {
+    PsiElement result = null;
+    if (expr instanceof PsiReferenceExpression) {
+      result = ((PsiReferenceExpression)expr).resolve();
     } else {
-      final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)parent).getLExpression());
+      final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(parentExpr.getLExpression());
       if (lExpr instanceof PsiReferenceExpression) {
-        resolve = ((PsiReferenceExpression)lExpr).resolve();
+        result = ((PsiReferenceExpression)lExpr).resolve();
       }
     }
-    if (!(resolve instanceof PsiVariable)) return;
-    sideEffectAwareRemove(project, rExpression, parent, (PsiVariable)resolve);
+    return result;
   }
 }

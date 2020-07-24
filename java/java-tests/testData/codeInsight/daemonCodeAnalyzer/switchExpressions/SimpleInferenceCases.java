@@ -116,4 +116,12 @@ class MyTest {
 
     System.out.println(c.getCanonicalName());
   }
+  
+  static void testNull(int i) {
+    var v = switch(i) {
+      case 1 -> "abcd";
+      default -> null;
+    };
+    System.out.println(v.<error descr="Cannot resolve method 'substring' in 'Object'">substring</error>(1));
+  }
 }

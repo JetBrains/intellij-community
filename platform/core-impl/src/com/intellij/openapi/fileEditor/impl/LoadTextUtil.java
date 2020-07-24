@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,13 +11,17 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -509,7 +513,7 @@ public final class LoadTextUtil {
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
-      return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+      return Strings.EMPTY_CHAR_SEQUENCE;
     }
   }
 

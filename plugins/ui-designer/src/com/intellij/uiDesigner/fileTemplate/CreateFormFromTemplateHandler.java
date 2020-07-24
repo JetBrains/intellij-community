@@ -4,10 +4,10 @@ package com.intellij.uiDesigner.fileTemplate;
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +17,7 @@ public class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHand
   @Override
   public boolean handlesTemplate(@NotNull final FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.GUI_DESIGNER_FORM);
+    return fileType.equals(GuiFormFileType.INSTANCE);
   }
 
   @Override

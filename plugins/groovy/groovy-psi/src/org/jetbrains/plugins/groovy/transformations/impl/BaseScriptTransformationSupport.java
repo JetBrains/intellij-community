@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import static com.intellij.psi.impl.cache.impl.id.IdIndex.hasIdentifierInFile;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.findDeclaredDetachedValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT;
 
@@ -141,7 +141,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
 
   @Nullable
   private static GrVariableDeclaration findDeclaration(GroovyFile file) {
-    if (!hasIdentifierInFile(file, "BaseScript")) {
+    if (!PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "BaseScript")) {
       return null;
     }
     for (GrVariableDeclaration declaration : file.getScriptDeclarations(false)) {

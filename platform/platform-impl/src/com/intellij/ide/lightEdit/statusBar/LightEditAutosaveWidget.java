@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
@@ -116,7 +117,7 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
       c.gridwidth = 1;
       c.insets = JBUI.insets(5, 10, 0, 0);
       final JLabel label =
-        new JLabel(ApplicationBundle.message("light.edit.autosave.widget.popup.text"));
+        new JLabel(getPopupText());
       label.setForeground(JBColor.GRAY);
       add(label, c);
 
@@ -128,6 +129,27 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
       });
     }
 
+    private static String getPopupText() {
+      StringBuilder builder = new StringBuilder();
+      GeneralSettings generalSettings = GeneralSettings.getInstance();
+      if (generalSettings.isAutoSaveIfInactive()) {
+        builder.append(ApplicationBundle.message("light.edit.autosave.widget.popup.text.time", generalSettings.getInactiveTimeout()));
+      }
+      if (generalSettings.isSaveOnFrameDeactivation()) {
+        if (builder.length() > 0) {
+          builder.append(",<br>");
+        }
+        String message = ApplicationBundle.message("light.edit.autosave.widget.popup.text.deactivation");
+        if (builder.length() > 0) {
+          message = message.replaceAll("<br>", " ");
+        }
+        builder.append(message);
+      }
+      if (builder.length() == 0) {
+        builder.append(ApplicationBundle.message("light.edit.autosave.widget.popup.text.on.close"));
+      }
+      return ApplicationBundle.message("light.edit.autosave.widget.popup.text", builder.toString());
+    }
 
     public void setAutosaveSelected(boolean isSelected) {
       myModeCb.setSelected(isSelected);

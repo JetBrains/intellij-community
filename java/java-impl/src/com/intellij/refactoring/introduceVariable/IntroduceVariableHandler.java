@@ -19,9 +19,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.WindowManager;
@@ -62,10 +60,8 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     HighlightManager highlightManager = null;
     if (editor != null) {
       highlightManager = HighlightManager.getInstance(project);
-      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       if (occurrences.length > 1) {
-        highlightManager.addOccurrenceHighlights(editor, occurrences, attributes, true, highlighters);
+        highlightManager.addOccurrenceHighlights(editor, occurrences, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
       }
     }
 

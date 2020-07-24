@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -106,8 +106,8 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testInvalidInput() {
-    myFixture.configureByText(StdFileTypes.JAVA, "class X {\n  Character.\n" +
-                                                 "            Sub<caret>set\n}");
+    myFixture.configureByText(JavaFileType.INSTANCE, "class X {\n  Character.\n" +
+                                                     "            Sub<caret>set\n}");
     myFixture.getAvailableIntentions();
   }
 

@@ -18,36 +18,44 @@ final class CollectionBinding extends AbstractCollectionBinding  {
 
   @Override
   protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
-    Collection result;
+    Collection<Object> result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {
-      result = (Collection)context;
+      //noinspection unchecked
+      result = (Collection<Object>)context;
       result.clear();
     }
     else {
-      result = context instanceof Set ? new HashSet() : new SmartList();
+      result = context instanceof Set ? new HashSet<>() : new SmartList<>();
     }
 
     for (Element node : elements) {
-      //noinspection unchecked
       result.add(deserializeItem(node, context));
     }
 
     return result;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  Collection<Object> getIterable(@NotNull Object o) {
-    if (isSortOrderedSet() && o instanceof LinkedHashSet) {
-      return (Collection<Object>)o;
+  Collection<?> getIterable(@NotNull Object o) {
+    Collection<?> collection = (Collection<?>)o;
+    if (collection.size() < 2 || ((isSortOrderedSet() && o instanceof LinkedHashSet)) || o instanceof SortedSet) {
+      // no need to sort
+      return collection;
     }
-    return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
+    else if (o instanceof Set) {
+      List<?> result = new ArrayList<>(collection);
+      result.sort(null);
+      return result;
+    }
+    else {
+      return collection;
+    }
   }
 
   @Override
-  protected @NotNull String getCollectionTagName(final @Nullable Object target) {
+  protected @NotNull String getCollectionTagName(@Nullable Object target) {
     if (target instanceof Set) {
       return Constants.SET;
     }

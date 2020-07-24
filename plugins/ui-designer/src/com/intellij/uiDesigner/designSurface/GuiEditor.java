@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -1189,7 +1188,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
           myAlarm.cancelRequest(myRefreshPropertiesRequest);
           myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
         }
-        else if (containingFile instanceof PsiPlainTextFile && containingFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+        else if (containingFile instanceof PsiPlainTextFile && containingFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
           // quick check if relevant
           String resourceName = FormEditingUtil.buildResourceName(containingFile);
           if (myDocument.getText().contains(resourceName)) {

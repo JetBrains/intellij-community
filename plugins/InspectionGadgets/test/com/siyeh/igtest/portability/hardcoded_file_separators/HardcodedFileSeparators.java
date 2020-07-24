@@ -7,10 +7,10 @@ public class HardcodedFileSeparators {
   }
 
   public static void foo() {
-    final String backSlash = "<warning descr="Hardcoded file separator '\\'"> \\ </warning>";
+    final String backSlash = " <warning descr="Hardcoded file separator '\\'">\\</warning> ";
     final String slash = "<warning descr="Hardcoded file separator '/'">/</warning>";
     final String date = "dd/MM/yy";
-    final String date2 = "<warning descr="Hardcoded file separator 'sdd/MM/yy'">sdd/MM/yy</warning>";
+    final String date2 = "sdd<warning descr="Hardcoded file separator '/'">/</warning>MM<warning descr="Hardcoded file separator '/'">/</warning>yy";
     final String tag1 = "<foo/>";
     final String tag2 = "</foo>";
     final String url = "jdbc:hsqldb:hsql://localhost:9013";

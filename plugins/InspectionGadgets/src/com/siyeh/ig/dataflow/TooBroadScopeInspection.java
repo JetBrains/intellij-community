@@ -77,7 +77,7 @@ public class TooBroadScopeInspection extends BaseInspection {
   }
 
   protected boolean isMovable(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return true;
     }

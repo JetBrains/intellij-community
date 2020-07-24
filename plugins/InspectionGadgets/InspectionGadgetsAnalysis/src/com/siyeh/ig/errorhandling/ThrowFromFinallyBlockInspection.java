@@ -19,11 +19,11 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      final PsiExpression exception = ParenthesesUtils.stripParentheses(statement.getException());
+      final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (exception == null) {
         return;
       }

@@ -1,16 +1,13 @@
 package com.jetbrains.python.psi.impl.references.hasattr
 
-import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyHasAttrVisitor(private val resolvedQualifier: PsiElement) : PyRecursiveElementVisitor() {
-  val result = hashMapOf<String, PsiElement>()
+  val result = hashSetOf<String>()
   private var myPositive: Boolean = true
 
   override fun visitPyPrefixExpression(node: PyPrefixExpression) {
@@ -39,9 +36,7 @@ class PyHasAttrVisitor(private val resolvedQualifier: PsiElement) : PyRecursiveE
     if (firstArg.reference.isReferenceTo(resolvedQualifier)) {
       val variant = attrName.stringValue
       if (StringUtil.isJavaIdentifier(variant)) {
-        if (!result.containsKey(variant)) {
-          result[variant] = attrName
-        }
+        result.add(variant)
       }
     }
   }

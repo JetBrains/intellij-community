@@ -38,15 +38,21 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
   private final IndexConfiguration state = new IndexConfiguration();
   private final IndexVersionRegistrationSink registrationResultSink = new IndexVersionRegistrationSink();
   private boolean currentVersionCorrupted;
+  @NotNull
   private final FileBasedIndexImpl myFileBasedIndex;
+  @NotNull
+  private final RegisteredIndexes myRegisteredIndexes;
 
-  FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index) {myFileBasedIndex = index;}
+  FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
+    myFileBasedIndex = index;
+    myRegisteredIndexes = registeredIndexes;
+  }
 
   private void initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
     Iterator<FileBasedIndexExtension<?, ?>> extensions =
       IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
+      ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :
       Collections.emptyIterator();
 
     // todo: init contentless indices first ?
@@ -56,7 +62,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
       ID<?, ?> name = extension.getName();
       RebuildStatus.registerIndex(name);
 
-      myFileBasedIndex.getRegisteredIndexes().registerIndexExtension(extension);
+      myRegisteredIndexes.registerIndexExtension(extension);
 
       addNestedInitializationTask(() -> {
         try {
@@ -71,7 +77,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
       });
     }
 
-    myFileBasedIndex.getRegisteredIndexes().extensionsDataWasLoaded();
+    myRegisteredIndexes.extensionsDataWasLoaded();
     activity.end();
   }
 
@@ -115,7 +121,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
       );
 
       state.freeze();
-      myFileBasedIndex.getRegisteredIndexes().setState(state); // memory barrier
+      myRegisteredIndexes.setState(state); // memory barrier
       // check if rebuild was requested for any index during registration
       for (ID<?, ?> indexId : state.getIndexIDs()) {
         try {
@@ -133,8 +139,8 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
     finally {
 
       myFileBasedIndex.setUpFlusher();
-      myFileBasedIndex.getRegisteredIndexes().ensureLoadedIndexesUpToDate();
-      myFileBasedIndex.getRegisteredIndexes().markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
+      myRegisteredIndexes.ensureLoadedIndexesUpToDate();
+      myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(state.getIndexIDs());
     }
   }

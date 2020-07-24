@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
+import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkListener
@@ -145,4 +146,6 @@ abstract class ToolWindowManager {
    * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
+
+  abstract fun getLastActiveToolWindow(condition: Predicate<JComponent>?): ToolWindow?
 }

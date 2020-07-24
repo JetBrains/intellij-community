@@ -5,13 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionReferenceProvider : FilePredictionBaseCandidateProvider(10) {
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile> {
     if (refs.isEmpty() || file == null) {
       return emptySet()
     }
 
-    val result = HashSet<VirtualFile>()
-    addWithLimit(refs.iterator(), result, file, limit)
+    val result = HashSet<FilePredictionCandidateFile>()
+    addWithLimit(refs.iterator(), result, "ref", file, limit)
     return result
   }
 }

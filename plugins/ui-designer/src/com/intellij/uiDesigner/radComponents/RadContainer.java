@@ -192,9 +192,9 @@ public class RadContainer extends RadComponent implements IContainer {
 
   /**
    * @param component component to be added.
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component} is {@code null}
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component} already exist in the
    *          container
    */
@@ -231,10 +231,10 @@ public class RadContainer extends RadComponent implements IContainer {
    * of invalid Swing hierarchy.
    *
    * @param component component to be removed.
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component}
    *          is {@code null}
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component}
    *          doesn't exist in the container
    */
@@ -334,7 +334,7 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   /**
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code type}
    *          is {@code null}
    * @see com.intellij.uiDesigner.shared.BorderType

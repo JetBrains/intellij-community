@@ -220,6 +220,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testNoCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testNoCastWithVar() { doTest(true, LanguageLevel.JDK_10); }
+  public void testDiamondInAnonymousClass() { doTest(true, LanguageLevel.JDK_11); }
 
   public void testUncheckedCast() {
     doTest(true);

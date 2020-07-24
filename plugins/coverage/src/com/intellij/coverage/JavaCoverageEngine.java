@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -435,7 +435,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     for (final PsiClass psiClass : classes) {
       final String className = ReadAction.compute(() -> psiClass.getName());
       for (File child : children) {
-        if (FileUtilRt.extensionEquals(child.getName(), StdFileTypes.CLASS.getDefaultExtension())) {
+        if (FileUtilRt.extensionEquals(child.getName(), JavaClassFileType.INSTANCE.getDefaultExtension())) {
           final String childName = FileUtilRt.getNameWithoutExtension(child.getName());
           if (childName.equals(className) ||  //class or inner
               childName.startsWith(className) && childName.charAt(className.length()) == '$') {

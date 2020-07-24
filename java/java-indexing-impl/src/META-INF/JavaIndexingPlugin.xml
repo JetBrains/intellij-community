@@ -77,6 +77,6 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
-    <indexingFlavor filetype="JAVA" implementationClass="com.intellij.JavaFileIndexingFlavor"/>
+    <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
   </extensions>
 </idea-plugin>

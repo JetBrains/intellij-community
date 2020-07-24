@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,14 +92,14 @@ public class ParenthesesUtils {
     return parent;
   }
 
+  /**
+   * @deprecated use {@link PsiUtil#skipParenthesizedExprDown(PsiExpression)} directly instead
+   */
+  @Deprecated
   @Contract("null -> null")
   @Nullable
   public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
-    while (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      expression = parenthesizedExpression.getExpression();
-    }
-    return expression;
+    return PsiUtil.skipParenthesizedExprDown(expression);
   }
 
   public static void removeParentheses(@NotNull PsiExpression expression, boolean ignoreClarifyingParentheses) {

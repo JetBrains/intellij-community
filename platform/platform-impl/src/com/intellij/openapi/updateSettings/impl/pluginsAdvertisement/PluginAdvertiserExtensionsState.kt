@@ -23,24 +23,32 @@ data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginsAdvertiser.Plugin>
 )
 
-class PluginAdvertiserExtensionsState(private val project: Project) {
+class PluginAdvertiserExtensionsStateService {
+  companion object {
+    fun getInstance(): PluginAdvertiserExtensionsStateService = service()
+  }
+
+  internal val cache: Cache<String, Optional<PluginAdvertiserExtensionsData>> =
+    CacheBuilder
+      .newBuilder()
+      .expireAfterWrite(1, TimeUnit.HOURS)
+      .build()
+}
+
+class PluginAdvertiserExtensionsState(private val project: Project, private val service: PluginAdvertiserExtensionsStateService) {
 
   companion object {
     private val LOG = Logger.getInstance(PluginsAdvertiser::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): PluginAdvertiserExtensionsState = project.service()
+    fun getInstance(project: Project): PluginAdvertiserExtensionsState =
+      PluginAdvertiserExtensionsState(project, PluginAdvertiserExtensionsStateService.getInstance())
   }
-
-  private val cache: Cache<String, Optional<PluginAdvertiserExtensionsData>> =
-    CacheBuilder
-      .newBuilder()
-      .expireAfterWrite(1, TimeUnit.HOURS)
-      .build()
 
   fun ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
     UnknownFeaturesCollector.getInstance(project).ignoreFeature(createUnknownExtensionFeature(extensionOrFileName))
     invalidateCacheDataForKey(extensionOrFileName)
+
   }
 
   private val enabledExtensionOrFileNames = ContainerUtil.newConcurrentSet<String>()
@@ -51,13 +59,13 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
   }
 
   private fun getCachedData(extensionOrFileName: String): PluginAdvertiserExtensionsData? =
-    cache.getIfPresent(extensionOrFileName)?.orElse(null)
+    service.cache.getIfPresent(extensionOrFileName)?.orElse(null)
 
   fun updateCache(extensionOrFileName: String): Boolean {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
 
-    if (cache.getIfPresent(extensionOrFileName) != null) {
+    if (service.cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }
     val knownExtensions = PluginsAdvertiser.loadExtensions()
@@ -66,12 +74,12 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
     }
 
     val newData = requestData(extensionOrFileName, knownExtensions)
-    cache.put(extensionOrFileName, Optional.ofNullable(newData))
+    service.cache.put(extensionOrFileName, Optional.ofNullable(newData))
     return true
   }
 
   private fun invalidateCacheDataForKey(extensionOrFileName: String) {
-    cache.invalidate(extensionOrFileName)
+    service.cache.invalidate(extensionOrFileName)
   }
 
   fun requestExtensionData(
@@ -132,7 +140,10 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
     knownExtensions: PluginsAdvertiser.KnownExtensions
   ): PluginAdvertiserExtensionsData? {
     val allPlugins = knownExtensions.find(extensionOrFileName)?.toSet()
-    if (allPlugins == null || allPlugins.isEmpty()) return null
+    if (allPlugins == null || allPlugins.isEmpty()) {
+      LOG.debug("No features for extension $extensionOrFileName")
+      return null
+    }
     val pluginIdsFromMarketplace = MarketplaceRequests.getInstance()
       .getLastCompatiblePluginUpdate(allPlugins.map { it.myPluginId }, null).map { it.pluginId }.toSet()
     val compatiblePlugins = allPlugins.filter {

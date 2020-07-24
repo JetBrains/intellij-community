@@ -439,6 +439,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     reset();
   }
 
+  public @NotNull VisibleAreaWidthProvider getWidthProvider() {
+    return myWidthProvider;
+  }
+
   @NotNull
   @Override
   public String dumpState() {

@@ -23,14 +23,13 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyChangeBaseClassQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyConvertToNewStyleQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +100,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
           final PyExpression callee = node.getCallee();
           if (callee != null) {
             registerProblem(callee, PyPsiBundle.message("INSP.oldstyle.class.super"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                            null, quickFixes.toArray(quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
+                            null, quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }

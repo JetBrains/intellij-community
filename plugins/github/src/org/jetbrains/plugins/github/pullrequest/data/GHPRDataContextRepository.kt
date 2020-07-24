@@ -1,33 +1,29 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.CollectionListModel
-import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
+import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
 import org.jetbrains.plugins.github.util.*
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
@@ -52,10 +48,6 @@ internal class GHPRDataContextRepository(private val project: Project) {
           }
           else {
             Disposer.register(contextDisposable, ctx)
-            Disposer.register(ctx, Disposable {
-              val editorManager = FileEditorManager.getInstance(project)
-              editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
-            })
           }
           ctx
         }
@@ -102,43 +94,67 @@ internal class GHPRDataContextRepository(private val project: Project) {
     else emptyList()
     indicator.checkCanceled()
 
-    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
+    val repositoryPath = repoWithPermissions.path
+    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repositoryPath)
 
-    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
+    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
+                                                  account, currentUser, currentUserTeams,
                                                   repoWithPermissions)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
-                                            requestExecutor, account.server, repoWithPermissions.path)
+                                            requestExecutor, account.server, repositoryPath)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
-    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), Git.getInstance(), project, requestExecutor,
+    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
                                                 gitRemoteCoordinates, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, repositoryCoordinates)
 
-    val listModel = CollectionListModel<GHPullRequestShort>()
-    val searchHolder = GithubPullRequestSearchQueryHolderImpl()
-    val listLoader = GHPRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoWithPermissions.path, listModel,
-                                        searchHolder)
+    val searchHolder = GHPRSearchQueryHolderImpl().apply {
+      query = GHPRSearchQuery.DEFAULT
+    }
+    val listLoader = GHGQLPagedListLoader(ProgressManager.getInstance(),
+                                          SimpleGHGQLPagesLoader(requestExecutor, { p ->
+                                            GHGQLRequests.PullRequest.search(account.server,
+                                                                             buildQuery(repositoryPath, searchHolder.query),
+                                                                             p)
+                                          }))
+    val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, repositoryPath)
 
-    val dataLoader = GHPRDataLoaderImpl(detailsService, stateService, reviewService, commentService, changesService) { id ->
-      val timelineModel = GHPRTimelineMergingModel()
-      GHPRTimelineLoader(ProgressManager.getInstance(), requestExecutor,
-                         account.server, repoWithPermissions.path, id.number,
-                         timelineModel)
-    }.also {
-      it.addDetailsLoadedListener { details: GHPullRequest ->
-        listLoader.updateData(details)
-      }
+    val dataProviderRepository = GHPRDataProviderRepositoryImpl(detailsService, stateService, reviewService, commentService,
+                                                                changesService) { id ->
+      GHGQLPagedListLoader(ProgressManager.getInstance(),
+                           SimpleGHGQLPagesLoader(requestExecutor, { p ->
+                             GHGQLRequests.PullRequest.Timeline.items(account.server, repositoryPath.owner, repositoryPath.repository,
+                                                                      id.number, p)
+                           }, true))
     }
 
     val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
-                                                        repoWithPermissions.path, repoOwner)
+                                                        repositoryPath, repoOwner)
+
+    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
+                                                                              GithubImageResizer.getInstance(),
+                                                                              requestExecutor)
+
+    val filesManager = GHPRFilesManagerImpl(project, repositoryCoordinates)
 
     indicator.checkCanceled()
-    return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                           requestExecutor, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
+    return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, searchHolder, listLoader, listUpdatesChecker,
+                           dataProviderRepository, securityService, repoDataService, avatarIconsProviderFactory, filesManager)
   }
+
+  @CalledInAwt
+  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? =
+    repositories.values.mapNotNull { it.lastLoadedValue }.find { it.repositoryCoordinates == repositoryCoordinates }
 
   companion object {
     fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()
+
+    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
+      return GithubApiSearchQueryBuilder.searchQuery {
+        qualifier("type", GithubIssueSearchType.pr.name)
+        qualifier("repo", repoPath.toString())
+        searchQuery?.buildApiSearchQuery(this)
+      }
+    }
   }
 }

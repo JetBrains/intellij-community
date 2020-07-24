@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -78,7 +79,8 @@ public class CommonDataflow {
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
   public static final class DataflowResult {
-    private final Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
+    private final @NotNull Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
+    private @NotNull Map<PsiExpression, DataflowPoint> myDataAssertionsDisabled = myData;
     private final RunnerResult myResult;
 
     public DataflowResult(RunnerResult result) {
@@ -93,7 +95,31 @@ public class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryState memState, DfaValue value) {
-      DataflowPoint point = myData.computeIfAbsent(expression, e -> new DataflowPoint());
+      DfaVariableValue assertionDisabled = value.getFactory().getAssertionDisabled();
+      if (assertionDisabled == null) {
+        assert myData == myDataAssertionsDisabled;
+        updateDataPoint(myData, expression, memState, value);
+      } else {
+        DfType type = memState.getDfType(assertionDisabled);
+        if (type == DfTypes.TRUE || type == DfTypes.FALSE) {
+          if (myData == myDataAssertionsDisabled) {
+            myDataAssertionsDisabled = new HashMap<>(myData);
+          }
+          updateDataPoint(type == DfTypes.TRUE ? myDataAssertionsDisabled : myData, expression, memState, value);
+        } else {
+          updateDataPoint(myData, expression, memState, value);
+          if (myData != myDataAssertionsDisabled) {
+            updateDataPoint(myDataAssertionsDisabled, expression, memState, value);
+          }
+        }
+      }
+    }
+
+    private void updateDataPoint(Map<PsiExpression, DataflowPoint> data,
+                                 PsiExpression expression,
+                                 DfaMemoryState memState,
+                                 DfaValue value) {
+      DataflowPoint point = data.computeIfAbsent(expression, e -> new DataflowPoint());
       if (DfaTypeValue.isContractFail(value)) {
         point.myMayFailByContract = true;
         return;
@@ -154,11 +180,25 @@ public class CommonDataflow {
 
     /**
      * @param expression an expression to infer the DfType, must be deparenthesized.
-     * @return DfType for that expression. May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @return DfType for that expression, assuming assertions are disabled. 
+     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @see #getDfTypeNoAssertions(PsiExpression) 
      */
     @NotNull
     public DfType getDfType(PsiExpression expression) {
       DataflowPoint point = myData.get(expression);
+      return point == null ? DfTypes.TOP : point.myDfType;
+    }
+
+    /**
+     * @param expression an expression to infer the DfType, must be deparenthesized.
+     * @return DfType for that expression, assuming assertions are disabled. 
+     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @see #getDfType(PsiExpression) 
+     */
+    @NotNull
+    public DfType getDfTypeNoAssertions(PsiExpression expression) {
+      DataflowPoint point = myDataAssertionsDisabled.get(expression);
       return point == null ? DfTypes.TOP : point.myDfType;
     }
   }
@@ -166,7 +206,7 @@ public class CommonDataflow {
   @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    DataFlowRunner runner = new DataFlowRunner(block.getProject(), block);
+    DataFlowRunner runner = new DataFlowRunner(block.getProject(), block, false, ThreeState.UNSURE);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return new DataflowResult(result);

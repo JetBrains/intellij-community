@@ -17,13 +17,13 @@ public abstract class PsiReferenceService {
   }
 
   /**
-   * By default, return the same as {@link com.intellij.psi.PsiElement#getReferences()}.
-   * For elements implementing {@link com.intellij.psi.ContributedReferenceHost} also run
-   * the reference providers registered in {@link com.intellij.psi.PsiReferenceContributor}
+   * By default, return the same as {@link PsiElement#getReferences()}.
+   * For elements implementing {@link ContributedReferenceHost} also run
+   * the reference providers registered in {@link PsiReferenceContributor}
    * extensions.
    * @param element PSI element to which the references will be bound
-   * @param hints optional hints which are passed to {@link com.intellij.psi.PsiReferenceProvider#acceptsHints(PsiElement, com.intellij.psi.PsiReferenceService.Hints)} and
-   * {@link com.intellij.psi.PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
+   * @param hints optional hints which are passed to {@link PsiReferenceProvider#acceptsHints(PsiElement, PsiReferenceService.Hints)} and
+   * {@link PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
    * fail-fast checks in case the pattern takes long to match.
    * @return the references
    */

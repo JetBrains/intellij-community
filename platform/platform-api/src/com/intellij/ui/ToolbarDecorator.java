@@ -29,9 +29,9 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  *
- * @see #createDecorator(javax.swing.JList)
- * @see #createDecorator(javax.swing.JTable)
- * @see #createDecorator(javax.swing.JTree)
+ * @see #createDecorator(JList)
+ * @see #createDecorator(JTable)
+ * @see #createDecorator(JTree)
  */
 public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
   protected Border myPanelBorder;

@@ -11,8 +11,8 @@ import java.util.EventListener;
 /**
  * @author max
  *
- * @see com.intellij.openapi.vcs.changes.ChangeListManager#addChangeListListener(ChangeListListener)
- * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)
+ * @see ChangeListManager#addChangeListListener(ChangeListListener)
+ * @see ChangeListManager#removeChangeListListener(ChangeListListener)
  */
 public interface ChangeListListener extends EventListener {
   Topic<ChangeListListener> TOPIC = Topic.create("VCS changelists changed", ChangeListListener.class);

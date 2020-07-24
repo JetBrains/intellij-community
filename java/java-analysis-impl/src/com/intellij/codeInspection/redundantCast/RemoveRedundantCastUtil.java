@@ -7,6 +7,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 
@@ -19,8 +20,9 @@ public class RemoveRedundantCastUtil {
     PsiExpression operand = castExpression.getOperand();
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
-      if (!(parent instanceof PsiExpression) || 
-          !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)parent, true)) {
+      PsiElement topParent = PsiUtil.skipParenthesizedExprUp(parent);
+      if (!(topParent instanceof PsiExpression) || 
+          !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)topParent, true)) {
         operand = parExpr.getExpression();
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
@@ -64,14 +64,14 @@ public final class LookupElementBuilder extends LookupElement {
   public static LookupElementBuilder create(@NotNull String lookupString) {
     return new LookupElementBuilder(lookupString, lookupString);
   }
-  
+
   public static LookupElementBuilder create(@NotNull Object object) {
     return new LookupElementBuilder(object.toString(), object);
   }
 
   public static LookupElementBuilder createWithSmartPointer(@NotNull String lookupString, @NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
-    return new LookupElementBuilder(lookupString, 
+    return new LookupElementBuilder(lookupString,
                                     SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element));
   }
 
@@ -160,7 +160,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withIcon(@Nullable Icon icon) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setIcon(icon);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -244,7 +244,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withItemTextForeground(@NotNull Color itemTextForeground) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextForeground(itemTextForeground);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation,
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
@@ -260,7 +260,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withItemTextUnderlined(boolean underlined) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextUnderlined(underlined);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation,
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
@@ -268,7 +268,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withItemTextItalic(boolean italic) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextItalic(italic);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation,
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
@@ -304,14 +304,14 @@ public final class LookupElementBuilder extends LookupElement {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeText(typeText, typeIcon);
     presentation.setTypeGrayed(grayed);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
   public LookupElementBuilder withTypeIconRightAligned(boolean typeIconRightAligned) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeIconRightAligned(typeIconRightAligned);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -327,7 +327,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withPresentableText(@NotNull String presentableText) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemText(presentableText);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -356,7 +356,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withBoldness(boolean bold) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setItemTextBold(bold);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -385,7 +385,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withStrikeoutness(boolean strikeout) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setStrikeout(strikeout);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -414,7 +414,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withTailText(@Nullable String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTailText(tailText, grayed);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -422,7 +422,7 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder appendTailText(@NotNull String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.appendTailText(tailText, grayed);
-    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, null, presentation, myPsiElement,
+    return cloneWithUserData(myLookupString, myObject, myInsertHandler, null, myExpensiveRenderer, presentation, myPsiElement,
                              myAllLookupStrings, myCaseSensitive);
   }
 
@@ -441,7 +441,7 @@ public final class LookupElementBuilder extends LookupElement {
   public InsertHandler<LookupElement> getInsertHandler() {
     return myInsertHandler;
   }
-  
+
   @Nullable
   public LookupElementRenderer<LookupElement> getRenderer() {
     return myRenderer;

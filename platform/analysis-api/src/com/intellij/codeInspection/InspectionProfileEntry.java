@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -27,7 +27,10 @@ import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -50,8 +53,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * For global tools read-only, for local tools would be used instead getID for modules with alternative classpath storage
    */
   @NonNls
-  @Nullable
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return null;
   }
 
@@ -90,8 +92,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * Tool ID passed to {@link InspectionSuppressor}.
    */
   @NonNls
-  @NotNull
-  protected String getSuppressId() {
+  protected @NotNull String getSuppressId() {
     return getShortName();
   }
 
@@ -160,8 +161,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
-  @NotNull
-  public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+  public static @NotNull Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
@@ -227,9 +227,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultGroupDisplayName();
       if (name != null) {
@@ -244,8 +242,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupKey
    */
   @NonNls
-  @Nullable
-  public String getGroupKey() {
+  public @Nullable String getGroupKey() {
     if (myNameProvider != null) {
       return myNameProvider.getGroupKey();
     }
@@ -255,8 +252,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @see InspectionEP#groupPath
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String @NotNull [] getGroupPath() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
       groupDisplayName = getGeneralGroupName();
@@ -269,9 +265,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultDisplayName();
       if (name != null) {
@@ -290,8 +284,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#shortName
    */
   @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultShortName();
       if (name != null) {
@@ -301,8 +294,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return getShortName(getClass().getSimpleName());
   }
 
-  @NotNull
-  public static String getShortName(@NotNull String className) {
+  public static @NotNull String getShortName(@NotNull String className) {
     return StringUtil.trimEnd(StringUtil.trimEnd(className, "Inspection"), "InspectionBase");
   }
 
@@ -311,8 +303,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @see InspectionEP#level
    */
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
@@ -330,8 +321,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return {@code null} if no UI options required.
    */
-  @Nullable
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     return null;
   }
 
@@ -391,9 +381,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   private static void loadBlackList() {
-    ourBlackList = new THashSet<>();
+    ourBlackList = new HashSet<>();
 
-    final URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
+    URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {
       LOG.error("Resource not found");
       return;
@@ -403,7 +393,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (!line.isEmpty()) ourBlackList.add(line);
+        if (!line.isEmpty()) {
+          ourBlackList.add(line);
+        }
       }
     }
     catch (IOException e) {
@@ -411,8 +403,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
   }
 
-  @NotNull
-  public static Collection<String> getBlackList() {
+  public static @NotNull Collection<String> getBlackList() {
     synchronized (BLACK_LIST_LOCK) {
       if (ourBlackList == null) {
         loadBlackList();
@@ -428,9 +419,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @return serialization filter.
    */
   @SuppressWarnings({"DeprecatedIsStillUsed"})
-  @Nullable
   @Deprecated
-  protected SerializationFilter getSerializationFilter() {
+  protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }
 
@@ -439,18 +429,15 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return hard-coded inspection description.
    */
-  @Nullable
-  public String getStaticDescription() {
+  public @Nullable String getStaticDescription() {
     return null;
   }
 
-  @Nullable
-  public String getDescriptionFileName() {
+  public @Nullable String getDescriptionFileName() {
     return null;
   }
 
-  @NotNull
-  protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 
@@ -462,13 +449,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @return short name of tool whose results will be used
    */
   @NonNls
-  @Nullable
-  public String getMainToolId() {
+  public @Nullable String getMainToolId() {
     return null;
   }
 
-  @Nullable
-  public String loadDescription() {
+  public @Nullable String loadDescription() {
     final String description = getStaticDescription();
     if (description != null) return description;
 

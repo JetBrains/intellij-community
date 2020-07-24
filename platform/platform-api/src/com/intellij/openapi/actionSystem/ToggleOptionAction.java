@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +47,12 @@ public class ToggleOptionAction extends ToggleAction {
   @Override
   public final void update(@NotNull AnActionEvent event) {
     Option option = optionSupplier.apply(event);
-    boolean supported = option != null && option.isEnabled();
+    boolean enabled = option != null && option.isEnabled();
+    boolean visible = enabled || option != null && option.isAlwaysVisible();
     Presentation presentation = event.getPresentation();
-    presentation.setEnabledAndVisible(supported);
-    if (supported) {
+    presentation.setEnabled(enabled);
+    presentation.setVisible(visible);
+    if (visible) {
       Toggleable.setSelected(presentation, option.isSelected());
       String name = option.getName();
       if (name != null) presentation.setText(name);
@@ -82,6 +83,10 @@ public class ToggleOptionAction extends ToggleAction {
 
     default boolean isEnabled() {
       return true;
+    }
+
+    default boolean isAlwaysVisible() {
+      return false;
     }
 
     boolean isSelected();

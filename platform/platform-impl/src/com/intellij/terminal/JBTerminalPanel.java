@@ -44,7 +44,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
   private static final @NonNls String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
-    "ActivateMessagesToolWindow",
     "ActivateProjectToolWindow",
     "ActivateFavoritesToolWindow",
     "ActivateFindToolWindow",
@@ -54,6 +53,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
     "ActivateServicesToolWindow",
+    "ActivateCommitToolWindow",
     "ActivateVersionControlToolWindow",
     "HideActiveWindow",
     "HideAllWindows",

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -65,7 +66,7 @@ public class UpdateHighlightersUtil {
     return Comparing.compare(o1.getDescription(), o2.getDescription());
   };
 
-  private static boolean isCoveredByOffsets(HighlightInfo info, HighlightInfo coveredBy) {
+  private static boolean isCoveredByOffsets(@NotNull HighlightInfo info, @NotNull HighlightInfo coveredBy) {
     return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
@@ -108,7 +109,7 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  private static boolean accept(@NotNull Project project, HighlightInfo info) {
+  private static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
     for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
       if (!filter.accept(info))
         return false;
@@ -117,7 +118,7 @@ public class UpdateHighlightersUtil {
     return true;
   }
 
-  public static boolean isFileLevelOrGutterAnnotation(HighlightInfo info) {
+  public static boolean isFileLevelOrGutterAnnotation(@NotNull HighlightInfo info) {
     return info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null;
   }
 
@@ -150,7 +151,7 @@ public class UpdateHighlightersUtil {
                                               int startOffset,
                                               int endOffset,
                                               @NotNull Collection<? extends HighlightInfo> highlights,
-                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                              @Nullable final EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                               int group,
                                               @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
@@ -167,8 +168,7 @@ public class UpdateHighlightersUtil {
 
 
   @NotNull
-  private static List<HighlightInfo> applyPostFilter(@NotNull Project project,
-                                                     @NotNull List<? extends HighlightInfo> highlightInfos) {
+  private static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
     List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
     for (HighlightInfo info : highlightInfos) {
       if (accept(project, info)) {
@@ -373,15 +373,23 @@ public class UpdateHighlightersUtil {
     final TextRange finalInfoRange = new TextRange(infoStartOffset, infoEndOffset);
     final TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-      if (infoAttributes != null) {
+      TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
+      finalHighlighter.setTextAttributesKey(textAttributesKey);
+
+      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme))) {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 
       info.setHighlighter(finalHighlighter);
       finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
-      Color color = info.getErrorStripeMarkColor(psiFile, colorsScheme);
-      finalHighlighter.setErrorStripeMarkColor(color);
+      Color infoErrorStripeColor = info.getErrorStripeMarkColor(psiFile, colorsScheme);
+      TextAttributes attributes = finalHighlighter.getTextAttributes(colorsScheme);
+      Color attributesErrorStripeColor = attributes != null ? attributes.getErrorStripeColor() : null;
+      if (infoErrorStripeColor != null && !infoErrorStripeColor.equals(attributesErrorStripeColor)) {
+        finalHighlighter.setErrorStripeMarkColor(infoErrorStripeColor);
+      }
+
       if (info != finalHighlighter.getErrorStripeTooltip()) {
         finalHighlighter.setErrorStripeTooltip(info);
       }
@@ -409,7 +417,7 @@ public class UpdateHighlightersUtil {
     };
 
     if (highlighter == null) {
-      highlighter = markup.addRangeHighlighterAndChangeAttributes(infoStartOffset, infoEndOffset, layer, null,
+      highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
       if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
         highlighter.setVisibleIfFolded(true);
@@ -420,10 +428,10 @@ public class UpdateHighlightersUtil {
     }
 
     if (infoAttributes != null) {
-      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
+      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes(colorsScheme));
       assert attributesSet : "Info: " + infoAttributes +
                              "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                             "; highlighter:" + highlighter.getTextAttributes();
+                             "; highlighter:" + highlighter.getTextAttributes(colorsScheme);
     }
   }
 

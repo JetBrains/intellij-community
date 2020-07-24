@@ -28,12 +28,14 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +43,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -79,6 +82,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
 
   private final AsyncRendering myAsyncRendering;
+
+  private final List<ItemPresentationCustomizer> myCustomizers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = lookup.getTopLevelEditor().getColorsScheme();
@@ -130,6 +135,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     int allowedWidth = list.getWidth() - calcSpacing(myNameComponent, myEmptyIcon) - calcSpacing(myTailComponent, null) - calcSpacing(myTypeLabel, null);
 
     LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
+    for (ItemPresentationCustomizer customizer : myCustomizers) {
+      presentation = customizer.customizePresentation(item, presentation);
+    }
 
     myNameComponent.clear();
     myNameComponent.setBackground(background);
@@ -198,6 +206,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @VisibleForTesting
   public int getLookupTextWidth() {
     return myLookupTextWidth;
+  }
+
+  void addPresentationCustomizer(@NotNull ItemPresentationCustomizer customizer) {
+    myCustomizers.add(customizer);
   }
 
   private static int calcSpacing(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
@@ -572,5 +584,22 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
         }
       }
     }
+  }
+
+  /**
+   * Allows to update element's presentation during completion session.
+   * <p>
+   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}.
+   */
+  @ApiStatus.Internal
+  public interface ItemPresentationCustomizer {
+    /**
+     * Invoked from EDT thread every time lookup element is preparing to be shown. Must be very fast.
+     *
+     * @return presentation to show
+     */
+    @NotNull
+    LookupElementPresentation customizePresentation(@NotNull LookupElement item,
+                                                    @NotNull LookupElementPresentation presentation);
   }
 }

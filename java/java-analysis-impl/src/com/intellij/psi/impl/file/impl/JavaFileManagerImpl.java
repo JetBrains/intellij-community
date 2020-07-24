@@ -13,15 +13,14 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -95,16 +94,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
       if (file == null) {
         throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());
       }
-      final boolean valid = file.isValid();
-      VirtualFile vFile = file.getVirtualFile();
-      if (!valid) {
-        LOG.error("Invalid file " +
-                  file + "; virtualFile:" + vFile +
-                  (vFile != null && !vFile.isValid() ? " (invalid)" : "") +
-                  "; id=" + (vFile == null ? 0 : ((VirtualFileWithId)vFile).getId()),
-                  new PsiInvalidElementAccessException(aClass));
-        continue;
-      }
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
       if (!hasAcceptablePackage(vFile)) continue;
 
       result.add(Pair.create(aClass, vFile));

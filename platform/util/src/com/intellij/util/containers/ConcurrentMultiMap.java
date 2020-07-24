@@ -1,69 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @see MultiMap#createConcurrentSet()
- * @author peter
+ * @deprecated Use {@link MultiMap#createConcurrent()} or {@link MultiMap#createConcurrentSet()}
  */
-public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
-  public static final int DEFAULT_CAPACITY = 16;
-  public static final float DEFAULT_LOAD_FACTOR = 0.75f;
-  public static final int DEFAULT_CONCURRENCY_LEVEL = ConcurrentIntObjectHashMap.NCPU;
-
+@Deprecated
+public class ConcurrentMultiMap<K, V> extends MultiMap<K, V> {
   public ConcurrentMultiMap() {
-    super();
+    super(new ConcurrentHashMap<>());
   }
 
   public ConcurrentMultiMap(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
-  @NotNull
-  @Override
-  protected ConcurrentMap<K, Collection<V>> createMap() {
-    return createMap(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR);
+    super(new ConcurrentHashMap<>(initialCapacity, loadFactor));
   }
 
   @Override
-  @NotNull
-  protected ConcurrentMap<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-    return ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL);
-  }
-
-  @NotNull
-  @Override
-  protected Collection<V> createCollection() {
+  protected @NotNull Collection<V> createCollection() {
     return ContainerUtil.createLockFreeCopyOnWriteList();
-  }
-
-  @Override
-  public void putValue(@NotNull K key, V value) {
-    Collection<V> collection = myMap.get(key);
-    if (collection == null) {
-      Collection<V> newCollection = createCollection();
-      collection = ConcurrencyUtil.cacheOrGet((ConcurrentMap<K, Collection<V>>)myMap, key, newCollection);
-    }
-    collection.add(value);
   }
 }

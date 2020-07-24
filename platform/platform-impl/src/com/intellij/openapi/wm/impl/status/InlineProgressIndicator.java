@@ -17,6 +17,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,19 +27,18 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
-
-  protected final TextPanel myText = new TextPanel();
-  private final TextPanel myText2 = new TextPanel();
-  private final JBIterable<ProgressButton> myEastButtons;
+  protected TextPanel myText;
+  private TextPanel myText2;
+  private JBIterable<ProgressButton> myEastButtons = JBIterable.empty();
 
   protected JProgressBar myProgress;
 
-  private JPanel myComponent;
+  protected JPanel myComponent;
 
   private final boolean myCompact;
   private TaskInfo myInfo;
 
-  private final TextPanel myProcessName = new TextPanel();
+  private TextPanel myProcessName;
   private boolean myDisposed;
 
   public InlineProgressIndicator(boolean compact, @NotNull TaskInfo processInfo) {
@@ -48,17 +48,25 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myProgress);
 
-    myComponent = new MyComponent(compact, myProcessName);
+    createComponent();
+  }
+
+  protected void createComponent() {
+    myText = new TextPanel();
+    myText2 = new TextPanel();
+    myProcessName = new TextPanel();
+
+    myComponent = new MyComponent(myCompact, myProcessName);
     myEastButtons = createEastButtons();
     if (myCompact) {
       myComponent.setLayout(new BorderLayout(2, 0));
       createCompactTextAndProgress();
       myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
-      myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
+      myComponent.setToolTipText(myInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
     }
     else {
       myComponent.setLayout(new BorderLayout());
-      myProcessName.setText(processInfo.getTitle());
+      myProcessName.setText(myInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(JBUI.Borders.empty(2));
@@ -81,7 +89,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText.recomputeSize();
       myText2.recomputeSize();
     }
-
   }
 
   protected void createCompactTextAndProgress() {
@@ -161,38 +168,63 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProgress.setValue((int)(getFraction() * 99 + 1));
     }
 
-    myText.setText(getText() != null ? getText() : "");
-    myText2.setText(getText2() != null ? getText2() : "");
+    setTextValue(getText() != null ? getText() : "");
+    setText2Value(getText2() != null ? getText2() : "");
 
-    if (myCompact && StringUtil.isEmpty(myText.getText())) {
-      myText.setText(myInfo.getTitle());
+    if (myCompact && StringUtil.isEmpty(getTextValue())) {
+      setTextValue(myInfo.getTitle());
     }
 
     if (isStopping()) {
       if (myCompact) {
-        myText.setText("Stopping - " + myText.getText());
+        setTextValue("Stopping - " + getTextValue());
       }
       else {
-        myProcessName.setText("Stopping - " + myInfo.getTitle());
-        myText.setEnabled(false);
-        myText2.setEnabled(false);
+        setProcessNameValue("Stopping - " + myInfo.getTitle());
+        setTextEnabled(false);
+        setText2Enabled(false);
       }
       myProgress.setEnabled(false);
     }
     else {
-      myText.setEnabled(true);
-      myText2.setEnabled(true);
+      setTextEnabled(true);
+      setText2Enabled(true);
       myProgress.setEnabled(true);
     }
 
     myEastButtons.forEach(b -> b.updateAction.run());
   }
 
+  @Nullable
+  protected String getTextValue() {
+    return myText.getText();
+  }
+
+  protected void setTextValue(@NotNull String text) {
+    myText.setText(text);
+  }
+
+  protected void setTextEnabled(boolean value) {
+    myText.setEnabled(value);
+  }
+
+  protected void setText2Value(@NotNull String text) {
+    myText2.setText(text);
+  }
+
+  protected void setText2Enabled(boolean value) {
+    myText2.setEnabled(value);
+  }
+
+  protected void setProcessNameValue(@NotNull String text) {
+    myProcessName.setText(text);
+  }
+
   protected boolean isPaintingIndeterminate() {
     return isIndeterminate() || getFraction() == 0;
   }
 
-  private boolean isStopping() {
+  protected boolean isStopping() {
     return wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
   }
 

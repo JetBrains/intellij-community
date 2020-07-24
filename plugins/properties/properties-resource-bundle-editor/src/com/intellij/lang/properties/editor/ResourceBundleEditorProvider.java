@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -25,7 +26,7 @@ public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAwa
     if (file instanceof ResourceBundleAsVirtualFile) return true;
     if (!file.isValid()) return false;
     final FileType type = file.getFileType();
-    if (type != StdFileTypes.PROPERTIES && type != StdFileTypes.XML) return false;
+    if (type != PropertiesFileType.INSTANCE && type != StdFileTypes.XML) return false;
 
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return Boolean.FALSE;

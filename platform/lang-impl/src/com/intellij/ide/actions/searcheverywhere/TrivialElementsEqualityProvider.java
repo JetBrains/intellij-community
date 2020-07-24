@@ -5,14 +5,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class TrivialElementsEqualityProvider implements SEResultsEqualityProvider {
+public class TrivialElementsEqualityProvider extends AbstractEqualityProvider {
 
-  @NotNull
   @Override
-  public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItem, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem) {
-    if (Objects.equals(newItem.getElement(), alreadyFoundItem.getElement())) {
-      return newItem.getPriority() > alreadyFoundItem.getPriority() ? SEEqualElementsActionType.REPLACE : SEEqualElementsActionType.SKIP;
-    }
-    return SEEqualElementsActionType.DO_NOTHING;
+  protected boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItem,
+                             @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem) {
+    return Objects.equals(newItem.getElement(), alreadyFoundItem.getElement());
   }
 }

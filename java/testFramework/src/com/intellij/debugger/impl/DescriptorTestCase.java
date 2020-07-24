@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerTestCase;
@@ -27,19 +13,19 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class DescriptorTestCase extends DebuggerTestCase {
-  private final List<Pair<NodeDescriptorImpl,List<String>>> myDescriptorLog = new ArrayList<>();
+  private final Map<NodeDescriptorImpl, NodeDescriptorText> myDescriptorLog = new LinkedHashMap<>();
 
   public DescriptorTestCase() {
     super();
@@ -80,52 +66,44 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     final DebugProcessImpl localProcess = suspendContext.getDebugProcess();
     invokeRatherLater(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         flushDescriptors();
         localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
     });
   }
 
-  protected void logDescriptor(final NodeDescriptorImpl descriptor, String text) {
-    Pair<NodeDescriptorImpl, List<String>> descriptorText = findDescriptorLog(descriptor);
+  private class NodeDescriptorText {
+    final List<String> myText = new SmartList<>();
+    String myLabel;
 
-    if(descriptorText == null) {
-      ArrayList<String> allText = new ArrayList<>();
-      allText.add(text);
-      descriptorText = new Pair<>(descriptor, allText);
-      myDescriptorLog.add(descriptorText);
+    void appendText(String text) {
+      if (!text.equals(ContainerUtil.getLastItem(myText))) {
+        myText.add(text);
+      }
     }
-    else {
-      List<String> allText = descriptorText.getSecond();
-      if(!allText.get(allText.size() - 1).equals(text)) {
-        allText.add(text);
+
+    void print() {
+      for (String text : myText) {
+        DescriptorTestCase.this.print(text, ProcessOutputTypes.SYSTEM);
+      }
+      if (StringUtil.isNotEmpty(myLabel)) {
+        DescriptorTestCase.this.print(myLabel, ProcessOutputTypes.SYSTEM);
       }
     }
   }
 
-  private Pair<NodeDescriptorImpl, List<String>> findDescriptorLog(final NodeDescriptorImpl descriptor) {
-    Pair<NodeDescriptorImpl, List<String>> descriptorText = null;
-    for (Pair<NodeDescriptorImpl, List<String>> pair : myDescriptorLog) {
-      if (pair.getFirst() == descriptor) {
-        descriptorText = pair;
-        break;
-      }
-    }
-    return descriptorText;
+  protected void logDescriptor(NodeDescriptorImpl descriptor, String text) {
+    myDescriptorLog.computeIfAbsent(descriptor, k -> new NodeDescriptorText()).appendText(text);
+  }
+
+  protected void logDescriptorLabel(NodeDescriptorImpl descriptor, String label) {
+    myDescriptorLog.computeIfAbsent(descriptor, k -> new NodeDescriptorText()).myLabel = label;
   }
 
   protected void flushDescriptors() {
-    for (Pair<NodeDescriptorImpl, List<String>> aMyDescriptorLog : myDescriptorLog) {
-      printDescriptorLog(aMyDescriptorLog);
-    }
+    myDescriptorLog.forEach((descriptor, text) -> text.print());
     myDescriptorLog.clear();
-  }
-
-  private void printDescriptorLog(Pair<NodeDescriptorImpl, List<String>> pair) {
-    for (String text : pair.getSecond()) {
-      print(text, ProcessOutputTypes.SYSTEM);
-    }
   }
 
   @Override
@@ -141,6 +119,29 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     }
   }
 
+  private static boolean expandOne(Tree tree) {
+    boolean anyExpanded = false;
+    for (int i = 0; i < tree.getRowCount(); i++) {
+      TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
+      if (tree.isCollapsed(i) && !treeNode.isLeaf()) {
+        anyExpanded = true;
+        tree.expandRow(i);
+        break;
+      }
+    }
+
+    return anyExpanded;
+  }
+
+  protected static void expandAll(Tree tree, Runnable wait) {
+    boolean cont = true;
+    while (cont) {
+      cont = UIUtil.invokeAndWaitIfNeeded(() -> expandOne(tree));
+      wait.run();
+    }
+  }
+
+  // Still used in kotlin tests
   protected void expandAll(final DebuggerTree tree, final Runnable runnable) {
     expandAll(tree, runnable, new HashSet<>(), null);
   }

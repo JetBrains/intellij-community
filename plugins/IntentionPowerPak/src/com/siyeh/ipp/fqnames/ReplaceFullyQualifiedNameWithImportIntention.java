@@ -33,7 +33,7 @@ import java.util.Collection;
 
 /**
  * This class seems to used from a third-party plugin (https://plugins.jetbrains.com/plugin/7688-eddy) and can't be removed.
- * @see com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
+ * @see UnnecessaryFullyQualifiedNameInspection
  */
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
 

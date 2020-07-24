@@ -326,6 +326,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testRenameRoot() {
+    LocalFileSystem.getInstance().refresh(false);
     rename(myModule1Dir, "newName");
   }
 

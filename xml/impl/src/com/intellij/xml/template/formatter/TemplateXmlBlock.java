@@ -23,9 +23,12 @@ import com.intellij.psi.formatter.xml.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock {
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
@@ -45,8 +48,9 @@ public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock 
   }
 
   @Override
-  protected XmlBlock createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
-    return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy,indent, child.getTextRange());
+  protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable TextRange range) {
+    return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, notNull(range, child.getTextRange()));
   }
 
   @Override

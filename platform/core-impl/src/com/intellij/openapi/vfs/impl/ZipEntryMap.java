@@ -120,7 +120,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return endIndex==0;
   }
 
-  private ArchiveHandler.EntryInfo @NotNull [] rehash() {
+  private void rehash() {
     ArchiveHandler.EntryInfo[] newEntries = new ArchiveHandler.EntryInfo[entries.length < 1000 ? entries.length  * 2 : entries.length * 3/2];
     for (ArchiveHandler.EntryInfo entry : entries) {
       if (entry != null) {
@@ -128,7 +128,6 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
       }
     }
     entries = newEntries;
-    return newEntries;
   }
 
   @NotNull

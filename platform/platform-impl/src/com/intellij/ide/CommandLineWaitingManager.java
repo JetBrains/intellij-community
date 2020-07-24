@@ -80,6 +80,10 @@ public final class CommandLineWaitingManager {
     return result;
   }
 
+  public boolean hasHookFor(@NotNull Object fileOrProject) {
+    return myFileOrProjectToCallback.containsKey(fileOrProject);
+  }
+
   private void freeObject(@NotNull Object fileOrProject) {
     myDismissedObjects.remove(fileOrProject);
     CompletableFuture<CliResult> future = myFileOrProjectToCallback.remove(fileOrProject);
@@ -101,7 +105,7 @@ public final class CommandLineWaitingManager {
     public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
       if (!PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) {
         CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
-        if (manager != null && manager.myFileOrProjectToCallback.containsKey(file) && !manager.myDismissedObjects.contains(file)) {
+        if (manager != null && manager.hasHookFor(file) && !manager.myDismissedObjects.contains(file)) {
           return new MyNotificationPanel(file);
         }
       }

@@ -2893,6 +2893,36 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Random int nextInt(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.IntStream ints(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.IntStream ints(long, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.LongStream longs(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.LongStream longs(long, long, long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -3213,6 +3243,42 @@
   <item name='java.util.Spliterators.IteratorSpliterator IteratorSpliterator(java.util.Iterator&lt;? extends T&gt;, int) 1'>
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom int nextInt(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.IntStream ints(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.IntStream ints(long, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.LongStream longs(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.LongStream longs(long, long, long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom long nextLong(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">

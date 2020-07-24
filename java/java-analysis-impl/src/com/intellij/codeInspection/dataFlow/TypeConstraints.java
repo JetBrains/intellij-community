@@ -324,8 +324,15 @@ public class TypeConstraints {
     @NotNull
     @Override
     public String toString() {
-      // TODO: support anonymous classes
-      return String.valueOf(myClass.getQualifiedName());
+      String name = myClass.getQualifiedName();
+      if (name == null) {
+        name = myClass.getName();
+      }
+      if (name == null && myClass instanceof PsiAnonymousClass) {
+        PsiClassType baseClassType = ((PsiAnonymousClass)myClass).getBaseClassType();
+        name = "anonymous " + createExact(baseClassType);
+      }
+      return String.valueOf(name);
     }
 
     @Override
@@ -447,6 +454,11 @@ public class TypeConstraints {
 
     private Unresolved(@NotNull String reference) {
       myReference = reference;
+    }
+
+    @Override
+    public boolean isResolved() {
+      return false;
     }
 
     @Override

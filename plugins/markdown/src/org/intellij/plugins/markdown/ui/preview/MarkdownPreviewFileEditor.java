@@ -49,7 +49,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       return Sanitizers.BLOCKS
         .and(Sanitizers.FORMATTING)
         .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https").allowElements("img")
+               .allowUrlProtocols("source", "file", "http", "https").allowElements("img")
                .allowAttributes("alt", "src", "title").onElements("img")
                .allowAttributes("border", "height", "width").onElements("img")
                .toFactory())
@@ -62,7 +62,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
                .allowAttributes("class").onElements("li")
                .toFactory())
         .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https", "mailto").allowElements("a")
+               .allowUrlProtocols("source", "file", "http", "https", "mailto").allowElements("a")
                .allowAttributes("href", "title").onElements("a")
                .toFactory())
         .and(Sanitizers.TABLES)

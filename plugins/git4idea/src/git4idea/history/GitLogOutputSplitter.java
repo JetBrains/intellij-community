@@ -15,7 +15,7 @@
  */
 package git4idea.history;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,10 +54,10 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
 
   @Override
   public void onLineAvailable(String line, Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR) {
+    if (ProcessOutputType.isStderr(outputType)) {
       myErrors.append(GitUtil.cleanupErrorPrefixes(line)).append("\n");
     }
-    else if (outputType == ProcessOutputTypes.STDOUT) {
+    else if (ProcessOutputType.isStdout(outputType)) {
       try {
         processOutputLine(line);
       }

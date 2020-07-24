@@ -11,14 +11,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> implements Processor<T> {
-
   public enum SearchMode {
     MAX_2_MEMBERS(2),
     MAX_100_MEMBERS(100);
@@ -29,7 +27,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     }
   }
 
-  private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
+  private final MultiMap<PsiClass, T> mySuggestions = MultiMap.createLinked();
 
   private final Map<String, Boolean> myPossibleClasses = new HashMap<>();
 

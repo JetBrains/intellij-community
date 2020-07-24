@@ -41,7 +41,7 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     PsiNamedElement namedElement = ApplicationManager.getApplication().runReadAction((Computable<PsiNamedElement>)() -> {
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;

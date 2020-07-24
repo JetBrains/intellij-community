@@ -47,7 +47,7 @@ internal object BranchesDashboardActions {
   }
 
   class MultipleLocalBranchActions : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(UpdateSelectedBranchAction(), DeleteBranchAction())
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
   }
 
   class CurrentBranchActions(project: Project,
@@ -210,6 +210,34 @@ internal object BranchesDashboardActions {
       for (branch in branches.filterNot(BranchInfo::isCurrent)) {
         gitBrancher.compare(branch.branchName, branch.repositories)
       }
+    }
+  }
+
+  class ShowArbitraryBranchesDiffAction : BranchesActionBase(text = messagePointer("action.Git.Compare.Selected.title"),
+                                                             icon = AllIcons.Actions.Diff) {
+    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      if (branches.size != 2) {
+        e.presentation.isEnabledAndVisible = false
+        e.presentation.description = ""
+      }
+      else {
+        e.presentation.description=message("action.Git.Compare.Selected.description")
+        val commonRepositories = branches.elementAt(0).repositories intersect branches.elementAt(1).repositories
+        if (commonRepositories.isEmpty()) {
+          e.presentation.isEnabled = false
+          e.presentation.description = message("action.Git.Compare.Selected.description.disabled")
+        }
+      }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val branches = e.getData(GIT_BRANCHES)!!
+      val branchOne = branches.elementAt(0)
+      val branchTwo = branches.elementAt(1)
+      val commonRepositories = branchOne.repositories intersect branchTwo.repositories
+      val gitBrancher = GitBrancher.getInstance(e.project!!)
+
+      gitBrancher.compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -12,7 +12,7 @@ import io.netty.handler.codec.http.*
 import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addCommonHeaders
-import org.jetbrains.io.addKeepAliveIfNeed
+import org.jetbrains.io.addKeepAliveIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.*
@@ -59,7 +59,6 @@ abstract class HttpRequestHandler {
   abstract fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
 
   protected fun sendData(content: ByteArray, name: String, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders): Boolean {
-
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
     response.addCommonHeaders()
@@ -67,7 +66,7 @@ abstract class HttpRequestHandler {
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
     response.headers().add(extraHeaders)
 
-    val keepAlive = response.addKeepAliveIfNeed(request)
+    val keepAlive = response.addKeepAliveIfNeeded(request)
     if (request.method() != HttpMethod.HEAD) {
       HttpUtil.setContentLength(response, content.size.toLong())
     }

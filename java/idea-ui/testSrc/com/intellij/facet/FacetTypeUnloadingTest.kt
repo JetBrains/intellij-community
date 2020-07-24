@@ -129,7 +129,7 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
         Disposer.dispose(facetTypeDisposable)
       }
     })
-    FacetType.EP_NAME.getPoint(null).registerExtension(type, facetTypeDisposable)
+    FacetType.EP_NAME.getPoint().registerExtension(type, facetTypeDisposable)
   }
 
   override fun setUp() {

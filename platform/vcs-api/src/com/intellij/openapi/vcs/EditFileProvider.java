@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * VCS interface for invoking "check out"/"edit file" operations.
  *
  * @author lesya
- * @see com.intellij.openapi.vcs.AbstractVcs#getEditFileProvider()
+ * @see AbstractVcs#getEditFileProvider()
  */
 public interface EditFileProvider {
   /**

@@ -75,4 +75,22 @@
     <myCustomInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="INVALID_BUNDLE"
                         key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
   </extensions>
+
+  <actions>
+    <group id="separatorGroup">
+      <separator key="my.key"/>
+
+      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+    </group>
+  </actions>
+
+  <actions resource-bundle="extensionI18nAnotherBundle">
+    <group id="separatorGroupWithCustomResourceBundle">
+      <separator key="another.key"/>
+
+      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+    </group>
+  </actions>
+
+  <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 </idea-plugin>

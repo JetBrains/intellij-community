@@ -31,6 +31,9 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IntMapForwardIndex;
+import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +137,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
       @Override
       @Nullable
-      public SerializedStubTree computeValue(@NotNull final FileContent inputData, @NotNull StubBuilderType type) {
+      protected SerializedStubTree computeValue(@NotNull final FileContent inputData, @NotNull StubBuilderType type) {
         try {
           SerializedStubTree prebuiltTree = findPrebuiltSerializedStubTree(inputData);
           if (prebuiltTree != null) {
@@ -144,6 +147,8 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
             }
             return prebuiltTree;
           }
+        } catch (ProcessCanceledException pce) {
+          throw pce;
         } catch (Exception e) {
           LOG.error("Error while indexing: " + inputData.getFileName() + " using prebuilt stub index", e);
         }

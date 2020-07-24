@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -16,11 +14,8 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ui.UIUtil
+import com.intellij.testFramework.*
+import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
 import java.io.File
@@ -43,6 +38,11 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
+    // Disable IndexableSetContributor (ExternalResourcesRootsProvider and others) to not affect project file index.
+    // They provide files for indexing, which are irrelevant to the current test.
+    // These files are checked on "ProjectFileIndex.isExcluded" (see de4d445d7e24) and pollute the index's cache.
+    runWriteAction { ExtensionTestUtil.maskExtensions(IndexableSetContributor.EP_NAME, emptyList(), testRootDisposable) }
+
     TestLoggerFactory.enableDebugLogging(testRootDisposable,
                                          "#" + NewMappings::class.java.name,
                                          "#" + VcsInitialization::class.java.name)
@@ -52,8 +52,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
     rootPath = projectRoot.path
 
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject)
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get("$rootPath/directoryMappings.ipr"))
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -68,11 +67,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     mappings = NewMappings(myProject, vcsManager)
     mappings.activateActiveVcses()
     Disposer.register(testRootDisposable, mappings)
-
-    UIUtil.dispatchAllInvocationEvents()
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
-    startupManager.runPostStartupActivitiesRegisteredDynamically()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     vcsManager.waitForInitialized()
   }
 

@@ -1,6 +1,9 @@
 package com.intellij.workspace.api
 
-import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.PEntityData
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PSoftLinkable
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.references.*
 import java.io.Serializable
@@ -21,8 +24,8 @@ class ModuleEntityData : PEntityData.WithCalculatablePersistentId<ModuleEntity>(
   lateinit var dependencies: List<ModuleDependencyItem>
 
   @ExperimentalStdlibApi
-  override fun getLinks(): List<PersistentEntityId<*>> {
-    return buildList {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    return buildSet {
       dependencies.forEach { dependency ->
         when (dependency) {
           is ModuleDependencyItem.Exportable.ModuleDependency -> this.add(dependency.module)
@@ -62,7 +65,7 @@ class ModuleEntityData : PEntityData.WithCalculatablePersistentId<ModuleEntity>(
     return changed
   }
 
-  override fun createEntity(snapshot: TypedEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies.toList()).also {
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
     addMetaData(it, snapshot)
   }
 
@@ -77,15 +80,23 @@ class ModuleEntity(
 
   override fun persistentId(): ModuleId = ModuleId(name)
 
-  val sourceRoots: Sequence<SourceRootEntity> by OneToMany(SourceRootEntity::class, false)
+  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
-  val contentRoots: Sequence<ContentRootEntity> by OneToMany(ContentRootEntity::class, false)
+  val contentRoots: Sequence<ContentRootEntity> by contentRootDelegate
 
-  val customImlData: ModuleCustomImlDataEntity? by OneToOneParent.Nullable(ModuleCustomImlDataEntity::class, false)
+  val customImlData: ModuleCustomImlDataEntity? by moduleImlDelegate
 
-  val groupPath: ModuleGroupPathEntity? by OneToOneParent.Nullable(ModuleGroupPathEntity::class, false)
+  val groupPath: ModuleGroupPathEntity? by moduleGroupDelegate
 
-  val javaSettings: JavaModuleSettingsEntity? by OneToOneParent.Nullable(JavaModuleSettingsEntity::class, false)
+  val javaSettings: JavaModuleSettingsEntity? by javaSettingsDelegate
+
+  companion object {
+    val sourceRootDelegate = OneToMany<ModuleEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
+    val contentRootDelegate = OneToMany<ModuleEntity, ContentRootEntity>(ContentRootEntity::class.java, false)
+    val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java, false)
+    val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java, false)
+    val javaSettingsDelegate = OneToOneParent.Nullable<ModuleEntity, JavaModuleSettingsEntity>(JavaModuleSettingsEntity::class.java, false)
+  }
 }
 
 @Suppress("unused")
@@ -96,7 +107,8 @@ class JavaModuleSettingsEntityData : PEntityData<JavaModuleSettingsEntity>() {
   var compilerOutputForTests: VirtualFileUrl? = null
 
   override fun createEntity(snapshot: TypedEntityStorage): JavaModuleSettingsEntity {
-    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests).also { addMetaData(it, snapshot) }
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests)
+      .also { addMetaData(it, snapshot) }
   }
 }
 
@@ -106,7 +118,11 @@ class JavaModuleSettingsEntity(
   val compilerOutput: VirtualFileUrl?,
   val compilerOutputForTests: VirtualFileUrl?
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, JavaModuleSettingsEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
@@ -115,7 +131,7 @@ class ModuleCustomImlDataEntityData : PEntityData<ModuleCustomImlDataEntity>() {
   lateinit var customModuleOptions: Map<String, String>
 
   override fun createEntity(snapshot: TypedEntityStorage): ModuleCustomImlDataEntity {
-    return ModuleCustomImlDataEntity(rootManagerTagCustomData, customModuleOptions.toMap()).also { addMetaData(it, snapshot) }
+    return ModuleCustomImlDataEntity(rootManagerTagCustomData, customModuleOptions).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -123,20 +139,30 @@ class ModuleCustomImlDataEntity(
   val rootManagerTagCustomData: String?,
   val customModuleOptions: Map<String, String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ModuleCustomImlDataEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
 class ModuleGroupPathEntityData : PEntityData<ModuleGroupPathEntity>() {
   lateinit var path: List<String>
 
-  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path.toList()).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class ModuleGroupPathEntity(
   val path: List<String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ModuleGroupPathEntity>(ModuleEntity::class.java)
+  }
 }
 
 data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
@@ -188,7 +214,9 @@ class SourceRootEntityData : PEntityData<SourceRootEntity>() {
   var tests: Boolean = false
   lateinit var rootType: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 open class SourceRootEntity(
@@ -196,7 +224,11 @@ open class SourceRootEntity(
   val tests: Boolean,
   val rootType: String
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, SourceRootEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
@@ -204,14 +236,20 @@ class JavaSourceRootEntityData : PEntityData<JavaSourceRootEntity>() {
   var generated: Boolean = false
   lateinit var packagePrefix: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class JavaSourceRootEntity(
   val generated: Boolean,
   val packagePrefix: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, JavaSourceRootEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
@@ -221,14 +259,21 @@ class JavaResourceRootEntityData : PEntityData<JavaResourceRootEntity>() {
   var generated: Boolean = false
   lateinit var relativeOutputPath: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated, relativeOutputPath).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated,
+                                                                                                           relativeOutputPath).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class JavaResourceRootEntity(
   val generated: Boolean,
   val relativeOutputPath: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, JavaResourceRootEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
@@ -244,7 +289,11 @@ class CustomSourceRootPropertiesEntityData : PEntityData<CustomSourceRootPropert
 class CustomSourceRootPropertiesEntity(
   val propertiesXmlTag: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, CustomSourceRootPropertiesEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
@@ -256,7 +305,7 @@ class ContentRootEntityData : PEntityData<ContentRootEntity>() {
   lateinit var excludedPatterns: List<String>
 
   override fun createEntity(snapshot: TypedEntityStorage): ContentRootEntity {
-    return ContentRootEntity(url, excludedUrls.toList(), excludedPatterns.toList()).also { addMetaData(it, snapshot) }
+    return ContentRootEntity(url, excludedUrls, excludedPatterns).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -265,7 +314,11 @@ open class ContentRootEntity(
   val excludedUrls: List<VirtualFileUrl>,
   val excludedPatterns: List<String>
 ) : PTypedEntity() {
-  open val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  open val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ContentRootEntity>(ModuleEntity::class.java)
+  }
 }
 
 class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : ContentRootEntity(url, emptyList(), emptyList()) {
@@ -283,21 +336,25 @@ class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : C
 class SourceRootOrderEntityData : PEntityData<SourceRootOrderEntity>() {
   lateinit var orderOfSourceRoots: List<VirtualFileUrl>
   override fun createEntity(snapshot: TypedEntityStorage): SourceRootOrderEntity {
-    return SourceRootOrderEntity(orderOfSourceRoots.toList()).also { addMetaData(it, snapshot) }
+    return SourceRootOrderEntity(orderOfSourceRoots).also { addMetaData(it, snapshot) }
   }
 }
 
 class SourceRootOrderEntity(
   var orderOfSourceRoots: List<VirtualFileUrl>
 ) : PTypedEntity() {
-  val contentRootEntity: ContentRootEntity by OneToOneChild.NotNull(ContentRootEntity::class, true)
+  val contentRootEntity: ContentRootEntity by contentRootDelegate
+
+  companion object {
+    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java, true)
+  }
 }
 
 class ModifiableSourceRootOrderEntity : PModifiableTypedEntity<SourceRootOrderEntity>() {
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
-  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class, ContentRootEntity::class,
-                                                                                   true)
+  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java,
+                                                                           true)
 }
 
 fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
@@ -333,9 +390,9 @@ class LibraryEntityData : PEntityData.WithCalculatablePersistentId<LibraryEntity
   lateinit var roots: List<LibraryRoot>
   lateinit var excludedRoots: List<VirtualFileUrl>
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
     val id = tableId
-    return if (id is LibraryTableId.ModuleLibraryTableId) listOf(id.moduleId) else emptyList()
+    return if (id is LibraryTableId.ModuleLibraryTableId) setOf(id.moduleId) else emptySet()
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -350,7 +407,7 @@ class LibraryEntityData : PEntityData.WithCalculatablePersistentId<LibraryEntity
   }
 
   override fun createEntity(snapshot: TypedEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots.toList(), excludedRoots.toList()).also { addMetaData(it, snapshot) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
@@ -399,7 +456,11 @@ class LibraryPropertiesEntity(
   val libraryType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class, true)
+  val library: LibraryEntity by libraryDelegate
+
+  companion object {
+    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java, true)
+  }
 }
 
 fun LibraryEntity.getCustomProperties() = referrers(LibraryPropertiesEntity::library).firstOrNull()
@@ -414,7 +475,11 @@ class SdkEntityData : PEntityData<SdkEntity>() {
 class SdkEntity(
   val homeUrl: VirtualFileUrl
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class, true)
+  val library: LibraryEntity by libraryDelegate
+
+  companion object {
+    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java, true)
+  }
 }
 
 @Suppress("unused")
@@ -431,7 +496,9 @@ class ExternalSystemModuleOptionsEntityData : PEntityData<ExternalSystemModuleOp
 
   override fun createEntity(snapshot: TypedEntityStorage): ExternalSystemModuleOptionsEntity {
     return ExternalSystemModuleOptionsEntity(externalSystem, externalSystemModuleVersion, linkedProjectPath, linkedProjectId,
-                                             rootProjectPath, externalSystemModuleGroup, externalSystemModuleType).also { addMetaData(it, snapshot) }
+                                             rootProjectPath, externalSystemModuleGroup, externalSystemModuleType).also {
+      addMetaData(it, snapshot)
+    }
   }
 }
 
@@ -446,7 +513,11 @@ class ExternalSystemModuleOptionsEntity(
   val externalSystemModuleGroup: String?,
   val externalSystemModuleType: String?
 ) : PTypedEntity() {
-  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class, true)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java, true)
+  }
 }
 
 
@@ -459,7 +530,8 @@ class FacetEntityData : PEntityData.WithPersistentId<FacetEntity>() {
   lateinit var facetType: String
   var configurationXmlTag: String? = null
 
-  override fun createEntity(snapshot: TypedEntityStorage): FacetEntity = FacetEntity(name, facetType, configurationXmlTag).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): FacetEntity = FacetEntity(name, facetType,
+                                                                                     configurationXmlTag).also { addMetaData(it, snapshot) }
 }
 
 class FacetEntity(
@@ -467,9 +539,14 @@ class FacetEntity(
   val facetType: String,
   val configurationXmlTag: String?
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class)
+  val module: ModuleEntity by moduleDelegate
 
-  val underlyingFacet: FacetEntity? by OneToOneChild.Nullable(FacetEntity::class, true)
+  val underlyingFacet: FacetEntity? by facetDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, FacetEntity>(ModuleEntity::class.java)
+    val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
+  }
 
   override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
 }
@@ -513,11 +590,17 @@ class ArtifactEntity(
   val includeInProjectBuild: Boolean,
   val outputUrl: VirtualFileUrl
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val rootElement: CompositePackagingElementEntity by OneToAbstractOneChild(CompositePackagingElementEntity::class)
-
   override fun persistentId(): ArtifactId = ArtifactId(name)
 
-  val customProperties: Sequence<ArtifactPropertiesEntity> by OneToMany(ArtifactPropertiesEntity::class, false)
+  val rootElement: CompositePackagingElementEntity by rootElementDelegate
+
+  val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
+
+  companion object {
+    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(
+      CompositePackagingElementEntity::class.java)
+    val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
+  }
 }
 
 @Suppress("unused")
@@ -534,13 +617,17 @@ class ArtifactPropertiesEntity(
   val providerType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val artifact: ArtifactEntity by ManyToOne.NotNull(ArtifactEntity::class)
+  val artifact: ArtifactEntity by artifactDelegate
+
+  companion object {
+    val artifactDelegate = ManyToOne.NotNull<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactEntity::class.java)
+  }
 }
 
 abstract class PackagingElementEntity : PTypedEntity()
 
 abstract class CompositePackagingElementEntity : PackagingElementEntity() {
-  val children: Sequence<PackagingElementEntity> by OneToAbstractMany(PackagingElementEntity::class)
+  val children: Sequence<PackagingElementEntity> by OneToAbstractMany(PackagingElementEntity::class.java)
 }
 
 @Suppress("unused")
@@ -580,7 +667,7 @@ class ArtifactRootElementEntity : CompositePackagingElementEntity()
 class ArtifactOutputPackagingElementEntityData : PEntityData<ArtifactOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var artifact: ArtifactId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(artifact)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(artifact)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
@@ -603,7 +690,7 @@ class ArtifactOutputPackagingElementEntity(
 class ModuleOutputPackagingElementEntityData : PEntityData<ModuleOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
@@ -626,10 +713,10 @@ class ModuleOutputPackagingElementEntity(
 class LibraryFilesPackagingElementEntityData : PEntityData<LibraryFilesPackagingElementEntity>(), PSoftLinkable {
   lateinit var library: LibraryId
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
     val tableId = library.tableId
-    if (tableId is LibraryTableId.ModuleLibraryTableId) return listOf(library, tableId.moduleId)
-    return listOf(library)
+    if (tableId is LibraryTableId.ModuleLibraryTableId) return setOf(library, tableId.moduleId)
+    return setOf(library)
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -663,8 +750,8 @@ class LibraryFilesPackagingElementEntity(
 class ModuleSourcePackagingElementEntityData : PEntityData<ModuleSourcePackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
-    return listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    return setOf(module)
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -688,7 +775,7 @@ class ModuleSourcePackagingElementEntity(
 class ModuleTestOutputPackagingElementEntityData : PEntityData<ModuleTestOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,

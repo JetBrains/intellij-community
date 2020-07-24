@@ -19,11 +19,16 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SimplifiableAssertionInspection extends BaseInspection {
+public class SimplifiableAssertionInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("simplifiable.junit.assertion.problem.descriptor", infos[0]);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Override
@@ -35,8 +40,6 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new SimplifiableJUnitAssertionVisitor();
   }
-
-  protected abstract boolean checkTestNG();
 
   static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
     return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
@@ -124,12 +127,12 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)parent.getParent();
-      final AssertHint assertHint = AssertHint.createAssertEqualsHint(callExpression, checkTestNG());
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(callExpression);
       if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
         replaceAssertEqualsWithAssertLiteral(assertHint);
       }
       else {
-        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(callExpression, checkTestNG());
+        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(callExpression);
         if (assertTrueFalseHint == null) {
           return;
         }
@@ -150,7 +153,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         else if (isEqualityComparison(argument)) {
           replaceWithAssertEquals(assertTrueFalseHint, "assertNotEquals");
         }
-        else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(argument)) {
+        else if (assertTrue && isArrayEqualityComparison(argument)) {
           replaceWithAssertEquals(assertTrueFalseHint, "assertArrayEquals");
         }
         else if (BoolUtils.isNegation(argument)) {
@@ -235,7 +238,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
 
-      if (checkTestNG()) {
+      if (!assertHint.isMessageOnFirstPosition()) {
         final PsiExpression temp = lhs;
         lhs = rhs;
         rhs = temp;
@@ -394,12 +397,12 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
+      final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
       if (assertHint != null && isAssertEqualsThatCouldBeAssertLiteral(assertHint)) {
         registerMethodCallError(expression, getReplacementMethodName(assertHint));
       }
       else {
-        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(expression, checkTestNG());
+        final AssertHint assertTrueFalseHint = AssertHint.createAssertTrueFalseHint(expression);
         if (assertTrueFalseHint == null) {
           return;
         }
@@ -424,7 +427,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           else if (isAssertThatCouldBeFail(firstArgument, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
           }
-          else if (assertTrue && !checkTestNG() && isArrayEqualityComparison(firstArgument)) {
+          else if (assertTrue && assertTrueFalseHint.isMessageOnFirstPosition() && isArrayEqualityComparison(firstArgument)) {
             registerMethodCallError(expression, "assertArrayEquals()");
           }
           else if (BoolUtils.isNegation(firstArgument)) {

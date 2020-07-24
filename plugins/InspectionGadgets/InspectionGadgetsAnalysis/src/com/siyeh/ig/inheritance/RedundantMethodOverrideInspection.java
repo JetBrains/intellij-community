@@ -17,7 +17,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +144,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       else {
         if (statement instanceof PsiReturnStatement) {
           final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
-          expression = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+          expression = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
         }
         else {
           return false;

@@ -19,6 +19,7 @@ import com.intellij.openapi.Forceable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
 import java.io.File;
@@ -36,7 +37,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull final Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                      @Nullable StorageLockContext lockContext) throws IOException {
     myEnumerator = useBtree() ?
                    new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
                    new PersistentEnumerator<>(file, dataDescriptor, initialSize);
@@ -45,7 +46,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull final File file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      @Nullable StorageLockContext lockContext,
                                       int version) throws IOException {
     this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
   }
@@ -53,10 +54,20 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      @Nullable StorageLockContext lockContext,
                                       int version) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version) :
-                   new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
+    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
+  }
+
+  @NotNull
+  static <Data> PersistentEnumeratorBase<Data> createDefaultEnumerator(@NotNull Path file,
+                                                                       @NotNull KeyDescriptor<Data> dataDescriptor,
+                                                                       final int initialSize,
+                                                                       @Nullable StorageLockContext lockContext,
+                                                                       int version) throws IOException {
+    return useBtree()
+           ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version)
+           : new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
   }
 
   @ApiStatus.Internal
@@ -89,9 +100,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   }
 
   public final void markDirty() throws IOException {
-    synchronized (myEnumerator) {
-      myEnumerator.markDirty(true);
-    }
+    myEnumerator.markDirty(true);
   }
 
   public boolean isCorrupted() {
@@ -122,10 +131,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
     return myEnumerator.tryEnumerate(name);
   }
 
-  public boolean traverseAllRecords(PersistentEnumeratorBase.RecordsProcessor recordsProcessor) throws IOException {
-    return myEnumerator.traverseAllRecords(recordsProcessor);
-  }
-
+  @TestOnly
   public Collection<Data> getAllDataObjects(@Nullable final PersistentEnumeratorBase.DataFilter filter) throws IOException {
     return myEnumerator.getAllDataObjects(filter);
   }

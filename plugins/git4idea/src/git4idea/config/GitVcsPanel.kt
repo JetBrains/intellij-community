@@ -13,6 +13,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -93,7 +94,6 @@ internal class GitVcsPanel(private val project: Project) :
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
     VcsExecutablePathSelector("Git", disposable!!, Consumer { path ->
-      val pathToGit = path ?: GitExecutableManager.getInstance().detectedExecutable
       object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
         private val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
         val errorNotifier = InlineErrorNotifierFromSettings(
@@ -105,6 +105,7 @@ internal class GitVcsPanel(private val project: Project) :
 
       override fun run(indicator: ProgressIndicator) {
         val executableManager = GitExecutableManager.getInstance()
+        val pathToGit = path ?: executableManager.detectedExecutable
         val executable = executableManager.getExecutable(pathToGit)
         executableManager.dropVersionCache(executable)
         gitVersion = executableManager.identifyVersion(executable)
@@ -142,8 +143,9 @@ internal class GitVcsPanel(private val project: Project) :
     }
 
     override fun resetGitExecutable() {
+      super.resetGitExecutable()
+      GitExecutableManager.getInstance().detectedExecutable // populate cache
       invokeAndWaitIfNeeded(modalityState) {
-        super.resetGitExecutable()
         resetPathSelector()
       }
     }
@@ -183,10 +185,16 @@ internal class GitVcsPanel(private val project: Project) :
 
   private fun resetPathSelector() {
     val projectSettingsPathToGit = projectSettings.pathToGit
+    val detectedExecutable = try {
+      GitExecutableManager.getInstance().detectedExecutable
+    }
+    catch (e: ProcessCanceledException) {
+      GitExecutableDetector.getDefaultExecutable()
+    }
     pathSelector.reset(applicationSettings.savedPathToGit,
                        projectSettingsPathToGit != null,
                        projectSettingsPathToGit,
-      GitExecutableManager.getInstance().detectedExecutable)
+                       detectedExecutable)
     updateBranchUpdateInfoRow()
   }
 

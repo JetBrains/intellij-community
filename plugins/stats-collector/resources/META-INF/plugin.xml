@@ -81,10 +81,6 @@
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
                             implementationClass="com.intellij.stats.completion.ContextFeaturesContributor"/>
-    <completion.contributor language="any" id="ml_diff" order="first"
-                            implementationClass="com.intellij.stats.completion.ItemsDiffCustomizingContributor"/>
-
-    <statistics.counterUsagesCollector groupId="completion" version="2"/>
 
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
@@ -107,10 +103,17 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
+
+    <lookup.usageDetails implementation="com.intellij.completion.ml.MLRankingLookupUsageDescriptor"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.completion.sorting.PositionDiffArrowInitializer"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
 
   <projectListeners>
     <listener class="com.intellij.completion.ml.common.RecentPlacesFeatures$StoreRecentPlacesListener"
-              topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener" />
+              topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
   </projectListeners>
 </idea-plugin>

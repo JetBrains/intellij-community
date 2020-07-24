@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public final class ImportUtils {
       return false;
     }
     PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (containingClass != null) {
+    while (containingClass != null) {
       final String shortName = ClassUtil.extractClassName(fqName);
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
       if (resolveHelper.resolveAccessibleReferencedVariable(shortName, context) != null) {
@@ -123,12 +123,10 @@ public final class ImportUtils {
           return fqName.equals(innerClass.getQualifiedName());
         }
       }
-      while (containingClass != null) {
-        if (shortName.equals(containingClass.getName())) {
-          return fqName.equals(containingClass.getQualifiedName());
-        }
-        containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+      if (shortName.equals(containingClass.getName())) {
+        return fqName.equals(containingClass.getQualifiedName());
       }
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
     final PsiJavaFile file = (PsiJavaFile) containingFile;
     if (hasExactImportConflict(fqName, file)) {

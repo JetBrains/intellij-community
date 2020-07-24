@@ -5,45 +5,80 @@
  */
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
 
-public class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+@ApiStatus.Internal
+class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   private final int myCacheSizeLimit;
-  private final String myAccessMode;
-  private final Map<File, ChannelDescriptor> myCache;
+  @NotNull
+  private final Set<StandardOpenOption> myOpenOptions;
+  @NotNull
+  private final Map<Path, ChannelDescriptor> myCache;
 
-  public OpenChannelsCache(final int cacheSizeLimit, @NonNls String accessMode) {
+  private final Object myLock = new Object();
+
+  @FunctionalInterface
+  interface ChannelProcessor<T> {
+    T process(@NotNull FileChannel channel) throws IOException;
+  }
+
+  OpenChannelsCache(final int cacheSizeLimit, @NotNull Set<StandardOpenOption> openOptions) {
     myCacheSizeLimit = cacheSizeLimit;
-    myAccessMode = accessMode;
+    myOpenOptions = openOptions;
     myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
-  public synchronized RandomAccessFile getChannel(File ioFile) throws FileNotFoundException {
-    ChannelDescriptor descriptor = myCache.get(ioFile);
-    if (descriptor == null) {
-      dropOvercache();
-      descriptor = new ChannelDescriptor(ioFile, myAccessMode);
-      myCache.put(ioFile, descriptor);
+  <T> T useChannel(@NotNull Path path, @NotNull ChannelProcessor<T> processor) throws IOException {
+    ChannelDescriptor descriptor;
+    synchronized (myLock) {
+      descriptor = myCache.get(path);
+      if (descriptor == null) {
+        releaseOverCachedChannels();
+        descriptor = new ChannelDescriptor(path, myOpenOptions);
+        myCache.put(path, descriptor);
+      }
+      descriptor.lock();
     }
-    descriptor.lock();
-    return descriptor.getChannel();
+
+    try {
+      return processor.process(descriptor.getChannel());
+    } finally {
+      synchronized (myLock) {
+        descriptor.unlock();
+      }
+    }
   }
 
-  private void dropOvercache() {
+  void closeChannel(Path path) {
+    synchronized (myLock) {
+      final ChannelDescriptor descriptor = myCache.remove(path);
+
+      if (descriptor != null) {
+        assert !descriptor.isLocked();
+        try {
+          descriptor.getChannel().close();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  private void releaseOverCachedChannels() {
     int dropCount = myCache.size() - myCacheSizeLimit;
 
     if (dropCount >= 0) {
-      List<File> keysToDrop = new ArrayList<>();
-      for (Map.Entry<File, ChannelDescriptor> entry : myCache.entrySet()) {
+      List<Path> keysToDrop = new ArrayList<>();
+      for (Map.Entry<Path, ChannelDescriptor> entry : myCache.entrySet()) {
         if (dropCount < 0) break;
         if (!entry.getValue().isLocked()) {
           dropCount--;
@@ -51,56 +86,33 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
         }
       }
 
-      for (File file : keysToDrop) {
+      for (Path file : keysToDrop) {
         closeChannel(file);
-      }
-    }
-  }
-
-  public synchronized void releaseChannel(File ioFile) {
-    ChannelDescriptor descriptor = myCache.get(ioFile);
-    assert descriptor != null;
-
-    descriptor.unlock();
-  }
-
-  public synchronized void closeChannel(File ioFile) {
-    final ChannelDescriptor descriptor = myCache.remove(ioFile);
-
-    if (descriptor != null) {
-      assert !descriptor.isLocked();
-      try {
-        descriptor.getChannel().close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
       }
     }
   }
 
   private static class ChannelDescriptor {
     private int lockCount = 0;
-    private final RandomAccessFile myChannel;
-    private final File myFile;
+    private final FileChannel myChannel;
 
-    ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
-      myFile = file;
-      myChannel = new RandomAccessFile(file, accessMode);
+    ChannelDescriptor(@NotNull Path file, @NotNull Set<? extends OpenOption> accessMode) throws IOException {
+      myChannel = FileChannelUtil.unInterruptible(FileChannel.open(file, accessMode));
     }
 
-    public void lock() {
+    void lock() {
       lockCount++;
     }
 
-    public void unlock() {
+    void unlock() {
       lockCount--;
     }
 
-    public boolean isLocked() {
+    boolean isLocked() {
       return lockCount != 0;
     }
 
-    public RandomAccessFile getChannel() {
+    FileChannel getChannel() {
       return myChannel;
     }
   }

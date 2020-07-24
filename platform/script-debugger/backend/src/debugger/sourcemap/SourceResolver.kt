@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.util.SystemInfo
@@ -8,8 +8,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.io.URLUtil
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2IntMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.debugger.ScriptDebuggerUrls
 import java.io.File
 
@@ -17,7 +20,7 @@ interface SourceFileResolver {
   /**
    * Return -1 if no match
    */
-  fun resolve(map: ObjectIntHashMap<Url>): Int = -1
+  fun resolve(map: Object2IntMap<Url>): Int = -1
   fun resolve(rawSources: List<String>): Int = -1
 }
 
@@ -33,15 +36,19 @@ class SourceResolver(private val rawSources: List<String>,
     Array(rawSources.size) { canonicalizeUrl(rawSources[it], baseUrl, trimFileScheme, baseUrlIsFile) }
   }
 
-  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> by lazy {
-    (
-      if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size)
-      else ObjectIntHashMap(rawSources.size, Urls.caseInsensitiveUrlHashingStrategy)
-    ).also {
-      for (i in rawSources.indices) {
-        it.put(canonicalizedUrls[i], i)
-      }
+  private val canonicalizedUrlToSourceIndex: Object2IntMap<Url> by lazy {
+    val map: Object2IntMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) {
+      Object2IntOpenHashMap(rawSources.size)
     }
+    else {
+      Object2IntOpenCustomHashMap(rawSources.size, CaseInsensitiveUrlHashingStrategy)
+    }
+    map.defaultReturnValue(-1)
+
+    for (i in rawSources.indices) {
+      map.put(canonicalizedUrls[i], i)
+    }
+    map
   }
 
   fun getSource(entry: MappingEntry): Url? {
@@ -49,7 +56,7 @@ class SourceResolver(private val rawSources: List<String>,
     return if (index < 0) null else canonicalizedUrls[index]
   }
 
-  fun getSourceIndex(url: Url): Int = canonicalizedUrlToSourceIndex[url]
+  fun getSourceIndex(url: Url): Int = canonicalizedUrlToSourceIndex.getInt(url)
 
   internal fun findSourceIndex(resolver: SourceFileResolver): Int {
     val resolveByCanonicalizedUrls = resolver.resolve(canonicalizedUrlToSourceIndex)
@@ -57,7 +64,7 @@ class SourceResolver(private val rawSources: List<String>,
   }
 
   fun findSourceIndex(sourceUrl: Url, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
-    val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
+    val index = canonicalizedUrlToSourceIndex.getInt(sourceUrl)
     if (index != -1) {
       return index
     }
@@ -70,7 +77,7 @@ class SourceResolver(private val rawSources: List<String>,
 
   internal fun findSourceIndexByFile(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int {
     if (!localFileUrlOnly) {
-      val index = canonicalizedUrlToSourceIndex.get(Urls.newFromVirtualFile(sourceFile).trimParameters())
+      val index = canonicalizedUrlToSourceIndex.getInt(Urls.newFromVirtualFile(sourceFile).trimParameters())
       if (index != -1) {
         return index
       }
@@ -80,7 +87,7 @@ class SourceResolver(private val rawSources: List<String>,
       return -1
     }
 
-    val index = canonicalizedUrlToSourceIndex.get(ScriptDebuggerUrls.newLocalFileUrl(sourceFile))
+    val index = canonicalizedUrlToSourceIndex.getInt(ScriptDebuggerUrls.newLocalFileUrl(sourceFile))
     if (index != -1) {
       return index
     }
@@ -159,4 +166,10 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     val split = path.split('?', limit = 2)
     return Urls.newUrl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
   }
+}
+
+private object CaseInsensitiveUrlHashingStrategy: Hash.Strategy<Url> {
+  override fun hashCode(url: Url?) = url?.hashCodeCaseInsensitive() ?: 0
+
+  override fun equals(url1: Url?, url2: Url?) = Urls.equals(url1, url2, caseSensitive = false, ignoreParameters = false)
 }

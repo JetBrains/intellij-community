@@ -188,7 +188,7 @@ public class ExternalDiffToolUtil {
       files.add(createFile(project, content, fileName));
     }
 
-    Map<String, String> patterns = new java.util.HashMap<>();
+    Map<String, String> patterns = new HashMap<>();
     if (files.size() == 2) {
       patterns.put("%1", files.get(0).getPath());
       patterns.put("%2", files.get(1).getPath());
@@ -209,6 +209,19 @@ public class ExternalDiffToolUtil {
                                   @NotNull ThreesideMergeRequest request)
     throws IOException, ExecutionException {
     boolean success = false;
+    try{
+      success = tryExecuteMerge(project, settings, request);
+    }
+    finally {
+      request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
+    }
+  }
+
+  public static boolean tryExecuteMerge(@Nullable Project project,
+                                        @NotNull ExternalDiffSettings settings,
+                                        @NotNull ThreesideMergeRequest request)
+          throws IOException, ExecutionException {
+    boolean success;
     OutputFile outputFile = null;
     List<InputFile> inputFiles = new ArrayList<>();
     try {
@@ -296,13 +309,13 @@ public class ExternalDiffToolUtil {
       if (success) outputFile.apply();
     }
     finally {
-      request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
 
       if (outputFile != null) outputFile.cleanup();
       for (InputFile file : inputFiles) {
         file.cleanup();
       }
     }
+    return success;
   }
 
   @NotNull

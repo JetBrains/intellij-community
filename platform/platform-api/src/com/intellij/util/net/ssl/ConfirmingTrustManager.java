@@ -182,7 +182,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
    * Trust manager that supports modifications of underlying physical key store.
    * It can also notify clients about such modifications, see {@link #addListener(CertificateListener)}.
    *
-   * @see com.intellij.util.net.ssl.CertificateListener
+   * @see CertificateListener
    */
   public static class MutableTrustManager extends ClientOnlyTrustManager {
     private final String myPath;

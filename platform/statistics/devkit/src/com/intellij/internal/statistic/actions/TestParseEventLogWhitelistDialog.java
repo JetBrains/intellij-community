@@ -5,8 +5,8 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -188,7 +188,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     updateResultRequest("{}");
 
     try {
-      FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
+      StatisticsWhitelistConditions whitelist = StatisticsWhitelistLoader.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
       String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }

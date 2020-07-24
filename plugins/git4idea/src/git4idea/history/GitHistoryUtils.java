@@ -1,16 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
-import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
-import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_TIME;
-import static git4idea.history.GitLogParser.GitLogOption.BODY;
-import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
-import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
-import static git4idea.history.GitLogParser.GitLogOption.HASH;
-import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
-import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
-import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
-
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,11 +20,7 @@ import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBranch;
-import git4idea.GitCommit;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -42,15 +28,12 @@ import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+
+import static git4idea.history.GitLogParser.GitLogOption.*;
 
 /**
  * A collection of methods for retrieving history information from native Git.
@@ -173,10 +156,9 @@ public class GitHistoryUtils {
    * Create a proper list of parameters for `git log` command from a list of hashes.
    *
    * @param vcs    an instance of {@link GitVcs} class for the repository, could be obtained from the
-   *               corresponding {@link git4idea.repo.GitRepository} or from a project by calling {@code GitVcs.getInstance(project)}
+   *               corresponding {@link GitRepository} or from a project by calling {@code GitVcs.getInstance(project)}
    * @param hashes a list of hashes to call `git log` for
    * @return a list of parameters that could be fed to a `git log` command
-   * @throws VcsException if there is a problem with running git
    */
   public static String @NotNull [] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
     List<String> parameters = new ArrayList<>();

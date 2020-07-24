@@ -3,10 +3,11 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectBundle;
@@ -55,12 +56,12 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   public List<? extends RootDetector> getRootDetectors() {
     List<RootDetector> results = new ArrayList<>();
     results.add(new DescendentBasedRootFilter(OrderRootType.CLASSES, false, "classes",
-                                              file -> FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)
+                                              file -> FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)
                                                       //some libraries store native libraries inside their JAR files and unpack them dynamically so we should detect such JARs as classes roots
                                                       || file.getFileSystem() instanceof JarFileSystem && isNativeLibrary(file)));
-    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
+    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, JavaClassFileType.INSTANCE, "jar directory"));
     results.addAll(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
-    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
+    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, JavaFileType.INSTANCE, "source archive directory"));
     results.add(new JavadocRootDetector());
     results.add(createAnnotationsRootDetector());
     results.add(new NativeLibraryRootFilter());

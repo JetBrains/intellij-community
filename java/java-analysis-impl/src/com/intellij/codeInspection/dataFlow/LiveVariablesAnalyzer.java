@@ -179,7 +179,10 @@ public class LiveVariablesAnalyzer {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
         // Do not flush special values and this value as they could be used implicitly
-        values.removeIf(var -> var.getDescriptor() instanceof SpecialField || var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor);
+        // Assertions disabled variable may be used from CommonDataflow
+        values.removeIf(var -> var.getDescriptor() instanceof SpecialField ||
+                               var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor ||
+                               var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor);
         instruction.getVarsToFlush().addAll(values);
       }
     }

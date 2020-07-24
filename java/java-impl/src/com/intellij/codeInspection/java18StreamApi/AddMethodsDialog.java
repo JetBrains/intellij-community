@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18StreamApi;
 
 
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,7 +20,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +131,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
-          final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<>();
+          final MultiMap<String, PsiMethod> nameToMethod = MultiMap.createLinked();
           for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), method -> {
             if (method.isConstructor() ||
                 !method.hasModifierProperty(PsiModifier.STATIC) ||
@@ -170,8 +170,8 @@ public class AddMethodsDialog extends DialogWrapper {
     setOKActionEnabled(isEnabled);
     myExamplePanel.setEnabled(isEnabled);
     if (!isEnabled) {
-      myBeforeActionPanel.reset("", StdFileTypes.JAVA);
-      myAfterActionPanel.reset("", StdFileTypes.JAVA);
+      myBeforeActionPanel.reset("", JavaFileType.INSTANCE);
+      myAfterActionPanel.reset("", JavaFileType.INSTANCE);
     }
   }
 
@@ -188,8 +188,8 @@ public class AddMethodsDialog extends DialogWrapper {
     LOG.assertTrue(psiExpression instanceof PsiMethodCallExpression);
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)psiExpression;
     template.convertToStream(methodCallExpression, method, false);
-    myBeforeActionPanel.reset("void example() {\n  <spot>" + methodCallExpression.getText() + "</spot>;\n}", StdFileTypes.JAVA);
-    myAfterActionPanel.reset("void example() {\n  <spot>" + template.convertToStream(methodCallExpression, method, true).getText() + "</spot>\n}", StdFileTypes.JAVA);
+    myBeforeActionPanel.reset("void example() {\n  <spot>" + methodCallExpression.getText() + "</spot>;\n}", JavaFileType.INSTANCE);
+    myAfterActionPanel.reset("void example() {\n  <spot>" + template.convertToStream(methodCallExpression, method, true).getText() + "</spot>\n}", JavaFileType.INSTANCE);
   }
 
   @Override

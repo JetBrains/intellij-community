@@ -174,4 +174,9 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     }
     return false;
   }
+
+  public static boolean isPropertyPsi(@NotNull PsiElement target) {
+    return target instanceof IProperty ||
+           target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget() instanceof IProperty;
+  }
 }

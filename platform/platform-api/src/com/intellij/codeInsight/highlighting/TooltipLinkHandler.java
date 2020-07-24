@@ -39,7 +39,7 @@ public abstract class TooltipLinkHandler {
 
   /**
    * Override to show extended description on mouse clicks on a link or expand action.
-   * This method is only called if {@link #handleLink(String, com.intellij.openapi.editor.Editor)}
+   * This method is only called if {@link #handleLink(String, Editor)}
    * returned {@code false}.
    *
    * @param refSuffix part of link's href attribute after registered prefix.

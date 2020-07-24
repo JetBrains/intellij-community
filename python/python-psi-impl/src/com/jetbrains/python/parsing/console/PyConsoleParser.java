@@ -16,7 +16,7 @@
 package com.jetbrains.python.parsing.console;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ParsingContext;
@@ -42,13 +42,13 @@ public class PyConsoleParser extends PyParser {
     myLanguageLevel = languageLevel;
   }
 
-  public static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
+  public static boolean startsWithIPythonSpecialSymbol(SyntaxTreeBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     return IPYTHON_START_SYMBOLS.contains(tokenType);
   }
 
   @Override
-  protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     boolean iPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && startsWithIPythonSpecialSymbol(builder);
     return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myPythonConsoleData, iPythonStartSymbol);
   }

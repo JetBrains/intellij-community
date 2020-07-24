@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -20,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -248,7 +248,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     try {
       return ReferencesSearch.search(field).forEach(t -> {
         PsiFile f = t.getElement().getContainingFile();
-        if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+        if (f != null && f.getFileType().equals(GuiFormFileType.INSTANCE)) {
           return true;
         }
         PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);

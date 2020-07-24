@@ -2,11 +2,12 @@
 package com.intellij.ui.win;
 
 import com.intellij.ide.CliResult;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationStarterBase;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -24,7 +25,7 @@ final class RecentProjectApplication extends ApplicationStarterBase {
   @NotNull
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    ProjectUtil.openProject(args.get(1), null, false);
+    PlatformProjectOpenProcessor.openExistingProject(Paths.get(args.get(1)).normalize());
     return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

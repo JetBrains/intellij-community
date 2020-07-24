@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -514,10 +517,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link CodeStyleManagerImpl#createDummy(Project, Language)})
+   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link CodeStyleManagerImpl#createMarker(PsiFile, int)})
    * if necessary.
    * <p/>
-
    * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
    * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
    * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
@@ -550,17 +552,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       }
     }
 
+    String marker = createMarker(file, offset);
+    document.insertString(offset, marker);
+    return new TextRange(offset, offset + marker.length());
+  }
+
+  private static @NotNull String createMarker(@NotNull PsiFile file, int offset) {
     Project project = file.getProject();
     PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset);
     Language language = injectedElement != null ? injectedElement.getLanguage() : PsiUtilCore.getLanguageAtOffset(file, offset);
 
     setSequentialProcessingAllowed(false);
-    String dummy = createDummy(project, language);
-    document.insertString(offset, dummy);
-    return new TextRange(offset, offset + dummy.length());
-  }
+    NewLineIndentMarkerProvider markerProvider = NewLineIndentMarkerProvider.EP.forLanguage(language);
+    String marker = markerProvider == null ? null : markerProvider.createMarker(file, offset);
+    if (marker != null) {
+      return marker;
+    }
 
-  private static @NotNull String createDummy(@NotNull Project project, @NotNull Language language) {
     PsiComment comment = null;
     try {
       comment = PsiParserFacade.SERVICE.getInstance(project).createLineOrBlockCommentFromText(language, "");
@@ -952,5 +960,26 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @Override
   public void scheduleIndentAdjustment(@NotNull Document document, int offset) {
     FormatterBasedIndentAdjuster.scheduleIndentAdjustment(myProject, document, offset);
+  }
+
+  @Override
+  public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
+      file,
+      () -> CommandProcessor.getInstance().executeCommand(
+        project,
+        () -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
+              () -> {
+                CodeStyleManager.getInstance(project).reformat(file);
+              }
+            );
+          });
+        },
+        "reformat", null
+      )
+    );
   }
 }

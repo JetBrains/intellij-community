@@ -30,6 +30,10 @@ import org.jetbrains.annotations.NotNull;
  * configuration file.
  */
 public abstract class ModuleExtension implements Disposable {
+  /**
+   * @deprecated don't enumerate extensions in the plugin, use {@link ModuleRootModel#getModuleExtension(Class)} instead
+   */
+  @Deprecated
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**

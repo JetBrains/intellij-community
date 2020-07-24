@@ -84,7 +84,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     super.runTest()
   }
 
-  protected static void addGroovyLibrary(final Module to) {
+  protected void addGroovyLibrary(final Module to) {
     GroovyProjectDescriptors.LIB_GROOVY_2_4.addTo(to)
   }
 

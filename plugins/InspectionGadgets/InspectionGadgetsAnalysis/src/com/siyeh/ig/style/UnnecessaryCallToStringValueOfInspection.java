@@ -24,9 +24,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -42,8 +40,6 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -145,7 +141,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
   @Nullable
   private static PsiExpression tryUnwrapRedundantConversion(PsiMethodCallExpression call) {
     if (!STATIC_TO_STRING_CONVERTERS.test(call)) return null;
-    final PsiExpression argument = ParenthesesUtils.stripParentheses(call.getArgumentList().getExpressions()[0]);
+    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
     if (argument == null) return null;
     PsiType argumentType = argument.getType();
     if (argumentType instanceof PsiPrimitiveType) {

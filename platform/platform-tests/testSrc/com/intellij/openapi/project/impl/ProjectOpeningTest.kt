@@ -1,22 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.createDirectories
-import junit.framework.TestCase
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -48,32 +51,28 @@ class ProjectOpeningTest {
   @Test
   fun openProjectCancelling() {
     val activity = MyStartupActivity()
-    ExtensionTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable, fireEvents = false)
-    val manager = ProjectManagerEx.getInstanceEx()
+    val ep = ExtensionPointName<StartupActivity.DumbAware>("com.intellij.startupActivity")
+    ExtensionTestUtil.maskExtensions(ep, listOf(activity), disposableRule.disposable, fireEvents = false)
     val foo = tempDir.newPath()
-    val project = manager.createProject(null, foo.toString())!!
-    try {
-      ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
-        override fun run(indicator: ProgressIndicator) {
-          assertThat(manager.openProject(project)).isFalse()
+    ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
+      override fun run(indicator: ProgressIndicator) {
+        val project = PlatformProjectOpenProcessor.openExistingProject(foo)
+        if (project != null) {
+          runInEdtAndWait {
+            PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+          }
         }
-      })
-      assertThat(project.isOpen).isFalse()
-      // 1 on maskExtensions call, second call our call
-      assertThat(activity.passed.get()).isTrue()
-    }
-    finally {
-      runInEdtAndWait {
-        closeProject(project)
+        assertThat(project).isNull()
       }
-    }
+    })
+    // 1 on maskExtensions call, second call our call
+    assertThat(activity.passed.get()).isTrue()
   }
 
   @Test
   fun cancelOnLoadingModules() {
     val foo = tempDir.newPath()
-    val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
-    var project = manager!!.createProject(null, foo.toString())!!
+    var project = createHeavyProject(foo)
     try {
       StoreUtil.saveSettings(project, false)
       runInEdtAndWait {
@@ -82,14 +81,14 @@ class ProjectOpeningTest {
       ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
         object : ProjectLifecycleListener {
           override fun projectComponentsInitialized(project: Project) {
-            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-            TestCase.assertNotNull(indicator)
+            val indicator = ProgressManager.getInstance().progressIndicator
+            assertThat(indicator).isNotNull()
             indicator!!.cancel()
             indicator.checkCanceled()
           }
         })
-      runInEdtAndWait {
-        project = manager.loadAndOpenProject(foo)!!
+      runModalTask("") {
+        project = PlatformProjectOpenProcessor.openExistingProject(foo, OpenProjectTask())!!
       }
       assertThat(project.isOpen).isFalse()
       assertThat(project.isDisposed).isTrue()
@@ -106,7 +105,7 @@ class ProjectOpeningTest {
     val projectDir = tempDir.newPath()
     projectDir.createDirectories()
 
-    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.toAbsolutePath().toString())!!
+    val dirBasedProject = createHeavyProject(projectDir)
     Disposer.register(disposableRule.disposable, Disposable {
       runInEdtAndWait { closeProject(dirBasedProject) }
     })

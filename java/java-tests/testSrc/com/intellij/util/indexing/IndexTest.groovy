@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -69,6 +68,8 @@ import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.forward.IntForwardIndex
+import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -561,7 +562,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
-    final VirtualFile vFile = myFixture.configureByText(StdFileTypes.JAVA, """            
+    final VirtualFile vFile = myFixture.configureByText(JavaFileType.INSTANCE, """            
             class Main111 {
                 static void staticMethod(Object o) {
                   staticMethod(null);

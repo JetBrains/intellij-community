@@ -288,19 +288,23 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     else {
       val firstComponentIndex = componentIndexWhenCellModeWasEnabled
       componentIndexWhenCellModeWasEnabled = -1
+
+      val componentCount = components.size - firstComponentIndex
+      if (componentCount == 0) return
+      val component = components.get(firstComponentIndex)
+      val cc = component.constraints
+
       // do not add split if cell empty or contains the only component
-      if ((components.size - firstComponentIndex) > 1) {
-        val component = components.get(firstComponentIndex)
-        val cc = component.constraints
-        cc.split(components.size - firstComponentIndex)
-        if (fullWidth) {
-          cc.spanX(LayoutUtil.INF)
-        }
-        if (isVerticalFlow) {
-          cc.flowY()
-          // because when vertical buttons placed near scroll pane, it wil be centered by baseline (and baseline not applicable for grow elements, so, will be centered)
-          cc.alignY("top")
-        }
+      if (componentCount > 1) {
+        cc.split(componentCount)
+      }
+      if (fullWidth) {
+        cc.spanX(LayoutUtil.INF)
+      }
+      if (isVerticalFlow) {
+        cc.flowY()
+        // because when vertical buttons placed near scroll pane, it wil be centered by baseline (and baseline not applicable for grow elements, so, will be centered)
+        cc.alignY("top")
       }
     }
   }

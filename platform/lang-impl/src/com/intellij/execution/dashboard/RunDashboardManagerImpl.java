@@ -25,7 +25,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -84,11 +86,37 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private void initExtensionPointListeners() {
-    Runnable dashboardUpdater = () -> updateDashboard(true);
-    CUSTOMIZER_EP_NAME.addChangeListener(dashboardUpdater, myProject);
-    GROUPING_RULE_EP_NAME.addChangeListener(dashboardUpdater, myProject);
-    DEFAULT_TYPES_PROVIDER_EP_NAME.addChangeListener(() -> setTypes(new HashSet<>(getTypes())), myProject);
+    ExtensionPointListener dashboardUpdater = new ExtensionPointListener() {
+      @Override
+      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+        updateDashboard(true);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
+          ServiceEventListener.ServiceEvent.createSyncResetEvent(RunDashboardServiceViewContributor.class));
+      }
+    };
+    CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    GROUPING_RULE_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+
+    ExtensionPointListener typeUpdater = new ExtensionPointListener() {
+      @Override
+      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+        setTypes(new HashSet<>(getTypes()));
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+        setTypes(new HashSet<>(getTypes()));
+        dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
+      }
+    };
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(typeUpdater, myProject);
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(typeUpdater, myProject);
   }
 
   private void initServiceContentListeners() {
@@ -362,10 +390,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         }
         result.add(syncedServices);
       }
-      for (List<RunDashboardServiceImpl> settingServices : myServices) {
-        RunDashboardService service = settingServices.get(0);
-        if (service.getContent() != null && !settingsList.contains(service.getSettings())) {
-          result.add(settingServices);
+      for (List<RunDashboardServiceImpl> oldServices : myServices) {
+        RunDashboardService oldService = oldServices.get(0);
+        if (oldService.getContent() != null && !settingsList.contains(oldService.getSettings())) {
+          if (!updateServiceSettings(result, oldServices)) {
+            result.add(oldServices);
+          }
         }
       }
       myServices = result;
@@ -490,6 +520,25 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       }
     }
     return null;
+  }
+
+  private static boolean updateServiceSettings(List<List<RunDashboardServiceImpl>> newServiceList,
+                                               List<RunDashboardServiceImpl> oldServices) {
+    RunDashboardServiceImpl oldService = oldServices.get(0);
+    RunnerAndConfigurationSettings oldSettings = oldService.getSettings();
+    for (List<RunDashboardServiceImpl> newServices : newServiceList) {
+      RunnerAndConfigurationSettings newSettings = newServices.get(0).getSettings();
+      if (newSettings.getType().equals(oldSettings.getType()) && newSettings.getName().equals(oldSettings.getName())) {
+        newServices.get(0).setContent(oldService.getContent());
+        for (int i = 1; i < oldServices.size(); i++) {
+          RunDashboardServiceImpl newService = new RunDashboardServiceImpl(newSettings);
+          newService.setContent(oldServices.get(i).getContent());
+          newServices.add(newService);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void updateContentToolbar(Content content, boolean visible) {

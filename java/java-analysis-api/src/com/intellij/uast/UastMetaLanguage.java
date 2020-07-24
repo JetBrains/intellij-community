@@ -3,22 +3,22 @@ package com.intellij.uast;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UastLanguagePlugin;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class UastMetaLanguage extends MetaLanguage {
   private final Set<Language> myLanguages;
 
-  protected UastMetaLanguage() {
+  private UastMetaLanguage() {
     super("UAST");
 
     Collection<UastLanguagePlugin> languagePlugins = UastLanguagePlugin.Companion.getInstances();
-    myLanguages = new THashSet<>(languagePlugins.size());
+    myLanguages = new HashSet<>(languagePlugins.size());
     initLanguages(languagePlugins);
 
     UastLanguagePlugin.Companion.getExtensionPointName().addChangeListener(() -> {

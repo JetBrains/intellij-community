@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -13,33 +14,42 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
+import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.OpenSourceUtil.navigate;
+import static java.util.Collections.emptyList;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+  private static final Logger LOG = Logger.getInstance(ProblemsViewPanel.class);
   private final Project myProject;
   private final ProblemsViewState myState;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
@@ -63,6 +73,17 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   };
   private final Option myShowPreview = new Option() {
     @Override
+    public boolean isEnabled() {
+      OpenFileDescriptor descriptor = getSelectedDescriptor();
+      return descriptor != null && null != ProblemsView.getDocument(getProject(), descriptor.getFile());
+    }
+
+    @Override
+    public boolean isAlwaysVisible() {
+      return true;
+    }
+
+    @Override
     public boolean isSelected() {
       return myState.getShowPreview();
     }
@@ -71,42 +92,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     public void setSelected(boolean selected) {
       myState.setShowPreview(selected);
       updatePreview(getSelectedDescriptor());
-    }
-  };
-  private final Option myShowErrors = new Option() {
-    @Override
-    public boolean isSelected() {
-      return myState.getShowErrors();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      myState.setShowErrors(selected);
-      myTreeModel.setFilter(createFilter());
-    }
-  };
-  private final Option myShowWarnings = new Option() {
-    @Override
-    public boolean isSelected() {
-      return myState.getShowWarnings();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      myState.setShowWarnings(selected);
-      myTreeModel.setFilter(createFilter());
-    }
-  };
-  private final Option myShowInformation = new Option() {
-    @Override
-    public boolean isSelected() {
-      return myState.getShowInformation();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      myState.setShowInformation(selected);
-      myTreeModel.setFilter(createFilter());
     }
   };
   private final Option mySortFoldersFirst = new Option() {
@@ -151,9 +136,10 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     myProject = project;
     myState = state;
 
+    myTreeModel.setComparator(createComparator());
+    myTreeModel.setFilter(new SeverityFilter(state));
     myTree = new Tree(new AsyncTreeModel(myTreeModel, this));
     myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(false);
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> {
@@ -161,6 +147,10 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
       updateAutoscroll(descriptor);
       updatePreview(descriptor);
     });
+    new TreeSpeedSearch(myTree);
+    EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
+    PopupHandler.installPopupHandler(myTree, "ProblemsView.ToolWindow.TreePopup", ActionPlaces.POPUP);
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.Toolbar");
     myToolbar = ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
@@ -196,20 +186,31 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
 
   abstract @NotNull String getDisplayName();
 
-  final void updateDisplayName() {
-    ToolWindow window = ProblemsView.getToolWindow(myProject);
-    if (window == null) return;
-    Content content = window.getContentManager().getContent(this);
-    if (content == null) return;
+  final void updateToolWindowContent() {
+    invokeLaterIfProjectAlive(getProject(), () -> {
+      ToolWindow window = ProblemsView.getToolWindow(getProject());
+      if (window == null) return;
+      ContentManager manager = window.getContentManagerIfCreated();
+      if (manager == null) return;
+      Content content = manager.getContent(this);
+      if (content == null) return;
 
+      Root root = myTreeModel.getRoot();
+      int count = root == null ? 0 : root.getProblemsCount();
+      content.setDisplayName(getContentDisplayName(count));
+      Icon icon = getToolWindowIcon(count);
+      if (icon != null) window.setIcon(icon);
+    });
+  }
+
+  @Nullable Icon getToolWindowIcon(int count) {
+    return null;
+  }
+
+  @NotNull String getContentDisplayName(int count) {
     String name = getDisplayName();
-    Root root = myTreeModel.getRoot();
-    int count = root == null ? 0 : root.getProblemsCount();
-    if (count > 0) {
-      //noinspection HardCodedStringLiteral
-      name = "<html><body>" + name + " <font color='" + toHtmlColor(UIUtil.getInactiveTextColor()) + "'>" + count + "</font></body></html>";
-    }
-    content.setDisplayName(name);
+    if (count <= 0) return name;
+    return "<html><body>" + name + " <font color='" + toHtmlColor(UIUtil.getInactiveTextColor()) + "'>" + count + "</font></body></html>";
   }
 
   @Override
@@ -224,6 +225,10 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
 
   final @NotNull Project getProject() {
     return myProject;
+  }
+
+  final @NotNull ProblemsViewState getState() {
+    return myState;
   }
 
   final @NotNull ProblemsTreeModel getTreeModel() {
@@ -245,14 +250,15 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   void selectionChangedTo(boolean selected) {
-    myTreeModel.setComparator(createComparator());
-    myTreeModel.setFilter(createFilter());
-    updatePreview(getSelectedDescriptor());
+    if (selected) {
+      myTreeModel.setComparator(createComparator());
+      updatePreview(getSelectedDescriptor());
 
-    ToolWindow window = ProblemsView.getToolWindow(getProject());
-    if (window instanceof ToolWindowEx) {
-      ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
-      ((ToolWindowEx)window).setAdditionalGearActions(group);
+      ToolWindow window = ProblemsView.getToolWindow(getProject());
+      if (window instanceof ToolWindowEx) {
+        ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
+        ((ToolWindowEx)window).setAdditionalGearActions(group);
+      }
     }
   }
 
@@ -264,7 +270,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull FileNode node) {
-    return getDescriptor(node.getFile(), 0);
+    return getDescriptor(node.getFile(), -1);
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull ProblemNode node) {
@@ -273,18 +279,23 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull VirtualFile file, int offset) {
     Document document = ProblemsView.getDocument(getProject(), file);
-    return document == null ? null : new OpenFileDescriptor(getProject(), file, offset);
+    if (document == null) return null;
+    if (offset < 0) return new OpenFileDescriptor(getProject(), file);
+    int length = document.getTextLength();
+    if (offset <= length) return new OpenFileDescriptor(getProject(), file, offset);
+    LOG.warn("offset is bigger then document length: " + file);
+    return new OpenFileDescriptor(getProject(), file, length);
   }
 
   private void updateAutoscroll(@Nullable OpenFileDescriptor descriptor) {
-    if (descriptor != null && isNotNullAndSelected(getAutoscrollToSource())) {
+    if (descriptor != null && UIUtil.isFocusAncestor(this) && isNotNullAndSelected(getAutoscrollToSource())) {
       invokeLater(() -> navigate(false, descriptor));
     }
   }
 
   private void updatePreview(@Nullable OpenFileDescriptor descriptor) {
     Document document = descriptor == null ? null : ProblemsView.getDocument(getProject(), descriptor.getFile());
-    Editor editor = myPreview.preview(document, isNotNullAndSelected(getShowPreview()));
+    Editor editor = myPreview.preview(document, document != null && isNotNullAndSelected(getShowPreview()));
     if (editor != null && descriptor != null) {
       invokeLater(() -> {
         if (editor.getComponent().isShowing()) {
@@ -306,38 +317,23 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return new TreeVisitor.ByTreePath<>(node.getPath(), o -> o);
   }
 
-  Comparator<Node> createComparator() {
+  @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
-      isNotNullAndSelected(getSortBySeverity()),
+      isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));
   }
 
-  Predicate<Node> createFilter() {
-    return new NodeFilter(
-      isNullableOrSelected(getShowErrors()),
-      isNotNullAndSelected(getShowWarnings()),
-      isNotNullAndSelected(getShowInformation()));
+  @NotNull Collection<Pair<String, Integer>> getSeverityFilters() {
+    return emptyList();
   }
 
   @Nullable Option getAutoscrollToSource() {
-    return myAutoscrollToSource;
+    return isNotNullAndSelected(getShowPreview()) ? null : myAutoscrollToSource;
   }
 
   @Nullable Option getShowPreview() {
     return myShowPreview;
-  }
-
-  @Nullable Option getShowErrors() {
-    return myShowErrors;
-  }
-
-  @Nullable Option getShowWarnings() {
-    return myShowWarnings;
-  }
-
-  @Nullable Option getShowInformation() {
-    return myShowInformation;
   }
 
   @Nullable Option getSortFoldersFirst() {

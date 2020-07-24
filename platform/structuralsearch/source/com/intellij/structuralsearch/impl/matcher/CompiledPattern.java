@@ -30,7 +30,7 @@ import java.util.Map;
 public abstract class CompiledPattern {
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
   private final Map<Object, MatchingHandler> handlers = new THashMap<>();
-  private final MultiMap<String, PsiElement> variableNodes = MultiMap.createSmart();
+  private final MultiMap<String, PsiElement> variableNodes = new MultiMap<>();
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;

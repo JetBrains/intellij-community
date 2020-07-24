@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Provides {@link com.intellij.execution.ExecutionTarget ExecutionTargets} for run configurations.
+ * Provides {@link ExecutionTarget ExecutionTargets} for run configurations.
  */
 public abstract class ExecutionTargetProvider {
   public static final ExtensionPointName<ExecutionTargetProvider> EXTENSION_NAME =

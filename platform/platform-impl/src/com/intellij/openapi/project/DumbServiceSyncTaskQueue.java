@@ -42,9 +42,10 @@ public final class DumbServiceSyncTaskQueue {
 
   private void processQueue() {
     while (true) {
-      QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask();
-      if (nextTask == null) break;
-      doRunTaskSynchronously(nextTask);
+      try (QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask()) {
+        if (nextTask == null) break;
+        doRunTaskSynchronously(nextTask);
+      }
     }
   }
 

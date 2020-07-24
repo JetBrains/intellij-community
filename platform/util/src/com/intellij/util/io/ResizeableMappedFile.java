@@ -39,20 +39,20 @@ public class ResizeableMappedFile implements Forceable {
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;
   private long myLastWrittenLogicalSize;
-  private final PagedFileStorage myStorage;
+  protected final PagedFileStorage myStorage;
   private final int myInitialSize;
 
   static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
   private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
-  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
   public ResizeableMappedFile(@NotNull Path file,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext lockContext,
+                              @Nullable StorageLockContext lockContext,
                               int pageSize,
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) {
@@ -208,15 +208,6 @@ public class ResizeableMappedFile implements Forceable {
     myStorage.putInt(index, value);
   }
 
-  public short getShort(long index) {
-    return myStorage.getShort(index);
-  }
-
-  public void putShort(long index, short value) {
-    ensureSize(index + 2);
-    myStorage.putShort(index, value);
-  }
-
   public long getLong(long index) {
     return myStorage.getLong(index);
   }
@@ -228,11 +219,6 @@ public class ResizeableMappedFile implements Forceable {
 
   public byte get(long index) {
     return myStorage.get(index);
-  }
-
-  public void put(long index, byte value) {
-    ensureSize(index + 1);
-    myStorage.put(index, value);
   }
 
   public void get(long index, byte[] dst, int offset, int length) {

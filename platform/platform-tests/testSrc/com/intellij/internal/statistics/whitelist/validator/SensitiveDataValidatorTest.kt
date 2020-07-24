@@ -5,54 +5,21 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
-import com.intellij.internal.statistic.eventLog.whitelist.EventLogWhitelistLoader
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import junit.framework.TestCase
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.test.assertTrue
 
 @Suppress("SameParameterValue")
-class SensitiveDataValidatorTest : UsefulTestCase() {
-  private var myFixture: CodeInsightTestFixture? = null
-
-  override fun setUp() {
-    super.setUp()
-
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val fixtureBuilder = factory.createFixtureBuilder("SensitiveDataValidatorTest")
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.fixture)
-    myFixture?.setUp()
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture?.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
+class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   @Test
   fun test_regex_escapes() {
@@ -80,7 +47,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_empty_rule() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_empty_rule.json"))
+    val validator = newValidatorByFile("test_empty_rule.json")
     val eventLogGroup = EventLogGroup("build.gradle.actions", 1)
 
     assertEmpty(validator.getEventRules(eventLogGroup))
@@ -92,7 +59,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_simple_enum_rules() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_enum_rules.json"))
+    val validator = newValidatorByFile("test_simple_enum_rules.json")
     var elg = EventLogGroup("my.simple.enum.value", 1)
 
     assertEventAccepted(validator, elg, "AAA")
@@ -121,7 +88,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_simple_enum_rules_with_spaces() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_enum_rules.json"))
+    val validator = newValidatorByFile("test_simple_enum_rules.json")
 
     val elg = EventLogGroup("my.simple.enum.node.ref", 1)
     assertEventAccepted(validator, elg, "NODE REF AAA")
@@ -134,7 +101,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   @Test
   fun test_simple_regexp_rules() {
     // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa/java.lang.String'
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
+    val validator = newValidatorByFile("test_simple_regexp_rules.json")
 
     var elg = EventLogGroup("my.simple.regexp.value", 1)
     assertEventAccepted(validator, elg, "aaa/java.lang.String")
@@ -163,9 +130,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_global_integer_regex_rule() {
-    val validator = createTestSensitiveDataValidator(
-      loadContent("test_global_regexp_rules.json")
-    )
+    val validator = newValidatorByFile("test_global_regexp_rules.json")
 
     val elg = EventLogGroup("regex.int.rule.group", 1)
     var value = 1000
@@ -179,9 +144,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_global_double_regex_rule() {
-    val validator = createTestSensitiveDataValidator(
-      loadContent("test_global_regexp_rules.json")
-    )
+    val validator = newValidatorByFile("test_global_regexp_rules.json")
 
     val elg = EventLogGroup("regex.double.rule.group", 1)
     var value = 100.0
@@ -202,7 +165,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   @Test
   fun test_simple_regexp_rules_with_spaces() {
     // custom regexp is:   [AB]_(.*) => matches  'A_x', 'A x'
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
+    val validator = newValidatorByFile("test_simple_regexp_rules.json")
 
     val elg = EventLogGroup("my.simple.regexp.with.underscore", 1)
     assertEventAccepted(validator, elg, "A_x")
@@ -215,7 +178,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   @Test
   fun test_simple_expression_rules() {
     // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
+    val validator = newValidatorByFile("test_simple_expression_rules.json")
     var elg = EventLogGroup("my.simple.expression", 1)
 
     assertSize(1, validator.getEventRules(elg))
@@ -235,7 +198,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   @Test
   fun test_simple_expression_rules_with_spaces() {
     // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
-    val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
+    val validator = newValidatorByFile("test_simple_expression_rules.json")
     val elg = EventLogGroup("my.simple.expression", 1)
 
     assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx_CCC_zzzREF_AAA_yyy")
@@ -245,7 +208,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_regexp_rule_with_global_regexps() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_regexp_rule-with-global-regexp.json"))
+    val validator = newValidatorByFile("test_regexp_rule-with-global-regexp.json")
     val elg = EventLogGroup("ui.fonts", 1)
 
     assertSize(10, validator.getEventRules(elg))
@@ -261,11 +224,12 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_validate_system_event_data() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_validate_event_data.json"))
+    val validator = newValidatorByFile("test_validate_event_data.json")
     val elg = EventLogGroup("system.keys.group", 1)
 
-    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "os", "plugin_type",
-                                                              "lang", "current_file", "input_event", "place")
+    val platformDataKeys: List<String> =
+      listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place")
+
     for (platformDataKey in platformDataKeys) {
       assertEventDataAccepted(validator, elg, platformDataKey, "<validated>")
     }
@@ -278,7 +242,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_validate_escaped_event_data() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_validate_event_data.json"))
+    val validator = newValidatorByFile("test_validate_event_data.json")
     val elg = EventLogGroup("system.keys.group", 1)
 
     assertEventDataAccepted(validator, elg, "ed.1", "AA")
@@ -493,7 +457,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_validate_object_list_event_data() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_object_event_data.json"))
+    val validator = newValidatorByFile("test_object_event_data.json")
     val eventLogGroup = EventLogGroup("object.group", 1)
 
     val data = hashMapOf<String, Any>("obj" to listOf(hashMapOf("name" to "AAA"), hashMapOf("name" to "NOT_DEFINED")))
@@ -508,7 +472,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_validate_nested_objects_event_data() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_nested_object_event_data.json"))
+    val validator = newValidatorByFile("test_nested_object_event_data.json")
     val eventLogGroup = EventLogGroup("object.group", 1)
 
     val data = hashMapOf<String, Any>("obj" to hashMapOf("nested_obj" to hashMapOf("name" to "NOT_DEFINED", "count" to "1")))
@@ -522,7 +486,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_list_validation() {
-    val validator = createTestSensitiveDataValidator(loadContent("test_list_validation.json"))
+    val validator = newValidatorByFile("test_list_validation.json")
     val eventLogGroup = EventLogGroup("object.group", 1)
 
     val data = hashMapOf<String, Any>("elements" to listOf("NOT_DEFINED", "AAA"))
@@ -555,7 +519,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
       ep.registerExtension(TestExistingWhitelistRule(), disposable)
       ep.registerExtension(TestThirdPartyWhitelistRule(), disposable)
 
-      val validator = createTestSensitiveDataValidator(loadContent(fileName))
+      val validator = newValidatorByFile(fileName)
       func(validator)
     }
     finally {
@@ -602,49 +566,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     TestCase.assertEquals(resultType.description, validatedEventData[key])
   }
 
-  private fun createTestSensitiveDataValidator(content: String): TestSensitiveDataValidator {
-    return TestSensitiveDataValidator(content)
-  }
-
-
-  private fun loadContent(fileName: String): String {
-    val file = File(PlatformTestUtil.getPlatformTestDataPath() + "fus/validation/" + fileName)
-    assertTrue { file.exists() }
-    return FileUtil.loadFile(file)
-  }
-
-
-  internal inner class TestSensitiveDataValidator constructor(myContent: String) : SensitiveDataValidator(TestWhitelistStorage(myContent)) {
-
-    fun getEventRules(group: EventLogGroup): Array<FUSRule> {
-      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
-
-      return if (whiteListRule == null) FUSRule.EMPTY_ARRAY else whiteListRule.eventIdRules
-    }
-
-    fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {
-      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
-
-      return if (whiteListRule == null) emptyMap() else whiteListRule.eventDataRules
-    }
-  }
-
-  class TestWhitelistStorage(myContent: String) : WhitelistStorage(
-    "TEST", TestEventLogWhitelistPersistence(myContent), TestEventLogWhitelistLoader(myContent)
-  )
-
-  class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
-    override fun getCachedWhitelist(): String? {
-      return myContent
-    }
-  }
-
-  class TestEventLogWhitelistLoader(private val myContent: String) : EventLogWhitelistLoader {
-    override fun getLastModifiedOnServer(): Long = 0
-
-    override fun loadWhiteListFromServer(): String = myContent
-  }
-
+  @Suppress("unused")
   internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
 
   internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomWhitelistRule("custom_action_id", TestCustomActionId::class.java)

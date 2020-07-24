@@ -19,6 +19,8 @@ public interface CodeStyleCachingService {
   @Nullable
   CodeStyleSettings tryGetSettings(@NotNull PsiFile file);
 
+  void scheduleWhenSettingsComputed(@NotNull PsiFile file, @NotNull Runnable runnable);
+
   @Nullable
   UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile);
 }

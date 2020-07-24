@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
@@ -17,7 +17,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
 import kotlin.properties.Delegates.notNull
@@ -79,12 +79,12 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun apply(settings: IcsSettings) {
       val oldList = settings.readOnlySources
-      val toDelete = THashSet<String>(oldList.size)
+      val toDelete = ObjectOpenHashSet<String>(oldList.size)
       for (oldSource in oldList) {
         ContainerUtil.addIfNotNull(toDelete, oldSource.path)
       }
 
-      val toCheckout = THashSet<ReadonlySource>()
+      val toCheckout = ObjectOpenHashSet<ReadonlySource>()
 
       val newList = editor.apply()
       for (newSource in newList) {
@@ -94,7 +94,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         }
       }
 
-      if (toDelete.isEmpty && toCheckout.isEmpty) {
+      if (toDelete.isEmpty() && toCheckout.isEmpty()) {
         return
       }
 

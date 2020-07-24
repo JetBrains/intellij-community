@@ -1,17 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -21,6 +23,8 @@ import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -128,12 +132,45 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return overridesToString(type);
   }
 
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    if (!(type instanceof ReferenceType)) {
+      return CompletableFuture.completedFuture(false);
+    }
+
+    if (JAVA_LANG_STRING.equals(type.name())) {
+      return CompletableFuture.completedFuture(false); // do not render 'String' objects for performance reasons
+    }
+
+    return overridesToStringAsync(type);
+  }
+
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
       Method toStringMethod = DebuggerUtils.findMethod((ReferenceType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
+  }
+
+  private static CompletableFuture<Boolean> overridesToStringAsync(Type type) {
+    if (!Registry.is("debugger.async.jdi")) {
+      return CompletableFuture.completedFuture(overridesToString(type));
+    }
+    if (type instanceof ClassType) {
+      return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
+        if (t instanceof ReferenceType) {
+          return DebuggerUtilsAsync.methods((ReferenceType)t)
+            .thenApply(methods -> {
+              return methods.stream().anyMatch(m -> !m.isAbstract() &&
+                                                    DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+            });
+        }
+        return CompletableFuture.completedFuture(false);
+      }).thenApply(t -> t != null);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override
@@ -148,8 +185,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    return DebugProcessImpl.getDefaultRenderer(value).isExpandableAsync(value, evaluationContext, parentDescriptor);
   }
 
   @Override

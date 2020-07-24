@@ -28,7 +28,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -148,7 +147,7 @@ public class ThrowableNotThrownInspection extends BaseInspection {
       if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
         return false;
       }
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return false;
       }

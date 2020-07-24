@@ -4,7 +4,8 @@ package com.intellij.slicer;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -12,15 +13,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -33,15 +40,17 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   @Override
   public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
-                                              @NotNull ExceptionInfo info) {
+                                              @NotNull ExceptionInfo info,
+                                              @NotNull Supplier<List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getAnalysis(anchor, info);
-    return createAction(analysis);
+    return createAction(analysis, nextFrames);
   }
 
   @Override
-  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor) {
+  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
+                                                             @NotNull Supplier<List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getIntermediateRowAnalysis(anchor);
-    return createAction(analysis);
+    return createAction(analysis, nextFrames);
   }
 
   private static @Nullable AnalysisStartingPoint getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
@@ -253,16 +262,45 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     PsiExpression ref = AnalysisStartingPoint.extractAnchor(castExpression.getOperand());
     if (ref == null) return null;
     if (actualClass != null) {
-      // TODO: support arrays, primitive arrays, inner classes
-      PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(actualClass, GlobalSearchScope.allScope(myProject));
-      if (classes.length == 1) {
-        return new AnalysisStartingPoint(
-          DfTypes.typedObject(JavaPsiFacade.getElementFactory(myProject).createType(classes[0]), Nullability.NOT_NULL), ref);
+      PsiType psiType = getPsiType(actualClass);
+      if (psiType != null) {
+        return new AnalysisStartingPoint(TypeConstraints.exact(psiType).asDfType().meet(DfTypes.NOT_NULL_OBJECT), ref);
       }
     }
     PsiType castType = castExpression.getType();
     if (castType != null) {
       return AnalysisStartingPoint.tryNegate(new AnalysisStartingPoint(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
+    }
+    return null;
+  }
+  
+  private @Nullable PsiType getPsiType(String classCastExceptionType) {
+    int dim = 0;
+    while (classCastExceptionType.startsWith("[", dim)) {
+      dim++;
+    }
+    String className;
+    if (dim > 0) {
+      if (classCastExceptionType.startsWith("L", dim) && classCastExceptionType.endsWith(";")) {
+        className = classCastExceptionType.substring(dim + 1, classCastExceptionType.length() - 1);
+      } else {
+        if (classCastExceptionType.length() == dim + 1){
+          PsiType type = PsiPrimitiveType.fromJvmTypeDescriptor(classCastExceptionType.charAt(dim));
+          if (type != null) {
+            while (dim-- > 0) type = type.createArrayType();
+            return type;
+          }
+        }
+        return null;
+      }
+    } else {
+      className = classCastExceptionType;
+    }
+    PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(myProject), className, null, true);
+    if (psiClass != null) {
+      PsiType type = JavaPsiFacade.getElementFactory(myProject).createType(psiClass);
+      while (dim-- > 0) type = type.createArrayType();
+      return type;
     }
     return null;
   }
@@ -275,18 +313,21 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis) {
+  private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis,
+                                          @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
     if (analysis == null) return null;
-    String text = JavaDfaSliceValueFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
+    String text = DfaBasedFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
     return new AnAction(null, JavaBundle.message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        List<StackLine> nextFrames = nextFramesSupplier.get();
+        StackFilter stackFilter = StackFilter.from(nextFrames);
         SliceAnalysisParams params = new SliceAnalysisParams();
         params.dataFlowToThis = true;
-        params.scope = new AnalysisScope(myProject);
+        params.scope = new AnalysisScope(GlobalSearchScope.allScope(myProject), myProject);
         params.scope.setSearchInLibraries(true);
-        params.valueFilter = new JavaDfaSliceValueFilter(analysis.myDfType);
+        params.valueFilter = new JavaValueFilter(new DfaBasedFilter(analysis.myDfType), stackFilter);
         SliceManager.getInstance(myProject).createToolWindow(analysis.myAnchor, params);
       }
     };

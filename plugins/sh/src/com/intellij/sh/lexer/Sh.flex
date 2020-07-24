@@ -29,6 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
   private boolean isQuoteOpen;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
+  private int regexStart = -1;
+  private int regexGroups = 0;
   private final IntStack stateStack = new IntStack(1_000);
   private final IntStack parenStack = new IntStack(1_000);
 
@@ -69,6 +71,8 @@ import com.intellij.openapi.util.text.StringUtil;
     isArithmeticExpansion = false;
     isQuoteOpen = false;
     isBackquoteOpen = false;
+    regexStart = -1;
+    regexGroups = 0;
   }
 %}
 
@@ -121,9 +125,8 @@ ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | "
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
-RegexWord                = [^\r\n\\\"' \t] | {EscapedChar}
-RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
-RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
+RegexWord                = [^\r\n\\\"' \t$`()] | {EscapedChar}
+Regex                    = {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 StringContent            = [^$\"`(\\] | {EscapedChar}
@@ -248,34 +251,46 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 <CONDITIONAL_EXPRESSION> {
     "=="                          { return EQ; }
     "!="                          { return NE; }
-    "=~"                          { pushState(REGULAR_EXPRESSION); return REGEXP; }
+    "=~"                          { regexStart = getTokenEnd(); regexGroups = 0; pushState(REGULAR_EXPRESSION); return REGEXP; }
     "<"                           { return LT; }
     ">"                           { return GT; }
 }
 
-<REGULAR_EXPRESSION> {
-  {WhiteSpace}+                   { return WHITESPACE;}
-  {RegexInQuotes}                 { popState(); return WORD; }
-}
 
-<PARAMETER_EXPANSION> {
+<REGULAR_EXPRESSION, PARAMETER_EXPANSION> {
   "$(("                              { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
-  "(("                               { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
-                                          pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
-                                      else return WORD; }
   "$("                               { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
   "${"                               { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
   "$["                               { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
-  "[["                               { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-  "["                                { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
-  "{"                                {             return LEFT_CURLY; }
-  "}"                                { popState(); return RIGHT_CURLY; }
   "`"                                { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; }
 
   {Variable}                         { return VAR; }
   {Quote}                            { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
   {RawString}                        |
   {UnclosedRawString}                { return RAW_STRING; }
+}
+
+<REGULAR_EXPRESSION> {
+  "(("                            { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                       pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                    else { yypushback(1); regexGroups++; return WORD; } }
+  "$"                             { return WORD; }
+  "("                             { regexGroups++; return WORD; }
+  ")"                             { if (regexGroups <= 0) { regexGroups = 0; popState(); return RIGHT_PAREN; } else { regexGroups--; return WORD; } }
+
+  {Regex}                         { return WORD; }
+  {WhiteSpace}+                   { if (regexGroups <= 0 && regexStart != getTokenStart()) { regexStart = -1; popState(); }; return WHITESPACE; }
+}
+
+<PARAMETER_EXPANSION> {
+  "(("                               { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                          pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                      else return WORD; }
+  "[["                               { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+  "["                                { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
+  "{"                                {             return LEFT_CURLY; }
+  "}"                                { popState(); return RIGHT_CURLY; }
+
   {ParamExpansionSeparator}          { return PARAM_SEPARATOR; }
   "%""%"? | "/""/"?                  { pushState(PARAMETER_EXPANSION_EXPR); return PARAM_SEPARATOR; }
   {IntegerLiteral}                   { return INT; }

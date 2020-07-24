@@ -37,14 +37,15 @@ final class DumbServiceGuiTaskQueue {
       //we do jump in EDT to
       if (myProject.isDisposed()) break;
 
-      QueuedDumbModeTask pair = myTaskQueue.extractNextTask();
-      if (pair == null) break;
+      try (QueuedDumbModeTask pair = myTaskQueue.extractNextTask()) {
+        if (pair == null) break;
 
-      bindProgress.accept(pair.getIndicator());
-      pair.registerStageStarted(activity);
+        bindProgress.accept(pair.getIndicator());
+        pair.registerStageStarted(activity);
 
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
-        runSingleTask(pair);
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+          runSingleTask(pair);
+        }
       }
     }
   }

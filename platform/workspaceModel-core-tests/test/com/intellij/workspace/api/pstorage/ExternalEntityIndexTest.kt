@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
+import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
+import com.intellij.workspace.api.pstorage.entities.addPSourceEntity
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -131,7 +133,7 @@ class ExternalEntityIndexTest {
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    diff.removeExternalIndex<Int>(INDEX_ID)
+    diff.removeExternalIndex(INDEX_ID)
     assertNull(diff.getExternalIndex<Int>(INDEX_ID))
     assertEquals(1, index.getDataByEntity(entity))
 

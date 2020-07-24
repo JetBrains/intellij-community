@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 
 import com.icl.saxon.TransformerFactoryImpl;
@@ -35,9 +34,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
 
-public class DebuggerServer extends PortableRemoteObject implements RemoteDebugger {
+public final class DebuggerServer extends PortableRemoteObject implements RemoteDebugger {
   private static final String XSLT_DEBUGGER = "XsltDebugger";
-  public static final int PORT = 34275;
+  private static final int PORT = 34275;
 
   private final Debugger myDebugger;
   private final RemoteBreakpointManagerImpl myBreakpointManager;
@@ -46,7 +45,7 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
   private final String myAccessToken;
 
   private DebuggerServer(Transformer transformer, Source xml, Result out, int port)
-    throws TransformerConfigurationException, RemoteException {
+    throws RemoteException {
     myPort = port;
     myAccessToken = System.getProperty("xslt.debugger.token");
     myDebugger = new LocalDebugger(transformer, xml, out) {
@@ -64,7 +63,7 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
   }
 
   public static DebuggerServer create(Transformer xsl, Source xml, Result out, int port)
-    throws TransformerConfigurationException, RemoteException {
+    throws RemoteException {
     final DebuggerServer server = new DebuggerServer(xsl, xml, out, port);
     final Registry registry = LocateRegistry.createRegistry(port);
     registry.rebind(XSLT_DEBUGGER, server);
@@ -75,6 +74,7 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
     return create(new TransformerFactoryImpl().newTransformer(new StreamSource(f)), new StreamSource(x), new StreamResult(), PORT);
   }
 
+  @Override
   public void stop(boolean force) throws RemoteException {
     myDebugger.stop(force);
     try {
@@ -84,67 +84,83 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
     }
   }
 
-  public boolean ping() throws RemoteException {
+  @Override
+  public boolean ping() {
     return myDebugger.ping();
   }
 
-  public Debugger.State waitForStateChange(Debugger.State state) throws RemoteException {
+  @Override
+  public Debugger.State waitForStateChange(Debugger.State state) {
     return myDebugger.waitForStateChange(state);
   }
 
-  public boolean waitForDebuggee() throws RemoteException {
+  @Override
+  public boolean waitForDebuggee() {
     return myDebugger.waitForDebuggee();
   }
 
-  public boolean start() throws RemoteException {
+  @Override
+  public boolean start() {
     return myDebugger.start();
   }
 
-  public void step() throws RemoteException {
+  @Override
+  public void step() {
     myDebugger.step();
   }
 
-  public void stepInto() throws RemoteException {
+  @Override
+  public void stepInto() {
     myDebugger.stepInto();
   }
 
-  public void resume() throws RemoteException {
+  @Override
+  public void resume() {
     myDebugger.resume();
   }
 
-  public boolean isStopped() throws RemoteException {
+  @Override
+  public boolean isStopped() {
     return myDebugger.isStopped();
   }
 
+  @Override
   public Frame getCurrentFrame() throws RemoteException {
     return RemoteFrameImpl.create(myDebugger.getCurrentFrame(), myAccessToken);
   }
 
+  @Override
   public Frame getSourceFrame() throws RemoteException {
     return RemoteFrameImpl.create(myDebugger.getSourceFrame(), myAccessToken);
   }
 
+  @Override
   public Value eval(String expr, String accessToken) throws RemoteException, Debugger.EvaluationException {
     return getCurrentFrame().eval(expr, accessToken);
   }
 
+  @Override
   public List<Variable> getGlobalVariables() throws RemoteException {
     return RemoteVariableImpl.convert(myDebugger.getGlobalVariables());
   }
 
-  public RemoteBreakpointManager getBreakpointManager() throws RemoteException {
+  @Override
+  public RemoteBreakpointManager getBreakpointManager() {
     return myBreakpointManager;
   }
 
-  public Debugger.State getState() throws RemoteException {
+  @Override
+  public Debugger.State getState() {
     return myDebugger.getState();
   }
 
-  public void pause() throws RemoteException {
+  @Override
+  public void pause() {
     myDebugger.pause();
   }
 
-  public EventQueue getEventQueue() throws RemoteException {
+  @Override
+  public EventQueue getEventQueue() {
     return myEventQueue;
   }
 }

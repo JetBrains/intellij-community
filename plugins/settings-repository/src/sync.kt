@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.messages.MessageBus
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
@@ -216,7 +216,7 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, st
     }
 
     val notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-    val changedStorageSet = THashSet<StateStorage>(changed)
+    val changedStorageSet = ObjectOpenHashSet<StateStorage>(changed)
     changedStorageSet.addAll(deleted)
     runBatchUpdate(messageBus) {
       store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)

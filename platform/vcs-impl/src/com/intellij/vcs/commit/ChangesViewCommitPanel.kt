@@ -59,8 +59,10 @@ import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates.observable
 
-private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
-private val MAC_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
+private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK), null)
+private val META_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK), null)
+private val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
+  if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
 
 private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
@@ -102,7 +104,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = NonOpaquePanel(HorizontalLayout(0))
+  private val buttonPanel = simplePanel().apply { isOpaque = false }
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
@@ -170,9 +172,11 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     buttonPanel.apply {
       border = getButtonPanelBorder()
 
-      add(commitButton)
-      add(commitActionToolbar.component)
-      add(toolbarPanel)
+      addToLeft(commitButton)
+      addToRight(NonOpaquePanel(HorizontalLayout(0)).apply {
+        add(commitActionToolbar.component)
+        add(toolbarPanel)
+      })
     }
     centerPanel
       .addToCenter(commitMessage)
@@ -219,9 +223,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private fun setupShortcuts(component: JComponent) {
     DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
-    if (isMac) {
-      DefaultCommitAction().registerCustomShortcutSet(MAC_COMMIT_ACTION_SHORTCUT, component, this)
-    }
     ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
   }
 

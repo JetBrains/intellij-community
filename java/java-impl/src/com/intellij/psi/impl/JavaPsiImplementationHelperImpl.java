@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,6 +169,10 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
       return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+    }
+
+    if (virtualFile instanceof LightVirtualFile) {
+      return LanguageLevel.HIGHEST;
     }
 
     LanguageLevel classesLanguageLevel = getClassesLanguageLevel(virtualFile);

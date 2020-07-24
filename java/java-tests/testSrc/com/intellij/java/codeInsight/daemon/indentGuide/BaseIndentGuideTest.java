@@ -1,8 +1,8 @@
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeInsight.daemon.indentGuide.IndentGuidesProvider.Guide;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -58,7 +58,7 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
       int shift = 0;
       int textStart = 0;
       Map<Integer, Integer> endedGuides = new HashMap<>(prevLineIndents);
-      int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+      int tabSize = CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
       int tabs = 0;
       for (int i = 0; i < line.length(); i++) {
         char c = line.charAt(i);

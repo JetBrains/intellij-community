@@ -211,9 +211,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
   }
 
-  // avoids stub-to-AST switch if possible,
-  // returns the light generated initializer literal expression if stored in stubs, the regular initializer if wasn't
-  public PsiExpression getDetachedInitializer() {
+  /**
+   * Avoids stub-to-AST switch if possible.
+   * @return Light generated initializer literal expression if it was stored in stubs, the regular initializer otherwise
+   */
+  @Nullable
+  public static PsiExpression getDetachedInitializer(@NotNull PsiVariable variable) {
+    return variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+  }
+
+  @Nullable
+  private PsiExpression getDetachedInitializer() {
     final PsiFieldStub stub = getGreenStub();
     PsiExpression initializer;
     if (stub == null) {
@@ -221,9 +229,11 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
     else {
       String initializerText = stub.getInitializerText();
+      if (StringUtil.isEmpty(initializerText)) {
+        return null;
+      }
 
-      if (StringUtil.isEmpty(initializerText) ||
-          PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
+      if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
           PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
         initializer = getInitializer();
       }

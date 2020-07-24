@@ -535,7 +535,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public void addProcessListener(ProcessListener listener) {
+    public void addProcessListener(@NotNull ProcessListener listener) {
       myOriginalHandler.addProcessListener(filtered(listener));
     }
 
@@ -611,7 +611,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public void addProcessListener(ProcessListener listener) {
+    public void addProcessListener(@NotNull ProcessListener listener) {
       myOriginalHandler.addProcessListener(filtered(listener));
     }
 

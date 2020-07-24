@@ -247,7 +247,7 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
  */
 class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
   private val quickFixName = when {
-    sdk != null && sdk.associatedModule != module -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
+    sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
     else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
   }
 
@@ -389,7 +389,7 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         }
         finally {
           PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
-          sdk.associatedModule?.baseDir?.refresh(true, false)
+          sdk.associatedModuleDir?.refresh(true, false)
         }
       }
     }

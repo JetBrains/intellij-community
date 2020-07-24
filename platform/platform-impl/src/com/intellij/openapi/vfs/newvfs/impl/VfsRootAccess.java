@@ -23,8 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,12 +39,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-public class VfsRootAccess {
+public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
     System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  private static final Set<String> ourAdditionalRoots = Collections.synchronizedSet(new THashSet<>(FileUtil.PATH_HASHING_STRATEGY));
+  private static final Set<String> ourAdditionalRoots = Collections.synchronizedSet(CollectionFactory.createFilePathSet());
   private static boolean insideGettingRoots;
 
   @TestOnly
@@ -98,7 +99,7 @@ public class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
@@ -178,7 +179,7 @@ public class VfsRootAccess {
   private static Collection<String> getAllRootUrls(Project project) {
     insideGettingRoots = true;
     try {
-      Set<String> roots = new THashSet<>();
+      Set<String> roots = new ObjectOpenHashSet<>();
       OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
       ContainerUtil.addAll(roots, enumerator.classes().getUrls());
       ContainerUtil.addAll(roots, enumerator.sources().getUrls());

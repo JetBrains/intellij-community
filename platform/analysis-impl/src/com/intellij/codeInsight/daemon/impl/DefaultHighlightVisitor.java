@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
@@ -22,13 +23,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -45,6 +44,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
   private boolean myDumb;
+  private final Set<Annotator> myProlificAnnotators = ContainerUtil.newConcurrentSet(); // annotators which produced at least one Annotation during this session
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project) {
@@ -74,14 +74,16 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
                          @NotNull final Runnable action) {
     myDumb = myDumbService.isDumb();
     myHolder = holder;
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("DefaultHighlightVisitor.analyze("+file.getName()+")");
-    }
 
     myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession(), myBatchMode) {
       @Override
       void queueToUpdateIncrementally() {
         if (!isEmpty()) {
+          if (myProlificAnnotators.add(myCurrentAnnotator)) {
+            // report first creation of Annotation by this annotator
+            myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).daemonProducedFirstAnnotation(holder.getAnnotationSession(),
+                                                                                                                         myCurrentAnnotator, get(0), file);
+          }
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < size(); i++) {
             Annotation annotation = get(i);
@@ -100,6 +102,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       myAnnotators.clear();
       myHolder = null;
       myAnnotationHolder = null;
+      myProlificAnnotators.clear();
     }
     return true;
   }
@@ -131,6 +134,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       for (Annotator annotator : annotators) {
         if (!myDumb || DumbService.isDumbAware(annotator)) {
           ProgressManager.checkCanceled();
+          holder.myCurrentAnnotator = annotator;
           annotator.annotate(element, holder);
           // assume that annotator is done messing with just created annotations after its annotate() method completed
           // and we can start applying them incrementally at last

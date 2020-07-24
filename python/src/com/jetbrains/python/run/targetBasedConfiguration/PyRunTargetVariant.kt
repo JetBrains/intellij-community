@@ -20,7 +20,7 @@ import com.jetbrains.python.run.PythonRunConfigurationForm
 enum class PyRunTargetVariant(private val customName: String? = null) {
   PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
-  fun getCustomName(): String = customName ?: name.toLowerCase().capitalize()
+  fun getCustomName(): String = customName ?: PythonRunConfigurationForm.getCustomNameText()
 }
 
 /**

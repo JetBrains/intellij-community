@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * Shows dialog with two tabs: Project View-like tree and Goto symbol-like list with quick search capability
  * Allows to quickly locate and choose PsiFile among all files inside project
  * (optionally filtered based on file type or general file filter(see PsiFileFilter))
- * @see TreeFileChooserFactory#createFileChooser(String, com.intellij.psi.PsiFile, com.intellij.openapi.fileTypes.FileType, com.intellij.ide.util.TreeFileChooser.PsiFileFilter)
+ * @see TreeFileChooserFactory#createFileChooser(String, PsiFile, com.intellij.openapi.fileTypes.FileType, TreeFileChooser.PsiFileFilter)
  * @see PsiFileFilter
  */
 public interface TreeFileChooser {

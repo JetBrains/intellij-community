@@ -2,6 +2,7 @@
 package com.intellij.usages.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.usageView.UsageViewBundle;
@@ -29,6 +30,7 @@ public class RerunSearchAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(UsageView.USAGE_VIEW_KEY) instanceof UsageViewImpl);
+    UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
+    e.getPresentation().setEnabledAndVisible(usageView instanceof UsageViewImpl && ((UsageViewImpl)usageView).canPerformReRun());
   }
 }

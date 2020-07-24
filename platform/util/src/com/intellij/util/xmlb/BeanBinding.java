@@ -8,7 +8,9 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
-import gnu.trove.TObjectFloatHashMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jdom.Comment;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -141,8 +143,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return true;
   }
 
-  public final @NotNull TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
-    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<>(accessorNameTracker.size());
+  public final @NotNull Object2FloatMap<String> computeBindingWeights(@NotNull ObjectLinkedOpenHashSet<String> accessorNameTracker) {
+    Object2FloatMap<String> weights = new Object2FloatOpenHashMap<>(accessorNameTracker.size());
     float weight = 0;
     float step = (float)myBindings.length / (float)accessorNameTracker.size();
     for (String name : accessorNameTracker) {
@@ -162,12 +164,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return weights;
   }
 
-  public final void sortBindings(final @NotNull TObjectFloatHashMap<? super String> weights) {
+  public final void sortBindings(@NotNull Object2FloatMap<? super String> weights) {
     Arrays.sort(myBindings, (o1, o2) -> {
       String n1 = o1.getAccessor().getName();
       String n2 = o2.getAccessor().getName();
-      float w1 = weights.get(n1);
-      float w2 = weights.get(n2);
+      float w1 = weights.getFloat(n1);
+      float w2 = weights.getFloat(n2);
       return (int)(w1 - w2);
     });
   }

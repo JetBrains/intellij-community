@@ -34,7 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

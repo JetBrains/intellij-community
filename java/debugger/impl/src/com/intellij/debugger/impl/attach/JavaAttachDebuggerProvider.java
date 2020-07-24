@@ -525,7 +525,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  static void attach(String transport, String address, Project project) {
+  public static void attach(String transport, String address, Project project) {
     attach(new DebuggerLocalAttachInfo(!"dt_shmem".equals(transport), address, null, null, false), project);
   }
 

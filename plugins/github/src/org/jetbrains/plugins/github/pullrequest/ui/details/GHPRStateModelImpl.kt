@@ -10,8 +10,9 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -21,11 +22,10 @@ import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateModelImpl(private val project: Project,
-                         private val dataProvider: GHPRDataProvider,
+                         private val stateData: GHPRStateDataProvider,
+                         private val changesData: GHPRChangesDataProvider,
                          override val details: GHPullRequestShort,
                          disposable: Disposable) : GHPRStateModel {
-
-  private val stateDataProvider = dataProvider.stateData
 
   private val mergeabilityEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val busyEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -44,7 +44,7 @@ class GHPRStateModelImpl(private val project: Project,
   override var actionError: Throwable? by observableField(null, actionErrorEventDispatcher)
 
   init {
-    stateDataProvider.loadMergeabilityState(disposable) {
+    stateData.loadMergeabilityState(disposable) {
       it.handleOnEdt { result: GHPRMergeabilityState?, error: Throwable? ->
         mergeabilityState = result
         mergeabilityLoadingError = error
@@ -59,15 +59,15 @@ class GHPRStateModelImpl(private val project: Project,
   }
 
   override fun reloadMergeabilityState() {
-    stateDataProvider.reloadMergeabilityState()
+    stateData.reloadMergeabilityState()
   }
 
   override fun submitCloseTask() = submitTask {
-    stateDataProvider.close(EmptyProgressIndicator())
+    stateData.close(EmptyProgressIndicator())
   }
 
   override fun submitReopenTask() = submitTask {
-    stateDataProvider.reopen(EmptyProgressIndicator())
+    stateData.reopen(EmptyProgressIndicator())
   }
 
   override fun submitMergeTask() = submitTask {
@@ -80,17 +80,17 @@ class GHPRStateModelImpl(private val project: Project,
       return@submitTask null
     }
 
-    stateDataProvider.merge(EmptyProgressIndicator(), dialog.message, mergeability.headRefOid)
+    stateData.merge(EmptyProgressIndicator(), dialog.message, mergeability.headRefOid)
   }
 
   override fun submitRebaseMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
-    stateDataProvider.rebaseMerge(EmptyProgressIndicator(), mergeability.headRefOid)
+    stateData.rebaseMerge(EmptyProgressIndicator(), mergeability.headRefOid)
   }
 
   override fun submitSquashMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
-    dataProvider.changesData.loadCommitsFromApi().successOnEdt { commits ->
+    changesData.loadCommitsFromApi().successOnEdt { commits ->
       val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
       val dialog = GithubMergeCommitMessageDialog(project,
                                                   GithubBundle.message("pull.request.merge.message.dialog.title"),
@@ -101,7 +101,7 @@ class GHPRStateModelImpl(private val project: Project,
       }
       dialog.message
     }.thenCompose { message ->
-      stateDataProvider.squashMerge(EmptyProgressIndicator(), message, mergeability.headRefOid)
+      stateData.squashMerge(EmptyProgressIndicator(), message, mergeability.headRefOid)
     }
   }
 

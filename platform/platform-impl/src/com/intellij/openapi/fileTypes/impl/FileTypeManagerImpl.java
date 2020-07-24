@@ -45,8 +45,8 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @SuppressWarnings("SpellCheckingInspection")
   static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
 
-  private final Set<FileType> myDefaultTypes = new THashSet<>();
+  private final Set<FileType> myDefaultTypes = new ObjectOpenHashSet<>();
   private final FileTypeDetectionService myDetectionService;
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
@@ -83,7 +83,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
-  private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<>();
+  private final Map<FileNameMatcher, String> myUnresolvedMappings = new Object2ObjectOpenHashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
@@ -98,7 +98,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_DESCRIPTION = "description";
 
-  private static class StandardFileType {
+  private static final class StandardFileType {
     @NotNull private final FileType fileType;
     @NotNull private final List<FileNameMatcher> matchers;
 
@@ -214,6 +214,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       stdFileType.matchers.removeAll(extension.getMatchers());
+      for (FileNameMatcher matcher : extension.getMatchers()) {
+        myPatternsTable.removeAssociation(matcher, stdFileType.fileType);
+      }
       fileTypeChanged(stdFileType.fileType, ApplicationManager.getApplication().isUnitTestMode());
     });
   }
@@ -386,6 +389,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return instantiateFileTypeBean(fileTypeBean);
     }
     type.matchers.addAll(fileTypeBean.getMatchers());
+    for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
+      myPatternsTable.addAssociation(matcher, type.fileType);
+    }
     return type.fileType;
   }
 
@@ -397,7 +403,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       if (!myPendingFileTypes.containsKey(bean.name)) {
         fileType = mySchemeManager.findSchemeByName(bean.name);
-        if (fileType != null) {
+        if (fileType != null && !(fileType instanceof AbstractFileType)) {
           return fileType;
         }
       }
@@ -749,7 +755,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isIgnoredFilesListEqualToCurrent(@NotNull String list) {
-    Set<String> tempSet = new THashSet<>();
+    Set<String> tempSet = new ObjectOpenHashSet<>();
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
     while (tokenizer.hasMoreTokens()) {
       tempSet.add(tokenizer.nextToken());
@@ -958,7 +964,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private @NotNull Map<String, FileType> readHashBangs(@NotNull Element e) {
     List<Element> children = e.getChildren("hashBang");
-    Map<String, FileType> result = new THashMap<>(children.size());
+    Map<String, FileType> result = new Object2ObjectOpenHashMap<>(children.size());
     for (Element hashBangTag : children) {
       String typeName = hashBangTag.getAttributeValue("type");
       String hashBangPattern = hashBangTag.getAttributeValue("value");
@@ -1058,7 +1064,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void writeExtensionsMap(@NotNull Element map, @NotNull FileType type, boolean specifyTypeName) {
     List<FileNameMatcher> associations = myPatternsTable.getAssociations(type);
-    Set<FileNameMatcher> defaultAssociations = new THashSet<>(myInitialAssociations.getAssociations(type));
+    Set<FileNameMatcher> defaultAssociations = new ObjectOpenHashSet<>(myInitialAssociations.getAssociations(type));
 
     for (FileNameMatcher matcher : associations) {
       boolean isDefaultAssociationContains = defaultAssociations.remove(matcher);
@@ -1135,7 +1141,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void bindUnresolvedMappings(@NotNull FileType fileType) {
-    for (FileNameMatcher matcher : new THashSet<>(myUnresolvedMappings.keySet())) {
+    for (FileNameMatcher matcher : new ObjectOpenHashSet<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (Objects.equals(name, fileType.getName())) {
         myPatternsTable.addAssociation(matcher, fileType);

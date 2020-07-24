@@ -277,26 +277,20 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitReferenceExpression(PsiReferenceExpression reference) {
     visitElement(reference);
-
-    boolean typedVarProcessed = false;
     final PsiElement referenceParent = reference.getParent();
 
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
-    if (pattern.isRealTypedVar(reference) &&
-        reference.getQualifierExpression() == null &&
-        !(referenceParent instanceof PsiExpressionStatement)) {
-      // typed var for expression (but not top level)
-      final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
-      GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
-      typedVarProcessed = true;
-    }
+    final boolean typedVar = pattern.isRealTypedVar(reference) &&
+                             reference.getQualifierExpression() == null &&
+                             !(referenceParent instanceof PsiExpressionStatement);
 
     final MatchingHandler handler = pattern.getHandler(reference);
+    GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
 
-    if (!typedVarProcessed && !(handler instanceof SubstitutionHandler)) {
+    if (!typedVar && !(handler instanceof SubstitutionHandler)) {
       final PsiElement resolve = reference.resolve();
 
       final PsiElement referenceQualifier = reference.getQualifier();
@@ -447,14 +441,17 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     super.visitReferenceElement(reference);
 
     final PsiElement parent = reference.getParent();
+    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
     if (parent != null && parent.getParent() instanceof PsiClass) {
-      GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference), TypeFilter.getInstance());
+      GlobalCompilingVisitor.setFilter(handler, TypeFilter.getInstance());
     }
     else if (parent instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
       if (newExpression.getArrayInitializer() != null) {
-        GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference),
-                                         e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+        GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+      }
+      else {
+        GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement);
       }
     }
   }

@@ -34,7 +34,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's viewport child.
    * Default is an empty {@code JViewport}.
    * 
-   * @see javax.swing.JScrollPane#setViewport
+   * @see JScrollPane#setViewport
    */
   protected JViewport viewport;
 
@@ -43,7 +43,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's vertical scrollbar child.
    * Default is a {@code JScrollBar}.
    * 
-   * @see javax.swing.JScrollPane#setVerticalScrollBar
+   * @see JScrollPane#setVerticalScrollBar
    */
   protected JScrollBar vsb;
 
@@ -52,7 +52,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's horizontal scrollbar child.
    * Default is a {@code JScrollBar}.
    * 
-   * @see javax.swing.JScrollPane#setHorizontalScrollBar
+   * @see JScrollPane#setHorizontalScrollBar
    */
   protected JScrollBar hsb;
 
@@ -60,7 +60,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
   /**
    * The row header child.  Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setRowHeader
+   * @see JScrollPane#setRowHeader
    */
   protected JViewport rowHead;
 
@@ -68,7 +68,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
   /**
    * The column header child.  Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setColumnHeader
+   * @see JScrollPane#setColumnHeader
    */
   protected JViewport colHead;
 
@@ -77,7 +77,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the lower left corner.
    * Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setCorner
+   * @see JScrollPane#setCorner
    */
   protected Component lowerLeft;
 
@@ -86,7 +86,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the lower right corner.
    * Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setCorner
+   * @see JScrollPane#setCorner
    */
   protected Component lowerRight;
 
@@ -95,7 +95,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the upper left corner.
    * Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setCorner
+   * @see JScrollPane#setCorner
    */
   protected Component upperLeft;
 
@@ -104,7 +104,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the upper right corner.
    * Default is {@code null}.
    * 
-   * @see javax.swing.JScrollPane#setCorner
+   * @see JScrollPane#setCorner
    */
   protected Component upperRight;
 
@@ -115,7 +115,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * <p/>
    * This field is obsolete, please use the {@code JScrollPane} field instead.
    * 
-   * @see javax.swing.JScrollPane#setVerticalScrollBarPolicy
+   * @see JScrollPane#setVerticalScrollBarPolicy
    */
   protected int vsbPolicy = VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -126,7 +126,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * <p/>
    * This field is obsolete, please use the {@code JScrollPane} field instead.
    * 
-   * @see javax.swing.JScrollPane#setHorizontalScrollBarPolicy
+   * @see JScrollPane#setHorizontalScrollBarPolicy
    */
   protected int hsbPolicy = HORIZONTAL_SCROLLBAR_AS_NEEDED;
 
@@ -362,7 +362,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * scrollable contents.
    * 
    * @return the {@code JViewport} object that displays the scrollable contents
-   * @see javax.swing.JScrollPane#getViewport
+   * @see JScrollPane#getViewport
    */
   @Override
   public JViewport getViewport() {
@@ -374,7 +374,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the {@code JScrollBar} object that handles horizontal scrolling.
    * 
    * @return the {@code JScrollBar} object that handles horizontal scrolling
-   * @see javax.swing.JScrollPane#getHorizontalScrollBar
+   * @see JScrollPane#getHorizontalScrollBar
    */
   @Override
   public JScrollBar getHorizontalScrollBar() {
@@ -385,7 +385,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the {@code JScrollBar} object that handles vertical scrolling.
    * 
    * @return the {@code JScrollBar} object that handles vertical scrolling
-   * @see javax.swing.JScrollPane#getVerticalScrollBar
+   * @see JScrollPane#getVerticalScrollBar
    */
   @Override
   public JScrollBar getVerticalScrollBar() {
@@ -397,7 +397,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the {@code JViewport} object that is the row header.
    * 
    * @return the {@code JViewport} object that is the row header
-   * @see javax.swing.JScrollPane#getRowHeader
+   * @see JScrollPane#getRowHeader
    */
   @Override
   public JViewport getRowHeader() {
@@ -409,7 +409,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the {@code JViewport} object that is the column header.
    * 
    * @return the {@code JViewport} object that is the column header
-   * @see javax.swing.JScrollPane#getColumnHeader
+   * @see JScrollPane#getColumnHeader
    */
   @Override
   public JViewport getColumnHeader() {
@@ -424,7 +424,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the {@code Component} at the specified corner, as defined in
    *         {@link ScrollPaneConstants}; if {@code key} is not one of the
    *         four corners, {@code null} is returned
-   * @see javax.swing.JScrollPane#getCorner
+   * @see JScrollPane#getCorner
    */
   @Override
   public Component getCorner(String key) {

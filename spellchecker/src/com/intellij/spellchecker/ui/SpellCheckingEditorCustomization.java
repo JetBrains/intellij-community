@@ -51,12 +51,14 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
    */
-  @Deprecated public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization ENABLED =
+    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
    */
-  @Deprecated public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization DISABLED =
+    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
@@ -75,7 +77,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
     // Please perform corresponding settings tuning if that assumption is broken at future.
 
-    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[] {SpellCheckingInspection.class};
+    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
       try {
         LocalInspectionTool tool = inspectionClass.newInstance();

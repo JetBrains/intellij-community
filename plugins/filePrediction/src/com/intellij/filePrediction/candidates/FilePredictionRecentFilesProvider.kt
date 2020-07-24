@@ -7,15 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionRecentFilesProvider : FilePredictionBaseCandidateProvider(30) {
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
-    val result = HashSet<VirtualFile>()
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile> {
+    val result = HashSet<FilePredictionCandidateFile>()
     val openFiles = FileEditorManager.getInstance(project).openFiles
-    addWithLimit(openFiles.iterator(), result, file, limit)
+    addWithLimit(openFiles.iterator(), result, "open", file, limit)
 
     val left = limit - result.size
     if (left > 0) {
-      val recentFiles = EditorHistoryManager.getInstance(project).files.filter { !result.contains(it) }.takeLast(left + 1)
-      addWithLimit(recentFiles.iterator(), result, file, limit)
+      val addedFiles = result.map { it.file }.toSet()
+      val recentFiles = EditorHistoryManager.getInstance(project).files.filter { !addedFiles.contains(it) }.takeLast(left + 1)
+      addWithLimit(recentFiles.iterator(), result, "recent", file, limit)
     }
     return result
   }

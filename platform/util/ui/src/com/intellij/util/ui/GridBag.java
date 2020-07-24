@@ -194,7 +194,7 @@ public class GridBag extends GridBagConstraints {
 
 
   /**
-   * @see #insets(java.awt.Insets)
+   * @see #insets(Insets)
    */
   @NotNull
   public GridBag insets(int top, int left, int bottom, int right) {

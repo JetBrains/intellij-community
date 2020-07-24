@@ -11,6 +11,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ant.AntActionsUsagesCollector;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
@@ -28,7 +29,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
@@ -564,7 +564,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         boolean b = super.isFileVisible(file, showHiddenFiles);
         if (!file.isDirectory()) {
-          b &= FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+          b &= FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
         }
         return b;
       }

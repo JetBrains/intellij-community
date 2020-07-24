@@ -183,7 +183,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         final PsiElement eachMethodCall = eachElement.getParent();
         if (eachMethodCall != null) {
           final TextRange textRange = eachMethodCall.getTextRange();
-          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
         }
       }
     }

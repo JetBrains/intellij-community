@@ -827,9 +827,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             if (selectedConfiguration == null) {
               selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
             }
-          },
-          ModalityState.NON_MODAL,
-          project.disposed)
+          }, ModalityState.NON_MODAL, project.disposed)
         }
       }
     }

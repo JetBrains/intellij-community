@@ -40,7 +40,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;

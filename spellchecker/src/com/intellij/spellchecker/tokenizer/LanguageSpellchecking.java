@@ -8,7 +8,7 @@ import com.intellij.lang.LanguageExtension;
  */
 public class LanguageSpellchecking extends LanguageExtension<SpellcheckingStrategy> {
   public static final LanguageSpellchecking INSTANCE = new LanguageSpellchecking();
-  
+
   private LanguageSpellchecking() {
     super(SpellcheckingStrategy.EP_NAME, new SpellcheckingStrategy());
   }

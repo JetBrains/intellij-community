@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;

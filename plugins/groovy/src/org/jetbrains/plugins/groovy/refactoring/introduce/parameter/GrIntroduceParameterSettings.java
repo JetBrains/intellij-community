@@ -33,7 +33,7 @@ public interface GrIntroduceParameterSettings extends GrIntroduceSettings, Intro
   TIntArrayList parametersToRemove();
 
   /**
-   * @see com.intellij.refactoring.IntroduceParameterRefactoring
+   * @see IntroduceParameterRefactoring
    */
   @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   int replaceFieldsWithGetters();

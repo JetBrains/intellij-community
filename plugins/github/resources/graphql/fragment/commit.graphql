@@ -22,4 +22,9 @@ fragment commit on Commit {
     messageHeadline
     messageHeadlineHTML
     messageBodyHTML
+    parents(first: 100) {
+        nodes {
+            ...commitHash
+        }
+    }
 }

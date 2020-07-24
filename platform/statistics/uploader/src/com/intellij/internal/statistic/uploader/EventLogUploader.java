@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -73,8 +74,8 @@ public class EventLogUploader {
     try {
       EventLogStatisticsService service = new EventLogStatisticsService(device, recorder, appInfo, new EventLogSendListener() {
         @Override
-        public void onLogsSend(int succeed, int failed, int totalLocalFiles) {
-          eventsLogger.logSendingLogsSucceed(succeed, failed, totalLocalFiles);
+        public void onLogsSend(@NotNull List<String> successfullySentFiles, int failed, int totalLocalFiles) {
+          eventsLogger.logSendingLogsSucceed(successfullySentFiles, failed, totalLocalFiles);
         }
       });
 

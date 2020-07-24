@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,8 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return EmmetOptions.getInstance().isEmmetEnabled() && TemplateManagerImpl.isApplicable(new ZenCodingTemplate(), editor, file, true);
+    return EmmetOptions.getInstance().isEmmetEnabled() &&
+           TemplateManagerImpl.isApplicable(new ZenCodingTemplate(), TemplateActionContext.surrounding(file, editor));
   }
 
   @NotNull

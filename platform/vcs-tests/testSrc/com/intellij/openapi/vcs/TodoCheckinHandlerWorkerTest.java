@@ -35,15 +35,15 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
   public void testInEditedSingle() {
     doTestTodoUpdate("        int i;  // TODO ? todo f",
                      "        int i2;  // TODO ? todo f",
-                     Arrays.asList(),
-                     Arrays.asList("TODO ? todo f"));
+                     Collections.emptyList(),
+                     Collections.singletonList("TODO ? todo f"));
   }
 
   public void testAddedSingle() {
     doTestTodoUpdate("    private void m() {",
                      "    private void m() { // todo test me",
-                     Arrays.asList("todo test me"),
-                     Arrays.asList());
+                     Collections.singletonList("todo test me"),
+                     Collections.emptyList());
   }
 
   public void testInEditedSingleWithDifferentOffsets() {
@@ -52,24 +52,24 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
         "        int i;  // TODO ? todo f"},
       new String[]{"package com.andthere;\n                                                                                           \n",
         "        int i2;  // TODO ? todo f"},
-      Arrays.asList(),
-      Arrays.asList("TODO ? todo f")
+      Collections.emptyList(),
+      Collections.singletonList("TODO ? todo f")
     );
   }
 
   public void testAddedSingleWithSimilarText() {
     doTestTodoUpdate("int i = 0; // todo check",
                      "int i = 0;// TODO ? todo f",
-                     Arrays.asList("TODO ? todo f"),
-                     Arrays.asList());
+                     Collections.singletonList("TODO ? todo f"),
+                     Collections.emptyList());
   }
 
   public void testNotChangedInTheMiddle() {
     doTestTodoUpdate(
       new String[]{"    /* 12345\n", "    todo in the middle\n", "    abcde\n"},
       new String[]{"    /* 123456\n", " 1  todo in the middle\n", "    abcde todo more\n"},
-      Arrays.asList("todo more"),
-      Arrays.asList("todo in the middle")
+      Collections.singletonList("todo more"),
+      Collections.singletonList("todo in the middle")
     );
   }
 
@@ -77,8 +77,8 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
     doTestTodoUpdate(
       new String[]{"    /* 12345\n", "    abcde\n"},
       new String[]{"    /* 123456\n", "    abcde more\n"},
-      Arrays.asList(),
-      Arrays.asList()
+      Collections.emptyList(),
+      Collections.emptyList()
     );
   }
 
@@ -98,7 +98,7 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
     assertEquals(0, addedOrEditedTodos.size());
     assertEquals(1, inChangedTodos.size());
     final TextRange textRange = inChangedTodos.iterator().next().getTextRange();
-    assertEquals("TODO ? todo f", myNewText.substring(textRange.getStartOffset(), textRange.getEndOffset()));
+    assertEquals("TODO ? todo f", textRange.substring(myNewText));
   }
 
   public void testMultiLineTodoCreation() {
@@ -107,8 +107,8 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
       "// second line",
       "// second",
       "//  second",
-      Arrays.asList("TODO first line\nsecond line"),
-      Arrays.asList()
+      Collections.singletonList("TODO first line\nsecond line"),
+      Collections.emptyList()
     );
   }
 
@@ -118,8 +118,8 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
       "//  second line",
       "//  second",
       "// second",
-      Arrays.asList("TODO first line"),
-      Arrays.asList()
+      Collections.singletonList("TODO first line"),
+      Collections.emptyList()
     );
   }
 

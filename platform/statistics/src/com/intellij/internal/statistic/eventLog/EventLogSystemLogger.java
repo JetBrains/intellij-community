@@ -4,8 +4,11 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistUpdateError;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class EventLogSystemLogger {
   private static final String GROUP = "event.log";
@@ -40,12 +43,18 @@ public class EventLogSystemLogger {
     logEvent(recorderId, eventId, data);
   }
 
-  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed, boolean external) {
+  public static void logFilesSend(@NotNull String recorderId,
+                                  int total,
+                                  int succeed,
+                                  int failed,
+                                  boolean external,
+                                  @NotNull List<String> successfullySentFiles) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
       addData("failed", failed).
-      addData("external", external);
+      addData("external", external).
+      addData("paths", ContainerUtil.map(successfullySentFiles, path -> EventLogConfiguration.INSTANCE.anonymize(path)));
     logEvent(recorderId, "logs.send", data);
   }
 

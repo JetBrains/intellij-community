@@ -16,11 +16,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -200,7 +197,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return getLineBreakpointVariants(project, types, position).thenAsync(variants -> {
       final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
       GuiUtils.invokeLaterIfNeeded(() -> {
-        for (XLineBreakpointType type : types) {
+        for (XLineBreakpointType<?> type : types) {
           if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
             return;
           }
@@ -214,7 +211,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               @Override
               public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                  updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                  updateHighlighter(((JList<?>)e.getSource()).getSelectedValue());
                 }
               }
 
@@ -233,10 +230,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                     range = lineRange;
                   }
                   if (!range.isEmpty() && range.intersects(lineRange)) {
-                    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
                     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                      range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                      DebuggerColors.BREAKPOINT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
                       HighlighterTargetArea.EXACT_RANGE);
                   }
                 }
@@ -306,13 +301,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
-            return;
           }
           else {
             XLineBreakpointType.XLineBreakpointVariant variant = variants.get(0);
             insertBreakpoint(variant.createProperties(), res, breakpointManager, file, line, variant.getType(), temporary);
-            return;
           }
+          return;
         }
         XLineBreakpointType type = types.get(0);
         insertBreakpoint(type.createBreakpointProperties(file, line), res, breakpointManager, file, line, type, temporary);
@@ -461,11 +455,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
-    return (o1, o2) -> {
-      int fileCompare = o1.getFileUrl().compareTo(o2.getFileUrl());
-      if (fileCompare != 0) return fileCompare;
-      return o1.getLine() - o2.getLine();
-    };
+    return Comparator.comparing(XLineBreakpoint<P>::getFileUrl).thenComparingInt(XLineBreakpoint::getLine);
   }
 
   @Nullable

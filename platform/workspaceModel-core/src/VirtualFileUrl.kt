@@ -56,6 +56,7 @@ class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlMa
 fun VirtualFileUrl.append(relativePath: String): VirtualFileUrl {
   return manager.fromUrl(url + "/" + relativePath.removePrefix("/"))
 }
+
 // TODO It's possible to write it without additional string allocations besides absolutePath
 fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
 fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = toFile().toVirtualFileUrl(virtualFileManager)

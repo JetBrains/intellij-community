@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.ide.ui.UISettings
@@ -78,6 +78,8 @@ internal class HtmlEditorPane() : JEditorPane() {
     isOpaque = false
     addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     margin = JBUI.emptyInsets()
+    UISettings.setupComponentAntialiasing(this)
+
 
     val caret = caret as DefaultCaret
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
@@ -90,10 +92,5 @@ internal class HtmlEditorPane() : JEditorPane() {
     else {
       text = "<html><body>$body</body></html>"
     }
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    UISettings.setupComponentAntialiasing(this)
   }
 }

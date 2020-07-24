@@ -45,7 +45,7 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
   private List<RangeHighlighter> getCurrentHighlighters() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     return Stream.of(getEditor().getMarkupModel().getAllHighlighters())
-      .filter(h -> attributes.equals(h.getTextAttributes()))
+      .filter(h -> attributes.equals(h.getTextAttributes(null)) || EditorColors.REFERENCE_HYPERLINK_COLOR.equals(h.getTextAttributesKey()))
       .sorted(RangeMarker.BY_START_OFFSET)
       .collect(Collectors.toList());
   }

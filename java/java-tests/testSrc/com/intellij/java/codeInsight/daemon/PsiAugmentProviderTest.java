@@ -23,7 +23,7 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    PsiAugmentProvider.EP_NAME.getPoint(null).registerExtension(new TestAugmentProvider(), myFixture.getTestRootDisposable());
+    PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new TestAugmentProvider(), myFixture.getTestRootDisposable());
     myFixture.addClass("package lombok;\npublic @interface val { }");
   }
 

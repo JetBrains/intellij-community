@@ -29,8 +29,8 @@ import static com.intellij.openapi.editor.HighlighterColors.TEXT;
  * See https://confluence.jetbrains.com/display/YTD5/Intellisense+for+issue+search for format details.
  * <p/>
  * It also provides two additional classes to represent tokens highlighting and
- * available completion items from response: {@link com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange}
- * and {@link com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem}.
+ * available completion items from response: {@link YouTrackIntellisense.HighlightRange}
+ * and {@link YouTrackIntellisense.CompletionItem}.
  *
  * @author Mikhail Golubev
  */
@@ -126,8 +126,8 @@ public class YouTrackIntellisense {
 
   /**
    * Main wrapper around "IntelliSense" element in YouTrack response. It delegates further parsing
-   * to {@link com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange} and
-   * {@link com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem}
+   * to {@link YouTrackIntellisense.HighlightRange} and
+   * {@link YouTrackIntellisense.CompletionItem}
    */
   public static class Response {
 

@@ -1,49 +1,56 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
-import com.intellij.openapi.fileTypes.FileType
+import java.util.concurrent.atomic.AtomicInteger
 
 class IndexingJobStatistics {
-  private val timeBucketSize = 128
 
-  val timesPerIndexer: Map<String /* ID.name() */, MaxNTimeBucket>
-    get() = _timesPerIndexer
+  private val _statsPerIndexer = hashMapOf<String, StatsPerIndexer>()
+  val statsPerIndexer: Map<String /* ID.name() */, StatsPerIndexer>
+    @Synchronized get() = _statsPerIndexer.toMap()
 
-  val timesPerFileType: Map<String /* File type name */, MaxNTimeBucket>
-    get() = _timesPerFileType
+  private val _statsPerFileType = hashMapOf<String, StatsPerFileType>()
+  val statsPerFileType: Map<String /* File type name */, StatsPerFileType>
+    @Synchronized get() = _statsPerFileType.toMap()
 
-  val numberOfFilesPerFileType: Map<String /* File type name */, Int>
-    get() = _numberOfFilesPerFileType
+  val numberOfTooLargeFiles = AtomicInteger()
+  val numberOfFailedToLoadFiles = AtomicInteger()
+  val numberOfFailedToIndexFiles = AtomicInteger()
 
-  val contentLoadingTime: MaxNTimeBucket
-    get() = _contentLoadingTime
+  data class StatsPerIndexer(
+    val indexingTime: TimeStats,
+    var numberOfFiles: Int,
+    var totalBytes: BytesNumber
+  )
 
-  val indexingTime: MaxNTimeBucket
-    get() = _indexingTime
-
-  private val _timesPerIndexer = hashMapOf<String, MaxNTimeBucket>()
-  private val _timesPerFileType = hashMapOf<String, MaxNTimeBucket>()
-  private val _numberOfFilesPerFileType = hashMapOf<String, Int>()
-  private val _contentLoadingTime = MaxNTimeBucket(timeBucketSize, 0)
-  private val _indexingTime = MaxNTimeBucket(timeBucketSize, 0)
+  data class StatsPerFileType(
+    val indexingTime: TimeStats,
+    val contentLoadingTime: TimeStats,
+    var numberOfFiles: Int,
+    var totalBytes: BytesNumber
+  )
 
   @Synchronized
-  fun addFileStatistics(fileStatistics: FileIndexingStatistics, fileType: FileType) {
+  fun addFileStatistics(
+    fileStatistics: FileIndexingStatistics,
+    contentLoadingTime: Long,
+    fileSize: Long
+  ) {
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
-      _timesPerIndexer.getOrPut(indexId.name) { MaxNTimeBucket(timeBucketSize, time) }.addTime(time)
+      val stats = _statsPerIndexer.getOrPut(indexId.name) {
+        StatsPerIndexer(TimeStats(), 0, 0)
+      }
+      stats.indexingTime.addTime(time)
+      stats.numberOfFiles++
+      stats.totalBytes += fileSize
     }
-    val fileTypeName = fileType.name
-    _numberOfFilesPerFileType.compute(fileTypeName) { _, currentNumber -> (currentNumber ?: 0) + 1 }
-    _timesPerFileType.computeIfAbsent(fileTypeName) { MaxNTimeBucket(timeBucketSize, fileStatistics.totalTime) }.addTime(fileStatistics.totalTime)
-  }
-
-  @Synchronized
-  fun addIndexingTime(nanoTime: TimeNano) {
-    _indexingTime.addTime(nanoTime)
-  }
-
-  @Synchronized
-  fun addContentLoadingTime(nanoTime: TimeNano) {
-    _contentLoadingTime.addTime(nanoTime)
+    val fileTypeName = fileStatistics.fileType.name
+    val stats = _statsPerFileType.getOrPut(fileTypeName) {
+      StatsPerFileType(TimeStats(), TimeStats(), 0, 0)
+    }
+    stats.contentLoadingTime.addTime(contentLoadingTime)
+    stats.indexingTime.addTime(fileStatistics.indexingTime)
+    stats.totalBytes += fileSize
+    stats.numberOfFiles++
   }
 }

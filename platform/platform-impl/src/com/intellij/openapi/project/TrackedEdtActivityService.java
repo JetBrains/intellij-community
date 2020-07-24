@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,7 +33,7 @@ final class TrackedEdtActivityService {
     }
   }
 
-  void invokeLater(@NotNull Runnable action) {
+  private void invokeLater(@NotNull Runnable action) {
     new TrackedEdtActivity(action).invokeLater();
   }
 
@@ -90,10 +89,8 @@ final class TrackedEdtActivityService {
     }
 
     void invokeLaterAfterProjectInitialized() {
-      StartupManager startupManager = StartupManager.getInstance(myProject);
-      startupManager.runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-        Application app = ApplicationManager.getApplication();
-        app.invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
+      StartupManager.getInstance(myProject).runAfterOpened(() -> {
+        ApplicationManager.getApplication().invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
       });
     }
 

@@ -31,7 +31,7 @@ class GroovyHighlightUsagesTest extends LightGroovyTestCase {
   }
 
   private void doTest(boolean directoryTest = false) {
-    SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
+    SeveritiesProvider.EP_NAME.getPoint().registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     def name = getTestName()
     if (directoryTest) {
       fixture.copyDirectoryToProject(name, "")

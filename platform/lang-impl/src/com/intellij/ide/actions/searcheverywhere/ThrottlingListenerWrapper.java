@@ -19,7 +19,7 @@ class ThrottlingListenerWrapper implements MultiThreadSearcher.Listener {
 
   public final int myThrottlingDelay;
 
-  private final MultiThreadSearcher.Listener myDelegateListener;
+  private final SESearcher.Listener myDelegateListener;
   private final Executor myDelegateExecutor;
 
   private final Buffer myBuffer = new Buffer();

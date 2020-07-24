@@ -122,8 +122,6 @@ public final class PluginManagerCore {
     return System.getProperty("idea.plugins.compatible.build");
   }
 
-
-
   /**
    * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
@@ -346,7 +344,7 @@ public final class PluginManagerCore {
     }
 
     for (IdeaPluginDescriptorImpl o : loadedPlugins) {
-      if (!o.getUseIdeaClassLoader()) {
+      if (!o.isUseIdeaClassLoader()) {
         continue;
       }
 
@@ -435,7 +433,7 @@ public final class PluginManagerCore {
       descriptor.jarFiles = null;
     }
 
-    if (descriptor.getUseIdeaClassLoader()) {
+    if (descriptor.isUseIdeaClassLoader()) {
       getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
@@ -455,9 +453,7 @@ public final class PluginManagerCore {
       for (Path pathElement : classPath) {
         urls.add(localFileToUrl(pathElement, descriptor));
       }
-      PluginClassLoader loader =
-        new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(),
-                              descriptor.getPluginPath());
+      PluginClassLoader loader = new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor, descriptor.getPluginPath());
       if (usePluginClassLoader) {
         loader.setCoreLoader(coreLoader);
       }
@@ -467,7 +463,8 @@ public final class PluginManagerCore {
 
   private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
     try {
-      return file.normalize().toUri().toURL();  // it is important not to have traversal elements in classpath
+      // it is important not to have traversal elements in classpath
+      return file.normalize().toUri().toURL();
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
@@ -540,7 +537,7 @@ public final class PluginManagerCore {
     Application app = ApplicationManager.getApplication();
     if (app == null || !app.isHeadlessEnvironment() || isUnitTestMode) {
       if (!errorsToReport.isEmpty()) {
-        String errorMessage = Stream.concat(errorsToReport.stream().map(o -> o.toUserError() + "."), actions.stream()).collect(Collectors.joining("<p/>"));
+        String errorMessage = Stream.concat(errorsToReport.stream().map(o -> StringUtil.escapeXmlEntities(o.toUserError()) + "."), actions.stream()).collect(Collectors.joining("<p/>"));
         if (ourPluginError == null) {
           ourPluginError = errorMessage;
         }
@@ -657,7 +654,7 @@ public final class PluginManagerCore {
 
       for (PluginId moduleId : incompatibleModuleIds) {
         IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(moduleId);
-        if (uniqueCheck.add(dep)) {
+        if (dep != null && uniqueCheck.add(dep)) {
           plugins.add(dep);
         }
       }
@@ -1329,9 +1326,10 @@ public final class PluginManagerCore {
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull List<PluginError> errors) {
-    if (descriptor.getPluginId() == CORE_ID || descriptor.isImplementationDetail()) {
+    if (descriptor.getPluginId() == CORE_ID) {
       return true;
     }
+    boolean notifyUser = !descriptor.isImplementationDetail();
 
     boolean result = true;
 
@@ -1341,7 +1339,7 @@ public final class PluginManagerCore {
       result = false;
       String presentableName = toPresentableName(incompatibleId.getIdString());
       errors.add(new PluginError(descriptor, "is incompatible with the IDE containing module " + presentableName,
-                                 "IDE contains module " + presentableName));
+                                 "IDE contains module " + presentableName, notifyUser));
     }
 
     // no deps at all
@@ -1365,14 +1363,14 @@ public final class PluginManagerCore {
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
         if (findErrorForPlugin(errors, depId) != null) {
-          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null));
+          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null, notifyUser));
         }
         else {
-          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null));
+          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null, notifyUser));
         }
       }
       else {
-        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null);
+        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null, notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         errors.add(error);
       }

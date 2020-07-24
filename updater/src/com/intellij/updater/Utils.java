@@ -17,7 +17,6 @@ public class Utils {
   private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
-  private static final byte[] BUFFER = new byte[BUFFER_SIZE];
 
   private static File myTempDir;
 
@@ -220,10 +219,11 @@ public class Utils {
   }
 
   public static void copyStream(InputStream from, OutputStream to) throws IOException {
+    byte[] buffer = new byte[BUFFER_SIZE];
     while (true) {
-      int read = from.read(BUFFER);
+      int read = from.read(buffer);
       if (read < 0) break;
-      to.write(BUFFER, 0, read);
+      to.write(buffer, 0, read);
     }
   }
 
@@ -337,7 +337,6 @@ public class Utils {
     @Override
     @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
     public synchronized void writeTo(OutputStream out) throws IOException {
-      //noinspection UnnecessarilyQualifiedStaticUsage
       Utils.writeBytes(buf, count, out);
     }
   }

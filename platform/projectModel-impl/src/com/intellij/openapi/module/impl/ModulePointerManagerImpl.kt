@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ProjectTopics
@@ -22,8 +22,8 @@ import kotlin.concurrent.write
 
 @State(name = "ModuleRenamingHistory", storages = [(Storage("modules.xml"))])
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
-  private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()
-  private val pointers = MultiMap.createSmart<Module, ModulePointerImpl>()
+  private val unresolved = MultiMap<String, ModulePointerImpl>()
+  private val pointers = MultiMap<Module, ModulePointerImpl>()
   private val lock = ReentrantReadWriteLock()
   private val oldToNewName = THashMap<String, String>()
 

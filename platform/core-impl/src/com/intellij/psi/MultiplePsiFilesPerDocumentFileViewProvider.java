@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -199,7 +200,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       if (!languages.contains(entry.getKey())) {
         PsiFileImpl file = entry.getValue();
         iterator.remove();
-        file.markInvalidated();
+        DebugUtil.performPsiModification(getClass().getName() + " root change", () -> file.markInvalidated());
       }
     }
     super.contentsSynchronized();

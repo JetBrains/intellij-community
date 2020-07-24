@@ -69,7 +69,7 @@ public class BoolUtils {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    PsiExpression stripped = ParenthesesUtils.stripParentheses(operand);
+    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(operand);
     return stripped == null ? operand : stripped;
   }
 
@@ -257,7 +257,7 @@ public class BoolUtils {
 
   @Contract("null -> false")
   public static boolean isBooleanLiteral(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiLiteralExpression)) {
       return false;
     }
@@ -268,7 +268,7 @@ public class BoolUtils {
 
   @Contract(value = "null -> false", pure = true)
   public static boolean isTrue(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return false;
     }
@@ -277,7 +277,7 @@ public class BoolUtils {
 
   @Contract(value ="null -> false", pure = true)
   public static boolean isFalse(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return false;
     }

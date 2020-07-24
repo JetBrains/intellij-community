@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,11 +28,20 @@ public class RemoteRepositoryDescription {
   private final String myId;
   private final String myName;
   private final String myUrl;
+  private final boolean myAllowSnapshots;
 
   public RemoteRepositoryDescription(@NotNull String id, @NotNull String name, @NotNull String url) {
+    this(id, name, url, true);
+  }
+
+  public RemoteRepositoryDescription(@NotNull String id,
+                                     @NotNull String name,
+                                     @NotNull String url,
+                                     boolean allowSnapshots) {
     myId = id;
     myName = name;
     myUrl = url;
+    myAllowSnapshots = allowSnapshots;
   }
 
   public String getId() {
@@ -46,30 +56,28 @@ public class RemoteRepositoryDescription {
     return myUrl;
   }
 
+  public boolean isAllowSnapshots() {
+    return myAllowSnapshots;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     RemoteRepositoryDescription that = (RemoteRepositoryDescription)o;
-
-    if (!myId.equals(that.myId)) return false;
-    if (!myName.equals(that.myName)) return false;
-    if (!myUrl.equals(that.myUrl)) return false;
-
-    return true;
+    return myAllowSnapshots == that.myAllowSnapshots &&
+           myId.equals(that.myId) &&
+           myName.equals(that.myName) &&
+           myUrl.equals(that.myUrl);
   }
 
   @Override
   public int hashCode() {
-    int result = myId.hashCode();
-    result = 31 * result + myName.hashCode();
-    result = 31 * result + myUrl.hashCode();
-    return result;
+    return Objects.hash(myId, myName, myUrl, myAllowSnapshots);
   }
 
   @Override
   public String toString() {
-    return myId + ":" + myName + ":" + myUrl;
+    return myId + ":" + myName + ":" + myUrl + " (snapshots=" + myAllowSnapshots + ")";
   }
 }

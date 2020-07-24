@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -105,23 +106,27 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     }
   }
 
+  private data class ScopedMember(val psiMember: PsiMember, var scope: SearchScope)
+
   private fun changeSelectedFile(env: ImperativeCommand.Environment,
-                                 members: List<PsiMember>,
+                                 members: List<ScopedMember>,
                                  fileToChange: PsiJavaFile): Set<VirtualFile> {
     val reportedFiles = mutableSetOf<VirtualFile>()
     val nChanges = env.generateValue(Generator.integers(1, 5), "Changes to make: %s")
     for (j in 0 until nChanges) {
       val editor = (FileEditorManager.getInstance(myProject).selectedEditor as TextEditor).editor
       val member = env.generateValue(Generator.sampledFrom(members), null)
-      env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, member)}")
-      val usages = findUsages(member)
+      val psiMember = member.psiMember
+      val prevScope = psiMember.useScope
+      env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, psiMember)}")
+      val usages = findUsages(psiMember)
       if (usages == null || usages.isEmpty()) {
         env.logMessage("Member has no usages (or too many). Skipping.")
         continue
       }
       env.logMessage("Found ${usages.size} usages of member and its parents")
 
-      val modifications = Modification.getPossibleModifications(member, env)
+      val modifications = Modification.getPossibleModifications(psiMember, env)
       if (modifications.isEmpty()) {
         env.logMessage("Don't know how to modify this member, skipping it.")
         continue
@@ -139,13 +144,15 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       env.logMessage("Modification applied")
       rehighlight(fileToChange, editor)
       reportedFiles.addAll(getFilesReportedByProblemSearch(editor, fileToChange))
+      val curScope = psiMember.useScope
+      member.scope = prevScope.union(curScope)
     }
     return reportedFiles
   }
 
-  private fun getMembersToSearch(member: PsiMember, modification: Modification, members: List<PsiMember>): List<PsiMember>? {
+  private fun getMembersToSearch(member: ScopedMember, modification: Modification, members: List<ScopedMember>): List<ScopedMember>? {
     if (!modification.searchAllMembers()) return listOf(member)
-    if (members.any { !isCheapToSearch(it) }) return null
+    if (members.any { !isCheapToSearch(it.psiMember) }) return null
     return members
   }
 
@@ -172,12 +179,12 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       }
   }
 
-  private fun findMembers(psiFile: PsiClassOwner): List<PsiMember> {
+  private fun findMembers(psiFile: PsiClassOwner): List<ScopedMember> {
     return MemberCollector.collectMembers(psiFile) { member ->
       if (member is PsiMethod && member.isConstructor) return@collectMembers false
       val modifiers = member.modifierList ?: return@collectMembers true
       return@collectMembers !modifiers.hasExplicitModifier(PsiModifier.PRIVATE)
-    }
+    }.map { ScopedMember(it, it.useScope) }
   }
 
   private fun findUsages(target: PsiMember): List<PsiElement>? {
@@ -219,7 +226,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return possibleOverride == JavaOverridingMethodsSearcher.findOverridingMethod(overrideClass, target, targetClass)
   }
 
-  private fun findFilesWithBrokenUsages(relatedFiles: Set<VirtualFile>, members: List<PsiMember>): Set<VirtualFile> {
+  private fun findFilesWithBrokenUsages(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
     val psiManager = PsiManager.getInstance(myProject)
     val filesWithErrors = mutableSetOf<VirtualFile>()
     for (file in relatedFiles) {
@@ -229,7 +236,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return filesWithErrors
   }
 
-  private fun hasErrors(psiFile: PsiFile, members: List<PsiMember>? = null): Boolean {
+  private fun hasErrors(psiFile: PsiFile, members: List<ScopedMember>? = null): Boolean {
     val infos = rehighlight(psiFile, openEditor(psiFile.virtualFile))
     return infos.any { info ->
       if (info.severity != HighlightSeverity.ERROR) return@any false
@@ -243,9 +250,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
                                                          PsiMethod::class.java, PsiField::class.java,
                                                          PsiReferenceList::class.java) ?: return@any false
       return@any StreamEx.ofTree(context, { StreamEx.of(*it.children) })
-        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m) } }
+        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m.psiMember) && inScope(el.containingFile, m.scope) } }
     }
   }
+
+  private fun inScope(psiFile: PsiFile, scope: SearchScope): Boolean = scope.contains(psiFile.virtualFile)
 
   private fun extractProblems(virtualFile: VirtualFile, inlay: Inlay<*>): String {
     data class Problem(val fileName: String, val offset: Int, val selectedElement: String,

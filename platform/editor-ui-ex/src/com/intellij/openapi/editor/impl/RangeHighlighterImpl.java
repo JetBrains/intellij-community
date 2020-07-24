@@ -4,6 +4,9 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -14,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +33,8 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
 
   private final MarkupModelImpl myModel;
-  private TextAttributes myTextAttributes;
+  private TextAttributes myForcedTextAttributes;
+  private TextAttributesKey myTextAttributesKey;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
   private Color myLineSeparatorColor;
@@ -62,11 +67,11 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes,
+                       @Nullable TextAttributesKey textAttributesKey,
                        boolean greedyToLeft,
                        boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end, false, false);
-    myTextAttributes = textAttributes;
+    myTextAttributesKey = textAttributesKey;
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
 
@@ -83,24 +88,54 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
 
   @Override
-  public TextAttributes getTextAttributes() {
-    return myTextAttributes;
+  public TextAttributesKey getTextAttributesKey() {
+    return myTextAttributesKey;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable TextAttributes getForcedTextAttributes() {
+    return myForcedTextAttributes;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable Color getForcedErrorStripeMarkColor() {
+    return myErrorStripeColor;
+  }
+
+  @Override
+  public @Nullable TextAttributes getTextAttributes(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
+    if (myForcedTextAttributes != null) return myForcedTextAttributes;
+    if (myTextAttributesKey == null) return null;
+
+    EditorColorsScheme colorScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
+    return colorScheme.getAttributes(myTextAttributesKey);
   }
 
   @Override
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
-    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
-    TextAttributes old = myTextAttributes;
-    myTextAttributes = textAttributes;
-    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
-    if (old != textAttributes && (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER)) {
+    TextAttributes old = myForcedTextAttributes;
+    if (old == textAttributes) return;
+
+    myForcedTextAttributes = textAttributes;
+
+    if (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER ||
+        old == null && myTextAttributesKey != null) {
       fireChanged(false, true);
     }
     else if (!Comparing.equal(old, textAttributes)) {
       fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes) ||
                          !Comparing.equal(getForegroundColor(old), getForegroundColor(textAttributes)));
+    }
+  }
+
+  @Override
+  public void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey) {
+    TextAttributesKey old = myTextAttributesKey;
+    myTextAttributesKey = textAttributesKey;
+    if (!Comparing.equal(old, textAttributesKey)) {
+      fireChanged(false, myForcedTextAttributes == null);
     }
   }
 
@@ -179,22 +214,19 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public Color getErrorStripeMarkColor() {
+  public Color getErrorStripeMarkColor(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
     if (myErrorStripeColor == NULL_COLOR) return null;
     if (myErrorStripeColor != null) return myErrorStripeColor;
-    if (myTextAttributes != null) return myTextAttributes.getErrorStripeColor();
-    return null;
+    if (myForcedTextAttributes != null) return myForcedTextAttributes.getErrorStripeColor();
+    TextAttributes textAttributes = getTextAttributes(scheme);
+    return textAttributes != null ? textAttributes.getErrorStripeColor() : null;
   }
 
   @Override
-  public void setErrorStripeMarkColor(Color color) {
-    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
+  public void setErrorStripeMarkColor(@Nullable Color color) {
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
-    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
     if (!Comparing.equal(old, color)) {
       fireChanged(false, false);
     }
@@ -280,6 +312,33 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     boolean old = isAfterEndOfLine();
     setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
     if (old != afterEndOfLine) {
+      fireChanged(false, false);
+    }
+  }
+
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    boolean old = isGreedyToLeft();
+    super.setGreedyToLeft(greedy);
+    if (old != greedy) {
+      fireChanged(false, false);
+    }
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    boolean old = isGreedyToRight();
+    super.setGreedyToRight(greedy);
+    if (old != greedy) {
+      fireChanged(false, false);
+    }
+  }
+
+  @Override
+  public void setStickingToRight(boolean value) {
+    boolean old = isStickingToRight();
+    super.setStickingToRight(value);
+    if (old != value) {
       fireChanged(false, false);
     }
   }

@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -295,9 +294,9 @@ public class AnalysisScope {
       return true;
     }
     if (myScope instanceof LocalSearchScope) {
-      final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
-      final Set<VirtualFile> files = new THashSet<>();
-      for (final PsiElement element : psiElements) {
+      PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+      Set<VirtualFile> files = new HashSet<>();
+      for (PsiElement element : psiElements) {
         VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(element));
         if (file != null && files.add(file)) {
           if (!processor.process(file)) return false;

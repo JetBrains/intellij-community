@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -31,7 +32,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   protected final DimensionService dimensionService = DimensionService.getInstance();
   private Mode myMode;
 
-  public ModeSwitchableDialog(com.intellij.openapi.project.Project project, boolean canBeParent) {
+  public ModeSwitchableDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
 
     myMode = Mode.values()[StringUtilRt.parseInt(PropertiesComponent.getInstance().getValue(getPrivateDimensionServiceKey() + ".MODE", "0"), 0)];

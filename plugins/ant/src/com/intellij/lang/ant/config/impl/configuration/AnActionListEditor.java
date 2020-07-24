@@ -130,10 +130,6 @@ public class AnActionListEditor<T> extends JPanel {
 
     Form() {
       myList.setModel(new DefaultListModel());
-      if (ApplicationManager.getApplication() == null) {
-        myListController = new ReorderableListToolbar<>(myList);
-        return;  // Preview mode
-      }
       myListController = new ReorderableListToolbar<>(myList);
     }
 

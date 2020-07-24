@@ -63,7 +63,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
   private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<>();
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Python SDK Updater");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup(
+    "Python SDK Updater",
+    PyBundle.message("python.sdk.updater.notifications.group.title"));
 
   /**
    * Refreshes the SDKs of the modules for the open project after some delay.

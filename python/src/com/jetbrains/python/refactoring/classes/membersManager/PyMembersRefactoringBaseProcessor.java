@@ -32,8 +32,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Processor for member-based refactorings. It moves members from one place to another using {@link com.jetbrains.python.refactoring.classes.membersManager.MembersManager}.
- * Inheritors only need to implement {@link com.intellij.usageView.UsageViewDescriptor} methods (while this interface is also implemented by this class)
+ * Processor for member-based refactorings. It moves members from one place to another using {@link MembersManager}.
+ * Inheritors only need to implement {@link UsageViewDescriptor} methods (while this interface is also implemented by this class)
  *
  * @author Ilya.Kazakevich
  */

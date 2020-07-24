@@ -82,9 +82,9 @@ final class ShortcutFilteringPanel extends JPanel {
   ShortcutFilteringPanel() {
     super(new VerticalLayout(JBUIScale.scale(2)));
 
-    myKeyboardPanel.myFirstStroke.setColumns(13);
+    myKeyboardPanel.myFirstStroke.setColumns(20);
     myKeyboardPanel.myFirstStroke.putClientProperty("JTextField.variant", "search");
-    myKeyboardPanel.mySecondStroke.setColumns(13);
+    myKeyboardPanel.mySecondStroke.setColumns(20);
     myKeyboardPanel.mySecondStroke.putClientProperty("JTextField.variant", "search");
     myKeyboardPanel.mySecondStroke.setVisible(false);
     myKeyboardPanel.mySecondStrokeEnable.setText(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));

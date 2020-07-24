@@ -3,7 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +17,6 @@ public interface SearchTopHitProvider {
   void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project);
 
   static String getTopHitAccelerator() {
-    return Registry.is("new.search.everywhere") ? "/" : "#";
+    return "/";
   }
 }

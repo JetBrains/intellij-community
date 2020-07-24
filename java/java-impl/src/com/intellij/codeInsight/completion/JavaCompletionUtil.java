@@ -914,14 +914,26 @@ public class JavaCompletionUtil {
 
     String open = escapeXmlIfNeeded(context, "<");
     context.getDocument().insertString(offset, open);
-    context.getEditor().getCaretModel().moveToOffset(offset + open.length());
+    offset += open.length();
+    context.getEditor().getCaretModel().moveToOffset(offset);
     if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
-      context.getDocument().insertString(offset + open.length(), escapeXmlIfNeeded(context, ">"));
+      context.getDocument().insertString(offset, escapeXmlIfNeeded(context, ">"));
+      context.commitDocument();
+
+      TabOutScopesTracker.getInstance().registerEmptyScope(context.getEditor(), offset, getTabOutOffset(context, offset));
     }
     if (context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       context.setAddCompletionChar(false);
     }
     return true;
+  }
+
+  private static int getTabOutOffset(@NotNull final InsertionContext context, final int offset) {
+    final PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCall.class, false);
+    if (call != null && call.getArgumentList() != null) {
+      return call.getArgumentList().getTextRange().getEndOffset() - 1;
+    }
+    return offset + 2;
   }
 
   public static FakePsiElement createContextWithXxxVariable(@NotNull PsiElement place, @NotNull PsiType varType) {

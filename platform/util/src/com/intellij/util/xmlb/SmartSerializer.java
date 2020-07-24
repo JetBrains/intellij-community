@@ -2,19 +2,18 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
-import gnu.trove.TObjectFloatHashMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
-
 public final class SmartSerializer {
-  private LinkedHashSet<String> mySerializedAccessorNameTracker;
-  private TObjectFloatHashMap<String> myOrderedBindings;
+  private ObjectLinkedOpenHashSet<String> mySerializedAccessorNameTracker;
+  private Object2FloatMap<String> myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
-  public SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
-    mySerializedAccessorNameTracker = trackSerializedNames ? new LinkedHashSet<>() : null;
+  private SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
+    mySerializedAccessorNameTracker = trackSerializedNames ? new ObjectLinkedOpenHashSet<>() : null;
 
     mySerializationFilter = useSkipEmptySerializationFilter ?
                             new SkipEmptySerializationFilter() {
@@ -70,7 +69,7 @@ public final class SmartSerializer {
       binding.serializeInto(bean, element, mySerializationFilter);
     }
     else {
-      LinkedHashSet<String> oldTracker = mySerializedAccessorNameTracker;
+      ObjectLinkedOpenHashSet<String> oldTracker = mySerializedAccessorNameTracker;
       try {
         mySerializedAccessorNameTracker = null;
         binding.serializeInto(bean, element, mySerializationFilter);

@@ -279,7 +279,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         if (!(grandParent instanceof PsiMethodCallExpression)) return false;
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         if (!MAP_GET.test(methodCallExpression)) return false;
-        PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodCallExpression.getMethodExpression().getQualifierExpression());
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodCallExpression.getMethodExpression().getQualifierExpression());
         if (!(qualifier instanceof PsiReferenceExpression)) return false;
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myMapReference, referenceExpression)) return false;
@@ -312,7 +312,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     @Override
     public void visitForeachStatement(PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      final PsiExpression iteratedValue = ParenthesesUtils.stripParentheses(statement.getIteratedValue());
+      final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
       final PsiExpression iteratedExpression = getIteratedExpression(iteratedValue);
       if (iteratedExpression == null) return;
       final PsiParameter parameter = statement.getIterationParameter();
@@ -330,7 +330,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       if (!ITERABLE_FOR_EACH.test(call)) return;
-      PsiExpression qualifier = ParenthesesUtils.stripParentheses(call.getMethodExpression().getQualifierExpression());
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
       PsiExpression expression = getIteratedExpression(qualifier);
       PsiReferenceExpression mapExpression = getMapReferenceFromKeySetCall(expression);
       if (mapExpression == null) return;

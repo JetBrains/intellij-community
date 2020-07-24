@@ -238,12 +238,17 @@ public class EditorHyperlinkSupport {
                                            @NotNull final HyperlinkInfo hyperlinkInfo,
                                            @Nullable TextAttributes followedHyperlinkAttributes,
                                            int layer) {
-    TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
-    final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
-                                                                                       highlightEndOffset,
-                                                                                       layer,
-                                                                                       textAttributes,
-                                                                                       HighlighterTargetArea.EXACT_RANGE);
+    final RangeHighlighter highlighter =
+      myEditor.getMarkupModel().addRangeHighlighterAndChangeAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES,
+                                                                       highlightStartOffset,
+                                                                       highlightEndOffset,
+                                                                       layer,
+                                                                       HighlighterTargetArea.EXACT_RANGE,
+                                                                       false, ex -> {
+          if (highlightAttributes != null) {
+            ex.setTextAttributes(highlightAttributes);
+          }
+        });
     associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
@@ -332,10 +337,6 @@ public class EditorHyperlinkSupport {
                                                   HighlighterTargetArea.EXACT_RANGE);
   }
 
-  private static TextAttributes getHyperlinkAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-  }
-
   @NotNull
   private static TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
     HyperlinkInfoTextAttributes attrs = HYPERLINK.get(range);
@@ -397,12 +398,12 @@ public class EditorHyperlinkSupport {
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, null);
       }
       if (range == link) {
-        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes(editor.getColorsScheme()));
         markupModel.setRangeHighlighterAttributes(range, getFollowedHyperlinkAttributes(range));
       }
     }
     //refresh highlighter text attributes
-    markupModel.addRangeHighlighter(0, 0, link.getLayer(), getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
+    markupModel.addRangeHighlighter(CodeInsightColors.HYPERLINK_ATTRIBUTES, 0, 0, link.getLayer(), HighlighterTargetArea.EXACT_RANGE).dispose();
   }
 
 

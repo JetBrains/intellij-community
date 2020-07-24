@@ -50,12 +50,12 @@ public class AssertHint {
     return ((PsiMethodCallExpression)myOriginalExpression).getArgumentList().getExpressions()[myArgIndex + 1];
   }
 
-  public PsiExpression getExpected(boolean checkTestNG) {
-    return checkTestNG ? getSecondArgument() : getFirstArgument();
+  public PsiExpression getExpected() {
+    return isMessageOnFirstPosition() ? getFirstArgument() : getSecondArgument();
   }
 
-  public PsiExpression getActual(boolean checkTestNG) {
-    return checkTestNG ? getFirstArgument() : getSecondArgument();
+  public PsiExpression getActual() {
+    return isMessageOnFirstPosition() ? getSecondArgument() : getFirstArgument();
   }
 
   public PsiExpression getOriginalExpression() {
@@ -67,17 +67,28 @@ public class AssertHint {
     return myMessage;
   }
 
-  public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression, boolean checkTestNG) {
-    return create(expression, methodName -> "assertEquals".equals(methodName) ? 2 : null, checkTestNG);
+  public static AssertHint createAssertEqualsHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertEquals".equals(methodName) ? 2 : null);
   }
 
-  public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression, boolean checkTestNG) {
-    return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName) ? 1 : null, checkTestNG);
+  public static AssertHint createAssertNotEqualsHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertNotEquals".equals(methodName) ? 2 : null);
+  }
+
+  public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName) ? 1 : null);
+  }
+
+  public static AssertHint createAssertSameHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertSame".equals(methodName) ? 2 : null);
+  }
+
+  public static AssertHint createAssertNotSameHint(PsiMethodCallExpression expression) {
+    return create(expression, methodName -> "assertNotSame".equals(methodName) ? 2 : null);
   }
 
   public static AssertHint create(PsiMethodCallExpression expression,
-                                  Function<? super String, Integer> methodNameToParamCount,
-                                  boolean checkTestNG) {
+                                  Function<? super String, Integer> methodNameToParamCount) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
     final Integer minimumParamCount = methodNameToParamCount.apply(methodName);
@@ -89,8 +100,8 @@ public class AssertHint {
     if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE) || !resolveResult.isValidResult()) {
       return null;
     }
-    final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);
-    final boolean messageOnFirstPosition = isMessageOnFirstPosition(method, checkTestNG);
+    final boolean messageOnLastPosition = isMessageOnLastPosition(method);
+    final boolean messageOnFirstPosition = isMessageOnFirstPosition(method);
     if (!messageOnFirstPosition && !messageOnLastPosition) {
       return null;
     }
@@ -127,8 +138,7 @@ public class AssertHint {
   }
 
   public static AssertHint create(PsiMethodReferenceExpression methodExpression,
-                                  Function<? super String, Integer> methodNameToParamCount,
-                                  boolean checkTestNG) {
+                                  Function<? super String, Integer> methodNameToParamCount) {
     @NonNls final String methodName = methodExpression.getReferenceName();
     final Integer minimumParamCount = methodNameToParamCount.apply(methodName);
     if (minimumParamCount == null) {
@@ -144,8 +154,8 @@ public class AssertHint {
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || !resolveResult.isValidResult()) {
       return null;
     }
-    final boolean messageOnLastPosition = isMessageOnLastPosition(method, checkTestNG);
-    final boolean messageOnFirstPosition = isMessageOnFirstPosition(method, checkTestNG);
+    final boolean messageOnLastPosition = isMessageOnLastPosition(method);
+    final boolean messageOnFirstPosition = isMessageOnFirstPosition(method);
     if (!messageOnFirstPosition && !messageOnLastPosition) {
       return null;
     }
@@ -158,32 +168,28 @@ public class AssertHint {
     return new AssertHint(0, messageOnFirstPosition, null, method, methodExpression);
   }
 
-  private static boolean isMessageOnFirstPosition(PsiMethod method, boolean checkTestNG) {
+  private static boolean isMessageOnFirstPosition(PsiMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    if (checkTestNG) {
-      return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName());
-    }
-    return JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
+    return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName()) ||
+           JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSUME.equals(qualifiedName);
   }
 
-  private static boolean isMessageOnLastPosition(PsiMethod method, boolean checkTestNG) {
+  private static boolean isMessageOnLastPosition(PsiMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    if (checkTestNG) {
-      return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName());
-    }
-    return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
-          JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
+    return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName()) || 
+           JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
+           JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }
 
   public boolean isAssertTrue() {
@@ -208,6 +214,8 @@ public class AssertHint {
       map.put("assertTrue", 1);
       map.put("assumeTrue", 1);
       map.put("fail", 0);
+
+      map.put("assertEqualsNoOrder", 2);//testng
       ASSERT_METHOD_2_PARAMETER_COUNT = Collections.unmodifiableMap(map);
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
+import com.intellij.util.UnmodifiableIterator;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -153,6 +154,6 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
                                             return virtualFileManager.findFileById(id);
                                           });
     Iterator<VirtualFile> weirdFileIterator = weirdFiles.iterator();
-    return ContainerUtil.filterIterator(ContainerUtil.concatIterators(idsIterator, idSetIterator, weirdFileIterator), Objects::nonNull);
+    return new UnmodifiableIterator<>(ContainerUtil.filterIterator(ContainerUtil.concatIterators(idsIterator, idSetIterator, weirdFileIterator), Objects::nonNull));
   }
 }

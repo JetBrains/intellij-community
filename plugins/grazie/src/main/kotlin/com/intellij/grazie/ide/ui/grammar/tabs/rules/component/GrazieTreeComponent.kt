@@ -19,15 +19,15 @@ import com.intellij.ui.*
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.awt.BorderLayout
-import java.util.*
 import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
                                                                      GrazieStateLifecycle, Disposable, GrazieUIComponent {
-  private val state = HashMap<String, RuleWithLang>()
+  private val state = Object2ObjectOpenHashMap<String, RuleWithLang>()
   private val filterComponent: GrazieRulesTreeFilter = GrazieRulesTreeFilter(this)
 
   private lateinit var myConnection: MessageBusConnection

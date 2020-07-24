@@ -8,12 +8,17 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.ContentRootEntity
 import com.intellij.workspace.api.SourceRootEntity
+import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
-internal class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedEntityImpl,
-                                 val sourceRootEntities: List<SourceRootEntity>,
-                                 val entity: ContentRootEntity) : ContentEntry {
+internal class ContentEntryViaTypedEntity(internal val model: LegacyBridgeModuleRootModel,
+                                          val sourceRootEntities: List<SourceRootEntity>,
+                                          val entity: ContentRootEntity,
+                                          val updater: (((TypedEntityStorageDiffBuilder) -> Unit) -> Unit)?) : ContentEntry {
   private val excludeFolders by lazy {
     entity.excludedUrls.map { ExcludeFolderViaTypedEntity(this, it) }
   }
@@ -21,7 +26,10 @@ internal class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedE
     sourceRootEntities.map { SourceFolderViaTypedEntity(this, it) }
   }
 
-  override fun getFile(): VirtualFile? = model.filePointerProvider.getAndCacheFilePointer(entity.url).file
+  override fun getFile(): VirtualFile? {
+    val filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(model.legacyBridgeModule)
+    return filePointerProvider.getAndCacheFilePointer(entity.url, LegacyBridgeFilePointerScope.ContentRoots).file
+  }
 
   override fun getUrl(): String = entity.url.url
 
@@ -45,6 +53,14 @@ internal class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedE
       excludePolicy.getExcludeRootsForModule(model).mapTo(result) { it.url }
     }
     return result
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return (other as? ContentEntry)?.url == url
+  }
+
+  override fun hashCode(): Int {
+    return url.hashCode()
   }
 
   override fun isSynthetic() = false

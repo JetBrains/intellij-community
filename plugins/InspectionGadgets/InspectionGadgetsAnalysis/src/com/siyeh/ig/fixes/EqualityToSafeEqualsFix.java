@@ -72,8 +72,8 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
       return;
     }
     final PsiBinaryExpression expression = (PsiBinaryExpression)parent;
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
-    final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     if (lhs == null ||  rhs == null) {
       return;
     }

@@ -10,7 +10,7 @@ import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableE
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Remove
 import java.util.*
 
-open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
+open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId, T>) {
   private lateinit var entityStorage: AbstractPEntityStorage
 
   fun getEntities(data: T): List<TypedEntity> = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
@@ -26,24 +26,24 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
     entityStorage = storage
   }
 
-  internal fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, T> {
-    val copy = BidirectionalMap<PId<out TypedEntity>, T>()
+  internal fun copyIndex(): BidirectionalMap<PId, T> {
+    val copy = BidirectionalMap<PId, T>()
     index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
     return copy
   }
 
   class MutableExternalEntityIndex<T> private constructor(
-    index: BidirectionalMap<PId<out TypedEntity>, T>,
+    index: BidirectionalMap<PId, T>,
     private val indexLog: MutableList<IndexLogRecord>
   ) : ExternalEntityIndex<T>(index) {
-    constructor() : this(BidirectionalMap<PId<out TypedEntity>, T>(), mutableListOf())
+    constructor() : this(BidirectionalMap<PId, T>(), mutableListOf())
 
     fun index(entity: TypedEntity, data: T) {
       entity as PTypedEntity
       index(entity.id, data)
     }
 
-    private fun index(id: PId<out TypedEntity>, data: T) {
+    private fun index(id: PId, data: T) {
       index[id] = data
       indexLog.add(Add(id, data))
     }
@@ -53,7 +53,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
       remove(entity.id)
     }
 
-    private fun remove(id: PId<out TypedEntity>) {
+    private fun remove(id: PId) {
       index.remove(id)
       indexLog.add(Remove(id))
     }
@@ -70,8 +70,8 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
     private fun toImmutable(): ExternalEntityIndex<T> = ExternalEntityIndex(copyIndex())
 
     private sealed class IndexLogRecord {
-      data class Add<T>(val id: PId<out TypedEntity>, val data: T) : IndexLogRecord()
-      data class Remove(val id: PId<out TypedEntity>) : IndexLogRecord()
+      data class Add<T>(val id: PId, val data: T) : IndexLogRecord()
+      data class Remove(val id: PId) : IndexLogRecord()
     }
 
     companion object {

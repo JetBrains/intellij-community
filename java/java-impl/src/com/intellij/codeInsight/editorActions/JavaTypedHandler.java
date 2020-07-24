@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -114,7 +114,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (c == ';') {
       if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
-    if (fileType == StdFileTypes.JAVA && c == '{') {
+    if (fileType == JavaFileType.INSTANCE && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
         return Result.CONTINUE;
@@ -253,7 +253,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean handleSemicolon(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
-    if (fileType != StdFileTypes.JAVA) return false;
+    if (fileType != JavaFileType.INSTANCE) return false;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) return false;
 

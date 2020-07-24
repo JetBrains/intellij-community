@@ -67,14 +67,14 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
       }
     }
   }
-
-  private fun isExternalModuleFile(filePath: String): Boolean {
-    val parentPath = PathUtil.getParentPath(filePath)
-    return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
-           && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
-  }
-
 }
+
+internal fun isExternalModuleFile(filePath: String): Boolean {
+  val parentPath = PathUtil.getParentPath(filePath)
+  return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
+         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
+}
+
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 

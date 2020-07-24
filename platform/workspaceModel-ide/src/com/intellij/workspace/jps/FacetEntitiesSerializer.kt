@@ -112,19 +112,19 @@ internal class FacetsOrderEntityData : PEntityData<FacetsOrderEntity>() {
   lateinit var orderOfFacets: List<String>
 
   override fun createEntity(snapshot: TypedEntityStorage): FacetsOrderEntity {
-    return FacetsOrderEntity(orderOfFacets.toList()).also { addMetaData(it, snapshot) }
+    return FacetsOrderEntity(orderOfFacets).also { addMetaData(it, snapshot) }
   }
 }
 
 internal class FacetsOrderEntity(
   val orderOfFacets: List<String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class, true)
+  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java, true)
 }
 
 internal class ModifiableFacetsOrderEntity : PModifiableTypedEntity<FacetsOrderEntity>() {
   var orderOfFacets: List<String> by EntityDataDelegation()
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class, ModuleEntity::class, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class.java, ModuleEntity::class.java, true)
 }
 
 private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()

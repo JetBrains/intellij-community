@@ -42,12 +42,14 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -399,7 +401,7 @@ public class UsageViewImpl implements UsageViewEx {
   // nodes just changed: parent node -> changed child
   // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
   // has to be linked because events for child nodes should be fired after events for parent nodes
-  private final MultiMap<Node, Node> changedNodesToFire = new LinkedMultiMap<>(); // guarded by changedNodesToFire
+  private final MultiMap<Node, Node> changedNodesToFire = MultiMap.createLinked(); // guarded by changedNodesToFire
 
   private final Consumer<Node> edtNodeChangedQueue = node -> {
     if (!getPresentation().isDetachedMode()) {
@@ -471,15 +473,14 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     // group nodes from changedNodesToFire by their parents and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
-    List<Map.Entry<Node, Collection<Node>>> changed;
+    List<? extends Map.Entry<Node, Collection<Node>>> changed;
     synchronized (changedNodesToFire) {
       changed = new ArrayList<>(changedNodesToFire.entrySet());
       changedNodesToFire.clear();
     }
     for (Map.Entry<Node, Collection<Node>> entry : changed) {
       Node parentNode = entry.getKey();
-      Set<Node> childrenToUpdate = new THashSet<>(entry.getValue());
-
+      Set<Node> childrenToUpdate = new HashSet<>(entry.getValue());
       for (int i = 0; i < parentNode.getChildCount(); i++) {
         Node childNode = (Node)parentNode.getChildAt(i);
         if (childrenToUpdate.contains(childNode)) {

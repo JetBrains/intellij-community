@@ -15,9 +15,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -287,11 +285,9 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
                                         @NotNull PsiElement element) {
     final List<RangeHighlighter> highlighters = new ArrayList<>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final int startOffset = element.getTextRange().getStartOffset();
     final int endOffset = element.getTextRange().getEndOffset();
-    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, highlighters);
+    highlightManager.addRangeHighlight(editor, startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
     highlighterMap.put(element, highlighters.get(0));
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);

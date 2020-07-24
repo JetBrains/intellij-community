@@ -136,4 +136,16 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     PsiMethod psiMethod = aClass.getMethods()[0];
     assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(psiMethod), false));
   }
+
+  public void testableClassTest() {
+        myFixture.addClass("package org.junit.jupiter.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Test {}");
+        PsiFile file = myFixture.configureByText("TestableClassTest.java",
+                                             "class TestableClassTest {\n" +
+                                             "\t@org.junit.jupiter.api.Test\n" +
+                                             "\tvoid foo() {}\n" +
+                                             "}");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    assertTrue(JUnitUtil.isTestClass(aClass));
+  }
 }

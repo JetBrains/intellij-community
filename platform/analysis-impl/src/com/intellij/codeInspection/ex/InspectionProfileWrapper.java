@@ -3,10 +3,12 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +31,22 @@ public class InspectionProfileWrapper {
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
 
-  protected final InspectionProfileImpl myProfile;
+  protected final InspectionProfile myProfile;
+  protected final InspectionProfileManager myProfileManager;
 
   public InspectionProfileWrapper(@NotNull InspectionProfileImpl profile) {
     myProfile = profile;
+    myProfileManager = profile.getProfileManager();
+  }
+
+  public InspectionProfileWrapper(@NotNull InspectionProfile profile, 
+                                  @NotNull InspectionProfileManager profileManager) {
+    myProfile = profile;
+    myProfileManager = profileManager;
+  }
+
+  public InspectionProfileManager getProfileManager() {
+    return myProfileManager;
   }
 
   public static void checkInspectionsDuplicates(@NotNull List<InspectionToolWrapper<?, ?>> toolWrappers) {
@@ -62,7 +76,7 @@ public class InspectionProfileWrapper {
     return myProfile.getInspectionTool(shortName, element);
   }
 
-  public @NotNull InspectionProfileImpl getInspectionProfile() {
+  public @NotNull InspectionProfile getInspectionProfile() {
     return myProfile;
   }
 }

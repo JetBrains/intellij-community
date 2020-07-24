@@ -13,7 +13,8 @@ import org.jetbrains.annotations.NotNull;
 )
 public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
-  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
+  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher =
+    EventDispatcher.create(DictionaryStateListener.class);
 
   public CachedDictionaryState() {
     name = DEFAULT_NAME;

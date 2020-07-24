@@ -25,7 +25,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -81,8 +80,8 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
-      final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
+      final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
+      final PsiExpression strippedArgument = PsiUtil.skipParenthesizedExprDown(argument);
       if (strippedArgument == null || qualifier == null || strippedQualifier == null) {
         return;
       }
@@ -114,13 +113,13 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!(ParenthesesUtils.stripParentheses(argument) instanceof PsiLiteralExpression)) {
+      if (!(PsiUtil.skipParenthesizedExprDown(argument) instanceof PsiLiteralExpression)) {
         return;
       }
       if (!TypeUtils.isJavaLangString(argument.getType())) {
         return;
       }
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (qualifier == null || qualifier instanceof PsiLiteralExpression) {
         return;
       }

@@ -93,7 +93,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (aClass instanceof PsiTypeParameter) return;
         if (PsiUtil.isLocalOrAnonymousClass(aClass) && !(aClass instanceof PsiEnumConstantInitializer)) return;
 
-        final DataFlowRunner runner = new DataFlowRunner(holder.getProject(), aClass, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS);
+        final DataFlowRunner runner = new DataFlowRunner(holder.getProject(), aClass, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, 
+                                                         ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
         DataFlowInstructionVisitor visitor =
           analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
         List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
@@ -118,7 +119,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) return;
         final DataFlowRunner runner = new DataFlowRunner(
-          holder.getProject(), method.getBody(), TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS);
+          holder.getProject(), method.getBody(), TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
         analyzeMethod(method, runner, Collections.singletonList(runner.createMemoryState()));
       }
 
@@ -313,7 +314,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
         if (visitor.isInstanceofRedundant(instanceOf)) {
           PsiExpression expression = instanceOf.getExpression();
-          if (expression != null && !JavaPsiPatternUtil.getExposedPatternVariables(expression).isEmpty()) continue;
+          if (expression != null && 
+              (!JavaPsiPatternUtil.getExposedPatternVariables(expression).isEmpty() || shouldBeSuppressed(expression))) continue;
           reporter.registerProblem(expression,
                                    JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
                                    new RedundantInstanceofFix());
@@ -871,6 +873,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           if (containingClass != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) return true;
         }
       }
+    }
+    if (expression instanceof PsiInstanceOfExpression) {
+      PsiType type = ((PsiInstanceOfExpression)expression).getOperand().getType();
+      if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyways reported as "always true"

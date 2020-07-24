@@ -19,7 +19,7 @@ class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
   fun testDeclarationWithoutReferences() = doTest()
 
   private fun doTest() {
-    SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
+    SeveritiesProvider.EP_NAME.getPoint().registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     val name = getTestName(true)
     myFixture.configureByFile("${name}/.editorconfig")
     myFixture.setReadEditorMarkupModel(true)

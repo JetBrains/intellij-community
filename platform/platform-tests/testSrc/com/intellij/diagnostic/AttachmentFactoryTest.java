@@ -8,9 +8,9 @@ import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,10 +19,10 @@ public class AttachmentFactoryTest {
 
   @Test
   public void testBigFilesStoredOnDisk() throws IOException {
-    File testFile = tempDir.newFile("a big one.txt");
+    Path testFile = tempDir.newFile("a big one.txt").toPath();
     String content = StringUtil.repeat("*", 100 * 1024);
     byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-    FileUtil.writeToFile(testFile, contentBytes);
+    FileUtil.writeToFile(testFile.toFile(), contentBytes);
 
     Attachment attachment = AttachmentFactory.createAttachment(testFile, false);
     assertThat(attachment.getDisplayText()).isNotEmpty().isNotEqualTo(content);
@@ -32,10 +32,10 @@ public class AttachmentFactoryTest {
 
   @Test
   public void testSmallFilesStoredInMemory() throws IOException {
-    File testFile = tempDir.newFile("a little one.txt");
+    Path testFile = tempDir.newFile("a little one.txt").toPath();
     String content = StringUtil.repeat("*", 1024);
     byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-    FileUtil.writeToFile(testFile, contentBytes);
+    FileUtil.writeToFile(testFile.toFile(), contentBytes);
 
     Attachment attachment = AttachmentFactory.createAttachment(testFile, false);
     assertThat(attachment.getDisplayText()).isEqualTo(content);

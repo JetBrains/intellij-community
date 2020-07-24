@@ -198,7 +198,7 @@ public abstract class DebuggerUtils {
   }
 
   /**
-   * Optimized version of {@link com.sun.jdi.ClassType#concreteMethodByName(java.lang.String, java.lang.String)}.
+   * Optimized version of {@link ClassType#concreteMethodByName(String, String)}.
    * It does not gather all visible methods before checking so can return early
    */
   @Nullable

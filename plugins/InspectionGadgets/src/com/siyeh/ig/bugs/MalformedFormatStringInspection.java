@@ -29,7 +29,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -145,17 +144,28 @@ public class MalformedFormatStringInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
-        return;
-      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       PsiExpression[] arguments = argumentList.getExpressions();
-      int formatArgumentIndex = findFirstStringArgumentIndex(arguments);
-      if (formatArgumentIndex < 0) {
-        return;
+
+      final PsiExpression formatArgument;
+      int formatArgumentIndex;
+      if (FormatUtils.STRING_FORMATTED.matches(expression)) {
+        formatArgument = expression.getMethodExpression().getQualifierExpression();
+        formatArgumentIndex = 0;
       }
-      final PsiExpression formatArgument = arguments[formatArgumentIndex];
-      formatArgumentIndex++;
+      else {
+        if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
+          return;
+        }
+
+        formatArgumentIndex = findFirstStringArgumentIndex(arguments);
+        if (formatArgumentIndex < 0) {
+          return;
+        }
+        
+        formatArgument = arguments[formatArgumentIndex];
+        formatArgumentIndex++;
+      }
       if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
         return;
       }
@@ -167,7 +177,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
       if (value == null) {
         return;
       }
-      int argumentCount = arguments.length - (formatArgumentIndex);
+      int argumentCount = arguments.length - formatArgumentIndex;
       final FormatDecode.Validator[] validators;
       try {
         validators = FormatDecode.decode(value, argumentCount);
@@ -220,7 +230,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
     }
 
     private PsiExpression resolveIfPossible(PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
         final PsiElement target = referenceExpression.resolve();

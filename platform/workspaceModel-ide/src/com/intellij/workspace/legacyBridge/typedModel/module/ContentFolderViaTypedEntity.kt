@@ -3,24 +3,20 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
 import org.jetbrains.jps.model.JpsElement
-import org.jetbrains.jps.model.JpsElementFactory
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.URL_ATTRIBUTE
 
 internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
-  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(contentFolderUrl).file
   override fun getContentEntry(): ContentEntryViaTypedEntity = entry
   override fun getUrl(): String = contentFolderUrl.url
   override fun isSynthetic(): Boolean = false
@@ -31,8 +27,13 @@ internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEn
 internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, val sourceRootEntity: SourceRootEntity)
   : ContentFolderViaTypedEntity(entry, sourceRootEntity.url), SourceFolder {
 
+  override fun getFile(): VirtualFile? {
+    val filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(entry.model.legacyBridgeModule)
+    return filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, LegacyBridgeFilePointerScope.SourceRoot).file
+  }
+
   private var packagePrefixVar: String? = null
-  private val sourceRootType: JpsModuleSourceRootType<*> by lazy { getSourceRootType(sourceRootEntity.rootType) }
+  private val sourceRootType: JpsModuleSourceRootType<out JpsElement> = getSourceRootType(sourceRootEntity)
 
   override fun getRootType() = sourceRootType
   override fun isTestSource() = sourceRootEntity.tests
@@ -41,52 +42,13 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
                                     sourceRootEntity.asJavaResourceRoot()?.relativeOutputPath?.replace('/', '.') ?: ""
 
   override fun getJpsElement(): JpsModuleSourceRoot {
-    val javaExtensionService = JpsJavaExtensionService.getInstance()
-
-    val rootProperties = when (sourceRootEntity.rootType) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
-        val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
-        javaExtensionService.createSourceRootProperties(
-          javaSourceRoot?.packagePrefix ?: "", javaSourceRoot?.generated ?: false)
-      }
-
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
-        val javaResourceRoot = sourceRootEntity.asJavaResourceRoot()
-        javaExtensionService.createResourceRootProperties(
-          javaResourceRoot?.relativeOutputPath ?: "", false)
-      }
-
-      else -> loadCustomRootProperties()
+    return entry.model.getOrCreateJpsRootProperties(sourceRootEntity.url) {
+      SourceRootPropertiesHelper.loadRootProperties(sourceRootEntity, rootType, url)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    return JpsElementFactory.getInstance().createModuleSourceRoot(url, rootType as JpsModuleSourceRootType<JpsElement>, rootProperties)
   }
 
-  private fun loadCustomRootProperties(): JpsElement {
-    val elementFactory = JpsElementFactory.getInstance()
-
-    val customSourceRoot = sourceRootEntity.asCustomSourceRoot() ?: return elementFactory.createDummyElement()
-    if (customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
-
-    val serializer = JpsModelSerializerExtension.getExtensions()
-      .flatMap { it.moduleSourceRootPropertiesSerializers }
-      .firstOrNull { it.type == rootType }
-    if (serializer == null) {
-      LOG.warn("Module source root type $rootType (${sourceRootEntity.rootType}) is not registered as JpsModelSerializerExtension")
-      return elementFactory.createDummyElement()
-    }
-
-    return try {
-      val element = JDOMUtil.load(customSourceRoot.propertiesXmlTag)
-      element.setAttribute(URL_ATTRIBUTE, url)
-      element.setAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE, sourceRootEntity.rootType)
-      serializer.loadProperties(element)
-    }
-    catch (t: Throwable) {
-      LOG.error("Unable to deserialize source root '${sourceRootEntity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
-      elementFactory.createDummyElement()
-    }
+  override fun <P : JpsElement> changeType(newType: JpsModuleSourceRootType<P>, properties: P) {
+    (ModuleRootManager.getInstance(contentEntry.rootModel.module) as LegacyBridgeModuleRootComponent).dropRootModelCache()
   }
 
   override fun hashCode() = entry.url.hashCode()
@@ -117,7 +79,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   override fun setPackagePrefix(packagePrefix: String) {
     if (getPackagePrefix() == packagePrefix) return
 
-    val updater = entry.model.updater ?: error("Model is read-only")
+    val updater = entry.updater ?: error("Model is read-only")
 
     val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
     if (javaSourceRoot == null) {
@@ -126,7 +88,6 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        // TODO Replace TempEntitySource with sourceRootEntity.source
         diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix, sourceRootEntity.entitySource)
       }
     } else {
@@ -140,13 +101,13 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
     packagePrefixVar = packagePrefix
   }
 
-  private fun getSourceRootType(rootType: String): JpsModuleSourceRootType<*> {
+  private fun getSourceRootType(entity: SourceRootEntity): JpsModuleSourceRootType<out JpsElement> {
     JpsModelSerializerExtension.getExtensions().forEach { extensions ->
       extensions.moduleSourceRootPropertiesSerializers.forEach {
-        if (it.typeId == rootType) return it.type
+        if (it.typeId == entity.rootType) return it.type
       }
     }
-    return JavaSourceRootType.SOURCE
+    return UnknownSourceRootType.getInstance(entity.rootType)
   }
 
   companion object {
@@ -154,5 +115,10 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   }
 }
 
-internal class ExcludeFolderViaTypedEntity(entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
-  : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder
+internal class ExcludeFolderViaTypedEntity(val entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
+  : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder {
+  override fun getFile(): VirtualFile? {
+    val filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(entry.model.legacyBridgeModule)
+    return filePointerProvider.getAndCacheFilePointer(excludeFolderUrl, LegacyBridgeFilePointerScope.ExcludedRoots).file
+  }
+}

@@ -21,7 +21,7 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementType;
 
 /**
- * A base class for all implementations of {@link org.jetbrains.jps.model.JpsElementType}.
+ * A base class for all implementations of {@link JpsElementType}.
  *
  * <p>
  * If elements of your type don't have any specific properties extend {@link JpsElementTypeWithDummyProperties} instead.

@@ -22,8 +22,9 @@ import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-inline fun <reified M : ModifiableTypedEntity<T>, T : TypedEntity> TypedEntityStorageBuilder.addEntity(source: EntitySource, noinline initializer: M.() -> Unit): T
-  = addEntity(M::class.java, source, initializer)
+inline fun <reified M : ModifiableTypedEntity<T>, T : TypedEntity> TypedEntityStorageBuilder.addEntity(source: EntitySource,
+                                                                                                       noinline initializer: M.() -> Unit): T = addEntity(
+  M::class.java, source, initializer)
 
 internal interface ProxyBasedEntity : TypedEntity {
   val storage: ProxyBasedEntityStorage
@@ -50,7 +51,11 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
     internal fun <E : TypedEntity> createProxy(clazz: Class<out E>, impl: EntityImpl) =
       proxyClassConstructors[clazz]!!.newInstance(impl) as E
 
-    internal fun <T1, T2> classifyByEquals(c1: Iterable<T1>, c2: Iterable<T2>, hashFunc1: (T1) -> Int, hashFunc2: (T2) -> Int, equalsFunc: (T1, T2) -> Boolean): TypedEntityStorageBuilderImpl.EqualityResult<T1, T2> {
+    internal fun <T1, T2> classifyByEquals(c1: Iterable<T1>,
+                                           c2: Iterable<T2>,
+                                           hashFunc1: (T1) -> Int,
+                                           hashFunc2: (T2) -> Int,
+                                           equalsFunc: (T1, T2) -> Boolean): TypedEntityStorageBuilderImpl.EqualityResult<T1, T2> {
       val hashes1 = c1.groupBy(hashFunc1)
       val hashes2 = c2.groupBy(hashFunc2)
 
@@ -71,7 +76,8 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
 
         if (l1.size == 1 && l2.size == 1 && equalsFunc(l1.single(), l2.single())) {
           equal.add(l1.single() to l2.single())
-        } else {
+        }
+        else {
           val ml1 = l1.toMutableList()
           val ml2 = l2.toMutableList()
 
@@ -79,7 +85,8 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
             val index2 = ml2.indexOfFirst { equalsFunc(itemFrom1, it) }
             if (index2 < 0) {
               onlyIn1.add(itemFrom1)
-            } else {
+            }
+            else {
               val itemFrom2 = ml2.removeAt(index2)
               equal.add(itemFrom1 to itemFrom2)
             }
@@ -112,7 +119,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     return entitiesByPersistentIdHash[id.hashCode()]?.asSequence()
       ?.map { (createEntityInstance(it) as E) }
-      ?.find {it.persistentId() == id }
+      ?.find { it.persistentId() == id }
   }
 
   override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
@@ -162,7 +169,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                              override val referrers: MutableMap<Long, MutableList<Long>>,
                                              override val persistentIdReferrers: MutableMap<Int, MutableList<Long>>,
                                              metaDataRegistry: EntityMetaDataRegistry)
-  : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, persistentIdReferrers, metaDataRegistry),
+  : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, persistentIdReferrers,
+                            metaDataRegistry),
     TypedEntityStorageBuilder, TypedEntityStorageDiffBuilder {
 
   constructor(storage: ProxyBasedEntityStorage)
@@ -276,7 +284,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
     entityById[id] = newData
     if (TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)) {
-      entitiesByPersistentIdHash.removeValue(oldIdHash ?: (createEntityInstance(oldData) as TypedEntityWithPersistentId).persistentId().hashCode(), oldData)
+      entitiesByPersistentIdHash.removeValue(
+        oldIdHash ?: (createEntityInstance(oldData) as TypedEntityWithPersistentId).persistentId().hashCode(), oldData)
       val persistentId = ((newInstance ?: createEntityInstance(newData)) as TypedEntityWithPersistentId).persistentId()
       entitiesByPersistentIdHash.putValue(persistentId.hashCode(), newData)
     }
@@ -323,8 +332,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   }
 
   private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
-    if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
-       || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)) return
+    if (!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
+        || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)) return
 
     val newPersistentId = newData.persistentId()
     val oldPersistentId = oldData.persistentId()
@@ -484,7 +493,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           }
 
           newEntities.remove(newData)
-        } else {
+        }
+        else {
           // Remove right here?
           // TODO Don't forget to check sourceFilter
           entitiesToRemove.add(oldData.id)
@@ -667,31 +677,32 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun shallowHashCode(data: EntityData): Int = data.properties.entries.sortedBy { it.key }.fold(data.unmodifiableEntityType.hashCode()) { acc: Int, (key: String, value: Any?) ->
-      when (val kind = data.metaData.properties.getValue(key)) {
-        is EntityPropertyKind.EntityReference -> kind.clazz.hashCode()
-        is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
-          is EntityPropertyKind.EntityReference -> itemKind.clazz.hashCode()
-          is EntityPropertyKind.List -> error("List of lists are not supported")
-          // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
-          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
-          is EntityPropertyKind.DataClass -> {
-            assertDataClassIsWithoutReferences(itemKind)
-            value.hashCode()
-          }
-          is EntityPropertyKind.EntityValue -> itemKind.clazz.hashCode()
-          EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> value.hashCode()
-        }
+  private fun shallowHashCode(data: EntityData): Int = data.properties.entries.sortedBy { it.key }.fold(
+    data.unmodifiableEntityType.hashCode()) { acc: Int, (key: String, value: Any?) ->
+    when (val kind = data.metaData.properties.getValue(key)) {
+      is EntityPropertyKind.EntityReference -> kind.clazz.hashCode()
+      is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
+        is EntityPropertyKind.EntityReference -> itemKind.clazz.hashCode()
+        is EntityPropertyKind.List -> error("List of lists are not supported")
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
         is EntityPropertyKind.DataClass -> {
-          assertDataClassIsWithoutReferences(kind)
+          assertDataClassIsWithoutReferences(itemKind)
           value.hashCode()
         }
-        is EntityPropertyKind.EntityValue -> kind.clazz.hashCode()
+        is EntityPropertyKind.EntityValue -> itemKind.clazz.hashCode()
         EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> value.hashCode()
-      } * 7 + acc
-    }
+      }
+      // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
+      is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
+      is EntityPropertyKind.DataClass -> {
+        assertDataClassIsWithoutReferences(kind)
+        value.hashCode()
+      }
+      is EntityPropertyKind.EntityValue -> kind.clazz.hashCode()
+      EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> value.hashCode()
+    } * 7 + acc
+  }
 
   private fun shallowEquals(data1: EntityData, data2: EntityData, replaceMap: Map<Long, Long>): Boolean {
     if (data1.unmodifiableEntityType != data2.unmodifiableEntityType) return false
@@ -761,7 +772,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       if (!replaceMap.containsValue(parentId)) {
         if (sourceFilter(storage.entityById.getValue(parentId).entitySource)) {
           recursiveAddEntity(parentId, backReferrers, storage, replaceMap, sourceFilter)
-        } else {
+        }
+        else {
           replaceMap[parentId] = parentId
         }
       }
@@ -831,7 +843,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     for (change in changeLog) {
       when (change) {
         is ChangeEntry.AddEntity -> {
-          changes[change.entityData.id] = change.entityData.unmodifiableEntityType to EntityChange.Added(createEntityInstance(change.entityData))
+          changes[change.entityData.id] = change.entityData.unmodifiableEntityType to EntityChange.Added(
+            createEntityInstance(change.entityData))
         }
         is ChangeEntry.RemoveEntity -> {
           val removedData = originalImpl.entityById[change.id]
@@ -848,7 +861,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           else {
             val oldData = originalImpl.entityById[change.id]
             if (oldData != null) {
-              changes[change.id] = oldData.unmodifiableEntityType to EntityChange.Replaced(originalImpl.createEntityInstance(oldData), createEntityInstance(change.newData))
+              changes[change.id] = oldData.unmodifiableEntityType to EntityChange.Replaced(originalImpl.createEntityInstance(oldData),
+                                                                                           createEntityInstance(change.newData))
             }
           }
         }
@@ -876,7 +890,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   }
 }
 
-internal class ProxyBasedEntityReferenceImpl<E : TypedEntity>(val id: Long): EntityReference<E>() {
+internal class ProxyBasedEntityReferenceImpl<E : TypedEntity>(val id: Long) : EntityReference<E>() {
   override fun resolve(storage: TypedEntityStorage): E = with(storage as ProxyBasedEntityStorage) {
     createEntityInstance(entityById.getValue(id)) as E
   }
@@ -890,7 +904,8 @@ internal inline class IdGenerator(val generator: AtomicLong) {
       if (currentGeneratorValue <= existingId) {
         val res = generator.compareAndSet(currentGeneratorValue, existingId + 1)
         if (res) break
-      } else break
+      }
+      else break
     }
   }
 
@@ -901,7 +916,10 @@ internal inline class IdGenerator(val generator: AtomicLong) {
 
 internal val entityDataIdGenerator = IdGenerator.startGenerator()
 
-internal class EntityData(val entitySource: EntitySource, val id: Long, val metaData: EntityMetaData, val properties: MutableMap<String, Any?> = HashMap()) {
+internal class EntityData(val entitySource: EntitySource,
+                          val id: Long,
+                          val metaData: EntityMetaData,
+                          val properties: MutableMap<String, Any?> = HashMap()) {
 
   constructor(
     entitySource: EntitySource,
@@ -918,7 +936,9 @@ internal class EntityData(val entitySource: EntitySource, val id: Long, val meta
   }
 
   fun collectReferences(collector: (Long) -> Unit) = metaData.collectReferences(properties, collector)
-  fun collectPersistentIdReferences(collector: (PersistentEntityId<*>) -> Unit) = metaData.collectPersistentIdReferences(properties, collector)
+  fun collectPersistentIdReferences(collector: (PersistentEntityId<*>) -> Unit) = metaData.collectPersistentIdReferences(properties,
+                                                                                                                         collector)
+
   fun replaceAllPersistentIdReferences(oldEntity: PersistentEntityId<*>, newEntity: PersistentEntityId<*>) =
     metaData.replaceAllPersistentIdReferences(properties, oldEntity, newEntity)
 
@@ -976,7 +996,8 @@ internal class EntityImpl(override val data: EntityData,
         val constructor = MethodHandles.Lookup::class.java.getDeclaredConstructor(Class::class.java, Int::class.java)
         constructor.isAccessible = true
         val lookup = constructor.newInstance(method.declaringClass, MethodHandles.Lookup.PRIVATE)
-        return lookup.unreflectSpecial(method, method.declaringClass).bindTo(proxy).invokeWithArguments(*(args ?: ArrayUtil.EMPTY_OBJECT_ARRAY))
+        return lookup.unreflectSpecial(method, method.declaringClass).bindTo(proxy).invokeWithArguments(
+          *(args ?: ArrayUtil.EMPTY_OBJECT_ARRAY))
       }
     }
     if (name.startsWith("get")) {
@@ -1053,7 +1074,7 @@ internal class EntityImpl(override val data: EntityData,
           // TODO EntityReferences are unsupported in SealedKotlinDataClassHierarchy, asserted in EntityMetaDataRegistry.getPropertyKind
           is EntityPropertyKind.SealedKotlinDataClassHierarchy, is EntityPropertyKind.Primitive,
           is EntityPropertyKind.PersistentId, EntityPropertyKind.FileUrl -> data.properties[propertyName] = newValue
-        }.let {  } // exhaustive when
+        }.let { } // exhaustive when
         is EntityPropertyKind.DataClass -> {
           val oldValue = data.properties[propertyName]
           data.properties[propertyName] = newValue
@@ -1071,10 +1092,11 @@ internal class EntityImpl(override val data: EntityData,
 }
 
 private fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getUnmodifiableEntityClass(clazz: Class<out M>): Class<T> {
-  val modifiableType = clazz.genericInterfaces.filterIsInstance(ParameterizedType::class.java).find { it.rawType == ModifiableTypedEntity::class.java }
+  val modifiableType = clazz.genericInterfaces.filterIsInstance(
+    ParameterizedType::class.java).find { it.rawType == ModifiableTypedEntity::class.java }
                        ?: throw IllegalArgumentException("$clazz doesn't implement ModifiableTypedEntity")
   val unmodifiableEntityClass = modifiableType.actualTypeArguments.firstOrNull() as? Class<T>
-                               ?: throw IllegalArgumentException("$clazz doesn't specify type argument for ModifiableTypedEntity")
+                                ?: throw IllegalArgumentException("$clazz doesn't specify type argument for ModifiableTypedEntity")
   if (!unmodifiableEntityClass.isAssignableFrom(clazz)) {
     throw IllegalArgumentException("$clazz is not subclass of its unmodifiable version $unmodifiableEntityClass")
   }
@@ -1082,7 +1104,7 @@ private fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getUnmodifiableEntit
 }
 
 private fun <K, V> MutableMap<K, MutableSet<V>>.putValue(k: K, v: V) {
-  computeIfAbsent(k) {HashSet()}.add(v)
+  computeIfAbsent(k) { HashSet() }.add(v)
 }
 
 private fun <K, V> MutableMap<K, MutableSet<V>>.removeValue(k: K, v: V) {
@@ -1096,7 +1118,7 @@ private fun <K, V> MutableMap<K, MutableSet<V>>.removeValue(k: K, v: V) {
 }
 
 private fun <K, V> MutableMap<K, MutableList<V>>.listPutValue(k: K, v: V) {
-  computeIfAbsent(k) {ArrayList()}.add(v)
+  computeIfAbsent(k) { ArrayList() }.add(v)
 }
 
 private fun <K, V> MutableMap<K, MutableList<V>>.listRemoveValue(k: K, v: V) {

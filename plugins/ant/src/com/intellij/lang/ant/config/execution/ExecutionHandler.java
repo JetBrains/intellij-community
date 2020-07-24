@@ -82,7 +82,7 @@ public final class ExecutionHandler {
   }
 
   /**
-   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
+   * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   public static void runBuild(final AntBuildFileBase buildFile,
                               List<String> targets,
@@ -93,7 +93,7 @@ public final class ExecutionHandler {
   }
 
   /**
-   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
+   * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   @Nullable
   private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,

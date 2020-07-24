@@ -16,10 +16,10 @@
 package com.siyeh.ipp.commutative;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -56,8 +56,8 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
     final PsiExpression argument = argumentList.getExpressions()[0];
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
-    final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
-    final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
+    final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
+    final PsiExpression strippedArgument = PsiUtil.skipParenthesizedExprDown(argument);
     if (strippedQualifier == null) {
       return;
     }

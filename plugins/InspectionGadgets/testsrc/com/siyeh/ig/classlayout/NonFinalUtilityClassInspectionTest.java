@@ -23,7 +23,7 @@ public class NonFinalUtilityClassInspectionTest extends LightJavaCodeInsightFixt
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ImplicitSubclassProvider.EP_NAME.getPoint(null).registerExtension(myImplicitSubclassProvider, getTestRootDisposable());
+    ImplicitSubclassProvider.EP_NAME.getPoint().registerExtension(myImplicitSubclassProvider, getTestRootDisposable());
   }
 
   @NotNull

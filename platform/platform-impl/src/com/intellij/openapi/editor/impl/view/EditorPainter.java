@@ -421,12 +421,15 @@ public class EditorPainter implements TextDrawingCallback {
             int offset = it.getEndOffset();
             SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
             if (softWrap == null) {
+              int logicalLine = myDocument.getLineNumber(offset);
+              List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+              float extensionsStartX = inlays.isEmpty()
+                                       ? x
+                                       : x + myView.getPlainSpaceWidth() + inlays.stream().mapToInt(Inlay::getWidthInPixels).sum();
               collectExtensions(visualLine, offset);
-              paintLineExtensionsBackground(visualLine, x, y);
+              paintLineExtensionsBackground(visualLine, extensionsStartX, y);
               paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
               myTextDrawingTasks.add(g -> {
-                int logicalLine = myDocument.getLineNumber(offset);
-                List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
                 if (!inlays.isEmpty()) {
                   float curX = x + myView.getPlainSpaceWidth();
                   for (Inlay inlay : inlays) {
@@ -435,7 +438,7 @@ public class EditorPainter implements TextDrawingCallback {
                     curX += width;
                   }
                 }
-                paintLineExtensions(visualLine, logicalLine, x, y + myAscent);
+                paintLineExtensions(visualLine, logicalLine, extensionsStartX, y + myAscent);
               });
             }
             else {
@@ -632,13 +635,13 @@ public class EditorPainter implements TextDrawingCallback {
       collectVisibleInnerHighlighters(region, myEditorMarkup, innerHighlighters);
       collectVisibleInnerHighlighters(region, myDocMarkup, innerHighlighters);
       if (innerHighlighters.isEmpty()) return null;
-      innerHighlighters.sort(IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      innerHighlighters.sort(IterationState.createByLayerThenByAttributesComparator(myEditor.getColorsScheme()));
       Color fgColor = null;
       Color bgColor = null;
       Color effectColor = null;
       EffectType effectType = null;
       for (RangeHighlighter h : innerHighlighters) {
-        TextAttributes attrs = h.getTextAttributes();
+        TextAttributes attrs = h.getTextAttributes(myEditor.getColorsScheme());
         if (attrs == null) continue;
         if (fgColor == null && attrs.getForegroundColor() != null) fgColor = attrs.getForegroundColor();
         if (bgColor == null && attrs.getBackgroundColor() != null) bgColor = attrs.getBackgroundColor();
@@ -861,7 +864,7 @@ public class EditorPainter implements TextDrawingCallback {
       Point2D lineEnd = myView.offsetToXY(lineEndOffset, true, false);
       float x = (float)lineEnd.getX();
       int y = (int)lineEnd.getY() + myYShift;
-      TextAttributes attributes = highlighter.getTextAttributes();
+      TextAttributes attributes = highlighter.getTextAttributes(myEditor.getColorsScheme());
       paintBackground(attributes, x, y, myView.getPlainSpaceWidth());
       if (attributes != null) {
         attributes.forEachEffect(
@@ -883,7 +886,7 @@ public class EditorPainter implements TextDrawingCallback {
 
     private void paintBorderEffect(MarkupModelEx markupModel) {
       markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, rangeHighlighter -> {
-        TextAttributes attributes = rangeHighlighter.getTextAttributes();
+        TextAttributes attributes = rangeHighlighter.getTextAttributes(myEditor.getColorsScheme());
         EffectDescriptor borderDescriptor = getBorderDescriptor(attributes);
         if (borderDescriptor != null) {
           paintBorderEffect(rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), borderDescriptor);
@@ -924,6 +927,7 @@ public class EditorPainter implements TextDrawingCallback {
       }
 
       boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
+      int margin = borderDescriptor.effectType == EffectType.SLIGHTLY_WIDER_BOX ? 1 : 0;
       myGraphics.setColor(borderDescriptor.effectColor);
       VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
       VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
@@ -933,7 +937,7 @@ public class EditorPainter implements TextDrawingCallback {
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.get(i));
           float endX = myCorrector.singleLineBorderEnd(ranges.get(i + 1));
-          drawSimpleBorder(startX, endX, y, rounded);
+          drawSimpleBorder(Math.max(startX - margin, 0), endX + margin, y, rounded);
         }
       }
       else {
@@ -1212,7 +1216,7 @@ public class EditorPainter implements TextDrawingCallback {
               highlighterEx.getAffectedAreaStartOffset() < bottomVisualLineStartOffset &&
               highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset -
                                                          (highlighterEx.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? 0 : 1)) {
-            TextAttributes attributes = highlighterEx.getTextAttributes();
+            TextAttributes attributes = highlighterEx.getTextAttributes(myEditor.getColorsScheme());
             Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
             if (backgroundColor != null) {
               this.layer = layer;

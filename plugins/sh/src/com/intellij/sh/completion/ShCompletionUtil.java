@@ -36,6 +36,14 @@ class ShCompletionUtil {
     return psiElement().inside(psiElement(ShTypes.OLD_ARITHMETIC_EXPANSION));
   }
 
+  static PsiElementPattern.Capture<PsiElement> insideCommandSubstitution() {
+    return psiElement().inside(psiElement(ShTypes.COMMAND_SUBSTITUTION_COMMAND));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideSubshellCommand() {
+    return psiElement().inside(psiElement(ShTypes.SUBSHELL_COMMAND));
+  }
+
   static PsiElementPattern.Capture<PsiElement> insideParameterExpansion() {
     return psiElement().inside(psiElement(ShTypes.SHELL_PARAMETER_EXPANSION));
   }

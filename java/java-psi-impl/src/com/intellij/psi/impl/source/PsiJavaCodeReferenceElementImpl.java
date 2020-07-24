@@ -649,6 +649,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     catch (IncorrectOperationException e) {
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
     }
+    List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
+    if (!annotations.isEmpty()) {
+      ref.addRangeBefore(annotations.get(0), annotations.get(annotations.size()-1), ref.getReferenceNameElement());
+    }
 
     PsiReferenceParameterList refParameterList = ref.getParameterList();
     if (parameterList != null && refParameterList != null) {
@@ -841,6 +845,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
         break;
       case CLASS_NAME_KIND:
+      case CLASS_IN_QUALIFIED_NEW_KIND:
         filter = ElementClassFilter.CLASS;
         break;
       case PACKAGE_NAME_KIND:
@@ -849,9 +854,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         filter = isQualified() ? new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE) : ElementClassFilter.PACKAGE;
-        break;
-      case CLASS_IN_QUALIFIED_NEW_KIND:
-        filter = ElementClassFilter.CLASS;
         break;
       default:
         throw new RuntimeException("Unknown reference type");

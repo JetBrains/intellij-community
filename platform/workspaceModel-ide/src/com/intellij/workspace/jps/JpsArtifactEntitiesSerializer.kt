@@ -37,6 +37,8 @@ private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
 
 internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource, virtualFileManager: VirtualFileUrlManager)
   : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
+  override val isExternalStorage: Boolean
+    get() = false
   override val additionalEntityTypes: List<Class<out TypedEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
 }
@@ -49,7 +51,7 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
 internal class ArtifactsOrderEntityData : PEntityData<ArtifactsOrderEntity>() {
   lateinit var orderOfArtifacts: List<String>
   override fun createEntity(snapshot: TypedEntityStorage): ArtifactsOrderEntity {
-    return ArtifactsOrderEntity(orderOfArtifacts.toList()).also { addMetaData(it, snapshot) }
+    return ArtifactsOrderEntity(orderOfArtifacts).also { addMetaData(it, snapshot) }
   }
 }
 

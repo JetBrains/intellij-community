@@ -49,7 +49,7 @@ public class IntToIntBtree {
   private final int myCachedMappingsSize;
   private static final int UNDEFINED_ADDRESS = -1;
 
-  public IntToIntBtree(int pageSize, @NotNull Path file, @NotNull PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
+  public IntToIntBtree(int pageSize, @NotNull Path file, @NotNull StorageLockContext storageLockContext, boolean initial) throws IOException {
     this.pageSize = pageSize;
 
     if (initial) {

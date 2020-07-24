@@ -209,6 +209,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         if (!TypeUtils.isJavaLangString(type)) return;
         PsiExpression expression = getCheckedExpression(useIsEmpty, argument);
         addNullCheck = expression == argument && NullabilityUtil.getExpressionNullability(expression, true) != Nullability.NOT_NULL;
+        if (addNullCheck && !ExpressionUtils.isSafelyRecomputableExpression(expression)) return;
       }
       else if (ExpressionUtils.isEmptyStringLiteral(argument)) {
         if (qualifier == null) return;

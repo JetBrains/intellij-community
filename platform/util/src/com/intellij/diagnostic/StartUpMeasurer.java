@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.util.containers.ObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -29,9 +30,6 @@ public final class StartUpMeasurer {
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
-    public static final String PROJECT_STARTUP = "project startup";
-
-    public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
     public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
     public static final String EDITOR_RESTORING = "editor restoring";
     public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
@@ -60,7 +58,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
+  public static final Map<String, Object2LongMap<String>> pluginCostMap = new HashMap<>();
 
   public static long getCurrentTime() {
     return System.nanoTime();
@@ -237,13 +235,14 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
-    ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
+  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, Object2LongMap<String>> pluginCostMap) {
+    Object2LongMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
     if (costPerPhaseMap == null) {
-      costPerPhaseMap = new ObjectLongHashMap<>();
+      costPerPhaseMap = new Object2LongOpenHashMap<>();
+      costPerPhaseMap.defaultReturnValue(-1);
       pluginCostMap.put(pluginId, costPerPhaseMap);
     }
-    long oldCost = costPerPhaseMap.get(phase);
+    long oldCost = costPerPhaseMap.getLong(phase);
     if (oldCost == -1) {
       oldCost = 0L;
     }

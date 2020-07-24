@@ -24,16 +24,6 @@ public class DumbServiceMergingTaskQueue {
   private final Map<DumbModeTask, ProgressIndicatorBase> myProgresses = new HashMap<>();
 
   /**
-   * Removes all tasks from Queue without disposing the tasks
-   */
-  void clearTasksQueue() {
-    //we use myProgresses to keep tasks for dispose
-    synchronized (myLock) {
-      myTasksQueue.clear();
-    }
-  }
-
-  /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   void disposePendingTasks() {
@@ -160,19 +150,24 @@ public class DumbServiceMergingTaskQueue {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Faieded to cancel DumbModeTask indicator: " + t.getMessage(), t);
+        LOG.warn("Failed to cancel DumbModeTask indicator: " + t.getMessage(), t);
       }
     }
   }
 
-  public static class QueuedDumbModeTask {
+  public static class QueuedDumbModeTask implements AutoCloseable {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    public QueuedDumbModeTask(@NotNull DumbModeTask task,
-                              @NotNull ProgressIndicatorEx progress) {
+    QueuedDumbModeTask(@NotNull DumbModeTask task,
+                       @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
+    }
+
+    @Override
+    public void close() {
+      Disposer.dispose(myTask);
     }
 
     @NotNull
@@ -185,22 +180,24 @@ public class DumbServiceMergingTaskQueue {
     }
 
     public void executeTask(@Nullable ProgressIndicator customIndicator) {
-      try {
-        //this is the cancellation check
-        myIndicator.checkCanceled();
-        myIndicator.setIndeterminate(true);
+      //this is the cancellation check
+      myIndicator.checkCanceled();
+      myIndicator.setIndeterminate(true);
 
-        if (customIndicator == null) {
-          customIndicator = myIndicator;
-        } else {
-          customIndicator.checkCanceled();
-          //TODO[jo]: bind with myIndicator here to enforce cancellation
-        }
-
-        myTask.performInDumbMode(customIndicator);
-      } finally {
-        Disposer.dispose(myTask);
+      if (customIndicator == null) {
+        customIndicator = myIndicator;
+      } else {
+        customIndicator.checkCanceled();
+        //ProgressIndicator customIndicatorFinal = customIndicator;
+        //new ProgressIndicatorListenerAdapter() {
+        //  @Override
+        //  public void cancelled() {
+        //    customIndicatorFinal.cancel();
+        //  }
+        //}.installToProgress(myIndicator);
       }
+
+      myTask.performInDumbMode(customIndicator);
     }
 
     public void registerStageStarted(@NotNull IdeActivity activity) {

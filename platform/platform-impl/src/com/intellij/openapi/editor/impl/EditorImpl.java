@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterClientListener;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.*;
@@ -210,6 +211,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorMarkupModelImpl myMarkupModel;
   @NotNull private final EditorFilteringMarkupModelEx myDocumentMarkupModel;
   @NotNull private final MarkupModelListener myMarkupModelListener;
+  @NotNull private final List<HighlighterClientListener> myHighlighterClientListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final FoldingModelImpl myFoldingModel;
   @NotNull private final ScrollingModelImpl myScrollingModel;
@@ -373,13 +375,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
-                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+                             EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme())));
       }
 
       @Override
@@ -388,9 +390,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    getFilteredDocumentMarkupModel().addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    getMarkupModel().addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    ErrorStripeMarkersModel errorStripeMarkersModel = myMarkupModel.getErrorStripeMarkersModel();
+    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
+    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
+    myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
+      @Override
+      public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
+        errorStripeMarkerChanged(((RangeHighlighterEx)e.getHighlighter()));
+      }
+    }, myCaretModel);
 
+    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    addHighlighterClientListener((startOffset, endOffset) -> repaint(startOffset, endOffset, true), myCaretModel);
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
 
@@ -597,6 +609,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            position == LineMarkerRendererEx.Position.RIGHT && !myGutterComponent.myForceRightFreePaintersAreaShown;
   }
 
+  private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
+    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
+
+    if (myDocumentChangeInProgress) {
+      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
+      // conversions might give incorrect results
+      myErrorStripeNeedsRepaint = true;
+      return;
+    }
+
+    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
+    if (myFoldingModel.isInBatchFoldingOperation()) {
+      myErrorStripeNeedsRepaint = true;
+    }
+    else {
+      int start = highlighter.getAffectedAreaStartOffset();
+      int end = highlighter.getAffectedAreaEndOffset();
+      myMarkupModel.repaint(start, end);
+    }
+  }
+
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
@@ -604,16 +637,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateGutterSize();
     }
 
-    boolean errorStripeNeedsRepaint = highlighter.getErrorStripeMarkColor() != null;
-    if (myDocumentChangeInProgress) {
-      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
-      // conversions might give incorrect results
-      myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
-      return;
-    }
+    if (myDocumentChangeInProgress) return;
 
     int textLength = myDocument.getTextLength();
-
     int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
 
@@ -629,16 +655,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
       repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-    }
-
-    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-    if (errorStripeNeedsRepaint) {
-      if (myFoldingModel.isInBatchFoldingOperation()) {
-        myErrorStripeNeedsRepaint = true;
-      }
-      else {
-        myMarkupModel.repaint(start, end);
-      }
     }
 
     updateCaretCursor();
@@ -993,6 +1009,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHighlighter.setColorScheme(myScheme);
+    myMarkupModel.rebuild();
 
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
@@ -1550,9 +1567,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.visualLineToY(line);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void repaint(int startOffset, int endOffset) {
     repaint(startOffset, endOffset, true);
+  }
+
+  @Override
+  public void fireHighlighterChanged(int startOffset, int endOffset) {
+    myHighlighterClientListeners.forEach(listener -> listener.highlighterChanged(startOffset, endOffset));
+  }
+
+  @Override
+  public void addHighlighterClientListener(HighlighterClientListener listener, Disposable parentDisposable) {
+    ContainerUtil.add(listener, myHighlighterClientListeners, parentDisposable);
   }
 
   void repaint(int startOffset, int endOffset, boolean invalidateTextLayout) {
@@ -2354,7 +2382,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
-    if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myKeepSelectionOnMousePress && !myDragStarted
+    if (myMousePressedEvent != null
+        && myKeepSelectionOnMousePress
+        && !myLastPressWasAtBlockInlay
+        && !myDragStarted
+        && myMousePressedEvent.getClickCount() == 1
         && !myMousePressedEvent.isShiftDown()
         && !myMousePressedEvent.isPopupTrigger()
         && !isToggleCaretEvent(myMousePressedEvent)
@@ -3452,8 +3484,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
       boolean newAvailable = filter == null || filter.value(highlighter);
       if (oldAvailable != newAvailable) {
+        boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
-                                                EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+                                                styleOrColorChanged);
+        myMarkupModel.getErrorStripeMarkersModel().attributesChanged(
+          (RangeHighlighterEx)highlighter, true,
+          styleOrColorChanged);
       }
     }
   }
@@ -4252,7 +4288,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       validateMousePointer(e, null);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      EditorMouseEvent event = createEditorMouseEvent(e);
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseDragged(e);
       }

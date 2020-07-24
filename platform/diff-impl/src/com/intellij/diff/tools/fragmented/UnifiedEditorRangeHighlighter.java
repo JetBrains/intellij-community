@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -83,24 +82,17 @@ class UnifiedEditorRangeHighlighter {
   }
 
   public void apply(@Nullable Project project, @NotNull Document document) {
-    MarkupModel model = DocumentMarkupModel.forDocument(document, project, true);
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
 
     for (Element piece : myPieces) {
       RangeHighlighterEx delegate = piece.getDelegate();
       if (!delegate.isValid()) continue;
 
-      RangeHighlighter highlighter = model
-        .addRangeHighlighter(piece.getStart(), piece.getEnd(), delegate.getLayer(), delegate.getTextAttributes(), delegate.getTargetArea());
-      highlighter.setEditorFilter(delegate.getEditorFilter());
-      highlighter.setCustomRenderer(delegate.getCustomRenderer());
-      highlighter.setErrorStripeMarkColor(delegate.getErrorStripeMarkColor());
-      highlighter.setErrorStripeTooltip(delegate.getErrorStripeTooltip());
-      highlighter.setGutterIconRenderer(delegate.getGutterIconRenderer());
-      highlighter.setLineMarkerRenderer(delegate.getLineMarkerRenderer());
-      highlighter.setLineSeparatorColor(delegate.getLineSeparatorColor());
-      highlighter.setThinErrorStripeMark(delegate.isThinErrorStripeMark());
-      highlighter.setLineSeparatorPlacement(delegate.getLineSeparatorPlacement());
-      highlighter.setLineSeparatorRenderer(delegate.getLineSeparatorRenderer());
+      model.addRangeHighlighterAndChangeAttributes(
+        delegate.getTextAttributesKey(), piece.getStart(), piece.getEnd(), delegate.getLayer(),
+        delegate.getTargetArea(), false, ex -> {
+          ex.copyFrom(delegate);
+        });
     }
   }
 

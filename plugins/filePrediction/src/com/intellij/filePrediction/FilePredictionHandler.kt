@@ -1,78 +1,51 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
-import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
-import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.filePrediction.features.history.FilePredictionHistory
-import com.intellij.filePrediction.features.history.context.FilePredictionContext
-import com.intellij.filePrediction.predictor.FileUsagePredictionHandler
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.concurrency.SequentialTaskExecutor
 
-class FilePredictionHandler {
+class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
-    private const val CALCULATE_OPEN_FILE_PROBABILITY: Double = 0.5
-    private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.1
+    private val LOG: Logger = Logger.getInstance(FilePredictionHandler::class.java)
 
-    fun getInstance(): FilePredictionHandler? = ServiceManager.getService(FilePredictionHandler::class.java)
+    fun getInstance(project: Project): FilePredictionHandler? = ServiceManager.getService(project, FilePredictionHandler::class.java)
   }
 
-  private val predictor: FileUsagePredictionHandler = FileUsagePredictionHandler(50, 5, 10)
+  private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("NextFilePrediction")
+  private val manager: FilePredictionSessionManager
 
-  private var session: FilePredictionSessionHolder = FilePredictionSessionHolder()
+  init {
+    val percent = Registry.get("filePrediction.calculate.candidates.percent").asDouble()
+    manager = FilePredictionSessionManager(50, 3, 5, percent)
+  }
 
-  fun onFileSelected(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
+  fun onFileSelected(newFile: VirtualFile) {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
 
-    NonUrgentExecutor.getInstance().execute {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, Runnable {
-        val previousSession = session.getSession()
-        if (previousSession != null && previousSession.shouldLog(CALCULATE_OPEN_FILE_PROBABILITY)) {
-          logOpenedFile(project, previousSession.id, newFile, prevFile)
-        }
-        val newSession = session.newSession()
-        if (newSession != null && newSession.shouldLog(CALCULATE_CANDIDATE_PROBABILITY)) {
-          predictor.predictNextFile(project, newSession.id, newFile)
-        }
+    executor.submit {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+        val start = System.currentTimeMillis()
         FilePredictionHistory.getInstance(project).onFileSelected(newFile.url)
+
+        manager.onSessionStarted(project, newFile)
+        if (LOG.isTraceEnabled) {
+          LOG.trace("Candidates calculation took ${System.currentTimeMillis() - start}ms")
+        }
       })
     }
-    FilePredictionContext.getInstance(project).onFileSelected(newFile.url)
   }
 
-  fun onFileOpened(project: Project, file: VirtualFile) {
-    if (ProjectManagerImpl.isLight(project)) {
-      return
-    }
-
-    FilePredictionContext.getInstance(project).onFileOpened(file.url)
-  }
-
-  fun onFileClosed(project: Project, file: VirtualFile) {
-    if (ProjectManagerImpl.isLight(project)) {
-      return
-    }
-
-    FilePredictionContext.getInstance(project).onFileClosed(file.url)
-  }
-
-  private fun logOpenedFile(project: Project,
-                            sessionId: Int,
-                            newFile: VirtualFile,
-                            prevFile: VirtualFile?) {
-    val start = System.currentTimeMillis()
-    val result = FilePredictionReferencesHelper.calculateExternalReferences(project, prevFile)
-
-    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result.value, prevFile)
-    val duration = System.currentTimeMillis() - start
-    FileNavigationLogger.logEvent(
-      project, "file.opened", sessionId, features, newFile.path, prevFile?.path, duration, result.duration
-    )
+  override fun dispose() {
+    executor.shutdown()
   }
 }

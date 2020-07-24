@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class DeclarationSearchUtils {
     if (def instanceof PsiVariable) {
       final PsiVariable target = (PsiVariable)def;
       final PsiExpression initializer = target.getInitializer();
-      return ParenthesesUtils.stripParentheses(initializer);
+      return PsiUtil.skipParenthesizedExprDown(initializer);
     }
     else if (def instanceof PsiReferenceExpression) {
       final PsiElement parent = def.getParent();
@@ -71,7 +72,7 @@ public class DeclarationSearchUtils {
       if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
         return null;
       }
-      return ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
+      return PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     }
     return null;
   }

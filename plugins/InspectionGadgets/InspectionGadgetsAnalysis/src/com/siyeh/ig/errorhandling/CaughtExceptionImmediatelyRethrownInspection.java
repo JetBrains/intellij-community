@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,7 +27,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      final PsiExpression expression = ParenthesesUtils.stripParentheses(statement.getException());
+      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (!(expression instanceof PsiReferenceExpression)) {
         return;
       }

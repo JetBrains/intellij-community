@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -73,7 +73,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
   @Override

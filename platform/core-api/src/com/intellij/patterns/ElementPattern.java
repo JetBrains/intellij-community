@@ -15,11 +15,11 @@
  */
 package com.intellij.patterns;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @see com.intellij.patterns.StandardPatterns and its extenders
+ * @see StandardPatterns and its extenders
  *
  * @author peter
  */

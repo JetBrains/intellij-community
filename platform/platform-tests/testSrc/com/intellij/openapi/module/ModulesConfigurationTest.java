@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,26 +24,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModulesConfigurationTest extends HeavyPlatformTestCase {
-  public void testAddRemoveModule() throws IOException, JDOMException {
+  public void testAddRemoveModule() throws IOException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();
 
-    ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir);
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
     closeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
     closeProject(reloaded, true);
 
-    reloaded = projectManager.loadAndOpenProject(projectDir);
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
     closeOnTearDown(reloaded);
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
     closeProject(reloaded, false);
   }
 
   // because of external storage, imls file can be missed on disk and it is not error
-  public void testRemoveFailedToLoadModule() throws IOException, JDOMException {
+  public void testRemoveFailedToLoadModule() throws IOException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();
     File moduleFile = result.getSecond();
@@ -53,8 +51,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
-    ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir);
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
     closeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);
@@ -62,7 +59,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     closeProject(reloaded, true);
     errors.clear();
 
-    reloaded = projectManager.loadAndOpenProject(projectDir);
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
     closeOnTearDown(reloaded);
     assertEmpty(errors);
     closeProject(reloaded, false);

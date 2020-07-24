@@ -132,7 +132,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -141,7 +141,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
@@ -363,7 +363,9 @@ public final class LanguageConsoleBuilder {
           return;
         }
 
-        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel().addRangeHighlighter(0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
+        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
+          .addRangeHighlighter(null, 0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                               HighlighterTargetArea.EXACT_RANGE);
         highlighter.setGreedyToRight(true);
         highlighter.setCustomRenderer(renderer);
         lineSeparatorPainter = highlighter;

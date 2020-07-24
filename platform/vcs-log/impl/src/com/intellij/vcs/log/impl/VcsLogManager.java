@@ -33,7 +33,10 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;

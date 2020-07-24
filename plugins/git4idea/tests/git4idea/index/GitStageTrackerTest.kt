@@ -37,7 +37,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
   fun `test unstaged`() {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.random(200))
+    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
@@ -50,7 +50,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
       assertTrue(state.statuses.isEmpty())
@@ -71,7 +71,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
   fun `test staged`() {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.random(200))
+    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
@@ -85,7 +85,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!!}
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
       assertTrue(state.statuses.isEmpty())
@@ -115,7 +115,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!!}
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),

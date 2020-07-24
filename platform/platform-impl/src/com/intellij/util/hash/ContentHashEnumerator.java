@@ -3,8 +3,8 @@ package com.intellij.util.hash;
 
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +25,14 @@ public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[
   }
 
   public ContentHashEnumerator(@NotNull Path contentsHashesFile,
-                               @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+                               @Nullable StorageLockContext storageLockContext) throws IOException {
     this(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
   }
 
   private ContentHashEnumerator(@NotNull Path file,
                                 @NotNull KeyDescriptor<byte[]> dataDescriptor,
                                 int initialSize,
-                                @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                @Nullable StorageLockContext lockContext) throws IOException {
     super(file, dataDescriptor, initialSize, lockContext);
     LOG.assertTrue(dataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy);
   }

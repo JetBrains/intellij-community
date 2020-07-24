@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -24,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import kotlin.reflect.KDeclarationContainer;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -75,6 +77,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TitledSeparator.class);
     appendPath(cp, TIntObjectHashMap.class);
+    appendPath(cp, Object2LongMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);
     appendPath(cp, SystemInfo.class);
@@ -87,7 +90,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
-    appendPath(cp, NotNullProducer.class);
+    appendPath(cp, NotNullProducer.class);  // intellij.platform.util
+    appendPath(cp, Strings.class);  // intellij.platform.util.strings
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
@@ -368,12 +372,12 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
   }
-  
+
   public void testTitledSeparator() throws Exception {
     JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
     assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
-  }  
-  
+  }
+
   public void testGotItPanel() throws Exception {
     JPanel panel = (JPanel) getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
     assertInstanceOf(panel.getComponent(2), JEditorPane.class);

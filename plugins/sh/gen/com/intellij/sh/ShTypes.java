@@ -77,6 +77,8 @@ public interface ShTypes {
   IElementType PRE_EXPRESSION = new ShCompositeElementType("PRE_EXPRESSION");
   IElementType PROCESS_SUBSTITUTION = new ShCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new ShCompositeElementType("REDIRECTION");
+  IElementType REGEX_CONDITION = new ShCompositeElementType("REGEX_CONDITION");
+  IElementType REGEX_PATTERN = new ShCompositeElementType("REGEX_PATTERN");
   IElementType SELECT_COMMAND = new ShCompositeElementType("SELECT_COMMAND");
   IElementType SHELL_COMMAND = new ShCompositeElementType("SHELL_COMMAND");
   IElementType SHELL_PARAMETER_EXPANSION = new ShCompositeElementType("SHELL_PARAMETER_EXPANSION");
@@ -387,6 +389,12 @@ public interface ShTypes {
       }
       else if (type == REDIRECTION) {
         return new ShRedirectionImpl(node);
+      }
+      else if (type == REGEX_CONDITION) {
+        return new ShRegexConditionImpl(node);
+      }
+      else if (type == REGEX_PATTERN) {
+        return new ShRegexPatternImpl(node);
       }
       else if (type == SELECT_COMMAND) {
         return new ShSelectCommandImpl(node);

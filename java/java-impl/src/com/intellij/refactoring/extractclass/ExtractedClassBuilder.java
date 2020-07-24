@@ -484,22 +484,16 @@ class ExtractedClassBuilder {
 
     private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
                           final String fieldName) {
-      if (tokenType.equals(JavaTokenType.EQ)) {
-        final String setterName = GenerateMembersUtil.suggestSetterName(field);
-        out.append(fieldName + '.' + setterName + '(');
-        rhs.accept(this);
-        out.append(')');
-      }
-      else {
+      final String setterName = GenerateMembersUtil.suggestSetterName(field);
+      out.append(fieldName).append('.').append(setterName).append('(');
+      if (!tokenType.equals(JavaTokenType.EQ)) {
         final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-        final String setterName = GenerateMembersUtil.suggestSetterName(field);
-        out.append(fieldName + '.' + setterName + '(');
         final String getterName = GenerateMembersUtil.suggestGetterName(field);
-        out.append(fieldName + '.' + getterName + "()");
+        out.append(fieldName).append('.').append(getterName).append("()");
         out.append(operator);
-        rhs.accept(this);
-        out.append(')');
       }
+      rhs.accept(this);
+      out.append(')');
     }
 
 

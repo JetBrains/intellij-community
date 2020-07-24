@@ -12,7 +12,7 @@ import org.jetbrains.annotations.TestOnly
  * reading the same file multiple times.
  */
 interface JpsFileContentReader {
-  fun loadComponent(fileUrl: String, componentName: String): Element?
+  fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String? = null): Element?
 }
 
 interface JpsFileContentWriter {
@@ -37,6 +37,7 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
  * Represents a serializer which is responsible for serializing all entities of the given type (e.g. libraries in *.ipr file).
  */
 interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
+  val isExternalStorage: Boolean
   val entityFilter: (E) -> Boolean
     get() = { true }
 }
@@ -58,22 +59,19 @@ interface JpsDirectoryEntitiesSerializerFactory<E : TypedEntity> {
 }
 
 /**
- * Represents a configuration file which contains references to other configuration files (e.g. .idea/modules.xml which contains references
- * to *.iml files).
+ * Represents a configuration file which contains references to individual modules files (an ipr file, or .idea/modules.xml, or modules.xml
+ * under external_build_system).
  */
-interface JpsFileSerializerFactory<E : TypedEntity> {
+interface JpsModuleListSerializer {
   val fileUrl: String
-  val entityClass: Class<E>
-  val additionalEntityClass: Class<out TypedEntity>
+  val isExternalStorage: Boolean
   val entitySourceFilter: (EntitySource) -> Boolean
     get() = { true }
 
-  /** Returns serializers for individual configuration files referenced from [fileUrl] */
   fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<VirtualFileUrl>
-  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<E>
-  fun saveEntitiesList(entities: Sequence<E>, writer: JpsFileContentWriter)
-  fun getMainEntity(additionalEntity: TypedEntity): E
-  fun getFileName(entity: E): String
+  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity>
+  fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
+  fun getFileName(entity: ModuleEntity): String
 
   fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
 }
@@ -85,13 +83,14 @@ interface JpsProjectSerializers {
   companion object {
     fun createSerializers(entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
-                          fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
+                          moduleListSerializers: List<JpsModuleListSerializer>,
                           configLocation: JpsProjectConfigLocation,
                           reader: JpsFileContentReader,
                           externalStorageMapping: JpsExternalStorageMapping,
+                          enableExternalStorage: Boolean,
                           virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, configLocation,
-                                       externalStorageMapping, virtualFileManager)
+      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
+                                       externalStorageMapping, enableExternalStorage, virtualFileManager)
     }
   }
 

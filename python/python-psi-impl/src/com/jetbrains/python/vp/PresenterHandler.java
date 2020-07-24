@@ -27,7 +27,7 @@ import java.lang.reflect.Method;
  */
 class PresenterHandler<C> implements InvocationHandler {
   /**
-   * Presenter, created by user with {@link com.jetbrains.python.vp.Creator#createPresenter(Object)}
+   * Presenter, created by user with {@link Creator#createPresenter(Object)}
    */
   private C realPresenter;
 

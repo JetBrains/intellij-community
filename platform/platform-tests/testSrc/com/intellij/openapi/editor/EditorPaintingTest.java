@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
@@ -236,6 +237,30 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
     getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
     checkResultWithGutter();
+  }
+
+  public void testAfterLineEndInlayWithLineExtension() throws Exception {
+    initText("");
+    getEditor().getInlayModel().addAfterLineEndElement(0, false, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) {
+        return 10;
+      }
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {
+        g.setColor(Color.red);
+        g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
+      }
+    });
+    ((EditorEx)getEditor()).registerLineExtensionPainter(
+      line -> Collections.singleton(new LineExtensionInfo("ABC", new TextAttributes(Color.black, null, null, null, Font.PLAIN)))
+    );
+    paintEditor(false, null, null); // first paint triggers size update due to line extensions
+    checkResult();
   }
 
   private void runIndentsPass() {

@@ -31,8 +31,7 @@ public abstract class VirtualFileSystem {
    * @see VirtualFileManager#getFileSystem
    */
   @NonNls
-  @NotNull
-  public abstract String getProtocol();
+  public abstract @NotNull String getProtocol();
 
   /**
    * Searches for the file specified by given path. Path is a string which uniquely identifies file within given
@@ -42,8 +41,7 @@ public abstract class VirtualFileSystem {
    * @param path the path to find file by
    * @return a virtual file if found, {@code null} otherwise
    */
-  @Nullable
-  public abstract VirtualFile findFileByPath(@NotNull @NonNls String path);
+  public abstract @Nullable VirtualFile findFileByPath(@NotNull @NonNls String path);
 
   /**
    * Fetches presentable URL of file with the given path in this file system.
@@ -52,8 +50,7 @@ public abstract class VirtualFileSystem {
    * @return presentable URL
    * @see VirtualFile#getPresentableUrl
    */
-  @NotNull
-  public String extractPresentableUrl(@NotNull String path) {
+  public @NotNull String extractPresentableUrl(@NotNull String path) {
     return path.replace('/', File.separatorChar);
   }
 
@@ -85,8 +82,7 @@ public abstract class VirtualFileSystem {
    * @param path the path
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    */
-  @Nullable
-  public abstract VirtualFile refreshAndFindFileByPath(@NotNull String path);
+  public abstract @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path);
 
   /**
    * Adds listener to the file system. Normally one should use {@link VirtualFileManager#VFS_CHANGES} message bus topic.
@@ -130,24 +126,21 @@ public abstract class VirtualFileSystem {
    *
    * @see VirtualFile#createChildData(Object,String)
    */
-  @NotNull
-  protected abstract VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException;
+  protected abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException;
 
   /**
    * Implementation of adding directories in this file system
    *
    * @see VirtualFile#createChildDirectory(Object,String)
    */
-  @NotNull
-  protected abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException;
+  protected abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException;
 
   /**
    * Implementation of copying files in this file system
    *
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
-  @NotNull
-  protected abstract VirtualFile copyFile(Object requestor,
+  protected abstract @NotNull VirtualFile copyFile(Object requestor,
                                           @NotNull VirtualFile virtualFile,
                                           @NotNull VirtualFile newParent,
                                           @NotNull String copyName) throws IOException;
@@ -168,8 +161,7 @@ public abstract class VirtualFileSystem {
    * <br />
    * The returned {@link Path} may not have a default filesystem behind.
    */
-  @Nullable
-  public Path getNioPath(@NotNull VirtualFile file) {
+  public @Nullable Path getNioPath(@NotNull VirtualFile file) {
     return null;
   }
 }

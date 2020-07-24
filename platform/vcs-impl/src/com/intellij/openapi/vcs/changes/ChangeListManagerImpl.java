@@ -462,7 +462,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     ProgressManager.getInstance().runProcess(() -> {
       if (myProject.isDisposed()) return;
 
-      VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
       final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
       if (checkScopeIsEmpty(invalidated)) {
         LOG.debug("[update] - dirty scope is empty");

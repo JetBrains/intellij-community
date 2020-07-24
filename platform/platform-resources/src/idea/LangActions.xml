@@ -89,7 +89,7 @@
     </reference>
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
+      <add-to-group group-id="FilePropertiesGroup" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>

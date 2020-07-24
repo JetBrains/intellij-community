@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
@@ -47,7 +48,7 @@ public final class ProjectGroup {
 
   public void addProject(@SystemIndependent String path) {
     List<String> projects = new ArrayList<>(StringUtil.split(myProjectPaths, File.pathSeparator));
-    projects.add(path);
+    projects.add(FileUtilRt.toSystemIndependentName(path));
     save(projects);
   }
 
@@ -71,7 +72,7 @@ public final class ProjectGroup {
   }
 
   private void save(@NotNull List<String> projects) {
-    myProjectPaths = StringUtil.join(projects, File.pathSeparator);
+    myProjectPaths = String.join(File.pathSeparator, projects);
   }
 
   @NotNull

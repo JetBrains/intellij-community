@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.editorActions
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.PasteHandler
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -752,7 +753,7 @@ class Test {
     doTest(before, toPaste, expected)
   }
   
-  def doTest(String before, String toPaste, String expected, FileType fileType = StdFileTypes.JAVA) {
+  def doTest(String before, String toPaste, String expected, FileType fileType = JavaFileType.INSTANCE) {
     myFixture.configureByText(fileType, before)
 
     def settings = CodeInsightSettings.getInstance()

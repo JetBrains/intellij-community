@@ -41,6 +41,11 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   private boolean myReady;
   private final Object LOCK = new Object();
 
+  @NotNull
+  public static VcsDirtyScopeManagerImpl getInstanceImpl(@NotNull Project project) {
+    return ((VcsDirtyScopeManagerImpl)getInstance(project));
+  }
+
   public VcsDirtyScopeManagerImpl(@NotNull Project project) {
     myProject = project;
 
@@ -84,7 +89,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     synchronized (LOCK) {
       wasReady = myReady;
       if (wasReady) {
-        myDirtBuilder.setEverythingDirty(true);
+        myDirtBuilder.markEverythingDirty();
       }
     }
 
@@ -136,24 +141,13 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     boolean hasSomethingDirty = false;
     for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
-      AbstractVcs vcs = Objects.requireNonNull(vcsRoot.getVcs());
-      VirtualFile root = vcsRoot.getPath();
-
       Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
       Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
 
       synchronized (LOCK) {
-        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
-        VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
-
-        for (FilePath filePath : files) {
-          scope.addDirtyPathFast(root, filePath, false);
+        if (myReady) {
+          hasSomethingDirty |= myDirtBuilder.addDirtyFiles(vcsRoot, files, dirs);
         }
-        for (FilePath filePath : dirs) {
-          scope.addDirtyPathFast(root, filePath, true);
-        }
-
-        hasSomethingDirty |= !myDirtBuilder.isEmpty();
       }
     }
 
@@ -203,12 +197,17 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     filePathsDirty(null, Collections.singleton(path));
   }
 
-  @Override
+  /**
+   * Take current dirty scope into processing.
+   * Should call {@link #changesProcessed} when done to notify {@link #whatFilesDirty} that scope is no longer dirty.
+   */
   @Nullable
   public VcsInvalidated retrieveScopes() {
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (!myReady) return null;
+      LOG.assertTrue(myDirtInProgress == null);
+
       dirtBuilder = myDirtBuilder;
       myDirtInProgress = dirtBuilder;
       myDirtBuilder = new DirtBuilder();
@@ -216,19 +215,18 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return calculateInvalidated(dirtBuilder);
   }
 
+  public void changesProcessed() {
+    synchronized (LOCK) {
+      myDirtInProgress = null;
+    }
+  }
+
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
     if (isEverythingDirty) {
-      // Mark roots explicitly dirty
       VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
-      for (VcsRoot root : roots) {
-        AbstractVcs vcs = root.getVcs();
-        VirtualFile path = root.getPath();
-        if (vcs != null) {
-          dirt.getScope(vcs).addDirtyPathFast(path, VcsUtil.getFilePath(path), true);
-        }
-      }
+      dirt.addEverythingDirtyRoots(Arrays.asList(roots));
     }
 
     List<VcsDirtyScopeImpl> scopes = dirt.getScopes();
@@ -237,13 +235,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     return new VcsInvalidated(scopes, isEverythingDirty);
-  }
-
-  @Override
-  public void changesProcessed() {
-    synchronized (LOCK) {
-      myDirtInProgress = null;
-    }
   }
 
   @NotNull
@@ -289,7 +280,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   static final class MyStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      ((VcsDirtyScopeManagerImpl)getInstance(project)).startListenForChanges();
+      getInstanceImpl(project).startListenForChanges();
     }
 
     @Override

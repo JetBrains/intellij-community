@@ -22,6 +22,7 @@ package com.intellij.util.io;
 /**
  * Barely, a copy of java.io.Bits, which is for unknown reason package-private.
  */
+@SuppressWarnings({"PointlessBitwiseExpression", "PointlessArithmeticExpression"})
 public class Bits {
 
     /*

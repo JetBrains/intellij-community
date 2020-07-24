@@ -19,9 +19,9 @@ interface TypedEntityStore {
 internal class ValuesCache {
   private data class ValuesCacheData(val version: Long, val value: Any?)
 
-  private val cachedValues: Cache<CachedValue<*>, ValuesCacheData> = CacheBuilder.newBuilder().weakValues().build()
+  private val cachedValues: Cache<CachedValue<*>, ValuesCacheData> = CacheBuilder.newBuilder().build()
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, ValuesCacheData> =
-    CacheBuilder.newBuilder().weakValues().build()
+    CacheBuilder.newBuilder().build()
 
   fun <R> cachedValue(value: CachedValue<R>, version: Long, storage: TypedEntityStorage): R {
     if (storage is TypedEntityStorageBuilder) error("storage must be immutable")
@@ -32,7 +32,7 @@ internal class ValuesCache {
     }
     else {
       val newValue = value.source(storage)
-      cachedValues.put(value, ValuesCacheData(version, newValue)) 
+      cachedValues.put(value, ValuesCacheData(version, newValue))
       return newValue
     }
   }
@@ -60,7 +60,7 @@ internal class ValuesCache {
   }
 }
 
-class EntityStoreOnBuilder(private val builder: TypedEntityStorageBuilder): TypedEntityStore {
+class EntityStoreOnBuilder(private val builder: TypedEntityStorageBuilder) : TypedEntityStore {
 
   private val valuesCache = ValuesCache()
   private val currentSnapshot: AtomicReference<Pair<Long, TypedEntityStorage>> = AtomicReference()
@@ -91,7 +91,7 @@ class EntityStoreOnBuilder(private val builder: TypedEntityStorageBuilder): Type
     valuesCache.clearCachedValue(value, parameter)
 }
 
-class EntityStoreOnStorage(private val storage: TypedEntityStorage): TypedEntityStore {
+class EntityStoreOnStorage(private val storage: TypedEntityStorage) : TypedEntityStore {
 
   init {
     if (storage is TypedEntityStorageBuilder) error("storage must be immutable, but got: ${storage.javaClass.name}")
@@ -176,7 +176,7 @@ abstract class EntityStoreChanged(val entityStore: TypedEntityStore) : EventObje
   abstract val storageBefore: TypedEntityStorage
   abstract val storageAfter: TypedEntityStorage
 
-  abstract fun <T: TypedEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
+  abstract fun <T : TypedEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 
   abstract fun getAllChanges(): Sequence<EntityChange<*>>
 }

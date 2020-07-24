@@ -354,6 +354,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private void restartMergeResolveIfNeeded() {
+      if (isDisposed()) return;
       if (myTextDiffProvider.getIgnorePolicy().equals(myCurrentIgnorePolicy)) return;
 
       if (!myInitialRediffFinished) {

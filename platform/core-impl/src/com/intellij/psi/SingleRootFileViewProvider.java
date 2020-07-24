@@ -242,7 +242,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       // jdk 6 doesn't have getAndSet()
       if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
         if (prev != psiFile && prev instanceof PsiFileEx) {
-          ((PsiFileEx)prev).markInvalidated();
+          DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
         }
         break;
       }

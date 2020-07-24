@@ -10,16 +10,19 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class ClassInnerStuffCache {
@@ -98,18 +101,18 @@ public class ClassInnerStuffCache {
   }
 
   private <T> CachedValueProvider.Result<T> makeResult(T value) {
-    return CachedValueProvider.Result.create(value, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+    return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT, myTracker);
   }
 
   private PsiField @NotNull [] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
-    List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
+    List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class, null);
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
   private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
-    List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
+    List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, null);
     if (myClass.isEnum()) {
       ContainerUtil.addIfNotNull(ext, getValuesMethod());
       ContainerUtil.addIfNotNull(ext, getValueOfMethod());
@@ -119,7 +122,7 @@ public class ClassInnerStuffCache {
 
   private PsiClass @NotNull [] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
-    List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
+    List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class, null);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
@@ -130,48 +133,36 @@ public class ClassInnerStuffCache {
 
   @NotNull
   private Map<String, PsiField> getFieldsMap() {
-    PsiField[] fields = getFields();
-    if (fields.length == 0) return Collections.emptyMap();
-
     Map<String, PsiField> cachedFields = new THashMap<>();
-    for (PsiField field : fields) {
+    for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
       if (!cachedFields.containsKey(name)) {
         cachedFields.put(name, field);
       }
     }
-    return cachedFields;
+    return ConcurrentFactoryMap.createMap(name -> {
+      PsiField result = cachedFields.get(name);
+      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiField.class, name));
+    });
   }
 
   @NotNull
   private Map<String, PsiMethod[]> getMethodsMap() {
-    PsiMethod[] methods = getMethods();
-    if (methods.length == 0) return Collections.emptyMap();
-
-    Map<String, List<PsiMethod>> collectedMethods = new HashMap<>();
-    for (PsiMethod method : methods) {
-      List<PsiMethod> list = collectedMethods.get(method.getName());
-      if (list == null) {
-        collectedMethods.put(method.getName(), list = new SmartList<>());
-      }
-      list.add(method);
-    }
-
-    Map<String, PsiMethod[]> cachedMethods = new THashMap<>();
-    for (Map.Entry<String, List<PsiMethod>> entry : collectedMethods.entrySet()) {
-      List<PsiMethod> list = entry.getValue();
-      cachedMethods.put(entry.getKey(), list.toArray(PsiMethod.EMPTY_ARRAY));
-    }
-    return cachedMethods;
+    List<PsiMethod> ownMethods = myClass.getOwnMethods();
+    return ConcurrentFactoryMap.createMap(name -> {
+      return JBIterable
+        .from(ownMethods).filter(m -> name.equals(m.getName()))
+        .append("values".equals(name) ? getValuesMethod() : null)
+        .append("valueOf".equals(name) ? getValueOfMethod() : null)
+        .append(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, name))
+        .toArray(PsiMethod.EMPTY_ARRAY);
+    });
   }
 
   @NotNull
   private Map<String, PsiClass> getInnerClassesMap() {
-    PsiClass[] classes = getInnerClasses();
-    if (classes.length == 0) return Collections.emptyMap();
-
     Map<String, PsiClass> cachedInners = new THashMap<>();
-    for (PsiClass psiClass : classes) {
+    for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
       if (name == null) {
         Logger.getInstance(ClassInnerStuffCache.class).error(psiClass);
@@ -180,7 +171,10 @@ public class ClassInnerStuffCache {
         cachedInners.put(name, psiClass);
       }
     }
-    return cachedInners;
+    return ConcurrentFactoryMap.createMap(name -> {
+      PsiClass result = cachedInners.get(name);
+      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, name));
+    });
   }
 
   private PsiMethod makeValuesMethod() {

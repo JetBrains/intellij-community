@@ -13,10 +13,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.pico.DefaultPicoContainer;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -117,12 +118,18 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
-    doRegisterExtension(extension, order, null);
+    doRegisterExtension(extension, order, getPluginDescriptor(), null);
   }
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, LoadingOrder.ANY, parentDisposable);
+    registerExtension(extension, getPluginDescriptor(), parentDisposable);
+  }
+
+  @Override
+  public final void registerExtension(@NotNull T extension,
+                                      @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable) {
+    doRegisterExtension(extension, LoadingOrder.ANY, pluginDescriptor, parentDisposable);
   }
 
   @Override
@@ -132,14 +139,15 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, order, parentDisposable);
+    doRegisterExtension(extension, order, getPluginDescriptor(), parentDisposable);
   }
 
   public final ComponentManager getComponentManager() {
     return componentManager;
   }
 
-  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order, @Nullable Disposable parentDisposable) {
+  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order,
+                                                @NotNull PluginDescriptor pluginDescriptor, @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
     checkExtensionType(extension, getExtensionClass(), null);
 
@@ -150,7 +158,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
     }
 
-    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getPluginDescriptor(), order);
+    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, pluginDescriptor, order);
     addExtensionAdapter(adapter);
     notifyListeners(false, Collections.singletonList(adapter), myListeners);
 
@@ -294,6 +302,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<Supplier<T>, ? super PluginDescriptor> consumer) {
+    if (isInReadOnlyMode()) {
+      for (T extension : myExtensionsCache) {
+        consumer.accept(() -> extension, pluginDescriptor /* doesn't matter for tests */);
+      }
+      return;
+    }
+
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : (shouldBeSorted ? getSortedAdapters() : myAdapters)) {
       consumer.accept(() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
@@ -400,7 +415,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return result;
     }
 
-    OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(totalSize);
+    ObjectOpenHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new ObjectOpenHashSet<>(totalSize);
     ExtensionPointListener<T>[] listeners = myListeners;
     int extensionIndex = 0;
     for (int i = 0; i < adapters.size(); i++) {
@@ -454,7 +469,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter,
                                      ExtensionPointListener<T> @Nullable [] listeners,
                                      T @Nullable [] result,
-                                     @Nullable OpenTHashSet<T> duplicates,
+                                     @Nullable ObjectOpenHashSet<T> duplicates,
                                      @NotNull Class<T> extensionClassForCheck,
                                      @NotNull List<? extends ExtensionComponentAdapter> adapters) {
     try {
@@ -762,7 +777,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   // true if added
   private boolean addListener(@NotNull ExtensionPointListener<T> listener) {
-    if (ArrayUtil.indexOf(myListeners, listener) != -1) {
+    if (ArrayUtilRt.indexOf(myListeners, listener, 0, myListeners.length) != -1) {
       return false;
     }
     if (listener instanceof ExtensionPointPriorityListener) {
@@ -918,12 +933,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
     int newSize = adapters.size();
 
+    clearCache();
     ExtensionPointListener<T>[] listeners = myListeners;
     if (listenerCallbacks == null || listeners.length == 0) {
       return;
     }
 
-    clearCache();
 
     List<ExtensionComponentAdapter> addedAdapters = Collections.emptyList();
     for (ExtensionPointListener<T> listener : listeners) {

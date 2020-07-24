@@ -41,6 +41,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
   }
 
   public void testEnum() {
+    //noinspection UnnecessaryEnumModifier
     doTest("enum Currencies {\n" +
            "    EURO, DOLLAR;\n" +
            "    private Currencies() {\n" +

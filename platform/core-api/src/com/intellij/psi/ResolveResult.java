@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /**
- * Represents the result of resolving a {@link com.intellij.psi.PsiPolyVariantReference}.
+ * Represents the result of resolving a {@link PsiPolyVariantReference}.
  *
- * @see com.intellij.psi.PsiElementResolveResult
+ * @see PsiElementResolveResult
  */
 public interface ResolveResult extends SymbolResolveResult {
   /**

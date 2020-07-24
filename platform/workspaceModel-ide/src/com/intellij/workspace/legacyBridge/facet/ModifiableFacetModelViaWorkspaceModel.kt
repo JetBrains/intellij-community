@@ -3,6 +3,7 @@ package com.intellij.workspace.legacyBridge.facet
 
 import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
+import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.Disposable
@@ -50,6 +51,7 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
     val underlyingEntity = facet.underlyingFacet?.let { entityToFacet.inverse()[it]!! }
     val entity = diff.addFacetEntity(facet.name, facet.type.stringId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
     entityToFacet[entity] = facet
+    FacetManagerImpl.setExternalSource(facet, externalSource)
     facetsChanged()
   }
 

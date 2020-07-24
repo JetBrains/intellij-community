@@ -6,24 +6,22 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-public class FilePathHashingStrategy {
+public final class FilePathHashingStrategy {
   private FilePathHashingStrategy() { }
 
-  @NotNull
-  public static TObjectHashingStrategy<String> create() {
+  public static @NotNull TObjectHashingStrategy<String> create() {
     return create(SystemInfo.isFileSystemCaseSensitive);
   }
-  @NotNull
-  public static TObjectHashingStrategy<CharSequence> createForCharSequence() {
+
+  public static @NotNull TObjectHashingStrategy<CharSequence> createForCharSequence() {
     return createForCharSequence(SystemInfo.isFileSystemCaseSensitive);
   }
-  @NotNull
-  public static TObjectHashingStrategy<CharSequence> createForCharSequence(boolean caseSensitive) {
+
+  public static @NotNull TObjectHashingStrategy<CharSequence> createForCharSequence(boolean caseSensitive) {
     return caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
   }
 
-  @NotNull
-  public static TObjectHashingStrategy<String> create(boolean caseSensitive) {
+  public static @NotNull TObjectHashingStrategy<String> create(boolean caseSensitive) {
     return caseSensitive ? ContainerUtil.canonicalStrategy() : CaseInsensitiveStringHashingStrategy.INSTANCE;
   }
 }

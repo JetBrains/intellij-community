@@ -32,7 +32,7 @@ public class JavaScopeProcessorEvent implements PsiScopeProcessor.Event {
 
   /**
    * An event issued by {@link com.intellij.psi.scope.util.PsiScopesUtil#treeWalkUp}
-   * after {@link com.intellij.psi.PsiElement#processDeclarations} was called,
+   * after {@link PsiElement#processDeclarations} was called,
    * for each element in the hierarchy defined by a chain of {@link PsiElement#getContext()} calls.
    * The associated object is the {@link PsiElement} whose declarations have been processed.
    */

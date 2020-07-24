@@ -91,4 +91,20 @@ internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
   override fun toString(): String {
     return HashMap(myKeyToValueMap).toString()
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LinkedBidirectionalMap<*, *>) return false
+
+    if (myKeyToValueMap != other.myKeyToValueMap) return false
+    if (myValueToKeysMap != other.myValueToKeysMap) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = myKeyToValueMap.hashCode()
+    result = 31 * result + myValueToKeysMap.hashCode()
+    return result
+  }
 }

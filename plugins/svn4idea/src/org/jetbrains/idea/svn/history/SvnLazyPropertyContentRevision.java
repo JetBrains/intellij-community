@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBaseContentRevision;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
@@ -31,14 +30,18 @@ import java.util.List;
 
 public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements PropertyRevision {
   private final static String ourPropertiesDelimiter = "\n";
-  private final VcsRevisionNumber myNumber;
-  private final Url myUrl;
+
+  private final @NotNull VcsRevisionNumber myNumber;
+  private final @NotNull Target myTarget;
   private List<PropertyData> myContent;
 
-  public SvnLazyPropertyContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, VcsRevisionNumber number, Url url) {
+  public SvnLazyPropertyContentRevision(@NotNull SvnVcs vcs,
+                                        @NotNull FilePath file,
+                                        @NotNull VcsRevisionNumber number,
+                                        @NotNull Target target) {
     super(vcs, file);
     myNumber = number;
-    myUrl = url;
+    myTarget = target;
   }
 
   @Nullable
@@ -60,7 +63,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     final Ref<VcsException> exceptionRef = new Ref<>();
     final Runnable runnable = () -> {
       try {
-        ref.set(getPropertyList(myVcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
+        ref.set(getPropertyList(myVcs, myTarget, myTarget.getPegRevision()));
       }
       catch (VcsException e) {
         exceptionRef.set(e);
@@ -85,18 +88,6 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myNumber;
-  }
-
-  @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Url url, @Nullable Revision revision)
-    throws SvnBindException {
-    return getPropertyList(vcs, Target.on(url, revision), revision);
-  }
-
-  @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable Revision revision)
-    throws SvnBindException {
-    return getPropertyList(vcs, Target.on(ioFile, revision), revision);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.File;
@@ -6,13 +6,13 @@ import java.util.*;
 
 public class DiffCalculator {
   public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
-    return calculate(oldChecksums, newChecksums, Collections.emptyList(), Collections.emptyList(), false);
+    return calculate(oldChecksums, newChecksums, Collections.emptySet(), Collections.emptySet(), false);
   }
 
   public static Result calculate(Map<String, Long> oldChecksums,
                                  Map<String, Long> newChecksums,
-                                 List<String> critical,
-                                 List<String> optional,
+                                 Set<String> critical,
+                                 Set<String> optional,
                                  boolean lookForMoved) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
@@ -76,7 +76,7 @@ public class DiffCalculator {
     return matches;
   }
 
-  private static String findBestCandidateForMove(List<String> paths, String path, List<String> optional) {
+  private static String findBestCandidateForMove(List<String> paths, String path, Set<String> optional) {
     if (paths == null) return null;
 
     boolean mandatory = !optional.contains(path);
@@ -143,7 +143,7 @@ public class DiffCalculator {
     return result;
   }
 
-  private static Map<String, Long> collect(Map<String, Long> older, Map<String, Long> newer, List<String> critical, boolean equal) {
+  private static Map<String, Long> collect(Map<String, Long> older, Map<String, Long> newer, Set<String> critical, boolean equal) {
     Map<String, Long> result = new LinkedHashMap<>();
     for (Map.Entry<String, Long> each : newer.entrySet()) {
       String file = each.getKey();

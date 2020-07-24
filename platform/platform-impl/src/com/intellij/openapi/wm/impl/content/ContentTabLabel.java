@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
-  private static final int MAX_WIDTH = JBUIScale.scale(300);
+  private static final int MAX_WIDTH = JBUIScale.scale(400);
   private static final int DEFAULT_HORIZONTAL_INSET = JBUIScale.scale(12);
   private static final int ICONS_GAP = JBUIScale.scale(3);
 

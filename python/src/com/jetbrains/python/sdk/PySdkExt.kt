@@ -163,6 +163,7 @@ val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
 
+@Deprecated("Use Sdk.associatedModuleDir instead. There may be several Module objects opened in different projects for a single *.iml module file. To be removed in 2021.2")
 val Sdk.associatedModule: Module?
   get() {
     val associatedPath = associatedModulePath
@@ -171,6 +172,9 @@ val Sdk.associatedModule: Module?
       .flatMap { ModuleManager.getInstance(it).modules.asSequence() }
       .firstOrNull { it?.basePath == associatedPath }
   }
+
+val Sdk.associatedModuleDir: VirtualFile?
+  get() = associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it) }
 
 fun Sdk.adminPermissionsNeeded(): Boolean {
   val pathToCheck = sitePackagesDirectory?.path ?: homePath ?: return false

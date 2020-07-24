@@ -241,7 +241,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
 
 
   override fun findLibrary(artifact: MavenArtifact): Library? {
-    return legacyBridge.legacyBridgeModuleLibraryTable().libraries.firstOrNull { it.name == artifact.ideaLibraryName() }
+    return legacyBridge.getModuleLibraryTable().libraries.firstOrNull { it.name == artifact.ideaLibraryName() }
   }
 
   override fun setLanguageLevel(level: LanguageLevel) {

@@ -10,7 +10,11 @@ class GitSquashOperationTest : GitSingleRepoTest() {
     val commitC = file("c").create().addCommit("Commit c").details()
     val commitsToSquash = listOf(commitC, commitB, commitA)
 
+    refresh()
+    updateChangeListManager()
+
     val newMessage = "Squashed commit message"
+
     GitSquashOperation(repo).execute(commitsToSquash, newMessage)
 
     assertLastMessage(newMessage)
@@ -28,6 +32,9 @@ class GitSquashOperationTest : GitSingleRepoTest() {
     val commitC = file("c").create().addCommit("Commit c").details()
     file("after").create().addCommit("Commit after")
     val commitsToSquash = listOf(commitC, commitB, commitA)
+
+    refresh()
+    updateChangeListManager()
 
     val newMessage = "Squashed commit message"
     GitSquashOperation(repo).execute(commitsToSquash, newMessage)
@@ -53,6 +60,9 @@ class GitSquashOperationTest : GitSingleRepoTest() {
     file("between2").create().addCommit("Commit between2")
     val commitC = file("c").create().addCommit("Commit c").details()
     val commitsToSquash = listOf(commitC, commitB, commitA)
+
+    refresh()
+    updateChangeListManager()
 
     val newMessage = "Squashed commit message"
     GitSquashOperation(repo).execute(commitsToSquash, newMessage)

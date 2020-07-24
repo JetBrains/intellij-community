@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -87,7 +86,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final Set<ActionKey> myBackgroundRunningTasks = new HashSet<>();
 
-  private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = new ArrayList<>();
+  private final List<VcsConsoleLine> myPendingOutput = new ArrayList<>();
 
   private final FileIndexFacade myExcludedIndex;
 
@@ -249,24 +248,25 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public void addMessageToConsoleWindow(final @Nullable String message, final @NotNull ConsoleViewContentType contentType) {
-    if (!Registry.is("vcs.showConsole")) {
-      return;
-    }
-    if (StringUtil.isEmptyOrSpaces(message)) {
-      return;
-    }
+  public void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType) {
+    addMessageToConsoleWindow(VcsConsoleLine.create(message, contentType));
+  }
+
+  @Override
+  public void addMessageToConsoleWindow(@Nullable VcsConsoleLine line) {
+    if (!Registry.is("vcs.showConsole")) return;
+    if (line == null) return;
 
     ApplicationManager.getApplication().invokeLater(() -> {
       // for default and disposed projects the ContentManager is not available.
       if (myProject.isDisposed() || myProject.isDefault()) return;
       final ContentManager contentManager = getContentManager();
       if (contentManager == null) {
-        myPendingOutput.add(Pair.create(message, contentType));
+        myPendingOutput.add(line);
       }
       else {
         VcsConsoleContent panel = getOrCreateConsoleContent(contentManager);
-        panel.printToConsole(message, contentType);
+        panel.printToConsole(line);
       }
     }, ModalityState.defaultModalityState());
   }
@@ -282,8 +282,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (console != null) return console;
 
     VcsConsoleContent newConsole = new VcsConsoleContent(myProject);
-    for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {
-      newConsole.printToConsole(pair.first, pair.second);
+    for (VcsConsoleLine line : myPendingOutput) {
+      newConsole.printToConsole(line);
     }
     myPendingOutput.clear();
 
@@ -878,8 +878,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       myConsole.requestScrollingToEnd();
     }
 
-    public void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
-      myConsole.print(message + "\n", contentType);
+    public void printToConsole(@NotNull VcsConsoleLine line) {
+      line.print(myConsole);
     }
   }
 

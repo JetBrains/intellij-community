@@ -1,9 +1,13 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -12,8 +16,10 @@ import com.intellij.workspace.api.VirtualFileUrlManager
 import com.intellij.workspace.api.toVirtualFileUrl
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
-import org.junit.Assert
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,22 +59,22 @@ class LegacyBridgeFilePointerProviderTest {
     val url = file.toVirtualFileUrl(virtualFileManager)
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-    val pointer1 = provider.getAndCacheFilePointer(url)
+    val pointer1 = provider.getAndCacheFilePointer(url, LegacyBridgeFilePointerScope.Test)
     val container1 = provider.getAndCacheFileContainer(LegacyBridgeFileContainer(urls = listOf(url), jarDirectories = emptyList()))
 
-    Assert.assertTrue(file.exists())
+    assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.rename(null, "y.txt") }
-    Assert.assertFalse(file.exists())
+    assertFalse(file.exists())
 
     file.writeText("")
 
-    val pointer2 = provider.getAndCacheFilePointer(url)
+    val pointer2 = provider.getAndCacheFilePointer(url, LegacyBridgeFilePointerScope.Test)
     val container2 = provider.getAndCacheFileContainer(LegacyBridgeFileContainer(urls = listOf(url), jarDirectories = emptyList()))
 
-    Assert.assertEquals(url.url, pointer2.url)
-    Assert.assertEquals(url.url, container2.urls.single())
-    Assert.assertEquals(File(file.parentFile, "y.txt").toVirtualFileUrl(virtualFileManager).url, pointer1.url)
-    Assert.assertEquals(File(file.parentFile, "y.txt").toVirtualFileUrl(virtualFileManager).url, container1.urls.single())
+    assertEquals(url.url, pointer2.url)
+    assertEquals(url.url, container2.urls.single())
+    assertFalse(pointer1.isValid)
+    assertTrue(container1.isEmpty)
   }
 
   @Test
@@ -85,21 +91,72 @@ class LegacyBridgeFilePointerProviderTest {
     val urlAfterMove = fileAfterMove.toVirtualFileUrl(virtualFileManager)
 
     val virtualFile1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-    val pointer1 = provider.getAndCacheFilePointer(url)
+    val pointer1 = provider.getAndCacheFilePointer(url, LegacyBridgeFilePointerScope.Test)
     val container1 = provider.getAndCacheFileContainer(LegacyBridgeFileContainer(urls = listOf(url), jarDirectories = emptyList()))
 
-    Assert.assertTrue(file.exists())
+    assertTrue(file.exists())
     WriteAction.runAndWait<Throwable> { virtualFile1.move(null, targetFolderVirtualFile) }
-    Assert.assertFalse(file.exists())
+    assertFalse(file.exists())
 
     file.writeText("")
 
-    val pointer2 = provider.getAndCacheFilePointer(url)
+    val pointer2 = provider.getAndCacheFilePointer(url, LegacyBridgeFilePointerScope.Test)
     val container2 = provider.getAndCacheFileContainer(LegacyBridgeFileContainer(urls = listOf(url), jarDirectories = emptyList()))
 
-    Assert.assertEquals(url.url, pointer2.url)
-    Assert.assertEquals(url.url, container2.urls.single())
-    Assert.assertEquals(urlAfterMove.url, pointer1.url)
-    Assert.assertEquals(urlAfterMove.url, container1.urls.single())
+    assertEquals(url.url, pointer2.url)
+    assertEquals(url.url, container2.urls.single())
+    assertFalse(pointer1.isValid)
+    assertTrue(container1.isEmpty)
+  }
+
+  @Test
+  fun `file pointers cache isn't reloaded with module change`() = WriteCommandAction.runWriteCommandAction(project) {
+    val modifiableModel = ModuleManager.getInstance(project).modifiableModel
+    val module = modifiableModel.newNonPersistentModule("myModule", "myModule")
+    modifiableModel.commit()
+
+    val pointerProvider = LegacyBridgeFilePointerProvider.getInstance(module) as LegacyBridgeFilePointerProviderImpl
+
+    assertTrue(pointerProvider.getFilePointers().isEmpty())
+
+    val modModuleRootModel = ModuleRootManager.getInstance(module).modifiableModel
+    val contentUrl = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("first").toFile().absolutePath)
+    modModuleRootModel.addContentEntry(contentUrl)
+    modModuleRootModel.commit()
+
+    val pointer = pointerProvider.getFilePointers().values.single().first
+
+    val modModuleRootModel2 = ModuleRootManager.getInstance(module).modifiableModel
+    val contentUrl2 = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("second").toFile().absolutePath)
+    modModuleRootModel2.addContentEntry(contentUrl2)
+    modModuleRootModel2.commit()
+
+    val pointers = pointerProvider.getFilePointers().values.map { it.first }
+    assertEquals(2, pointers.size)
+    assertSame(pointer, pointers.first())
+  }
+
+  @Test
+  fun `file pointers removed on entity removal`() = WriteCommandAction.runWriteCommandAction(project) {
+    val modifiableModel = ModuleManager.getInstance(project).modifiableModel
+    val module = modifiableModel.newNonPersistentModule("myModule", "myModule")
+    modifiableModel.commit()
+
+    val pointerProvider = LegacyBridgeFilePointerProvider.getInstance(module) as LegacyBridgeFilePointerProviderImpl
+
+    assertTrue(pointerProvider.getFilePointers().isEmpty())
+
+    val modModuleRootModel = ModuleRootManager.getInstance(module).modifiableModel
+    val contentUrl = VfsUtilCore.pathToUrl(temporaryDirectoryRule.newPath("first").toFile().absolutePath)
+    val contentEntry = modModuleRootModel.addContentEntry(contentUrl)
+    modModuleRootModel.commit()
+
+    val pointer = pointerProvider.getFilePointers().values.single().first
+
+    val modModuleRootModel2 = ModuleRootManager.getInstance(module).modifiableModel
+    modModuleRootModel2.removeContentEntry(contentEntry)
+    modModuleRootModel2.commit()
+
+    assertFalse(pointer.isValid)
   }
 }

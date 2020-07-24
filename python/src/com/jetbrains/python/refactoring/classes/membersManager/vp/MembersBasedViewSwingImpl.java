@@ -34,7 +34,7 @@ import java.awt.*;
 import java.util.Collection;
 
 /**
- * {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView} implementation on swing.
+ * {@link MembersBasedView} implementation on swing.
  * Consists of {@link #myTopPanel} and {@link #myCenterPanel}. Children must fill them in constructor.
  * Presenter is stored in {@link #myPresenter}.
  * Panel with members in {@link #myPyMemberSelectionPanel}

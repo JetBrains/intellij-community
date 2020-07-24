@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -62,7 +62,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.GUI_DESIGNER_FORM);
+    return new DefaultFileTypeSpecificInputFilter(GuiFormFileType.INSTANCE);
   }
 
   @Override

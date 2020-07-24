@@ -295,7 +295,7 @@ public class MyTestInjector {
 
     // cannot use maskAll here because of InjectedLanguageEditingTest (ok for all other tests)
     //((ExtensionPointImpl<LanguageInjector>)LanguageInjector.EXTENSION_POINT_NAME.getPoint(null)).maskAll(Collections.singletonList(myInjector), parent);
-    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).registerExtension(myInjector, parent);
+    LanguageInjector.EXTENSION_POINT_NAME.getPoint().registerExtension(myInjector, parent);
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

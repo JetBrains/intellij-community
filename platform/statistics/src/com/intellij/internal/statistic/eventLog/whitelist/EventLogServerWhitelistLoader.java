@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,12 +17,14 @@ public class EventLogServerWhitelistLoader implements EventLogWhitelistLoader {
 
   @Override
   public long getLastModifiedOnServer() {
-    return FUStatisticsWhiteListGroupsService.lastModifiedWhitelist(mySettingsService);
+    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
+    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService.getWhiteListProductUrl(), userAgent);
   }
 
   @Override
   @NotNull
   public String loadWhiteListFromServer() throws EventLogWhitelistLoadException {
-    return FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
+    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
+    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), userAgent);
   }
 }

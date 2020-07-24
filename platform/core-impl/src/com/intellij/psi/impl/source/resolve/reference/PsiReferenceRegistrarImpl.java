@@ -18,10 +18,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -33,6 +30,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
   private final ConcurrentMap<Class<?>, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
+  private final List<Disposable> myCleanupDisposables = new ArrayList<>();
 
   PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
@@ -54,6 +52,13 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   void markInitialized() {
     myInitialized = true;
+  }
+
+  void cleanup() {
+    for (Disposable disposable : myCleanupDisposables) {
+      Disposer.dispose(disposable);
+    }
+    myCleanupDisposables.clear();
   }
 
   @Override
@@ -100,9 +105,15 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     }
     providerBinding.registerProvider(provider, pattern, priority);
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, () -> unregisterReferenceProvider(scope, provider));
+      Disposable disposable = () -> unregisterReferenceProvider(scope, provider);
+      Disposer.register(parentDisposable, disposable);
+      myCleanupDisposables.add(disposable);
     }
 
+    clearBindingsCache();
+  }
+
+  void clearBindingsCache() {
     myBindingCache.clear();
   }
 
@@ -114,7 +125,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
         myBindingsMap.remove(scope);
       }
     }
-    myBindingCache.clear();
+    clearBindingsCache();
   }
 
   private void registerNamedReferenceProvider(String @NotNull [] names,
@@ -138,12 +149,14 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
     if (parentDisposable != null) {
       NamedObjectProviderBinding finalProviderBinding = providerBinding;
-      Disposer.register(parentDisposable, () -> {
+      Disposable disposable = () -> {
         finalProviderBinding.unregisterProvider(provider);
         if (finalProviderBinding.isEmpty()) {
           myNamedBindingsMap.remove(scopeClass);
         }
-      });
+      };
+      myCleanupDisposables.add(disposable);
+      Disposer.register(parentDisposable, disposable);
     }
   }
 

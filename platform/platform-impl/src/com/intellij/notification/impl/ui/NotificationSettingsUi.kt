@@ -5,9 +5,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.notification.impl.isReadAloudEnabled
+import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
@@ -21,6 +22,7 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
   val ui: DialogPanel
   private lateinit var type: ComboBox<NotificationDisplayType>
   private lateinit var log: JCheckBox
+  private lateinit var playSound: JCheckBox
   private lateinit var readAloud: JCheckBox
   init {
     val model = createComboboxModel(notification)
@@ -28,10 +30,10 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
       row(IdeBundle.message("notifications.configurable.column.popup")) {
         type = comboBox(model,
                         getter = notification::displayType,
-                        setter = {notification.displayType = it},
+                        setter = {notification.displayType = it ?: NONE},
                         renderer = SimpleListCellRenderer.create("") {it?.title}).component
         type.addActionListener {
-          notification.displayType = type.selectedItem as NotificationDisplayType?
+          notification.displayType = type.selectedItem as NotificationDisplayType
         }
       }
       row {
@@ -40,6 +42,16 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
                        {notification.isShouldLog = it}).component
         log.addActionListener {
           notification.isShouldLog = log.isSelected
+        }
+      }
+      if (isSoundEnabled()) {
+        row {
+          playSound = checkBox(IdeBundle.message("notifications.configurable.play.sound"),
+                               {notification.isPlaySound},
+                               {notification.isPlaySound = it}).component
+          playSound.addActionListener {
+            notification.isPlaySound = playSound.isSelected
+          }
         }
       }
       if (isReadAloudEnabled()) {
@@ -55,8 +67,6 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
     }.withBorder(JBUI.Borders.empty(2))
   }
 
-  private fun isReadAloudEnabled() = SystemInfo.isMac
-
   fun updateUi(notification: NotificationSettingsWrapper) {
     this.notification = notification
     type.model = createComboboxModel(notification)
@@ -64,6 +74,9 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
     log.isSelected = notification.isShouldLog
     if (isReadAloudEnabled()) {
       readAloud.isSelected = notification.isShouldReadAloud
+    }
+    if (isSoundEnabled()) {
+      playSound.isSelected = notification.isPlaySound
     }
   }
 

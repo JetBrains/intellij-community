@@ -95,6 +95,10 @@ public final class ProjectUtil {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
+  /**
+   * @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)}
+   */
+  @Deprecated
   public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
   }
@@ -140,7 +144,7 @@ public final class ProjectUtil {
     }
 
     if (isValidProjectPath(file)) {
-      return PlatformProjectOpenProcessor.openExistingProject(file, file, options);
+      return PlatformProjectOpenProcessor.openExistingProject(file, options);
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -148,7 +152,7 @@ public final class ProjectUtil {
         for (Path child : directoryStream) {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            return openProject(childPath, options.projectToClose, options.forceOpenInNewFrame);
+            return openProject(Paths.get(childPath), options);
           }
         }
       }
@@ -248,7 +252,10 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project openProject(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    Path file = Paths.get(path);
+    return openProject(Paths.get(path), new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+  }
+
+  public static @Nullable Project openProject(@NotNull Path file, @NotNull OpenProjectTask options) {
     BasicFileAttributes fileAttributes = PathKt.basicAttributesIfExists(file);
     if (fileAttributes == null) {
       Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", file.toString()), CommonBundle.getErrorTitle());
@@ -275,7 +282,7 @@ public final class ProjectUtil {
     }
 
     try {
-      return PlatformProjectOpenProcessor.openExistingProject(file, file, new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+      return PlatformProjectOpenProcessor.openExistingProject(file, options);
     }
     catch (Exception e) {
       Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
@@ -291,24 +298,23 @@ public final class ProjectUtil {
   }
 
   public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
-    final Window window = getActiveFrameOrWelcomeScreen();
-    final Icon icon = Messages.getWarningIcon();
+    Window window = getActiveFrameOrWelcomeScreen();
+    Icon icon = Messages.getWarningIcon();
     String title = IdeBundle.message(titleKey);
-    final int answer =
-      window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon);
-    return answer == Messages.YES;
+    return (window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon)) == Messages.YES;
   }
 
   public static Window getActiveFrameOrWelcomeScreen() {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    if (window != null) return window;
+    if (window != null) {
+      return window;
+    }
 
     for (Frame frame : Frame.getFrames()) {
       if (frame instanceof IdeFrame && frame.isVisible()) {
         return frame;
       }
     }
-
     return null;
   }
 

@@ -51,7 +51,7 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
   }
 
   private static ExtensionPointImpl<ConfigurationType> getConfigurationTypesExtPoint() {
-    return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint(null);
+    return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
   }
 
   private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull ServerType<?> serverType) {

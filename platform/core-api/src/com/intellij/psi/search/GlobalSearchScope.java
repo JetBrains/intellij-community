@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -86,6 +87,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return Collections.emptySet();
   }
 
+  /**
+   * @return a set of model branches whose copied files this scope might contain
+   */
+  public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+    return Collections.emptySet();
+  }
+
   @NotNull
   @Contract(pure = true)
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
@@ -160,6 +168,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
+      }
+
+      @Override
+      public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+        return GlobalSearchScope.this.getModelBranchesAffectingScope();
       }
 
       @NonNls
@@ -457,6 +470,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+      return ContainerUtil.intersection(myScope1.getModelBranchesAffectingScope(), myScope2.getModelBranchesAffectingScope());
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof IntersectionScope)) return false;
@@ -523,6 +541,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
       for (GlobalSearchScope scope : myScopes) {
         result.addAll(scope.getUnloadedModulesBelongingToScope());
+      }
+      return result;
+    }
+
+    @Override
+    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+      Set<ModelBranch> result = new LinkedHashSet<>();
+      for (GlobalSearchScope scope : myScopes) {
+        result.addAll(scope.getModelBranchesAffectingScope());
       }
       return result;
     }

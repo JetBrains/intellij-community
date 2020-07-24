@@ -16,14 +16,14 @@
 
 package com.intellij.facet.ui;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * Provides component to edit several facets simultaneously. Changes in this component must be propagated to original facet editors.
- * Use {@link com.intellij.facet.ui.MultipleFacetEditorHelper} to bind controls in editor to corresponding controls in facet editors. 
+ * Use {@link MultipleFacetEditorHelper} to bind controls in editor to corresponding controls in facet editors. 
  */
 public abstract class MultipleFacetSettingsEditor {
 

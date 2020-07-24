@@ -16,7 +16,6 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,23 +32,4 @@ public interface Dictionary {
 
   @NotNull
   Set<String> getWords();
-
-  /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default boolean isEmpty() {
-    return true;
-  }
-
-  /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default void traverse(@SuppressWarnings("unused") @NotNull Consumer<String> action) {}
-
-  /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default int size() {
-    return 0;
-  }
 }

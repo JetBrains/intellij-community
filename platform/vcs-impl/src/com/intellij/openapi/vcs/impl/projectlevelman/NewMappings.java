@@ -96,18 +96,29 @@ public class NewMappings implements Disposable {
   }
 
   public void activateActiveVcses() {
-    MyVcsActivator activator;
     synchronized (myUpdateLock) {
       if (myActivated) return;
       myActivated = true;
-
-      activator = updateActiveVcses();
-
       LOG.debug("activated");
     }
-    activator.activate();
-
+    updateActiveVcses();
     updateMappedRoots(true);
+  }
+
+  /**
+   * @return {@link #myActivated} value
+   */
+  private boolean updateActiveVcses() {
+    MyVcsActivator activator =
+      ReadAction.compute(() -> {
+        synchronized (myUpdateLock) {
+          return myActivated ? createVcsActivator() : null;
+        }
+      });
+    if (activator != null) {
+      activator.activate();
+    }
+    return activator != null;
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
@@ -129,12 +140,7 @@ public class NewMappings implements Disposable {
   public void updateMappedVcsesImmediately() {
     LOG.debug("updateMappingsImmediately");
 
-    MyVcsActivator activator;
-    synchronized (myUpdateLock) {
-      if (!myActivated) return;
-      activator = updateActiveVcses();
-    }
-    activator.activate();
+    if (!updateActiveVcses()) return;
 
     synchronized (myUpdateLock) {
       Disposer.dispose(myFilePointerDisposable);
@@ -163,21 +169,16 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue.cancelAllUpdates();
 
     List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
-
-    MyVcsActivator activator = null;
     synchronized (myUpdateLock) {
       boolean mappingsChanged = !myMappings.equals(newMappings);
       if (!mappingsChanged) return; // mappings are up-to-date
 
       myMappings = newMappings;
 
-      if (myActivated) {
-        activator = updateActiveVcses();
-      }
-
       dumpMappingsToLog();
     }
-    if (activator != null) activator.activate();
+
+    updateActiveVcses();
 
     updateMappedRoots(false);
 
@@ -442,7 +443,7 @@ public class NewMappings implements Disposable {
       myMappings = Collections.emptyList();
       myMappedRoots = Collections.emptyList();
       myFilePointerDisposable = Disposer.newDisposable();
-      activator = updateActiveVcses();
+      activator = createVcsActivator();
     }
     activator.activate();
   }
@@ -521,7 +522,7 @@ public class NewMappings implements Disposable {
   }
 
   @NotNull
-  private MyVcsActivator updateActiveVcses() {
+  private MyVcsActivator createVcsActivator() {
     Set<AbstractVcs> newVcses = map2SetNotNull(myMappings, mapping -> getMappingsVcs(mapping));
 
     List<AbstractVcs> oldVcses = myActiveVcses;

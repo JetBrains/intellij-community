@@ -1272,9 +1272,6 @@ public class PsiTreeUtil {
     if (!cur.getClass().equals(element.getClass())) {
       throw new IllegalStateException("File structure differs: " + cur.getClass() + " != " + element.getClass());
     }
-    if (!cur.getTextRange().equals(element.getTextRange())) {
-      throw new IllegalStateException("File structure differs: " + cur.getTextRange() + " != " + element.getTextRange());
-    }
     //noinspection unchecked
     return (T)cur;
   }

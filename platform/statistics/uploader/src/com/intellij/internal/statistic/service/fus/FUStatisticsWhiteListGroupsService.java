@@ -3,28 +3,14 @@ package com.intellij.internal.statistic.service.fus;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
-import org.apache.http.*;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.utils.DateUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.internal.statistic.StatisticsStringUtil.*;
-import static java.util.Collections.emptyList;
+import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
 
 /**
  * <ol>
@@ -48,76 +34,6 @@ import static java.util.Collections.emptyList;
  * </ol>
  */
 public class FUStatisticsWhiteListGroupsService {
-  //private static final Logger LOG = Logger.getInstance(FUStatisticsWhiteListGroupsService.class);
-
-  /**
-   * @return empty whitelist if error happened during groups fetching or parsing
-   */
-  @NotNull
-  public static FUSWhitelist getApprovedGroups(@NotNull String userAgent, @NotNull String serviceUrl) {
-    try {
-      String content = getFUSWhiteListContent(userAgent, serviceUrl);
-      return parseApprovedGroups(content);
-    }
-    catch (EventLogWhitelistParseException | EventLogWhitelistLoadException e) {
-      return FUSWhitelist.empty();
-    }
-  }
-
-  @NotNull
-  public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) throws EventLogWhitelistLoadException {
-    String userAgent = settingsService.getApplicationInfo().getUserAgent();
-    return getFUSWhiteListContent(userAgent, settingsService.getWhiteListProductUrl());
-  }
-
-  public static long lastModifiedWhitelist(@NotNull EventLogUploadSettingsService settingsService) {
-    String userAgent = settingsService.getApplicationInfo().getUserAgent();
-    return lastModifiedWhitelist(userAgent, settingsService.getWhiteListProductUrl());
-  }
-
-  @NotNull
-  private static String getFUSWhiteListContent(@NotNull String userAgent, @Nullable String serviceUrl) throws EventLogWhitelistLoadException {
-    if (isEmptyOrSpaces(serviceUrl)) {
-      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_SERVICE_URL);
-    }
-
-    try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
-         CloseableHttpResponse response = client.execute(new HttpGet(serviceUrl))) {
-      StatusLine statusLine = response.getStatusLine();
-      int code = statusLine != null ? statusLine.getStatusCode() : -1;
-      if (code != HttpStatus.SC_OK) {
-        throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.UNREACHABLE_SERVICE, code);
-      }
-
-      HttpEntity entity = response.getEntity();
-      String content = entity != null ? EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8) : null;
-      if (content == null) {
-        throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_RESPONSE_BODY);
-      }
-      return content;
-    }
-    catch (IOException e) {
-      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.ERROR_ON_LOAD, e);
-    }
-  }
-
-  private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
-    if (!isEmptyOrSpaces(serviceUrl)) {
-      try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
-           CloseableHttpResponse response = client.execute(new HttpHead(serviceUrl))) {
-        Header[] headers = response.getHeaders(HttpHeaders.LAST_MODIFIED);
-        return Stream.of(headers).
-          map(header -> header.getValue()).
-          filter(Objects::nonNull).
-          map(value -> DateUtils.parseDate(value).getTime()).
-          max(Long::compareTo).orElse(0L);
-      }
-      catch (IOException e) {
-        //LOG.info(e);
-      }
-    }
-    return 0;
-  }
 
   @NotNull
   public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogWhitelistParseException {
@@ -140,41 +56,6 @@ public class FUStatisticsWhiteListGroupsService {
     }
   }
 
-  @NotNull
-  public static FUSWhitelist parseApprovedGroups(@Nullable String content) throws EventLogWhitelistParseException {
-    WLGroups groups = parseWhiteListContent(content);
-    Map<String, GroupFilterCondition> groupToCondition = new HashMap<>();
-    for (WLGroup group : groups.groups) {
-      if (group.isValid()) {
-        groupToCondition.put(group.id, toCondition(group.builds, group.versions));
-      }
-    }
-    return FUSWhitelist.create(groupToCondition);
-  }
-
-  @NotNull
-  private static GroupFilterCondition toCondition(@Nullable List<WLBuild> builds, @Nullable List<WLVersion> versions) {
-    final List<BuildRange> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds) : emptyList();
-    final List<VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
-    return new GroupFilterCondition(buildRanges, versionRanges);
-  }
-
-  private static List<BuildRange> toBuildRanges(@NotNull List<WLBuild> builds) {
-    List<BuildRange> result = new ArrayList<>();
-    for (WLBuild build : builds) {
-      result.add(BuildRange.create(build.from, build.to));
-    }
-    return result;
-  }
-
-  private static List<VersionRange> toVersionRanges(@NotNull List<WLVersion> versions) {
-    List<VersionRange> result = new ArrayList<>();
-    for (WLVersion version : versions) {
-      result.add(VersionRange.create(version.from, version.to));
-    }
-    return result;
-  }
-
   public static class WLGroups {
     @NotNull
     public final ArrayList<WLGroup> groups = new ArrayList<>();
@@ -191,20 +72,6 @@ public class FUStatisticsWhiteListGroupsService {
     public final ArrayList<WLVersion> versions = new ArrayList<>();
     @Nullable
     public WLRule rules;
-
-    public boolean accepts(EventLogBuild current) {
-      if (!isValid()) {
-        return false;
-      }
-      final boolean hasBuilds = builds != null && !builds.isEmpty();
-      return !hasBuilds || builds.stream().anyMatch(build -> build.contains(current));
-    }
-
-    private boolean isValid() {
-      final boolean hasBuilds = builds != null && !builds.isEmpty();
-      final boolean hasVersions = versions != null && !versions.isEmpty();
-      return isNotEmpty(id) && (hasBuilds || hasVersions);
-    }
   }
 
   public static class WLVersion {
@@ -224,20 +91,8 @@ public class FUStatisticsWhiteListGroupsService {
     @Nullable public Map<String, String> regexps;
   }
 
-  private static class WLBuild {
+  public static class WLBuild {
     public String from;
     public String to;
-
-    public boolean contains(EventLogBuild build) {
-      // toBuild or fromBuild == null when to or from border isn't set
-      EventLogBuild toBuild = EventLogBuild.fromString(to);
-      EventLogBuild fromBuild = EventLogBuild.fromString(from);
-
-      if (toBuild == null && fromBuild == null) {
-        return false;
-      }
-      return (toBuild == null || toBuild.compareTo(build) > 0) &&
-             (fromBuild == null || fromBuild.compareTo(build) <= 0);
-    }
   }
 }

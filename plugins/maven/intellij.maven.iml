@@ -86,6 +86,7 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.maven.model" exported="" />
+    <orderEntry type="library" name="commons-cli" level="project" />
   </component>
   <component name="copyright">
     <Base>

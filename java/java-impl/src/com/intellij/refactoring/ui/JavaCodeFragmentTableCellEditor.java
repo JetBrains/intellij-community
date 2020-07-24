@@ -16,8 +16,8 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase {
 
   public JavaCodeFragmentTableCellEditor(final Project project) {
-    super(project, StdFileTypes.JAVA);
+    super(project, JavaFileType.INSTANCE);
   }
 
   @Override

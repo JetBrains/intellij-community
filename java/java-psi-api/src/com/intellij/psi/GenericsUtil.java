@@ -321,7 +321,7 @@ public class GenericsUtil {
         if (type instanceof PsiWildcardType) {
           type = ((PsiWildcardType)type).getBound();
         }
-        return type != null ? type.createArrayType() : arrayType;
+        return type != null ? type.createArrayType().annotate(arrayType.getAnnotationProvider()) : arrayType;
       }
 
       @Override

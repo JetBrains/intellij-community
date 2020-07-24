@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import git4idea.commands.GitHandler
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -72,7 +73,16 @@ sealed class GitExecutable {
     }
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
-      // Handling 'withNoTty' is not needed, as tty can't leak into WSL executable
+      if (withNoTty) {
+        val executablePath = commandLine.exePath
+        commandLine.exePath = "setsid"
+        if (Registry.`is`("git.use.setsid.wait.for.wsl.ssh")) {
+          commandLine.parametersList.prependAll("-w", executablePath)
+        }
+        else {
+          commandLine.parametersList.prependAll(executablePath)
+        }
+      }
 
       // TODO: check that executable exists
       //var executable = exePath

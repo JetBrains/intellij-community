@@ -19,21 +19,25 @@ import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  @NonNls public static final String USERS = "users";
-  @NonNls public static final String USERS_IDS = "users-ids";
+  @NonNls private static final String USERS = "users";
+  @NonNls private static final String USERS_IDS = "users-ids";
   @NotNull private final UserIndexer myUserIndexer;
 
   public VcsLogUserIndex(@NotNull StorageId storageId,
@@ -61,8 +65,8 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
                                            storageId.getVersion());
   }
 
-  public TIntHashSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
-    Set<Integer> ids = new HashSet<>();
+  public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
+    IntSet ids = new IntOpenHashSet();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
     }

@@ -1,10 +1,13 @@
 package com.intellij.workspace.ide
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.project.isDirectoryBased
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.VirtualFileUrlManager
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -82,6 +85,7 @@ data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
                                    val externalSystemId: String,
                                    val storedExternally: Boolean) : EntitySource
 
+fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
 /**
  * Represents entities which are added to the model automatically and shouldn't be persisted
  */

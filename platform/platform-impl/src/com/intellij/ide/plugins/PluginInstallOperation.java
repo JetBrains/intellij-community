@@ -312,7 +312,7 @@ public class PluginInstallOperation {
     if (pluginFromMarketplace == null) {
       return pluginFromCustomRepos;
     }
-    if (StringUtil.compareVersionNumbers(pluginFromCustomRepos.getVersion(), pluginFromMarketplace.getVersion()) > 0) {
+    if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(), pluginFromMarketplace) > 0) {
       return pluginFromCustomRepos;
     } else {
       return pluginFromMarketplace;

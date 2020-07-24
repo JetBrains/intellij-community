@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
@@ -15,6 +15,7 @@ import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -23,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -425,9 +425,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
                                                                              @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
-    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", StdFileTypes.JAVA));
+    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", StdFileTypes.JAVA));
+      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText, "", JavaFileType.INSTANCE));
     }
     return childrenRenderer;
   }
@@ -438,7 +438,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       ArrayList<EnumerationChildrenRenderer.ChildInfo> childrenList = new ArrayList<>(expressions.length);
       for (String[] expression : expressions) {
         childrenList.add(new EnumerationChildrenRenderer.ChildInfo(
-          expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA), false));
+          expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", JavaFileType.INSTANCE), false));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -462,11 +462,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         return evaluated + postfix;
       }
     };
-    labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", StdFileTypes.JAVA));
+    labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     return labelRenderer;
   }
 
-  private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, XValuePresentationProvider {
+  private static class MapEntryLabelRenderer extends ReferenceRenderer
+    implements ValueLabelRenderer, XValuePresentationProvider, OnDemandRenderer {
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");
 
@@ -475,12 +476,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     private MapEntryLabelRenderer() {
       super("java.util.Map$Entry");
-      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", StdFileTypes.JAVA));
-      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", StdFileTypes.JAVA));
+      myKeyExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getKey()", "", JavaFileType.INSTANCE));
+      myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", JavaFileType.INSTANCE));
     }
 
     @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+      if (!isShowValue(descriptor, evaluationContext)) {
+        return "";
+      }
       String keyText = calcExpression(evaluationContext, descriptor, myKeyExpression, listener, KEY_DESCRIPTOR);
       String valueText = calcExpression(evaluationContext, descriptor, myValueExpression, listener, VALUE_DESCRIPTOR);
       return keyText + " -> " + valueText;
@@ -511,6 +515,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     @Override
     public String getUniqueId() {
       return "MapEntry renderer";
+    }
+
+    @NotNull
+    @Override
+    public String getLinkText() {
+      return JavaDebuggerBundle.message("message.node.evaluate");
     }
 
     private Value doEval(EvaluationContext evaluationContext, Value originalValue, MyCachedEvaluator cachedEvaluator)

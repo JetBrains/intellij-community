@@ -25,7 +25,7 @@ import java.util.Comparator;
 /**
  * Action for sorting items in a generic tree.
  *
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getSorters()
+ * @see TreeModel#getSorters()
  */
 public interface Sorter extends TreeAction {
   Sorter[] EMPTY_ARRAY = new Sorter[0];

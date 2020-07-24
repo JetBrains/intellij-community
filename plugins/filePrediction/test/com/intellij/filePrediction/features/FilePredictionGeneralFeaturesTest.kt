@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -25,7 +26,9 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
 
     val provider = FilePredictionGeneralFeatures()
-    val actual = provider.calculateFileFeatures(myFixture.project, nextFile.virtualFile, prevFile.virtualFile)
+    val actual = provider.calculateFileFeatures(
+      myFixture.project, nextFile.virtualFile, prevFile.virtualFile, FAILED_COMPUTATION
+    )
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {
       assertTrue("Cannot find feature '${feature.key}' in $actual", actual.containsKey(feature.key))
@@ -38,7 +41,9 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     configurator.configure(myFixture.project, myModule)
 
     val provider = FilePredictionGeneralFeatures()
-    val actual = provider.calculateFileFeatures(myFixture.project, nextFile.virtualFile, null)
+    val actual = provider.calculateFileFeatures(
+      myFixture.project, nextFile.virtualFile, null, FAILED_COMPUTATION
+    )
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {
       assertTrue("Cannot find feature '${feature.key}' in $actual", actual.containsKey(feature.key))

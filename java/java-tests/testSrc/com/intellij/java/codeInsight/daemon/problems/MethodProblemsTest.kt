@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.siyeh.ig.psiutils.TypeUtils
@@ -312,6 +313,66 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
         typeElement.replace(newTypeElement)
       }
       assertTrue(hasReportedProblems<PsiClass>(targetClass, refClass))
+    }
+  }
+
+  fun testImmediateInstanceMethodCall() {
+    val aClass = myFixture.addClass("""
+      package bar;
+      
+      public class A {
+        public void foo(int i) {}
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package bar;
+      
+      public class Usage {
+        void test() {
+          new A().foo(42);
+        }
+      }
+    """.trimIndent())
+
+    doTest(aClass) {
+      changeMethod(aClass) { method, _ ->
+        method.parameterList.getParameter(0)?.delete()
+      }
+      val reportedElements = ProjectProblemPassUtils.getInlays(myFixture.editor).keys
+      assertSize(1, reportedElements)
+      assertTrue(reportedElements.first() is PsiMethod)
+    }
+  }
+
+  fun testImmediateNestedClassInstanceMethodCall() {
+    val aClass = myFixture.addClass("""
+      package bar;
+      
+      public class A {
+        public static class Nested {
+          public void foo(int i) {}
+        }
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package bar;
+      
+      public class Usage {
+        void test() {
+          (new A.Nested()).foo(42);
+        }
+      }
+    """.trimIndent())
+
+    doTest(aClass) {
+      changeMethod(aClass.allInnerClasses[0]) { method, _ ->
+        method.parameterList.getParameter(0)?.delete()
+      }
+      val reportedElements = ProjectProblemPassUtils.getInlays(myFixture.editor).keys
+      assertSize(1, reportedElements)
+      assertTrue(reportedElements.first() is PsiMethod)
     }
   }
 

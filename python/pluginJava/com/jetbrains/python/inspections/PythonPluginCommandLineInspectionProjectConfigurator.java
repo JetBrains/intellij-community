@@ -13,11 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.facet.PythonFacetType;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUpdater;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -26,6 +28,16 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
+  @Override
+  public @NotNull String getName() {
+    return "python";
+  }
+
+  @Override
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
+    return PyBundle.message("py.commandline.configure");
+  }
+
   @Override
   public boolean isApplicable(@NotNull ConfiguratorContext context) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();

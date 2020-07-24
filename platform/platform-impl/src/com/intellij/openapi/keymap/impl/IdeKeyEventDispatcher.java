@@ -50,7 +50,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.KeyboardLayoutUtil;
+import com.intellij.util.text.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -132,7 +132,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
    */
   public boolean dispatchKeyEvent(final KeyEvent e){
     if (myDisposed) return false;
-    KeyboardLayoutUtil.storeAsciiForChar(e);
+
+    if (e.getID() == KeyEvent.KEY_PRESSED) {
+      storeAsciiForChar(e);
+    }
 
     if (e.isConsumed()) {
       return false;
@@ -238,6 +241,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     finally {
       myContext.clear();
     }
+  }
+
+  private static void storeAsciiForChar(@NotNull KeyEvent e) {
+    char aChar = e.getKeyChar();
+    if (aChar == KeyEvent.CHAR_UNDEFINED) return;
+    int mods = e.getModifiers();
+    if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
+
+    KeyboardLayoutUtil.storeAsciiForChar(e.getKeyCode(), aChar, KeyEvent.VK_A, KeyEvent.VK_Z);
   }
 
   private static boolean isSpeedSearchEditing(KeyEvent e) {
@@ -649,8 +661,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-      if (component != null && !component.isShowing()) {
+      if (isContextComponentNotVisible(actionEvent)) {
         logTimeMillis(startedAt, action);
         return true;
       }
@@ -679,6 +690,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
+  }
+
+  private static boolean isContextComponentNotVisible(AnActionEvent actionEvent) {
+    Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return component != null && !component.isShowing();
   }
 
   private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,

@@ -11,7 +11,6 @@ import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.util.concurrent.FastThreadLocalThread
 import io.netty.util.internal.logging.InternalLoggerFactory
 import java.net.InetAddress
@@ -74,7 +73,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       catch (e: IllegalStateException) {
         logger<BuiltInServer>().warn(e)
         @Suppress("DEPRECATION")
-        (OioEventLoopGroup(1, threadFactory))
+        (io.netty.channel.oio.OioEventLoopGroup(1, threadFactory))
       }
 
       return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler)
@@ -136,9 +135,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
         channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
         return (future.channel().localAddress() as InetSocketAddress).port
       }
-      ExceptionUtil.rethrowAll(future.cause())
-      // unreachable
-      return -1
+      throw future.cause()
     }
 
     @JvmStatic

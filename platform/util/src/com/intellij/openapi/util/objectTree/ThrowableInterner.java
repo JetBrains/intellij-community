@@ -3,16 +3,18 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Please don't look, there's nothing interesting here.
@@ -109,6 +111,22 @@ public class ThrowableInterner {
     }
     // obsolete jdk
     return backtrace instanceof Object[] && ((Object[])backtrace).length == BACKTRACE_INFO_LENGTH ? (Object[])backtrace : null;
+  }
+
+  public static void clearBacktrace(@NotNull Throwable throwable) {
+    try {
+      throwable.setStackTrace(new StackTraceElement[0]);
+      if (BACKTRACE_FIELD != null) {
+        BACKTRACE_FIELD.set(throwable, null);
+      }
+      else if (BACKTRACE_FIELD_OFFSET != UNKNOWN) {
+        AtomicFieldUpdater.getUnsafe().putObject(throwable, (long)BACKTRACE_FIELD_OFFSET, null);
+      }
+    }
+    catch (Throwable e) {
+      //noinspection ConstantConditions
+      ExceptionUtil.rethrowAllAsUnchecked(e);
+    }
   }
 
   @NotNull

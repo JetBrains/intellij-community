@@ -34,11 +34,12 @@ public class DfaValueFactory {
   private final boolean myUnknownMembersAreNullable;
   private final @NotNull FieldChecker myFieldChecker;
   private final @NotNull Project myProject;
+  private @Nullable DfaVariableValue myAssertionDisabled;
 
   /**
    * @param project a project in which context the analysis is performed
    * @param context an item to analyze (code-block, expression, class)
-   * @param unknownMembersAreNullable
+   * @param unknownMembersAreNullable if true, unknown (non-annotated members) are assumed to be nullable
    */
   public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context, boolean unknownMembersAreNullable) {
     myProject = project;
@@ -74,6 +75,15 @@ public class DfaValueFactory {
   @NotNull
   public DfaTypeValue getObjectType(@Nullable PsiType type, @NotNull Nullability nullability) {
     return fromDfType(DfTypes.typedObject(type, nullability));
+  }
+
+  public @Nullable DfaVariableValue getAssertionDisabled() {
+    return myAssertionDisabled;
+  }
+
+  void setAssertionDisabled(@NotNull DfaVariableValue value) {
+    assert myAssertionDisabled == null;
+    myAssertionDisabled = value;
   }
 
   int registerValue(DfaValue value) {
@@ -163,8 +173,7 @@ public class DfaValueFactory {
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
         return getConstant(variable, type);
       }
-      PsiExpression initializer =
-        variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+      PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
       if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
         return getNull();

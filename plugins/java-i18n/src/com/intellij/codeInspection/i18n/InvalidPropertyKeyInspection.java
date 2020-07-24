@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -122,7 +123,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           return;
         }
-        final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(PsiFieldImpl.getDetachedInitializer(field));
         String key = computeStringValue(initializer);
         visitPropertyKeyAnnotationParameter(expression, key,
                                             field.getContainingFile() == expression.getContainingFile() ? initializer : expression);

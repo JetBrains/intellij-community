@@ -20,7 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
     final PsiLocalVariable newVariable = extractDeclared(declaration);
     if (newVariable != null) {
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(newVariable.getInitializer());
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
 
       if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
         for (PsiReference reference : ReferencesSearch.search(newVariable).findAll()) {

@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
    *
    * @return True if the space must be preserved (xml:space='preserve'), false if the attribute
    *         contains 'default'. If the attribute is not defined, return the current value.
-   */ 
+   */
   private static boolean shouldPreserveSpace(ASTNode node, boolean defaultValue) {
     if (node.getPsi() instanceof XmlTag) {
       XmlTag tag = (XmlTag)node.getPsi();
@@ -82,7 +83,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
     return defaultValue;
   }
-  
+
   public boolean isPreserveSpace() {
     return myPreserveSpace;
   }
@@ -207,7 +208,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     else if (!isBuildIndentsOnly()) {
       myInjectedBlockBuilder.addInjectedLanguageBlockWrapper(result, child, indent, 0, null);
     }
-    
+
     return child;
   }
 
@@ -279,13 +280,25 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       );
     }
     else {
-      result.add(createSimpleChild(child, indent, wrap, alignment));
+      result.add(createSimpleChild(child, indent, wrap, alignment, null));
     }
   }
 
-
+  /** @deprecated use and override {@code createSimpleChild } overload with {@code range } provided */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   protected XmlBlock createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
-    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace());
+    return null;
+  }
+
+  protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable TextRange range) {
+    XmlBlock blockFromDeprecatedCall = createSimpleChild(child, indent, wrap, alignment);
+    if (blockFromDeprecatedCall != null) {
+      return blockFromDeprecatedCall;
+    }
+    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, range, isPreserveSpace());
   }
 
   protected XmlTagBlock createTagBlock(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
@@ -294,7 +307,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   @Nullable
   protected XmlTag findXmlTagAt(final ASTNode child, final int startOffset) {
-    return null; 
+    return null;
   }
 
   @Nullable
@@ -351,7 +364,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public abstract boolean insertLineBreakBeforeTag();
-  
+
   public int getBlankLinesBeforeTag() {
     return insertLineBreakBeforeTag() ? 1 : 0;
   }
@@ -416,7 +429,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
     if (isBuildIndentsOnly()) return false;
-    
+
     if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
       return true;
     }

@@ -68,6 +68,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
@@ -83,6 +84,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
   private static final int MAX_POPUP_WIDTH = 650;
+  private static final int MAX_QUICK_DOC_CHARACTERS = 100_000;
 
   private final Alarm myAlarm;
   private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
@@ -123,8 +125,12 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     LaterInvocator.addModalityStateListener(entering -> {
       cancelProcessingAndCloseHint();
     }, this);
-    IdeEventQueue.getInstance().addActivityListener(() -> {
-      cancelCurrentProcessing();
+    IdeEventQueue.getInstance().addDispatcher(event -> {
+      int eventID = event.getID();
+      if (eventID == KeyEvent.KEY_PRESSED || eventID == KeyEvent.KEY_TYPED) {
+        cancelCurrentProcessing();
+      }
+      return false;
     }, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyActionListener());
   }
@@ -535,6 +541,9 @@ public final class EditorMouseHoverPopupManager implements Disposable {
             }).executeSynchronously();
             if (targetElement != null) {
               quickDocMessage = documentationManager.generateDocumentation(targetElement, element, true);
+              if (quickDocMessage != null && quickDocMessage.length() > MAX_QUICK_DOC_CHARACTERS) {
+                quickDocMessage = quickDocMessage.substring(0, MAX_QUICK_DOC_CHARACTERS);
+              }
             }
           }
         }

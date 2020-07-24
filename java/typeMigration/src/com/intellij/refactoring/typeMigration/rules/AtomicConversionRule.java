@@ -28,7 +28,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,7 @@ public class AtomicConversionRule extends TypeConversionRule {
     LOG.assertTrue(toTypeClass != null);
     final String qualifiedName = toTypeClass.getQualifiedName();
     if (context instanceof PsiParenthesizedExpression) {
-      context = ParenthesesUtils.stripParentheses((PsiExpression)context);
+      context = PsiUtil.skipParenthesizedExprDown((PsiExpression)context);
     }
     if (qualifiedName != null) {
       if (qualifiedName.equals(AtomicInteger.class.getName()) || qualifiedName.equals(AtomicLong.class.getName())) {
@@ -111,7 +110,7 @@ public class AtomicConversionRule extends TypeConversionRule {
                 final PsiExpression argument = result.getArgumentList().getExpressions()[0];
                 if (argument instanceof PsiPrefixExpression) {
                   final PsiExpression operand = ((PsiPrefixExpression)argument).getOperand();
-                  final PsiExpression striped = ParenthesesUtils.stripParentheses(operand);
+                  final PsiExpression striped = PsiUtil.skipParenthesizedExprDown(operand);
                   if (striped != null && operand != striped) {
                     operand.replace(striped);
                   }

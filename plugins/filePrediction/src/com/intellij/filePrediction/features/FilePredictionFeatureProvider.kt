@@ -6,7 +6,6 @@ import com.intellij.filePrediction.FileFeaturesComputationResult
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 internal object FilePredictionFeaturesHelper {
@@ -18,24 +17,39 @@ internal object FilePredictionFeaturesHelper {
                             prevFile: VirtualFile?): FileFeaturesComputationResult {
     val start = System.currentTimeMillis()
     val result = HashMap<String, FilePredictionFeature>()
-    val isInRef = refs.contains(newFile)
-    if (isInRef != ThreeState.UNSURE) {
-      result["in_ref"] = FilePredictionFeature.binary(isInRef == ThreeState.YES)
-    }
-
-    val providers = EP_NAME.extensionList
-    for (provider in providers) {
-      val prefix = if (provider.getName().isNotEmpty()) provider.getName() + "_" else ""
-      val features = provider.calculateFileFeatures(project, newFile, prevFile).mapKeys { prefix + it.key }
+    for (provider in EP_NAME.extensionList) {
+      val prefix = calculateProviderPrefix(provider)
+      val features = provider.calculateFileFeatures(project, newFile, prevFile, refs).mapKeys { prefix + it.key }
       result.putAll(features)
     }
     return FileFeaturesComputationResult(result, start)
   }
+
+  fun getFeatureCodes(): Map<String, Int> {
+    val codes = hashMapOf<String, Int>()
+    for ((index, provider) in EP_NAME.extensionList.withIndex()) {
+      val prefix = calculateProviderPrefix(provider)
+      for ((featureIndex, feature) in provider.getFeatures().withIndex()) {
+        val key = prefix + feature
+        val value = 100 * index + featureIndex
+        codes[key] = value
+      }
+    }
+    return codes
+  }
+
+  private fun calculateProviderPrefix(provider: FilePredictionFeatureProvider) =
+    if (provider.getName().isNotEmpty()) provider.getName() + "_" else ""
 }
 
 @ApiStatus.Internal
 interface FilePredictionFeatureProvider {
   fun getName(): String
 
-  fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature>
+  fun getFeatures(): Array<String>
+
+  fun calculateFileFeatures(project: Project,
+                            newFile: VirtualFile,
+                            prevFile: VirtualFile?,
+                            refs: ExternalReferencesResult): Map<String, FilePredictionFeature>
 }

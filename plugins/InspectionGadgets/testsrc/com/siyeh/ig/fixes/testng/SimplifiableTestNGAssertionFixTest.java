@@ -17,7 +17,7 @@ package com.siyeh.ig.fixes.testng;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection;
+import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
 
 public class SimplifiableTestNGAssertionFixTest extends IGQuickFixesTestCase {
 
@@ -34,7 +34,7 @@ public class SimplifiableTestNGAssertionFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SimplifiedTestNGAssertionInspection());
+    myFixture.enableInspections(new SimplifiableAssertionInspection());
     myRelativePath = "testng/simplifiable_testng_assertion";
     myDefaultHint = InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
 

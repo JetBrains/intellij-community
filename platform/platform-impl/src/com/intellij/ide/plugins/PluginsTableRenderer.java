@@ -100,8 +100,8 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myCategory.clear();
       myCategory.setOpaque(false);
       Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
-      SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
-                                                           UIUtil.getListForeground(isSelected),
+      SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected, hasFocus),
+                                                           UIUtil.getListForeground(isSelected, hasFocus),
                                                            JBColor.RED,
                                                            SimpleTextAttributes.STYLE_PLAIN);
       Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
@@ -109,7 +109,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
       if (category != null) {
         if (query instanceof String) {
-          SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);
         }
         else {
           myCategory.append(category);
@@ -193,7 +193,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (!Objects.equals(initialNameForeground, myName.getForeground())) {
           attr = attr.derive(attr.getStyle(), myName.getForeground(), attr.getBgColor(), attr.getWaveColor());
         }
-        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);
       }
       else {
         myName.append(pluginName);

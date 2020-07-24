@@ -16,9 +16,9 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -222,7 +222,8 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
             if (stream != null) {
               try {
                 // todo: Remote file can be XmlPropertiesFile
-                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
+                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
+                                                                                                            PropertiesFileType.INSTANCE);
                 result = new HashMap<>();
                 for (final IProperty property : propFile.getProperties()) {
                   result.put(property.getUnescapedKey(), property.getUnescapedValue());

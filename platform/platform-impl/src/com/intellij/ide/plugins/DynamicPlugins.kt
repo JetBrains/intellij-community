@@ -39,10 +39,13 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
@@ -53,6 +56,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import java.awt.Window
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
@@ -136,7 +140,7 @@ object DynamicPlugins {
     }
 
     if (descriptor.isRequireRestart) {
-      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart";
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
     }
 
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
@@ -150,7 +154,7 @@ object DynamicPlugins {
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
-      if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId) && !descriptor.useIdeaClassLoader) {
+      if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId) && !descriptor.isUseIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           val loader = baseDescriptor ?: descriptor
@@ -394,7 +398,7 @@ object DynamicPlugins {
             true
           }
 
-          if (!pluginDescriptor.useIdeaClassLoader) {
+          if (!pluginDescriptor.isUseIdeaClassLoader) {
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
               Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
@@ -422,6 +426,10 @@ object DynamicPlugins {
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
+          val projectManager = ProjectManagerEx.getInstanceExIfCreated()
+          if (projectManager != null && projectManager.isDefaultProjectInitialized) {
+            Disposer.dispose(projectManager.defaultProject)
+          }
 
           if (disable) {
             // update list of disabled plugins
@@ -445,6 +453,7 @@ object DynamicPlugins {
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+      clearTemporaryLostComponent()
 
       if (ApplicationManager.getApplication().isUnitTestMode && loadedPluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         return true
@@ -485,14 +494,14 @@ object DynamicPlugins {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
-    val openProjects = ProjectUtil.getOpenProjects()
+    val openedProjects = ProjectUtil.getOpenProjects().asList()
     val appExtensionArea = application.extensionArea
     val unloadListeners = mutableListOf<Runnable>()
     pluginDescriptor.extensions?.let { extensions ->
       for ((epName, epExtensions) in extensions) {
         val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
         if (!isAppLevelEp) {
-          for (project in openProjects) {
+          for (project in openedProjects) {
             val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
             if (!isProjectLevelEp) {
               for (module in ModuleManager.getInstance(project).modules) {
@@ -505,7 +514,7 @@ object DynamicPlugins {
 
       // todo clear extension cache granularly
       appExtensionArea.clearUserCache()
-      for (project in openProjects) {
+      for (project in openedProjects) {
         (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
       }
     }
@@ -515,16 +524,16 @@ object DynamicPlugins {
     }
 
     // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
-    processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.resetExtensionPoints(points) }
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.resetExtensionPoints(points) }
     // unregister plugin extension points
-    processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.unregisterExtensionPoints(points) }
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
     val appMessageBus = application.messageBus as MessageBusEx
     appMessageBus.unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
-    for (project in openProjects) {
+    for (project in openedProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
       (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
 
@@ -540,7 +549,7 @@ object DynamicPlugins {
   }
 
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
-                                            projects: Array<Project>,
+                                            projects: List<Project>,
                                             processor: (points: List<ExtensionPointImpl<*>>, area: ExtensionsAreaImpl) -> Unit) {
     pluginDescriptor.appContainerDescriptor.extensionPoints?.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
@@ -652,5 +661,27 @@ object DynamicPlugins {
         callback.run()
       }
     })
+  }
+
+  private fun clearTemporaryLostComponent() {
+    try {
+      val clearMethod = Window::class.java.declaredMethods.find { it.name == "setTemporaryLostComponent" }
+      if (clearMethod == null) {
+        LOG.info("setTemporaryLostComponent method not found")
+        return
+      }
+      clearMethod.isAccessible = true
+      loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
+        val window = when(frame) {
+          is ProjectFrameHelper -> frame.frame
+          is Window -> frame
+          else -> continue@loop
+        }
+        clearMethod.invoke(window, null)
+      }
+    }
+    catch (e: Throwable) {
+      LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
   }
 }

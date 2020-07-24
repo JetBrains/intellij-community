@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.cache.impl;
 
+import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.search.IndexPattern;
-import com.intellij.util.indexing.IdDataConsumer;
 import gnu.trove.TObjectIntHashMap;
 
 public final class OccurrenceConsumer {

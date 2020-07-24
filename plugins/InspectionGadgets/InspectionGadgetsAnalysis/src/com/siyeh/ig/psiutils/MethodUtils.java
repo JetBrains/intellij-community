@@ -311,7 +311,7 @@ public class MethodUtils {
       }
       if (statement instanceof PsiReturnStatement) {
         final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
-        final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+        final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
         if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
           return true;
         }

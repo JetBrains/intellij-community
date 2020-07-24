@@ -234,7 +234,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         twoColumnRow(
           {
             label(message("label.text.antialiasing.scope.ide"))
-            comboBox(DefaultComboBoxModel(AntialiasingType.values()), settings::ideAAType, renderer = AAListCellRenderer(false))
+            val ideAAOptions =
+              if (!AntialiasingType.canUseSubpixelAAForIDE())
+                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+              else
+                AntialiasingType.values()
+            comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
               .shouldUpdateLaF()
               .onApply {
                 for (w in Window.getWindows()) {

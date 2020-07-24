@@ -2,7 +2,6 @@
 package com.intellij.workspace.api.pstorage.indices
 
 import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
@@ -13,40 +12,56 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex private constructor(
-  internal val index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
+  internal open val index: BidirectionalMultiMap<VirtualFileUrl, PId>
 ) {
-  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>())
+  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, PId>())
 
-  internal fun getVirtualFiles(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
+  internal fun getVirtualFiles(id: PId): Set<VirtualFileUrl>? =
     index.getKeys(id)
 
-  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>> {
-    val copy = BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>()
-    index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
-    return copy
-  }
-
   class MutableVirtualFileIndex private constructor(
-    index: BidirectionalMultiMap<VirtualFileUrl, PId<out TypedEntity>>
+    override var index: BidirectionalMultiMap<VirtualFileUrl, PId>
   ) : VirtualFileIndex(index) {
-    internal fun index(id: PId<out TypedEntity>, virtualFileUrls: List<VirtualFileUrl>? = null) {
+
+    private var freezed = true
+
+    internal fun index(id: PId, virtualFileUrls: List<VirtualFileUrl>? = null) {
+      startWrite()
       index.removeValue(id)
       if (virtualFileUrls == null) return
       virtualFileUrls.forEach { index.put(it, id) }
     }
 
-    fun toImmutable(): VirtualFileIndex = VirtualFileIndex(copyIndex())
+    private fun startWrite() {
+      if (!freezed) return
+      freezed = false
+      index = copyIndex()
+    }
+
+    private fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId> = index.copy()
+
+    fun toImmutable(): VirtualFileIndex {
+      freezed = true
+      return VirtualFileIndex(index)
+    }
 
     companion object {
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.copyIndex())
+      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.index)
     }
   }
+}
+
+internal fun <A, B> BidirectionalMultiMap<A, B>.copy():BidirectionalMultiMap<A, B> {
+  val copy = BidirectionalMultiMap<A, B>()
+  this.keys.forEach { key -> this.getValues(key).forEach { value -> copy.put(key, value) } }
+  return copy
 }
 
 //---------------------------------------------------------------------
 class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as VirtualFileUrl
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl) {
@@ -56,14 +71,15 @@ class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : Rea
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, listOf(value))
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, listOf(value))
   }
 }
 
 //---------------------------------------------------------------------
 class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl?> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl?
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as VirtualFileUrl?
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl?) {
@@ -73,14 +89,15 @@ class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let{ listOf(value) })
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value?.let { listOf(value) })
   }
 }
 
 //---------------------------------------------------------------------
 class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
   override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as List<VirtualFileUrl>
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as List<VirtualFileUrl>
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: List<VirtualFileUrl>) {
@@ -90,6 +107,6 @@ class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> :
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, value)
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value)
   }
 }

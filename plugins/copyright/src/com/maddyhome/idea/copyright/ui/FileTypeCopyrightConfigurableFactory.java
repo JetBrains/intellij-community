@@ -16,6 +16,8 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -31,10 +33,10 @@ public class FileTypeCopyrightConfigurableFactory {
     if (fileType.equals(StdFileTypes.JAVA)) {
       return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Package", "Before Imports", "Before Class"}, project);
     }
-    else if (fileType.equals(StdFileTypes.XML)) {
+    else if (fileType.equals(XmlFileType.INSTANCE)) {
       return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
     }
-    else if (fileType.equals(StdFileTypes.HTML)) {
+    else if (fileType.equals(HtmlFileType.INSTANCE)) {
       return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
     }
     else if (fileType.equals(StdFileTypes.JSP)) {

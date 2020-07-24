@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.Property
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
 @State(name = "GraziConfig", storages = [
   Storage(value = "grazi_global.xml", deprecated = true),
@@ -71,10 +72,12 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
      *
      * *NOTE: By default availableLanguages are not included into equals. Check for it manually.*
      */
-    val availableLanguages: Set<Lang> by lazy { enabledLanguages.filter { it.jLanguage != null }.toSet() }
+    val availableLanguages: Set<Lang> by lazy {
+      enabledLanguages.asSequence().filter { it.jLanguage != null }.toCollection(ObjectLinkedOpenHashSet())
+    }
 
     val missedLanguages: Set<Lang>
-      get() = enabledLanguages.filter { it.jLanguage == null }.toSet()
+      get() = enabledLanguages.asSequence().filter { it.jLanguage == null }.toCollection(ObjectLinkedOpenHashSet())
 
     override fun increment() = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 

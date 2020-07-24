@@ -26,16 +26,15 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
@@ -44,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -350,8 +350,7 @@ public final class TemplateState implements Disposable {
     myStarted = true;
 
     PsiFile file = getPsiFile();
-    myTemplate = substituteTemplate(Objects.requireNonNull(file), myEditor.getCaretModel().getOffset(), template);
-
+    myTemplate = template;
     myProcessor = processor;
 
     MyBasicUndoableAction undoableAction = new MyBasicUndoableAction(this, myDocument);
@@ -380,17 +379,6 @@ public final class TemplateState implements Disposable {
     LiveTemplateRunLogger.log(myProject, template, file.getLanguage());
 
     processAllExpressions(myTemplate);
-  }
-
-  @NotNull
-  private static TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template) {
-    for (TemplateSubstitutor substitutor : TemplateSubstitutor.EP_NAME.getExtensionList()) {
-      final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
-      if (substituted != null) {
-        template = substituted;
-      }
-    }
-    return template;
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
@@ -1109,6 +1097,10 @@ public final class TemplateState implements Disposable {
     return myDocument == null;
   }
 
+  public boolean isLastVariable() {
+    return getNextVariableNumber(getCurrentVariableNumber()) < 0;
+  }
+
   private int getNextVariableNumber(int currentVariableNumber) {
     for (int i = currentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
       if (checkIfTabStop(i)) {
@@ -1218,16 +1210,28 @@ public final class TemplateState implements Disposable {
   }
 
   private RangeHighlighter getSegmentHighlighter(int segmentNumber, boolean isSelected, boolean isEnd) {
-    final TextAttributes lvAttr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    TextAttributes attributes = isSelected ? lvAttr : new TextAttributes();
-    TextAttributes endAttributes = new TextAttributes();
+    boolean newStyle = Registry.is("live.templates.highlight.all.variables");
+    TextAttributesKey attributesKey = isEnd ? null :
+                                      isSelected ? EditorColors.LIVE_TEMPLATE_ATTRIBUTES :
+                                      newStyle ? EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT :
+                                      null;
 
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    RangeHighlighter segmentHighlighter = myEditor.getMarkupModel()
-      .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, isEnd ? endAttributes : attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighterEx segmentHighlighter = (RangeHighlighterEx)myEditor.getMarkupModel()
+      .addRangeHighlighter(attributesKey, start, end, HighlighterLayer.SELECTION - 1, HighlighterTargetArea.EXACT_RANGE);
     segmentHighlighter.setGreedyToLeft(true);
     segmentHighlighter.setGreedyToRight(true);
+
+    EditorColorsScheme scheme = myEditor.getColorsScheme();
+    TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
+    if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
+      TextAttributes clone = attributes.clone();
+      clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
+      clone.setBackgroundColor(scheme.getDefaultBackground());
+      segmentHighlighter.setTextAttributes(clone);
+    }
+
     return segmentHighlighter;
   }
 

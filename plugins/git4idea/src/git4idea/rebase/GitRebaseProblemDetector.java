@@ -27,7 +27,7 @@ import git4idea.commands.GitLineHandlerListener;
  * discarded while merging. In that case 'git rebase --skip' is used.
  * </p>
  * <p>
- * To use the detector add it as a {@link git4idea.commands.GitLineHandlerListener} to {@link git4idea.commands.GitLineHandler}
+ * To use the detector add it as a {@link GitLineHandlerListener} to {@link git4idea.commands.GitLineHandler}
  * </p>
  */
 public class GitRebaseProblemDetector implements GitLineHandlerListener {

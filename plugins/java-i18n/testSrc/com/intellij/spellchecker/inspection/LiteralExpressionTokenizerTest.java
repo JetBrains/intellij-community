@@ -46,7 +46,7 @@ public class LiteralExpressionTokenizerTest extends BasePlatformTestCase {
 
     @Override
     public void consume(TextRange range) {
-      myTokenTexts.add(myText.substring(range.getStartOffset(), range.getEndOffset()));
+      myTokenTexts.add(range.substring(myText));
     }
   }
 

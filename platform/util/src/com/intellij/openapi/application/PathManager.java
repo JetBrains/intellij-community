@@ -5,7 +5,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
@@ -548,13 +551,16 @@ public final class PathManager {
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
       PathManager.class,                               // module 'intellij.platform.util'
+      Strings.class,                                   // module 'intellij.platform.util.strings'
+      FList.class,                                     // module 'intellij.platform.util.collections'
+      MinusculeMatcher.class,                          // module 'intellij.platform.util.text.matching'
       com.intellij.openapi.util.SystemInfoRt.class,    // module 'intellij.platform.util.rt'
       com.intellij.util.lang.UrlClassLoader.class,     // module 'intellij.platform.util.classLoader'
       org.intellij.lang.annotations.Flow.class,        // jetbrains-annotations-java5
       org.jdom.Document.class,                         // jDOM
       org.apache.log4j.Appender.class,                 // Log4J
       gnu.trove.THashSet.class,                        // Trove
-      Object2IntMap.class,                            // fastutil
+      Object2IntMap.class,                             // fastutil
       com.sun.jna.TypeMapper.class,                    // JNA
       com.sun.jna.platform.FileUtils.class,            // JNA (jna-platform)
       org.apache.oro.text.regex.PatternMatcher.class,  // OROMatcher

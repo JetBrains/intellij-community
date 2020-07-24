@@ -22,8 +22,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +46,7 @@ public class RunContentExecutor implements Disposable {
   private String myTitle = "Output";
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
+  private boolean myFocusToolWindow = true;
   /**
    * User-provided console that has to be used instead of newly created
    */
@@ -94,6 +93,11 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
+  public RunContentExecutor withFocusToolWindow(boolean focusToolWindow) {
+    myFocusToolWindow = focusToolWindow;
+    return this;
+  }
+
   private ConsoleView createConsole() {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
     consoleBuilder.filters(myFilterList);
@@ -107,6 +111,8 @@ public class RunContentExecutor implements Disposable {
 
     final JComponent consolePanel = createConsolePanel(console, actions);
     RunContentDescriptor descriptor = new RunContentDescriptor(console, myProcess, consolePanel, myTitle);
+    descriptor.setActivateToolWindowWhenAdded(myActivateToolWindow);
+    descriptor.setAutoFocusContent(myFocusToolWindow);
 
     Disposer.register(descriptor, this);
     Disposer.register(descriptor, console);
@@ -116,11 +122,6 @@ public class RunContentExecutor implements Disposable {
     actions.add(new CloseAction(executor, descriptor, myProject));
 
     RunContentManager.getInstance(myProject).showRunContent(executor, descriptor);
-
-    if (myActivateToolWindow) {
-      activateToolWindow();
-    }
-
     return console;
   }
 
@@ -139,11 +140,6 @@ public class RunContentExecutor implements Disposable {
       });
     }
     myProcess.startNotify();
-  }
-
-  public void activateToolWindow() {
-    ApplicationManager.getApplication().invokeLater(
-      () -> ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null));
   }
 
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {

@@ -20,7 +20,7 @@ class ModuleStructureValidator {
   private static HashSet<String> pathAttributes = new HashSet<String>([
     "interface", "implementation", "class", "topic", "instance", "provider",
     "implements", "headlessImplementation", "serviceInterface", "serviceImplementation",
-    "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass",
+    "interfaceClass", "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass", "hostElementClass", "targetClass",
     "forClass", "className", "predicateClassName", "displayNameSupplierClassName", "preloaderClassName",
     "treeRenderer"])
 
@@ -29,19 +29,23 @@ class ModuleStructureValidator {
 
   private static HashSet<String> pathElements = new HashSet<String>(["interface-class", "implementation-class"])
   private static HashSet<String> predefinedTypes = new HashSet<String>(["java.lang.Object"])
+  private static HashSet<String> ignoreModules = new HashSet<String>(["intellij.java.testFramework", "intellij.platform.uast.tests"])
 
   private BuildContext buildContext
-  private MultiMap<String, String> moduleJars
-  private HashSet<String> moduleNames
-  private ArrayList<GString> errors
-  private ArrayList<GString> warnings
+  private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
+  private HashSet<String> moduleNames = new HashSet<String>()
+  private ArrayList<GString> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
-    this.moduleJars = moduleJars
-    this.moduleNames = new HashSet<String>(moduleJars.values())
-    this.errors = new ArrayList<>()
-    this.warnings = new ArrayList<>()
+    for (moduleJar in moduleJars.entrySet()) {
+      // Filter out jars with relative paths in name
+      if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
+        continue
+
+      this.moduleJars.put(moduleJar.key, moduleJar.value)
+      this.moduleNames.addAll(moduleJar.value)
+    }
   }
 
   void validate() {
@@ -51,19 +55,19 @@ class ModuleStructureValidator {
     buildContext.messages.info("Validating modules...")
     def visitedModules = new HashSet<JpsModule>()
     for (moduleName in moduleNames) {
+      if (ignoreModules.contains(moduleName)) {
+        continue
+      }
       validateModuleDependencies(visitedModules, buildContext.findModule(moduleName))
     }
 
     buildContext.messages.info("Validating xml descriptors...")
     validateXmlDescriptors()
 
-    if (warnings.isEmpty() && errors.isEmpty()) {
+    if (errors.isEmpty()) {
       buildContext.messages.info("Validation finished successfully")
     }
     else {
-      if (warnings.any()) {
-        buildContext.messages.warning("Validation warnings: \n" + warnings.join("\n"))
-      }
       if (errors.any()) {
         buildContext.messages.warning("Validation errors: \n" + errors.join("\n"))
       }
@@ -81,7 +85,7 @@ class ModuleStructureValidator {
     for (module in modulesInJars.keySet()) {
       def jars = modulesInJars.get(module)
       if (jars.size() > 1) {
-        warnings.add("Module '$module' contains in several JARs: " + jars.join("; "))
+        buildContext.messages.warning("Module '$module' contains in several JARs: " + jars.join("; "))
       }
     }
   }
@@ -97,6 +101,7 @@ class ModuleStructureValidator {
         // Skip test dependencies
         def role = dependency.container.getChild(JpsJavaDependencyExtensionRole.INSTANCE)
         if (role != null && role.scope.name() == "TEST") continue
+        if (role != null && role.scope.name() == "RUNTIME") continue
 
         // Skip localization modules
         def dependantModule = ((JpsModuleDependency)dependency).module
@@ -152,7 +157,7 @@ class ModuleStructureValidator {
       if (descriptorFile == null) {
         def isOptional = (((Node)includeNode).children().any { it instanceof Node && ((Node)it).name() == fallbackName })
         if (isOptional) {
-          warnings.add("Can not find optional xml descriptor '$ref' referenced in '${descriptor.name}'")
+          buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
         }
         else {
           errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'")
@@ -217,7 +222,7 @@ class ModuleStructureValidator {
       }
 
       if (value.startsWith("com.") || value.startsWith("org.")) {
-        warnings.add(
+        buildContext.messages.warning(
           "Attribute '$name' contains qualified path '$value'. Add attribute into 'ModuleStructureValidator.pathAttributes' or 'ModuleStructureValidator.nonPathAttributes' collection.")
       }
     }

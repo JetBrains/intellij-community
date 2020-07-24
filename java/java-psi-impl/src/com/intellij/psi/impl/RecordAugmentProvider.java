@@ -18,9 +18,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAware {
-  @NotNull
   @Override
-  protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+  protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                    @NotNull Class<Psi> type,
+                                                                    @Nullable String nameHint) {
     if (element instanceof PsiExtensibleClass) {
       PsiExtensibleClass aClass = (PsiExtensibleClass)element;
       if (!aClass.isRecord()) return Collections.emptyList();

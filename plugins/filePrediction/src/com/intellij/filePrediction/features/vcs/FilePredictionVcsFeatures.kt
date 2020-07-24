@@ -3,6 +3,7 @@ package com.intellij.filePrediction.features.vcs
 
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
+import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -16,7 +17,16 @@ import kotlin.collections.HashMap
 class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
   override fun getName(): String = "vcs"
 
-  override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
+  override fun getFeatures(): Array<String> = arrayOf(
+    "prev_in_changelist",
+    "in_changelist",
+    "related_prob"
+  )
+
+  override fun calculateFileFeatures(project: Project,
+                                     newFile: VirtualFile,
+                                     prevFile: VirtualFile?,
+                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
     if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return emptyMap()
 
     val result = HashMap<String, FilePredictionFeature>()

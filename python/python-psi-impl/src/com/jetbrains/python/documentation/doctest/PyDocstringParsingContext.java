@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.documentation.doctest;
 
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -32,7 +32,7 @@ public class PyDocstringParsingContext extends ParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;
 
-  public PyDocstringParsingContext(final PsiBuilder builder,
+  public PyDocstringParsingContext(final SyntaxTreeBuilder builder,
                                    LanguageLevel languageLevel,
                                    StatementParsing.FUTURE futureFlag) {
     super(builder, languageLevel, futureFlag);

@@ -113,7 +113,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       Collection<HighlightInfo> infos = doHighlighting();
 
-      data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+      data.checkResult(getFile(), infos, getEditor().getDocument().getText(), filePath);
     }
     finally {
       PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
@@ -126,8 +126,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
       public HighlightTestInfo doTest() {
         String path = assertOneElement(filePaths);
         configureByFile(path);
-        ExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos,
-                                                                         getFile());
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
         if (checkSymbolNames) data.checkSymbolNames();
 
         checkHighlighting(data, composeLocalPath(path));

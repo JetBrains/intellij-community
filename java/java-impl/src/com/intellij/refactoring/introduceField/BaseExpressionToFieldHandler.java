@@ -19,9 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -234,12 +232,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement element = selectedExpr.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = selectedExpr;
     return element;
-  }
-
-  private static TextAttributes highlightAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
-                EditorColors.SEARCH_RESULT_ATTRIBUTES
-              );
   }
 
   @Nullable
@@ -828,7 +820,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-              highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
+              highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight,
+                                                       EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
               WindowManager
                 .getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
             }

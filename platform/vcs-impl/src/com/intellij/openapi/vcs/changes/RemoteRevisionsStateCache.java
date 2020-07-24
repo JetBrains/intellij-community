@@ -1,40 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.TreeDiffProvider;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+import static com.intellij.vcsUtil.VcsUtil.getVcsRootFor;
 
 public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   private final static long DISCRETE = 3600000;
   // All files that were checked during cache update and were not invalidated.
   // pair.First - if file is changed (true means changed)
   // pair.Second - vcs root where file belongs to
-  private final Map<String, Pair<Boolean, VcsRoot>> myChanged;
+  private final @NotNull Map<String, Pair<Boolean, VcsRoot>> myChanged = new HashMap<>();
 
   // All files that needs to be checked during next cache update, grouped by vcs root
-  private final MultiMap<VcsRoot, String> myQueries;
+  private final @NotNull MultiMap<VcsRoot, String> myQueries = new MultiMap<>();
   // All vcs roots for which cache update was performed with update timestamp
-  private final Map<VcsRoot, Long> myTs;
-  private final Object myLock;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final VcsConfiguration myVcsConfiguration;
+  private final @NotNull Map<VcsRoot, Long> myTs = new HashMap<>();
+  private final @NotNull Object myLock = new Object();
+  private final @NotNull Project myProject;
 
-  RemoteRevisionsStateCache(final Project project) {
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myChanged = new HashMap<>();
-    myQueries = new MultiMap<>();
-    myTs = new HashMap<>();
-    myLock = new Object();
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
+  RemoteRevisionsStateCache(@NotNull Project project) {
+    myProject = project;
   }
 
   @Override
@@ -44,11 +42,6 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
         myChanged.remove(path);
       }
     }
-  }
-
-  @Nullable
-  private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
 
   @Override
@@ -70,7 +63,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (!isSupportedFor(vcs)) return;
 
-    final VirtualFile root = getRootForPath(path);
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
     synchronized (myLock) {
       myQueries.putValue(new VcsRoot(vcs, root), path);
@@ -81,7 +74,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (!isSupportedFor(vcs)) return;
 
-    final VirtualFile root = getRootForPath(path);
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
     synchronized (myLock) {
       final VcsRoot key = new VcsRoot(vcs, root);
@@ -104,8 +97,8 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   @Override
   public boolean updateStep() {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<>();
-    final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
-                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000L : DISCRETE);
+    int interval = VcsConfiguration.getInstance(myProject).CHANGED_ON_SERVER_INTERVAL;
+    final long oldPoint = System.currentTimeMillis() - (interval > 0 ? interval * 60000L : DISCRETE);
 
     synchronized (myLock) {
       // just copies myQueries MultiMap to dirty MultiMap

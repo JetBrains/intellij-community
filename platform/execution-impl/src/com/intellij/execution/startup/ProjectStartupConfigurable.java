@@ -126,12 +126,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          selectAndAddConfiguration(button);
-        }
-      })
+      .setAddAction(this::selectAndAddConfiguration)
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -259,7 +254,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<>();
+    final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
     final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
@@ -269,7 +264,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
         }
       }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
-    for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
+    for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
         if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
@@ -279,7 +274,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     }
     final JBPopup popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(wrappers)
-      .setRenderer(SimpleListCellRenderer.<ChooseRunConfigurationPopup.ItemWrapper>create((label, value, index) -> {
+      .setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setIcon(value.getIcon());
         label.setText(value.getText());
       }))

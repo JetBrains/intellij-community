@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
 import com.intellij.cvsSupport2.errorHandling.InvalidModuleDescriptionException;
@@ -90,7 +91,8 @@ public class AdminWriterStoringRepositoryPath implements IAdminWriter, Repositor
 
   @Override
   public String getRepositoryPath(String repository) {
-    if (myRepositoryPath == null) throw new InvalidModuleDescriptionException(com.intellij.CvsBundle.message("error.mesage.cannot.expand.module", myModuleName), myCvsRoot);
+    if (myRepositoryPath == null) throw new InvalidModuleDescriptionException(
+      CvsBundle.message("error.mesage.cannot.expand.module", myModuleName), myCvsRoot);
     return myRepositoryPath;
   }
 

@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @see com.intellij.diff.DiffContentFactory
+ * @see DiffContentFactory
  */
 public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final String myTitle;

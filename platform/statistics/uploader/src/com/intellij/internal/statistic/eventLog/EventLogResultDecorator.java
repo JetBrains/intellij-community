@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public interface EventLogResultDecorator {
   default void onLogsLoaded(int localFiles) {}
 
-  void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content);
+  void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content, @NotNull String logPath);
 
   void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content);
 

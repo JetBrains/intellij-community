@@ -57,7 +57,7 @@ public final class IfsUtil {
    *
    * @param file File
    * @return true if file image is loaded.
-   * @throws java.io.IOException if image can not be loaded
+   * @throws IOException if image can not be loaded
    */
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);

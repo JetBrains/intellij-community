@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -341,12 +341,14 @@ class Foo {
   void testOtherContext() throws IOException {
     configureFromFileText("a.java", "class Foo { <caret>xxx }")
     assertInstanceOf(
-      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())),
+      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(),
+                                                                                                     getEditor()))),
       JavaCodeContextType.Declaration.class)
 
     configureFromFileText("a.txt", "class Foo { <caret>xxx }")
     assertInstanceOf(
-      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(myFixture.getFile(), getEditor().getCaretModel().getOffset())),
+      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(),
+                                                                                                     getEditor()))),
       EverywhereContextType.class)
   }
 

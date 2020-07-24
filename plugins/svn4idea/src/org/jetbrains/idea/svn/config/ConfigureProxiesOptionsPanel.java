@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private JButton myTestConnectionButton;
   private JTextField myPathToCertificatesField;
   private TextFieldWithBrowseButton myClientCertificatePathField;
-  private JList myRepositoriesList;
+  private JList<String> myRepositoriesList;
   private boolean myIsDefault;
 
   private final Runnable myValidator;
@@ -44,20 +45,20 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private final TestConnectionPerformer myTestConnectionPerformer;
 
   /**
-   * called on after repositories list had been recalculated by {@link org.jetbrains.idea.svn.config.PatternsListener}
+   * called on after repositories list had been recalculated by {@link PatternsListener}
    *
-   * @see org.jetbrains.idea.svn.config.RepositoryUrlsListener#onListChanged(java.util.List)
+   * @see RepositoryUrlsListener#onListChanged(List)
    */
   @Override
   public void onListChanged(final List<String> urls) {
-    final String value = (String) myRepositoriesList.getSelectedValue();
+    final String value = myRepositoriesList.getSelectedValue();
     myRepositoriesList.removeAll();
-    myRepositoriesList.setListData(urls.toArray());
+    myRepositoriesList.setListData(ArrayUtil.toStringArray(urls));
     // for keeping selection
     if (value != null) {
-      final ListModel model = myRepositoriesList.getModel();
+      final ListModel<String> model = myRepositoriesList.getModel();
       for (int i = 0; i < model.getSize(); i++) {
-        final String element = (String) model.getElementAt(i);
+        final String element = model.getElementAt(i);
         if (value.equals(element)) {
           myRepositoriesList.setSelectedIndex(i);
         }
@@ -68,10 +69,10 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   public List<String> getRepositories() {
-    final ListModel model = myRepositoriesList.getModel();
+    final ListModel<String> model = myRepositoriesList.getModel();
     final List<String> result = new ArrayList<>(model.getSize());
     for (int i = 0; i < model.getSize(); i++) {
-      result.add((String) model.getElementAt(i));
+      result.add(model.getElementAt(i));
     }
     return result;
   }
@@ -98,7 +99,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     putPatternsListener();
 
     myTestConnectionButton.addActionListener(e -> {
-      final String value = (String)myRepositoriesList.getSelectedValue();
+      final String value = myRepositoriesList.getSelectedValue();
       if ((value != null) && (myTestConnectionPerformer.enabled())) {
         myTestConnectionPerformer.execute(value);
       }

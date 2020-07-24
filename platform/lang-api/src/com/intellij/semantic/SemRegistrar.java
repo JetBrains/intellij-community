@@ -9,7 +9,7 @@ import com.intellij.util.NullableFunction;
 import java.util.Collection;
 
 /**
- * @see com.intellij.semantic.SemContributor#registerSemProviders(SemRegistrar, Project)
+ * @see SemContributor#registerSemProviders(SemRegistrar, Project)
  * @author peter
  */
 public interface SemRegistrar {

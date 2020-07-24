@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
-import com.intellij.workspace.api.VirtualFileUrl
+import com.intellij.workspace.api.*
 
 data class LegacyBridgeFileContainer(
   val urls: List<VirtualFileUrl>,
@@ -15,8 +15,8 @@ data class LegacyBridgeFileContainer(
 
 data class LegacyBridgeJarDirectory(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
 
-interface LegacyBridgeFilePointerProvider {
-  fun getAndCacheFilePointer(url: VirtualFileUrl): VirtualFilePointer
+internal interface LegacyBridgeFilePointerProvider {
+  fun getAndCacheFilePointer(url: VirtualFileUrl, scope: LegacyBridgeFilePointerScope): VirtualFilePointer
   fun getAndCacheFileContainer(description: LegacyBridgeFileContainer): VirtualFilePointerContainer
 
   companion object {
@@ -30,5 +30,24 @@ interface LegacyBridgeFilePointerProvider {
   }
 }
 
-fun LegacyBridgeFileContainer.getAndCacheVirtualFilePointerContainer(provider: LegacyBridgeFilePointerProvider) =
+internal fun LegacyBridgeFileContainer.getAndCacheVirtualFilePointerContainer(provider: LegacyBridgeFilePointerProvider) =
   provider.getAndCacheFileContainer(this)
+
+/**
+ * This class defines rules when virtual file url became invalid and virtual file pointer should be disposed
+ *   VirtualFilePointer will be disposed in case [checkUrl] returns true
+ *
+ * This class is designed to control a very limited scope of virtual file pointers. It means that it's not created for common cases and
+ *   it's probably already used everywhere it should be used.
+ */
+internal sealed class LegacyBridgeFilePointerScope(
+  val checkUrl: (TypedEntity, VirtualFileUrl) -> Boolean
+) {
+  object SourceRoot : LegacyBridgeFilePointerScope({ entity, url -> entity is SourceRootEntity && entity.url == url })
+  object ExcludedRoots : LegacyBridgeFilePointerScope({ entity, url -> entity is ContentRootEntity && url in entity.excludedUrls })
+  object ContentRoots : LegacyBridgeFilePointerScope({ entity, url -> entity is ContentRootEntity && entity.url == url })
+  class Module(val name: String) : LegacyBridgeFilePointerScope({ entity, _ -> entity is ModuleEntity && entity.name == name })
+
+  // Just any content root entity
+  object Test: LegacyBridgeFilePointerScope({ _, _ -> false })
+}

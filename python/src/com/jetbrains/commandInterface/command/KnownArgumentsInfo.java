@@ -55,7 +55,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
   private final int myMinArguments;
   /**
    * Maximum number of arguments this command accepts
-   * (number of required arguments + num of optional arguments or {@link java.lang.Integer#MAX_VALUE} if last argument may have infinite
+   * (number of required arguments + num of optional arguments or {@link Integer#MAX_VALUE} if last argument may have infinite
    * number of values)
    */
   private final int myMaxArguments;

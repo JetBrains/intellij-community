@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -13,12 +13,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
+import java.nio.file.Paths
 
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
-    val project = getProjectManager().loadAndOpenProject(projectPath)!!
+    val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath))
     try {
       val moduleManager = ModuleManager.getInstance(project)
       assertEquals(3, moduleManager.allModuleDescriptions.size)

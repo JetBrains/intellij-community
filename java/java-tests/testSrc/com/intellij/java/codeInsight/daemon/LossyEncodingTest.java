@@ -7,9 +7,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -70,7 +70,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testNativeConversion() {
-    configureByText(StdFileTypes.PROPERTIES, "a=<caret>v");
+    configureByText(PropertiesFileType.INSTANCE, "a=<caret>v");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     UIUtil.dispatchAllInvocationEvents();  //reload files
 

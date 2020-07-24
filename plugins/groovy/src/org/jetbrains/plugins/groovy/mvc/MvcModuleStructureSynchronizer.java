@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -417,11 +416,12 @@ public final class MvcModuleStructureSynchronizer {
   }
 
   private void updateProjectViewVisibility() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myProject.isDisposed()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensionList()) {
           Class<? extends ToolWindowFactory> factoryClass = ep.getFactoryClass(ep.getPluginDescriptor());
           if (factoryClass == null || !MvcToolWindowDescriptor.class.isAssignableFrom(factoryClass)) {
@@ -445,7 +445,7 @@ public final class MvcModuleStructureSynchronizer {
             Disposer.dispose(toolWindow.getContentManager());
           }
         }
-      });
+      }, myProject.getDisposed());
     });
   }
 }

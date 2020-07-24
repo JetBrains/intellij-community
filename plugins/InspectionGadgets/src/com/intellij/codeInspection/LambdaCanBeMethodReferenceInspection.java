@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -53,38 +54,39 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!HighlightingFeature.LAMBDA_EXPRESSIONS.isAvailable(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_8)) {
-          final PsiElement body = expression.getBody();
-          final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-          if (functionalInterfaceType == null) return;
-          MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
-          if (methodRefCandidate == null) return;
-          final PsiExpression candidate =
-            canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
-                                        methodRefCandidate.myExpression);
-          if (candidate == null) return;
-          ProblemHighlightType type;
-          if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
-            type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          }
-          else {
-            if (!isOnTheFly) return;
-            type = ProblemHighlightType.INFORMATION;
-          }
-          PsiElement element =
-            type == ProblemHighlightType.INFORMATION || InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)
-            ? expression
-            : candidate;
-          holder.registerProblem(holder.getManager().createProblemDescriptor(
-            element,
-            getDisplayName(),
-            type != ProblemHighlightType.INFORMATION,
-            type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
+        final PsiElement body = expression.getBody();
+        final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+        if (functionalInterfaceType == null) return;
+        MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
+        if (methodRefCandidate == null) return;
+        final PsiExpression candidate =
+          canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
+                                      methodRefCandidate.myExpression);
+        if (candidate == null) return;
+        ProblemHighlightType type;
+        if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
+          type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         }
+        else {
+          if (!isOnTheFly) return;
+          type = ProblemHighlightType.INFORMATION;
+        }
+        PsiElement element =
+          type == ProblemHighlightType.INFORMATION || InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)
+          ? expression
+          : candidate;
+        holder.registerProblem(holder.getManager().createProblemDescriptor(
+          element,
+          getDisplayName(),
+          type != ProblemHighlightType.INFORMATION,
+          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
       }
     };
   }
@@ -105,6 +107,8 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
                                                           @Nullable PsiElement context,
                                                           final PsiExpression methodRefCandidate) {
     if (functionalInterfaceType == null) return null;
+    // Do not suggest for annotated lambda, as annotation will be lost during the conversion
+    if (Stream.of(parameters).anyMatch(LambdaCanBeMethodReferenceInspection::hasAnnotation)) return null;
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
@@ -571,6 +575,16 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     else {
       return containingClass.getName();
     }
+  }
+
+  /**
+   * @param p variable to test
+   * @return true if given variable is annotated or its type is annotated
+   */
+  private static boolean hasAnnotation(PsiVariable p) {
+    if (p.getAnnotations().length > 0) return true;
+    PsiTypeElement typeElement = p.getTypeElement();
+    return typeElement != null && !typeElement.isInferredType() && PsiTypesUtil.hasTypeAnnotation(typeElement.getType());
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {

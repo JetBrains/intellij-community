@@ -53,7 +53,7 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
     return myProject;
   }
 
-  public void setProject(@NotNull Project project) {
+  public void setProject(Project project) {
     myProject = project;
   }
 

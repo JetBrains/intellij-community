@@ -42,7 +42,6 @@ import com.intellij.ui.IconWithToolTip;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
@@ -152,24 +151,10 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     final RangeHighlighterEx highlighter;
     int line = getLine();
     if (line >= 0) {
-      highlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
+      highlighter = markup.addPersistentLineHighlighter(CodeInsightColors.BOOKMARKS_ATTRIBUTES, line, HighlighterLayer.ERROR + 1);
       if (highlighter != null) {
         highlighter.setGutterIconRenderer(new MyGutterIconRenderer(this));
-
-        TextAttributes textAttributes =
-          ObjectUtils.notNull(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES),
-                              new TextAttributes());
-        Color stripeColor = ObjectUtils.notNull(textAttributes.getErrorStripeColor(), new JBColor(0x000000, 0xdbdbdb));
-        highlighter.setErrorStripeMarkColor(stripeColor);
         highlighter.setErrorStripeTooltip(getBookmarkTooltip());
-
-        TextAttributes attributes = highlighter.getTextAttributes();
-        if (attributes == null) {
-          attributes = new TextAttributes();
-        }
-        attributes.setBackgroundColor(textAttributes.getBackgroundColor());
-        attributes.setForegroundColor(textAttributes.getForegroundColor());
-        highlighter.setTextAttributes(attributes);
       }
     }
     else {

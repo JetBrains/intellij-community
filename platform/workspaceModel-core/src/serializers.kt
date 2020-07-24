@@ -71,7 +71,9 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver,
 
     kryo.register(ByteArray::class.java)
 
-    registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) { Collections.unmodifiableCollection(emptySet()) }
+    registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
+      Collections.unmodifiableCollection(emptySet())
+    }
     registerFieldSerializer(kryo, Collections.unmodifiableSet<Any>(emptySet()).javaClass) { Collections.unmodifiableSet(emptySet()) }
     registerFieldSerializer(kryo, Collections.unmodifiableList<Any>(emptyList()).javaClass) { Collections.unmodifiableList(emptyList()) }
     registerFieldSerializer(kryo, Collections.unmodifiableMap<Any, Any>(emptyMap()).javaClass) { Collections.unmodifiableMap(emptyMap()) }
@@ -174,7 +176,9 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver,
     }
   }
 
-  private fun Kryo.registerClasses(entityClasses: List<Class<out TypedEntity>>, entitySourceClasses: List<Class<*>>, metaDataRegistry: EntityMetaDataRegistry) {
+  private fun Kryo.registerClasses(entityClasses: List<Class<out TypedEntity>>,
+                                   entitySourceClasses: List<Class<*>>,
+                                   metaDataRegistry: EntityMetaDataRegistry) {
     for (clazz in entityClasses) {
       register(clazz)
       val metadata = metaDataRegistry.getEntityMetaData(clazz)
@@ -235,7 +239,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver,
           kryo.writeClassAndObject(output, propertyValue)
         }
       }
-    } finally {
+    }
+    finally {
       output.flush()
     }
   }

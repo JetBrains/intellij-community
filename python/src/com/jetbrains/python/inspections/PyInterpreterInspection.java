@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;
@@ -101,12 +102,11 @@ public class PyInterpreterInspection extends PyInspection {
         registerProblem(node, PyPsiBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
-        final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
-        final String associatedName = associatedModule != null ? associatedModule.getName() : PySdkExtKt.getAssociatedModulePath(sdk);
         // TODO: Introduce an inspection extension
-        if (PipenvKt.isPipEnv(sdk) && associatedModule != module) {
-          final String message = associatedName != null ?
-                                 "Pipenv interpreter is associated with another " + interpreterOwner + ": '" + associatedName + "'" :
+        final String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
+        if (PipenvKt.isPipEnv(sdk) && (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
+          final String message = associatedModulePath != null ?
+                                 "Pipenv interpreter is associated with another " + interpreterOwner + ": '" + associatedModulePath + "'" :
                                  "Pipenv interpreter is not associated with any " + interpreterOwner;
           registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }

@@ -29,12 +29,15 @@ import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -106,30 +109,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
-/* Android Studio: b/156739439
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
-  }
-
-  private void updateFractionalMetrics() {
-    if (SystemInfo.isMacOSCatalina) {
-      Object value = hasSearchMatch() ? null : UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
-      if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
-      putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
-    }
-  }
-
-  private boolean hasSearchMatch() {
-    synchronized (myFragments) {
-      for (ColoredFragment fragment : myFragments) {
-        if (SimpleTextAttributes.STYLE_SEARCH_MATCH == fragment.attributes.getStyle()) {
-          return true;
-        }
-      }
-    }
-    return false;
-Android Studio: b/156739439 */
   }
 
   @NotNull
@@ -401,9 +383,6 @@ Android Studio: b/156739439 */
 
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
-/* Android Studio: b/156739439
-    updateFractionalMetrics();
-Android Studio: b/156739439 */
     synchronized (myFragments) {
       // Calculate width
       float width = myIpad.left;
@@ -514,9 +493,21 @@ Android Studio: b/156739439 */
   }
 
   private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
-    String text = fragment.text;
-    if (StringUtil.isEmpty(text)) return 0;
-    return getTextRenderer(fragment, font).getWidth();
+    if (StringUtil.isEmpty(fragment.text)) return 0;
+    int index = myFragments.indexOf(fragment);
+    ColoredFragment nextFragment = index != -1 && index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
+    if (!SystemInfo.isMacOSCatalina
+        || !fragment.attributes.isSearchMatch()
+        || nextFragment == null
+        || fragment.attributes.getFontStyle() != nextFragment.attributes.getFontStyle()) {
+      return getTextRenderer(fragment, font).getWidth();
+    }
+    float first = getTextRenderer(fragment, font).getWidth();
+    float second = getTextRenderer(nextFragment, font).getWidth();
+    float compound = getTextRenderer(new ColoredFragment(fragment.text + nextFragment.text, fragment.attributes), font).getWidth();
+    //return Math.min(w1, w3 - w2);
+    //return (w1 + (w3 - w2)) / 2;
+    return (first + 2 * (compound - second)) / 3;
   }
 
   @NotNull
@@ -562,9 +553,6 @@ Android Studio: b/156739439 */
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
-/* Android Studio: b/156739439
-    updateFractionalMetrics();
-Android Studio: b/156739439 */
     float curX = myIpad.left;
     if (myBorder != null) {
       curX += myBorder.getBorderInsets(this).left;
@@ -764,9 +752,6 @@ Android Studio: b/156739439 */
   }
 
   protected int doPaintText(Graphics2D g, int textStart, boolean focusAroundIcon) {
-/* Android Studio: b/156739439
-    updateFractionalMetrics();
-Android Studio: b/156739439 */
     synchronized (myFragments) {
       // If there is no icon, then we have to add left internal padding
       if (textStart == 0) {
@@ -894,7 +879,7 @@ Android Studio: b/156739439 */
         Color fgColor;
         if (attributes.isSearchMatch()) {
           fgColor = new JBColor(Gray._50, Gray._0);
-          UIUtil.drawSearchMatch(g, x1, x2, height);
+          UIUtil.drawSearchMatch(g, x1, x2 + 1, height);
         }
         else if (attributes.isClickable()) {
           boolean selected = UIUtil.getTreeSelectionBackground(true) == getBackground();
@@ -906,13 +891,46 @@ Android Studio: b/156739439 */
         }
         g.setFont(frag.font);
         g.setColor(fgColor);
-        g.drawString(text, x1, baseline);
+        if (!drawWithClipping(frag.index, g, frag.font, frag.start, frag.end, baseline)) {
+          g.drawString(text, x1, baseline);
+        }
 
         int fragmentWidth = (int)(x2 - x1);
         drawTextAttributes(g, attributes, (int)x1, (int)baseline, fragmentWidth, g.getFontMetrics(), g.getFont());
       }
       return (int)offset;
     }
+  }
+
+  private boolean drawWithClipping(int index, Graphics2D g, Font font, float x1, float x2, float baseline) {
+    if (!SystemInfo.isMacOSCatalina) return false;
+    ColoredFragment fragment = myFragments.get(index);
+    if (!fragment.attributes.isSearchMatch()) return false;
+    ColoredFragment prevFragment = index > 0 ? myFragments.get(index - 1) : null;
+    ColoredFragment nextFragment = index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
+    boolean okToMerge = prevFragment != null || nextFragment != null;
+    if (okToMerge && prevFragment != null) {
+      okToMerge = ((prevFragment.attributes.getStyle() | SimpleTextAttributes.STYLE_SEARCH_MATCH) == fragment.attributes.getStyle());
+    }
+    if (okToMerge && nextFragment != null) {
+      okToMerge = ((nextFragment.attributes.getStyle() | SimpleTextAttributes.STYLE_SEARCH_MATCH) == fragment.attributes.getStyle());
+    }
+    if (okToMerge) {
+      String mergedText = (prevFragment != null ? prevFragment.text : "")
+                          + fragment.text
+                          + (nextFragment != null ? nextFragment.text : "");
+      Graphics2D clippedGraphics = (Graphics2D)g.create();
+      try {
+        clippedGraphics.setClip(new Rectangle2D.Float(x1, 0, x2 - x1 + 1, getHeight()));
+
+        if (prevFragment != null) x1 -= computeStringWidth(prevFragment, font);
+        clippedGraphics.drawString(mergedText, x1, baseline);
+      } finally {
+        clippedGraphics.dispose();
+      }
+      return true;
+    }
+    return false;
   }
 
   protected Color getActiveTextColor(Color attributesColor) {
@@ -1016,16 +1034,11 @@ Android Studio: b/156739439 */
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     UISettings.setupAntialiasing(g);
-/* Android Studio: b/156739439
     g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS));
-Android Studio: b/156739439 */
   }
 
   @Override
   public int getBaseline(int width, int height) {
-/* Android Studio: b/156739439
-    updateFractionalMetrics();
-Android Studio: b/156739439 */
     super.getBaseline(width, height);
     return getTextBaseLine(getFontMetrics(getFont()), height);
   }
@@ -1097,7 +1110,7 @@ Android Studio: b/156739439 */
     if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
       String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
       if (iconToolTip != null) {
-        return iconToolTip;
+        return StringUtil.capitalize(iconToolTip);
       }
     }
     return super.getToolTipText(event);

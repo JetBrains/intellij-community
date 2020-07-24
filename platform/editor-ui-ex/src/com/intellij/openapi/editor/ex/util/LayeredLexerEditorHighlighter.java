@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterClientListener;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -377,8 +379,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @Override
-    public void repaint(int start, int end) {
+    public void fireHighlighterChanged(int start, int end) {
       // TODO: map ranges to outer document
+    }
+
+    @Override
+    public void addHighlighterClientListener(HighlighterClientListener listener,
+                                             Disposable parentDisposable) {
     }
 
     @Override

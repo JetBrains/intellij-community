@@ -19,12 +19,12 @@ import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
@@ -63,7 +63,7 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
       boolean hasDecimalLiteral = false;
       boolean hasOctalLiteral = false;
       for (PsiExpression initializer : initializers) {
-        initializer = ParenthesesUtils.stripParentheses(initializer);
+        initializer = PsiUtil.skipParenthesizedExprDown(initializer);
         if (initializer instanceof PsiLiteralExpression) {
           final PsiLiteralExpression literal = (PsiLiteralExpression)initializer;
           if (isDecimalLiteral(literal)) {

@@ -107,7 +107,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * Returns the list of output directories in which this target is going to produce its output. (The specific
    * files produced need to be reported by {@link org.jetbrains.jps.incremental.TargetBuilder#build} through
    *
-   * {@link org.jetbrains.jps.builders.BuildOutputConsumer#registerOutputFile}.)
+   * {@link BuildOutputConsumer#registerOutputFile}.)
    * @param context the compilation context.
    * @return the collection of output roots.
    */

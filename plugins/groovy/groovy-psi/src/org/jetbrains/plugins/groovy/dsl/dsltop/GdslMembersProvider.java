@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Container of methods, which will be available on a top-level of closures,
- * passed to GroovyDSL contributors. See {@link org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers} for an example.
+ * passed to GroovyDSL contributors. See {@link GroovyDslDefaultMembers} for an example.
  * All methods to inject should take one extra parameter - an instance of {@link org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer}
  * to be refer its properties.
  *

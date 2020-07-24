@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -48,13 +47,13 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
+public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance(ProjectFromSourcesBuilderImpl.class);
   private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<>();
-  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.emptyInstance();
+  private MultiMap<ProjectStructureDetector, DetectedProjectRoot> myRoots = MultiMap.empty();
   private final WizardContext myContext;
   private final ModulesProvider myModulesProvider;
   private Set<String> myModuleNames;

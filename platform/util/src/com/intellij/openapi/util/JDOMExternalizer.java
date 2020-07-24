@@ -117,7 +117,7 @@ public class JDOMExternalizer {
    * @param nodeName node name (tag, in our example)
    * @param attrName attribute name (attr, in our example)
    * @param values a pack of values to add
-   * @see #loadStringsList(org.jdom.Element, String, String)
+   * @see #loadStringsList(Element, String, String)
    */
   public static void saveStringsList(@NotNull final Element parent,
                                      @NotNull final String nodeName,
@@ -134,9 +134,9 @@ public class JDOMExternalizer {
   public static List<String> loadStringsList(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<>();
     if (element != null) {
-      @NotNull final List list = element.getChildren(rootName);
-      for (Object o : list) {
-        paths.add(((Element)o).getAttribute(attrName).getValue());
+      final List<Element> list = element.getChildren(rootName);
+      for (Element e : list) {
+        paths.add(e.getAttribute(attrName).getValue());
       }
     }
     return paths;

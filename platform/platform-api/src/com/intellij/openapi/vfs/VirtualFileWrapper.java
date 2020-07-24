@@ -29,7 +29,7 @@ import java.io.IOException;
  * on demand.
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.openapi.vfs.VirtualFile
+ * @see VirtualFile
  */
 public class VirtualFileWrapper {
   private final File myFile;
@@ -51,7 +51,7 @@ public class VirtualFileWrapper {
    *
    * @throws SecurityException
    *          If a security manager exists and its <code>{@link
-   *          java.lang.SecurityManager#checkRead(java.lang.String)}</code>
+   *          SecurityManager#checkRead(String)}</code>
    *          method denies read access to the file or directory
    */
   public boolean exists() {

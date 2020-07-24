@@ -95,7 +95,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Function<InspectionProfileImpl, InspectionProfileWrapper> custom = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
     myProfileWrapper = custom == null ? new InspectionProfileWrapper(profileToUse) : custom.apply(profileToUse);
     assert myProfileWrapper != null;
-    mySeverityRegistrar = myProfileWrapper.getInspectionProfile().getProfileManager().getSeverityRegistrar();
+    mySeverityRegistrar = myProfileWrapper.getProfileManager().getSeverityRegistrar();
     myInspectInjectedPsi = inspectInjectedPsi;
 
     // initial guess
@@ -209,9 +209,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                               @NotNull List<? extends PsiElement> inside,
                                               @NotNull List<? extends PsiElement> outside) {
     HighlightDisplayKey key = HighlightDisplayKey.find(RedundantSuppressInspection.SHORT_NAME);
-    final InspectionProfileImpl inspectionProfile = myProfileWrapper.getInspectionProfile();
+    final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (key != null && inspectionProfile.isToolEnabled(key, getFile())) {
-      InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
+      InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspection.SHORT_NAME, getFile());
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
       if (suppressor instanceof RedundantSuppressionDetector) {
         if (toolWrappers.stream().anyMatch(LocalInspectionToolWrapper::runForWholeFile)) {
@@ -408,9 +408,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void addDescriptorIncrementally(final @NotNull ProblemDescriptor descriptor,
                                           final @NotNull LocalInspectionToolWrapper tool,
                                           final @NotNull ProgressIndicator indicator) {
-    if (myIgnoreSuppressed && tool.getTool().isSuppressedFor(descriptor.getPsiElement())) {
-      return;
+    if (myIgnoreSuppressed) {
+      LocalInspectionToolWrapper toolWrapper = tool;
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (descriptor instanceof ProblemDescriptorWithReporterName) {
+        String reportingToolName = ((ProblemDescriptorWithReporterName)descriptor).getReportingToolName();
+        toolWrapper = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
+      }
+
+      if (toolWrapper.getTool().isSuppressedFor(psiElement)) {
+        registerSuppressedElements(psiElement, toolWrapper.getID(), toolWrapper.getAlternativeID());
+        return;
+      }
     }
+
     ApplicationManager.getApplication().invokeLater(()->{
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) return;
@@ -420,8 +431,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
 
       infos.clear();
-      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement,
-                                    myIgnoreSuppressed);
+      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
       for (HighlightInfo info : infos) {
         final EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
@@ -496,7 +506,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
-                                             @NotNull PsiElement element, boolean ignoreSuppressed) {
+                                             @NotNull PsiElement element, 
+                                             boolean ignoreSuppressed) {
     if (descriptor instanceof ProblemDescriptorWithReporterName) {
       String reportingToolName = ((ProblemDescriptorWithReporterName)descriptor).getReportingToolName();
       final InspectionToolWrapper<?, ?> reportingTool = myProfileWrapper.getInspectionTool(reportingToolName, element);
@@ -509,6 +520,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       registerSuppressedElements(element, toolWrapper.getID(), toolWrapper.getAlternativeID());
       return;
     }
+    createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, toolWrapper, severity, descriptor, element);
+  }
+
+  private void createHighlightsForDescriptor(@NotNull List<? super HighlightInfo> outInfos,
+                                             @NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered,
+                                             @NotNull InjectedLanguageManager ilManager,
+                                             @NotNull PsiFile file,
+                                             @NotNull Document documentRange,
+                                             @NotNull LocalInspectionToolWrapper toolWrapper,
+                                             @NotNull HighlightSeverity severity,
+                                             @NotNull ProblemDescriptor descriptor,
+                                             @NotNull PsiElement element) {
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
     @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
 
@@ -521,8 +544,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
-    @NonNls String link = "";
+    String link = "";
     if (showToolDescription(toolWrapper)) {
+      //noinspection HardCodedStringLiteral
       link = " <a "
              + "href=\"#inspection/" + shortName + "\""
              + (StartupUiUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
@@ -543,12 +567,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
     if (context != getFile()) {
       String errorMessage = "Reported element " + element +
-                       " is not from the file '" + file.getVirtualFile().getPath() +
-                       "' the inspection '" + shortName +
-                       "' (" + tool.getClass() +
-                       ") was invoked for. Message: '" + descriptor + "'.\nElement containing file: " +
-                       context + "\nInspection invoked for file: " + myContext + "\n";
-      PluginException.logPluginError(LOG, errorMessage, null, tool.getClass());
+                            " is not from the file '" + file.getVirtualFile().getPath() +
+                            "' the inspection '" + shortName +
+                            "' (" + toolWrapper.getTool().getClass() +
+                            ") was invoked for. Message: '" + descriptor + "'.\nElement containing file: " +
+                            context + "\nInspection invoked for file: " + myContext + "\n";
+      PluginException.logPluginError(LOG, errorMessage, null, toolWrapper.getTool().getClass());
     }
     boolean isOutsideInjected = !myInspectInjectedPsi || file == getFile();
     if (isOutsideInjected) {

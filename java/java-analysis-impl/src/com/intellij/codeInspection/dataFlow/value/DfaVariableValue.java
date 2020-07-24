@@ -99,6 +99,9 @@ public final class DfaVariableValue extends DfaValue {
     myDescriptor = descriptor;
     myQualifier = qualifier;
     myVarType = descriptor.getType(qualifier);
+    if (myDescriptor instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+      myFactory.setAssertionDisabled(this);
+    }
   }
 
   @Nullable

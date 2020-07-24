@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -38,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +51,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
@@ -486,6 +486,13 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   @NotNull
+  public static List<ShelvedChangeList> getExactlySelectedLists(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.exactlySelected(shelvedChangeTree).userObjectsStream(ShelvedChangeList.class)).toList();
+  }
+
+  @NotNull
   public static List<ShelvedChange> getShelveChanges(@NotNull final DataContext dataContext) {
     return notNullize(dataContext.getData(SHELVED_CHANGE_KEY));
   }
@@ -500,7 +507,7 @@ public class ShelvedChangesViewManager implements Disposable {
     ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
     if (shelvedChangeTree == null) return emptyList();
     return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
-      .map(ShelvedWrapper::getRequestName).toList();
+      .map(ShelvedWrapper::getPath).toList();
   }
 
   private static class MyShelveDeleteProvider implements DeleteProvider {
@@ -961,7 +968,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private static class ShelvedListNode extends ChangesBrowserNode<ShelvedChangeList> {
-    private static final Icon PatchIcon = StdFileTypes.PATCH.getIcon();
+    private static final Icon PatchIcon = PatchFileType.INSTANCE.getIcon();
     private static final Icon AppliedPatchIcon =
       new IconSizeWrapper(Patch_applied, Patch_applied.getIconWidth(), Patch_applied.getIconHeight()) {
         @Override

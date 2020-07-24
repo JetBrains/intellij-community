@@ -332,12 +332,7 @@ public abstract class InplaceRefactoring {
                                                             RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
                                                             RefactoringBundle.message("inplace.refactoring.abandon.started"),
                                                             RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
-        if (exitCode == Messages.CANCEL) {
-          finish(true);
-        }
-        else {
-          navigateToAlreadyStarted(oldDocument, exitCode);
-        }
+        navigateToAlreadyStarted(oldDocument, exitCode);
         return true;
       }
       else {
@@ -361,6 +356,8 @@ public abstract class InplaceRefactoring {
     beforeTemplateStart();
 
     WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
+
+    afterTemplateStart();
 
     if (myBalloon == null) {
       showBalloon();
@@ -387,6 +384,9 @@ public abstract class InplaceRefactoring {
       myEditor.getDocument().createRangeMarker(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset());
     myCaretRangeMarker.setGreedyToLeft(true);
     myCaretRangeMarker.setGreedyToRight(true);
+  }
+
+  protected void afterTemplateStart(){
   }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
@@ -476,9 +476,11 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
+  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
     finish(true);
-    navigateToStarted(oldDocument, myProject, exitCode, getCommandName());
+    if (exitCode != Messages.CANCEL) {
+      navigateToStarted(oldDocument, myProject, exitCode, getCommandName());
+    }
   }
 
   private static void navigateToStarted(final Document oldDocument,

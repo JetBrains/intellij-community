@@ -7,43 +7,53 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.rd.attach
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.createHeavyProject
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.*
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.File
 
-class ProjectModelRule : TestRule {
+class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
   val baseProjectDir = TempDirectory()
-  private val projectDelegate = lazy { createHeavyProject(baseProjectDir.root.toPath()) }
   private val disposableRule = DisposableRule()
-  val project by projectDelegate
-  private val closeProject = object : ExternalResource() {
-    override fun after() {
-      if (projectDelegate.isInitialized()) {
-        runInEdtAndWait {
-          ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+  lateinit var project: Project
+  private val projectResource = object : ExternalResource() {
+    override fun before() {
+      project = if (forceEnableWorkspaceModel) {
+        WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+          createHeavyProject(baseProjectDir.root.toPath())
         }
+      }
+      else {
+        createHeavyProject(baseProjectDir.root.toPath())
+      }
+      runInEdtAndWait {
+        PlatformTestUtil.openProject(project)
+      }
+    }
+
+    override fun after() {
+      runInEdtAndWait {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
       }
     }
   }
-  private val ruleChain = RuleChain(baseProjectDir, closeProject, disposableRule)
+  private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
 
   override fun apply(base: Statement, description: Description): Statement {
     return ruleChain.apply(base, description)
@@ -51,8 +61,9 @@ class ProjectModelRule : TestRule {
 
   fun createModule(name: String = "module"): Module {
     val imlFile = File(baseProjectDir.root, "$name/$name.iml")
+    val manager = moduleManager
     return runWriteActionAndWait {
-      moduleManager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      manager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
     }
   }
 
@@ -66,15 +77,29 @@ class ProjectModelRule : TestRule {
     return ProjectJdkTable.getInstance().createSdk(name, sdkType)
   }
 
-  fun addSdk(sdk: Sdk): Sdk {
+  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+      val sdkModificator = sdk.sdkModificator
+      try {
+        setup(sdkModificator)
+      } finally {
+        sdkModificator.commitChanges()
+      }
     }
     return sdk
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     return addLibrary(name, projectLibraryTable, setup)
+  }
+
+  fun addModuleLevelLibrary(module: Module, name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
+    val library = Ref.create<LibraryEx>()
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      library.set(addLibrary(name, model.moduleLibraryTable, setup))
+    }
+    return library.get()
   }
 
   fun addLibrary(name: String, libraryTable: LibraryTable, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {

@@ -24,13 +24,13 @@ import java.io.File;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class SPFileUtil {
 
-  public static void processFilesRecursively(final String rootPath, final Consumer<? super String> consumer){
+  public static void processFilesRecursively(final String rootPath, final Consumer<? super String> consumer) {
     final File rootFile = new File(rootPath);
-    if (rootFile.exists() && rootFile.isDirectory()){
+    if (rootFile.exists() && rootFile.isDirectory()) {
       FileUtil.processFilesRecursively(rootFile, file -> {
-        if (!file.isDirectory()){
+        if (!file.isDirectory()) {
           final String path = file.getPath();
-          if (path.endsWith(".dic")){
+          if (path.endsWith(".dic")) {
             consumer.consume(path);
           }
         }

@@ -414,7 +414,7 @@ class RootIndex {
       Module[] modules = moduleManager.getModules();
       Graph graph = new Graph(modules.length);
 
-      MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
+      MultiMap<VirtualFile, Node> roots = new MultiMap<>();
 
       for (final Module module : modules) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -468,8 +468,8 @@ class RootIndex {
 
     @NotNull
     private Pair<MultiMap<VirtualFile, OrderEntry>, MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
-      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmart();
-      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmart();
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<>();
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<>();
 
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -531,8 +531,8 @@ class RootIndex {
         }
       }
 
-      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
-      @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots,
                                                       Pair.getFirst(libraryClassRootInfo),
                                                       Pair.getFirst(librarySourceRootInfo),
@@ -607,7 +607,7 @@ class RootIndex {
   }
 
   @Nullable
-  private DirectoryInfo handleInterestingId(int id, VirtualFile file) {
+  private DirectoryInfo handleInterestingId(int id, @NotNull VirtualFile file) {
     DirectoryInfo info = myRootInfos.get(file);
     if (info != null) {
       return info;
@@ -752,7 +752,7 @@ class RootIndex {
     }
 
     private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot,
-                                               List<? extends VirtualFile> hierarchy,
+                                               @NotNull List<? extends VirtualFile> hierarchy,
                                                @NotNull FileTypeAssocTable<Boolean> table) {
       for (VirtualFile file : hierarchy) {
         if (table.findAssociatedFileType(file.getNameSequence()) != null) {

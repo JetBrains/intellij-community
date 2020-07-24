@@ -20,10 +20,17 @@ import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -138,6 +145,17 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
       "</component>",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
+  }
+
+  private static Collection<JpsModuleSourceRootPropertiesSerializer<?>> findSerializers(Collection<JpsModuleSourceRootType<?>> rootTypes) {
+    final Set<JpsModuleSourceRootType<?>> typesSet = rootTypes instanceof Set ? (Set<JpsModuleSourceRootType<?>>)rootTypes : new HashSet<>(rootTypes);
+    Set<JpsModuleSourceRootPropertiesSerializer<?>> result = new HashSet<>();
+    for (JpsModelSerializerExtension ext : JpsModelSerializerExtension.getExtensions()) {
+      result.addAll(
+        ext.getModuleSourceRootPropertiesSerializers().stream().filter(serializer -> typesSet.contains(serializer.getType())).collect(Collectors.toSet())
+      );
+    }
+    return result;
   }
 
   public void testModuleLibraries() throws IOException, JDOMException {

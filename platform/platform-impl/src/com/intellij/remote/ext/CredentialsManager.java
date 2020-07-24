@@ -46,13 +46,16 @@ public abstract class CredentialsManager {
     if (!(additionalData instanceof RemoteSdkAdditionalData)) return;
     RemoteSdkAdditionalData<?> data = (RemoteSdkAdditionalData<?>)additionalData;
     if (data.getRemoteConnectionType() != CredentialsType.UNKNOWN) return;
-    if (!credentialsType.hasPrefix(data.getInterpreterPath())) return;
+
+    String credentialsId = data.connectionCredentials().getId();
+    if (!credentialsType.hasPrefix(credentialsId)) return;
 
     Element root = new Element("root");
     data.connectionCredentials().save(root);
 
     Object credentials = credentialsType.createCredentials();
     credentialsType.getHandler(credentials).load(root);
+    data.setCredentials(credentialsType.getCredentialsKey(), credentials);
   }
 
   public static void forgetCredentialType(@NotNull Stream<? extends SdkAdditionalData> additionalData,
@@ -68,6 +71,7 @@ public abstract class CredentialsManager {
     data.connectionCredentials().save(root);
 
     UnknownCredentialsHolder unknownCredentials = CredentialsType.UNKNOWN.createCredentials();
+    unknownCredentials.setSdkId(data.getSdkId());
     CredentialsType.UNKNOWN.getHandler(unknownCredentials).load(root);
     data.setCredentials(CredentialsType.UNKNOWN.getCredentialsKey(), unknownCredentials);
   }

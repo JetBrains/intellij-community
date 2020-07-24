@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +67,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     if (virtualFile == null) return null;
     VirtualFile parent = virtualFile.getParent();
     if (parent == null) return null;
-    return new CollectedInfo(parent.getPath(), file.getText(), file.getModificationStamp(), getShellcheckExecutionParams(file));
+    return new CollectedInfo(file.getProject(), parent.getPath(), file.getText(), file.getModificationStamp(),
+                             getShellcheckExecutionParams(file));
   }
 
   @Nullable
@@ -78,6 +80,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
 
     String shellcheckExecutable = ShSettings.getShellcheckPath();
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
+    ShShellcheckUtil.checkShellCheckForUpdate(fileInfo.project);
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
@@ -237,12 +240,14 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
   }
 
   static class CollectedInfo {
+    private final Project project;
     private final String workDirectory;
     private final String fileContent;
     private final long modificationStamp;
     private final List<String> executionParams;
 
-    CollectedInfo(String workDirectory, String fileContent, long modificationStamp, List<String> executionParams) {
+    CollectedInfo(Project project, String workDirectory, String fileContent, long modificationStamp, List<String> executionParams) {
+      this.project = project;
       this.workDirectory = workDirectory;
       this.fileContent = fileContent;
       this.modificationStamp = modificationStamp;

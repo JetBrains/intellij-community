@@ -33,6 +33,7 @@ import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -182,7 +183,7 @@ public final class FSRecords {
     private static ContentHashEnumerator myContentHashesEnumerator;
     private static File myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
-    private static final TIntArrayList myFreeRecords = new TIntArrayList();
+    private static final IntList myFreeRecords = new IntArrayList();
 
     private static volatile boolean myDirty;
     /** accessed under {@link #r}/{@link #w} */
@@ -215,7 +216,7 @@ public final class FSRecords {
     }
 
     static int getFreeRecord() {
-      return myFreeRecords.isEmpty() ? 0 : myFreeRecords.remove(myFreeRecords.size() - 1);
+      return myFreeRecords.isEmpty() ? 0 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
     }
 
     private static void createBrokenMarkerFile(@Nullable Throwable reason) {
@@ -293,7 +294,7 @@ public final class FSRecords {
           throw new IOException("Corruption marker file found");
         }
 
-        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+        StorageLockContext storageLockContext = new StorageLockContext(false);
         myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
 
         myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
@@ -1132,7 +1133,7 @@ public final class FSRecords {
           int nameId = dup.getNameId();
           assert nameId > 0 : existingList;
           ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
-                                                     dup.getSymLinkTarget());
+                                                 dup.getSymLinkTarget());
           result.set(dupI, replaced);
         }
         j++;
