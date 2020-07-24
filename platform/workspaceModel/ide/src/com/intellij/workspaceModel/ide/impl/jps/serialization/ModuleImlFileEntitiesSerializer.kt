@@ -24,8 +24,8 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.File
 import java.io.StringReader
+import java.nio.file.Paths
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
@@ -589,7 +589,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModuleManagerImpl.getPathsToModuleFiles(moduleManagerTag).map {
       //todo load module groups
-      File(it.path).toVirtualFileUrl(virtualFileManager)
+      Paths.get(it.path).toVirtualFileUrl(virtualFileManager)
     }
   }
 

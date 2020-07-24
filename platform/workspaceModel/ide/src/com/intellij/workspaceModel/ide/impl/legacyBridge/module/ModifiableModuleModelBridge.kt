@@ -29,9 +29,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import java.nio.file.Paths
 
 internal class ModifiableModuleModelBridge(
   private val project: Project,
@@ -145,7 +145,7 @@ internal class ModifiableModuleModelBridge(
     removeUnloadedModule(moduleName)
 
     val builder = WorkspaceEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(File(filePath), project.configLocation!!, builder, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, virtualFileManager)
     diff.addDiff(builder)
     val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
     if (moduleEntity == null) {

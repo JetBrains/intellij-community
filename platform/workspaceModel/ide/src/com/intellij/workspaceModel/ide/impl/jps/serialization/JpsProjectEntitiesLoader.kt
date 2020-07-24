@@ -41,12 +41,12 @@ object JpsProjectEntitiesLoader {
     return data
   }
 
-  fun loadModule(moduleFile: File, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
-    val source = JpsFileEntitySource.FileInDirectory(moduleFile.parentFile.toVirtualFileUrl(virtualFileManager), configLocation)
+  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
+    val source = JpsFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(virtualFileManager), configLocation)
     loadModule(moduleFile, source, configLocation, builder, virtualFileManager)
   }
 
-  internal fun loadModule(moduleFile: File,
+  internal fun loadModule(moduleFile: Path,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
                           builder: WorkspaceEntityStorageBuilder,
