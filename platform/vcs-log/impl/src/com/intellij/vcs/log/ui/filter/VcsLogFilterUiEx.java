@@ -13,6 +13,8 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EventListener;
+
 @ApiStatus.Experimental
 public interface VcsLogFilterUiEx extends VcsLogFilterUi {
 
@@ -53,5 +55,14 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
   default void setCustomEmptyText(@NotNull StatusText text) {
     text.setText(VcsLogBundle.message("vcs.log.no.commits.matching.status"));
     VcsLogUiUtil.appendResetFiltersActionToEmptyText(this, text);
+  }
+
+  /**
+   * Adds a listener for filters change.
+   */
+  void addFilterListener(@NotNull VcsLogFilterListener listener);
+
+  interface VcsLogFilterListener extends EventListener {
+    void onFiltersChanged();
   }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.EventListener;
 
 @ApiStatus.Experimental
 public interface MainVcsLogUi extends VcsLogUiEx {
@@ -30,10 +29,4 @@ public interface MainVcsLogUi extends VcsLogUiEx {
 
   void invokeOnChange(@NotNull Runnable runnable,
                       @NotNull Condition<? super VcsLogDataPack> condition);
-
-  void addFilterListener(@NotNull VcsLogFilterListener listener);
-
-  interface VcsLogFilterListener extends EventListener {
-    void onFiltersChanged();
-  }
 }

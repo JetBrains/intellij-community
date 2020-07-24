@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -44,8 +43,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
   @NotNull private final History myHistory;
-  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher =
-    EventDispatcher.create(VcsLogFilterListener.class);
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -141,16 +138,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
 
   protected void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
-    myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
 
     JComponent toolbar = myMainFrame.getToolbar();
     toolbar.revalidate();
     toolbar.repaint();
-  }
-
-  @Override
-  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
-    myFilterListenerDispatcher.addListener(listener);
   }
 
   @NotNull

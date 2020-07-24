@@ -80,7 +80,7 @@ public class VcsLogTabsManager {
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
       ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus);
-      ui.addFilterListener(() -> {
+      ui.getFilterUi().addFilterListener(() -> {
         VcsLogEditorUtilKt.updateTabName(myProject, ui);
       });
     }
@@ -88,7 +88,7 @@ public class VcsLogTabsManager {
       ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
                                         () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
                                         factory, focus);
-      ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
+      ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");

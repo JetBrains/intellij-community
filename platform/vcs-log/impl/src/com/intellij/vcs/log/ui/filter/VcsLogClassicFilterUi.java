@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -67,6 +68,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull protected final TextFilterModel myTextFilterModel;
   @NotNull private final TextFilterField myFilterField;
 
+  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
+
   public VcsLogClassicFilterUi(@NotNull VcsLogData logData,
                                @NotNull Consumer<VcsLogFilterCollection> filterConsumer,
                                @NotNull MainVcsLogUiProperties uiProperties,
@@ -91,6 +94,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     for (FilterModel<?> model : models) {
       model.addSetFilterListener(() -> {
         filterConsumer.consume(getFilters());
+        myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
@@ -178,6 +182,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   protected FilterActionComponent createStructureFilterComponent() {
     return new FilterActionComponent(
       () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myColorManager).initUi());
+  }
+
+  @Override
+  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
+    myFilterListenerDispatcher.addListener(listener);
   }
 
   protected static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
