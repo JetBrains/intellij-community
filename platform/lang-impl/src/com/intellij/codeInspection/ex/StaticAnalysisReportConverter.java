@@ -25,7 +25,9 @@ public class StaticAnalysisReportConverter extends JsonInspectionsReportConverte
   }
 
   private static void writeInspectionsMeta(Path target) throws ConversionException {
-    Path meta = Paths.get("inspectionsMeta.json");
+    String path = System.getProperty("inspection.external.metafile.path");
+    if (path == null) return;
+    Path meta = Paths.get(path);
     if (Files.notExists(meta)) return;
     try {
       Files.copy(meta, target);
