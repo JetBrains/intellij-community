@@ -19,13 +19,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -53,7 +55,7 @@ public class TransferToEDTQueue<T> {
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
-  private final Queue<T> myQueue = new Queue<>(10); // guarded by myQueue
+  private final Deque<T> myQueue = new ArrayDeque<>(10); // guarded by myQueue
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
@@ -113,7 +115,7 @@ public class TransferToEDTQueue<T> {
 
   // return true if element was pulled from the queue and processed successfully
   private boolean processNext() {
-    T thing = pullFirst();
+    T thing = pollFirst();
     if (thing == null) return false;
     if (!myProcessor.process(thing)) {
       stop();
@@ -122,9 +124,9 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
-  private T pullFirst() {
+  private T pollFirst() {
     synchronized (myQueue) {
-      return myQueue.isEmpty() ? null : myQueue.pullFirst();
+      return myQueue.pollFirst();
     }
   }
 
@@ -137,12 +139,8 @@ public class TransferToEDTQueue<T> {
   }
 
   public boolean offerIfAbsent(@NotNull T thing) {
-    return offerIfAbsent(thing, ContainerUtil.canonicalStrategy());
-  }
-
-  public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<? super T> equality) {
     synchronized (myQueue) {
-      boolean absent = myQueue.process(t -> !equality.equals(t, thing));
+      boolean absent = !myQueue.contains(thing);
       if (absent) {
         myQueue.addLast(thing);
         scheduleUpdate();
@@ -158,7 +156,6 @@ public class TransferToEDTQueue<T> {
   }
 
   protected void schedule(@NotNull Runnable updateRunnable) {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 
@@ -179,7 +176,7 @@ public class TransferToEDTQueue<T> {
   @NotNull
   public Collection<T> dump() {
     synchronized (myQueue) {
-      return myQueue.toList();
+      return new ArrayList<>(myQueue);
     }
   }
 

@@ -17,7 +17,6 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ImmutableUserMap;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,13 +28,13 @@ public abstract class LookAheadLexer extends LexerBase {
 
   private final Lexer myBaseLexer;
   private int myTokenStart;
-  private final Queue<IElementType> myTypeCache;
-  private final Queue<Integer> myEndOffsetCache;
+  private final MutableRandomAccessQueue<IElementType> myTypeCache;
+  private final MutableRandomAccessQueue<Integer> myEndOffsetCache;
 
   public LookAheadLexer(@NotNull Lexer baseLexer, int capacity) {
     myBaseLexer = baseLexer;
-    myTypeCache = new Queue<>(capacity);
-    myEndOffsetCache = new Queue<>(capacity);
+    myTypeCache = new MutableRandomAccessQueue<>(capacity);
+    myEndOffsetCache = new MutableRandomAccessQueue<>(capacity);
   }
 
   public LookAheadLexer(@NotNull Lexer baseLexer) {
