@@ -2,6 +2,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectByteHashMap;
@@ -21,7 +22,7 @@ final class DefaultFileOperations implements FileOperations {
   private static final Archive NULL_ARCHIVE = new Archive() {
     @Override
     public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
-      return Collections.emptyList();
+      return Iterators.emptyIterable();
     }
     @Override
     public void close(){
@@ -204,25 +205,30 @@ final class DefaultFileOperations implements FileOperations {
     public Iterable<JavaFileObject> list(final String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
       final Collection<ZipEntry> entries = myPaths.get(relPath);
       if (entries == null || entries.isEmpty()) {
-        return Collections.emptyList();
+        return Iterators.emptyIterable();
       }
+      Iterable<ZipEntry> entriesIterable = entries;
       if (recurse) {
-        final Collection<Iterable<ZipEntry>> allChildren = new ArrayList<Iterable<ZipEntry>>();
-        for (Map.Entry<String, Collection<ZipEntry>> e : myPaths.entrySet()) {
-          final String dir = e.getKey();
-          if (relPath.isEmpty()) {
-            allChildren.add(e.getValue());
-          }
-          else {
-            // check if the directory is 'under' the given relative path
-            if (dir.startsWith(relPath) && (dir.length() == relPath.length() || dir.charAt(relPath.length()) == '/')) {
-              allChildren.add(e.getValue());
-            }
-          }
+        if (relPath.isEmpty()) {
+          entriesIterable = Iterators.flat(myPaths.values());
         }
-        return Iterators.map(Iterators.filter(Iterators.flat(allChildren), ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
+        else {
+          final Iterable<Map.Entry<String, Collection<ZipEntry>>> baseIterable = Iterators.filter(myPaths.entrySet(), new BooleanFunction<Map.Entry<String, Collection<ZipEntry>>>() {
+            @Override
+            public boolean fun(Map.Entry<String, Collection<ZipEntry>> e) {
+              final String dir = e.getKey();
+              return dir.startsWith(relPath) && (dir.length() == relPath.length() || dir.charAt(relPath.length()) == '/');
+            }
+          });
+          entriesIterable = Iterators.flat(Iterators.map(baseIterable, new Function<Map.Entry<String, Collection<ZipEntry>>, Iterable<ZipEntry>>() {
+            @Override
+            public Iterable<ZipEntry> fun(Map.Entry<String, Collection<ZipEntry>> e) {
+              return e.getValue();
+            }
+          }));
+        }
       }
-      return Iterators.map(Iterators.filter(entries, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
+      return Iterators.map(Iterators.filter(entriesIterable, ourEntryFilter.getFor(kinds)), myToFileObjectConverter);
     }
 
     @Override

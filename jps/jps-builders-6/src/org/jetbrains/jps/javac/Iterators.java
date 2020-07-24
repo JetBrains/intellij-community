@@ -32,7 +32,7 @@ public class Iterators {
     };
   }
 
-  static <T> Iterator<T> flat(final Iterator<? extends T> first, final Iterator<? extends T> second) {
+  public static <T> Iterator<T> flat(final Iterator<? extends T> first, final Iterator<? extends T> second) {
     return new BaseIterator<T>() {
       @Override
       public boolean hasNext() {
@@ -48,7 +48,7 @@ public class Iterators {
 
   public static <T> Iterable<T> flat(final Collection<? extends Iterable<T>> parts) {
     if (parts.isEmpty()) {
-      return Collections.emptyList();
+      return emptyIterable();
     }
     if (parts.size() == 1) {
       return parts.iterator().next();
