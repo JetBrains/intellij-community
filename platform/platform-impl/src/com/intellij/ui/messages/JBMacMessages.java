@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -17,11 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created by Denis Fokin
- */
-public class JBMacMessages extends MacMessagesEmulation {
-
+public final class JBMacMessages extends MacMessagesEmulation {
   @Override
   public int showYesNoCancelDialog(@NotNull String title,
                                    String message,
@@ -31,7 +27,7 @@ public class JBMacMessages extends MacMessagesEmulation {
                                    @Nullable Window window,
                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
     String defaultButtonCleaned = defaultButton.replace(BundleBase.MNEMONIC_STRING, "");
     String otherButtonCleaned = otherButton.replace(BundleBase.MNEMONIC_STRING, "");
@@ -62,7 +58,7 @@ public class JBMacMessages extends MacMessagesEmulation {
                                int focusedOptionIndex,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
 
     Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
@@ -86,74 +82,65 @@ public class JBMacMessages extends MacMessagesEmulation {
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
     new SheetMessage(window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, okText, okText);
   }
 
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText) {
-    final Window foremostWindow = getForemostWindow(null);
+    final Window foremostWindow = getForemostWindow();
     new SheetMessage(foremostWindow, title, message, UIUtil.getInformationIcon(), new String [] {okText},null, null, okText);
   }
 
-  private static Window getForemostWindow(final Window window) {
-    Window _window = null;
+  private static @Nullable Window getForemostWindow() {
+    Window window = null;
     IdeFocusManager ideFocusManager = IdeFocusManager.getGlobalInstance();
 
     Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
     // Let's ask for a focused component first
     if (focusOwner != null) {
-      _window = SwingUtilities.getWindowAncestor(focusOwner);
+      window = SwingUtilities.getWindowAncestor(focusOwner);
     }
 
-    if (_window == null) {
+    if (window == null) {
       // Looks like ide lost focus, let's ask about the last focused component
       focusOwner = ideFocusManager.getLastFocusedFor(ideFocusManager.getLastFocusedIdeWindow());
       if (focusOwner != null) {
-        _window = SwingUtilities.getWindowAncestor(focusOwner);
+        window = SwingUtilities.getWindowAncestor(focusOwner);
       }
     }
 
-    if (_window == null) {
-      _window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (window == null) {
+      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     }
 
-    if (_window == null) {
-      _window = WindowManager.getInstance().findVisibleFrame();
+    if (window == null) {
+      window = WindowManager.getInstance().findVisibleFrame();
     }
 
-    if (_window == null && window != null) {
-      // It might be we just has not opened a frame yet.
-      // So let's ask AWT
-      focusOwner = window.getMostRecentFocusOwner();
-      if (focusOwner != null) {
-        _window = SwingUtilities.getWindowAncestor(focusOwner);
-      }
-    }
-
-    if (_window != null) {
+    if (window != null) {
       // We have successfully found the window
       // Let's check that we have not missed a blocker
-      if (ModalityHelper.isModalBlocked(_window)) {
-        _window = ModalityHelper.getModalBlockerFor(_window);
+      if (ModalityHelper.isModalBlocked(window)) {
+        window = ModalityHelper.getModalBlockerFor(window);
       }
     }
 
-    while (_window != null && MacUtil.getWindowTitle(_window) == null) {
-      _window = _window.getOwner();
+    while (window != null && MacUtil.getWindowTitle(window) == null) {
+      window = window.getOwner();
       //At least our frame should have a title
     }
 
-    while (Registry.is("skip.untitled.windows.for.mac.messages") && _window instanceof JDialog && !((JDialog)_window).isModal()) {
-      _window = _window.getOwner();
+    while (window instanceof JDialog && Registry.is("skip.untitled.windows.for.mac.messages", false) && !((JDialog)window).isModal()) {
+      window = window.getOwner();
     }
 
-    while (_window != null && _window.getParent() != null && WindowManager.getInstance().isNotSuggestAsParent(_window)) {
-      _window = _window.getOwner();
+    while (window != null && window.getParent() != null && WindowManager.getInstance().isNotSuggestAsParent(window)) {
+      window = window.getOwner();
     }
 
-    return _window;
+    return window;
   }
 
   @Override
@@ -163,7 +150,7 @@ public class JBMacMessages extends MacMessagesEmulation {
                              @NotNull String noButton,
                              @Nullable Window window) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {yesButton, noButton}, null, yesButton, noButton);
@@ -178,7 +165,7 @@ public class JBMacMessages extends MacMessagesEmulation {
                              @Nullable Window window,
                              @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {yesButton, noButton}, doNotAskDialogOption, yesButton, noButton);
@@ -192,7 +179,7 @@ public class JBMacMessages extends MacMessagesEmulation {
   @Override
   public void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window) {
     if (window == null) {
-      window = getForemostWindow(null);
+      window = getForemostWindow();
     }
     new SheetMessage(window, title, message, UIUtil.getErrorIcon(), new String [] {okButton}, null, null, okButton);
   }
