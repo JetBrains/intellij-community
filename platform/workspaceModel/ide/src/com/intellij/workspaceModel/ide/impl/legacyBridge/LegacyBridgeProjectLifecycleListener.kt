@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
+import com.intellij.configurationStore.ProjectStoreBase
+import com.intellij.configurationStore.ProjectStoreImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -13,6 +15,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.ProjectStoreOwner
+import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -58,7 +61,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
 
     val container = project as ComponentManagerImpl
 
-    (project as ProjectStoreOwner).componentStore = ProjectStoreBridge(project)
+    (project.stateStore as ProjectStoreImpl).moduleSavingCustomizer = ProjectStoreBridge(project)
     container.registerComponent(JpsProjectModelSynchronizer::class.java, JpsProjectModelSynchronizer::class.java, pluginDescriptor, false)
     container.registerComponent(RootsChangeWatcher::class.java, RootsChangeWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
