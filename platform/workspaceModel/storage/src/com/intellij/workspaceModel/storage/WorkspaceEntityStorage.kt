@@ -116,6 +116,11 @@ interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
+  /**
+   * Search [WorkspaceEntity] which contain required [VirtualFileUrl] and return mapping of entity to the property with VFU
+   * @param fileUrl virtual file url which entity should contains
+   * @return the sequence of pairs which contains entity and property name which contains required [VirtualFileUrl]
+   */
   fun findEntitiesWithVirtualFileUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>>
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 }

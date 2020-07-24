@@ -215,10 +215,13 @@ class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     }
 
     fun getSubtreeNodes(): List<FilePathNode> {
-      val subtreeNodes = mutableListOf<FilePathNode>()
+      return getSubtreeNodes(mutableListOf())
+    }
+
+    private fun getSubtreeNodes(subtreeNodes: MutableList<FilePathNode>): List<FilePathNode> {
       children?.forEach {
         subtreeNodes.add(it)
-        subtreeNodes.addAll(it.getSubtreeNodes())
+        it.getSubtreeNodes(subtreeNodes)
       }
       return subtreeNodes
     }

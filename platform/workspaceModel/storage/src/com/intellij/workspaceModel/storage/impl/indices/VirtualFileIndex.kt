@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
+import com.intellij.util.SmartList
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.EntityId
@@ -28,7 +29,8 @@ open class VirtualFileIndex private constructor(
     entityId2VirtualFileUrlInfo[id]?.asSequence() ?: emptySequence()
 
   class MutableVirtualFileIndex private constructor(
-    // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
+    // Do not write to [entityId2VirtualFileUrlInfo]  and [vfu2VirtualFileUrlInfo] directly! Create a dedicated method for that
+    // and call [startWrite] before write.
     override var entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
     override var vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
   ) : VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo) {
@@ -79,11 +81,11 @@ open class VirtualFileIndex private constructor(
 
     private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl) {
       val entityProperty = VirtualFileUrlInfo(virtualFileUrl, id, propertyName)
-      val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, mutableListOf())
+      val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, SmartList())
       firstVfuInfos.add(entityProperty)
       entityId2VirtualFileUrlInfo[id] = firstVfuInfos
 
-      val secondVfuInfos = vfu2VirtualFileUrlInfo.getOrDefault(virtualFileUrl, mutableListOf())
+      val secondVfuInfos = vfu2VirtualFileUrlInfo.getOrDefault(virtualFileUrl, SmartList())
       secondVfuInfos.add(entityProperty)
       vfu2VirtualFileUrlInfo[virtualFileUrl] = secondVfuInfos
     }
