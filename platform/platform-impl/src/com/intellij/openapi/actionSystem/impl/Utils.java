@@ -179,7 +179,7 @@ public final class Utils {
         }
       });
     }
-    if (SystemInfo.isMacSystemMenu && isWindowMenu) {
+    if (SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("ide.macos.main.menu.align.menu.items")) {
       Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
       children.forEach(child -> replaceIconIn(child, icon));
     }
