@@ -676,4 +676,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInstanceOfUnresolved() { doTest(); }
   public void testProtobufNotNullGetters() { doTest(); }
   public void testAIOOBETransfer() { doTest(); }
+  public void testBoxingShortByte() { doTest(); }
 }
