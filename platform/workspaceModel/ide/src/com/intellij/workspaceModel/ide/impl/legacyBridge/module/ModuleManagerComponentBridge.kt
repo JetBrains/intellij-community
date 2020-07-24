@@ -53,7 +53,6 @@ import java.util.concurrent.Callable
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   val outOfTreeModulesPath: String =
     FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val LOG = Logger.getInstance(javaClass)
 
@@ -593,14 +592,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
-
-    private fun entity(entityChange: EntityChange<*>): WorkspaceEntity {
-      return when (entityChange) {
-        is EntityChange.Added -> entityChange.entity
-        is EntityChange.Removed -> entityChange.entity
-        is EntityChange.Replaced -> entityChange.oldEntity
-      }
-    }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleEntity = entityStorage.current.findModuleEntity(module as ModuleBridge) ?: return null
