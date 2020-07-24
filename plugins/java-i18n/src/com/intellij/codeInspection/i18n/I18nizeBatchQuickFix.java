@@ -118,7 +118,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                                                                         Collections.singletonList(propertiesFile),
                                                                         data.getKey(),
                                                                         data.getValue(),
-                                                                        PsiExpression.EMPTY_ARRAY);
+                                                                        new UExpression[0]);
           List<UExpression> uExpressions = data.getContextData().getExpressions();
           List<PsiElement> psiElements = data.getContextData().getPsiElements();
           for (int i = 0; i < psiElements.size(); i++) {
@@ -203,7 +203,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     return null;
   }
   
-  private static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
+  public static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {

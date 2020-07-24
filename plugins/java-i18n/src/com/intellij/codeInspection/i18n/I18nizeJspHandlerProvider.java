@@ -23,12 +23,15 @@ import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
@@ -71,7 +74,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
                                    UInjectionHost literalExpression,
                                    Collection<PropertiesFile> propertiesFiles,
                                    String key, String value, String i18nizedText,
-                                   PsiExpression[] parameters,
+                                   UExpression[] parameters,
                                    final PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException {
       Project project = psiFile.getProject();
       TextRange selectedText = JavaI18nUtil.getSelectedRange(editor, psiFile);

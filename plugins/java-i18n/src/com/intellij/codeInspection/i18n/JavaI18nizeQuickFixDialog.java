@@ -30,6 +30,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
@@ -268,8 +269,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myLiteralExpression;
   }
 
-  public PsiExpression[] getParameters() {
-    return PsiExpression.EMPTY_ARRAY;
+  public UExpression[] getParameters() {
+    return new UExpression[0];
   }
 
   static class JavaExtensibilityData {

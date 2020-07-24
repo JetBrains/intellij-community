@@ -23,10 +23,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.psi.PsiExpression;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.io.File;
@@ -71,7 +71,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
                                    "key1",
                                    "value1",
                                    "i18nizedExpr",
-                                   PsiExpression.EMPTY_ARRAY,
+                                   new UExpression[0], 
                                    JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER);
       });
 

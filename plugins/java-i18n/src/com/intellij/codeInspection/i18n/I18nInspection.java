@@ -688,10 +688,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       if (myOnTheFly) {
         fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
+        if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
+          fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
+        }
+
         if (sourcePsi instanceof PsiLiteralExpression) {
-          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-            fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
-          }
 
           if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
             fixes.add(createIntroduceConstantFix());

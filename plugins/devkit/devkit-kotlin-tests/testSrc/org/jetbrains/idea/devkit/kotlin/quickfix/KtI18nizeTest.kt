@@ -6,9 +6,7 @@ import com.intellij.codeInspection.i18n.JavaI18nUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiExpression
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.IncorrectOperationException
 import junit.framework.TestCase
 
 private val i18nizedExpr = "i18nizedExpr"
@@ -38,7 +36,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
                                      "key1",
                                      "value1",
                                      i18nizedExpr,
-                                     PsiExpression.EMPTY_ARRAY,
+                                     emptyArray(),
                                      JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER)
       }
       myFixture.checkResult(expected)

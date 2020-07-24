@@ -19,10 +19,10 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
@@ -40,7 +40,7 @@ public interface I18nQuickFixHandler {
                           String key,
                           String value,
                           String i18nizedText,
-                          PsiExpression[] parameters,
+                          UExpression[] parameters,
                           PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException;
 
   @Nullable

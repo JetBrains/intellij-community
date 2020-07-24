@@ -95,7 +95,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
                                  UInjectionHost literalExpression,
                                  Collection<PropertiesFile> propertiesFiles,
                                  String key, String value, String i18nizedText,
-                                 PsiExpression[] parameters,
+                                 UExpression[] parameters,
                                  final PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException {
     Project project = psiFile.getProject();
     propertyCreationHandler.createProperty(project, propertiesFiles, key, value, parameters);
@@ -172,6 +172,14 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
         LOG.error(e);
       }
     }
+    return doDocumentReplacement(psiFile, literalExpression, i18nizedText, document);
+  }
+
+  @Nullable
+  protected static PsiElement doDocumentReplacement(@NotNull PsiFile psiFile,
+                                                    UElement literalExpression,
+                                                    String i18nizedText,
+                                                    Document document) {
     PsiElement psi = literalExpression.getSourcePsi();
     if (psi == null) {
       return null;
