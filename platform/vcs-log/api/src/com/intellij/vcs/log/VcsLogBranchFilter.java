@@ -28,6 +28,11 @@ public interface VcsLogBranchFilter extends VcsLogBranchLikeFilter {
   @NotNull
   Collection<String> getTextPresentation();
 
+  /**
+   * @return true if filter has no patterns
+   */
+  boolean isEmpty();
+
   @NotNull
   @Override
   default VcsLogFilterCollection.FilterKey<VcsLogBranchFilter> getKey() {
