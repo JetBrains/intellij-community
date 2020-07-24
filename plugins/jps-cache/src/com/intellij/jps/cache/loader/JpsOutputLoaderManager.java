@@ -37,6 +37,7 @@ import org.jetbrains.jps.model.serialization.JpsLoaderBase;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -90,7 +91,15 @@ public class JpsOutputLoaderManager implements Disposable {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
         if (commitInfo != null) {
           // Drop JPS metadata to force plugin for downloading all compilation outputs
-          if (isForceUpdate) myMetadataLoader.dropCurrentProjectMetadata();
+          if (isForceUpdate) {
+            myMetadataLoader.dropCurrentProjectMetadata();
+            File outDir = new File(myBuildOutDir);
+            if (outDir.exists()) {
+              indicator.setText("Clean output directories");
+              FileUtil.delete(outDir);
+            }
+            LOG.info("Compilation output folder empty");
+          }
           startLoadingForCommit(commitInfo.first);
         }
         hasRunningTask.set(false);
