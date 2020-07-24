@@ -2,12 +2,9 @@ package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
-import org.jetbrains.plugins.feature.suggester.actions.listeners.DocumentActionsListener
-import org.jetbrains.plugins.feature.suggester.actions.listeners.EditorActionsListener
-import org.jetbrains.plugins.feature.suggester.actions.listeners.PsiActionsListener
+import org.jetbrains.plugins.feature.suggester.actions.isAfterAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
@@ -48,8 +45,6 @@ class FeatureSuggestersManager(val project: Project) {
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {
-        return ApplicationManager.getApplication()
-            .getService(FeatureSuggesterSettings::class.java)
-            ?.isEnabled(suggestingActionDisplayName) ?: false
+        return FeatureSuggesterSettings.instance().isEnabled(suggestingActionDisplayName)
     }
 }

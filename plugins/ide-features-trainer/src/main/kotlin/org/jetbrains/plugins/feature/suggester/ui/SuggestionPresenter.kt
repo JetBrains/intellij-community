@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LightweightHint
@@ -52,8 +51,8 @@ class NotificationSuggestionPresenter :
         )
         notification.addAction(object : AnAction("Do not suggest this action anymore") {
             override fun actionPerformed(e: AnActionEvent) {
-                val settings = ApplicationManager.getApplication().getService(FeatureSuggesterSettings::class.java)
-                settings?.disableSuggester(suggestion.suggesterId)
+                val settings = FeatureSuggesterSettings.instance()
+                settings.disableSuggester(suggestion.suggesterId)
                 notification.hideBalloon()
             }
         })
