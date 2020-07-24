@@ -21,3 +21,9 @@ non-sealed interface ID1 extends ID0 {}
 enum ImplicitlySealedEnum {
   A {}
 }
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> enum Foo {}
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> enum WithConstants {
+  BAR {}
+}

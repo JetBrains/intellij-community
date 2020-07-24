@@ -18,3 +18,7 @@ non-sealed interface MiddleMan extends Indirect {}
 final class IndirectInheritor implements MiddleMan {}
 
 sealed class AnotherPackage permits <error descr="Class is not allowed to extend sealed class from another package">p1.P1</error> {}
+
+enum ImlicitlySealedWithPermitsClause <error descr="No permits clause allowed for enum">permits FOO</error> {
+  FOO {};
+}

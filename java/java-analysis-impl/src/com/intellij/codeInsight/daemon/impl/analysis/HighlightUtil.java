@@ -978,7 +978,7 @@ public final class HighlightUtil {
         }
 
         if (aClass.isEnum()) {
-          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier));
+          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier) || PsiModifier.SEALED.equals(modifier));
         }
 
         if (aClass.isRecord()) {

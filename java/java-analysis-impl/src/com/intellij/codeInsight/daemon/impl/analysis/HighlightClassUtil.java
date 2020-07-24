@@ -1059,6 +1059,16 @@ public final class HighlightClassUtil {
       PsiClass aClass = (PsiClass)parent;
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) return;
+      if (aClass.isEnum() || aClass.isRecord()) {
+        String description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "permits.after.enum");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(list)
+          .descriptionAndTooltip(description)
+          .create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(list));
+        holder.add(info);
+        return;
+      }
       if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(list.getFirstChild())
