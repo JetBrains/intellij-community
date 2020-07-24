@@ -10,7 +10,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -37,6 +36,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order

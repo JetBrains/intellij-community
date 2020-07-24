@@ -59,6 +59,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
@@ -77,5 +78,6 @@ iml_module(
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:Trove4j",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.0.1:jar",
+        "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )

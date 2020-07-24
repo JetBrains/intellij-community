@@ -9,7 +9,6 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
         "//tools/idea/images:intellij.platform.images",
     ],
     test_srcs = ["testSrc"],
@@ -39,6 +38,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
@@ -48,5 +48,6 @@ iml_module(
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.tests[module]",
     ],
 )

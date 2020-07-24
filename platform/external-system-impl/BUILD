@@ -37,6 +37,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
@@ -47,7 +48,6 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/execution-impl:intellij.platform.execution.impl[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
-        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner[module]",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module]",
         "//tools/idea/.idea/libraries:kotlin-reflect",
@@ -57,6 +57,7 @@ iml_module(
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:commons-cli",
     ],
 )
 
@@ -79,6 +80,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",

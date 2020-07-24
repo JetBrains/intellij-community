@@ -17,6 +17,9 @@ iml_module(
         "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader",
+        "//tools/idea/platform/util/strings:intellij.platform.util.strings",
+        "//tools/idea/platform/util/collections:intellij.platform.util.collections",
+        "//tools/idea/platform/util/text-matching:intellij.platform.util.text.matching",
     ],
     # do not sort: must match IML order
     deps = [
@@ -31,6 +34,9 @@ iml_module(
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:commons-compress",
         "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/platform/util/strings:intellij.platform.util.strings[module]",
+        "//tools/idea/platform/util/collections:intellij.platform.util.collections[module]",
+        "//tools/idea/platform/util/text-matching:intellij.platform.util.text.matching[module]",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
@@ -68,6 +74,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     test_srcs = ["testSrc"],

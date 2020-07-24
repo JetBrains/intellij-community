@@ -12,14 +12,14 @@ iml_module(
     exports = [
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:jps-build-script-dependencies-bootstrap",
-        "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
+        "//tools/idea/.idea/libraries:commons-cli",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:jps-build-script-dependencies-bootstrap",
-        "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
+        "//tools/idea/.idea/libraries:commons-cli",
     ],
 )
 
@@ -74,6 +74,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
@@ -124,8 +125,6 @@ iml_module(
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
-        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
-        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/201.11:jar",
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
@@ -138,6 +137,12 @@ iml_module(
         "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
         "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
         "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-ant",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-nio/2.5.11:jar",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-cli-commons/2.5.11:jar",
         "//tools/idea/.idea/libraries:gant-groovy",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",

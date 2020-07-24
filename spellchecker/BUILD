@@ -14,6 +14,7 @@ iml_module(
         "resources",
         "compatibilityResources",
     ],
+    test_resources = ["testResources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
@@ -45,6 +46,7 @@ iml_module(
         "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
     ],
     # do not sort: must match IML order
@@ -60,5 +62,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//prebuilts/tools/common/m2/repository/com/intellij/grazie/grazie-spellchecker/0.1.6:jar",
+        "//prebuilts/tools/common/m2/repository/info/debatty/java-string-similarity/1.2.1:jar",
+        "//tools/idea/xml/relaxng:intellij.relaxng[module, test]",
     ],
 )

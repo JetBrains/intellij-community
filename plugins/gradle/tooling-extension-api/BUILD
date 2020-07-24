@@ -11,6 +11,8 @@ iml_module(
     exports = [
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy/2.4.17:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-ant/2.4.17:jar",
     ],
     # do not sort: must match IML order
     deps = [
@@ -21,7 +23,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy",
-        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-ant",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy/2.4.17:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-ant/2.4.17:jar",
     ],
 )

@@ -45,6 +45,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-jsr223",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
+        "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-templates",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-xml",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
@@ -66,5 +67,6 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//prebuilts/tools/common/m2/repository/com/github/luben/zstd-jni/1.4.0-1:jar",
     ],
 )
