@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.psi.util.PsiConcatenationUtil;
@@ -132,7 +133,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             try {
               expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(i18NText, psiElement);
               if (language == JavaLanguage.INSTANCE) {
-                psiElement.replace(expression);
+                JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement.replace(expression));
                 continue;
               }
             }

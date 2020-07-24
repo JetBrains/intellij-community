@@ -3,11 +3,13 @@
 // found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -23,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -184,10 +188,12 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     if (psi == null) {
       return null;
     }
-    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(psiFile.getProject()).createSmartPsiElementPointer(psi);
-    document.replaceString(psi.getTextRange().getStartOffset(), psi.getTextRange().getEndOffset(), i18nizedText);
+
+    Language language = psi.getLanguage();
+    int startOffset = psi.getTextRange().getStartOffset();
+    document.replaceString(startOffset, psi.getTextRange().getEndOffset(), i18nizedText);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
-    return pointer.getElement();
+    return CodeInsightUtilCore.findElementInRange(psiFile, startOffset, startOffset + i18nizedText.length(), PsiElement.class, language);
   }
 
   private static void reformatAndCorrectReferences(PsiElement newExpression) throws IncorrectOperationException {
