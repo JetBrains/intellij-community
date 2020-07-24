@@ -136,11 +136,12 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                 continue;
               }
             }
-            catch (IncorrectOperationException ignored) {
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
               continue;
             }
             
-            @Nullable Couple<@NotNull String> callDescriptor = getCallDescriptor(expression);
+            @Nullable Couple<String> callDescriptor = getCallDescriptor(expression);
             if (callDescriptor == null) {
               LOG.debug("Templates are not supported for " + language.getDisplayName());
               continue;
@@ -156,9 +157,12 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             List<UExpression> arguments = new ArrayList<>();
             arguments.add(pluginElementFactory.createStringLiteralExpression(data.getKey(), psiElement));
             arguments.addAll(data.getContextData().getArgs());
-            
+
+            UExpression receiver = callDescriptor.first != null 
+                                   ? pluginElementFactory.createQualifiedReference(callDescriptor.first, null)
+                                   : null;
             UCallExpression callExpression = pluginElementFactory
-              .createCallExpression(pluginElementFactory.createQualifiedReference(callDescriptor.first, null),
+              .createCallExpression(receiver,
                                     callDescriptor.second,
                                     arguments,
                                     null,
@@ -179,12 +183,11 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
   /**
    * @return qualifier.methodName couple
    */
-  private static @Nullable Couple<@NotNull String> getCallDescriptor(PsiExpression expression) {
+  private static @Nullable Couple<String> getCallDescriptor(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       String qualifiedName = qualifierExpression != null ? qualifierExpression.getText() : null;
-      if (qualifiedName == null) return null;
       String methodName = methodExpression.getReferenceName();
       if (methodName == null) return null;
       
