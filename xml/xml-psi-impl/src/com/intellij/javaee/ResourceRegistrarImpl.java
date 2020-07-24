@@ -56,11 +56,10 @@ public final class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addInternalResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, @Nullable Class<?> clazz) {
-    addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz);
+    addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz, null);
   }
 
-  @NotNull
-  public Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
+  public @NotNull Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
     return myResources;
   }
 

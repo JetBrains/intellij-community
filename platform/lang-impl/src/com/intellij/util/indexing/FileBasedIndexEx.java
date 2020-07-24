@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -112,13 +111,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
-    Set<K> allKeys = new THashSet<>();
+    Set<K> allKeys = new HashSet<>();
     processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
   }
 
   @Override
-  public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
     return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
   }
 

@@ -6,16 +6,18 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -130,9 +132,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return myResourceLocations.contains(file.getUrl());
   }
 
-  @Nullable
-  static <T> Map<String, T> getMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version, boolean create) {
-    version = StringUtil.notNullize(version, DEFAULT_VERSION);
+  static @Nullable <T> Map<String, T> getMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version, boolean create) {
+    version = Strings.notNullize(version, DEFAULT_VERSION);
     Map<String, T> map = resources.get(version);
     if (map == null) {
       if (create) {
@@ -153,7 +154,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String getResourceLocation(@NotNull @NonNls String url, @Nullable String version) {
-    String result = getUserResource(url, StringUtil.notNullize(version, DEFAULT_VERSION));
+    String result = getUserResource(url, Strings.notNullize(version, DEFAULT_VERSION));
     if (result == null) {
       XMLCatalogManager manager = getCatalogManager();
       if (manager != null) {
@@ -504,7 +505,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     incModificationCount();
     for (Element element : state.getChildren(RESOURCE_ELEMENT)) {
       String url = element.getAttributeValue(URL_ATTR);
-      if (!StringUtil.isEmpty(url)) {
+      if (!Strings.isEmpty(url)) {
         addSilently(url, DEFAULT_VERSION, Objects.requireNonNull(element.getAttributeValue(LOCATION_ATTR)).replace('/', File.separatorChar));
       }
     }
@@ -538,14 +539,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     incModificationCount();
   }
 
-  Collection<Map<String, Resource>> getStandardResources() {
+  final @NotNull Collection<Map<String, Resource>> getStandardResources() {
     return myStandardResources.getValue().values();
   }
 
-  private static final NotNullLazyKey<ExternalResourceManagerExImpl, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ExternalResourceManagerExImpl.class);
-
-  private static ExternalResourceManagerExImpl getProjectResources(Project project) {
-    return INSTANCE_CACHE.getValue(project);
+  private static ExternalResourceManagerExImpl getProjectResources(@NotNull Project project) {
+    return project.getService(ExternalResourceManagerExImpl.class);
   }
 
   @Override

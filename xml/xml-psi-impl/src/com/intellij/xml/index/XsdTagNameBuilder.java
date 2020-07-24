@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
 import com.intellij.util.xml.NanoXmlBuilder;
@@ -8,37 +8,25 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XsdTagNameBuilder implements NanoXmlBuilder {
-  @NotNull
-  public static Collection<String> computeTagNames(final InputStream is) {
-    return computeTagNames(new InputStreamReader(is, StandardCharsets.UTF_8));
-  }
-
-  @NotNull
-  public static Collection<String> computeTagNames(@NotNull Reader reader) {
+public final class XsdTagNameBuilder implements NanoXmlBuilder {
+  public static @NotNull Collection<String> computeTagNames(@NotNull Reader reader) {
     try {
-      final XsdTagNameBuilder builder = new XsdTagNameBuilder();
+      XsdTagNameBuilder builder = new XsdTagNameBuilder();
       NanoXmlUtil.parse(reader, builder);
       return builder.myTagNames;
     }
     finally {
       try {
-        if (reader != null) {
-          reader.close();
-        }
+        reader.close();
       }
-      catch (IOException e) {
-        // can never happen
+      catch (IOException ignore) {
       }
     }
   }
@@ -47,15 +35,12 @@ public class XsdTagNameBuilder implements NanoXmlBuilder {
   private boolean myElementStarted;
 
   @Override
-  public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
-      throws Exception {
-
+  public void startElement(@NonNls String name, @NonNls String nsPrefix, @NonNls String nsURI, String systemID, int lineNr) {
     myElementStarted = nsPrefix != null && nsURI.equals(XmlUtil.XML_SCHEMA_URI) && name.equals("element");
   }
 
   @Override
-  public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
-      throws Exception {
+  public void addAttribute(@NonNls String key, String nsPrefix, String nsURI, String value, String type) {
     if (myElementStarted && key.equals("name")) {
       myTagNames.add(value);
       myElementStarted = false;

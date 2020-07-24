@@ -40,7 +40,7 @@ public interface InspectionsReportConverter {
 
   default void projectData(@NotNull Project project, @Nullable String outputPath) throws ConversionException {}
 
-  class ConversionException extends Exception {
+  final class ConversionException extends Exception {
     public ConversionException(String message) {
       super(message);
     }

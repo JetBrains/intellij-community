@@ -38,7 +38,9 @@ final class ExternalResourcesRootsProvider extends IndexableSetContributor {
 
   @Override
   public @NotNull Set<VirtualFile> getAdditionalRootsToIndex() {
-    Set<VirtualFile> roots = new HashSet<>(myStandardResources.getValue());
+    Set<VirtualFile> standardResources = myStandardResources.getValue();
+    Set<VirtualFile> roots = new HashSet<>(standardResources.size() + 1);
+    roots.addAll(standardResources);
     String path = FetchExtResourceAction.getExternalResourcesPath();
     VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);
     if (extResources != null) {
