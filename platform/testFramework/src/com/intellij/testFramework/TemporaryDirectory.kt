@@ -157,7 +157,7 @@ class TemporaryDirectory : ExternalResource() {
   private fun generatePath(suffix: String?): Path {
     var fileName = sanitizedName
     if (suffix != null) {
-      fileName = if (fileName.isEmpty()) suffix else "_$suffix"
+      fileName = if (fileName.isEmpty()) suffix else "${fileName}_$suffix"
     }
 
     val path = generateTemporaryPath(fileName, root ?: throw IllegalStateException("not initialized yet"))
