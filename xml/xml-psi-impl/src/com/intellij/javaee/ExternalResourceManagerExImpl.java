@@ -90,10 +90,10 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
-    for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getExtensionList()) {
+    for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getIterable()) {
       provider.registerResources(registrar);
     }
-    for (StandardResourceEP extension : StandardResourceEP.EP_NAME.getExtensionList()) {
+    for (StandardResourceEP extension : StandardResourceEP.EP_NAME.getIterable()) {
       registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
     }
 
@@ -132,19 +132,15 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return myResourceLocations.contains(file.getUrl());
   }
 
-  static @Nullable <T> Map<String, T> getMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version, boolean create) {
+  private static @Nullable <T> Map<String, T> getMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version) {
     version = Strings.notNullize(version, DEFAULT_VERSION);
     Map<String, T> map = resources.get(version);
-    if (map == null) {
-      if (create) {
-        map = new HashMap<>();
-        resources.put(version, map);
-      }
-      else if (!version.equals(DEFAULT_VERSION)) {
-        map = resources.get(DEFAULT_VERSION);
-      }
-    }
-    return map;
+    return map == null && !version.equals(DEFAULT_VERSION) ? resources.get(DEFAULT_VERSION) : map;
+  }
+
+  static <T> @NotNull Map<String, T> getOrCreateMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version) {
+    version = Strings.notNullize(version, DEFAULT_VERSION);
+    return resources.computeIfAbsent(version, __ -> new HashMap<>());
   }
 
   @Override
@@ -181,7 +177,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @Override
   @Nullable
   public String getStdResource(@NotNull String url, @Nullable String version) {
-    Map<String, Resource> map = getMap(myStandardResources.getValue(), version, false);
+    Map<String, Resource> map = getMap(myStandardResources.getValue(), version);
     if (map != null) {
       Resource resource = map.get(url);
       return resource == null ? null : resource.getResourceUrl();
@@ -193,7 +189,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Nullable
   private String getUserResource(@NotNull String url, @Nullable String version) {
-    Map<String, String> map = getMap(myResources, version, false);
+    Map<String, String> map = getMap(myResources, version);
     return map != null ? map.get(url) : null;
   }
 
@@ -246,7 +242,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
-    Map<String, T> resources = getMap(resourcesMap, version, false);
+    Map<String, T> resources = getMap(resourcesMap, version);
     if (resources != null) {
       result.addAll(resources.keySet());
     }
@@ -274,9 +270,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   private void addSilently(@NotNull String url, @Nullable String version, String location) {
-    Map<String, String> map = getMap(myResources, version, true);
-    assert map != null;
-    map.put(url, location);
+    getOrCreateMap(myResources, version).put(url, location);
     myResourceLocations.add(location);
     incModificationCount();
   }
@@ -289,7 +283,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @Override
   public void removeResource(@NotNull String url, @Nullable String version) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    Map<String, String> map = getMap(myResources, version, false);
+    Map<String, String> map = getMap(myResources, version);
     if (map != null) {
       String location = map.remove(url);
       if (location != null) {
