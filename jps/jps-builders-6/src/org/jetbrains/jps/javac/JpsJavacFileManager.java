@@ -147,7 +147,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       name.append(externalizeFileName(packageName)).append(File.separatorChar).append(relativeName);
     }
     final String fileName = name.toString();
-    return getFileForOutput(location, getKind(fileName), fileName, null, sibling);
+    return getFileForOutput(location, JpsFileObject.findKind(fileName), fileName, null, sibling);
   }
 
   private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
@@ -239,19 +239,6 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     if (counter == 0 && myContext.isCanceled()) {
       throw new CompilationCanceledException();
     }
-  }
-
-  private static JavaFileObject.Kind getKind(String name) {
-    if (name.endsWith(JavaFileObject.Kind.CLASS.extension)){
-      return JavaFileObject.Kind.CLASS;
-    }
-    if (name.endsWith(JavaFileObject.Kind.SOURCE.extension)) {
-      return JavaFileObject.Kind.SOURCE;
-    }
-    if (name.endsWith(JavaFileObject.Kind.HTML.extension)) {
-      return JavaFileObject.Kind.HTML;
-    }
-    return JavaFileObject.Kind.OTHER;
   }
 
   private static String externalizeFileName(CharSequence cs, JavaFileObject.Kind kind) {
@@ -408,8 +395,8 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   }
 
   @Override
-  public Iterable<JavaFileObject> list(Location location, String packageName, final Set<JavaFileObject.Kind> kinds, final boolean recurse) throws IOException {
-    Iterable<JavaFileObject> allFiles;
+  public Iterable<JavaFileObject> list(final Location location, final String packageName, final Set<JavaFileObject.Kind> kinds, final boolean recurse) throws IOException {
+    Iterable<JavaFileObject> result;
     try {
       if (isFileSystemLocation(location)) {
         // we consider here only locations that are known to be file-based
@@ -417,66 +404,68 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
         if (locationRoots == null) {
           return Collections.emptyList();
         }
-
-        final List<Iterable<JavaFileObject>> result = new ArrayList<Iterable<JavaFileObject>>();
-        for (File root : locationRoots) {
-          final boolean isFile;
-
-          FileOperations.Archive archive = myFileOperations.lookupArchive(root);
-          if (archive != null) {
-            isFile = true;
-          }
-          else {
-            isFile = myFileOperations.isFile(root);
-          }
-
-          if (isFile) {
-            // Not a directory; either a file or non-existent, create the archive
+        result = Iterators.flat(Iterators.map(locationRoots, new Function<File, Iterable<JavaFileObject>>() {
+          @Override
+          public Iterable<JavaFileObject> fun(File root) {
             try {
-              if (archive == null) {
-                archive = myFileOperations.openArchive(root, myEncodingName, location);
-              }
+              final boolean isFile;
+
+              FileOperations.Archive archive = myFileOperations.lookupArchive(root);
               if (archive != null) {
-                result.add(archive.list(packageName.replace('.', '/'), kinds, recurse));
+                isFile = true;
               }
               else {
-                // fallback to default implementation
-                result.add(super.list(location, packageName, kinds, recurse));
+                isFile = myFileOperations.isFile(root);
               }
-            }
-            catch (IOException ex) {
-              throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
-            }
-          }
-          else {
-            // is a directory or does not exist
-            final File dir = new File(root, packageName.replace('.', '/'));
 
-            // Generally, no directories should be included in result. If recurse:= false,
-            // the fileOperations.listFiles(dir, recurse) output may contain children directories, so the filter should skip them too
-            final BooleanFunction<File> kindsMatcher = ourKindFilter.getFor(kinds);
-            final BooleanFunction<File> filter = recurse || !kinds.contains(JavaFileObject.Kind.OTHER) ? kindsMatcher : new BooleanFunction<File>() {
-              @Override
-              public boolean fun(File file) {
-                return kindsMatcher.fun(file) && (
-                  !(kinds.size() == 1 || JpsFileObject.findKind(file.getName()) == JavaFileObject.Kind.OTHER) /* the kind != OTHER */ || myFileOperations.isFile(file)
-                );
+              if (isFile) {
+                // Not a directory; either a file or non-existent, create the archive
+                try {
+                  if (archive == null) {
+                    archive = myFileOperations.openArchive(root, myEncodingName, location);
+                  }
+                  if (archive != null) {
+                    return archive.list(packageName.replace('.', '/'), kinds, recurse);
+                  }
+                  // fallback to default implementation
+                  return JpsJavacFileManager.super.list(location, packageName, kinds, recurse);
+                }
+                catch (IOException ex) {
+                  throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
+                }
               }
-            };
-            result.add(Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
+
+              // is a directory or does not exist
+              final File dir = new File(root, packageName.replace('.', '/'));
+
+              // Generally, no directories should be included in result. If recurse:= false,
+              // the fileOperations.listFiles(dir, recurse) output may contain children directories, so the filter should skip them too
+              final BooleanFunction<File> kindsMatcher = ourKindFilter.getFor(kinds);
+              final BooleanFunction<File> filter = recurse || !kinds.contains(JavaFileObject.Kind.OTHER) ? kindsMatcher : new BooleanFunction<File>() {
+                @Override
+                public boolean fun(File file) {
+                  return kindsMatcher.fun(file) && (
+                    !(kinds.size() == 1 || JpsFileObject.findKind(file.getName()) == JavaFileObject.Kind.OTHER) /* the kind != OTHER */ || myFileOperations.isFile(file)
+                  );
+                }
+              };
+              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
           }
-        }
-        allFiles = Iterators.flat(result);
+        }));
       }
       else {
         // locations, not supported by this class should be handled by default javac file manager
-        allFiles = super.list(location, packageName, kinds, recurse);
+        result = super.list(location, packageName, kinds, recurse);
       }
     }
     catch (IllegalStateException e) {
       if (e.getCause() instanceof UnsupportedOperationException) {
         // fallback
-        allFiles = super.list(location, packageName, kinds, recurse);
+        result = super.list(location, packageName, kinds, recurse);
       }
       else {
         throw e;
@@ -484,10 +473,10 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     }
     catch (UnsupportedOperationException e) {
       // fallback
-      allFiles = super.list(location, packageName, kinds, recurse);
+      result = super.list(location, packageName, kinds, recurse);
     }
     //noinspection unchecked
-    return kinds.contains(JavaFileObject.Kind.SOURCE) ? (Iterable<JavaFileObject>)wrapJavaFileObjects(allFiles) : allFiles;
+    return kinds.contains(JavaFileObject.Kind.SOURCE) ? (Iterable<JavaFileObject>)wrapJavaFileObjects(result) : result;
   }
 
   // this method overrides corresponding API method since javac 9

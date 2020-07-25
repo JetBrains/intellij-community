@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,15 +13,9 @@ import java.util.NoSuchElementException;
 
 public class Iterators {
 
-  @SuppressWarnings("rawtypes")
-  private static final Iterable<?> EMPTY_ITERABLE = new Iterable() {
-    private final Iterator ITERATOR = Collections.emptyList().iterator();
-    @NotNull
-    @Override
-    public Iterator iterator() {
-      return ITERATOR;
-    }
-  };
+  private static <T> boolean isEmpty(Iterable<T> iterable) {
+    return iterable == Collections.emptyList() || iterable == Collections.emptySet() || iterable == Collections.emptyMap();
+  }
 
   public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
     return new Iterable<T>() {
@@ -48,7 +43,7 @@ public class Iterators {
 
   public static <T> Iterable<T> flat(final Collection<? extends Iterable<T>> parts) {
     if (parts.isEmpty()) {
-      return emptyIterable();
+      return Collections.emptyList();
     }
     if (parts.size() == 1) {
       return parts.iterator().next();
@@ -57,7 +52,7 @@ public class Iterators {
   }
 
   public static <T> Iterable<T> flat(final Iterable<? extends Iterable<? extends T>> parts) {
-    return new Iterable<T>() {
+    return isEmpty(parts)? Collections.<T>emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -102,17 +97,7 @@ public class Iterators {
   }
 
   public static <I> Iterator<I> asIterator(final Iterable<? extends I> from) {
-    return map(from.iterator(), new Function<I, I>() {
-      @Override
-      public I fun(I i) {
-        return i;
-      }
-    });
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> Iterable<T> emptyIterable() {
-    return (Iterable<T>)EMPTY_ITERABLE;
+    return map(from.iterator(), Functions.<I, I>identity());
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
@@ -147,7 +132,7 @@ public class Iterators {
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
-    return new Iterable<O>() {
+    return isEmpty(from)? Collections.<O>emptyList() : new Iterable<O>() {
       @NotNull
       @Override
       public Iterator<O> iterator() {
@@ -171,7 +156,7 @@ public class Iterators {
   }
 
   public static <T> Iterable<T> filter(final Iterable<? extends T> it, final BooleanFunction<? super T> predicate) {
-    return new Iterable<T>() {
+    return isEmpty(it)? Collections.<T>emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {

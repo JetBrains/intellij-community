@@ -22,7 +22,7 @@ final class DefaultFileOperations implements FileOperations {
   private static final Archive NULL_ARCHIVE = new Archive() {
     @Override
     public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
-      return Iterators.emptyIterable();
+      return Collections.emptyList();
     }
     @Override
     public void close(){
@@ -65,7 +65,7 @@ final class DefaultFileOperations implements FileOperations {
           return Iterators.asIterable(f);
         }
         if (children.length == 0) {
-          return Iterators.emptyIterable();
+          return Collections.emptyList();
         }
         return Iterators.flat(Iterators.map(Arrays.asList(children), new Function<File, Iterable<File>>() {
           @Override
@@ -205,7 +205,7 @@ final class DefaultFileOperations implements FileOperations {
     public Iterable<JavaFileObject> list(final String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
       final Collection<ZipEntry> entries = myPaths.get(relPath);
       if (entries == null || entries.isEmpty()) {
-        return Iterators.emptyIterable();
+        return Collections.emptyList();
       }
       Iterable<ZipEntry> entriesIterable = entries;
       if (recurse) {
