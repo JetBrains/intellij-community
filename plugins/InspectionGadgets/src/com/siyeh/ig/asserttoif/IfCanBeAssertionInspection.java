@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.asserttoif;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -87,11 +73,14 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      if (statement.getCondition() != null &&
-          statement.getElseBranch() == null &&
-          getThrownNewException(statement.getThenBranch()) != null) {
-        registerStatementError(statement, PsiUtil.isLanguageLevel7OrHigher(statement) && ComparisonUtils.isNullComparison(statement.getCondition()), true);
+      final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
+      if (condition == null || statement.getElseBranch() != null || getThrownNewException(statement.getThenBranch()) == null) {
+        return;
       }
+      final boolean isObjectsRequireNonNullAvailable = PsiUtil.isLanguageLevel7OrHigher(statement) &&
+                                                       ComparisonUtils.isNullComparison(condition) &&
+                                                       ((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ;
+      registerStatementError(statement, isObjectsRequireNonNullAvailable, true);
     }
 
     @Override
@@ -160,7 +149,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         final PsiElement parent = descriptor.getPsiElement().getParent();
         if (!(parent instanceof PsiIfStatement)) return null;
         final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-        PsiExpression condition = ifStatement.getCondition();
+        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
         if (!(condition instanceof PsiBinaryExpression)) return null;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
         if (nullComparedExpression == null) return null;

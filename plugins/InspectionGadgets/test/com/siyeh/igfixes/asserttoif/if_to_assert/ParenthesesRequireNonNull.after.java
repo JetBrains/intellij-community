@@ -1,9 +1,9 @@
 package com.siyeh.ipp.asserttoif.if_to_assert;
 
+import java.util.Objects;
+
 class Parentheses {
   void s(String s) {
-    i<caret>f (((s) == (null))) {
-      throw (new NullPointerException(("s")));
-    }
+      Objects.requireNonNull((s), ("s"));
   }
 }
