@@ -35,11 +35,11 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -120,7 +120,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
                  return;
                }
 
-               final Set<String> usedWords = new THashSet<>();
+               final Set<String> usedWords = new HashSet<>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, r -> {
                  if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {

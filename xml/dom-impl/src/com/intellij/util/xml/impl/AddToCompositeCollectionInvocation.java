@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.EvaluatedXmlName;
-import gnu.trove.THashSet;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author peter
 */
-class AddToCompositeCollectionInvocation implements Invocation {
+final class AddToCompositeCollectionInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myMainDescription;
   private final Set<? extends CollectionChildDescriptionImpl> myQnames;
   private final Type myType;
@@ -23,10 +23,10 @@ class AddToCompositeCollectionInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) {
     final XmlTag tag = handler.ensureTagExists();
 
-    Set<XmlTag> set = new THashSet<>();
+    Set<XmlTag> set = new HashSet<>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       set.addAll(qname.getCollectionSubTags(handler, tag, true));
     }

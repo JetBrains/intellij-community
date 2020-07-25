@@ -13,11 +13,11 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
 import com.intellij.util.xml.impl.DomAnchorImpl;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -111,7 +111,7 @@ public class DomExtensionImpl implements DomExtension {
   public <T> void putUserData(Key<T> key, T value) {
     Map<Key<?>, Object> map = myUserMap;
     if (map == null) {
-      map = new THashMap<>();
+      map = new HashMap<>();
       myUserMap = map;
     }
     map.put(key, value);

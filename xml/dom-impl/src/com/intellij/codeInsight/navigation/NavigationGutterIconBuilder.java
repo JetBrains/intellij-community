@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -24,7 +10,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NotNullFactory;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -35,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -312,7 +300,7 @@ public class NavigationGutterIconBuilder<T> {
                                                                  @NotNull Collection<? extends T> targets,
                                                                  @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    Set<PsiElement> elements = new THashSet<>();
+    Set<PsiElement> elements = new HashSet<>();
     final List<SmartPsiElementPointer<?>> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
@@ -333,7 +321,7 @@ public class NavigationGutterIconBuilder<T> {
       return false;
     }
 
-    Set<PsiElement> elements = new THashSet<>();
+    Set<PsiElement> elements = new HashSet<>();
     Collection<? extends T> targets = myTargets.getValue();
     for (final T target : targets) {
       for (final PsiElement psiElement : myConverter.fun(target)) {
