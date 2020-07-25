@@ -156,6 +156,25 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 9);
   }
 
+  public void testTwoTopLevelRangesWithNested() {
+    // IDEA-246585
+    assertRanges("a {b{c}p}/{d}",
+                 5, 6,
+                 3, 8,
+                 11, 12);
+
+    assertRanges("a {b{c}}/{d}",
+                 5, 6,
+                 3, 7,
+                 10, 11);
+
+    assertRanges("a {b}/{d{c}}",
+                 "{", "}",
+                 false, true,
+                 3, 4,
+                 7, 11);
+  }
+
   private static void assertRanges(String text,
                                    int... rangeOffsets) {
     assertRanges(text, "{", "}", false, false, rangeOffsets);
@@ -168,13 +187,13 @@ public class PlaceholderTextRangesTest extends TestCase {
                                    int... rangeOffsets) {
     assertEquals("start/end offsets not balanced", 0, rangeOffsets.length % 2);
 
-    final int expectedRangeCount = rangeOffsets.length / 2;
+    int expectedRangeCount = rangeOffsets.length / 2;
     List<TextRange> expectedRanges = new ArrayList<>(expectedRangeCount);
     for (int i = 0; i < expectedRangeCount; i++) {
       expectedRanges.add(new TextRange(rangeOffsets[i * 2], rangeOffsets[i * 2 + 1]));
     }
 
-    final Set<TextRange> ranges = PlaceholderTextRanges.getPlaceholderRanges(text, prefix, suffix, useFullTextRange, filterNested);
+    Set<TextRange> ranges = PlaceholderTextRanges.getPlaceholderRanges(text, prefix, suffix, useFullTextRange, filterNested);
     assertOrderedEquals(ranges, expectedRanges);
   }
 }
