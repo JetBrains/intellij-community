@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -91,6 +92,16 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return type.isInstance(component) ? (T)component : null;
   }
 
+  static boolean isProjectErrorsEnabled() {
+    return Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled");
+  }
+
+  @Override
+  public void init(@NotNull ToolWindow window) {
+    if (!isProjectErrorsEnabled()) return;
+    Project project = ((ToolWindowEx)window).getProject();
+    HighlightingErrorsProvider.getInstance(project);
+  }
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
@@ -98,7 +109,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(isToolbarVisible(window, PropertiesComponent.getInstance(project)));
     ContentManager manager = window.getContentManager();
     createContent(manager, new HighlightingPanel(project, state));
-    if (Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled"))
+    if (isProjectErrorsEnabled())
     createContent(manager, new ProjectErrorsPanel(project, state));
     selectContent(manager, state.getSelectedIndex());
     selectionChanged(true, manager.getSelectedContent());

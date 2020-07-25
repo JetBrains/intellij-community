@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorMarkupModel
@@ -46,7 +45,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 
   override fun getToolWindowIcon(count: Int): Icon? {
-    if (Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled")) return null
+    if (ProblemsView.isProjectErrorsEnabled()) return null
     val root = treeModel.root as? HighlightingFileRoot ?: return Toolwindows.ToolWindowProblemsEmpty
     val problem = root.getChildren(root.file).any {
       val severity = (it as? ProblemNode)?.severity
