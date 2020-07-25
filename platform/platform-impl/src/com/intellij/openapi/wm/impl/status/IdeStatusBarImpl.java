@@ -32,7 +32,6 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
-  private final Set<IdeStatusBarImpl> myChildren = new THashSet<>();
+  private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
 
   private static final class WidgetBean {
     JComponent component;

@@ -21,13 +21,13 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -260,7 +260,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
+    Map<Boolean, List<AdditionalIcon>> map = new HashMap<>();
     for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
       if (myAdditionalIcon.getAvailable()) {
         map.computeIfAbsent(myAdditionalIcon.getAfterText(), k -> new SmartList<>()).add(myAdditionalIcon);

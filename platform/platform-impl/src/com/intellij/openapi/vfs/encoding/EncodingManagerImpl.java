@@ -31,8 +31,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
-import gnu.trove.Equality;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,17 +40,19 @@ import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
-  private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
+  private static final BiPredicate<Reference<Document>, Reference<Document>> REFERENCE_EQUALITY = new BiPredicate<Reference<Document>, Reference<Document>>() {
     @Override
-    public boolean equals(Reference<Document> o1, Reference<Document> o2) {
+    public boolean test(Reference<Document> o1, Reference<Document> o2) {
       Object v1 = o1 == null ? REFERENCE_EQUALITY : o1.get();
       Object v2 = o2 == null ? REFERENCE_EQUALITY : o2.get();
       return v1 == v2;
@@ -233,7 +233,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Collection<Charset> result = new THashSet<>();
+    Collection<Charset> result = new HashSet<>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());

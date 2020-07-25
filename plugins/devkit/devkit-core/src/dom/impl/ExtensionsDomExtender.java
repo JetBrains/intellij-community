@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.include.FileIncludeManager;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
@@ -30,8 +29,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class ExtensionsDomExtender extends DomExtender<Extensions> {
-
+public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new ExtensionDomExtender();
 
   @Override
@@ -108,7 +106,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
     final VirtualFile[] includingFiles = FileIncludeManager.getManager(project).getIncludingFiles(currentFile, false);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Set<VirtualFile> includingAndDependsFiles = new SmartHashSet<>();
+    Set<VirtualFile> includingAndDependsFiles = new HashSet<>();
     for (VirtualFile virtualFile : includingFiles) {
       if (!fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
         continue;

@@ -19,7 +19,7 @@ import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -427,7 +427,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private void mergeAcceptedNodes(@NotNull N node, Set<U> accepted) {
       int k = 0;
       N cur = getChildSafe(node, 0);
-      TIntArrayList newIds = new TIntArrayList();
+      IntArrayList newIds = new IntArrayList();
       for (U child : accepted) {
         U curUsrObject = getUserObject(cur);
         boolean isCur = cur != null && myUseIdentityHashing ? curUsrObject == child : (curUsrObject != null && curUsrObject.equals(child));
@@ -441,26 +441,31 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         ++k;
       }
       if (newIds.size() > 0) {
-        nodesWereInserted(node, newIds.toNativeArray());
+        nodesWereInserted(node, newIds.toIntArray());
       }
       if (node.getChildCount() > k) {
-        TIntArrayList leftIds = new TIntArrayList();
+        IntArrayList leftIds = new IntArrayList();
         List<N> leftNodes = new ArrayList<>();
         for (int i = node.getChildCount() - 1; i >= k; --i) {
           leftNodes.add(getChild(node, i));
           node.remove(i);
           leftIds.add(i);
         }
-        leftIds.reverse();
-        Collections.reverse(leftNodes);
         if (leftIds.size() > 0) {
-          nodesWereRemoved(node, leftIds.toNativeArray(), leftNodes.toArray());
+          int[] ints = leftIds.toIntArray();
+          for (int i = 0; i < ints.length; i++) {
+            int temp = ints[i];
+            ints[i] = ints[ints.length - i - 1];
+            ints[ints.length - i - 1] = temp;
+          }
+          Collections.reverse(leftNodes);
+          nodesWereRemoved(node, ints, leftNodes.toArray());
         }
       }
     }
 
     private void removeNotAccepted(@NotNull N node, Set<U> accepted) {
-      TIntArrayList removedIds = new TIntArrayList();
+      IntArrayList removedIds = new IntArrayList();
       List<N> removedNodes = new ArrayList<>();
       for (int i = node.getChildCount() - 1; i >= 0; --i) {
         N child = getChild(node, i);
@@ -470,10 +475,15 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           node.remove(i);
         }
       }
-      removedIds.reverse();
-      Collections.reverse(removedNodes);
-      if (removedIds.size() > 0) {
-        nodesWereRemoved(node, removedIds.toNativeArray(), removedNodes.toArray());
+      if (!removedIds.isEmpty()) {
+        Collections.reverse(removedNodes);
+        int[] ints = removedIds.toIntArray();
+        for (int i = 0; i < ints.length / 2; i++) {
+          int temp = ints[i];
+          ints[i] = ints[ints.length - i - 1];
+          ints[ints.length - i - 1] = temp;
+        }
+        nodesWereRemoved(node, ints, removedNodes.toArray());
       }
     }
 

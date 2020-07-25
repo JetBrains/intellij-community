@@ -50,7 +50,6 @@ import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -359,7 +358,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public FileEditor @NotNull [] getSelectedEditors() {
-    Set<EditorWindow> windows = new THashSet<>(myWindows);
+    Set<EditorWindow> windows = new HashSet<>(myWindows);
     EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
       windows.add(currentWindow);

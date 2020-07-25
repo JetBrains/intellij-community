@@ -24,7 +24,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.SmartHashSet
 import org.jdom.Element
 import java.util.*
 import java.util.function.Function
@@ -179,7 +178,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     while (true) {
       val next = boundShortcuts.get(id) ?: break
       if (visited == null) {
-        visited = SmartHashSet()
+        visited = HashSet()
       }
 
       id = next

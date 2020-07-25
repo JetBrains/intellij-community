@@ -11,7 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +24,15 @@ abstract class FoldRegionsTree {
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
+  static final Hash.Strategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new Hash.Strategy<FoldRegion>() {
     @Override
-    public int computeHashCode(FoldRegion o) {
-      return o.getStartOffset() * 31 + o.getEndOffset();
+    public int hashCode(@Nullable FoldRegion o) {
+      return o == null ? 0 : o.getStartOffset() * 31 + o.getEndOffset();
     }
 
     @Override
-    public boolean equals(FoldRegion o1, FoldRegion o2) {
-      return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
+    public boolean equals(@Nullable FoldRegion o1, @Nullable FoldRegion o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset());
     }
   };
 

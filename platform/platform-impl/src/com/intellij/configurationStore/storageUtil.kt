@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.NotificationType
@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
-import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -72,7 +71,7 @@ private fun checkUnknownMacros(project: Project,
                                showDialog: Boolean,
                                unknownMacros: MutableSet<String>,
                                substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, THashSet(unknownMacros)))) {
+  if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, HashSet(unknownMacros)))) {
     return
   }
 

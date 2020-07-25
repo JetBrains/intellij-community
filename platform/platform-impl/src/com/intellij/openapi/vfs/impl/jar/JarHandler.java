@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +34,7 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipFile;
 
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-
-public class JarHandler extends ZipHandler {
+public final class JarHandler extends ZipHandler {
   private static final Logger LOG = Logger.getInstance(JarHandler.class);
 
   private static final String JARS_FOLDER = "jars";
@@ -330,7 +327,7 @@ public class JarHandler extends ZipHandler {
       // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
       // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
       // - Remove jar library snapshots that have no projectLibraryPath
-      Set<String> availableLibrarySnapshots = newTroveSet(
+      Set<String> availableLibrarySnapshots = new HashSet<>(Arrays.asList(
         Objects.requireNonNull(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
           @Override
           public boolean accept(File dir, String name) {
@@ -347,12 +344,12 @@ public class JarHandler extends ZipHandler {
             }
             return true;
           }
-        })));
+        }))));
 
       final List<String> invalidLibraryFilePaths = new ArrayList<>();
       final List<String> allLibraryFilePaths = new ArrayList<>();
       MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
-      Set<String> validLibraryFilePathToJarSnapshotFilePaths = new THashSet<>();
+      Set<String> validLibraryFilePathToJarSnapshotFilePaths = new HashSet<>();
 
       info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for (String filePath:allLibraryFilePaths) {

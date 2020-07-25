@@ -14,12 +14,12 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
@@ -28,8 +28,7 @@ import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetr
 /**
  * @author Konstantin Bulenkov
  */
-public class UiInfoUsageCollector extends ApplicationUsagesCollector {
-
+final class UiInfoUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
@@ -49,7 +48,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @NotNull
   public static Set<MetricEvent> getDescriptors() {
-    Set<MetricEvent> set = new THashSet<>();
+    Set<MetricEvent> set = new HashSet<>();
 
     addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
     addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");

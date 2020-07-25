@@ -33,7 +33,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import javax.swing.KeyStroke
@@ -118,7 +117,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         return it
       }
 
-      val result = THashMap<KeyStroke, MutableList<String>>()
+      val result = HashMap<KeyStroke, MutableList<String>>()
 
       fun addKeystrokesMap(actionId: String) {
         for (shortcut in getOwnOrBoundShortcuts(actionId)) {
@@ -292,7 +291,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private val gestureToListOfIds: Map<KeyboardModifierGestureShortcut, List<String>> by lazy { fillShortcutToListOfIds(KeyboardModifierGestureShortcut::class.java) }
 
   private fun <T : Shortcut> fillShortcutToListOfIds(shortcutClass: Class<T>): Map<T, MutableList<String>> {
-    val map = THashMap<T, MutableList<String>>()
+    val map = HashMap<T, MutableList<String>>()
 
     fun addActionToShortcutsMap(actionId: String) {
       for (shortcut in getOwnOrBoundShortcuts(actionId)) {
@@ -646,7 +645,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun getConflicts(actionId: String, keyboardShortcut: KeyboardShortcut): Map<String, MutableList<KeyboardShortcut>> {
-    val result = THashMap<String, MutableList<KeyboardShortcut>>()
+    val result = HashMap<String, MutableList<KeyboardShortcut>>()
 
     for (id in getActionIds(keyboardShortcut.firstKeyStroke)) {
       if (id == actionId || (actionId.startsWith("Editor") && id == "$${actionId.substring(6)}")) {

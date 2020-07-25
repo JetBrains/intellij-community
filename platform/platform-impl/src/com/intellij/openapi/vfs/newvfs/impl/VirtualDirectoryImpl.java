@@ -25,12 +25,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -390,7 +389,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           }
           return cmp;
         });
-        TIntHashSet prevChildren = new TIntHashSet(myData.myChildrenIds);
+        IntOpenHashSet prevChildren = new IntOpenHashSet(myData.myChildrenIds);
         VfsData vfsData = getVfsData();
         for (int i = 0; i < children.size(); i++) {
           ChildInfo child = children.get(i);
@@ -409,7 +408,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         if (!prevChildren.isEmpty()) {
           LOG.error("Loaded child disappeared: " +
                     "parent=" + verboseToString(this) +
-                    "; child=" + verboseToString(vfsData.getFileById(prevChildren.toArray()[0], this, true)));
+                    "; child=" + verboseToString(vfsData.getFileById(prevChildren.iterator().nextInt(), this, true)));
         }
       }
 
@@ -530,7 +529,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     synchronized (myData) {
       int[] oldIds = myData.myChildrenIds;
-      TIntArrayList mergedIds = new TIntArrayList(oldIds.length + added.size());
+      IntArrayList mergedIds = new IntArrayList(oldIds.length + added.size());
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
@@ -557,7 +556,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       };
       ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, (nextInfo,__) -> mergedIds.add(nextInfo.getId()));
-      myData.myChildrenIds = mergedIds.toNativeArray();
+      myData.myChildrenIds = mergedIds.toIntArray();
 
       if (markAllChildrenLoaded) {
         setChildrenLoaded();
@@ -633,7 +632,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // check if all these names are not existing, remove invalid events from the list
-  public void validateChildrenToCreate(@NotNull List<? extends VFileCreateEvent> childrenToCreate) {
+  public void validateChildrenToCreate(@NotNull List<VFileCreateEvent> childrenToCreate) {
     if (childrenToCreate.size() <= 1) {
       for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
         VFileCreateEvent event = childrenToCreate.get(i);
@@ -645,8 +644,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     boolean caseSensitive = getFileSystem().isCaseSensitive();
 
-    CharSequenceHashingStrategy strategy = caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
-    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, strategy);
+    Set<CharSequence> existingNames = CollectionFactory.createCharSequenceSet(caseSensitive, myData.myChildrenIds.length);
     VfsData vfsData = getVfsData();
     for (int id : myData.myChildrenIds) {
       existingNames.add(vfsData.getNameByFileId(id));
@@ -669,7 +667,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void validateAgainst(@NotNull List<? extends VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
+  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
     for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
       VFileCreateEvent event = childrenToCreate.get(i);
       String childName = event.getChildName();

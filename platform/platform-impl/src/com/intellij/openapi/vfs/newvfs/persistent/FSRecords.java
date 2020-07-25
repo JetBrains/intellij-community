@@ -25,15 +25,14 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -720,7 +719,7 @@ public final class FSRecords {
   static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        TIntArrayList result = new TIntArrayList();
+        IntArrayList result = new IntArrayList();
 
         try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
@@ -731,8 +730,7 @@ public final class FSRecords {
           }
         }
         catch (FileNotFoundException ignored) { }
-
-        return result.toNativeArray();
+        return result.toIntArray();
       }
 
       try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
@@ -1090,9 +1088,7 @@ public final class FSRecords {
   // return entries from `existingList` plus `newList',
   // in case of name clash use id from the corresponding `existingList` entry and name from the `newList` entry (to avoid duplicating ids: preserve old id but supply new name)
   @NotNull
-  static ListResult mergeByName(@NotNull ListResult existingList,
-                                @NotNull ListResult newList,
-                                @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
+  static ListResult mergeByName(@NotNull ListResult existingList, @NotNull ListResult newList, boolean isCaseSensitive) {
     List<? extends ChildInfo> newChildren = newList.children;
     List<? extends ChildInfo> oldChildren = existingList.children;
     if (oldChildren.isEmpty()) return newList;
@@ -1101,8 +1097,10 @@ public final class FSRecords {
     // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
 
     // name -> index in result
-    // ObjectIntHashMap is used here to distinguish between absence and the 0th index
-    ObjectIntHashMap<CharSequence> name2I = new ObjectIntHashMap<>(Math.max(oldChildren.size(), newChildren.size()), hashingStrategy);
+    Object2IntOpenCustomHashMap<CharSequence> nameToIndex = new Object2IntOpenCustomHashMap<>(Math.max(oldChildren.size(), newChildren.size()), FastUtilHashingStrategies
+      .getCharSequenceStrategy(isCaseSensitive));
+    // distinguish between absence and the 0th index
+    nameToIndex.defaultReturnValue(-1);
 
     List<ChildInfo> result = new ArrayList<>(Math.max(oldChildren.size(), newChildren.size()));
     for (int i = 0, j = 0; i < newChildren.size() || j < oldChildren.size(); ) {
@@ -1118,7 +1116,7 @@ public final class FSRecords {
       else if (newId < oldId) {
         // newId is absent from `oldChildren`
         CharSequence name = newChild.getName();
-        int dupI = name2I.put(name, result.size(), -1);
+        int dupI = nameToIndex.put(name, result.size());
         if (dupI == -1) {
           result.add(newChild);
         }
@@ -1138,7 +1136,7 @@ public final class FSRecords {
       else {
         // oldId is absent from `newChildren`
         CharSequence name = oldChild.getName();
-        int dupI = name2I.put(name, result.size(), -1);
+        int dupI = nameToIndex.put(name, result.size());
         if (dupI == -1) {
           result.add(oldChild);
         }
@@ -1156,7 +1154,7 @@ public final class FSRecords {
         j++;
       }
     }
-    return name2I.isEmpty() ? newList : new ListResult(result);
+    return nameToIndex.isEmpty() ? newList : new ListResult(result);
   }
 
   static @Nullable String readSymlinkTarget(int id) {
@@ -1223,7 +1221,7 @@ public final class FSRecords {
   @Nullable
   static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
-      @Nullable private TIntArrayList path;
+      @Nullable private IntArrayList path;
       private VirtualFileSystemEntry foundParent;
 
       @Override
@@ -1244,7 +1242,9 @@ public final class FSRecords {
           }
 
           currentId = parentId;
-          if (path == null) path = new TIntArrayList();
+          if (path == null) {
+            path = new IntArrayList();
+          }
           path.add(currentId);
         }
         return null;

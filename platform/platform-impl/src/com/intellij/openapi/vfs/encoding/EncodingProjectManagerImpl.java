@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -36,8 +36,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -137,7 +135,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myMapping.clear();
     List<Element> files = element.getChildren("file");
     if (!files.isEmpty()) {
-      Map<VirtualFilePointer, Charset> mapping = new THashMap<>();
+      Map<VirtualFilePointer, Charset> mapping = new HashMap<>();
       for (Element fileElement : files) {
         String url = fileElement.getAttributeValue("url");
         String charsetName = fileElement.getAttributeValue("charset");
@@ -278,8 +276,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertIsWriteThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    final Map<VirtualFilePointer, Charset> newMap = new THashMap<>(mapping.size());
-    final Map<VirtualFilePointer, Charset> oldMap = new THashMap<>(myMapping);
+    final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
+    final Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -342,7 +340,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     if (!changed.isEmpty()) {
       Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor(myProject);
       tryStartReloadWithProgress(() -> {
-        Set<VirtualFile> processed = new THashSet<>();
+        Set<VirtualFile> processed = new HashSet<>();
         next:
         for (VirtualFilePointer changedFilePointer : changed) {
           VirtualFile changedFile = changedFilePointer.getFile();

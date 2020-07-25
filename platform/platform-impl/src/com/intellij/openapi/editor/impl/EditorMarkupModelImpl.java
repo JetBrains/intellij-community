@@ -55,7 +55,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -564,7 +563,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
-      final Set<RangeHighlighter> highlighters = new THashSet<>();
+      final Set<RangeHighlighter> highlighters = new HashSet<>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
       if (highlighters.isEmpty()) return false;
@@ -1373,7 +1372,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         if (text == null) continue;
 
         if (tooltips == null) {
-          tooltips = new THashSet<>();
+          tooltips = new HashSet<>();
         }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {

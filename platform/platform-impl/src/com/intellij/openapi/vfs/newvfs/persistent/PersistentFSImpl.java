@@ -31,9 +31,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
-import com.intellij.util.text.FilePathHashingStrategy;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -179,7 +176,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // preserve current children which match delegateNames (to have stable id)
       // (on case-insensitive system replace those from current with case-changes ones from delegateNames preserving the id)
       // add those from delegateNames which are absent from current
-      Set<String> toAddNames = new THashSet<>(Arrays.asList(delegateNames), FilePathHashingStrategy.create(fs.isCaseSensitive()));
+      Set<String> toAddNames = CollectionFactory.createFilePathSet(delegateNames, fs.isCaseSensitive());
       for (ChildInfo currentChild : currentChildren) {
         toAddNames.remove(currentChild.getName().toString());
       }
@@ -194,8 +191,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
       toAddChildren.sort(ChildInfo.BY_ID);
-      TObjectHashingStrategy<CharSequence> hashingStrategy = FilePathHashingStrategy.createForCharSequence(fs.isCaseSensitive());
-      return current.merge(toAddChildren, hashingStrategy);
+      return current.merge(toAddChildren, fs.isCaseSensitive());
     });
 
     setChildrenCached(id);
@@ -1118,16 +1114,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     childrenAdded.sort(ChildInfo.BY_ID);
-    TObjectHashingStrategy<CharSequence> hashingStrategy = FilePathHashingStrategy.createForCharSequence(delegate.isCaseSensitive());
-    FSRecords.update(parentId, oldChildren -> oldChildren.merge(childrenAdded, hashingStrategy));
+    FSRecords.update(parentId, oldChildren -> oldChildren.merge(childrenAdded, delegate.isCaseSensitive()));
     parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
 
-    saveScannedChildrenRecursively(createEvents, delegate, hashingStrategy);
+    saveScannedChildrenRecursively(createEvents, delegate, delegate.isCaseSensitive());
   }
 
   private static void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
                                                      @NotNull NewVirtualFileSystem delegate,
-                                                     @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
+                                                     boolean isCaseSensitive) {
     for (VFileCreateEvent createEvent : createEvents) {
       ChildInfo[] children = createEvent.getChildren();
       if (children == null || !createEvent.isDirectory()) continue;
@@ -1152,7 +1147,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           added.sort(ChildInfo.BY_ID);
-          FSRecords.update(directoryId, oldChildren -> oldChildren.merge(added, hashingStrategy));
+          FSRecords.update(directoryId, oldChildren -> oldChildren.merge(added, isCaseSensitive));
           setChildrenCached(directoryId);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -17,7 +18,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
@@ -27,12 +30,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newCounterMetric;
-
 /**
  * @author gregsh
  */
-public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
+final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
@@ -52,7 +53,7 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
     int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0;
-    TObjectIntHashMap<String> types = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<String> types = new Object2IntOpenHashMap<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
 
     for (Module module : modules) {
@@ -66,30 +67,32 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
             packagePrefix++;
           }
           String key = typeNames.get(source.getRootType());
-          if (key == null) continue;
-          if (!types.increment(key)) {
-            types.put(key, 1);
+          if (key == null) {
+            continue;
           }
+          types.addTo(key, 1);
         }
       }
     }
 
     final Set<MetricEvent> result = new HashSet<>();
-    result.add(newCounterMetric("modules.total", modules.length));
-    result.add(newCounterMetric("content.roots.total", contentRoots));
-    result.add(newCounterMetric("source.roots.total", sourceRoots));
-    result.add(newCounterMetric("excluded.roots.total", excludedRoots));
-    types.forEachEntry(
-      (key, count) -> result.add(newCounterMetric("source.root", count, new FeatureUsageData().addData("type", key)))
-    );
+    result.add(MetricEventFactoryKt.newCounterMetric("modules.total", modules.length));
+    result.add(MetricEventFactoryKt.newCounterMetric("content.roots.total", contentRoots));
+    result.add(MetricEventFactoryKt.newCounterMetric("source.roots.total", sourceRoots));
+    result.add(MetricEventFactoryKt.newCounterMetric("excluded.roots.total", excludedRoots));
+    ObjectIterator<Object2IntMap.Entry<String>> iterator = types.object2IntEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Object2IntMap.Entry<String> entry = iterator.next();
+      result.add(MetricEventFactoryKt.newCounterMetric("source.root", entry.getIntValue(), new FeatureUsageData().addData("type", entry.getKey())));
+    }
     if (PlatformUtils.isIntelliJ()) {
-      result.add(newCounterMetric("package.prefix", packagePrefix));
+      result.add(MetricEventFactoryKt.newCounterMetric("package.prefix", packagePrefix));
     }
 
     NamedScope[] localScopes = NamedScopeManager.getInstance(project).getEditableScopes();
-    result.add(newCounterMetric("named.scopes.total.local", localScopes.length));
+    result.add(MetricEventFactoryKt.newCounterMetric("named.scopes.total.local", localScopes.length));
     NamedScope[] sharedScopes = DependencyValidationManager.getInstance(project).getEditableScopes();
-    result.add(newCounterMetric("named.scopes.total.shared", sharedScopes.length));
+    result.add(MetricEventFactoryKt.newCounterMetric("named.scopes.total.shared", sharedScopes.length));
 
     return result;
   }

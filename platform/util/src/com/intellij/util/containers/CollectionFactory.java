@@ -3,8 +3,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.*;
@@ -65,27 +63,39 @@ public final class CollectionFactory {
   }
 
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive, int expectedSize, float loadFactor) {
-    return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
   }
 
   public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize, float loadFactor) {
-    return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
+  }
+
+  public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize) {
+    return new ObjectOpenCustomHashSet<>(expectedSize, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
+  }
+
+  public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive) {
+    return new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
   }
 
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive) {
-    return new Object2ObjectOpenCustomHashMap<>(caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
+  }
+
+  public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(int capacity, float loadFactory, boolean caseSensitive) {
+    return new Object2ObjectOpenCustomHashMap<>(capacity, loadFactory, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
   }
 
   public static @NotNull Set<String> createCaseInsensitiveStringSet() {
-    return new ObjectOpenCustomHashSet<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   public static @NotNull Set<String> createCaseInsensitiveStringSet(@NotNull Set<String> items) {
-    return new ObjectOpenCustomHashSet<>(items, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap() {
-    return new Object2ObjectOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   public static @NotNull Set<String> createFilePathSet() {
@@ -106,7 +116,7 @@ public final class CollectionFactory {
       return new HashSet<>(expectedSize);
     }
     else {
-      return new ObjectOpenCustomHashSet<>(expectedSize, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectOpenCustomHashSet<>(expectedSize, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
     }
   }
 
@@ -115,7 +125,16 @@ public final class CollectionFactory {
       return new HashSet<>(paths);
     }
     else {
-      return new ObjectOpenCustomHashSet<>(paths, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectOpenCustomHashSet<>(paths, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+    }
+  }
+
+  public static @NotNull Set<String> createFilePathSet(String @NotNull[] paths, boolean isFileSystemCaseSensitive) {
+    if (isFileSystemCaseSensitive) {
+      return new HashSet<>(Arrays.asList(paths));
+    }
+    else {
+      return new ObjectOpenCustomHashSet<>(paths, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
     }
   }
 
@@ -141,7 +160,7 @@ public final class CollectionFactory {
       return new HashMap<>(expectedSize);
     }
     else {
-      return new Object2ObjectOpenCustomHashMap<>(expectedSize, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new Object2ObjectOpenCustomHashMap<>(expectedSize, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
     }
   }
 
@@ -162,7 +181,7 @@ public final class CollectionFactory {
       return new ObjectLinkedOpenHashSet<>();
     }
     else {
-      return new ObjectLinkedOpenCustomHashSet<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectLinkedOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
     }
   }
 
@@ -174,7 +193,7 @@ public final class CollectionFactory {
       return createSmallMemoryFootprintLinkedMap();
     }
     else {
-      return new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
     }
   }
 
@@ -300,45 +319,5 @@ public final class CollectionFactory {
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
     //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
-  }
-}
-
-// must be not exposed to avoid exposing Hash.Strategy interface
-final class FastUtilCharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
-  static final FastUtilCharSequenceHashingStrategy CASE_SENSITIVE = new FastUtilCharSequenceHashingStrategy(true);
-  static final FastUtilCharSequenceHashingStrategy CASE_INSENSITIVE = new FastUtilCharSequenceHashingStrategy(false);
-
-  private final boolean isCaseSensitive;
-
-  private FastUtilCharSequenceHashingStrategy(boolean caseSensitive) {
-    isCaseSensitive = caseSensitive;
-  }
-
-  @Override
-  public int hashCode(CharSequence o) {
-    if (o == null) {
-      return 0;
-    }
-    return isCaseSensitive ? StringUtil.stringHashCode(o) : StringUtil.stringHashCodeInsensitive(o);
-  }
-
-  @Override
-  public boolean equals(CharSequence s1, CharSequence s2) {
-    return StringUtilRt.equal(s1, s2, isCaseSensitive);
-  }
-}
-
-// must be not exposed to avoid exposing Hash.Strategy interface
-final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strategy<String> {
-  static final FastUtilCaseInsensitiveStringHashingStrategy INSTANCE = new FastUtilCaseInsensitiveStringHashingStrategy();
-
-  @Override
-  public int hashCode(String s) {
-    return s == null ? 0 : StringUtil.stringHashCodeInsensitive(s);
-  }
-
-  @Override
-  public boolean equals(String s1, String s2) {
-    return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
   }
 }

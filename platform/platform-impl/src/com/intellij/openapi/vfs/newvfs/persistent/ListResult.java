@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // stores result of various FSRecords.list*() methods and the current FSRecords.localModCount for optimistic locking support
-class ListResult {
+final class ListResult {
   private final int modStamp;
   // sorted by getId()
   final List<? extends ChildInfo> children;
@@ -76,9 +75,9 @@ class ListResult {
 
   @Contract(pure=true)
   @NotNull
-  ListResult merge(@NotNull List<? extends ChildInfo> newList, @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
+  ListResult merge(@NotNull List<? extends ChildInfo> newList, boolean isCaseSensitive) {
     // assume list is sorted
-    ListResult newChildren = FSRecords.mergeByName(this, new ListResult(newList), hashingStrategy);
+    ListResult newChildren = FSRecords.mergeByName(this, new ListResult(newList), isCaseSensitive);
     return new ListResult(modStamp, newChildren.children);
   }
 

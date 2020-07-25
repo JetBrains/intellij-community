@@ -13,28 +13,20 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -77,7 +69,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       return;
     }
     MultiMap<PluginId, UnknownFeature> features = new MultiMap<>();
-    Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins = new THashMap<>();
+    Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins = new HashMap<>();
     List<IdeaPluginDescriptor> customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null);
     if (project.isDisposed()) {
       return;
@@ -112,7 +104,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }
 
     List<String> bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values());
-    Set<PluginDownloader> plugins = new THashSet<>();
+    Set<PluginDownloader> plugins = new HashSet<>();
 
     if (!ids.isEmpty()) {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance()

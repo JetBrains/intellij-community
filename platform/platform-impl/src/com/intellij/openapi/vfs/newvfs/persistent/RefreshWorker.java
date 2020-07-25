@@ -146,7 +146,7 @@ public final class RefreshWorker {
     List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = CollectionFactory.createFilePathSet(Arrays.asList(upToDateNames), fs.isCaseSensitive());
+    Set<String> newNames = CollectionFactory.createFilePathSet(upToDateNames, fs.isCaseSensitive());
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
@@ -159,7 +159,7 @@ public final class RefreshWorker {
     Set<String> deletedNames = CollectionFactory.createFilePathSet(persistedNames, fs.isCaseSensitive());
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    ObjectOpenCustomHashSet<String> actualNames = fs.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(Arrays.asList(upToDateNames), false);
+    ObjectOpenCustomHashSet<String> actualNames = fs.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
     }
@@ -238,7 +238,7 @@ public final class RefreshWorker {
       actualNames = null;
     }
     else {
-      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(Arrays.asList(VfsUtil.filterNames(fs.list(dir))), false);
+      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(VfsUtil.filterNames(fs.list(dir)), false);
     }
 
     if (LOG.isTraceEnabled()) {

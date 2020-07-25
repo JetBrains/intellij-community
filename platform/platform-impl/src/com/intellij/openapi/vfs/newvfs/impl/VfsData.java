@@ -14,15 +14,11 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.ByteArrayCharSequence;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +68,7 @@ public final class VfsData {
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
-  private TIntHashSet myDyingIds = new TIntHashSet();
+  private IntOpenHashSet myDyingIds = new IntOpenHashSet();
 
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
@@ -92,12 +88,13 @@ public final class VfsData {
   private void killInvalidatedFiles() {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {
-        for (int id : myDyingIds.toArray()) {
+        for (IntIterator iterator = myDyingIds.iterator(); iterator.hasNext(); ) {
+          int id = iterator.nextInt();
           Segment segment = Objects.requireNonNull(getSegment(id, false));
           segment.myObjectArray.set(getOffset(id), myDeadMarker);
           myChangedParents.remove(id);
         }
-        myDyingIds = new TIntHashSet();
+        myDyingIds = new IntOpenHashSet();
       }
     }
   }
@@ -396,8 +393,8 @@ public final class VfsData {
     private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
       Set<CharSequence> adopted = myAdoptedNames;
       if (adopted == null) {
-        myAdoptedNames = adopted =
-          new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+        adopted = CollectionFactory.createCharSequenceSet(caseSensitive);
+        myAdoptedNames = adopted;
       }
       return adopted;
     }

@@ -22,7 +22,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.sf.cglib.asm.$ClassVisitor;
 import net.sf.cglib.asm.$Label;
 import net.sf.cglib.asm.$Type;
@@ -375,9 +375,9 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     ClassLoader nonPluginLoader = null;
 
     List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-    NotNullLazyValue<TObjectIntHashMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
+    NotNullLazyValue<Object2IntOpenHashMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
       int count = 0;
-      TObjectIntHashMap<PluginId> map = new TObjectIntHashMap<>(plugins.size());
+      Object2IntOpenHashMap<PluginId > map = new Object2IntOpenHashMap<>(plugins.size());
       for (IdeaPluginDescriptor descriptor : plugins) {
         map.put(descriptor.getPluginId(), count++);
       }
@@ -388,7 +388,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       for (Class<?> anInterface : interfaces) {
         ClassLoader loader = anInterface.getClassLoader();
         if (loader instanceof PluginClassLoader) {
-          int order = idToIndex.getValue().get(((PluginClassLoader)loader).getPluginId());
+          int order = idToIndex.getValue().getInt(((PluginClassLoader)loader).getPluginId());
           if (maxIndex < order) {
             maxIndex = order;
             bestLoader = loader;
@@ -404,7 +404,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     if (superclass != null) {
       superLoader = superclass.getClassLoader();
       if (superLoader instanceof PluginClassLoader &&
-          maxIndex < idToIndex.getValue().get(((PluginClassLoader)superLoader).getPluginId())) {
+          maxIndex < idToIndex.getValue().getInt(((PluginClassLoader)superLoader).getPluginId())) {
         return superLoader;
       }
     }
