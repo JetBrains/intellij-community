@@ -4,7 +4,12 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import static java.util.Collections.emptySet;
 
 public final class PlaceholderTextRanges {
 
@@ -32,6 +37,7 @@ public final class PlaceholderTextRanges {
 
   /**
    * Searches for placeholder text ranges with the given prefix and suffix.
+   *
    * @param s                  String to parse.
    * @param prefix             Prefix.
    * @param suffix             Suffix.
@@ -45,49 +51,50 @@ public final class PlaceholderTextRanges {
                                                     @NotNull String suffix,
                                                     boolean useFullTextRange,
                                                     boolean filterNestedRanges) {
-    int current = s.indexOf(prefix);
-    if (current == -1) {
-      return Collections.emptySet();
+    if (!s.contains(prefix)) {
+      return emptySet();
     }
 
     Set<TextRange> ranges = new LinkedHashSet<>(2);
-
     Deque<Integer> prefixes = new ArrayDeque<>();
-    prefixes.push(current);
-    boolean currentPointsAtPrefix = true;
 
-    while (current >= 0) {
-      int nextSuffix = s.indexOf(suffix, currentPointsAtPrefix ? current + prefix.length() : current);
-      if (nextSuffix == -1) {
-        break;
+    int searchFrom = 0;
+    while (searchFrom < s.length()) {
+      int nextSuffix = s.indexOf(suffix, searchFrom);
+      if (nextSuffix < 0) {
+        break; // no more suffixes to create ranges
       }
+      int nextPrefix = s.indexOf(prefix, searchFrom);
 
-      int nextPrefix = s.indexOf(prefix, current + 1);
-
-      while (nextPrefix > 0 && nextPrefix + prefix.length() <= nextSuffix) {
+      if (prefixes.isEmpty()) {
+        if (nextPrefix < 0) {
+          break; // no more prefixes to match with suffix
+        }
         prefixes.push(nextPrefix);
-        nextPrefix = s.indexOf(prefix, nextPrefix + 1);
+        searchFrom = nextPrefix + 1;
       }
+      else if (nextPrefix < 0
+               || nextSuffix <= nextPrefix
+               || nextPrefix + prefix.length() >= nextSuffix) { // support overlapping tokens
+        // suffix first
+        int prefixPairPos = prefixes.pop();
 
-      nextPrefix = prefixes.pop();
-      int startOffset = nextPrefix + (useFullTextRange ? 0 : prefix.length());
-      int endOffset = useFullTextRange ? nextSuffix + suffix.length() : nextSuffix;
+        int startOffset = prefixPairPos + (useFullTextRange ? 0 : prefix.length());
+        int endOffset = useFullTextRange ? nextSuffix + suffix.length() : nextSuffix;
 
-      TextRange textRange = new TextRange(startOffset, endOffset);
-      ranges.add(textRange);
+        ranges.add(TextRange.create(startOffset, endOffset));
 
-      while (!prefixes.isEmpty() && prefixes.peek() + prefix.length() > nextPrefix) {
-        prefixes.pop();
+        // remove overlapping prefix positions from stack
+        while (!prefixes.isEmpty() && prefixes.peek() + prefix.length() > prefixPairPos) {
+          prefixes.pop();
+        }
+
+        searchFrom = nextSuffix + suffix.length();
       }
-
-      current = s.indexOf(prefix, nextSuffix + suffix.length());
-      if (current > 0) {
-        prefixes.push(current);
-        currentPointsAtPrefix = true;
-      }
-      else if (!prefixes.isEmpty()) {
-        current = s.indexOf(suffix, nextSuffix + suffix.length());
-        currentPointsAtPrefix = false;
+      else {
+        // prefix first
+        prefixes.push(nextPrefix);
+        searchFrom = nextPrefix + 1;
       }
     }
 
