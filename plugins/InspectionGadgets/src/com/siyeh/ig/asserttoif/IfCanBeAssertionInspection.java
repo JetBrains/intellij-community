@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IfCanBeAssertionInspection extends BaseInspection {
-  private static final String GUAVA_PRECONDITIONS = "com.google.common.base.Preconditions";
-  private static final String GUAVA_CHECK_NON_NULL = "checkNotNull";
+  private static final CallMatcher.Simple MATCHER = CallMatcher.staticCall("com.google.common.base.Preconditions", "checkNotNull");
 
   @NotNull
   @Override
@@ -86,43 +85,13 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (MethodCallUtils.isCallToMethod(expression,
-                                         GUAVA_PRECONDITIONS,
-                                         null,
-                                         GUAVA_CHECK_NON_NULL,
-                                         (PsiType[])null) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
+      if (MATCHER.test(expression) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
         registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);
       }
     }
   }
 
   private static class ReplaceWithObjectsNonNullFix extends InspectionGadgetsFix {
-    private static final class Replacer {
-      private final Consumer<? super String> myReplacer;
-      private final PsiExpression myNullComparedExpression;
-      private final PsiExpression myMessage;
-
-      private Replacer(@NotNull Consumer<? super String> replacer, @NotNull PsiExpression nullComparedExpression, @Nullable PsiExpression message) {
-        myReplacer = replacer;
-        myNullComparedExpression = nullComparedExpression;
-        myMessage = message;
-      }
-
-      public void replace() {
-        String messageText;
-        if (myMessage == null) {
-          messageText = "";
-        }
-        else {
-          PsiType messageType = myMessage.getType();
-          messageText = ", " + ((messageType != null && messageType.equalsToText(CommonClassNames.JAVA_LANG_STRING))
-                                ? myMessage.getText()
-                                : (CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + myMessage.getText() + ")"));
-        }
-        String newText = "java.util.Objects.requireNonNull(" + myNullComparedExpression.getText() + messageText + ")";
-        myReplacer.consume(newText);
-      }
-    }
     private final boolean myIsIfStatement;
 
     ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
@@ -138,23 +107,16 @@ public class IfCanBeAssertionInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      Replacer info = getReplaceInfo(descriptor);
-      if (info == null) return;
-      info.replace();
-    }
-
-    @Nullable
-    private Replacer getReplaceInfo(ProblemDescriptor descriptor) {
       if (myIsIfStatement) {
         final PsiElement parent = descriptor.getPsiElement().getParent();
-        if (!(parent instanceof PsiIfStatement)) return null;
+        if (!(parent instanceof PsiIfStatement)) return;
         final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
-        if (!(condition instanceof PsiBinaryExpression)) return null;
+        final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
+        if (!(condition instanceof PsiBinaryExpression)) return;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
-        if (nullComparedExpression == null) return null;
+        if (nullComparedExpression == null) return;
         PsiNewExpression exception = getThrownNewException(ifStatement.getThenBranch());
-        if (exception == null) return null;
+        if (exception == null) return;
         PsiExpressionList args = exception.getArgumentList();
         PsiExpression message = null;
         if (args != null) {
@@ -164,29 +126,38 @@ public class IfCanBeAssertionInspection extends BaseInspection {
           }
         }
         CommentTracker tracker = new CommentTracker();
-        return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker),
-                            tracker.markUnchanged(nullComparedExpression),
-                            message);
+        final String text = buildNewExpressionText(tracker.markUnchanged(nullComparedExpression), message);
+        PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker);
       } else {
         PsiReferenceExpression ref = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiReferenceExpression.class);
-        if (ref == null) return null;
+        if (ref == null) return;
         PsiMethodCallExpression methodCall = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
-        if (methodCall == null || !MethodCallUtils.isCallToMethod(methodCall,
-                                                                  GUAVA_PRECONDITIONS,
-                                                                  null,
-                                                                  GUAVA_CHECK_NON_NULL,
-                                                                  (PsiType[])null)) {
-          return null;
+        if (!MATCHER.test(methodCall)) {
+          return;
         }
         PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-        if (args.length > 2) return null;
+        if (args.length > 2) return;
         CommentTracker tracker = new CommentTracker();
-        return new Replacer(text -> PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text, tracker),
-                            tracker.markUnchanged(args[0]),
-                            args.length == 2 ? tracker.markUnchanged(args[1]) : null);
+        final String text = buildNewExpressionText(tracker.markUnchanged(args[0]), (args.length == 2) ? tracker.markUnchanged(args[1]) : null);
+        PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text, tracker);
       }
     }
 
+    private static String buildNewExpressionText(@NotNull PsiExpression nullComparedExpression, @Nullable PsiExpression message) {
+      final StringBuilder result = new StringBuilder("java.util.Objects.requireNonNull(");
+      result.append(nullComparedExpression.getText());
+      if (message != null) {
+        result.append(", ");
+        if (ExpressionUtils.hasStringType(message)) {
+          result.append(message.getText());
+        }
+        else {
+          result.append(CommonClassNames.JAVA_LANG_STRING + ".valueOf(").append(message.getText()).append(")");
+        }
+      }
+      result.append(")");
+      return result.toString();
+    }
   }
 
   private static class IfToAssertionFix extends InspectionGadgetsFix {

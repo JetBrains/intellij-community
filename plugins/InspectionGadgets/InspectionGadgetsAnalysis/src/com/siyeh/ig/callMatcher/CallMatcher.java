@@ -301,7 +301,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       return parametersMatch(parameterList);
     }
 
-    @Contract(pure = true)
+    @Contract(value = "null -> false", pure = true)
     @Override
     public boolean test(PsiMethodCallExpression call) {
       if (call == null) return false;
