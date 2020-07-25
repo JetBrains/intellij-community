@@ -40,6 +40,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.*;
@@ -181,7 +184,7 @@ public final class FSRecords {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static ContentHashEnumerator myContentHashesEnumerator;
-    private static File myRootsFile;
+    private static Path myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final IntList myFreeRecords = new IntArrayList();
 
@@ -253,24 +256,26 @@ public final class FSRecords {
       throw new RuntimeException("Can't initialize filesystem storage", exception);
     }
 
-    @Nullable
-    private static Exception tryInit() {
-      final File basePath = basePath().getAbsoluteFile();
-      if (!(basePath.isDirectory() || basePath.mkdirs())) {
-        return new RuntimeException("Cannot create storage directory: " + basePath);
+    private static @Nullable Exception tryInit() {
+      Path basePath = basePath().getAbsoluteFile().toPath();
+      try {
+        Files.createDirectories(basePath);
+      }
+      catch (IOException e) {
+        return e;
       }
 
-      final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
-      final File attributesFile = new File(basePath, "attrib" + VFS_FILES_EXTENSION);
-      final File contentsFile = new File(basePath, "content" + VFS_FILES_EXTENSION);
-      final File contentsHashesFile = new File(basePath, "contentHashes" + VFS_FILES_EXTENSION);
-      final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
-      myRootsFile = ourStoreRootsSeparately ? new File(basePath, "roots" + VFS_FILES_EXTENSION) : null;
+      Path namesFile = basePath.resolve("names" + VFS_FILES_EXTENSION);
+      Path attributesFile = basePath.resolve("attrib" + VFS_FILES_EXTENSION);
+      Path contentsFile = basePath.resolve("content" + VFS_FILES_EXTENSION);
+      Path contentsHashesFile = basePath.resolve("contentHashes" + VFS_FILES_EXTENSION);
+      Path recordsFile = basePath.resolve("records" + VFS_FILES_EXTENSION);
+      myRootsFile = ourStoreRootsSeparately ? basePath.resolve("roots" + VFS_FILES_EXTENSION) : null;
 
-      final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
+      File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
-      if (!namesFile.exists()) {
-        invalidateIndex("'" + namesFile.getPath() + "' does not exist");
+      if (!Files.exists(namesFile)) {
+        invalidateIndex("'" + namesFile + "' does not exist");
       }
 
       try {
@@ -280,16 +285,16 @@ public final class FSRecords {
         }
 
         StorageLockContext storageLockContext = new StorageLockContext(false);
-        myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
+        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
 
-        myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
+        myAttributes = new Storage(attributesFile, REASONABLY_SMALL) {
           @Override
-          protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
+          protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
             return inlineAttributes && useSmallAttrTable ? new CompactRecordsTable(recordsFile, pool, false) : super.createRecordsTable(pool, recordsFile);
           }
         };
 
-        myContents = new RefCountingStorage(contentsFile.getPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useCompressionUtil) {
+        myContents = new RefCountingStorage(contentsFile, CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useCompressionUtil) {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
@@ -298,11 +303,11 @@ public final class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
-        myRecords = new ResizeableMappedFile(recordsFile.toPath(), 20 * 1024, storageLockContext,
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
 
         boolean initial = myRecords.length() == 0;
@@ -335,8 +340,8 @@ public final class FSRecords {
 
           boolean deleted = FileUtil.delete(getCorruptionMarkerFile());
           deleted &= IOUtil.deleteAllFilesStartingWith(namesFile);
-          deleted &= AbstractStorage.deleteFiles(attributesFile.getPath());
-          deleted &= AbstractStorage.deleteFiles(contentsFile.getPath());
+          deleted &= AbstractStorage.deleteFiles(attributesFile);
+          deleted &= AbstractStorage.deleteFiles(contentsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
@@ -353,7 +358,7 @@ public final class FSRecords {
               e1.printStackTrace();
             }
             else {
-              final String message = "Files in " + basePath.getPath() + " are locked.\n" +
+              final String message = "Files in " + basePath + " are locked.\n" +
                                      ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
               if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
                 JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
@@ -717,8 +722,7 @@ public final class FSRecords {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while ((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -770,8 +774,7 @@ public final class FSRecords {
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -784,8 +787,7 @@ public final class FSRecords {
         catch (FileNotFoundException ignored) {}
 
         DbConnection.markDirty();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream =
-               new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile, true)))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile, StandardOpenOption.APPEND)) {
           int id = createRecord();
           stream.write(id + " " + rootUrl + "\n");
           return id;
@@ -840,8 +842,7 @@ public final class FSRecords {
       DbConnection.markDirty();
       if (ourStoreRootsSeparately) {
         List<String> rootsThatLeft = new ArrayList<>();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -853,9 +854,8 @@ public final class FSRecords {
         }
         catch (FileNotFoundException ignored) {}
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream =
-               new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile)))) {
-          for (String line:rootsThatLeft) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile)) {
+          for (String line : rootsThatLeft) {
             stream.write(line);
             stream.write("\n");
           }

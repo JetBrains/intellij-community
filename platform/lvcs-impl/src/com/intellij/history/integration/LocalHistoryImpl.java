@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
@@ -15,19 +15,20 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
@@ -91,13 +92,8 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     VirtualFileManager.getInstance().addVirtualFileManagerListener(myEventDispatcher, this);
   }
 
-  @NotNull
-  public static File getStorageDir() {
-    return new File(getSystemPath(), "LocalHistory");
-  }
-
-  private static String getSystemPath() {
-    return PathManager.getSystemPath();
+  public static @NotNull Path getStorageDir() {
+    return Paths.get(PathManager.getSystemPath(), "LocalHistory");
   }
 
   @Override
@@ -122,7 +118,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   @TestOnly
   public void cleanupForNextTest() {
     doDispose();
-    FileUtil.delete(getStorageDir());
+    PathKt.delete(getStorageDir());
     init();
   }
 

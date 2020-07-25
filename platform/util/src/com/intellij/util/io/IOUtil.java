@@ -12,11 +12,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class IOUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final boolean BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER =
@@ -158,6 +162,36 @@ public final class IOUtil {
 
   public static boolean isAscii(char c) {
     return c < 128;
+  }
+
+  public static boolean deleteAllFilesStartingWith(@NotNull Path file) {
+    String baseName = file.getFileName().toString();
+    Path parentFile = file.getParent();
+    if (parentFile == null) {
+      return true;
+    }
+
+    List<Path> files;
+    try (Stream<Path> stream = Files.list(parentFile)) {
+      files = stream.filter(it -> it.getFileName().toString().startsWith(baseName)).collect(Collectors.toList());
+    }
+    catch (NoSuchFileException ignore) {
+      return true;
+    }
+    catch (IOException ignore) {
+      return false;
+    }
+
+    boolean ok = true;
+    for (Path f : files) {
+      try {
+        Files.deleteIfExists(f);
+      }
+      catch (IOException ignore) {
+        ok = false;
+      }
+    }
+    return ok;
   }
 
   public static boolean deleteAllFilesStartingWith(@NotNull File file) {
