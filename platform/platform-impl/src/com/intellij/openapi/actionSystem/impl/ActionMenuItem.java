@@ -244,7 +244,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     if (ActionMenu.isShowIcons()) {
       return null;
     }
-    if (!ActionMenu.isAligned()) {
+    if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {
       return icon;
     }
     if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
