@@ -115,12 +115,12 @@ final class VfsEventGenerationHelper {
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
   // null means error during scan
   private static ChildInfo @Nullable [] scanChildren(@NotNull Path root,
-                                                     @NotNull List<Path> excluded,
+                                                     @NotNull List<? extends Path> excluded,
                                                      @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled)
   throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
+    ChildInfo fakeRoot = new ChildInfoImpl("", null, null, null);
     stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
       int checkCanceledCount;
@@ -152,7 +152,7 @@ final class VfsEventGenerationHelper {
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
         String symLinkTarget = isSymLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
-        ChildInfo info = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
+        ChildInfo info = new ChildInfoImpl(name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
@@ -164,7 +164,8 @@ final class VfsEventGenerationHelper {
         // store children back
         ChildInfo parentInfo = ContainerUtil.getLastItem(parentInfos);
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
-        ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymlinkTarget());
+        ChildInfo newInfo = ((ChildInfoImpl)parentInfo).withChildren(children);
+
         parentInfos.set(parentInfos.size() - 1, newInfo);
         return FileVisitResult.CONTINUE;
       }

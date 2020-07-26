@@ -277,6 +277,22 @@ public final class VfsData {
         }
       }
     }
+    void setFlags(int id, int combinedMask, int combinedValue) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
+      }
+      assert (combinedMask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
+                                                    Integer.toHexString(combinedMask)+")";
+      int offset = getOffset(id) * 2 + 1;
+      while (true) {
+        int oldInt = myIntArray.get(offset);
+        int updated = oldInt & ~combinedMask | combinedValue;
+        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
+          return;
+        }
+      }
+    }
 
     long getModificationStamp(int id) {
       return myIntArray.get(getOffset(id) * 2 + 1) & ~ALL_FLAGS_MASK;

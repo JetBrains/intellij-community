@@ -1388,7 +1388,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       int childId = childInfo.getId();
       assert parent instanceof VirtualDirectoryImpl : parent;
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-      VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), childData.first, isEmptyDirectory);
+      VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), fileAttributesToFlags(childData.first), isEmptyDirectory);
       if (isEmptyDirectory) {
         // when creating empty directory we need to make sure every file created inside will fire "file created" event
         // in order to virtual file pointer manager get those events to update its pointers properly
@@ -1599,5 +1599,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @TestOnly
   ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
     return myIdToDirCache;
+  }
+
+  @Attributes
+  static int fileAttributesToFlags(@NotNull FileAttributes attributes) {
+    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden());
+  }
+
+  @Attributes
+  public static int fileAttributesToFlags(boolean isDirectory, boolean isWritable,
+                                          boolean isSymLink, boolean isSpecial, boolean isHidden) {
+    return (isDirectory ? IS_DIRECTORY_FLAG : 0) |
+           (isWritable ? 0 : IS_READ_ONLY) |
+           (isSymLink ? IS_SYMLINK : 0) |
+           (isSpecial ? IS_SPECIAL : 0) |
+           (isHidden ? IS_HIDDEN : 0);
   }
 }

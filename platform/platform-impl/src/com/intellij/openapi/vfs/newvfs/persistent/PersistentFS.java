@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,8 +104,4 @@ public abstract class PersistentFS extends ManagingFS {
 
   // true if FS persisted at least one child or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
-
-  public static @NotNull FileAttributes toFileAttributes(@Attributes int attr) {
-    return new FileAttributes(isDirectory(attr), isSpecialFile(attr), isSymLink(attr), isHidden(attr), -1, -1, isWritable(attr));
-  }
 }

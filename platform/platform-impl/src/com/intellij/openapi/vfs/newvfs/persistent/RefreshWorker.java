@@ -303,7 +303,7 @@ public final class RefreshWorker {
       // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
       name = fs.getCanonicallyCasedName(file);
     }
-    return new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   static class RefreshCancelledException extends RuntimeException {

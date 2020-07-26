@@ -143,11 +143,7 @@ public final class FSRecords {
       setTimestamp(id, attributes.lastModified);
       setLength(id, attributes.isDirectory() ? -1L : attributes.length);
 
-      setFlags(id, (attributes.isDirectory() ? PersistentFS.IS_DIRECTORY_FLAG : 0) |
-                   (attributes.isWritable() ? 0 : PersistentFS.IS_READ_ONLY) |
-                   (attributes.isSymLink() ? PersistentFS.IS_SYMLINK : 0) |
-                   (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
-                   (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
+      setFlags(id, PersistentFSImpl.fileAttributesToFlags(attributes), true);
       setParent(id, parentId);
       return nameId;
     });
@@ -1043,8 +1039,8 @@ public final class FSRecords {
   }
 
   private static void updateSymlinkInfoForNewChild(int parentId, @NotNull ChildInfo info) {
-    FileAttributes attributes = info.getFileAttributes();
-    if (attributes != null && attributes.isSymLink()) {
+    int attributes = info.getFileAttributeFlags();
+    if (attributes != -1 && PersistentFS.isSymLink(attributes)) {
       int id = info.getId();
       String symlinkTarget = info.getSymlinkTarget();
       storeSymlinkTarget(id, symlinkTarget);
@@ -1127,8 +1123,7 @@ public final class FSRecords {
           ChildInfo oldDup = result.get(dupI);
           int nameId = newChild.getNameId();
           assert nameId > 0 : newList;
-          ChildInfoImpl replaced = new ChildInfoImpl(oldDup.getId(), nameId, oldDup.getFileAttributes(), oldDup.getChildren(),
-                                                 oldDup.getSymlinkTarget());
+          ChildInfo replaced = ((ChildInfoImpl)oldDup).withNameId(nameId);
           result.set(dupI, replaced);
         }
         i++;
@@ -1147,8 +1142,7 @@ public final class FSRecords {
           ChildInfo dup = result.get(dupI);
           int nameId = dup.getNameId();
           assert nameId > 0 : existingList;
-          ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
-                                                 dup.getSymlinkTarget());
+          ChildInfo replaced = ((ChildInfoImpl)dup).withId(oldChild.getId());
           result.set(dupI, replaced);
         }
         j++;
