@@ -36,7 +36,6 @@
 
         <!-- Formatting -->
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
-        <codeStyleSettingsProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
             implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
 
