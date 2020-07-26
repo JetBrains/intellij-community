@@ -44,7 +44,7 @@ object MLCompletionSettingsCollector {
     override fun acceptRuleId(ruleId: String?): Boolean = ruleId == "ml_completion_ranker_id"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      if (WeakModelProvider.availableProviders().any { it.displayNameInSettings == data }) {
+      if (WeakModelProvider.availableProviders().any { it.id == data }) {
         return ValidationResultType.ACCEPTED
       }
 

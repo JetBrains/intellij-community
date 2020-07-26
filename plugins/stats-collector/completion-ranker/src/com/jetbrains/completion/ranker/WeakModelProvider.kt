@@ -71,7 +71,7 @@ interface WeakModelProvider : RankingModelProvider {
     fun enabledByDefault(): List<String> {
       return availableProviders().asSequence()
         .filter { it.isEnabledByDefault }
-        .map { it.displayNameInSettings }
+        .map { it.id }
         .toList()
     }
 

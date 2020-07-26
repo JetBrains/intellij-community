@@ -44,17 +44,17 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     return SenderPreloadingActivityKt.isCompletionLogsSendAllowed();
   }
 
-  public boolean isLanguageEnabled(@NotNull String languageName) {
-    return myState.language2state.getOrDefault(languageName, isEnabledByDefault(languageName));
+  public boolean isLanguageEnabled(@NotNull String rankerId) {
+    return myState.language2state.getOrDefault(rankerId, isEnabledByDefault(rankerId));
   }
 
-  public void setLanguageEnabled(@NotNull String languageName, boolean isEnabled) {
-    if (isEnabled == isLanguageEnabled(languageName)) return;
-    setLanguageEnabledImpl(languageName, isEnabled);
-    logCompletionState(languageName, isEnabled);
+  public void setLanguageEnabled(@NotNull String rankerId, boolean isEnabled) {
+    if (isEnabled == isLanguageEnabled(rankerId)) return;
+    setRankerEnabledImpl(rankerId, isEnabled);
+    logCompletionState(rankerId, isEnabled);
     if (isRankingEnabled()) {
       // log only if language ranking settings changes impact completion behavior
-      MLCompletionSettingsCollector.rankingSettingsChanged(languageName, isEnabled, isEnabledByDefault(languageName), true);
+      MLCompletionSettingsCollector.rankingSettingsChanged(rankerId, isEnabled, isEnabledByDefault(rankerId), true);
     }
   }
 
@@ -73,7 +73,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public void loadState(@NotNull State state) {
     myState.rankingEnabled = state.rankingEnabled;
     myState.showDiff = state.showDiff;
-    state.language2state.forEach((lang, enabled) -> setLanguageEnabledImpl(lang, enabled));
+    state.language2state.forEach((lang, enabled) -> setRankerEnabledImpl(lang, enabled));
   }
 
   private void logCompletionState(@NotNull String languageName, boolean isEnabled) {
@@ -86,12 +86,12 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     return enabledByDefault.contains(languageName);
   }
 
-  private void setLanguageEnabledImpl(@NotNull String languageName, boolean isEnabled) {
-    if (isEnabledByDefault(languageName) == isEnabled) {
-      myState.language2state.remove(languageName);
+  private void setRankerEnabledImpl(@NotNull String rankerId, boolean isEnabled) {
+    if (isEnabledByDefault(rankerId) == isEnabled) {
+      myState.language2state.remove(rankerId);
     }
     else {
-      myState.language2state.put(languageName, isEnabled);
+      myState.language2state.put(rankerId, isEnabled);
     }
   }
 

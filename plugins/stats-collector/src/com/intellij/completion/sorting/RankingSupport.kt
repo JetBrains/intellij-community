@@ -30,14 +30,14 @@ object RankingSupport {
     return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
 
-  fun availableLanguages(): List<String> {
+  fun availableRankers(): List<RankingModelProvider> {
     val registeredLanguages = Language.getRegisteredLanguages()
     return WeakModelProvider.availableProviders()
       .filter { provider ->
         registeredLanguages.any {
           provider.isLanguageSupported(it)
         }
-      }.map { it.displayNameInSettings }.distinct().sorted().toList()
+      }.toList()
   }
 
   private fun findProviderSafe(language: Language): RankingModelProvider? {
@@ -55,7 +55,7 @@ object RankingSupport {
       return LanguageRankingModel(provider.model)
     }
     catch (e: Exception) {
-      LOG.error("Could not create ranking model '${provider.displayNameInSettings}'", e)
+      LOG.error("Could not create ranking model with id '${provider.id}' and name '${provider.displayNameInSettings}'", e)
       return null
     }
   }
@@ -66,17 +66,17 @@ object RankingSupport {
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
     if (application.isEAP && isCompletionLogsSendAllowed() && experimentInfo.inExperiment && experimentStatus.experimentChanged(language)) {
-      configureSettingsInExperimentOnce(experimentInfo, provider.displayNameInSettings)
+      configureSettingsInExperimentOnce(experimentInfo, provider.id)
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
-    return settings.isRankingEnabled && settings.isLanguageEnabled(provider.displayNameInSettings)
+    return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
   }
 
-  private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, language: String) {
+  private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, rankerId: String) {
     val settings = CompletionMLRankingSettings.getInstance()
     if (experimentInfo.shouldRank) settings.isRankingEnabled = experimentInfo.shouldRank
-    settings.setLanguageEnabled(language, experimentInfo.shouldRank)
+    settings.setLanguageEnabled(rankerId, experimentInfo.shouldRank)
     settings.isShowDiffEnabled = experimentInfo.shouldShowArrows
     if (experimentInfo.shouldShowArrows && shouldShowArrowsNotification()) {
       showNotificationAboutArrows()

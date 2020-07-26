@@ -7,8 +7,8 @@ import com.intellij.openapi.options.ConfigurableProvider
 
 class MLRankingConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
-    val availableLanguages = RankingSupport.availableLanguages()
-    if (availableLanguages.isEmpty()) return null
-    return MLRankingConfigurable(availableLanguages)
+    val availableRankers = RankingSupport.availableRankers()
+    if (availableRankers.isEmpty()) return null
+    return MLRankingConfigurable(availableRankers)
   }
 }
