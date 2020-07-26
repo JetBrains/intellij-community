@@ -10,17 +10,22 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
 public abstract class DynamicBundle extends AbstractBundle {
   private final static Logger LOG = Logger.getInstance(DynamicBundle.class);
   private final static Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+
+  @NotNull
+  private static String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
@@ -80,6 +85,9 @@ public abstract class DynamicBundle extends AbstractBundle {
 
   public static class LanguageBundleEP extends AbstractExtensionPointBean {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
+
+    @Attribute("lang")
+    public String lang = Locale.ENGLISH.getLanguage();
   }
 
   private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
@@ -118,5 +126,16 @@ public abstract class DynamicBundle extends AbstractBundle {
       };
     }
     return rb;
+  }
+
+  public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
+    if (langBundle != null) {
+      ourLangTag = langBundle.lang;
+    }
+  }
+
+  @NotNull
+  public static Locale getLocale() {
+    return Locale.forLanguageTag(ourLangTag);
   }
 }
