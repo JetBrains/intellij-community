@@ -94,8 +94,11 @@ public class RegistryValue {
   }
 
   public String[] getOptions() {
-    String value = asString();
-    if (value.startsWith("[") && value.endsWith("]")) {
+    return getOptions(Registry.getInstance().getBundleValue(myKey, true));
+  }
+
+  private static String[] getOptions(String value) {
+    if (value != null && value.startsWith("[") && value.endsWith("]")) {
       return value.substring(1, value.length() - 1).split("\\|");
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -103,7 +106,7 @@ public class RegistryValue {
 
   @Nullable
   public String getSelectedOption() {
-    for (String option : getOptions()) {
+    for (String option : getOptions(asString())) {
       if (option.endsWith("*")) {
         return StringUtil.trimEnd(option, "*");
       }
