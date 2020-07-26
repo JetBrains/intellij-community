@@ -194,7 +194,7 @@ public final class ActionMenu extends JBMenu {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
-      if (Registry.is("ide.macos.main.menu.hide.icons")) {
+      if (isShowIcons()) {
         setIcon(null);
         setDisabledIcon(null);
       } else {
@@ -207,6 +207,18 @@ public final class ActionMenu extends JBMenu {
         }
       }
     }
+  }
+
+  static boolean isShowIcons() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
+  }
+
+  static boolean isAligned() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
+  }
+
+  static boolean isAlignedInGroup() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
   }
 
   @Override

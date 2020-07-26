@@ -20,7 +20,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -242,10 +241,10 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private Icon wrapNullIcon(Icon icon) {
-    if (SystemInfo.isMac && Registry.is("ide.macos.main.menu.hide.icons")) {
+    if (ActionMenu.isShowIcons()) {
       return null;
     }
-    if (!Registry.is("ide.macos.main.menu.align.menu.items")) {
+    if (!ActionMenu.isAligned()) {
       return icon;
     }
     if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
