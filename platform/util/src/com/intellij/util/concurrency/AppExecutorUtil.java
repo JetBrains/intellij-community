@@ -77,19 +77,23 @@ public final class AppExecutorUtil {
    * which will shutdown itself when {@code parentDisposable} gets disposed.
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
-                                                                     Disposable parentDisposable) {
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name,
+                                                                     @NotNull Executor backendExecutor,
+                                                                     int maxThreads,
+                                                                     @NotNull Disposable parentDisposable) {
     BoundedTaskExecutor executor = new BoundedTaskExecutor(name, backendExecutor, maxThreads, true);
     Disposer.register(parentDisposable, () -> executor.shutdownNow());
     return executor;
   }
   /**
-   * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
-   * which will shutdown itself when {@code parentDisposable} gets disposed.
+   * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}.
+   * Tasks are prioritized according to {@code comparator}.
    */
   @NotNull
-  public static ExecutorService createCustomPriorityQueueBoundedApplicationPoolExecutor(@NotNull String name, @NotNull Executor backendExecutor,
-                                                                                        int maxThreads, @NotNull Comparator<? super Runnable> comparator) {
+  public static ExecutorService createCustomPriorityQueueBoundedApplicationPoolExecutor(@NotNull String name,
+                                                                                        @NotNull Executor backendExecutor,
+                                                                                        int maxThreads,
+                                                                                        @NotNull Comparator<? super Runnable> comparator) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, true, new PriorityBlockingQueue<>(11, comparator));
   }
 }
