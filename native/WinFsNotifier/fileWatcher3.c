@@ -300,19 +300,46 @@ static void UpdateRoots(bool report) {
     free(buffer.text);
 }
 
+static bool GetClosestExistingDirectory(const wchar_t *path)
+{
+	struct _stat buffer;
+	bool result = false;
+	while (true) {
+		int res = _wstat(path, &buffer);
+		if (res == 0 && (buffer.st_mode & _S_IFDIR) == _S_IFDIR) {
+			result = true;
+			break;
+		}
+		if (res != 0 && errno == ENOENT) {
+			wchar_t *p = wcsrchr(path, L'\\');
+			if (p != NULL) {
+				*p = 0;
+				continue;
+			}
+		}
+		break;
+	}
+
+	return result;
+}
+
 static void AddWatchRoot(const wchar_t *path) {
     WatchRoot *root = (WatchRoot *)calloc(1, sizeof(WatchRoot));
     root->next = NULL;
 	wcsncpy(root->rootPath, path, MAX_PATH);
-	if (root->rootPath[wcslen(root->rootPath)-1] != L'\\') {
-		wcscat(root->rootPath, L"\\");
+	if (GetClosestExistingDirectory(root->rootPath)) {
+		if (root->rootPath[wcslen(root->rootPath)-1] != L'\\') {
+			wcscat(root->rootPath, L"\\");
+		}
+		root->hThread = NULL;
+		root->hStopEvent = NULL;
+		root->state = rsOff;
+		root->bUsed = true;
+		root->next = firstWatchRoot;
+		firstWatchRoot = root;
+	} else {
+		free(root);
 	}
-	root->hThread = NULL;
-	root->hStopEvent = NULL;
-	root->state = rsOff;
-	root->bUsed = true;
-    root->next = firstWatchRoot;
-    firstWatchRoot = root;
 }
 
 static void FreeWatchRootsList() {
