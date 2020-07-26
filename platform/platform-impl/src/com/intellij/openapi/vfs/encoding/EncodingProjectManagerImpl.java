@@ -81,9 +81,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
-      }, ModalityState.NON_MODAL, project.getDisposed());
+      GuiUtils.invokeLaterIfNeeded(() -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments(),
+                                   ModalityState.NON_MODAL, project.getDisposed());
     }
   }
 
@@ -457,7 +456,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {
     if (myNative2AsciiForPropertiesFiles != native2Ascii) {
       myNative2AsciiForPropertiesFiles = native2Ascii;
-      myIdeEncodingManager.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii, myProject);
+      EncodingManagerImpl.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii, myProject);
     }
   }
 
@@ -484,7 +483,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Charset old = myDefaultCharsetForPropertiesFiles;
     if (!Comparing.equal(old, charset)) {
       myDefaultCharsetForPropertiesFiles = charset;
-      myIdeEncodingManager.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset, myProject);
+      EncodingManagerImpl.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset, myProject);
     }
   }
 
