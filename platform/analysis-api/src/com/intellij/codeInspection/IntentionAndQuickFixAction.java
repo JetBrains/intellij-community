@@ -2,11 +2,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,19 +18,19 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public abstract String getName();
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionFamilyName
   @NotNull
   public abstract String getFamilyName();
 
   public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public String getText() {
     return getName();

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -44,6 +45,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return getFamilyName() + " " + getPreposition() + " '@" + ClassUtil.extractClassName(myAnnotation) + "'";
   }
 
+  @IntentionName
   @NotNull
   protected String getPreposition() {
     return "with";

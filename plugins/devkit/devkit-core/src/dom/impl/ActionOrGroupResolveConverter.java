@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -115,6 +116,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return true;
   }
 
+  @InspectionMessage
   protected String getResultTypes() {
     return "action or group";
   }
