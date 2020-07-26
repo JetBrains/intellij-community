@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <ctype.h>
+#include <fcntl.h>
+#include <io.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +17,7 @@ enum RootState {
 };
 
 typedef struct __WatchRoot {
-    char rootPath[MAX_PATH + 1];
+    wchar_t rootPath[MAX_PATH + 1];
     HANDLE hThread;
     HANDLE hStopEvent;
 	bool bUsed;
@@ -43,51 +45,50 @@ typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWOR
 static GetFinalPathNameByHandlePtr pGetFinalPathNameByHandle = NULL;
 
 typedef struct {
-    char *text;
+    wchar_t *text;
     size_t size;
 } PrintBuffer;
 
-static void AppendString(PrintBuffer *buffer, const char *str) {
-    if (buffer->text == NULL || strlen(buffer->text) + strlen(str) + 1 > buffer->size) {
-        size_t newSize = buffer->size + max(4096, strlen(str));
-        char *newData = (char *)malloc(newSize);
+static void AppendString(PrintBuffer *buffer, const wchar_t *str) {
+    if (buffer->text == NULL || wcslen(buffer->text) + wcslen(str) + 1 > buffer->size) {
+        size_t newSize = buffer->size + max(4096, wcslen(str));
+        wchar_t *newData = (wchar_t *)calloc(newSize, sizeof(wchar_t));
         if (buffer->text != NULL) {
-            strcpy_s(newData, newSize, buffer->text);
+            wcscpy_s(newData, newSize, buffer->text);
             free(buffer->text);
         } else {
-            newData[0] = '\0';
+            newData[0] = L'\0';
         }
         buffer->text = newData;
         buffer->size = newSize;
     }
-    strcat_s(buffer->text, buffer->size, str);
+    wcscat_s(buffer->text, buffer->size, str);
 }
 
 // -- Volume operations ---------------------------------------------------
 
-static bool IsDriveWatchable(const char *rootPath) {
-    UINT type = GetDriveTypeA(rootPath);
+static bool IsDriveWatchable(const wchar_t *rootPath) {
+    UINT type = GetDriveTypeW(rootPath);
     if (type == DRIVE_REMOVABLE || type == DRIVE_FIXED || type == DRIVE_RAMDISK) {
-        char fsName[MAX_PATH + 1];
-        if (GetVolumeInformationA(rootPath, NULL, 0, NULL, NULL, NULL, fsName, sizeof(fsName))) {
-            return strcmp(fsName, "NTFS") == 0 ||
-                   strcmp(fsName, "FAT") == 0 ||
-                   strcmp(fsName, "FAT32") == 0 ||
-                   _stricmp(fsName, "exFAT") == 0 ||
-                   _stricmp(fsName, "reFS") == 0;
+        wchar_t fsName[MAX_PATH + 1];
+        if (GetVolumeInformationW(rootPath, NULL, 0, NULL, NULL, NULL, fsName, sizeof(fsName)/sizeof(wchar_t))) {
+            return wcscmp(fsName, L"NTFS") == 0 ||
+                   wcscmp(fsName, L"FAT") == 0 ||
+                   wcscmp(fsName, L"FAT32") == 0 ||
+                   _wcsicmp(fsName, L"exFAT") == 0 ||
+                   _wcsicmp(fsName, L"reFS") == 0;
         }
     }
 
     return false;
 }
 
-static bool IsPathWatchable(const char *pathToWatch) {
+static bool IsPathWatchable(const wchar_t *pathToWatch) {
     bool watchable = true;
-    int pathLen = MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, NULL, 0);
-    wchar_t *path = (wchar_t *)calloc((size_t)pathLen + 1, sizeof(wchar_t));
-    MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, path, pathLen);
+	wchar_t *path = _wcsdup(pathToWatch);
     wchar_t buffer[1024];
     const unsigned int bufferSize = 1024;
+	size_t pathLen = wcslen(path);
 
     wchar_t *pSlash;
     while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
@@ -119,45 +120,45 @@ static bool IsPathWatchable(const char *pathToWatch) {
 
 static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
     for (WatchRoot *root = firstWatchRoot; root; root = root->next) {
-        const char *path = root->rootPath;
+        const wchar_t *path = root->rootPath;
         if (!IsPathWatchable(path)) {
             AppendString(buffer, path);
-            AppendString(buffer, "\n");
+            AppendString(buffer, L"\n");
         }
     }
 }
 
 // -- Watcher thread ----------------------------------------------------------
 
-static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info) {
-    const char *event;
+static void PrintChangeInfo(const wchar_t *rootPath, FILE_NOTIFY_INFORMATION *info) {
+    const wchar_t *event;
     if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
-        event = "CREATE";
+        event = L"CREATE";
     } else if (info->Action == FILE_ACTION_REMOVED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
-        event = "DELETE";
+        event = L"DELETE";
     } else if (info->Action == FILE_ACTION_MODIFIED) {
-        event = "CHANGE";
+        event = L"CHANGE";
     } else {
         return;  // unknown event
     }
 
-    char utfBuffer[4 * MAX_PATH + 1];
-    int wcsLen = (int)(info->FileNameLength / sizeof(wchar_t));
-    int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, wcsLen, utfBuffer, sizeof(utfBuffer), NULL, NULL);
-    utfBuffer[converted] = '\0';
+	wchar_t *filename = (wchar_t*)calloc(info->FileNameLength + 1, sizeof(wchar_t));
+	memcpy(filename, info->FileName, info->FileNameLength);
 
     EnterCriticalSection(&csOutput);
-    puts(event);
-    printf(rootPath);
-    puts(utfBuffer);
+    _putws(event);
+    wprintf(rootPath);
+    _putws(filename);
     fflush(stdout);
     LeaveCriticalSection(&csOutput);
+
+	free(filename);
 }
 
-static void PrintEverythingChangedUnderRoot(const char *rootPath) {
+static void PrintEverythingChangedUnderRoot(const wchar_t *rootPath) {
     EnterCriticalSection(&csOutput);
-    puts("RECDIRTY");
-    puts(rootPath);
+    _putws(L"RECDIRTY");
+    _putws(rootPath);
     fflush(stdout);
     LeaveCriticalSection(&csOutput);
 }
@@ -178,8 +179,8 @@ static DWORD WINAPI WatcherThread(void *param) {
     memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    const char *rootPath = pRoot->rootPath;
-    HANDLE hRootDir = CreateFileA(rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
+    const wchar_t *rootPath = pRoot->rootPath;
+    HANDLE hRootDir = CreateFileW(rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
 
     char buffer[EVENT_BUFFER_SIZE];
     HANDLE handles[2] = {pRoot->hStopEvent, overlapped.hEvent};
@@ -286,30 +287,30 @@ static void UpdateRoots(bool report) {
     }
 
     PrintBuffer buffer = {NULL, 0};
-    AppendString(&buffer, "UNWATCHEABLE\n");
+    AppendString(&buffer, L"UNWATCHEABLE\n");
     PrintUnwatchablePaths(&buffer, unwatchable);
-    AppendString(&buffer, "#\nREMAP\n");
-    AppendString(&buffer, "#");
+    AppendString(&buffer, L"#\nREMAP\n");
+    AppendString(&buffer, L"#");
 
     EnterCriticalSection(&csOutput);
-    puts(buffer.text);
+    _putws(buffer.text);
     fflush(stdout);
     LeaveCriticalSection(&csOutput);
 
     free(buffer.text);
 }
 
-static void AddWatchRoot(const char *path) {
-    WatchRoot *root = (WatchRoot *)malloc(sizeof(WatchRoot));
+static void AddWatchRoot(const wchar_t *path) {
+    WatchRoot *root = (WatchRoot *)calloc(1, sizeof(WatchRoot));
     root->next = NULL;
-	memset(root->rootPath, 0, sizeof(root->rootPath));
-	strncpy(root->rootPath, path, MAX_PATH);
-	if (root->rootPath[strlen(root->rootPath)-1] != '\\') {
-		strcat(root->rootPath, "\\");
+	wcsncpy(root->rootPath, path, MAX_PATH);
+	if (root->rootPath[wcslen(root->rootPath)-1] != L'\\') {
+		wcscat(root->rootPath, L"\\");
 	}
 	root->hThread = NULL;
 	root->hStopEvent = NULL;
 	root->state = rsOff;
+	root->bUsed = true;
     root->next = firstWatchRoot;
     firstWatchRoot = root;
 }
@@ -328,35 +329,37 @@ static void FreeWatchRootsList() {
 
 int main(int argc, char *argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS);
+	_setmode(_fileno(stdin), _O_U8TEXT);
+	_setmode(_fileno(stdout), _O_U8TEXT);
     pGetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
     InitializeCriticalSection(&csOutput);
 
-    char buffer[8192];
+    wchar_t buffer[8192];
+	int bufferSize = sizeof(buffer) / sizeof(wchar_t);
     while (true) {
-        if (!gets_s(buffer, sizeof(buffer) - 1) || strcmp(buffer, "EXIT") == 0) {
+        if (!_getws_s(buffer, bufferSize - 1) || wcscmp(buffer, L"EXIT") == 0) {
             break;
         }
-
-        if (strcmp(buffer, "ROOTS") == 0) {
+        if (wcscmp(buffer, L"ROOTS") == 0) {
             MarkAllRootsUnused();
 			UpdateRoots(false);
             FreeWatchRootsList();
 
             bool failed = false;
             while (true) {
-                if (!gets_s(buffer, sizeof(buffer) - 1)) {
+                if (!_getws_s(buffer, bufferSize - 1)) {
                     failed = true;
                     break;
                 }
-                if (strlen(buffer) == 0) {
+                if (wcslen(buffer) == 0) {
                     continue;
                 }
-                if (buffer[0] == '#') {
+                if (buffer[0] == L'#') {
                     break;
                 }
 
-                char *root = buffer;
-                if (*root == '|') root++;
+                wchar_t *root = buffer;
+                if (*root == L'|') root++;
                 AddWatchRoot(root);
             }
             if (failed) {
@@ -377,7 +380,7 @@ int main(int argc, char *argv[]) {
         QueryPerformanceFrequency(&fcy);
         _total_ = _total_ * 1000000 / fcy.QuadPart;
         _post_ = _post_ * 1000000 / fcy.QuadPart;
-        fprintf(stderr, "!! TOTAL=%llu(%d) POST=%llu(%d) MAX.EVENTS=%u\n",
+        fwprintf(stderr, L"!! TOTAL=%llu(%d) POST=%llu(%d) MAX.EVENTS=%u\n",
                 _total_, (int) (_total_ / _calls_),
                 _post_, (int) (_post_ / _calls_),
                 _max_events_);
