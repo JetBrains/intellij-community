@@ -13,6 +13,7 @@ import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.util.io.StreamUtil
 import org.toml.ide.TomlHighlighter
 import org.toml.ide.icons.TomlIcons
+import org.toml.lang.TomlLanguage
 import javax.swing.Icon
 
 class TomlColorSettingsPage : ColorSettingsPage {
@@ -24,7 +25,7 @@ class TomlColorSettingsPage : ColorSettingsPage {
         StreamUtil.convertSeparators(StreamUtil.readText(stream, "UTF-8"))
     }
 
-    override fun getDisplayName(): String = "Toml"
+    override fun getDisplayName(): String = TomlLanguage.displayName
     override fun getHighlighter(): SyntaxHighlighter = TomlHighlighter()
     override fun getIcon(): Icon? = TomlIcons.TOML_FILE
     override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = tagToDescriptorMap
