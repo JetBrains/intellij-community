@@ -130,13 +130,16 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
     .mapValues { (jdkVersion, groupItems) ->
       val majorVersion = groupItems.first().jdkMajorVersion
 
-      val includedItems = groupItems.map { JdkVersionVendorItem(item = it) }
+      val includedItems = groupItems
+        .map { JdkVersionVendorItem(item = it) }
+        .sortedBy { it.item.product.packagePresentationText.toLowerCase() }
+
       val includedProducts = groupItems.map { it.product }.toHashSet()
 
       val excludedItems = allItems
         .asSequence()
-        .filter { it !in groupItems }
         .filter { it.product !in includedProducts }
+        .filter { it !in groupItems }
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
@@ -153,6 +156,7 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
         //we assume the initial order of feed items contains vendors in the right order
         .mapNotNull { it.value }
         .map { JdkVersionVendorItem(item = it) }
+        .sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
       JdkVersionItem(jdkVersion, includedItems, excludedItems)
     }
