@@ -147,16 +147,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, myRefactoringScope, true).forEach(method -> {
-      for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        if (signature.getMethod() == myMethod) {
-          usages.add(new UsageInfo(method));
+    if (myDeleteTheDeclaration) {
+      OverridingMethodsSearch.search(myMethod, myRefactoringScope, true)
+        .forEach(method -> {
+          if (shouldDeleteOverrideAttribute(method)) {
+            usages.add(new OverrideAttributeUsageInfo(method));
+          }
           return true;
-        }
-      }
-
-      return true;
-    });
+        });
+    }
 
     if (mySearchInComments || mySearchForTextOccurrences) {
       final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
@@ -178,6 +177,22 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private boolean shouldDeleteOverrideAttribute(PsiMethod method) {
+    return method.getHierarchicalMethodSignature()
+      .getSuperSignatures().stream()
+      .allMatch(signature -> {
+        PsiMethod superMethod = signature.getMethod();
+        if (superMethod == myMethod) {
+          return true;
+        }
+        if (JavaLanguage.INSTANCE == method.getLanguage() &&
+            Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
+          return !PsiUtil.isLanguageLevel6OrHigher(method);
+        }
+        return false;
+      });
   }
 
   @Override
@@ -459,6 +474,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final List<PsiElement> imports2Delete = new ArrayList<>();
           for (final UsageInfo usage : usages) {
             final PsiElement element = usage.getElement();
+            if (element == null) continue;
+            if (usage instanceof OverrideAttributeUsageInfo) {
+              for (OverrideMethodsProcessor processor : OverrideMethodsProcessor.EP_NAME.getExtensionList()) {
+                if (processor.removeOverrideAttribute(element)) {
+                  break;
+                }
+              }
+              continue;
+            }
+            
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
             }
@@ -468,13 +493,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                 //no overloads available: ensure broken import are deleted and
                 //unused overloaded imports are deleted by optimize imports helper
                 imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
-              }
-            }
-            else if (element instanceof PsiMethod) {
-              for (OverrideMethodsProcessor processor : OverrideMethodsProcessor.EP_NAME.getExtensionList()) {
-                if (processor.removeOverrideAttribute((PsiMethod)element)) {
-                  break;
-                }
               }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
@@ -1238,6 +1256,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
+    }
+  }
+
+  private static class OverrideAttributeUsageInfo extends UsageInfo {
+    private OverrideAttributeUsageInfo(@NotNull PsiElement element) {
+      super(element);
     }
   }
 }

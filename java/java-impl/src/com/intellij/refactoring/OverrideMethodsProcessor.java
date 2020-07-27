@@ -2,14 +2,15 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public interface OverrideMethodsProcessor {
   ExtensionPointName<OverrideMethodsProcessor> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.overrideMethodProcessor");
 
   /**
-   * Should check if {@code method} has override attribute and iff, then remove it.
+   * Should check if {@code element} has override attribute and iff, then remove it.
    * @return true if attribute was found so further processing is not required
    */
-  boolean removeOverrideAttribute(PsiMethod method);
+  boolean removeOverrideAttribute(@NotNull PsiElement element);
 }

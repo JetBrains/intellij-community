@@ -3,15 +3,19 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaOverrideMethodsProcessor implements OverrideMethodsProcessor {
   @Override
-  public boolean removeOverrideAttribute(PsiMethod method) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, Override.class.getName());
-    if (annotation != null) {
-      annotation.delete();
-      return true;
+  public boolean removeOverrideAttribute(@NotNull PsiElement element) {
+    if (element instanceof PsiMethod) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiMethod)element, true, Override.class.getName());
+      if (annotation != null) {
+        annotation.delete();
+        return true;
+      }
     }
     return false;
   }
