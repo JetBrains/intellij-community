@@ -9,8 +9,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -27,29 +25,9 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   private final Map<VariableDescriptor, DFAType> initialTypes;
 
-  public TypesSemilattice(PsiManager manager,
-                          @NotNull InitialTypeProvider provider,
-                          Instruction @NotNull [] flow,
-                          @NotNull DFAFlowInfo flowInfo) {
+  public TypesSemilattice(@NotNull PsiManager manager, @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
     myManager = manager;
-    initialTypes = computeInitialTypes(flow, flowInfo, provider);
-  }
-
-  private static Map<VariableDescriptor, DFAType> computeInitialTypes(Instruction @NotNull [] flow,
-                                                                      @NotNull DFAFlowInfo flowInfo,
-                                                                      @NotNull InitialTypeProvider provider) {
-    Map<VariableDescriptor, DFAType> collector = new HashMap<>();
-    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(flow);
-    for (VariableDescriptor descriptor : descriptors) {
-      if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
-        continue;
-      }
-      DFAType initialType = provider.initialType(descriptor);
-      if (initialType != null) {
-        collector.put(descriptor, initialType);
-      }
-    }
-    return collector;
+    this.initialTypes = initialTypes;
   }
 
   @Override

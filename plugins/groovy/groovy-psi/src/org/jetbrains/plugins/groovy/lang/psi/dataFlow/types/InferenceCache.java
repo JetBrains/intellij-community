@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -119,9 +116,24 @@ class InferenceCache {
                                             @NotNull DFAFlowInfo flowInfo,
                                             @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
-    final TypesSemilattice semilattice =
-      new TypesSemilattice(owner.getManager(), new InitialTypeProvider(owner, initialTypes), myFlow, flowInfo);
+    final Map<VariableDescriptor, DFAType> initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState);
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+  }
+
+  private Map<VariableDescriptor, DFAType> computeInitialState(@NotNull DFAFlowInfo flowInfo, @NotNull InitialTypeProvider provider) {
+    Map<VariableDescriptor, DFAType> collector = new HashMap<>();
+    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(myFlow);
+    for (VariableDescriptor descriptor : descriptors) {
+      if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
+        continue;
+      }
+      DFAType initialType = provider.initialType(descriptor);
+      if (initialType != null) {
+        collector.put(descriptor, initialType);
+      }
+    }
+    return collector;
   }
 
   @Nullable
