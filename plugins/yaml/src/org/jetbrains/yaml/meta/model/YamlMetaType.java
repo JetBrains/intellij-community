@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -209,8 +211,8 @@ public abstract class YamlMetaType {
     private int myLevel;
     private boolean myCaretAppended;
 
-    public YamlInsertionMarkup() {
-      this("  ");
+    public YamlInsertionMarkup(@NotNull InsertionContext context) {
+      this(getTabSymbol(context));
     }
 
     public YamlInsertionMarkup(@NotNull String tabSymbol) {
@@ -233,11 +235,19 @@ public abstract class YamlMetaType {
       append(CRLF_MARKUP);
       if (withSequenceItemMark) {
         append(tabs(myLevel - 1));
-        append(SEQUENCE_ITEM_MARKUP);
+        append(sequenceItemPrefix());
       }
       else {
         append(tabs(myLevel));
       }
+    }
+
+    @NotNull
+    private String sequenceItemPrefix() {
+      String result = SEQUENCE_ITEM_MARKUP;
+      if(myTabSymbol.length() > result.length())
+        result += myTabSymbol.substring(result.length());
+      return result;
     }
 
     public void appendCaret() {
@@ -278,6 +288,11 @@ public abstract class YamlMetaType {
 
     private String tabs(int level) {
       return StringUtil.repeat(myTabSymbol, level);
+    }
+
+    @NotNull
+    private static String getTabSymbol(@NotNull InsertionContext context) {
+      return StringUtil.repeatSymbol(' ', CodeStyle.getIndentSize(context.getFile()));
     }
 
     public void insertStringAndCaret(Editor editor, String commonPadding) {
