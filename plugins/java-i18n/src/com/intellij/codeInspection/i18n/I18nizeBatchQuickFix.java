@@ -17,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PartiallyKnownString;
-import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +24,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.text.UniqueNameGenerator;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -79,7 +77,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         }
         else if (distinct.add(concatenation.getRootUExpression().getSourcePsi())) {
           ArrayList<UExpression> args = new ArrayList<>();
-          String value = buildUnescapedFormatString(concatenation, args);
+          String value = JavaI18nUtil.buildUnescapedFormatString(concatenation, args);
           String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
                                            I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           HardcodedStringContextData contextData = new HardcodedStringContextData(
@@ -96,7 +94,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     if (keyValuePairs.isEmpty()) return;
 
     ArrayList<I18nizedPropertyData<HardcodedStringContextData>> replacements = new ArrayList<>(keyValuePairs.values());
-    I18nizeMultipleStringsDialog dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
+    I18nizeMultipleStringsDialog<HardcodedStringContextData> dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
       List<PsiElement> elements = data.getPsiElements();
       return ContainerUtil.map(elements, element -> new UsageInfo(element.getParent()));
     }, null, true);
@@ -127,7 +125,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             UExpression uExpression = uExpressions.get(i);
             Language language = psiElement.getLanguage();
             String i18NText =
-              dialog.getI18NText(data.getKey(), data.getValue(), StringUtil.join(data.getContextData().getArgs(), e -> e.getSourcePsi().getText(), ", "));
+              dialog.getI18NText(data.getKey(), data.getValue(), JavaI18nUtil.composeParametersText(data.getContextData().getArgs()));
 
             PsiExpression expression;
             try {
@@ -202,24 +200,6 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       return Couple.of(qualifiedName, methodName);
     }
     return null;
-  }
-  
-  public static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
-    StringBuilder result = new StringBuilder();
-    int elIndex = 0;
-    for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
-      if (expression instanceof ULiteralExpression) {
-        Object value = ((ULiteralExpression)expression).getValue();
-        if (value != null) {
-          result.append(PsiConcatenationUtil.formatString(value.toString(), false));
-        }
-      }
-      else {
-        result.append("{").append(elIndex++).append("}");
-        formatParameters.add(expression);
-      }
-    }
-    return result.toString();
   }
 
   /**

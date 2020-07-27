@@ -4,7 +4,6 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -23,10 +22,9 @@ import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
-  private static final Logger LOG = Logger.getInstance(I18nizeConcatenationQuickFix.class);
   @NonNls public static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
@@ -66,14 +64,11 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
     return doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument());
   }
 
-  private static String composeParametersText(final List<UExpression> args) {
-    return args.stream().map(expression -> expression.getSourcePsi().getText()).collect(Collectors.joining(","));
-  }
-
   @Override
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {
     final List<UExpression> args = new ArrayList<>();
-    String formatString = I18nizeBatchQuickFix.buildUnescapedFormatString(UStringConcatenationsFacade.createFromTopConcatenation(literalExpression), args);
+    String formatString = JavaI18nUtil
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(literalExpression)), args);
 
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
       @Override
@@ -85,7 +80,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
       @Override
       protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
                                     final PsiElement context) {
-        return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression.getSourcePsi());
+        return textGenerator.getI18nizedConcatenationText(propertyKey, JavaI18nUtil.composeParametersText(args), propertiesFile, literalExpression.getSourcePsi());
       }
 
       @Override
@@ -95,7 +90,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
       @Override
       protected void addAdditionalAttributes(final Map<String, String> attributes) {
-        attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
+        attributes.put(PARAMETERS_OPTION_KEY, JavaI18nUtil.composeParametersText(args));
       }
     };
   }
