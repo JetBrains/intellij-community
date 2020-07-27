@@ -17,7 +17,6 @@ package com.intellij.openapi.util.io;
 
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -25,26 +24,21 @@ import static com.intellij.util.BitUtil.isSet;
  * @version 11.1
  * @see FileSystemUtil#getAttributes(String)
  */
-public final class FileAttributes {
+public class FileAttributes {
   public enum Type { FILE, DIRECTORY, SPECIAL }
 
   public static final byte SYM_LINK = 0x01;
   public static final byte HIDDEN = 0x02;
   public static final byte READ_ONLY = 0x04;
+  private static final int TYPE_SHIFT = 3; // two bits encoding Type: 00: unknown, 01: FILE, 10: DIRECTORY, 11: SPECIAL
 
   @MagicConstant(flags = {SYM_LINK, HIDDEN, READ_ONLY})
   public @interface Flags { }
 
-  public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(null, SYM_LINK, 0, 0);
-
-  /**
-   * {@code null} means unknown type - typically broken symlink.
-   */
-  @Nullable
-  public final Type type;
+  public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(SYM_LINK, 0, 0);
 
   @Flags
-  public final byte flags;
+  protected final byte flags;
 
   /**
    * In bytes, 0 for special files.<br/>
@@ -60,40 +54,45 @@ public final class FileAttributes {
 
 
   public FileAttributes(boolean directory, boolean special, boolean symlink, boolean hidden, long length, long lastModified, boolean writable) {
-    this(type(directory, special), flags(symlink, hidden, !writable), length, lastModified);
+    this(flags(symlink, hidden, !writable, directory, special), length, lastModified);
   }
 
-  private FileAttributes(@Nullable Type type, @Flags byte flags, long length, long lastModified) {
-    this.type = type;
+  protected FileAttributes(@Flags byte flags, long length, long lastModified) {
+    if (flags != -1 && (flags & 0b11100000) != 0) {
+      throw new IllegalArgumentException("Invalid flags: " + Integer.toBinaryString(flags));
+    }
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;
   }
 
-  @NotNull
-  private static Type type(boolean isDirectory, boolean isSpecial) {
-    return isDirectory ? Type.DIRECTORY : isSpecial ? Type.SPECIAL : Type.FILE;
+  protected FileAttributes(@NotNull FileAttributes fileAttributes) {
+    this.flags = fileAttributes.flags;
+    this.length = fileAttributes.length;
+    this.lastModified = fileAttributes.lastModified;
   }
 
   @Flags
-  private static byte flags(boolean isSymlink, boolean isHidden, boolean isReadOnly) {
+  private static byte flags(boolean isSymlink, boolean isHidden, boolean isReadOnly, boolean directory, boolean special) {
     @Flags byte flags = 0;
     if (isSymlink) flags |= SYM_LINK;
     if (isHidden) flags |= HIDDEN;
     if (isReadOnly) flags |= READ_ONLY;
+    int type_flags = special ? 0b11 : !directory ? 0b01 : 0b10;
+    flags |= (type_flags << TYPE_SHIFT);
     return flags;
   }
 
   public boolean isFile() {
-    return type == Type.FILE;
+    return ((flags >> TYPE_SHIFT) & 0xff) == 0b01;
   }
 
   public boolean isDirectory() {
-    return type == Type.DIRECTORY;
+    return ((flags >> TYPE_SHIFT) & 0xff) == 0b10;
   }
 
   public boolean isSpecial() {
-    return type == Type.SPECIAL;
+    return ((flags >> TYPE_SHIFT) & 0xff) == 0b11;
   }
 
   public boolean isSymLink() {
@@ -117,15 +116,13 @@ public final class FileAttributes {
     if (flags != that.flags) return false;
     if (lastModified != that.lastModified) return false;
     if (length != that.length) return false;
-    if (type != that.type) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = type != null ? type.hashCode() : 0;
-    result = 31 * result + flags;
+    int result = flags;
     result = 31 * result + (int)(length ^ (length >>> 32));
     result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
     return result;
@@ -136,10 +133,7 @@ public final class FileAttributes {
     StringBuilder sb = new StringBuilder();
 
     sb.append("[type:");
-    if (type == Type.FILE) sb.append('f');
-    else if (type == Type.DIRECTORY) sb.append('d');
-    else if (type == Type.SPECIAL) sb.append('!');
-    else sb.append('-');
+    sb.append(getType());
 
     if (isSet(flags, SYM_LINK)) sb.append('l');
     if (isSet(flags, HIDDEN)) sb.append('.');
@@ -154,9 +148,17 @@ public final class FileAttributes {
     return sb.toString();
   }
 
-  @NotNull
-  public static FileAttributes createFrom(byte fileAttributesType, @Flags byte flags, long length, long lastModified) {
-    Type type = fileAttributesType == -1 ? null : Type.values()[fileAttributesType];
-    return new FileAttributes(type, flags, length, lastModified);
+  /**
+   * {@code null} means unknown type - typically broken symlink.
+   */
+  public Type getType() {
+    int type = (flags >> TYPE_SHIFT) & 0xff;
+    switch (type) {
+      case 0b00: return null;
+      case 0b01: return Type.FILE;
+      case 0b10: return Type.DIRECTORY;
+      case 0b11: return Type.SPECIAL;
+    }
+    throw new IllegalStateException(Integer.toBinaryString(flags));
   }
 }

@@ -91,7 +91,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isUnix) { // avoid opening fifo files
       FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
       if (attributes != null && !attributes.isFile()) {
-        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.type + ')');
+        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.getType() + ')');
       }
     }
 

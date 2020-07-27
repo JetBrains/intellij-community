@@ -432,8 +432,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
     FileAttributes attributes = fs.getAttributes(virtualFile);
     assertNotNull(attributes);
-    assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.HIDDEN, attributes.flags);
+    assertEquals(FileAttributes.Type.FILE, attributes.getType());
+    assertTrue(attributes.isHidden());
   }
 
   @Test
