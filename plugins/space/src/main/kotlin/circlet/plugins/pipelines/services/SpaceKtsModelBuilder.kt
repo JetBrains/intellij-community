@@ -217,7 +217,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
           }
 
           _error.value = null
-          //_config.value = scriptConfig
+          _config.value = scriptConfig
 
         }
         catch (th: Throwable) {
