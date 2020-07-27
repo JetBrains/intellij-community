@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -134,6 +135,17 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
     return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
+  }
+
+  public static void updateNewProjectIconIfWelcomeScreen(@NotNull AnActionEvent e) {
+    if (isNewWelcomeScreen(e)) {
+      Presentation presentation = e.getPresentation();
+      presentation.setIcon(AllIcons.General.Add);
+      if (Registry.is("use.tabbed.welcome.screen")) {
+        presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
+        presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
+      }
+    }
   }
 
   private static final class WelcomeScreenGroup extends DefaultActionGroup {
