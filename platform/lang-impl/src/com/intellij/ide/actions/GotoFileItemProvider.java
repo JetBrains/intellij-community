@@ -174,16 +174,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchQualifiers(@NotNull MinusculeMatcher qualifierMatcher,
-                                                                           @NotNull Iterable<? extends PsiFileSystemItem> iterable) {
+                                                                           JBIterable<FoundItemDescriptor<PsiFileSystemItem>> iterable) {
     List<FoundItemDescriptor<PsiFileSystemItem>> matching = new ArrayList<>();
-    for (PsiFileSystemItem item : iterable) {
+    for (FoundItemDescriptor<PsiFileSystemItem> descriptor : iterable) {
+      PsiFileSystemItem item = descriptor.getItem();
       ProgressManager.checkCanceled();
       String qualifier = Objects.requireNonNull(getParentPath(item));
       FList<TextRange> fragments = qualifierMatcher.matchingFragments(qualifier);
       if (fragments != null) {
         int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.get(fragments.size() - 1).getEndOffset();
-        int degree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty;
-        matching.add(new FoundItemDescriptor<>(item, degree));
+        int qualifierDegree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty;
+        matching.add(new FoundItemDescriptor<>(item, qualifierDegree + descriptor.getWeight()));
       }
     }
     if (matching.size() > 1) {
@@ -374,7 +375,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchedFiles =
           parameters.getLocalPatternName().isEmpty()
           ? filesMatchingPath
-          : matchQualifiers(qualifierMatcher, filesMatchingPath.map(res -> res.getItem()));
+          : matchQualifiers(qualifierMatcher, filesMatchingPath);
 
         matchedFiles = moveDirectoriesToEnd(matchedFiles);
         Processor<FoundItemDescriptor<PsiFileSystemItem>> trackingProcessor = res -> {
