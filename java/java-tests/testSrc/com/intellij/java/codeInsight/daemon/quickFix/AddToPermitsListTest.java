@@ -32,6 +32,7 @@ public class AddToPermitsListTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass aClass = myFixture.addClass("sealed class A {}");
     myFixture.configureByText("C.java", "non-sealed class C extends <caret>A {}");
     invokeFix("Add 'C' to permits list of a sealed class 'A'");
+    assertEquals("sealed class A permits C {}", aClass.getText());
     myFixture.configureByText("B.java", "final class B extends <caret>A {}");
     invokeFix("Add 'B' to permits list of a sealed class 'A'");
     assertEquals("sealed class A permits B, C {}", aClass.getText());

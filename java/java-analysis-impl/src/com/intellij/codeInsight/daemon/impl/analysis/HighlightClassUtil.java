@@ -1033,7 +1033,7 @@ public final class HighlightClassUtil {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
         .range(elementToHighlight).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddToPermitsListFix(elementToHighlight, identifier));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddToPermitsListFix(aClass, superClass));
       return info;
     }
     return null;
