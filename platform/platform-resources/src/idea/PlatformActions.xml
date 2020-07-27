@@ -837,6 +837,8 @@
     <group id="WelcomeScreen.QuickStart">
     </group>
 
+    <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
+
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
       <reference ref="About"/>
