@@ -116,13 +116,13 @@ class InferenceCache {
                                             @NotNull DFAFlowInfo flowInfo,
                                             @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
-    final Map<VariableDescriptor, DFAType> initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
+    final TypeDfaState initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState);
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
 
-  private Map<VariableDescriptor, DFAType> computeInitialState(@NotNull DFAFlowInfo flowInfo, @NotNull InitialTypeProvider provider) {
-    Map<VariableDescriptor, DFAType> collector = new HashMap<>();
+  private TypeDfaState computeInitialState(@NotNull DFAFlowInfo flowInfo, @NotNull InitialTypeProvider provider) {
+    TypeDfaState state = new TypeDfaState();
     Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(myFlow);
     for (VariableDescriptor descriptor : descriptors) {
       if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
@@ -130,10 +130,10 @@ class InferenceCache {
       }
       DFAType initialType = provider.initialType(descriptor);
       if (initialType != null) {
-        collector.put(descriptor, initialType);
+        state.putType(descriptor, initialType);
       }
     }
-    return collector;
+    return state;
   }
 
   @Nullable

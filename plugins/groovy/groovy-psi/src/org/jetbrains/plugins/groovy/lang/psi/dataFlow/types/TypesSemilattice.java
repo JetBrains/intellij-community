@@ -23,17 +23,17 @@ import static com.intellij.util.containers.ContainerUtil.*;
 public class TypesSemilattice implements Semilattice<TypeDfaState> {
   private final PsiManager myManager;
 
-  private final Map<VariableDescriptor, DFAType> initialTypes;
+  private final TypeDfaState initialState;
 
-  public TypesSemilattice(@NotNull PsiManager manager, @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
+  public TypesSemilattice(@NotNull PsiManager manager, @NotNull TypeDfaState initialState) {
     myManager = manager;
-    this.initialTypes = initialTypes;
+    this.initialState = initialState;
   }
 
   @Override
   @NotNull
   public TypeDfaState initial() {
-    return new TypeDfaState(initialTypes);
+    return new TypeDfaState(initialState);
   }
 
   @NotNull
@@ -64,11 +64,6 @@ class TypeDfaState {
 
   TypeDfaState() {
     myVarTypes = new HashMap<>();
-    myEvictedDescriptors = new HashSet<>();
-  }
-
-  TypeDfaState(@NotNull Map<VariableDescriptor, DFAType> initial) {
-    myVarTypes = initial;
     myEvictedDescriptors = new HashSet<>();
   }
 
