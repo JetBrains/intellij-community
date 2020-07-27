@@ -102,4 +102,8 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   public void testLiteralMigration() {
     doTestFieldType("a", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicLong", null));
   }
+  
+  public void testFieldDeclaration() {
+    doTestFieldType("a", getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
+  }
 }
