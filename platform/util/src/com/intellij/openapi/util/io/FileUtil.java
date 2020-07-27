@@ -21,6 +21,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -1472,5 +1473,13 @@ public class FileUtil extends FileUtilRt {
     catch (MalformedURLException e) {
       return "file://" + file.getAbsolutePath();
     }
+  }
+
+  /**
+   * Energy-efficient variant of {@link File#toURI()}. Unlike the latter, doesn't check whether a given file is a directory,
+   * so URIs never have a trailing slash (but are nevertheless compatible with {@link File#File(URI)}).
+   */
+  public static @NotNull URI fileToUri(@NotNull File file) {
+    return FileUtilRt.fileToUri(file);
   }
 }
