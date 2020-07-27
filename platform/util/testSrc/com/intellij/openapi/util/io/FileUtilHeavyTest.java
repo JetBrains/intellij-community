@@ -29,7 +29,7 @@ public class FileUtilHeavyTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
-  public void testProcessSimple() throws IOException {
+  public void testProcessSimple() {
     setupVisitorTestDirectories();
 
     Map<String, Integer> result = new HashMap<>();
@@ -47,7 +47,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testProcessStops() throws IOException {
+  public void testProcessStops() {
     setupVisitorTestDirectories();
 
     int[] cnt = {0};
@@ -61,7 +61,7 @@ public class FileUtilHeavyTest {
 
   @Test
   @SuppressWarnings("deprecation")
-  public void testProcessDirectoryFilter() throws IOException {
+  public void testProcessDirectoryFilter() {
     setupVisitorTestDirectories();
 
     Map<String, Integer> result = new HashMap<>();
@@ -139,7 +139,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void twoFilesOrder2() throws IOException {
+  public void twoFilesOrder2() {
     File first = tempDir.newFile("first");
     tempDir.newFile("second");
     assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first", "second")).isEqualTo(first.getPath());
@@ -223,7 +223,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testJunctionDeletion() throws IOException {
+  public void testJunctionDeletion() {
     IoTestUtil.assumeWindows();
 
     File targetDir = tempDir.newDirectory("target");
@@ -254,7 +254,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testRecursiveDeletionWithJunction() throws IOException {
+  public void testRecursiveDeletionWithJunction() {
     IoTestUtil.assumeWindows();
 
     File top = tempDir.newDirectory("top");
