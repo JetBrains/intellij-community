@@ -55,7 +55,7 @@ class ChainResolver {
           LOG.debug("Chains found:" + found);
         }
         searchResult.updateStatus(found);
-      }).inSmartMode(elementAtDebugger.getProject()).coalesceBy(ChainResolver.class).submit(executor);
+      }).inSmartMode(elementAtDebugger.getProject()).submit(executor);
     }
   }
 
