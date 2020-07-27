@@ -69,7 +69,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    setTitle("Type Migration");
+    setTitle(JavaRefactoringBundle.message("type.migration.action.name"));
   }
 
   @Override

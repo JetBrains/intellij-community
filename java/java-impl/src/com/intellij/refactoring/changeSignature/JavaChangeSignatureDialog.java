@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -318,12 +319,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             myTypeEditor.addDocumentListener(getSignatureUpdater());
             myTypeEditor.setPreferredWidth(getTable().getWidth() / 2);
             myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
-            add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
+            add(createLabeledPanel(RefactoringBundle.message("column.name.type"), myTypeEditor), BorderLayout.WEST);
 
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
             myNameEditor.addDocumentListener(getSignatureUpdater());
             myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
-            add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
+            add(createLabeledPanel(JavaBundle.message("dialog.create.field.from.parameter.field.name.label"), myNameEditor), BorderLayout.CENTER);
             new TextFieldCompletionProvider() {
 
               @Override
