@@ -1060,4 +1060,22 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       }
     }).assertTiming();
   }
+
+  @Test
+  public void testMoveJars() throws IOException {
+    File jarParent = new File(tempDir.getRoot(), "a/b/c");
+
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+
+    File newJarParent = new File(tempDir.getRoot(), "new_a");
+    assertTrue(newJarParent.mkdir());
+    doMove(jarParent, newJarParent);
+    assertTrue(jarPointer.getFile() != null && jarPointer.getFile().isValid());
+  }
 }
