@@ -118,9 +118,9 @@ class InferenceCache {
                                             Instruction @NotNull [] flow,
                                             @NotNull DFAFlowInfo flowInfo,
                                             @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
-    final TypeDfaInstance dfaInstance =
-      new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, initialTypes));
-    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
+    final TypesSemilattice semilattice =
+      new TypesSemilattice(owner.getManager(), new InitialTypeProvider(owner, initialTypes), myFlow, flowInfo);
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
 

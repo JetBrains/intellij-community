@@ -9,6 +9,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -23,20 +25,43 @@ import static com.intellij.util.containers.ContainerUtil.*;
 public class TypesSemilattice implements Semilattice<TypeDfaState> {
   private final PsiManager myManager;
 
-  public TypesSemilattice(PsiManager manager) {
+  private final Map<VariableDescriptor, DFAType> initialTypes;
+
+  public TypesSemilattice(PsiManager manager,
+                          @NotNull InitialTypeProvider provider,
+                          Instruction @NotNull [] flow,
+                          @NotNull DFAFlowInfo flowInfo) {
     myManager = manager;
+    initialTypes = computeInitialTypes(flow, flowInfo, provider);
+  }
+
+  private static Map<VariableDescriptor, DFAType> computeInitialTypes(Instruction @NotNull [] flow,
+                                                                      @NotNull DFAFlowInfo flowInfo,
+                                                                      @NotNull InitialTypeProvider provider) {
+    Map<VariableDescriptor, DFAType> collector = new HashMap<>();
+    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(flow);
+    for (VariableDescriptor descriptor : descriptors) {
+      if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
+        continue;
+      }
+      DFAType initialType = provider.initialType(descriptor);
+      if (initialType != null) {
+        collector.put(descriptor, initialType);
+      }
+    }
+    return collector;
   }
 
   @Override
   @NotNull
   public TypeDfaState initial() {
-    return new TypeDfaState();
+    return new TypeDfaState(initialTypes);
   }
 
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
-    if (ins.isEmpty()) return new TypeDfaState();
+    if (ins.isEmpty()) return initial();
 
     TypeDfaState result = new TypeDfaState(ins.get(0));
     if (ins.size() == 1) {
@@ -61,6 +86,11 @@ class TypeDfaState {
 
   TypeDfaState() {
     myVarTypes = new HashMap<>();
+    myEvictedDescriptors = new HashSet<>();
+  }
+
+  TypeDfaState(@NotNull Map<VariableDescriptor, DFAType> initial) {
+    myVarTypes = initial;
     myEvictedDescriptors = new HashSet<>();
   }
 

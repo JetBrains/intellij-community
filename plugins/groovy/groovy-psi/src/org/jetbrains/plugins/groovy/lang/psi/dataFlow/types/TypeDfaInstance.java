@@ -24,7 +24,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -32,28 +35,23 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final Instruction[] myFlow;
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
-  private final InitialTypeProvider myInitialTypeProvider;
   private final PsiManager myManager;
   private final int lastInterestingInstructionIndex;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
-                  @NotNull PsiManager manager,
-                  @NotNull InitialTypeProvider initialTypeProvider) {
+                  @NotNull PsiManager manager) {
     myFlow = flow;
     myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
-    myInitialTypeProvider = initialTypeProvider;
     lastInterestingInstructionIndex = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
   }
 
   @Override
   public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
-    if (instruction.num() == 0) {
-      handleFirstInstruction(state);
-    } else if (instruction instanceof ReadWriteVariableInstruction) {
+    if (instruction instanceof ReadWriteVariableInstruction) {
       handleReadWriteVariable(state, (ReadWriteVariableInstruction)instruction);
     }
     else if (instruction instanceof MixinTypeInstruction) {
@@ -67,19 +65,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction.getElement() instanceof GrFunctionalExpression) {
       handleFunctionalExpression(state, instruction);
-    }
-  }
-
-  private void handleFirstInstruction(@NotNull TypeDfaState state) {
-    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(myFlow);
-    for (VariableDescriptor descriptor : descriptors) {
-      if (!myFlowInfo.getInterestingDescriptors().contains(descriptor)) {
-        continue;
-      }
-      DFAType initialType = myInitialTypeProvider.initialType(descriptor);
-      if (initialType != null) {
-        state.putType(descriptor, initialType);
-      }
     }
   }
 
