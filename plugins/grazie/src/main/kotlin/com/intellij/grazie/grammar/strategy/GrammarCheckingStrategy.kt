@@ -13,6 +13,7 @@ import com.intellij.grazie.utils.orTrue
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.TokenType.WHITE_SPACE
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -105,6 +106,21 @@ interface GrammarCheckingStrategy {
   fun isMyContextRoot(element: PsiElement): Boolean
 
   /**
+   * Determine PsiElement roots that should be considered as a continuous text including [root].
+   * [root] element MUST be present in chain.
+   * Passing any sub-element in chain must return the same list of all the elements in the chain.
+   * Chain roots must be in the same [TextDomain] and have the same [GrammarCheckingStrategy]
+   * or be a [WHITE_SPACE].
+   * For example, this method can be used to combine single-line comments into
+   * a single block of text for grammar check.
+   *
+   * @param root root element previously selected in [isMyContextRoot]
+   * @return list of root elements that should be considered as a continuous text with [WHITE_SPACE] elements
+   */
+  @JvmDefault
+  fun getRootsChain(root: PsiElement): List<PsiElement> = listOf(root)
+
+  /**
    * Determine if this strategy enabled by default.
    *
    * @return true if enabled else false
@@ -142,14 +158,28 @@ interface GrammarCheckingStrategy {
   fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> = StrategyUtils.emptyLinkedSet()
 
   /**
-   * Determine if typo is will be shown to user. The final check before add typo to [ProblemsHolder].
+   * Determine if typo will be shown to user. The final check before add typo to [ProblemsHolder].
    *
    * @param root root element previously selected in [isMyContextRoot]
    * @param typoRange range of the typo inside [root] element
    * @param ruleRange range of elements needed for rule to find typo
    * @return true if typo should be accepted
    */
+  @Deprecated("Use isTypoAccepted(PsiElement, List<PsiElement>, IntRange, IntRange)")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange) = true
+
+  /**
+   * Determine if typo will be shown to user. The final check before add typo to [ProblemsHolder].
+   *
+   * @param parent common parent of [roots]
+   * @param roots roots from [getRootsChain] method
+   * @param typoRange range of the typo inside [parent] element
+   * @param ruleRange range of elements needed for rule to find typo
+   * @return true if typo should be accepted
+   */
+  @JvmDefault
+  fun isTypoAccepted(parent: PsiElement, roots: List<PsiElement>, typoRange: IntRange, ruleRange: IntRange) = true
 
   /**
    * Get ignored typo categories for [child] element @see [Typo.Category].

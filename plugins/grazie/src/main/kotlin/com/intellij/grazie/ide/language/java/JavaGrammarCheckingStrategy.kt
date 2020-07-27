@@ -33,9 +33,8 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
 
   override fun isAbsorb(element: PsiElement) = isTag(element) && (!isCommentData(element) || isCodeTag(element))
 
-  override fun isStealth(element: PsiElement) = element is LeafPsiElement
-                                                && element.elementType in listOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS,
-                                                                                 DOC_COMMENT_END)
+  private val STEALTH_TYPES = setOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END)
+  override fun isStealth(element: PsiElement) = element is LeafPsiElement && element.elementType in STEALTH_TYPES
 
   override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = when {
     root is PsiLiteralExpression -> RuleGroup.LITERALS
@@ -46,5 +45,13 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun getStealthyRanges(root: PsiElement, text: CharSequence) = when (root) {
     is PsiCommentImpl -> StrategyUtils.indentIndexes(text, setOf(' ', '\t', '*', '/'))
     else -> StrategyUtils.indentIndexes(text, setOf(' ', '\t'))
+  }
+
+  private val SINGLE_LINE_COMMENT_TYPES = setOf(END_OF_LINE_COMMENT, C_STYLE_COMMENT)
+  override fun getRootsChain(root: PsiElement): List<PsiElement> {
+    return if (root.elementType in SINGLE_LINE_COMMENT_TYPES) {
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(root, SINGLE_LINE_COMMENT_TYPES).toList()
+    }
+    else super.getRootsChain(root)
   }
 }

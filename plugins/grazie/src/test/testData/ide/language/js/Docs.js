@@ -36,7 +36,7 @@ class ExampleClassWithNoTypos {
 class ExampleClassWithTypos {
     /**
      * Creates an empty group
-     * @param  {String} name the name which group
+     * @param  {String} name the <warning descr="COMMA_WHICH">name which</warning> group
      */
     constructor(name) {
         /** @private */

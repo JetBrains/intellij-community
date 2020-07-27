@@ -14,6 +14,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN)
+    val enabledRules = setOf("COMMA_WHICH")
   }
 
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
@@ -24,7 +25,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
     if (GrazieConfig.get().enabledLanguages != enabledLanguages) {
       GrazieConfig.update { state ->
-        state.copy(enabledLanguages = enabledLanguages)
+        state.copy(enabledLanguages = enabledLanguages, userEnabledRules = enabledRules)
       }
 
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()

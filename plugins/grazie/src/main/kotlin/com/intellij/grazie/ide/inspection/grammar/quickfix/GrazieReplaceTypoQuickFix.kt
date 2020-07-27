@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.startOffset
 
 class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionActionWithChoice {
 
@@ -40,7 +41,7 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionAction
       val myEditor = editor ?: LazyEditor(file)
 
       val element = typo.location.element ?: return
-      val range = TextRange.create(typo.location.errorRange.start, typo.location.errorRange.endInclusive + 1).shiftRight(element.textOffset)
+      val range = TextRange.create(typo.location.errorRange.start, typo.location.errorRange.endInclusive + 1).shiftRight(element.startOffset)
 
 
       val text = myEditor.document.getText(range)
