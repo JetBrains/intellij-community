@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -127,7 +128,7 @@ public class InvokeCompletion extends ActionOnFile {
         return;
       }
       env.logMessage("No lookup");
-      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
 
@@ -139,7 +140,7 @@ public class InvokeCompletion extends ActionOnFile {
       LookupElement sameItem = ContainerUtil.find(items, e ->
         e.getAllLookupStrings().stream().anyMatch(
           s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
-      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
@@ -161,12 +162,10 @@ public class InvokeCompletion extends ActionOnFile {
     }
   }
 
-  private boolean checkAnnotatorErrorsAtCaret(@NotNull Editor editor,
-                                              @NotNull PsiFile file,
-                                              Environment env,
-                                              String expectedVariant) {
-    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), editor);
-    int caretOffset = editor.getCaretModel().getOffset();
+  private boolean checkAnnotatorErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
+    int caretOffset = hostEditor.getCaretModel().getOffset();
     boolean hasErrors = ContainerUtil.exists(infos, i -> i.getStartOffset() <= caretOffset && caretOffset <= i.getEndOffset());
     if (hasErrors) {
       env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
