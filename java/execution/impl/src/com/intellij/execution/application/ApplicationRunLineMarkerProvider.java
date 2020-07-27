@@ -1,16 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +24,10 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     if (Registry.is("ide.jvm.run.marker")) return null;
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof PsiJavaFile && HighlightClassUtil.isJavaHashBangScript((PsiJavaFile)containingFile)) {
+        return null;
+      }
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
         final AnAction[] actions = ExecutorAction.getActions();
