@@ -52,10 +52,9 @@ class GrazieInspection : LocalInspectionTool() {
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return
-
         val typos = CollectionFactory.createSmallMemoryFootprintSet<Typo>()
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
