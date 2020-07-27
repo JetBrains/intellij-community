@@ -51,7 +51,8 @@ public abstract class ModelBranchImpl implements ModelBranch {
     }
   }
 
-  Project getProject() {
+  @NotNull
+  public Project getProject() {
     return myProject;
   }
 

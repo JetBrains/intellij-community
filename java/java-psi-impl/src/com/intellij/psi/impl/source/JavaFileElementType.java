@@ -7,6 +7,8 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.model.ModelBranch;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -43,7 +45,11 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
     final VirtualFile dir = file.getParent();
-    return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
+    if (dir == null || dir.getUserData(LanguageLevel.KEY) != null) {
+      return true;
+    }
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    return branch != null && FileIndexFacade.getInstance(branch.getProject()).isInSourceContent(file);
   }
 
   @Override

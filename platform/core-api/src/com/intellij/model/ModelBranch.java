@@ -20,6 +20,11 @@ import java.util.function.Consumer;
 public interface ModelBranch {
 
   /**
+   * @return the project which this model branch was created for
+   */
+  @NotNull Project getProject();
+
+  /**
    * Perform the given action in a context of a new model branch. The action may populate branch with model non-physical copies
    * and perform changes on those copies.<p></p>
    *

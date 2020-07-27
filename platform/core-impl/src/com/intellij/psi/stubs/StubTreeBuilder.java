@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.TreeBackedLighterAST;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public final class StubTreeBuilder {
   private static final Key<Stub> stubElementKey = Key.create("stub.tree.for.file.content");
@@ -67,8 +65,6 @@ public final class StubTreeBuilder {
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (!(elementType instanceof IStubFileElementType)) return null;
       VirtualFile vFile = file.getFile();
-      ModelBranch branch = ModelBranch.getFileBranch(vFile);
-      if (branch != null) vFile = Objects.requireNonNull(branch.findOriginalFile(vFile));
       boolean shouldBuildStubFor = ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
       if (toBuild && !shouldBuildStubFor) return null;
       PushedFilePropertiesRetriever pushedFilePropertiesRetriever = PushedFilePropertiesRetriever.getInstance();
