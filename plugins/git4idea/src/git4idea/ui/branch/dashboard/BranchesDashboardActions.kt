@@ -396,6 +396,20 @@ internal object BranchesDashboardActions {
     }
   }
 
+  class UpdateBranchFilterInLogAction : DumbAwareAction() {
+
+    override fun update(e: AnActionEvent) {
+      val uiController = e.getData(BRANCHES_UI_CONTROLLER)
+      val project = e.project
+      val enabled = project != null && uiController != null
+      e.presentation.isEnabled = enabled
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getRequiredData(BRANCHES_UI_CONTROLLER).updateLogBranchFilter()
+    }
+  }
+
   class RenameLocalBranch : BranchesActionBase() {
 
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {

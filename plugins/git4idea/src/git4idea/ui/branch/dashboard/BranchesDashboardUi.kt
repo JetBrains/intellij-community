@@ -83,6 +83,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val changeLogFilterAllowed = properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]
     if (!changeLogFilterAllowed) return@TreeSelectionListener
 
+    updateLogBranchFilter()
+  }
+
+  internal fun updateLogBranchFilter() {
+    val ui = logUi
     val branchNames = tree.getSelectedBranchNames()
     val oldFilters = ui.filterUi.filters
     val newFilters = if (branchNames.isNotEmpty()) {
@@ -215,13 +220,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
     override fun getData(dataId: String): Any? {
-      if (GIT_BRANCHES.`is`(dataId)) {
-        return tree.getSelectedBranches()
+      return when {
+        GIT_BRANCHES.`is`(dataId) -> tree.getSelectedBranches()
+        BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
+        VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
+        else -> null
       }
-      else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId)) {
-        return logUi.properties
-      }
-      return null
     }
   }
 

@@ -48,6 +48,10 @@
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
+    <action id="Git.Log.Branches.Change.Branch.Filter" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$UpdateBranchFilterInLogAction">
+      <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+    </action>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
     <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain">

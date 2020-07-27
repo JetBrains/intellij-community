@@ -51,6 +51,10 @@ internal class BranchesDashboardController(private val project: Project,
     remoteBranches.clear()
   }
 
+  fun updateLogBranchFilter() {
+    ui.updateLogBranchFilter()
+  }
+
   fun checkForBranchesUpdate(): Boolean {
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project)
