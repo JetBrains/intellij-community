@@ -214,7 +214,7 @@ public class IDEATestNGRemoteListener {
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
-    final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
+    final String location = className + "/" + result.getMethodName() + (invocationCount > 0 ? "[" + invocationCount + "]" : "");
     myPrintStream.println(
       "##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
       "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
