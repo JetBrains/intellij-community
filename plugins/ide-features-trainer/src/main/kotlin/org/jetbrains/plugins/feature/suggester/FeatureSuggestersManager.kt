@@ -27,9 +27,9 @@ class FeatureSuggestersManager(val project: Project) {
 
     private fun processSuggesters(langSupport: LanguageSupport) {
         for (suggester in FeatureSuggester.suggesters) {
-            if (!suggester.isEnabled()) continue
-            suggester.langSupport = langSupport
-            processSuggester(suggester)
+            if (suggester.isEnabled() && suggester.isSuggestionNeeded()) {
+                suggester.langSupport = langSupportprocessSuggester(suggester)
+            }
         }
     }
 

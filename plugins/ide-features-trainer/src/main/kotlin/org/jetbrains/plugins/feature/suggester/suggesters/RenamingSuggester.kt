@@ -12,13 +12,18 @@ import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import java.util.concurrent.TimeUnit
 
 class RenamingSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use safe renaming: Shift + F6?"
+        const val SUGGESTING_ACTION_ID = "Rename"
         const val SUGGESTING_TIP_FILENAME = "neue-Rename.html"
         const val NUMBER_OF_RENAMES_TO_GET_SUGGESTION = 3
+        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
+
+    private val actionsSummary = actionsLocalSummary()
 
     private class RenamedIdentifiersData(val initialState: String, val references: List<PsiElement>) {
         fun isAllRenamed(): Boolean {
@@ -83,6 +88,14 @@ class RenamingSuggester : FeatureSuggester {
             }
         }
         return NoSuggestion
+    }
+
+    override fun isSuggestionNeeded(): Boolean {
+        return super.isSuggestionNeeded(
+            actionsSummary,
+            SUGGESTING_ACTION_ID,
+            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+        )
     }
 
     private fun PsiElement.getAllReferences(): List<PsiElement> {

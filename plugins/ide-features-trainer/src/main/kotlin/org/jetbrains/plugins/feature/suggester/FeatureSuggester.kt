@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.feature.suggester
 
+import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
+@Suppress("UnstableApiUsage")
 interface FeatureSuggester {
 
     companion object {
@@ -33,6 +35,24 @@ interface FeatureSuggester {
         get() = false
 
     fun getSuggestion(actions: UserActionsHistory): Suggestion
+
+    fun isSuggestionNeeded(): Boolean
+
+    fun isSuggestionNeeded(
+        actionsSummary: ActionsLocalSummary,
+        suggestingActionId: String,
+        minNotificationIntervalMillis: Long
+    ): Boolean {
+        val actionStats = actionsSummary.getActionsStats()
+        val summary = actionStats[suggestingActionId]
+        return if (summary == null) {
+            true
+        } else {
+            val lastTimeUsed = summary.last
+            val delta = System.currentTimeMillis() - lastTimeUsed
+            delta > minNotificationIntervalMillis
+        }
+    }
 
     val suggestingActionDisplayName: String
 }

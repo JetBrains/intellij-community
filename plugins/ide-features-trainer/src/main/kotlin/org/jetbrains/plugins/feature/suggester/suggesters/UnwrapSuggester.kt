@@ -8,15 +8,18 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import java.util.concurrent.TimeUnit
 
 class UnwrapSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Unwrap action?"
         const val SUGGESTING_ACTION_ID = "Unwrap"
+        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     override lateinit var langSupport: LanguageSupport
 
+    private val actionsSummary = actionsLocalSummary()
     private var unwrappingStatements: List<PsiElement>? = null
     private val firstSelectionRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
@@ -59,6 +62,14 @@ class UnwrapSuggester : FeatureSuggester {
             else -> NoSuggestion
         }
         return NoSuggestion
+    }
+
+    override fun isSuggestionNeeded(): Boolean {
+        return super.isSuggestionNeeded(
+            actionsSummary,
+            SUGGESTING_ACTION_ID,
+            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+        )
     }
 
     private fun intersectsByText(unwrappingStatements: List<PsiElement>, blockStatements: List<PsiElement>): Boolean {

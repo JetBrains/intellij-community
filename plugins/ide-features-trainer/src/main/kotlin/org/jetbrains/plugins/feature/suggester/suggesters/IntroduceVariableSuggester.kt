@@ -15,6 +15,7 @@ import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import java.util.concurrent.TimeUnit
 
 class IntroduceVariableSuggester : FeatureSuggester {
     companion object {
@@ -22,7 +23,10 @@ class IntroduceVariableSuggester : FeatureSuggester {
         const val SUGGESTING_ACTION_ID = "IntroduceVariable"
         const val SUGGESTING_TIP_FILENAME = "neue-IntroduceVariable.html"
         const val DESCRIPTOR_ID = "refactoring.introduceVariable"
+        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
+
+    private val actionsSummary = actionsLocalSummary()
 
     private data class ExtractedExpressionData(val exprText: String, var changedStatement: PsiElement) {
         var declaration: PsiElement? = null
@@ -98,6 +102,14 @@ class IntroduceVariableSuggester : FeatureSuggester {
             else -> NoSuggestion
         }
         return NoSuggestion
+    }
+
+    override fun isSuggestionNeeded(): Boolean {
+        return super.isSuggestionNeeded(
+            actionsSummary,
+            SUGGESTING_ACTION_ID,
+            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+        )
     }
 
     private fun ChildReplacedAction.isVariableDeclarationAdded(): Boolean {

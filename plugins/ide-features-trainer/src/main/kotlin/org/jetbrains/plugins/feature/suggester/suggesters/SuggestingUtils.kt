@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
+import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -71,6 +73,11 @@ internal fun Transferable.asString(): String? {
     } catch (ex: Exception) {
         null
     }
+}
+
+@Suppress("UnstableApiUsage")
+internal fun actionsLocalSummary(): ActionsLocalSummary {
+    return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
 }
 
 internal fun createSuggestion(
