@@ -1135,7 +1135,6 @@ public class AllIcons {
   }
 
   public final static class Welcome {
-    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
     /** 24x24 */ public static final @NotNull Icon CreateNewProjectTab = load("/welcome/createNewProjectTab.svg");
     /** 24x24 */ public static final @NotNull Icon CreateNewProjectTabSelected = load("/welcome/createNewProjectTabSelected.svg");
     /** 24x24 */ public static final @NotNull Icon FromVCSTab = load("/welcome/fromVCSTab.svg");
@@ -1156,6 +1155,12 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2021.1")
     public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
 
     /** @deprecated to be removed in IDEA 2021.1 */
     @SuppressWarnings("unused")
