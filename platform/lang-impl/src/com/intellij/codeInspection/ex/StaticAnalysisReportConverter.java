@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 final class StaticAnalysisReportConverter extends JsonInspectionsReportConverter {
   @Override
   public String getFormatName() {
@@ -36,7 +38,7 @@ final class StaticAnalysisReportConverter extends JsonInspectionsReportConverter
       return;
     }
     try {
-      Files.copy(meta, target);
+      Files.copy(meta, target, REPLACE_EXISTING);
     }
     catch (IOException e) {
       throw new ConversionException(e);
