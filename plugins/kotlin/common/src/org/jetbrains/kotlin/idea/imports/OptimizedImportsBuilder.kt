@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
+import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -328,6 +329,7 @@ class OptimizedImportsBuilder(
         return fileWithImports.getFileResolutionScope()
     }
 
+    @OptIn(FrontendInternals::class)
     private fun KtFile.getFileResolutionScope() =
         getResolutionFacade().frontendService<FileScopeProvider>().getFileScopes(this).importingScope
 
