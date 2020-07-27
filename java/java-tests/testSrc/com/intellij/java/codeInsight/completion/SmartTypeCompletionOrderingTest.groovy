@@ -343,6 +343,12 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   @NeedsIndex.Full
+  void testAssertNotEquals() throws Throwable {
+    myFixture.addClass("package org.junit; public class Assert { public static void assertNotEquals(Object a, Object b) {} }")
+    checkPreferredItems(0, "boo", "bar")
+  }
+
+  @NeedsIndex.Full
   void testPreferCollectionsEmptyList() throws Throwable {
     myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }")
     configureNoCompletion(getTestName(false) + ".java")
