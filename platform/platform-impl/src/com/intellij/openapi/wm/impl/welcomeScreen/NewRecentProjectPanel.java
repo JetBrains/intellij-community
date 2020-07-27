@@ -157,7 +157,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       private void initConstraints () {
         nameCell = new GridBagConstraints();
         pathCell = new GridBagConstraints();
-        GridBagConstraints closeButtonCell = new GridBagConstraints();
+        GridBagConstraints rightButtonCell = new GridBagConstraints();
 
         nameCell.gridx = 0;
         nameCell.gridy = 0;
@@ -175,13 +175,13 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         pathCell.anchor = GridBagConstraints.LAST_LINE_START;
 
 
-        closeButtonCell.gridx = 1;
-        closeButtonCell.gridy = 0;
-        closeButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
-        closeButtonCell.insets = JBUI.insets(7, 7, 7, 7);
-        closeButtonCell.gridheight = 2;
+        rightButtonCell.gridx = 1;
+        rightButtonCell.gridy = 0;
+        rightButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
+        rightButtonCell.insets = JBUI.insets(7, 7, 7, 7);
+        rightButtonCell.gridheight = 2;
 
-        //closeButtonCell.anchor = GridBagConstraints.WEST;
+        //rightButtonCell.anchor = GridBagConstraints.WEST;
       }
 
       @Override
