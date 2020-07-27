@@ -41,13 +41,17 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/i18nize";
   }
 
-  private void doTest(@NonNls String ext) {
-    configureByFile(getBasePath() + "/before"+getTestName(false)+"."+ext);
+  private void doTest() {
+    doTest("i18nizedExpr");
+  }
+
+  private void doTest(String i18nizedText) {
+    configureByFile(getBasePath() + "/before" + getTestName(false) + "." + "java");
     I18nizeAction action = new I18nizeAction();
     DataContext dataContext = DataManager.getInstance().getDataContext(getEditor().getComponent());
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "place", dataContext);
     action.update(event);
-    @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + ext;
+    @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + "java";
     boolean afterFileExists = new File(PathManagerEx.getTestDataPath() + afterFile).exists();
     I18nQuickFixHandler handler = I18nizeAction.getHandler(event);
     try {
@@ -70,7 +74,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
                                    Collections.emptyList(),
                                    "key1",
                                    "value1",
-                                   "i18nizedExpr",
+                                   i18nizedText,
                                    new UExpression[0], 
                                    JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER);
       });
@@ -79,11 +83,15 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testLiteral() {doTest("java");}
-  public void testOutsideLiteral() {doTest("java");}
-  public void testLiteralRightSubSelection() {doTest("java");}
-  public void testCaretAtPlus() {doTest("java");}
+  public void testLiteral() {doTest();}
+  public void testOutsideLiteral() {doTest();}
+  public void testLiteralRightSubSelection() {doTest();}
+  public void testCaretAtPlus() {doTest();}
 
-  public void testLongConcat() {doTest("java");}
-  public void testCharacterLiteral() {doTest("java");}
+  public void testLongConcat() {doTest();}
+  public void testCharacterLiteral() {doTest();}
+
+  public void testShortenClassReferences() {
+    doTest("p.MyBundle.message(\"key\")");
+  }
 }
