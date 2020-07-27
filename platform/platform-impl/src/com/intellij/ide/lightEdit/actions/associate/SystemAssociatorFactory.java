@@ -2,18 +2,21 @@
 package com.intellij.ide.lightEdit.actions.associate;
 
 import com.intellij.ide.lightEdit.actions.associate.linux.LinuxFileTypeAssociator;
-import com.sun.jna.Platform;
+import com.intellij.ide.lightEdit.actions.associate.win.WinFileTypeAssociator;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 public final class SystemAssociatorFactory {
-  private final static SystemFileTypeAssociator FILE_TYPE_ASSOCIATOR;
-  static {
-    if (Platform.isLinux()) {
-      FILE_TYPE_ASSOCIATOR = new LinuxFileTypeAssociator();
+  private final static SystemFileTypeAssociator FILE_TYPE_ASSOCIATOR = createAssociator();
+
+  private static @Nullable SystemFileTypeAssociator createAssociator() {
+    if (SystemInfo.isLinux) {
+      return new LinuxFileTypeAssociator();
     }
-    else {
-      FILE_TYPE_ASSOCIATOR = null;
+    if (SystemInfo.isWindows) {
+      return new WinFileTypeAssociator();
     }
+    return null;
   }
 
   private SystemAssociatorFactory() {
