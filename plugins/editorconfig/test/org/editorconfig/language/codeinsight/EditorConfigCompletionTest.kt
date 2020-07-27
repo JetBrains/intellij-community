@@ -50,8 +50,8 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testComplexValue3() = doInverseTest("all", "none", "accessors")
   fun testComplexValue4() = doExactTest("none", "silent", "suggestion", "warning", "error")
   fun testComplexValue5() = doInverseTest("none", "silent", "suggestion", "warning", "error")
-  fun testComplexValue6() = doExactTest("my_symbols")
-  fun testComplexValue7() = doExactTest()
+  fun testComplexValue6() = doExactTest("my_symbols", "unset")
+  fun testComplexValue7() = doExactTest("unset")
   fun testRootDeclaration1() = doExactTest("root = true", "[")
   fun testRootDeclaration2() = doInverseTest("root = true")
   fun testRootDeclaration3() = doExactTest("[")
@@ -60,7 +60,7 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testSimpleOptionKey1() = doTest(*basicValues)
   fun testSimpleOptionKey2() = doInverseTest("indent_size", "indent_style")
   fun testSimpleOptionKey3() = doTest(*basicValues)
-  fun testSimpleOptionValue() = doExactTest("lf", "crlf", "cr")
+  fun testSimpleOptionValue() = doExactTest("lf", "crlf", "cr", "unset")
 
   fun doTest(vararg required: String) = with(myFixture) {
     val name = getTestName(true)
