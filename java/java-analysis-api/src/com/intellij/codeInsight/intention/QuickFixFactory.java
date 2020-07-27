@@ -478,6 +478,10 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
 
+  /**
+   * @param elementToHighlight reference to sealed parent class from extends / implements clause
+   * @param classIdentifier class that should be added to parents permits list
+   */
   @NotNull
   public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiElement elementToHighlight, @NotNull PsiIdentifier classIdentifier);
 }
