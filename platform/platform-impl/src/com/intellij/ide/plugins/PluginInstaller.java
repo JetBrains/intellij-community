@@ -35,12 +35,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author stathik
@@ -162,6 +164,7 @@ public final class PluginInstaller {
       commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
+      sourceFile = renameZipFileToRoot(sourceFile);
       commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
       commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
@@ -204,10 +207,25 @@ public final class PluginInstaller {
     }
     else {
       target = new File(targetPath, rootEntryName(sourceFile));
-      if(!UpdateSettings.getInstance().isKeepPluginsArchive()) FileUtil.delete(target);
+      FileUtil.delete(target);
+      if(UpdateSettings.getInstance().isKeepPluginsArchive()){
+        sourceFile = renameZipFileToRoot(sourceFile);
+      }
       new Decompressor.Zip(sourceFile).extract(new File(targetPath));
     }
     return target;
+  }
+
+  @NotNull
+  private static File renameZipFileToRoot(File zip) throws IOException {
+    String newName = rootEntryName(zip)+".zip";
+    FileUtil.rename(zip, newName);
+    File newZip = new File(zip.getParent()+"/"+newName);
+    if(newZip.exists()){
+      FileUtil.delete(zip);
+      return newZip;
+    }
+    return zip;
   }
 
   private static String rootEntryName(File zip) throws IOException {

@@ -20,7 +20,6 @@ import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
-import com.jetbrains.plugin.blockmap.*
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
@@ -29,11 +28,11 @@ import java.net.URLConnection
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 import java.io.*
-import java.nio.charset.Charset
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
-import kotlin.collections.ArrayList
+import com.jetbrains.plugin.blockmap.core.BlockMap
+import com.jetbrains.plugin.blockmap.core.makeFileHash
+
 
 @ApiStatus.Internal
 open class MarketplaceRequests {
@@ -46,6 +45,12 @@ open class MarketplaceRequests {
     private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
     private const val FILENAME = "filename="
+
+    private const val BLOCKMAP_FILENAME = "blockmap.json"
+
+    private const val HASH_FILENAME = "hash.txt"
+
+    private const val MAXIMUM_DOWNLOAD_PERCENT = 0.3
 
     private val INSTANCE = MarketplaceRequests()
 
@@ -394,123 +399,64 @@ open class MarketplaceRequests {
 
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
     if(!prevPluginArchive.exists()) throw IOException(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
+    val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
+
+    // working with demo
+    //val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
+    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","localhost:8080")
+
+    val pluginFileUrl = getPluginFileUrl(curPluginUrl)
+    val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_FILENAME)
+    val pluginHashFileUrl = pluginFileUrl.replaceAfterLast("/", HASH_FILENAME)
+    println(blockMapFileUrl)
+
+    val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
+      request.inputStream.reader().buffered().use { input ->
+        objectMapper.readValue(input.readText(), BlockMap::class.java) }
+    }
+    LOG.info("Plugin blockmap file downloaded")
+    println("Plugin blockmap file downloaded")
+    val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
+      request.inputStream.reader().buffered().use { input -> input.readText() }
+    }
+    LOG.info("Plugin hash file downloaded")
+    println("Plugin hash file downloaded")
+
+    if(downloadPercent(oldBlockMap, newBlockMap) > MAXIMUM_DOWNLOAD_PERCENT){
+      throw IOException(IdeBundle.message("too.large.download.size"))
+    }
 
     val file = getPluginTempFile()
-    LOG.info(file.toString())
+    val merger = PluginChunkMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator)
+    FileOutputStream(file).use { output ->  merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, curPluginUrl)) }
 
-    val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
-    LOG.info("prevBlockMap chunks=${oldBlockMap.chunks.size}")
-
-    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
-    //val curPluginUrl = pluginUrl
-    LOG.info(curPluginUrl)
-
-    val blockMapUrl = curPluginUrl.replace("pluginManager","pluginManager/blockmap")
-    //val newBlockMap = ObjectInputStream(FileInputStream("C:\\Users\\Ivan\\JetBrains\\Internship\\intellij\\system\\idea\\plugins\\blockmap.bin")).use { input -> input.readObject() as BlockMap }
-    val newBlockMap = HttpRequests.request(blockMapUrl).productNameAsUserAgent().connect { request ->
-      ObjectInputStream(request.inputStream.buffered()).use { input -> input.readObject() as BlockMap }
+    val curFileHash = FileInputStream(file).use { input -> makeFileHash(input) }
+    if(curFileHash != newPluginHash){
+      throw IOException("Restored archive's hash doesn't match to original archive's hash")
     }
-    LOG.info("newBlockMap chunks=${newBlockMap.chunks.size}")
+    println(curFileHash != newPluginHash)
 
-    val blockMapDiff = oldBlockMap.compare(newBlockMap)
-    LOG.info("blockMapDiff chunks=${blockMapDiff.size}")
-
-
-    val merger = IdeaMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator = indicator)
-    FileOutputStream(file).use { output ->  merger.merge(output, IdeaChunkDataSource(oldBlockMap, newBlockMap, curPluginUrl)) }
-
-
-    //val newFileBytes = FileInputStream("D:\\plugins\\CodeStream\\8.1.3+74.zip").use { input -> input.readBytes() }
-    val newFileBytes = FileInputStream("D:\\plugins\\IntelliJ IDEA Help\\IntelliJIDEAHelp.zip").use { input -> input.readBytes() }
-
-    val mergeFileBytes = FileInputStream(file).use { input -> input.readBytes() }
-    LOG.info("new bytes=${newFileBytes.size}, merge bytes=${mergeFileBytes.size}")
-    /*var s = 0
-    for(i in newFileBytes.indices) if(newFileBytes[i] != mergeFileBytes[i]) s++
-    println(s)*/
-    LOG.info(newFileBytes.contentEquals(mergeFileBytes).toString())
     val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
     val fileName: String = guessFileName(connection, file, pluginUrl)
     val newFile = File(file.parentFile, fileName)
     FileUtil.rename(file, newFile)
-    LOG.info(newFile.toString())
+    println(newFile)
     return newFile
   }
 
-  class IdeaChunkDataSource(
-    private val oldBlockMap: BlockMap,
-    private val newBlockMap: BlockMap,
-    private val newPluginUrl : String,
-    private val maxHttpHeaderLength : Int = 5000
-  ) : ChunkDataSource{
-    private val oldMap = oldBlockMap.chunks.associateBy { it.hash }
-    private var curChunk = 0
-    private var curRangeChunkLengths = ArrayList<Int>()
-    private var curChunkData = getRange(nextRange())
-    private var pointer = 0
-
-    private fun nextRange() : String{
-      val range = StringBuilder()
-      curRangeChunkLengths = ArrayList()
-      var size = 0
-      while (curChunk < newBlockMap.chunks.size && range.length <= maxHttpHeaderLength) {
-        val newChunk = newBlockMap.chunks[curChunk]
-        if (!oldMap.containsKey(newChunk.hash)) {
-          range.append("${newChunk.offset}-${newChunk.offset + newChunk.length - 1},")
-          curRangeChunkLengths.add(newChunk.length)
-          size+=newChunk.length
-        }
-        curChunk++
-      }
-      return range.removeSuffix(",").toString()
-    }
-
-    private fun getRange(range : String) : ArrayList<ByteArray>{
-      val result = ArrayList<ByteArray>()
-      HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
-        val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
-        request.inputStream.buffered().use { input ->
-          for(length in curRangeChunkLengths){
-            // parsing http get range response
-            do {
-              val line = nextLine(input)
-            } while(!line.contains(boundary))
-            nextLine(input)
-            nextLine(input)
-            nextLine(input)
-            val data = ByteArray(length)
-            // input.read(bytearray) doesn't work properly
-            for(i in 0 until length) data[i] = input.read().toByte()
-            result.add(data)
-          }
-        }
-      }
-      return result
-    }
-
-    private fun nextLine(input : BufferedInputStream) : String{
-      ByteArrayOutputStream().use { baos ->
-        do{
-          val byte = input.read()
-          baos.write(byte)
-        }while(byte.toChar() != '\n')
-        return String(baos.toByteArray(), Charset.defaultCharset())
-      }
-    }
-
-    override fun get(chunk: FastCDC.Chunk): ByteArray? {
-      if(curChunkData.size != 0){
-        if(pointer < curChunkData.size){
-          return curChunkData[pointer++]
-        }else{
-          curChunkData = getRange(nextRange())
-          pointer = 0
-          return get(chunk)
-        }
-      }else return null
-    }
+  private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
+    val oldSet = oldBlockMap.chunks.toSet()
+    val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
+    return newChunks.sumBy { chunk -> chunk.length }.toDouble()/
+           newBlockMap.chunks.sumBy { chunk -> chunk.length }.toDouble()
   }
 
+  private fun getPluginFileUrl(pluginUrl: String) : String{
+    return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
+      val url = request.connection.url
+      "${url.protocol}://${url.host}${url.path}"
+    }
+  }
 
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
     val suffix = if(prevPlugin.endsWith(".jar")) "" else ".zip"

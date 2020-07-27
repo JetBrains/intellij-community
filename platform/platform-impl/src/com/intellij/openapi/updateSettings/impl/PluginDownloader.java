@@ -260,18 +260,17 @@ public final class PluginDownloader {
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
-    //if(myOldFile == null || myPluginUrl.contains("localhost")){
     if (myOldFile == null) {
       return myMarketplaceRequests.download(myPluginUrl, indicator);
     }
     else {
       try {
-        return myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
+        File f = myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
+        return f;
       }
       catch (Exception e) {
         e.printStackTrace();
-        return null;
-        //return myMarketplaceRequests.download(myPluginUrl, indicator);
+        return myMarketplaceRequests.download(myPluginUrl, indicator);
       }
     }
   }
