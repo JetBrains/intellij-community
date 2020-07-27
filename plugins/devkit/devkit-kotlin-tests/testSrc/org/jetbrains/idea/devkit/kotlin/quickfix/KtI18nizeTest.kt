@@ -9,14 +9,14 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 
-private val i18nizedExpr = "i18nizedExpr"
+private const val i18nizedExpr = "i18nizedExpr"
 
 /**
  * Analogical Java tests: [com.intellij.java.codeInsight.daemon.quickFix.I18nizeTest]
  */
 class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private fun doTest(before: String, expected: String? = null) {
+  private fun doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) {
     myFixture.configureByText("Test.kt", before)
     val action = I18nizeAction()
     val dataContext = DataManager.getInstance().getDataContext(editor.component)
@@ -35,7 +35,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
                                      emptyList(),
                                      "key1",
                                      "value1",
-                                     i18nizedExpr,
+                                     i18nized,
                                      emptyArray(),
                                      JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER)
       }
@@ -80,4 +80,30 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
       <caret>val foo = "string"
     }
   """.trimIndent())
+
+  fun testShortenClassReferences() = doTest("""
+    package p
+    class MyBundle {
+      fun message(key: String): String {
+        return key;
+      }
+    }
+    class a {
+      fun f() {
+        val s = "x<caret>xxxx"
+      }
+    }
+  """.trimIndent(), """
+    package p
+    class MyBundle {
+      fun message(key: String): String {
+        return key;
+      }
+    }
+    class a {
+      fun f() {
+        val s = MyBundle().message("key")
+      }
+    }
+  """.trimIndent(), i18nized = """p.MyBundle().message("key")""")
 }

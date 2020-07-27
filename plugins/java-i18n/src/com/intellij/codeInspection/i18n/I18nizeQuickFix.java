@@ -176,7 +176,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
         LOG.error(e);
       }
     }
-    return doDocumentReplacement(psiFile, literalExpression, i18nizedText, document);
+    PsiElement notShortenPsi = doDocumentReplacement(psiFile, literalExpression, i18nizedText, document);
+    return generationPlugin != null ? shortReferences(notShortenPsi, generationPlugin) : null;
   }
 
   @Nullable
@@ -195,6 +196,21 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
     return CodeInsightUtilCore.findElementInRange(psiFile, startOffset, startOffset + i18nizedText.length(), PsiElement.class, language);
   }
+
+  private static @Nullable PsiElement shortReferences(@Nullable PsiElement element,
+                                                      @NotNull UastCodeGenerationPlugin generationPlugin) {
+    UElement uElement = UastContextKt.toUElement(element);
+    if (uElement == null) {
+      return null;
+    }
+    // Here we rely on that replacing same element will shorten references
+    UElement replace = generationPlugin.replace(uElement, uElement, UElement.class);
+    if (replace == null) {
+      return null;
+    }
+    return replace.getSourcePsi();
+  }
+
 
   private static void reformatAndCorrectReferences(PsiElement newExpression) throws IncorrectOperationException {
     final Project project = newExpression.getProject();
