@@ -155,7 +155,7 @@ public final class FileAttributes {
   }
 
   @NotNull
-  public static FileAttributes createFrom(byte fileAttributesType, byte flags, long length, long lastModified) {
+  public static FileAttributes createFrom(byte fileAttributesType, @Flags byte flags, long length, long lastModified) {
     Type type = fileAttributesType == -1 ? null : Type.values()[fileAttributesType];
     return new FileAttributes(type, flags, length, lastModified);
   }

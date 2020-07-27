@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static final int IS_SYMLINK_FLAG = 0x2000_0000;
   private static final int HAS_SYMLINK_FLAG = 0x4000_0000;
   static final int IS_SPECIAL_FLAG = 0x8000_0000;
+
+  @MagicConstant(flags = {IS_WRITABLE_FLAG, IS_HIDDEN_FLAG, IS_SYMLINK_FLAG, IS_SPECIAL_FLAG, DIRTY_FLAG, HAS_SYMLINK_FLAG, SYSTEM_LINE_SEPARATOR_DETECTED, CHILDREN_CACHED, INDEXED_FLAG})
+  @interface Flags {}
 
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
@@ -155,11 +159,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     getSegment().setModificationStamp(myId, modificationStamp);
   }
 
-  boolean getFlagInt(int mask) {
+  boolean getFlagInt(@Flags int mask) {
     return getSegment().getFlag(myId, mask);
   }
 
-  void setFlagInt(int mask, boolean value) {
+  void setFlagInt(@Flags int mask, boolean value) {
     getSegment().setFlag(myId, mask, value);
   }
 
