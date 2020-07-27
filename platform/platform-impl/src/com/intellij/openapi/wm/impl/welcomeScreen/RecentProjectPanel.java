@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -438,7 +439,7 @@ public class RecentProjectPanel extends JPanel {
 
   protected class RecentProjectItemRenderer extends JPanel implements ListCellRenderer<AnAction> {
     protected final JLabel myName = new JLabel();
-    protected final JLabel myPath = new JLabel();
+    protected final JLabel myPath = ComponentPanelBuilder.createNonWrappingCommentComponent("");
     protected boolean myHovered;
 
     /** @deprecated use the default constructor */
@@ -450,8 +451,6 @@ public class RecentProjectPanel extends JPanel {
 
     protected RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());
-
-      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -476,7 +475,7 @@ public class RecentProjectPanel extends JPanel {
       Color back = getListBackground(selected, list.hasFocus());
 
       myName.setForeground(fore);
-      myPath.setForeground(selected ? fore : UIUtil.getInactiveTextColor());
+      myPath.setForeground(UIUtil.getInactiveTextColor());
 
       setBackground(back);
 
