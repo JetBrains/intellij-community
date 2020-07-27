@@ -1059,7 +1059,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public void setText(@NotNull final CharSequence text) {
     Runnable runnable = () -> replaceString(0, getTextLength(), 0, text, LocalTimeCounter.currentTime(), true);
-    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress() || !myAssertThreading) {
       runnable.run();
     }
     else {

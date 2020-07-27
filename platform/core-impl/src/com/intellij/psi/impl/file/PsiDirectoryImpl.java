@@ -401,16 +401,18 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
       try {
         VirtualFile newVFile;
-        final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myManager.getProject());
         if (originalFile instanceof PsiFileImpl) {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String text = originalFile.getText();
           final PsiFile psiFile = getManager().findFile(newVFile);
-          final Document document = psiFile == null ? null : psiDocumentManager.getDocument(psiFile);
+          final Document document = psiFile == null ? null : psiFile.getViewProvider().getDocument();
           final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
           if (document != null) {
             document.setText(text);
-            fileDocumentManager.saveDocument(document);
+            if (psiFile.isPhysical()) {
+              fileDocumentManager.saveDocument(document);
+            }
+            PsiDocumentManager.getInstance(getProject()).commitDocument(document);
           }
           else {
             String lineSeparator = fileDocumentManager.getLineSeparator(newVFile, getProject());
@@ -431,7 +433,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
             newVFile = VfsUtilCore.copyFile(null, originalFile.getVirtualFile(), myFile);
           }
         }
-        psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);

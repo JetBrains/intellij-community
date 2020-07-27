@@ -11,9 +11,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,16 +33,17 @@ import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public final class ModelBranchImpl implements ModelBranch {
-  private final Map<VirtualFile, VirtualFile> myVFileCopies = new HashMap<>();
-  private final Set<BranchedVirtualFile> myRenamedFiles = new LinkedHashSet<>();
+public abstract class ModelBranchImpl implements ModelBranch {
+  private final Map<VirtualFile, BranchedVirtualFileImpl> myVFileCopies = new HashMap<>();
+  private final Set<BranchedVirtualFileImpl> myVfsStructureChanges = new LinkedHashSet<>();
+  private final Set<BranchedVirtualFileImpl> myAffectedFiles = new HashSet<>();
   private final Map<Document, List<DocumentEvent>> myDocumentChanges = new HashMap<>();
   private final List<Runnable> myAfterMerge = new ArrayList<>();
   private final SimpleModificationTracker myVfsChanges = new SimpleModificationTracker();
   private final Project myProject;
   private boolean myMerged;
 
-  private ModelBranchImpl(@NotNull Project project) {
+  ModelBranchImpl(@NotNull Project project) {
     myProject = project;
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (PsiDocumentManager.getInstance(project).hasEventSystemEnabledUncommittedDocuments()) {
@@ -49,9 +51,22 @@ public final class ModelBranchImpl implements ModelBranch {
     }
   }
 
+  Project getProject() {
+    return myProject;
+  }
+
+  void addVfsStructureChange(BranchedVirtualFileImpl file) {
+    myVfsChanges.incModificationCount();
+    myVfsStructureChanges.add(file);
+
+    VfsUtilCore.processFilesRecursively(file, each -> {
+      myAffectedFiles.add((BranchedVirtualFileImpl)each);
+      return true;
+    });
+  }
+
   @NotNull
-  static ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<ModelBranch> action) {
-    ModelBranchImpl branch = new ModelBranchImpl(project);
+  static ModelPatch performInBranch(@NotNull Consumer<ModelBranch> action, @NotNull ModelBranchImpl branch) {
     action.accept(branch);
     return new ModelPatch() {
       @Override
@@ -65,7 +80,9 @@ public final class ModelBranchImpl implements ModelBranch {
         for (Document document : branch.myDocumentChanges.keySet()) {
           VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
           VirtualFile original = branch.findOriginalFile(file);
-          result.put(original, document.getImmutableCharSequence());
+          if (original != null) {
+            result.put(original, document.getImmutableCharSequence());
+          }
         }
         return result;
       }
@@ -79,58 +96,18 @@ public final class ModelBranchImpl implements ModelBranch {
 
   @Override
   @NotNull
-  public VirtualFile findFileCopy(@NotNull VirtualFile original) {
+  public BranchedVirtualFileImpl findFileCopy(@NotNull VirtualFile original) {
     assert ModelBranch.getFileBranch(original) != this;
     return myVFileCopies.computeIfAbsent(original, __ -> {
       assert !(original instanceof VirtualFileWindow);
-      BranchedVirtualFile copy = new BranchedVirtualFile(original, this) {
-
-        @Override
-        public @NotNull CharSequence getContent() {
-          if (!getFileType().isBinary()) {
-            FileViewProvider vp = PsiManagerEx.getInstanceEx(myProject).getFileManager().findViewProvider(original);
-            if (vp != null) {
-              Document document = FileDocumentManager.getInstance().getCachedDocument(original);
-              if (document != null && PsiDocumentManager.getInstance(myProject).isUncommited(document)) {
-                throw new IllegalStateException("Content loading is only allowed for committed original files");
-              }
-              return vp.getContents().toString();
-            }
-          }
-          throw new UnsupportedOperationException("No string content for binary file " + this);
-        }
-
-        @Override
-        public byte @NotNull [] contentsToByteArray() throws IOException {
-          return original.contentsToByteArray();
-        }
-
-        @Override
-        public void rename(Object requestor, @NotNull String newName) throws IOException {
-          super.rename(requestor, newName);
-          myVfsChanges.incModificationCount();
-          myRenamedFiles.add(this);
-        }
-
-        @Override
-        public @Nullable VirtualFile findChild(@NotNull String name) {
-          BranchedVirtualFile renamed = ContainerUtil.find(myRenamedFiles, f -> name.equals(f.getName()) && equals(f.getParent()));
-          if (renamed != null) return renamed;
-
-          VirtualFile child = original.findChild(name);
-          return child == null ? null : branch.findFileCopy(child);
-        }
-
-      };
-
-      copy.putUserData(AbstractFileViewProvider.FREE_THREADED, true);
-
-      return copy;
+      assert original instanceof VirtualFileWithId;
+      return new BranchedVirtualFileImpl(this, original, original.getName(), original.isDirectory(), null);
     });
   }
 
-  void registerDocumentChange(Document document, DocumentEvent event) {
+  void registerDocumentChange(Document document, DocumentEvent event, BranchedVirtualFileImpl file) {
     myDocumentChanges.computeIfAbsent(document, __ -> new ArrayList<>()).add(event);
+    myAffectedFiles.add(file);
   }
 
   @Nullable
@@ -180,8 +157,10 @@ public final class ModelBranchImpl implements ModelBranch {
   public <T extends PsiElement> T findOriginalPsi(@NotNull T branched) {
     assert myMerged;
     if (branched instanceof PsiDirectory) {
+      VirtualFile originalDir = findOriginalFile(((PsiDirectory) branched).getVirtualFile());
+      if (originalDir == null) return null;
       //noinspection unchecked
-      return (T)Objects.requireNonNull(PsiManager.getInstance(myProject).findDirectory(findOriginalFile(((PsiDirectory)branched).getVirtualFile())));
+      return (T)Objects.requireNonNull(PsiManager.getInstance(myProject).findDirectory(originalDir));
     }
 
     PsiFile branchedFile = branched.getContainingFile();
@@ -190,11 +169,11 @@ public final class ModelBranchImpl implements ModelBranch {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public VirtualFile findOriginalFile(@NotNull VirtualFile file) {
-    BranchedVirtualFile branched = (BranchedVirtualFile)file;
-    assert branched.branch == this;
-    return branched.original;
+    BranchedVirtualFileImpl branched = (BranchedVirtualFileImpl)file;
+    assert branched.getBranch() == this;
+    return branched.getOriginal();
   }
 
   @Override
@@ -211,23 +190,28 @@ public final class ModelBranchImpl implements ModelBranch {
     assert !myMerged;
     myMerged = true;
 
-    for (BranchedVirtualFile file : myRenamedFiles) {
-      VirtualFile original = file.original;
-      String copyName = file.getName();
-      if (!original.getName().equals(copyName)) {
-        PsiFileImplUtil.saveDocumentIfFileWillBecomeBinary(original, copyName);
-        try {
+    try {
+      for (BranchedVirtualFileImpl file : myVfsStructureChanges) {
+        VirtualFile original = file.getOrCreateOriginal();
+        String copyName = file.getName();
+        if (!original.getName().equals(copyName)) {
+          PsiFileImplUtil.saveDocumentIfFileWillBecomeBinary(original, copyName);
           original.rename(this, copyName);
         }
-        catch (IOException e) {
-          throw new IncorrectOperationException(e);
+        VirtualFile newParent = findOriginalFile(file.getParent());
+        if (!original.getParent().equals(newParent)) {
+          assert newParent != null;
+          original.move(this, newParent);
         }
       }
+    }
+    catch (IOException e) {
+      throw new IncorrectOperationException(e);
     }
 
     for (Document document : myDocumentChanges.keySet()) {
       VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-      DocumentImpl original = (DocumentImpl) FileDocumentManager.getInstance().getDocument(findOriginalFile(file));
+      DocumentImpl original = (DocumentImpl) FileDocumentManager.getInstance().getDocument(Objects.requireNonNull(findOriginalFile(file)));
       assert original != null;
 
       for (DocumentEvent event : myDocumentChanges.get(document)) {
@@ -246,11 +230,7 @@ public final class ModelBranchImpl implements ModelBranch {
     return new DelegatingGlobalSearchScope(scope, this, getBranchedPsiModificationCount()) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        ModelBranch fileBranch = ModelBranch.getFileBranch(file);
-        if (fileBranch == ModelBranchImpl.this) {
-          return super.contains(findOriginalFile(file));
-        }
-        return false;
+        return ModelBranch.getFileBranch(file) == ModelBranchImpl.this && super.contains(file);
       }
 
       @Override
@@ -262,8 +242,7 @@ public final class ModelBranchImpl implements ModelBranch {
 
   public boolean hasModifications(@NotNull VirtualFile branchFile) {
     assert ModelBranch.getFileBranch(branchFile) == this;
-    return myRenamedFiles.contains(branchFile) ||
-           myDocumentChanges.containsKey(FileDocumentManager.getInstance().getCachedDocument(branchFile));
+    return myAffectedFiles.contains(branchFile);
   }
 
   public static boolean processModifiedFilesInScope(@NotNull GlobalSearchScope scope, @NotNull Processor<? super VirtualFile> processor) {
@@ -275,18 +254,14 @@ public final class ModelBranchImpl implements ModelBranch {
                                                      Processor<? super VirtualFile> processor,
                                                      Collection<ModelBranch> branches) {
     for (ModelBranch branch : branches) {
-      for (VirtualFile file : ((ModelBranchImpl)branch).myRenamedFiles) {
+      for (VirtualFile file : ((ModelBranchImpl)branch).myAffectedFiles) {
         if (scope.contains(file) && !processor.process(file)) {
-          return false;
-        }
-      }
-      for (Document document : ((ModelBranchImpl)branch).myDocumentChanges.keySet()) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (file != null && scope.contains(file) && !processor.process(file)) {
           return false;
         }
       }
     }
     return true;
   }
+
+  protected abstract void assertAllChildrenLoaded(@NotNull VirtualFile file);
 }

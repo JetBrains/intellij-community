@@ -543,10 +543,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
-      outputStream.flush();
     }
   }
 

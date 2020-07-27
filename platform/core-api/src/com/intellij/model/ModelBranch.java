@@ -84,7 +84,7 @@ public interface ModelBranch {
    * @return a branch that's the given file was copied by, or null if there's no such branch.
    */
   static @Nullable ModelBranch getFileBranch(@NotNull VirtualFile file) {
-    return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).branch : null;
+    return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).getBranch() : null;
   }
 
 
