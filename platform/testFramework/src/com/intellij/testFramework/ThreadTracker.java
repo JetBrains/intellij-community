@@ -320,9 +320,6 @@ public final class ThreadTracker {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
-        if (ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
-          return false;
-        }
         ThreadGroup group = thread.getThreadGroup();
         return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
       });
