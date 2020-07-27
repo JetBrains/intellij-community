@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class FilePathMapping<T> {
@@ -21,7 +22,7 @@ public final class FilePathMapping<T> {
 
   public FilePathMapping(boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
-    myPathMap = CollectionFactory.createFilePathMap();
+    myPathMap = caseSensitive ? new HashMap<>() : CollectionFactory.createCaseInsensitiveStringMap();
   }
 
   public void add(@NotNull String filePath, @NotNull T value) {
