@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
@@ -93,11 +94,21 @@ public class TextMateServiceImpl extends TextMateService {
     THashMap<String, CharSequence> newExtensionsMapping = new THashMap<>();
     for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
       if (bundleConfigBean.isEnabled()) {
-        boolean result = registerBundle(LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath()), newExtensionsMapping);
+        VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
+        boolean result = registerBundle(bundleFile, newExtensionsMapping);
         if (!result) {
-          Notifications.Bus.notify(new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error"),
-                                                    TextMateBundle.message("textmate.cant.register.bundle", bundleConfigBean.getName()),
-                                                    NotificationType.ERROR, null));
+          String bundleName = bundleConfigBean.getName();
+          String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
+                                                   : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
+          Notification notification = new Notification("TextMate Bundles",
+                                                  TextMateBundle.message("textmate.bundle.load.error", bundleName),
+                                                  errorMessage,
+                                                  NotificationType.ERROR, null);
+          notification.addAction(NotificationAction.createSimple(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> {
+            bundleConfigBean.setEnabled(false);
+            notification.expire();
+          }));
+          Notifications.Bus.notify(notification);
         }
       }
     }
