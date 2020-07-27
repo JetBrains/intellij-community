@@ -12,8 +12,8 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
     @JvmField val GROUP = EventLogGroup("actions", configVersion)
     @JvmField val ACTION_ID = EventFields.String("action_id").withCustomRule("action")
-    @JvmField val ACTION_CLASS = EventFields.String("class").withCustomRule("class")
-    @JvmField val ACTION_PARENT = EventFields.String("parent").withCustomRule("class")
+    @JvmField val ACTION_CLASS = EventFields.String("class").withCustomRule("class_name")
+    @JvmField val ACTION_PARENT = EventFields.String("parent").withCustomRule("class_name")
     @JvmField val CONTEXT_MENU = EventFields.Boolean("context_menu")
     @JvmField val DUMB = EventFields.Boolean("dumb")
 

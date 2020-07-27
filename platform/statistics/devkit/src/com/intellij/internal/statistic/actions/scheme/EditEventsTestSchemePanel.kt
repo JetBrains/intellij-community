@@ -3,8 +3,10 @@ package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionListModel
@@ -23,7 +25,8 @@ import javax.swing.SwingConstants
 
 class EditEventsTestSchemePanel(private val project: Project,
                                 testSchemeGroups: List<LocalWhitelistGroup>,
-                                productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
+                                productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
+                                generatedScheme: List<WhitelistBuilder.WhitelistGroup>) : JPanel(), Disposable {
   private val groupsModel = CollectionListModel(testSchemeGroups)
   private val groupsList: JBList<LocalWhitelistGroup> = JBList(groupsModel)
   private var groupConfiguration: EventsTestSchemeGroupConfiguration
@@ -35,12 +38,13 @@ class EditEventsTestSchemePanel(private val project: Project,
 
   init {
     val initialGroup = LocalWhitelistGroup("", false)
-    groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup) { group ->
+    groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup, generatedScheme) { group ->
       groupsModel.contentsChanged(group)
     }
 
     val groupListPanel = ToolbarDecorator.createDecorator(groupsList)
-      .setAsUsualTopToolbar()
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
       .setAddAction {
         val newGroup = LocalWhitelistGroup("", false)
         groupsModel.add(newGroup)
@@ -95,8 +99,7 @@ class EditEventsTestSchemePanel(private val project: Project,
 
   fun validateGroups(): List<ValidationInfo> {
     for (group in groupsModel.items) {
-      val validationInfo = EventsTestSchemeGroupConfiguration.validateTestSchemeGroup(project, group,
-                                                                                      groupConfiguration.groupIdTextField)
+      val validationInfo = EventsTestSchemeGroupConfiguration.validateTestSchemeGroup(project, group, groupConfiguration.groupIdTextField)
       if (validationInfo.isNotEmpty()) {
         groupsList.selectedIndex = groupsModel.getElementIndex(group)
         return validationInfo
