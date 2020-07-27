@@ -244,10 +244,10 @@ open class FileBasedStorage(file: Path,
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
-      val action = if (blockSaving != null) "Please correct the file content" else "File content will be recreated"
+      val action = if (blockSaving == null) "File content will be recreated" else "Please correct the file content"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                   "Load Settings",
-                   "Cannot load settings from file '$file': $reason\n$action",
+                   ConfigurationStoreBundle.message("notification.load.settings.title"),
+                   "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
                    NotificationType.WARNING)
         .notify(null)
     }
