@@ -402,25 +402,21 @@ open class MarketplaceRequests {
     val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
 
     // working with demo
-    //val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
-    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","localhost:8080")
+    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
 
     val pluginFileUrl = getPluginFileUrl(curPluginUrl)
     val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_FILENAME)
     val pluginHashFileUrl = pluginFileUrl.replaceAfterLast("/", HASH_FILENAME)
-    println(blockMapFileUrl)
 
     val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
       request.inputStream.reader().buffered().use { input ->
         objectMapper.readValue(input.readText(), BlockMap::class.java) }
     }
     LOG.info("Plugin blockmap file downloaded")
-    println("Plugin blockmap file downloaded")
     val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
       request.inputStream.reader().buffered().use { input -> input.readText() }
     }
     LOG.info("Plugin hash file downloaded")
-    println("Plugin hash file downloaded")
 
     if(downloadPercent(oldBlockMap, newBlockMap) > MAXIMUM_DOWNLOAD_PERCENT){
       throw IOException(IdeBundle.message("too.large.download.size"))
@@ -432,15 +428,13 @@ open class MarketplaceRequests {
 
     val curFileHash = FileInputStream(file).use { input -> makeFileHash(input) }
     if(curFileHash != newPluginHash){
-      throw IOException("Restored archive's hash doesn't match to original archive's hash")
+      throw IOException(IdeBundle.message("hashes.doesnt.match"))
     }
-    println(curFileHash != newPluginHash)
 
     val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
     val fileName: String = guessFileName(connection, file, pluginUrl)
     val newFile = File(file.parentFile, fileName)
     FileUtil.rename(file, newFile)
-    println(newFile)
     return newFile
   }
 

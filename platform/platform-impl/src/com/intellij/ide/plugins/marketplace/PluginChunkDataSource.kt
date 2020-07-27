@@ -39,13 +39,13 @@ class PluginChunkDataSource(
 
   private fun nextRange() : String{
     val range = StringBuilder()
-    curRangeChunkLengths = ArrayList()
-    var size = 0
+    curRangeChunkLengths.clear()
+    var rangeHeaderLength = 0
     while (curChunk < newChunks.size && range.length <= MAX_HTTP_HEADERS_LENGTH) {
       val newChunk = newChunks[curChunk]
       range.append("${newChunk.offset}-${newChunk.offset + newChunk.length - 1},")
       curRangeChunkLengths.add(newChunk.length)
-      size+=newChunk.length
+      rangeHeaderLength+=newChunk.length
       curChunk++
     }
     return range.removeSuffix(",").toString()

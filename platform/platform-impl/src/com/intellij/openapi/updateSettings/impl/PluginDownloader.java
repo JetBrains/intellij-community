@@ -265,11 +265,9 @@ public final class PluginDownloader {
     }
     else {
       try {
-        File f = myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
-        return f;
+        return myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
       }
       catch (Exception e) {
-        e.printStackTrace();
         return myMarketplaceRequests.download(myPluginUrl, indicator);
       }
     }
