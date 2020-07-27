@@ -118,7 +118,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                    boolean addSubdirectoryPointers,
                                    @NotNull NewVirtualFileSystem fs,
                                    @NotNull VFileEvent event) {
-    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, event);
   }
 
