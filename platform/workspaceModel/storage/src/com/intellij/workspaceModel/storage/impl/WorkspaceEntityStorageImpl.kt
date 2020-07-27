@@ -950,11 +950,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     return index
   }
 
-  override fun findEntitiesWithVirtualFileUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
-    indexes.virtualFileIndex.getVirtualFileUrlInfoByVFU(fileUrl).mapNotNull {
-      val entityData = entityDataById(it.entityId) ?: return@mapNotNull null
-      entityData.createEntity(this) to it.propertyName
-    }
+  override fun getVirtualFileUrlIndex(): VirtualFileUrlIndex {
+    indexes.virtualFileIndex.setTypedEntityStorage(this)
+    return indexes.virtualFileIndex
+  }
 
   internal fun assertConsistency() {
     entitiesByType.assertConsistency()

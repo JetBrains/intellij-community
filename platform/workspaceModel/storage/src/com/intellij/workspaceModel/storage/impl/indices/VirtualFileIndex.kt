@@ -3,7 +3,10 @@ package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.util.SmartList
 import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlIndex
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -16,17 +19,25 @@ import kotlin.reflect.full.memberProperties
 open class VirtualFileIndex private constructor(
   internal open val entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
   internal open val vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
-) {
+): VirtualFileUrlIndex {
+  private lateinit var entityStorage: AbstractEntityStorage
   constructor() : this(HashMap<EntityId, MutableList<VirtualFileUrlInfo>>(), HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>())
-
-  internal fun getVirtualFileUrlInfoByVFU(fileUrl: VirtualFileUrl): Sequence<VirtualFileUrlInfo> =
-    vfu2VirtualFileUrlInfo[fileUrl]?.asSequence() ?: emptySequence()
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> =
     entityId2VirtualFileUrlInfo[id]?.asSequence()?.map { it.vfu }?.toSet() ?: emptySet()
 
   internal fun getVirtualFileUrlInfoByEntityId(id: EntityId): Sequence<VirtualFileUrlInfo> =
     entityId2VirtualFileUrlInfo[id]?.asSequence() ?: emptySequence()
+
+  override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
+    vfu2VirtualFileUrlInfo[fileUrl]?.asSequence()?.mapNotNull {
+      val entityData = entityStorage.entityDataById(it.entityId) ?: return@mapNotNull null
+      entityData.createEntity(entityStorage) to it.propertyName
+    } ?: emptySequence()
+
+  internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
+    entityStorage = storage
+  }
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrlInfo]  and [vfu2VirtualFileUrlInfo] directly! Create a dedicated method for that

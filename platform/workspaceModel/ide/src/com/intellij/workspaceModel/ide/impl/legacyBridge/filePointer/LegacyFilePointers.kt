@@ -87,7 +87,7 @@ class LegacyModelRootsFilePointers(val project: Project) {
 
   private fun addEntitiesWithVFU(storage: WorkspaceEntityStorageBuilder, virtualFileUrl: VirtualFileUrl,
                                  aggregator: MutableList<EntityWithVirtualFileUrl>) {
-    storage.findEntitiesWithVirtualFileUrl(virtualFileUrl).forEach {
+    storage.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).forEach {
       aggregator.add(EntityWithVirtualFileUrl(it.first, virtualFileUrl, it.second))
     }
   }
