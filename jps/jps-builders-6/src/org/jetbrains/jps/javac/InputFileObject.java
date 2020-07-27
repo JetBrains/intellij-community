@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.tools.*;
@@ -14,7 +15,7 @@ public final class InputFileObject extends JpsFileObject {
   private Reference<File> myAbsFileRef;
 
   InputFileObject(File f, String encoding) {
-    super(f.toURI(), findKind(f.getName()), StandardLocation.SOURCE_PATH);
+    super(FileUtilRt.fileToUri(f), findKind(f.getName()), StandardLocation.SOURCE_PATH);
     this.myFile = f;
     myEncoding = encoding;
   }
