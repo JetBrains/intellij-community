@@ -135,7 +135,7 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     list.clear()
     list.addAll(modules)
     // compiler uses module list from disk, ask to save workspace
-    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project, saveDocuments = false, forceSavingAllSettings = true))
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
   companion object {

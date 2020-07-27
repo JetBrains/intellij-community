@@ -294,7 +294,7 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
 
   private void markAsChangedAndScheduleSave() {
     if (changed.compareAndSet(false, true)) {
-      SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask.projectIncludingAllSettings(myProject), false);
+      SaveAndSyncHandler.getInstance().scheduleProjectSave(myProject, true);
     }
   }
 

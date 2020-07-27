@@ -34,8 +34,6 @@ import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.pooledThreadSingleAlarm
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAwt
 import java.beans.PropertyChangeListener
@@ -72,7 +70,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
         saveQueue.pollFirst() ?: return
       }
 
-      if (task.onlyProject?.isDisposed == true) {
+      if (task.project?.isDisposed == true) {
         continue
       }
 
@@ -82,18 +80,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
       LOG.runAndLogException {
         runBlocking {
-          coroutineScope {
-            if (task.saveDocuments) {
-              launch(storeEdtCoroutineDispatcher) {
-                // forceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
-                // in any case flag isDocumentsSavingExplicit is not really important
-                (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(task.forceSavingAllSettings)
-              }
-            }
-            launch {
-              saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.onlyProject)
-            }
-          }
+          saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
         }
       }
     }
@@ -160,10 +147,14 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   private fun addToSaveQueue(task: SaveTask): Boolean {
     synchronized(saveQueue) {
-      if (task.onlyProject == null) {
-        saveQueue.removeAll(task::isMoreGenericThan)
+      if (task.project == null) {
+        if (saveQueue.any { it.project == null }) {
+          return false
+        }
+
+        saveQueue.removeAll { it.project != null }
       }
-      else if (saveQueue.any { it.isMoreGenericThan(task) }) {
+      else if (saveQueue.any { it.project == null || it.project === task.project }) {
         return false
       }
 
@@ -216,7 +207,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
           if (project != null) {
             synchronized(saveQueue) {
-              saveQueue.removeAll { it.onlyProject === project }
+              saveQueue.removeAll { it.project === project }
             }
           }
 
@@ -319,7 +310,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
   }
 }
 
-private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask(saveDocuments = false)
+private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
 internal abstract class BaseSaveAndSyncHandler : SaveAndSyncHandler() {
   internal val edtPoolDispatcherManager = EdtPoolDispatcherManager()
