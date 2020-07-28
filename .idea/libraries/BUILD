@@ -1748,14 +1748,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "kotlin-gradle-plugin-model",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.70:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.70:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "javax.annotation-api",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/javax/annotation/javax.annotation-api/1.3.2:jar"],
