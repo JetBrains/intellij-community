@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -143,7 +144,12 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       }
     }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
-    dialog.show();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.doAction();
+    }
+    else {
+      dialog.show();
+    }
   }
 
   public static boolean checkRecursive(PsiMethod method) {
