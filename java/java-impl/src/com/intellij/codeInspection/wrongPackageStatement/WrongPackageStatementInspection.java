@@ -54,25 +54,31 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
       PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (dirPackage == null) return null;
       PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-
-      // highlight the first class in the file only
-      PsiClass[] classes = javaFile.getClasses();
-      if (classes.length == 0 && packageStatement == null) return null;
-
+      
       String packageName = dirPackage.getQualifiedName();
-      if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
-        String description = JavaErrorBundle.message("missing.package.statement", packageName);
+      if (packageStatement == null) {
+        if (!Comparing.strEqual(packageName, "", true)) {
+          // highlight the first class in the file only
+          PsiClass[] classes = javaFile.getClasses();
+          if (classes.length == 0) return null;
+          PsiIdentifier nameIdentifier = classes[0].getNameIdentifier();
+          if (nameIdentifier == null) return null;
 
-        final LocalQuickFix fix =
-          PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName) ? new AdjustPackageNameFix(packageName) : null;
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description, fix,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
+          String description = JavaErrorBundle.message("missing.package.statement", packageName);
+
+          final LocalQuickFix fix =
+            PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)
+            ? new AdjustPackageNameFix(packageName)
+            : null;
+          return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, description, fix,
+                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
+        }
       }
-      if (packageStatement != null) {
+      else {
         final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<>();
-        if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
+        if (classPackage == null || !Comparing.equal(packageName, packageReference.getQualifiedName(), true)) {
           if (PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
             availableFixes.add(new AdjustPackageNameFix(packageName));
           }
@@ -82,7 +88,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
         if (!availableFixes.isEmpty()){
           String description = JavaErrorBundle.message("package.name.file.path.mismatch",
                                                        packageReference.getQualifiedName(),
-                                                       dirPackage.getQualifiedName());
+                                                       packageName);
           LocalQuickFix[] fixes = availableFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
