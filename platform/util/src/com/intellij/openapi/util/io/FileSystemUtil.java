@@ -38,7 +38,7 @@ public final class FileSystemUtil {
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  private interface Mediator {
+  interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
     @Nullable String resolveSymLink(@NotNull String path) throws IOException;
     boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
