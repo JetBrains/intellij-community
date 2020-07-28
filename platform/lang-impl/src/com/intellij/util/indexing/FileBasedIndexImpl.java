@@ -866,8 +866,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     Collection<Document> documents = getUnsavedDocuments();
-    boolean psiBasedIndex = myRegisteredIndexes.isPsiDependentIndex(indexId);
-    if(psiBasedIndex) {
+    if(true) {
       Set<Document> transactedDocuments = getTransactedDocuments();
       if (documents.isEmpty()) {
         documents = transactedDocuments;
@@ -929,9 +928,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       content = new AuthenticContent(document);
     }
 
-    boolean psiBasedIndex = myRegisteredIndexes.isPsiDependentIndex(requestedIndexId);
-
-    final long currentDocStamp = psiBasedIndex ? PsiDocumentManager.getInstance(project).getLastCommittedStamp(document) : content.getModificationStamp();
+    final long currentDocStamp = PsiDocumentManager.getInstance(project).getLastCommittedStamp(document);
 
     final long previousDocStamp = myLastIndexedDocStamps.get(document, requestedIndexId);
     if (previousDocStamp == currentDocStamp) return;
@@ -1034,7 +1031,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myStorageBufferingHandler.runUpdate(true, updateComputable);
   }
 
-  void cleanupMemoryStorage(boolean skipPsiBasedIndices) {
+  void cleanupMemoryStorage(boolean skipContentDependentIndexes) {
     myLastIndexedDocStamps.clear();
     if (myRegisteredIndexes == null) {
       // unsaved doc is dropped while plugin load/unload-ing
@@ -1047,7 +1044,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return;
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
-      if (skipPsiBasedIndices && myRegisteredIndexes.isPsiDependentIndex(indexId)) continue;
+      if (skipContentDependentIndexes && myRegisteredIndexes.isContentDependentIndex(indexId)) continue;
       final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
       assert index != null;
       index.cleanupMemoryStorage();
@@ -1435,7 +1432,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
-    return !myRegisteredIndexes.isNotRequiringContentIndex(indexId);
+    return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
   @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
@@ -1502,7 +1499,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     else { // file was removed
       for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
-        if (myRegisteredIndexes.isNotRequiringContentIndex(indexId)) {
+        if (!myRegisteredIndexes.isContentDependentIndex(indexId)) {
           updateSingleIndex(indexId, null, fileId, null);
         }
       }
@@ -1595,7 +1592,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return true;
     }
 
-    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myRegisteredIndexes.getPsiDependentIndices()), getFileId(file), file);
+    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myRegisteredIndexes.getRequiringContentIndices()), getFileId(file), file);
     return false;
   }
 
@@ -1675,7 +1672,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       boolean wasIndexed = false;
       List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
       for (ID<?, ?> candidate : candidates) {
-        if (myRegisteredIndexes.isPsiDependentIndex(candidate)) {
+        if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
           if(getInputFilter(candidate).acceptInput(virtualFile)) {
             getIndex(candidate).resetIndexedStateForFile(fileId);
             wasIndexed = true;
@@ -1794,10 +1791,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
-    return extension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent();
-  }
   public static final boolean DO_TRACE_STUB_INDEX_UPDATE = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false);
 
   @ApiStatus.Internal

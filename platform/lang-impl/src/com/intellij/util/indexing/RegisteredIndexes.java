@@ -31,7 +31,6 @@ final class RegisteredIndexes {
 
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<>();
   private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<>();
-  private final Set<ID<?, ?>> myPsiDependentIndices = new HashSet<>();
   private final Set<FileType> myNoLimitCheckTypes = new HashSet<>();
 
   private volatile boolean myExtensionsRelatedDataWasLoaded;
@@ -116,7 +115,9 @@ final class RegisteredIndexes {
 
   void registerIndexExtension(@NotNull FileBasedIndexExtension<?, ?> extension) {
     ID<?, ?> name = extension.getName();
-    myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    if (extension.dependsOnFileContent()) {
+      myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    }
 
     if (!extension.dependsOnFileContent()) {
       if (extension.indexDirectories()) myIndicesForDirectories.add(name);
@@ -126,7 +127,6 @@ final class RegisteredIndexes {
       myRequiringContentIndices.add(name);
     }
 
-    if (FileBasedIndexImpl.isPsiDependentIndex(extension)) myPsiDependentIndices.add(name);
     myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
   }
 
@@ -156,21 +156,13 @@ final class RegisteredIndexes {
     return myNotRequiringContentIndices;
   }
 
-  boolean isNotRequiringContentIndex(@NotNull ID<?, ?> indexId) {
-    return myNotRequiringContentIndices.contains(indexId);
-  }
-
   @NotNull
   List<ID<?, ?>> getIndicesForDirectories() {
     return myIndicesForDirectories;
   }
 
-  Set<ID<?, ?>> getPsiDependentIndices() {
-    return myPsiDependentIndices;
-  }
-
-  boolean isPsiDependentIndex(@NotNull ID<?, ?> indexId) {
-    return myPsiDependentIndices.contains(indexId);
+  boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
+    return myRequiringContentIndices.contains(indexId);
   }
 
   UpdateTask<Document> getUnsavedDataUpdateTask(@NotNull ID<?, ?> indexId) {
