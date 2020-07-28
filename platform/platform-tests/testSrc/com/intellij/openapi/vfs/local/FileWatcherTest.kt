@@ -37,19 +37,19 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.After
+import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
@@ -99,8 +99,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     }
 
     runInEdtAndWait {
-      runWriteAction { root.delete(this) }
-      (fs as LocalFileSystemImpl).cleanupForNextTest()
+      if (this::root.isInitialized) {
+        runWriteAction { root.delete(this) }
+      }
+      if (this::fs.isInitialized) {
+        (fs as LocalFileSystemImpl).cleanupForNextTest()
+      }
     }
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
@@ -548,7 +552,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file2 = tempDir.newFile("top/root/2.txt")
     refresh(top)
     val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
-    assertTrue(fsRoot.exists(), "can't guess root of $top")
+    assertTrue("can't guess root of $top", fsRoot.exists())
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
