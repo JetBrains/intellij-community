@@ -26,7 +26,8 @@ abstract class TomlAnnotationTestBase : TomlTestBase() {
 
     protected abstract fun createAnnotationFixture(): TomlAnnotationTestFixture
 
-    protected fun checkHighlighting(@Language("TOML") text: String) = annotationFixture.checkHighlighting(text)
+    protected fun checkHighlighting(@Language("TOML") text: String, ignoreExtraHighlighting: Boolean = true) =
+        annotationFixture.checkHighlighting(text, ignoreExtraHighlighting)
 
     protected fun checkByText(
         @Language("TOML") text: String,

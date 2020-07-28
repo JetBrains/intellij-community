@@ -11,5 +11,5 @@ import kotlin.reflect.KClass
 abstract class TomlAnnotatorTestBase(private val annotatorClass: KClass<out AnnotatorBase>) : TomlAnnotationTestBase() {
 
     override fun createAnnotationFixture(): TomlAnnotationTestFixture =
-        TomlAnnotationTestFixture(myFixture, annotatorClasses = listOf(annotatorClass))
+        TomlAnnotationTestFixture(this, myFixture, annotatorClasses = listOf(annotatorClass))
 }

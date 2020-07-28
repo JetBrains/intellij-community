@@ -9,12 +9,14 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.ide.annotator.AnnotationTestFixtureBase
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import junit.framework.TestCase
 import kotlin.reflect.KClass
 
 class TomlAnnotationTestFixture(
+    testCase: TestCase,
     codeInsightFixture: CodeInsightTestFixture,
     annotatorClasses: List<KClass<out AnnotatorBase>> = emptyList(),
     inspectionClasses: List<KClass<out InspectionProfileEntry>> = emptyList()
-) : AnnotationTestFixtureBase(codeInsightFixture, annotatorClasses, inspectionClasses) {
+) : AnnotationTestFixtureBase(testCase, codeInsightFixture, annotatorClasses, inspectionClasses) {
     override val baseFileName: String = "example.toml"
 }
