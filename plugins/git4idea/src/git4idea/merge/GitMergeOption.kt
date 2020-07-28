@@ -1,19 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-enum class MergeOption(@NonNls val option: String,
-                       @NonNls val descriptionKey: String) {
+enum class GitMergeOption(@NonNls val option: String,
+                          @Nls val description: String) {
 
-  NO_FF("--no-ff", "merge.option.no.ff"),
-  FF_ONLY("--ff-only", "merge.option.ff.only"),
-  SQUASH("--squash", "merge.option.squash"),
-  COMMIT_MESSAGE("-m", "merge.option.msg"),
-  NO_COMMIT("--no-commit", "merge.option.no.commit"),
-  NO_VERIFY("--no-verify", "merge.option.no.verify");
+  NO_FF("--no-ff", GitBundle.message("merge.option.no.ff")),
+  FF_ONLY("--ff-only", GitBundle.message("merge.option.ff.only")),
+  SQUASH("--squash", GitBundle.message("merge.option.squash")),
+  COMMIT_MESSAGE("-m", GitBundle.message("merge.option.msg")),
+  NO_COMMIT("--no-commit", GitBundle.message("merge.option.no.commit")),
+  NO_VERIFY("--no-verify", GitBundle.message("merge.option.no.verify"));
 
-  fun isOptionSuitable(option: MergeOption): Boolean {
+  fun isOptionSuitable(option: GitMergeOption): Boolean {
     return when (this) {
       NO_FF -> option !in NO_FF_INCOMPATIBLE
       FF_ONLY -> option !in FF_ONLY_INCOMPATIBLE

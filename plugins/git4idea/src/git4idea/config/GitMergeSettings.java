@@ -6,7 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import git4idea.merge.MergeOption;
+import git4idea.merge.GitMergeOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +16,12 @@ import java.util.Set;
 @State(name = "Git.Merge.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitMergeSettings implements PersistentStateComponent<GitMergeSettings.State> {
 
-  private final static Set<MergeOption> NO_OPTIONS = EnumSet.noneOf(MergeOption.class);
+  private final static Set<GitMergeOption> NO_OPTIONS = EnumSet.noneOf(GitMergeOption.class);
 
   private GitMergeSettings.State myState = new GitMergeSettings.State();
 
   public static class State {
-    public Set<MergeOption> OPTIONS = NO_OPTIONS;
+    public Set<GitMergeOption> OPTIONS = NO_OPTIONS;
   }
 
   @Nullable
@@ -36,11 +36,11 @@ public class GitMergeSettings implements PersistentStateComponent<GitMergeSettin
   }
 
   @NotNull
-  public Set<MergeOption> getOptions() {
+  public Set<GitMergeOption> getOptions() {
     return ImmutableSet.copyOf(myState.OPTIONS);
   }
 
-  public void setOptions(@NotNull Set<MergeOption> options) {
+  public void setOptions(@NotNull Set<GitMergeOption> options) {
     myState.OPTIONS = !options.isEmpty()
                       ? EnumSet.copyOf(options)
                       : NO_OPTIONS;
