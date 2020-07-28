@@ -142,7 +142,12 @@ public class SslSocketFactory extends SSLSocketFactory {
 
   @NotNull
   public static PrivateKey readPrivateKey(@NotNull String filePath) throws IOException {
-    return new PrivateKeyReader(filePath).getPrivateKey();
+    return readPrivateKey(filePath, null);
+  }
+
+  @NotNull
+  public static PrivateKey readPrivateKey(@NotNull String filePath, @Nullable char[] password) throws IOException {
+    return new PrivateKeyReader(filePath, password).getPrivateKey();
   }
 
   private static final class MyTrustManager implements X509TrustManager {
@@ -170,14 +175,17 @@ public class SslSocketFactory extends SSLSocketFactory {
       return ks;
     }
 
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
       if (trustManager == null) throw new RuntimeException("No X509TrustManager found");
       trustManager.checkServerTrusted(x509Certificates, s);
     }
 
+    @Override
     @NotNull
     public X509Certificate[] getAcceptedIssuers() {
       return new X509Certificate[0];
@@ -185,12 +193,15 @@ public class SslSocketFactory extends SSLSocketFactory {
   }
 
   private static class MyTrustEverybodyManager implements X509TrustManager {
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
+    @Override
     @NotNull
     public X509Certificate[] getAcceptedIssuers() {
       return new X509Certificate[0];
@@ -207,30 +218,36 @@ public class SslSocketFactory extends SSLSocketFactory {
       myPrivateKey = readPrivateKey(keyPath);
     }
 
+    @Override
     @NotNull
     public String[] getClientAliases(String s, Principal[] principals) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
+    @Override
     public String chooseClientAlias(String[] strings, Principal[] principals, Socket socket) {
       return myAlias;
     }
 
+    @Override
     @NotNull
     public String[] getServerAliases(String s, Principal[] principals) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
+    @Override
     @Nullable
     public String chooseServerAlias(String s, Principal[] principals, Socket socket) {
       return null;
     }
 
+    @Override
     @NotNull
     public X509Certificate[] getCertificateChain(String s) {
       return myCertificates;
     }
 
+    @Override
     @NotNull
     public PrivateKey getPrivateKey(String s) {
       return myPrivateKey;
