@@ -183,10 +183,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return "LocalFileSystem";
   }
 
-  @TestOnly
+  @Override
   public void cleanupForNextTest() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    PersistentFS.getInstance().clearIdCache();
+    super.cleanupForNextTest();
     myWatchRootsManager.clear();
   }
 
