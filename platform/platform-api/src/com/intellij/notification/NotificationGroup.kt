@@ -137,6 +137,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     return createNotification("", content, type)
   }
 
+  @JvmOverloads
   fun createNotification(
     @NotificationTitle title: String,
     @NotificationContent content: String,
@@ -145,15 +146,6 @@ class NotificationGroup(@param:NonNls val displayId: String,
     notificationDisplayId: String? = null
   ): Notification {
     return Notification(displayId, notificationDisplayId, title, content, type, listener)
-  }
-
-  fun createNotification(
-    @NotificationTitle title: String,
-    @NotificationContent content: String,
-    type: NotificationType = NotificationType.INFORMATION,
-    listener: NotificationListener? = null
-  ): Notification {
-    return createNotification(title, content, type, listener, null)
   }
 
   @JvmOverloads
