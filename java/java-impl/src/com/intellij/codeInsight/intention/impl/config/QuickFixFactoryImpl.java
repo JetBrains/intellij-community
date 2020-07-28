@@ -941,4 +941,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                             @NotNull PsiClass superClass) {
     return new AddToPermitsListFix(subClass, superClass);
   }
+
+  @Override
+  public IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
+    return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
+  }
 }

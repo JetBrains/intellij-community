@@ -1094,10 +1094,16 @@ public final class HighlightClassUtil {
           }
           else {
             if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
-              holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                           .range(permitted)
-                           .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"))
-                           .create());
+              HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(permitted)
+                .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"))
+                .create();
+              PsiFile parentFile = aClass.getContainingFile();
+              if (parentFile instanceof PsiClassOwner) {
+                String parentPackage = ((PsiClassOwner)parentFile).getPackageName();
+                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMoveClassToPackageFix(inheritorClass, parentPackage));
+              }
+              holder.add(info);
             }
             else if (currentModule != null && currentModule != JavaModuleGraphUtil.findDescriptorByElement(inheritorClass)) {
               holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
