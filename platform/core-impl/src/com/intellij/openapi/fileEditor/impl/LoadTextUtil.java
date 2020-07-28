@@ -21,7 +21,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +33,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class LoadTextUtil {
@@ -730,7 +730,7 @@ public final class LoadTextUtil {
 
     @NotNull
     Set<String> allLineSeparators() {
-      Set<String> result = new THashSet<>();
+      Set<String> result = new HashSet<>();
       if (CR_count > 0) result.add(LineSeparator.CR.getSeparatorString());
       if (LF_count > 0) result.add(LineSeparator.LF.getSeparatorString());
       if (CRLF_count > 0) result.add(LineSeparator.CRLF.getSeparatorString());

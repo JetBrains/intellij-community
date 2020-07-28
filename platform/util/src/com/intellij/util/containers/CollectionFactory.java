@@ -320,4 +320,9 @@ public final class CollectionFactory {
     //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
   }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
+    return new ConcurrentSoftHashMap<>();
+  }
 }

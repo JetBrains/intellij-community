@@ -9,17 +9,17 @@ import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private String myExePath;
   private File myWorkDirectory;
-  private final Map<String, String> myEnvParams = new MyTHashMap();
+  private final Map<String, String> myEnvParams = new MyMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = defaultCharset();
@@ -228,7 +228,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public Map<String, String> getEffectiveEnvironment() {
-    MyTHashMap env = new MyTHashMap();
+    Map<String, String> env = new MyMap();
     setupEnvironment(env);
     return env;
   }
@@ -404,7 +404,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
+    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
       String systemPath = System.getenv("PATH");
       String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
@@ -475,7 +475,7 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -483,8 +483,8 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows) {
-        THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      if (SystemInfoRt.isWindows) {
+        Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();
@@ -530,9 +530,9 @@ public class GeneralCommandLine implements UserDataHolder {
     myUserData.put(key, value);
   }
 
-  private static final class MyTHashMap extends THashMap<String, String> {
-    private MyTHashMap() {
-      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
+  private static final class MyMap extends Object2ObjectOpenCustomHashMap<String, String> {
+    private MyMap() {
+      super(FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isWindows));
     }
 
     @Override

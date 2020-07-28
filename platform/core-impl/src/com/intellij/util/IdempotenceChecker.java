@@ -15,7 +15,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
-  private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
+  private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new HashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
   private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");

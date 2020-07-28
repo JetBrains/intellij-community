@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -11,11 +11,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,7 +379,7 @@ public final class ParametersList implements Cloneable {
       return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
 
-    Map<String, String> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    Map<String, String> map = CollectionFactory.createCaseInsensitiveStringMap();
     Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
     if (!pathMacros.isEmpty()) {
       for (String name : pathMacros.keySet()) {

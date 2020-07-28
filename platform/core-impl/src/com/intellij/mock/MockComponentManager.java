@@ -13,13 +13,13 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +29,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final DefaultPicoContainer myPicoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
 
-  private final Map<Class<?>, Object> myComponents = new THashMap<>();
+  private final Map<Class<?>, Object> myComponents = new HashMap<>();
   private final Set<Object> myDisposableComponents = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private boolean myDisposed;
 

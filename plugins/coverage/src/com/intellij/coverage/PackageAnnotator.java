@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -154,7 +153,7 @@ public final class PackageAnnotator {
                              .productionOnly()
                              .classes()
                              .getRoots());
-      final Set<VirtualFile> productionRootsSet = new SmartHashSet<>();
+      final Set<VirtualFile> productionRootsSet = new HashSet<>();
 
       if (productionRoots != null) {
         Map<VirtualFile, DirCoverageInfo> dirsMap = new HashMap<>();

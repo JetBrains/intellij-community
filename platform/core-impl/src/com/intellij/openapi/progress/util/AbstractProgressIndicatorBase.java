@@ -19,7 +19,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myShouldStartActivity = true;
 
   private Stack<String> myTextStack; // guarded by this
-  private TDoubleArrayList myFractionStack; // guarded by this
+  private DoubleArrayList myFractionStack; // guarded by this
   private Stack<String> myText2Stack; // guarded by this
 
   private ProgressIndicator myModalityProgress;
@@ -205,7 +205,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       setText(oldText);
       setText2(oldText2);
 
-      double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+      double oldFraction = myFractionStack.removeDouble(myFractionStack.size() - 1);
       if (!isIndeterminate()) {
         setFraction(oldFraction);
       }
@@ -300,12 +300,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       if (indicator instanceof AbstractProgressIndicatorBase) {
         AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
-
         myTextStack = stacked.myTextStack == null ? null : new Stack<>(stacked.getTextStack());
-
         myText2Stack = stacked.myText2Stack == null ? null : new Stack<>(stacked.getText2Stack());
-
-        myFractionStack = stacked.myFractionStack == null ? null : new TDoubleArrayList(stacked.getFractionStack().toNativeArray());
+        myFractionStack = stacked.myFractionStack == null ? null : new DoubleArrayList(stacked.getFractionStack().toDoubleArray());
       }
       dontStartActivity();
     }
@@ -323,9 +320,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @NotNull
-  private TDoubleArrayList getFractionStack() {
-    TDoubleArrayList stack = myFractionStack;
-    if (stack == null) myFractionStack = stack = new TDoubleArrayList(2);
+  private DoubleArrayList getFractionStack() {
+    DoubleArrayList stack = myFractionStack;
+    if (stack == null) {
+      stack = new DoubleArrayList(2);
+      myFractionStack = stack;
+    }
     return stack;
   }
 

@@ -45,15 +45,11 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @HeavyPlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
@@ -439,7 +435,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     ctrlD();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Set<PsiReferenceExpression> refs = new THashSet<>();
+    Set<PsiReferenceExpression> refs = new HashSet<>();
     int offset=0;
     while (true) {
       offset = getEditor().getDocument().getText().indexOf("foo();", offset+1);

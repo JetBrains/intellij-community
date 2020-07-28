@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FastUtilHashingStrategies;
-import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -95,17 +93,7 @@ final class Win32FsCache {
 
   private static final class IncompleteChildrenMap<V> extends Object2ObjectOpenCustomHashMap<String, V> {
     IncompleteChildrenMap() {
-      super(SystemInfoRt.isFileSystemCaseSensitive ? new Hash.Strategy<String>() {
-        @Override
-        public int hashCode(@Nullable String o) {
-          return Objects.hashCode(o);
-        }
-
-        @Override
-        public boolean equals(@Nullable String a, @Nullable String b) {
-          return Objects.equals(a, b);
-        }
-      } : FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+      super(FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isFileSystemCaseSensitive));
     }
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
@@ -83,15 +82,14 @@ public final class FileTemplateUtil {
       Node apacheChild = apacheNode.jjtGetChild(i);
       collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes, project);
       if (apacheChild instanceof ASTReference) {
-        ASTReference apacheReference = (ASTReference)apacheChild;
-        String s = apacheReference.literal();
+        String s = apacheChild.literal();
         s = referenceToAttribute(s, includeDummies);
         if (s != null && s.length() > 0 && !propertiesNames.contains(s)) {
           referenced.add(s);
         }
       }
       else if (apacheChild instanceof ASTSetDirective) {
-        ASTReference lhs = (ASTReference)apacheChild.jjtGetChild(0);
+        Node lhs = apacheChild.jjtGetChild(0);
         String attr = referenceToAttribute(lhs.literal(), false);
         if (attr != null) {
           defined.add(attr);
@@ -172,9 +170,9 @@ public final class FileTemplateUtil {
   }
 
   @NotNull
-  public static String mergeTemplate(@NotNull Map attributes, @NotNull String content, boolean useSystemLineSeparators) throws IOException {
+  public static String mergeTemplate(@NotNull Map attributes, @NotNull String content, boolean useSystemLineSeparators) {
     VelocityContext context = createVelocityContext();
-    for (final Object o : attributes.keySet()) {
+    for (Object o : attributes.keySet()) {
       String name = (String)o;
       context.put(name, attributes.get(name));
     }
@@ -189,7 +187,7 @@ public final class FileTemplateUtil {
   }
 
   @NotNull
-  public static String mergeTemplate(@NotNull Properties attributes, @NotNull String content, boolean useSystemLineSeparators) throws IOException {
+  public static String mergeTemplate(@NotNull Properties attributes, @NotNull String content, boolean useSystemLineSeparators) {
     return mergeTemplate(attributes, content, useSystemLineSeparators, null);
   }
 
@@ -418,7 +416,7 @@ public final class FileTemplateUtil {
   @NotNull
   public static Pattern getTemplatePattern(@NotNull FileTemplate template,
                                            @NotNull Project project,
-                                           @NotNull TIntObjectHashMap<String> offsetToProperty) {
+                                           @NotNull Int2ObjectMap<String> offsetToProperty) {
     String templateText = template.getText().trim();
     String regex = templateToRegex(templateText, offsetToProperty, project);
     regex = StringUtil.replace(regex, "with", "(?:with|by)");
@@ -427,7 +425,7 @@ public final class FileTemplateUtil {
   }
 
   @NotNull
-  private static String templateToRegex(@NotNull String text, @NotNull TIntObjectHashMap<String> offsetToProperty, @NotNull Project project) {
+  private static String templateToRegex(@NotNull String text, @NotNull Int2ObjectMap<String> offsetToProperty, @NotNull Project project) {
     List<Object> properties = new ArrayList<>(FileTemplateManager.getInstance(project).getDefaultProperties().keySet());
     properties.add(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
 
@@ -441,8 +439,7 @@ public final class FileTemplateUtil {
       for (int i = regex.indexOf(escaped); i != -1 && i < regex.length(); i = regex.indexOf(escaped, i + 1)) {
         String replacement = first ? "([^\\n]*)" : "\\" + groupNumber;
         int delta = escaped.length() - replacement.length();
-        int[] offs = offsetToProperty.keys();
-        for (int off : offs) {
+        for (int off : offsetToProperty.keySet().toIntArray()) {
           if (off > i) {
             String prop = offsetToProperty.remove(off);
             offsetToProperty.put(off - delta, prop);

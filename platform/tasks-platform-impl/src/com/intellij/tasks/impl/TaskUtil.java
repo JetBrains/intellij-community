@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.tasks.impl;
 
 import com.google.gson.Gson;
@@ -24,7 +23,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -58,16 +56,11 @@ public final class TaskUtil {
 
     Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
     format = updateToVelocity(format);
-    try {
-      return FileTemplateUtil.mergeTemplate(map, format, false);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return FileTemplateUtil.mergeTemplate(map, format, false);
   }
 
   private static Map<String, String> formatFromExtensions(@NotNull LocalTask task) {
-    HashMap<String, String> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {

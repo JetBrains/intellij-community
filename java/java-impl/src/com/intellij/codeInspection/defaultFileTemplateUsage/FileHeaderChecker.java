@@ -17,12 +17,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,7 +32,7 @@ public final class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance(FileHeaderChecker.class);
 
   static ProblemDescriptor checkFileHeader(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {
-    TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<>();
+    Int2ObjectMap<String> offsetToProperty = new Int2ObjectOpenHashMap<>();
     FileTemplate defaultTemplate = FileTemplateManager.getInstance(file.getProject()).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     Pattern pattern = FileTemplateUtil.getTemplatePattern(defaultTemplate, file.getProject(), offsetToProperty);
     Matcher matcher = pattern.matcher(file.getViewProvider().getContents());
@@ -49,10 +51,10 @@ public final class FileHeaderChecker {
   }
 
 
-  private static Properties computeProperties(final Matcher matcher, final TIntObjectHashMap<String> offsetToProperty, Project project) {
+  private static Properties computeProperties(final MatchResult matcher, final Int2ObjectMap<String> offsetToProperty, Project project) {
     Properties properties = new Properties(FileTemplateManager.getInstance(project).getDefaultProperties());
 
-    int[] offsets = offsetToProperty.keys();
+    int[] offsets = offsetToProperty.keySet().toIntArray();
     Arrays.sort(offsets);
     for (int i = 0; i < offsets.length; i++) {
       final int offset = offsets[i];
@@ -65,8 +67,8 @@ public final class FileHeaderChecker {
     return properties;
   }
 
-  private static LocalQuickFix[] createQuickFix(final Matcher matcher,
-                                                final TIntObjectHashMap<String> offsetToProperty,
+  private static LocalQuickFix[] createQuickFix(final MatchResult matcher,
+                                                final Int2ObjectMap<String> offsetToProperty,
                                                 Project project,
                                                 boolean onTheFly) {
     final FileTemplate template = FileTemplateManager.getInstance(project).getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
