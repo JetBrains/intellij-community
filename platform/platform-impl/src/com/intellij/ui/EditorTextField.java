@@ -652,12 +652,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       super.setEnabled(enabled);
       setFocusTraversalPolicyProvider(enabled);
       setViewerEnabled(enabled);
-      EditorEx editor = myEditor;
-      if (editor != null) {
-        releaseEditor(editor);
-        initEditor();
-        revalidate();
-      }
+      resetEditor();
     }
   }
 
@@ -665,8 +660,26 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     myIsViewer = !enabled;
   }
 
+  private void resetEditor() {
+    final EditorEx editor = myEditor;
+
+    if (editor != null) {
+      releaseEditor(editor);
+      initEditor();
+      revalidate();
+    }
+  }
+
   public boolean isViewer() {
     return myIsViewer;
+  }
+
+  public void setViewer(boolean viewer) {
+    if (myIsViewer != viewer) {
+      myIsViewer = viewer;
+
+      resetEditor();
+    }
   }
 
   @Override
