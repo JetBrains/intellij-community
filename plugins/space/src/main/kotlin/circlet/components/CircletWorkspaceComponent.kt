@@ -47,6 +47,7 @@ import java.io.PrintWriter
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URI
+import java.net.URL
 import kotlin.coroutines.resume
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
@@ -98,14 +99,6 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     manager.value?.signOut(false)
   }
 
-  private val ports = lazy {
-    val regex = "[^\\d]*(?<port>\\d+)[^\\d]*".toRegex()
-    val ports = IdeaOAuthConfig.redirectURIs.mapNotNull { it ->
-      regex.find(it)?.groups?.get("port")?.value?.toIntOrNull()
-    }
-    Pair(ports.min() ?: 1000, ports.max() ?: 65535)
-  }
-
   suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
     log.assert(manager.value == null, "manager.value == null")
 
@@ -113,14 +106,15 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     val wsConfig = ideaConfig(server)
     val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration,
                                wsConfig)
-
-    val port = selectFreePort(ports.value.first, ports.value.second)
-    val authUrl = "http://localhost:$port/auth"
-    val codeFlow = CodeFlowConfig(wsConfig, authUrl)
+    val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
+    val ports = portsMapping.keys
+    val freePort = selectFreePort(ports.min()!!, ports.max()!!)
+    val authUrl = portsMapping.getValue(freePort)
+    val codeFlow = CodeFlowConfig(wsConfig, authUrl.toExternalForm())
 
     val response: OAuthTokenResponse = suspendCancellableCoroutine { cnt ->
       launch(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-        ServerSocket(port).use { serverSocket ->
+        ServerSocket(freePort).use { serverSocket ->
           val socket: Socket = serverSocket.accept()
           socket.getInputStream().use { inputStream ->
             BufferedReader(InputStreamReader(inputStream)).use { reader ->
