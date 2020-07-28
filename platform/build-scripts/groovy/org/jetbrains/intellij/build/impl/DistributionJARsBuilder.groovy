@@ -276,6 +276,7 @@ class DistributionJARsBuilder {
       runAsync(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
     ).join()
     buildLib()
+    BrokenPluginsBuildFileService.withContext(buildContext).buildFile()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
