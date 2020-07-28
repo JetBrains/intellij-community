@@ -28,7 +28,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
 
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
-    if (USE_SHAREABLE_STUBS) {
+    if (!USE_SHAREABLE_STUBS) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
     return new FileLocalStubForwardIndexExternalizer();
