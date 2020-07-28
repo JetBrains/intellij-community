@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -131,13 +132,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       Module a = loadModule(Paths.get(PathManagerEx.getHomePath(getClass())).resolve("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml"));
       assertEventsCount(1);
 
-      final Sdk jdk;
-      try {
-        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertNoEvents();
 
@@ -158,14 +153,10 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final Module moduleB = createModule("b.iml");
       assertEventsCount(2);
 
-      final Sdk jdk;
-      try {
-        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
+      final Sdk unused = ProjectJdkTable.getInstance().createSdk("unused", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(unused, getTestRootDisposable());
       assertNoEvents();
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -180,7 +171,39 @@ public class RootsChangedTest extends JavaModuleTestCase {
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
       assertEventsCount(1);
+
+      final SdkModificator sdkModificator2 = unused.getSdkModificator();
+      sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator2.commitChanges();
+      assertNoEvents();
     });
+  }
+
+  public void testSetupUnknownJdk() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Module module = createModule("a.iml");
+      assertEventsCount(1);
+      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      model.setInvalidSdk("new-jdk", JavaSdk.getInstance().getName());
+      model.commit();
+      assertEventsCount(1);
+
+      Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      assertEventsCount(1);
+    });
+  }
+
+  @NotNull
+  public Sdk createJdk() {
+    final Sdk jdk;
+    try {
+      jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+    return jdk;
   }
 
   public void testInheritedJdkEditing() {
