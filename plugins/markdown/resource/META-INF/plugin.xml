@@ -28,11 +28,11 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.fenceLanguageProvider"
                     interface="org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.markdown.codeFencePluginGeneratingProvider"
-                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.previewStylesProvider"
                     interface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewStylesProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -124,6 +124,9 @@ Includes the following features:</p>
     <registryKey key="markdown.formatter.apply.to.code.fence"
                  defaultValue="false"
                  description="Should Markdown use injected languages' formatters to format code-fences"/>
+    <registryKey key="markdown.mermaid.download.link"
+                 defaultValue="https://unpkg.com/mermaid@8.6.0/dist/mermaid.js"
+                 description="Link which Markdown plugin will use to download Mermaid.js library"/>
   </extensions>
 
   <applicationListeners>
@@ -135,10 +138,17 @@ Includes the following features:</p>
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider" />
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
 
-    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeFenceLanguageProvider"/>
-    <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.plantuml.PlantUMLCodeGeneratingProvider"/>
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
-    <codeFencePluginGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension"/>
+
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension"/>
+
+    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
   </extensions>
 
   <actions>

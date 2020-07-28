@@ -1,8 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions
 
-import com.intellij.openapi.extensions.ExtensionPointName
-
-interface MarkdownCodeFencePluginGeneratingProvider {
+/**
+ * Implementors of this interface will be automatically added
+ * to the list of extensions on the settings page.
+ */
+interface MarkdownCodeFencePluginGeneratingProvider : MarkdownExtension {
   /**
    * Check if plugin applicable for code fence language string
    */
@@ -22,12 +25,9 @@ interface MarkdownCodeFencePluginGeneratingProvider {
   fun onLAFChanged()
 
   companion object {
-    val EP_NAME: ExtensionPointName<MarkdownCodeFencePluginGeneratingProvider> = ExtensionPointName.create(
-      "org.intellij.markdown.codeFencePluginGeneratingProvider"
-    )
-
-    val all: Set<MarkdownCodeFencePluginGeneratingProvider>
-      get() = EP_NAME.extensions.toSet()
+    @JvmStatic
+    val all: List<MarkdownCodeFencePluginGeneratingProvider>
+      get() = MarkdownExtension.all.filterIsInstance<MarkdownCodeFencePluginGeneratingProvider>()
 
     /**
      * Notify all [MarkdownCodeFencePluginGeneratingProvider] that Look and Feel has been changed

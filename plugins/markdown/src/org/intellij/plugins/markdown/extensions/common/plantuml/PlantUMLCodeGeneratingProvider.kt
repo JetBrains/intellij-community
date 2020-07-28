@@ -1,21 +1,27 @@
-package org.intellij.plugins.markdown.extensions.plantuml
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.extensions.common.plantuml
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
-import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable
+import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCacheCollector
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
 
-internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector?)
-  : MarkdownCodeFenceCacheableProvider(collector) {
-  // this empty constructor is needed for the component initialization
-  constructor() : this(null)
+internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector? = null)
+  : MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithExternalFiles {
+  override val downloadLink: String =
+    Registry.stringValue("markdown.plantuml.download.link")
+
+  override val downloadFilename: String = "plantuml.jar"
 
   override fun isApplicable(language: String): Boolean {
-    return ((language == "puml" || language == "plantuml") && MarkdownSettingsConfigurable.isPlantUMLAvailable())
+    return isEnabled && isAvailable && (language == "puml" || language == "plantuml")
   }
 
   override fun generateHtml(language: String, raw: String): String {
@@ -28,6 +34,14 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
   }
 
   override fun onLAFChanged() {}
+
+  override val displayName: String =
+    MarkdownBundle.message("markdown.extensions.plantuml.display.name")
+
+  override val description: String =
+    MarkdownBundle.message("markdown.extensions.plantuml.description")
+
+  override val id: String = "PlantUMLLanguageExtension"
 
   private fun cacheDiagram(path: File, text: String) {
     if (!path.exists()) generateDiagram(text, path)
@@ -48,8 +62,11 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
 
     private val sourceStringReader by lazy {
       try {
+        val self = MarkdownCodeFencePluginGeneratingProvider.all
+          .filterIsInstance<PlantUMLCodeGeneratingProvider>()
+          .first()
         Class.forName("net.sourceforge.plantuml.SourceStringReader", false, URLClassLoader(
-          arrayOf(MarkdownSettingsConfigurable.getDownloadedJarPath()?.toURI()?.toURL()), this::class.java.classLoader))
+          arrayOf(self.fullPath.toURI().toURL()), this::class.java.classLoader))
       }
       catch (e: Exception) {
         LOG.warn(
