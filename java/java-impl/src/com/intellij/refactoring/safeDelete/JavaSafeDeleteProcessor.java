@@ -702,7 +702,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    final List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeCalleesSafeToDelete(method);
+    final List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeReferencedCodeSafeToDelete(method);
     if (calleesSafeToDelete != null) {
       for (PsiElement callee : calleesSafeToDelete) {
         usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));

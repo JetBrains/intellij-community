@@ -16,6 +16,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -29,8 +30,10 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteMemberCalleeUsage
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +70,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   }
 
   @Nullable
-  static List<PsiElement> computeCalleesSafeToDelete(final PsiMember psiMember) {
+  static List<PsiElement> computeReferencedCodeSafeToDelete(final PsiMember psiMember) {
     final PsiElement body;
     if (psiMember instanceof PsiMethod) {
       body = ((PsiMethod)psiMember).getBody();
@@ -78,14 +81,14 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     if (body != null) {
       final PsiClass containingClass = psiMember.getContainingClass();
       if (containingClass != null) {
-        final Set<PsiElement> membersToCheck = new HashSet<>();
+        final Set<PsiElement> elementsToCheck = new HashSet<>();
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             PsiElement resolved = expression.resolve();
             if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
-              ContainerUtil.addAllNotNull(membersToCheck, resolved);
+              ContainerUtil.addAllNotNull(elementsToCheck, resolved);
             }
           }
 
@@ -99,19 +102,19 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
                   .map(result -> result.getElement())
                   .filter(e -> !(e instanceof PsiMember))
                   .toArray(PsiElement[]::new);
-                ContainerUtil.addAllNotNull(membersToCheck, nonMembers);
+                ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
               }
               else {
                 PsiElement resolve = reference.resolve();
                 if (resolve != null && !(resolve instanceof PsiMember)) {
-                  membersToCheck.add(resolve);
+                  elementsToCheck.add(resolve);
                 }
               }
             }
           }
         });
 
-        return membersToCheck
+        return elementsToCheck
           .stream()
           .filter(m -> !(m instanceof PsiMember) || containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
           .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
@@ -144,6 +147,11 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     return (MemberNodeBase<PsiElement>)node.getParent();
   }
 
+  @Override
+  protected @NotNull @Nls String getCalleeEditorTitle() {
+    return JavaBundle.message("caller.chooser.referenced.code.title");
+  }
+
   private class SafeDeleteJavaMemberNode extends MemberNodeBase<PsiElement> {
 
     SafeDeleteJavaMemberNode(PsiElement currentMember,
@@ -160,7 +168,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
         JavaMemberNode.customizeRendererText(renderer, ((PsiMember)member), isEnabled());
       }
       else {
-        renderer.append(member.getText()); //todo
+        renderer.append(ElementDescriptionUtil.getElementDescription(member, UsageViewShortNameLocation.INSTANCE));
       }
     }
 
@@ -177,7 +185,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
       }
 
       if (!(member instanceof PsiMember)) return Collections.emptyList();
-      final List<PsiElement> callees = computeCalleesSafeToDelete((PsiMember)member);
+      final List<PsiElement> callees = computeReferencedCodeSafeToDelete((PsiMember)member);
       if (callees != null) {
         callees.remove(getTopMember());
         return callees;

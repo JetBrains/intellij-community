@@ -44,6 +44,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,11 +223,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                                                   false));
     splitter.setFirstComponent(callerComponent);
     final JComponent calleeComponent = myCalleeEditor.getComponent();
-    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.callee.method"),
+    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(getCalleeEditorTitle(),
                                                                   false));
     splitter.setSecondComponent(calleeComponent);
     splitter.setBorder(IdeBorderFactory.createRoundedBorder());
     return splitter;
+  }
+
+  @NotNull
+  @Nls
+  protected String getCalleeEditorTitle() {
+    return RefactoringBundle.message("caller.chooser.callee.method");
   }
 
   private Editor createEditor() {
