@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +27,7 @@ import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
+import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUIUtil.getTextField
 import net.miginfocom.layout.AC
@@ -34,11 +36,14 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
+import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
@@ -370,6 +375,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun createOntoField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
+    isSwingPopup = false
     isEditable = true
     isVisible = false
     editor = object : BasicComboBoxEditor() {
@@ -377,20 +383,23 @@ internal class GitRebaseDialog(private val project: Project,
         emptyText.text = GitBundle.message("rebase.dialog.onto.field")
       }
     }
-    @Suppress("UsePropertyAccessSyntax")
-    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(COMBOBOX_VALUE_PROTOTYPE))
+    renderer = ComboBoxPrototypeRenderer.create(this, PresentableRef::toString)
+    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
   }
 
   private fun createUpstreamField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(185))
+    isSwingPopup = false
     isEditable = true
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.upstream.field.placeholder")
       }
     }
-    @Suppress("UsePropertyAccessSyntax")
-    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(COMBOBOX_VALUE_PROTOTYPE))
+    renderer = ComboBoxPrototypeRenderer.create(this, PresentableRef::toString)
+    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
   }
 
   private fun createRootField() = ComboBox(CollectionComboBoxModel(roots)).apply {
@@ -625,5 +634,41 @@ internal class GitRebaseDialog(private val project: Project,
 
   data class PresentableRef(private val ref: GitReference) {
     override fun toString() = ref.name
+  }
+}
+
+internal abstract class ComboBoxPrototypeRenderer<E> private constructor(private val comboBox: ComboBox<E>) : SimpleListCellRenderer<E>() {
+
+  private val rememberedSize = sizeToPair(calcPrototypeSize())
+
+  override fun getPreferredSize(): Dimension {
+    if (comboBox.prototypeDisplayValue == null) {
+      return super.getPreferredSize()
+    }
+    return pairToSize(rememberedSize)
+  }
+
+  private fun calcPrototypeSize(): Dimension {
+    return DefaultListCellRenderer()
+      .getListCellRendererComponent(comboBox.popup?.list, comboBox.prototypeDisplayValue, -1, false, false)
+      .preferredSize
+  }
+
+  companion object {
+    const val COMBOBOX_VALUE_PROTOTYPE = "origin/quite-long-branch-name"
+
+    fun <T> create(comboBox: ComboBox<T>,
+                   renderer: (T) -> @NlsContexts.Label String): ComboBoxPrototypeRenderer<T> {
+
+      return object : ComboBoxPrototypeRenderer<T>(comboBox) {
+        override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+          text = if (value == null) "" else renderer(value)
+        }
+      }
+    }
+
+    private fun sizeToPair(size: Dimension) = Pair(size.width, size.height)
+
+    private fun pairToSize(pair: Pair<Int, Int>) = Dimension(pair.first, pair.second)
   }
 }

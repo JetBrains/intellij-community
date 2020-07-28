@@ -34,6 +34,8 @@ import git4idea.config.GitMergeSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
+import git4idea.rebase.ComboBoxPrototypeRenderer
+import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRepository
 import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
@@ -313,8 +315,7 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply {
       item = defaultRoot.name
       isSwingPopup = false
-      @Suppress("UsePropertyAccessSyntax")
-      setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
+      ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
 
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
@@ -346,11 +347,11 @@ class GitMergeDialog(private val project: Project,
           })
         }
       }
-
-      @Suppress("UsePropertyAccessSyntax")
-      setUI(FlatComboBoxUI(
+      prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
+      renderer = ComboBoxPrototypeRenderer.create(this) { it }
+      ui = FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
-        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
+        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
     }
   }
 

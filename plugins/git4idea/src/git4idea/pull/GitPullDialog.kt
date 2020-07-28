@@ -35,6 +35,8 @@ import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
+import git4idea.rebase.ComboBoxPrototypeRenderer
+import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -413,12 +415,13 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
-    @Suppress("UsePropertyAccessSyntax")
-    setUI(FlatComboBoxUI(
+    prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
+    renderer = ComboBoxPrototypeRenderer.create(this) { it }
+    ui = FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),
       GitBundle.message("pull.branch.nothing.to.pull"),
-      this@GitPullDialog::createBranchFieldPopupComponent))
+      this@GitPullDialog::createBranchFieldPopupComponent)
   }
 
   private fun createBranchFieldPopupComponent(content: JComponent): JComponent {
