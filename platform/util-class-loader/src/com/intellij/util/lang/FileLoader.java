@@ -75,8 +75,7 @@ final class FileLoader extends Loader {
 
     volatile DirEntry[] childrenDirectories;
     final int nameHash;
-    @NotNull
-    final String name;
+    @NotNull final String name;
 
     DirEntry(int nameHash, @NotNull String name) {
       this.nameHash = nameHash;
@@ -150,7 +149,7 @@ final class FileLoader extends Loader {
         newChildrenDirectories[directories.length] = nextEntry;
       }
       else {
-        newChildrenDirectories = new DirEntry[] {nextEntry};
+        newChildrenDirectories = new DirEntry[]{nextEntry};
       }
       lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
     }
@@ -330,7 +329,8 @@ final class FileLoader extends Loader {
         System.out.println("Scanned: " + myRootDirAbsolutePath + " for " + (doneNanos / nsMsFactor) + "ms");
       }
       trySaveToIndex(loaderData);
-    } else {
+    }
+    else {
       currentScanningTime = totalScanning.get();
     }
 

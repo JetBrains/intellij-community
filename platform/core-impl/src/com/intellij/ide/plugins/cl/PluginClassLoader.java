@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class PluginClassLoader extends UrlClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   static {
     if (registerAsParallelCapable()) {
       markParallelCapable(PluginClassLoader.class);
@@ -77,14 +77,17 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
+  @Override
   public long getEdtTime() {
     return edtTime.get();
   }
 
+  @Override
   public long getBackgroundTime() {
     return backgroundTime.get();
   }
 
+  @Override
   public long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
@@ -380,10 +383,12 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  @Override
   public @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
+  @Override
   public @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }

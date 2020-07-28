@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.reference.SoftReference;
-import gnu.trove.TIntHashSet;
+import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,15 +165,15 @@ class JarLoader extends Loader {
   }
 
   private final AtomicInteger myNumberOfRequests = new AtomicInteger();
-  private volatile TIntHashSet myPackageHashesInside;
+  private volatile StrippedIntOpenHashSet myPackageHashesInside;
 
-  @NotNull
-  private TIntHashSet buildPackageHashes() {
+  private @NotNull
+  StrippedIntOpenHashSet buildPackageHashes() {
     try {
       ZipFile zipFile = getZipFile();
       try {
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        TIntHashSet result = new TIntHashSet();
+        StrippedIntOpenHashSet result = new StrippedIntOpenHashSet();
 
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
@@ -188,7 +188,7 @@ class JarLoader extends Loader {
     }
     catch (Exception e) {
       error("url: " + myFilePath, e);
-      return new TIntHashSet(0);
+      return new StrippedIntOpenHashSet(0);
     }
   }
 
@@ -197,7 +197,7 @@ class JarLoader extends Loader {
   Resource getResource(@NotNull String name) {
     if (myConfiguration.myLazyClassloadingCaches) {
       int numberOfHits = myNumberOfRequests.incrementAndGet();
-      TIntHashSet packagesInside = myPackageHashesInside;
+      StrippedIntOpenHashSet packagesInside = myPackageHashesInside;
 
       if (numberOfHits > ClasspathCache.NUMBER_OF_ACCESSES_FOR_LAZY_CACHING && packagesInside == null) {
         myPackageHashesInside = packagesInside = buildPackageHashes();

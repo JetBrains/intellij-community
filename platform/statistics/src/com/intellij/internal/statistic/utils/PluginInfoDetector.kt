@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.internal.statistic.utils.PluginInfoDetector.isPluginFromOfficialJbPluginRepo
 import com.intellij.internal.statistic.utils.PluginInfoDetector.isSafeToReportFrom
 import com.intellij.openapi.application.ApplicationManager
@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
   val classLoader = clazz.classLoader
   return when {
-    classLoader is PluginClassLoader -> {
-      getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
+    classLoader is PluginAwareClassLoader -> {
+      getPluginInfoByDescriptor(classLoader.pluginDescriptor)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
       builtFromSources

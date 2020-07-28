@@ -53,10 +53,10 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
-    
+
     if (Registry.is("idea.lazy.classloading.caches") &&
-        vm.hasProperty(SYSTEM_CL_PROPERTY) && 
-        UrlClassLoader.class.getName().equals(vm.getPropertyValue(SYSTEM_CL_PROPERTY))) {
+        vm.hasProperty(SYSTEM_CL_PROPERTY) &&
+        "com.intellij.util.lang.UrlClassLoader".equals(vm.getPropertyValue(SYSTEM_CL_PROPERTY))) {
       vm.addProperty("idea.lazy.classloading.caches", "true");
     }
 
