@@ -36,7 +36,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService
                 serviceImplementation="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings"/>
-        <applicationConfigurable parentId="editor"
+        <applicationConfigurable parentId="tools"
                                  instance="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterConfigurable"
                                  id="org.intellij.featureSuggester.FeatureSuggesterConfigurable"/>
         <projectService serviceImplementation="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager"/>
@@ -44,6 +44,8 @@
                 implementation="org.jetbrains.plugins.feature.suggester.actions.listeners.PsiActionsListener"/>
         <editorFactoryDocumentListener
                 implementation="org.jetbrains.plugins.feature.suggester.actions.listeners.DocumentActionsListener"/>
+        <statistics.counterUsagesCollector groupId="feature_suggester" version="1"/>
+        <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggesterIdRuleValidator"/>
     </extensions>
 
     <applicationListeners>
