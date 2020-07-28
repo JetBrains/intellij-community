@@ -15,6 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.LightweightHint
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_DONT_SUGGEST_EVENT_ID
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_LEARN_MORE_EVENT_ID
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_SHOWED_EVENT_ID
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_THANKS_EVENT_ID
 import java.awt.Point
 
 interface SuggestionPresenter {
@@ -37,10 +42,12 @@ class HintSuggestionPresenter : SuggestionPresenter {
     }
 }
 
+@Suppress("UnstableApiUsage")
 class NotificationSuggestionPresenter :
     SuggestionPresenter {
     private val notificationGroup =
         NotificationGroup("IDE Feature Suggester", NotificationDisplayType.STICKY_BALLOON, false)
+    private val statisticsCollector = FeatureSuggestersStatisticsCollector()
 
     override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
         val notification = notificationGroup.createNotification(
@@ -54,6 +61,14 @@ class NotificationSuggestionPresenter :
                 val settings = FeatureSuggesterSettings.instance()
                 settings.disableSuggester(suggestion.suggesterId)
                 notification.hideBalloon()
+                statisticsCollector.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
+            }
+        })
+
+        notification.addAction(object : AnAction("Thanks! Useful suggestion") {
+            override fun actionPerformed(e: AnActionEvent) {
+                notification.hideBalloon()
+                statisticsCollector.sendStatistics(NOTIFICATION_THANKS_EVENT_ID, suggestion.suggesterId)
             }
         })
 
@@ -63,11 +78,13 @@ class NotificationSuggestionPresenter :
                 override fun actionPerformed(e: AnActionEvent) {
                     SingleTipDialog.showForProject(project, tip)
                     notification.hideBalloon()
+                    statisticsCollector.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
                 }
             })
         }
 
         notification.notify(project)
+        statisticsCollector.sendStatistics(NOTIFICATION_SHOWED_EVENT_ID, suggestion.suggesterId)
     }
 
     private fun getTipByFilename(tipFilename: String): TipAndTrickBean? {
