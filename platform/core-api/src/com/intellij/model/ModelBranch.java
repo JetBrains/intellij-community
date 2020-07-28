@@ -3,6 +3,7 @@ package com.intellij.model;
 
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -17,7 +18,7 @@ import java.util.function.Consumer;
  * performing changes on them in background and then inspecting and/or applying the changes back to the real model.
  */
 @ApiStatus.Experimental
-public interface ModelBranch {
+public interface ModelBranch extends UserDataHolder {
 
   /**
    * @return the project which this model branch was created for
@@ -57,6 +58,10 @@ public interface ModelBranch {
    */
   <T extends PsiSymbolReference> @NotNull T obtainReferenceCopy(@NotNull T original);
 
+  /**
+   * @return a file in the branch copy corresponding to the given VFS URL
+   */
+  @Nullable VirtualFile findFileByUrl(@NotNull String url);
 
 
   // ----------------- find originals by branched model
@@ -100,6 +105,11 @@ public interface ModelBranch {
    * @return a number changed each time any non-physical PSI created by this branch is changed.
    */
   long getBranchedPsiModificationCount();
+
+  /**
+   * @return a number changed each time any non-physical file in this branch is created/moved/renamed/deleted.
+   */
+  long getBranchedVfsStructureModificationCount();
 
 
   /**

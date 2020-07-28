@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -12,7 +13,9 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -128,6 +131,25 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @NotNull
+  RootIndex getRootIndex(VirtualFile file) {
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    if (branch != null) {
+      return obtainBranchRootIndex(branch);
+    }
+    return getRootIndex();
+  }
+
+  private static final Key<Pair<Long, RootIndex>> BRANCH_ROOT_INDEX = Key.create("BRANCH_ROOT_INDEX");
+
+  private static RootIndex obtainBranchRootIndex(ModelBranch branch) {
+    Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
+    long modCount = branch.getBranchedVfsStructureModificationCount();
+    if (pair == null || pair.first != modCount) {
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+    }
+    return pair.second;
+  }
+
   RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
@@ -141,7 +163,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
     dispatchPendingEvents();
-    return getRootIndex().getInfoForFile(file);
+    return getRootIndex(file).getInfoForFile(file);
   }
 
   @Nullable
@@ -164,9 +186,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
-    if (!(dir instanceof VirtualFileWithId)) return null;
+    if (!(dir instanceof VirtualFileWithId) && ModelBranch.getFileBranch(dir) == null) return null;
 
-    return getRootIndex().getPackageName(dir);
+    return getRootIndex(dir).getPackageName(dir);
   }
 
   @NotNull

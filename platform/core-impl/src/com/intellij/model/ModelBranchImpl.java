@@ -4,6 +4,8 @@ package com.intellij.model;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -11,8 +13,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
@@ -23,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +38,8 @@ import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public abstract class ModelBranchImpl implements ModelBranch {
+public abstract class ModelBranchImpl extends UserDataHolderBase implements ModelBranch {
+  private static final Logger LOG = Logger.getInstance(ModelBranchImpl.class);
   private final Map<VirtualFile, BranchedVirtualFileImpl> myVFileCopies = new HashMap<>();
   private final Set<BranchedVirtualFileImpl> myVfsStructureChanges = new LinkedHashSet<>();
   private final Set<BranchedVirtualFileImpl> myAffectedFiles = new HashSet<>();
@@ -51,6 +57,7 @@ public abstract class ModelBranchImpl implements ModelBranch {
     }
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
@@ -93,6 +100,38 @@ public abstract class ModelBranchImpl implements ModelBranch {
   @Override
   public void runAfterMerge(@NotNull Runnable action) {
     myAfterMerge.add(action);
+  }
+
+  @Override
+  public @Nullable VirtualFile findFileByUrl(@NotNull String url) {
+    int prefixEnd = url.length();
+    while (prefixEnd > 0) {
+      VirtualFile someParent = VirtualFileManager.getInstance().findFileByUrl(url.substring(0, prefixEnd));
+      if (someParent != null) {
+        return findFileByUrl(url, findFileCopy(someParent));
+      }
+      prefixEnd = url.lastIndexOf('/', prefixEnd - 1);
+    }
+    return null;
+  }
+
+  @Nullable
+  private VirtualFile findFileByUrl(@NotNull String url, @NotNull BranchedVirtualFileImpl someCopyFromSameFS) {
+    BranchedVirtualFileImpl topmostChange =
+      JBIterable.generate(someCopyFromSameFS, BranchedVirtualFileImpl::getParent).filter(myVfsStructureChanges::contains).last();
+    BranchedVirtualFileImpl stableAncestor = topmostChange != null ? topmostChange.getParent() : someCopyFromSameFS;
+    String stableUrl = Objects.requireNonNull(findOriginalFile(stableAncestor)).getUrl();
+
+    if (url.equals(stableUrl)) {
+      return stableAncestor;
+    }
+
+    if (!url.startsWith(stableUrl)) {
+      LOG.error("Inconsistent branch copies, please include attachment with paths",
+                new Attachment("urls.txt", "url=" + url + "\nstableUrl=" + stableUrl));
+      return null;
+    }
+    return stableAncestor.findFileByRelativePath(url.substring(stableUrl.length() + 1));
   }
 
   @Override
@@ -179,12 +218,17 @@ public abstract class ModelBranchImpl implements ModelBranch {
 
   @Override
   public long getBranchedPsiModificationCount() {
-    return myVfsChanges.getModificationCount() +
+    return getBranchedVfsStructureModificationCount() +
            myDocumentChanges.keySet().stream()
              .map(PsiDocumentManager.getInstance(myProject)::getPsiFile)
              .filter(Objects::nonNull)
              .mapToLong(PsiFile::getModificationStamp)
              .sum();
+  }
+
+  @Override
+  public long getBranchedVfsStructureModificationCount() {
+    return myVfsChanges.getModificationCount();
   }
 
   private void mergeBack() {
