@@ -103,4 +103,6 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     ?.contents
     ?.mapNotNull { it.component as? ProjectErrorsPanel }
     ?.firstOrNull()
+    ?.treeModel
+    ?.root
 }

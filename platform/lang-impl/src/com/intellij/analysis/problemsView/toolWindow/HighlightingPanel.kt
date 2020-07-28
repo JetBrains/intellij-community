@@ -17,7 +17,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.tree.TreeUtil.promiseSelectFirstLeaf
+import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.Icon
 
 internal class HighlightingPanel(project: Project, state: ProblemsViewState)
@@ -28,6 +28,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   init {
     tree.showsRootHandles = false
+    updateCurrentFile()
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
     getApplication().messageBus.connect(this)
@@ -59,11 +60,6 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     if (selected) updateCurrentFile()
   }
 
-  fun selectHighlighter(highlighter: RangeHighlighterEx) {
-    val root = treeModel.root as? HighlightingFileRoot
-    root?.findProblemNode(highlighter)?.let { select(it) }
-  }
-
   override fun powerSaveStateChanged() {
     statusUpdateAlarm.cancelAndRequest(forceRun = true)
     updateToolWindowContent()
@@ -83,9 +79,15 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     else {
       if (root != null && root.file == file) return
       treeModel.root = HighlightingFileRoot(this, file)
-      promiseSelectFirstLeaf(tree)
+      TreeUtil.promiseSelectFirstLeaf(tree)
     }
     powerSaveStateChanged()
+  }
+
+  fun selectHighlighter(highlighter: RangeHighlighterEx) {
+    val root = treeModel.root as? HighlightingFileRoot ?: return
+    val problem = root.findProblem(highlighter) ?: return
+    TreeUtil.promiseSelect(tree, ProblemNodeFinder(problem))
   }
 
   private fun findCurrentFile(): VirtualFile? {

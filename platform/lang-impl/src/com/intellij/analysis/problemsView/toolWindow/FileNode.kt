@@ -30,7 +30,7 @@ internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
       presentation.addText("  ${getLocationRelativeToUserHome(url)}", GRAYED_ATTRIBUTES)
     }
     val root = findAncestor(Root::class.java)
-    val count = root?.getProblemsCount(file) ?: 0
+    val count = root?.getFileProblemCount(file) ?: 0
     if (count > 0) {
       val text = ProblemsViewBundle.message("problems.view.file.problems", count)
       presentation.addText("  $text", GRAYED_ATTRIBUTES)

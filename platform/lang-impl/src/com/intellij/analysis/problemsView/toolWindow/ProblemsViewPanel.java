@@ -23,7 +23,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -72,7 +71,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     if (content == null) return;
 
     Root root = myTreeModel.getRoot();
-    int count = root == null ? 0 : root.getProblemsCount();
+    int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getContentDisplayName(count));
     Icon icon = getToolWindowIcon(count);
     if (icon != null) window.setIcon(icon);
@@ -322,14 +321,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
 
   private void invokeLater(@NotNull Runnable runnable) {
     getApplication().invokeLater(runnable, stateForComponent(this));
-  }
-
-  void select(@NotNull Node node) {
-    TreeUtil.promiseSelect(getTree(), createVisitor(node));
-  }
-
-  @NotNull TreeVisitor createVisitor(@NotNull Node node) {
-    return new TreeVisitor.ByTreePath<>(node.getPath(), o -> o);
   }
 
   @NotNull Comparator<Node> createComparator() {

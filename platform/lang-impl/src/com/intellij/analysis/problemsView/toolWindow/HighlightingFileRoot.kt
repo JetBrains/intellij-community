@@ -2,15 +2,16 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
-import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile)
-  : Root(panel, ProblemFilter(panel.state)), ProblemsListener {
+internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile) : Root(panel) {
+
+  private val problems = mutableSetOf<HighlightingProblem>()
+  private val filter = ProblemFilter(panel.state)
 
   private val provider = object : ProblemsProvider {
     override val project = panel.project
@@ -23,24 +24,51 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     Disposer.register(provider, watcher)
   }
 
-  fun findProblemNode(highlighter: RangeHighlighterEx): ProblemNode? {
-    val problem = watcher.findProblem(highlighter) ?: return null
-    return super.findProblemNode(file, problem)
+  fun findProblem(highlighter: RangeHighlighterEx) = watcher.findProblem(highlighter)
+
+  override fun getProblemCount() = synchronized(problems) { problems.count(filter) }
+
+  override fun getProblemFiles() = when (getProblemCount() > 0) {
+    true -> listOf(file)
+    else -> emptyList()
   }
 
+  override fun getFileProblemCount(file: VirtualFile) = when (this.file == file) {
+    true -> getProblemCount()
+    else -> 0
+  }
+
+  override fun getFileProblems(file: VirtualFile) = when (this.file == file) {
+    true -> synchronized(problems) { problems.filter(filter) }
+    else -> emptyList()
+  }
+
+  override fun getOtherProblemCount() = 0
+
+  override fun getOtherProblems(): Collection<Problem> = emptyList()
+
   override fun problemAppeared(problem: Problem) {
-    addProblems(file, problem)
-    if (!ProblemsView.isProjectErrorsEnabled()) return
-    if (problem is HighlightingProblem && problem.severity >= HighlightSeverity.ERROR.myVal) {
-      HighlightingErrorsProvider.getInstance(problem.provider.project).problemsAppeared(file)
-    }
+    if (problem !is HighlightingProblem || problem.file != file) return
+    notify(problem, synchronized(problems) { SetUpdateState.add(problem, problems) })
+    if (!ProblemsView.isProjectErrorsEnabled() || problem.severity < HighlightSeverity.ERROR.myVal) return
+    HighlightingErrorsProvider.getInstance(problem.provider.project).problemsAppeared(file)
   }
 
   override fun problemDisappeared(problem: Problem) {
-    removeProblems(file, problem)
+    if (problem !is HighlightingProblem || problem.file != file) return
+    notify(problem, synchronized(problems) { SetUpdateState.remove(problem, problems) })
   }
 
   override fun problemUpdated(problem: Problem) {
-    updateProblem(file, problem)
+    if (problem !is HighlightingProblem || problem.file != file) return
+    notify(problem, synchronized(problems) { SetUpdateState.update(problem, problems) })
+  }
+
+  private fun notify(problem: Problem, state: SetUpdateState) = when (state) {
+    SetUpdateState.ADDED -> super.problemAppeared(problem)
+    SetUpdateState.REMOVED -> super.problemDisappeared(problem)
+    SetUpdateState.UPDATED -> super.problemUpdated(problem)
+    SetUpdateState.IGNORED -> {
+    }
   }
 }
