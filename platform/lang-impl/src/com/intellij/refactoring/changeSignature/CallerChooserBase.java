@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,6 +67,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private Editor myCalleeEditor;
   private final boolean myInitDone;
   private final String myFileName;
+  private final Collection<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   protected MemberNodeBase<M> createTreeNodeFor(M method, HashSet<M> called, Runnable cancelCallback) {
     throw new UnsupportedOperationException();
@@ -155,13 +157,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final PsiElement callee = parentNode != null ? parentNode.getElementToSearch() : null;
     if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
+      for (RangeHighlighter r : myHighlighters) {
+        highlighter.removeSegmentHighlighter(myCallerEditor, r);
+      }
+      myHighlighters.clear();
       int start = getStartOffset(caller);
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
       for (PsiElement element : findElementsToHighlight(caller, callee)) {
         TextRange textRange = element.getTextRange();
         textRange = injectedLanguageManager.injectedToHost(element, textRange);
         highlighter.addRangeHighlight(myCallerEditor, textRange.getStartOffset() - start, textRange.getEndOffset() - start, 
-                                      EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, false, null);
+                                      EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, false, myHighlighters);
       }
     }
   }
