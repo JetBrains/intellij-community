@@ -51,7 +51,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributorKt.newifyOriginInfo;
+import static org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor.NewifiedConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
@@ -416,10 +416,8 @@ public class CompleteReferenceExpression {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-        if (!(element instanceof OriginInfoAwareElement)) return true;
-        String originInfo = ((OriginInfoAwareElement)element).getOriginInfo();
-        if (!newifyOriginInfo.equals(originInfo)) return true;
+      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor() && !(element instanceof NewifiedConstructor)) {
+        return true;
       }
       if (element instanceof PsiNamedElement) {
 
