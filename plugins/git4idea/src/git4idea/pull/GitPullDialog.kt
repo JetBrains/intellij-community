@@ -58,13 +58,13 @@ class GitPullDialog(private val project: Project,
                     private val roots: List<VirtualFile>,
                     private val defaultRoot: VirtualFile) : DialogWrapper(project) {
 
-  val selectedOptions = mutableSetOf<PullOption>()
+  val selectedOptions = mutableSetOf<GitPullOption>()
 
   private val repositories = sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
   private val branches = collectBranches().toMutableMap()
 
-  private val optionInfos = mutableMapOf<PullOption, OptionInfo<PullOption>>()
+  private val optionInfos = mutableMapOf<GitPullOption, OptionInfo<GitPullOption>>()
 
   private val repositoryField = createRepositoryField()
   private val remoteField = createRemoteField()
@@ -115,7 +115,7 @@ class GitPullDialog(private val project: Project,
 
   fun getSelectedBranches() = listOf(branchField.item)
 
-  fun isCommitAfterMerge() = PullOption.NO_COMMIT !in selectedOptions
+  fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
 
   private fun collectBranches() = repositories.associateWith { repository -> getBranchesInRepo(repository) }
 
@@ -182,7 +182,7 @@ class GitPullDialog(private val project: Project,
            ?: GitUtil.getDefaultOrFirstRemote(remotes)
   }
 
-  private fun optionChosen(option: PullOption) {
+  private fun optionChosen(option: GitPullOption) {
     if (option !in selectedOptions) {
       selectedOptions += option
     }
@@ -228,20 +228,20 @@ class GitPullDialog(private val project: Project,
     )
   }
 
-  private fun getOptionInfo(option: PullOption) = optionInfos.computeIfAbsent(option) {
-    OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
+  private fun getOptionInfo(option: GitPullOption) = optionInfos.computeIfAbsent(option) {
+    OptionInfo(option, option.option, option.description)
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<PullOption>(GitBundle.message("pull.options.modify.popup.title"),
-                                                                               getOptions()) {
-    override fun isSelectable(value: PullOption?) = isOptionEnabled(value!!)
+  private fun createOptionPopupStep() = object : BaseListPopupStep<GitPullOption>(GitBundle.message("pull.options.modify.popup.title"),
+                                                                                  getOptions()) {
+    override fun isSelectable(value: GitPullOption?) = isOptionEnabled(value!!)
 
-    override fun onChosen(selectedValue: PullOption, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
+    override fun onChosen(selectedValue: GitPullOption, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
   }
 
-  private fun getOptions() = PullOption.values().toMutableList().apply {
+  private fun getOptions() = GitPullOption.values().toMutableList().apply {
     if (!isNoVerifySupported) {
-      remove(PullOption.NO_VERIFY)
+      remove(GitPullOption.NO_VERIFY)
     }
   }
 
@@ -267,10 +267,10 @@ class GitPullDialog(private val project: Project,
       optionsPanel.isVisible = true
     }
 
-    val shownOptions = mutableSetOf<PullOption>()
+    val shownOptions = mutableSetOf<GitPullOption>()
 
     optionsPanel.components.forEach { c ->
-      @Suppress("UNCHECKED_CAST") val optionButton = c as OptionButton<PullOption>
+      @Suppress("UNCHECKED_CAST") val optionButton = c as OptionButton<GitPullOption>
       val pullOption = optionButton.option
 
       if (pullOption !in selectedOptions) {
@@ -288,9 +288,9 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createOptionButton(option: PullOption) = OptionButton(option, option.option) { optionChosen(option) }
+  private fun createOptionButton(option: GitPullOption) = OptionButton(option, option.option) { optionChosen(option) }
 
-  private fun isOptionEnabled(option: PullOption) = selectedOptions.all { it.isOptionSuitable(option) }
+  private fun isOptionEnabled(option: GitPullOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
   private fun updateTitle() {
     val currentBranchName = getSelectedRepository().currentBranchName

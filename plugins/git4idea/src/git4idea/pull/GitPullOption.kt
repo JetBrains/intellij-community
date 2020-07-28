@@ -1,19 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.pull
 
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-enum class PullOption(@NonNls val option: String,
-                      @NonNls val descriptionKey: String) {
+enum class GitPullOption(@NonNls val option: String,
+                         @Nls val description: String) {
 
-  REBASE("--rebase", "pull.option.rebase"),
-  FF_ONLY("--ff-only", "pull.option.ff.only"),
-  NO_FF("--no-ff", "pull.option.no.ff"),
-  SQUASH("--squash", "pull.option.squash.commit"),
-  NO_COMMIT("--no-commit", "pull.option.no.commit"),
-  NO_VERIFY("--no-verify", "merge.option.no.verify");
+  REBASE("--rebase", GitBundle.message("pull.option.rebase")),
+  FF_ONLY("--ff-only", GitBundle.message("pull.option.ff.only")),
+  NO_FF("--no-ff", GitBundle.message("pull.option.no.ff")),
+  SQUASH("--squash", GitBundle.message("pull.option.squash.commit")),
+  NO_COMMIT("--no-commit", GitBundle.message("pull.option.no.commit")),
+  NO_VERIFY("--no-verify", GitBundle.message("merge.option.no.verify"));
 
-  fun isOptionSuitable(option: PullOption): Boolean {
+  fun isOptionSuitable(option: GitPullOption): Boolean {
     return when (this) {
       REBASE -> option !in REBASE_INCOMPATIBLE
       FF_ONLY -> option !in FF_ONLY_INCOMPATIBLE

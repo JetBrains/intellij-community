@@ -50,8 +50,8 @@ internal class GitRebaseDialog(private val project: Project,
 
   private val rebaseSettings = project.service<GitRebaseSettings>()
 
-  private val selectedOptions = mutableSetOf<RebaseOption>()
-  private val optionInfos = mutableMapOf<RebaseOption, OptionInfo<RebaseOption>>()
+  private val selectedOptions = mutableSetOf<GitRebaseOption>()
+  private val optionInfos = mutableMapOf<GitRebaseOption, OptionInfo<GitRebaseOption>>()
 
   private val localBranches = mutableListOf<GitBranch>()
   private val remoteBranches = mutableListOf<GitBranch>()
@@ -146,17 +146,17 @@ internal class GitRebaseDialog(private val project: Project,
     val selectedBranch = branchField.item
     val branch = if (currentBranch?.name != selectedBranch) selectedBranch else null
 
-    val newBase = if (RebaseOption.ONTO in selectedOptions) getTextField(ontoField).text else null
+    val newBase = if (GitRebaseOption.ONTO in selectedOptions) getTextField(ontoField).text else null
     val upstream = getTextField(upstreamField).text
 
     return GitRebaseParams(GitVcs.getInstance(project).version, branch, newBase, upstream,
-                           RebaseOption.INTERACTIVE in selectedOptions,
-                           RebaseOption.PRESERVE_MERGES in selectedOptions)
+                           GitRebaseOption.INTERACTIVE in selectedOptions,
+                           GitRebaseOption.PRESERVE_MERGES in selectedOptions)
   }
 
   private fun saveSettings() {
     rebaseSettings.options = selectedOptions
-    rebaseSettings.newBase = if (RebaseOption.ONTO in selectedOptions)
+    rebaseSettings.newBase = if (GitRebaseOption.ONTO in selectedOptions)
       getTextField(ontoField).text
     else
       getTextField(upstreamField).text
@@ -180,7 +180,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateNewBase(): ValidationInfo? {
-    val field = if (RebaseOption.ONTO in selectedOptions) ontoField else upstreamField
+    val field = if (GitRebaseOption.ONTO in selectedOptions) ontoField else upstreamField
     if (getTextField(field).text.isEmpty()) {
       return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), field)
     }
@@ -191,7 +191,7 @@ internal class GitRebaseDialog(private val project: Project,
     val upstream = getTextField(upstreamField).text
 
     if (upstream.isNullOrEmpty()) {
-      return if (RebaseOption.ONTO in selectedOptions)
+      return if (GitRebaseOption.ONTO in selectedOptions)
         ValidationInfo(GitBundle.message("rebase.dialog.error.upstream.not.selected"), upstreamField)
       else
         ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), upstreamField)
@@ -201,7 +201,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateOnto(): ValidationInfo? {
-    if (RebaseOption.ONTO in selectedOptions) {
+    if (GitRebaseOption.ONTO in selectedOptions) {
       val newBase = getTextField(ontoField).text
 
       if (newBase.isNullOrEmpty()) {
@@ -228,7 +228,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateBranch(): ValidationInfo? {
-    if (RebaseOption.SWITCH_BRANCH !in selectedOptions) {
+    if (GitRebaseOption.SWITCH_BRANCH !in selectedOptions) {
       return null
     }
     val selectedBranch = getTextField(branchField).text
@@ -440,21 +440,21 @@ internal class GitRebaseDialog(private val project: Project,
       { isOptionEnabled(it) })
   }
 
-  private fun isOptionEnabled(option: RebaseOption) = selectedOptions.all { it.isOptionSuitable(option) }
+  private fun isOptionEnabled(option: GitRebaseOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
-  private fun getOptionInfo(option: RebaseOption) = optionInfos.computeIfAbsent(option) {
-    OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
+  private fun getOptionInfo(option: GitRebaseOption) = optionInfos.computeIfAbsent(option) {
+    OptionInfo(option, option.option, option.description)
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<RebaseOption>(GitBundle.message("rebase.options.modify.dialog.title"),
-                                                                                 RebaseOption.values().toMutableList()) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<GitRebaseOption>(GitBundle.message("rebase.options.modify.dialog.title"),
+                                                                                    GitRebaseOption.values().toMutableList()) {
 
-    override fun onChosen(selectedValue: RebaseOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue!!) })
+    override fun onChosen(selectedValue: GitRebaseOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue!!) })
 
-    override fun isSelectable(value: RebaseOption?) = isOptionEnabled(value!!)
+    override fun isSelectable(value: GitRebaseOption?) = isOptionEnabled(value!!)
   }
 
-  private fun optionChosen(option: RebaseOption) {
+  private fun optionChosen(option: GitRebaseOption) {
     if (option !in selectedOptions) {
       selectedOptions += option
     }
@@ -485,7 +485,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateTopPanel() {
-    val showOntoField = RebaseOption.ONTO in selectedOptions
+    val showOntoField = GitRebaseOption.ONTO in selectedOptions
     ontoLabel.isVisible = showOntoField
     ontoField.isVisible = showOntoField
 
@@ -495,7 +495,7 @@ internal class GitRebaseDialog(private val project: Project,
 
     val showBranchField = !showRootField()
                           && !showOntoField
-                          && RebaseOption.SWITCH_BRANCH in selectedOptions
+                          && GitRebaseOption.SWITCH_BRANCH in selectedOptions
 
     var isDirty = false
     if (showBranchField) {
@@ -528,8 +528,8 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun updateBottomPanel() {
     val showRoot = showRootField()
-    val showOnto = RebaseOption.ONTO in selectedOptions
-    val showBranch = (showRoot || showOnto) && RebaseOption.SWITCH_BRANCH in selectedOptions
+    val showOnto = GitRebaseOption.ONTO in selectedOptions
+    val showBranch = (showRoot || showOnto) && GitRebaseOption.SWITCH_BRANCH in selectedOptions
 
     if (showOnto) {
       if (!isAlreadyAdded(upstreamField, bottomPanel)) {
@@ -561,10 +561,10 @@ internal class GitRebaseDialog(private val project: Project,
   private fun updateOptionsPanel() {
     val selectedOptionsToShow = selectedOptions intersect getOptionsToShowInPanel()
 
-    val shownOptions = mutableSetOf<RebaseOption>()
+    val shownOptions = mutableSetOf<GitRebaseOption>()
     optionsPanel.components.forEach { c ->
       @Suppress("UNCHECKED_CAST")
-      val optionButton = c as OptionButton<RebaseOption>
+      val optionButton = c as OptionButton<GitRebaseOption>
       val rebaseOption = optionButton.option
 
       if (rebaseOption in selectedOptionsToShow) {
@@ -590,9 +590,9 @@ internal class GitRebaseDialog(private val project: Project,
     .growX()
     .pushX()
 
-  private fun getOptionsToShowInPanel() = setOf(RebaseOption.INTERACTIVE, RebaseOption.PRESERVE_MERGES)
+  private fun getOptionsToShowInPanel() = setOf(GitRebaseOption.INTERACTIVE, GitRebaseOption.PRESERVE_MERGES)
 
-  private fun createOptionButton(option: RebaseOption) = OptionButton(option, option.option) { optionChosen(option) }
+  private fun createOptionButton(option: GitRebaseOption) = OptionButton(option, option.option) { optionChosen(option) }
 
   private fun isAlreadyAdded(component: JComponent, container: Container) = component.parent == container
 
