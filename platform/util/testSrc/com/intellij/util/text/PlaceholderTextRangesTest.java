@@ -175,6 +175,14 @@ public class PlaceholderTextRangesTest extends TestCase {
                  7, 11);
   }
 
+  public void testDeepNestedBraces() {
+    assertRanges("{{{}{}}}",
+                 3, 3,
+                 5, 5,
+                 2, 6,
+                 1, 7);
+  }
+
   private static void assertRanges(String text,
                                    int... rangeOffsets) {
     assertRanges(text, "{", "}", false, false, rangeOffsets);
