@@ -104,7 +104,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Check for persistent id uniqueness
     pEntityData.persistentId(this)?.let { persistentId ->
-      if (indexes.persistentIdIndex.getIdsByEntry(persistentId) != null) {
+      val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
+      if (ids != null && ids.isNotEmpty()) {
         entitiesByType.remove(pEntityData.id, unmodifiableEntityClassId)
         throw PersistentIdAlreadyExistsException(persistentId)
       }
@@ -143,7 +144,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Check for persistent id uniqueness
     if (beforePersistentId != null) {
       val newPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
-      if (beforePersistentId != newPersistentId && indexes.persistentIdIndex.getIdsByEntry(newPersistentId) != null ) {
+      val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+      if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
           // Restore previous value
         (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
           throw PersistentIdAlreadyExistsException(newPersistentId)
