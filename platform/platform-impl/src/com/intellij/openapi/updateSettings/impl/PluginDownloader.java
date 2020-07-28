@@ -261,15 +261,15 @@ public final class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
     if (myOldFile == null) {
-      return myMarketplaceRequests.download(myPluginUrl, indicator);
+      return myMarketplaceRequests.downloadPlugin(myPluginUrl, indicator);
     }
     else {
       try {
-        return myMarketplaceRequests.download(myPluginUrl, myOldFile, indicator);
+        return myMarketplaceRequests.downloadPluginViaBlockmap(myPluginUrl, myOldFile, indicator);
       }
       catch (Exception e) {
-        LOG.error(IdeBundle.message("error.download.plugin.via.blockmap"), e);
-        return myMarketplaceRequests.download(myPluginUrl, indicator);
+        LOG.debug(IdeBundle.message("error.download.plugin.via.blockmap"), e);
+        return myMarketplaceRequests.downloadPlugin(myPluginUrl, indicator);
       }
     }
   }

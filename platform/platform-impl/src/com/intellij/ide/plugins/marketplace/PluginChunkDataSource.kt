@@ -66,6 +66,7 @@ class PluginChunkDataSource(
             val str = nextLine(input)
           }
           while (!str.contains(boundary))
+          // skip useless lines: Content-Type, Content-Length and empty line
           nextLine(input)
           nextLine(input)
           nextLine(input)

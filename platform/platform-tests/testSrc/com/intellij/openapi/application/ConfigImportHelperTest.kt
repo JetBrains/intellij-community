@@ -172,7 +172,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         val path = localTempDir.newDirectory("pluginTemp").toPath().resolve("my-plugin-new.jar")
         PluginBuilder()
           .id(oldBuilder.id)
@@ -198,7 +198,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw IOException("404")
       }
     }
@@ -301,7 +301,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw AssertionError("No file download should be requested")
       }
     }
