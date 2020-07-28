@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -262,6 +262,14 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * Selects the entire line of text at the caret position.
    */
   void selectLineAtCaret();
+
+  /**
+   * Selects the entire lines covering the current selection, if any.
+   * If there's no selection, does the same as {@link #selectLineAtCaret()}.
+   * Because the resulting selection includes the line ending character,
+   * a repeated invocation of this method extends the selection to include the next line.
+   */
+  void extendLineSelection();
 
   /**
    * Selects the entire word at the caret position, optionally using camel-case rules to

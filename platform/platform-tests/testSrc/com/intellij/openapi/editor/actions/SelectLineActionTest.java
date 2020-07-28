@@ -25,8 +25,8 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
             "third line");
     selectLine();
     checkResultByText("first line\n" +
-                      "<caret><selection>second line\n" +
-                      "</selection>third line"
+                      "<selection>second line\n" +
+                      "</selection><caret>third line"
     );
   }
 
@@ -37,8 +37,38 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
     assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     selectLine();
     checkResultByText("first line\n" +
-                      "<caret><selection>second line\n" +
-                      "</selection>third line"
+                      "<selection>second line\n" +
+                      "</selection><caret>third line"
+    );
+  }
+
+  public void testWithExistingSelection() {
+    prepare("first line\n" +
+            "secon<caret><selection>d line\n" +
+            "third li</selection>ne\n" +
+            "fourth line\n" +
+            "fifth line");
+
+    selectLine();
+    checkResultByText("first line\n" +
+                      "<selection>second line\n" +
+                      "third line\n" +
+                      "</selection><caret>fourth line\n" +
+                      "fifth line"
+    );
+    selectLine();
+    checkResultByText("first line\n" +
+                      "<selection>second line\n" +
+                      "third line\n" +
+                      "fourth line\n" +
+                      "</selection><caret>fifth line"
+    );
+    selectLine();
+    checkResultByText("first line\n" +
+                      "<selection>second line\n" +
+                      "third line\n" +
+                      "fourth line\n" +
+                      "fifth line</selection><caret>"
     );
   }
 
