@@ -278,7 +278,10 @@ public final class HighlightClassUtil {
    * @return true if file correspond to the shebang script
    */
   public static boolean isJavaHashBangScript(PsiJavaFile containingFile) {
-    return containingFile.getText().startsWith("#!");
+    PsiElement firstChild = containingFile.getFirstChild();
+    return firstChild instanceof PsiComment && 
+           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
+           firstChild.getText().startsWith("#!");
   }
 
   static HighlightInfo checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {

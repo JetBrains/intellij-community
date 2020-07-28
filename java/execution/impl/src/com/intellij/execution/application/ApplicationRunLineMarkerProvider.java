@@ -25,11 +25,13 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       PsiFile containingFile = element.getContainingFile();
-      if (containingFile instanceof PsiJavaFile && HighlightClassUtil.isJavaHashBangScript((PsiJavaFile)containingFile)) {
-        return null;
-      }
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
+
+        if (containingFile instanceof PsiJavaFile && HighlightClassUtil.isJavaHashBangScript((PsiJavaFile)containingFile)) {
+          return null;
+        }
+
         final AnAction[] actions = ExecutorAction.getActions();
         return new Info(AllIcons.RunConfigurations.TestState.Run, actions, element1 -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, element1)), "\n"));
       }
