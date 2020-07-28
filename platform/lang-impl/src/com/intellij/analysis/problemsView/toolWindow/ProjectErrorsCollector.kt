@@ -10,12 +10,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
+private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()
   private val problemCount = AtomicInteger()
 
   override fun getProblemCount() = problemCount.get()
+
+  override fun getProblemFiles() = synchronized(fileProblems) {
+    fileProblems.keys.toSet()
+  }
 
   override fun getFileProblemCount(file: VirtualFile) = synchronized(fileProblems) {
     fileProblems[file]?.size ?: 0
@@ -67,17 +71,17 @@ internal class ProjectErrorsCollector(val project: Project) : ProblemsCollector 
   private fun notify(problem: Problem, state: SetUpdateState) {
     when (state) {
       SetUpdateState.ADDED -> {
-        getProjectErrors()?.addProblem(problem)
+        getProblemsListener()?.problemAppeared(problem)
         val emptyBefore = problemCount.getAndIncrement() == 0
         if (emptyBefore) updateToolWindowIcon()
       }
       SetUpdateState.REMOVED -> {
-        getProjectErrors()?.removeProblem(problem)
+        getProblemsListener()?.problemDisappeared(problem)
         val emptyAfter = problemCount.decrementAndGet() == 0
         if (emptyAfter) updateToolWindowIcon()
       }
       SetUpdateState.UPDATED -> {
-        getProjectErrors()?.updateProblem(problem)
+        getProblemsListener()?.problemUpdated(problem)
       }
       SetUpdateState.IGNORED -> {
       }
@@ -94,7 +98,7 @@ internal class ProjectErrorsCollector(val project: Project) : ProblemsCollector 
     else -> Toolwindows.ToolWindowProblems
   }
 
-  private fun getProjectErrors() = ProblemsView.getToolWindow(project)
+  private fun getProblemsListener() = ProblemsView.getToolWindow(project)
     ?.contentManagerIfCreated
     ?.contents
     ?.mapNotNull { it.component as? ProjectErrorsPanel }

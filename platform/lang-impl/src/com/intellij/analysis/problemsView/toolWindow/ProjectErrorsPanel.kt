@@ -3,11 +3,12 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.project.Project
 
 internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, state) {
+  : ProblemsViewPanel(project, state), ProblemsListener {
 
   private val root = Root(this)
 
@@ -20,15 +21,15 @@ internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
   override fun getSortFoldersFirst(): Option? = null
   override fun getSortBySeverity(): Option? = null
 
-  fun addProblem(problem: Problem) {
+  override fun problemAppeared(problem: Problem) {
     if (problem is FileProblem) root.addProblems(problem.file, problem)
   }
 
-  fun removeProblem(problem: Problem) {
+  override fun problemDisappeared(problem: Problem) {
     if (problem is FileProblem) root.removeProblems(problem.file, problem)
   }
 
-  fun updateProblem(problem: Problem) {
+  override fun problemUpdated(problem: Problem) {
     if (problem is FileProblem) root.updateProblem(problem.file, problem)
   }
 }

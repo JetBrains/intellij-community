@@ -945,7 +945,7 @@
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
-    <projectService serviceInterface="com.intellij.analysis.problemsView.ProblemsListener"
+    <projectService serviceInterface="com.intellij.analysis.problemsView.ProblemsCollector"
                     serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProjectErrorsCollector"/>
 
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
