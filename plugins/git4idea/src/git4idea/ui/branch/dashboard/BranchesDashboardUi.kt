@@ -88,10 +88,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun updateLogBranchFilter() {
     val ui = logUi
-    val branchNames = tree.getSelectedBranchNames()
+    val selectedFilters = tree.getSelectedBranchFilters()
     val oldFilters = ui.filterUi.filters
-    val newFilters = if (branchNames.isNotEmpty()) {
-      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branchNames))
+    val newFilters = if (selectedFilters.isNotEmpty()) {
+      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
     } else {
       oldFilters.without(VcsLogBranchLikeFilter::class.java)
     }

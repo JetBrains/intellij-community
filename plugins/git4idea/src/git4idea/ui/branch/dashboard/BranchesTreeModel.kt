@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import java.util.*
@@ -32,7 +33,7 @@ internal data class BranchNodeDescriptor(val type: NodeType,
 }
 
 internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE
+  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE, HEAD_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
