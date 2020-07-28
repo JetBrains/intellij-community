@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -122,7 +122,7 @@ public class SelectionModelImpl implements SelectionModel {
     LOG.assertTrue(success);
   }
 
-  public static void doSelectLineAtCaret(Caret caret) {
+  public static void doSelectLineAtCaret(@NotNull Caret caret, boolean extendCurrentSelection) {
     Editor editor = caret.getEditor();
     int lineNumber = caret.getLogicalPosition().line;
     Document document = editor.getDocument();
@@ -130,7 +130,10 @@ public class SelectionModelImpl implements SelectionModel {
       return;
     }
 
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(caret);
+    Pair<LogicalPosition, LogicalPosition> lines =
+      EditorUtil.calcSurroundingRange(editor,
+                                      extendCurrentSelection ? caret.getSelectionStartPosition() : caret.getVisualPosition(),
+                                      extendCurrentSelection ? caret.getSelectionEndPosition() : caret.getVisualPosition());
     LogicalPosition lineStart = lines.first;
     LogicalPosition nextLineStart = lines.second;
 
@@ -138,7 +141,6 @@ public class SelectionModelImpl implements SelectionModel {
     int end = editor.logicalPositionToOffset(nextLineStart);
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    caret.removeSelection();
     caret.setSelection(start, end);
   }
 
