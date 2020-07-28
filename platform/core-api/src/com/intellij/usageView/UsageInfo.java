@@ -11,6 +11,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
   private static final Logger LOG = Logger.getInstance(UsageInfo.class);
@@ -199,6 +201,10 @@ public class UsageInfo {
     }
     int delta = elementRange.getStartOffset();
     return result.getStartOffset() < delta ? null : result.shiftRight(-delta);
+  }
+
+  public @Nullable Icon getIcon() {
+    return null;
   }
 
   /**
