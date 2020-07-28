@@ -58,51 +58,15 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       }
     })
 
-    val listener = RootSetChangedListener {
-      makeRootsChange(EmptyRunnable.INSTANCE, false, true)
-    }
-
     // TODO It's also possible not to fire roots change event if JDK is not used
-    bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
-      override fun jdkAdded(jdk: Sdk) {
-        jdk.rootProvider.addRootSetChangedListener(listener, this@ProjectRootManagerBridge)
-      }
-
-      override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        //todo make this more efficient by storing mapping between sdks and modules
-        val affectedModules = WorkspaceModel.getInstance(myProject).entityStorage.current.entities(ModuleEntity::class.java)
-          .filter { module ->
-            module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.SdkDependency>().any {
-              it.sdkName == previousName && it.sdkType == jdk.sdkType.name
-            }
-          }.toList()
-        if (affectedModules.isNotEmpty()) {
-          WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
-            for (module in affectedModules) {
-              val updated = module.dependencies.map {
-                when (it) {
-                  is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
-                  else -> it
-                }
-              }
-              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
-                dependencies = updated
-              }
-            }
-          }
-        }
-      }
-
-      override fun jdkRemoved(jdk: Sdk) {
-        jdk.rootProvider.removeRootSetChangedListener(listener)
-      }
-    })
+    bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkChangeListener())
   }
 
   override fun getActionToRunWhenProjectJdkChanges(): Runnable {
     return Runnable {
       super.getActionToRunWhenProjectJdkChanges().run()
-      if (hasModuleWithInheritedJdk()) makeRootsChange(EmptyRunnable.INSTANCE, false, true) }
+      if (hasModuleWithInheritedJdk()) fireRootsChanged()
+    }
   }
 
   override fun projectClosed() {
@@ -164,9 +128,14 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   private fun hasModuleWithInheritedJdk() = ModuleManager.getInstance(project).modules.asSequence()
     .filter { ModuleRootManager.getInstance(it).orderEntries.filterIsInstance<InheritedJdkOrderEntry>().any() }.any()
 
+  private fun fireRootsChanged() {
+    makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+  }
+
   // Listener for global libraries linked to module
   private inner class GlobalLibraryTableListener : LibraryTable.Listener, RootSetChangedListener {
     private val librariesPerModuleMap = BidirectionalMultiMap<ModuleEntity, String>()
+
     private var insideRootsChange = false
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
@@ -192,11 +161,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
     override fun afterLibraryAdded(newLibrary: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary))) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary))) fireRootsChanged()
     }
 
     override fun afterLibraryRemoved(library: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) fireRootsChanged()
     }
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
@@ -229,7 +198,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (insideRootsChange) return
       insideRootsChange = true
       try {
-        makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+        fireRootsChanged()
       }
       finally {
         insideRootsChange = false
@@ -237,8 +206,48 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     private fun getLibraryIdentifier(library: Library) = "${library.table.tableLevel}$LIBRARY_NAME_DELIMITER${library.name}"
-    private fun getLibraryIdentifier(libraryTable: LibraryTable, libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
+    private fun getLibraryIdentifier(libraryTable: LibraryTable,
+                                     libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
 
     fun clear() = librariesPerModuleMap.clear()
+  }
+
+  private inner class JdkChangeListener : ProjectJdkTable.Listener, RootSetChangedListener {
+    override fun jdkAdded(jdk: Sdk) {
+      jdk.rootProvider.addRootSetChangedListener(this, this@ProjectRootManagerBridge)
+    }
+
+    override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+      //todo make this more efficient by storing mapping between sdks and modules
+      val affectedModules = WorkspaceModel.getInstance(myProject).entityStorage.current.entities(ModuleEntity::class.java)
+        .filter { module ->
+          module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.SdkDependency>().any {
+            it.sdkName == previousName && it.sdkType == jdk.sdkType.name
+          }
+        }.toList()
+      if (affectedModules.isNotEmpty()) {
+        WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
+          for (module in affectedModules) {
+            val updated = module.dependencies.map {
+              when (it) {
+                is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                else -> it
+              }
+            }
+            builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+              dependencies = updated
+            }
+          }
+        }
+      }
+    }
+
+    override fun jdkRemoved(jdk: Sdk) {
+      jdk.rootProvider.removeRootSetChangedListener(this)
+    }
+
+    override fun rootSetChanged(wrapper: RootProvider) {
+      fireRootsChanged()
+    }
   }
 }
