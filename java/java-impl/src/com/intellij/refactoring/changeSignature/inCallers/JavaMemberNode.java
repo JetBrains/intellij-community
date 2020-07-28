@@ -37,15 +37,19 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
 
   @Override
   protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
+    customizeRendererText(renderer, getMember(), isEnabled());
+  }
+
+  public static <M extends PsiMember> void customizeRendererText(ColoredTreeCellRenderer renderer, M member, boolean enabled) {
     final StringBuilder buffer = new StringBuilder(128);
-    final PsiClass containingClass = getMember().getContainingClass();
+    final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
       buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
       buffer.append('.');
     }
-    buffer.append(formatMember(getMember()));
+    buffer.append(formatMember(member));
 
-    final SimpleTextAttributes attributes = isEnabled() ?
+    final SimpleTextAttributes attributes = enabled ?
                                             new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground()) :
                                             SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
     renderer.append(buffer.toString(), attributes);

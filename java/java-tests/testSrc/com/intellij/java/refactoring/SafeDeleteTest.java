@@ -123,6 +123,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteMethodWithPropertyUsage() {
+    doTest("Foo");
+  }
+
   public void testParameterInHierarchy() {
     doTest("C2");
   }

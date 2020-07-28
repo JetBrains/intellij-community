@@ -415,7 +415,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       else {
         final PsiMember member = calleesSafeToDelete.get(0).getCallerMember();
         final ArrayList<UsageInfo> list = new ArrayList<>();
-        AbstractJavaMemberCallerChooser<?> chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
+        SafeDeleteJavaCalleeChooser chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
           @Override
           protected ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems() {
             return calleesSafeToDelete;
@@ -702,9 +702,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    final List<PsiMember> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeCalleesSafeToDelete(method);
+    final List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeCalleesSafeToDelete(method);
     if (calleesSafeToDelete != null) {
-      for (PsiMember callee : calleesSafeToDelete) {
+      for (PsiElement callee : calleesSafeToDelete) {
         usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
       }
     }
