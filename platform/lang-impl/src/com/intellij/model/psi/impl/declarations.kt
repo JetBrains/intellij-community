@@ -30,7 +30,7 @@ private val declarationProviderEP = ExtensionPointName.create<PsiSymbolDeclarati
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
-  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.extensions) {
+  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
     ProgressManager.checkCanceled()
     extension.getDeclarations(element, offsetInElement).filterTo(result) {
       element === it.declaringElement && offsetInElement in it.declarationRange
