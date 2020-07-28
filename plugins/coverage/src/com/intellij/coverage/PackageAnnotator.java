@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,8 +31,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class PackageAnnotator {
-
+public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
 
