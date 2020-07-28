@@ -237,7 +237,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               }
             }
 
-            setBorder(JBUI.Borders.empty(5, 7));
+            setBorder(JBUI.Borders.empty(8, 7));
             if (isInsideGroup) {
               add(spacer, BorderLayout.WEST);
             }
@@ -296,7 +296,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
           @Override
           public Dimension getPreferredSize() {
-            return new Dimension(super.getPreferredSize().width, JBUIScale.scale(44));
+            return new Dimension(super.getPreferredSize().width, JBUIScale.scale(value instanceof ProjectGroupActionGroup ? 32 : 50));
           }
         };
       }
