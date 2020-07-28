@@ -67,7 +67,9 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
               td {
                 valign = "top"
                 style = "padding-right: 5px; color: gray; vertical-align: top;"
+                +" "
                 +msg("grazie.settings.grammar.rule.incorrect")
+                +" "
                 if (!isOnTheFly) nbsp()
               }
               td {
@@ -82,7 +84,9 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
                 td {
                   valign = "top"
                   style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top;"
+                  +" "
                   +msg("grazie.settings.grammar.rule.correct")
+                  +" "
                   if (!isOnTheFly) nbsp()
                 }
                 td {
@@ -97,6 +101,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
 
         p {
           style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-bottom: 0px;"
+          +" "
           +msg("grazie.tooltip.powered-by-language-tool")
         }
       }
