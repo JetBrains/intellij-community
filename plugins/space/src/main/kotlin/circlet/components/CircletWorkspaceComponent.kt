@@ -28,6 +28,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.suspendCancellableCoroutine
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.withContext
 import libraries.klogging.KLogger
 import libraries.klogging.assert
 import libraries.klogging.logger
@@ -106,14 +107,18 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     val wsConfig = ideaConfig(server)
     val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration,
                                wsConfig)
+    val ioDispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
+
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
-    val freePort = selectFreePort(ports.min()!!, ports.max()!!)
+    val freePort = withContext(lifetime, ioDispatcher) {
+      selectFreePort(ports.min()!!, ports.max()!!)
+    }
     val authUrl = portsMapping.getValue(freePort)
     val codeFlow = CodeFlowConfig(wsConfig, authUrl.toExternalForm())
 
     val response: OAuthTokenResponse = suspendCancellableCoroutine { cnt ->
-      launch(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+      launch(lifetime, ioDispatcher) {
         ServerSocket(freePort).use { serverSocket ->
           val socket: Socket = serverSocket.accept()
           socket.getInputStream().use { inputStream ->
