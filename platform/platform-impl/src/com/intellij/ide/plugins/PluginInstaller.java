@@ -162,7 +162,6 @@ public final class PluginInstaller {
       commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
-      sourceFile = renameZipFileToRoot(sourceFile);
       commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
       commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
@@ -206,27 +205,12 @@ public final class PluginInstaller {
     else {
       target = new File(targetPath, rootEntryName(sourceFile));
       FileUtil.delete(target);
-      if(UpdateSettings.getInstance().isKeepPluginsArchive()){
-        sourceFile = renameZipFileToRoot(sourceFile);
-      }
       new Decompressor.Zip(sourceFile).extract(new File(targetPath));
     }
     return target;
   }
 
-  @NotNull
-  private static File renameZipFileToRoot(File zip) throws IOException {
-    String newName = rootEntryName(zip)+".zip";
-    FileUtil.rename(zip, newName);
-    File newZip = new File(zip.getParent()+"/"+newName);
-    if(newZip.exists()){
-      FileUtil.delete(zip);
-      return newZip;
-    }
-    return zip;
-  }
-
-  private static String rootEntryName(File zip) throws IOException {
+  public static String rootEntryName(File zip) throws IOException {
     try (ZipFile zipFile = new ZipFile(zip)) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {

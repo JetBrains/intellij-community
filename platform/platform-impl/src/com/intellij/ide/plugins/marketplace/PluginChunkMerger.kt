@@ -9,13 +9,13 @@ import java.io.*
 
 
 class PluginChunkMerger(
-  private val oldFile : File,
-  oldBlockMap : BlockMap = BlockMap(oldFile.inputStream()),
+  private val oldFile: File,
+  oldBlockMap: BlockMap = BlockMap(oldFile.inputStream()),
   newBlockMap: BlockMap,
-  private val indicator : ProgressIndicator
+  private val indicator: ProgressIndicator
 ) : ChunkMerger(oldFile, oldBlockMap, newBlockMap) {
-  private val newFileSize : Int = newBlockMap.chunks.sumBy { chunk -> chunk.length }
-  private var wroteBytes : Int = 0
+  private val newFileSize: Int = newBlockMap.chunks.sumBy { chunk -> chunk.length }
+  private var wroteBytes: Int = 0
 
   override fun merge(output: OutputStream, newChunkDataSource: Iterator<ByteArray>) {
     indicator.checkCanceled()
@@ -23,21 +23,19 @@ class PluginChunkMerger(
     super.merge(output, newChunkDataSource)
   }
 
-  override fun downloadChunkFromNewData(newChunk: Chunk, newChunkDataSource: Iterator<ByteArray>,
-                                        output: OutputStream) {
+  override fun downloadChunkFromNewData(newChunk: Chunk, newChunkDataSource: Iterator<ByteArray>, output: OutputStream) {
     super.downloadChunkFromNewData(newChunk, newChunkDataSource, output)
-    wroteBytes+=newChunk.length
+    wroteBytes += newChunk.length
     setIndicatorFraction()
   }
 
-  override fun downloadChunkFromOldData(oldChunk: Chunk, oldFileRAF: RandomAccessFile,
-                                        output: OutputStream) {
+  override fun downloadChunkFromOldData(oldChunk: Chunk, oldFileRAF: RandomAccessFile, output: OutputStream) {
     super.downloadChunkFromOldData(oldChunk, oldFileRAF, output)
-    wroteBytes+=oldChunk.length
+    wroteBytes += oldChunk.length
     setIndicatorFraction()
   }
 
-  private fun setIndicatorFraction(){
+  private fun setIndicatorFraction() {
     indicator.checkCanceled()
     indicator.fraction = wroteBytes.toDouble() / newFileSize.toDouble()
   }

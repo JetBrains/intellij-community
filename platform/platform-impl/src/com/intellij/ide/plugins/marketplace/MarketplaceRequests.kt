@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.PathManager
@@ -20,18 +21,18 @@ import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
+import com.jetbrains.plugin.blockmap.core.BlockMap
+import com.jetbrains.plugin.blockmap.core.makeFileHash
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
+import java.io.*
 import java.net.HttpURLConnection
 import java.net.URLConnection
-import javax.xml.parsers.ParserConfigurationException
-import javax.xml.parsers.SAXParserFactory
-import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
-import com.jetbrains.plugin.blockmap.core.BlockMap
-import com.jetbrains.plugin.blockmap.core.makeFileHash
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
 
 
 @ApiStatus.Internal
@@ -50,7 +51,7 @@ open class MarketplaceRequests {
 
     private const val HASH_FILENAME = "hash.txt"
 
-    private const val MAXIMUM_DOWNLOAD_PERCENT = 0.3
+    private const val MAXIMUM_DOWNLOAD_PERCENT = 1.0
 
     private val INSTANCE = MarketplaceRequests()
 
@@ -387,10 +388,13 @@ open class MarketplaceRequests {
     return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
       HttpRequests.RequestProcessor { request: HttpRequests.Request ->
         request.saveToFile(file, indicator)
-        val fileName: String = guessFileName(request.connection, file, pluginUrl)
-        val newFile = File(file.parentFile, fileName)
-        FileUtil.rename(file, newFile)
-        newFile
+        val pluginFileUrl = getPluginFileUrl(pluginUrl)
+        if (pluginFileUrl.endsWith(".zip")) {
+          renameFileToZipRoot(file)
+        }
+        else {
+          guessPluginFile(request.connection, file, pluginUrl)
+        }
       })
   }
 
@@ -398,11 +402,13 @@ open class MarketplaceRequests {
   open fun download(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
 
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
-    if(!prevPluginArchive.exists()) throw IOException(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
+    if (!prevPluginArchive.exists()) {
+      throw IOException(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
+    }
     val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
 
     // working with demo
-    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com","plugin-blockmap-patches.dev.marketplace.intellij.net")
+    val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com", "plugin-blockmap-patches.dev.marketplace.intellij.net")
 
     val pluginFileUrl = getPluginFileUrl(curPluginUrl)
     val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_FILENAME)
@@ -410,7 +416,8 @@ open class MarketplaceRequests {
 
     val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
       request.inputStream.reader().buffered().use { input ->
-        objectMapper.readValue(input.readText(), BlockMap::class.java) }
+        objectMapper.readValue(input.readText(), BlockMap::class.java)
+      }
     }
     LOG.info("Plugin blockmap file downloaded")
     val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
@@ -418,34 +425,53 @@ open class MarketplaceRequests {
     }
     LOG.info("Plugin hash file downloaded")
 
-    if(downloadPercent(oldBlockMap, newBlockMap) > MAXIMUM_DOWNLOAD_PERCENT){
+    if (downloadPercent(oldBlockMap, newBlockMap) > MAXIMUM_DOWNLOAD_PERCENT) {
       throw IOException(IdeBundle.message("too.large.download.size"))
     }
 
     val file = getPluginTempFile()
     val merger = PluginChunkMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator)
-    FileOutputStream(file).use { output ->  merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, curPluginUrl)) }
+    FileOutputStream(file).use { output -> merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, pluginFileUrl)) }
 
     val curFileHash = FileInputStream(file).use { input -> makeFileHash(input) }
-    if(curFileHash != newPluginHash){
+    if (curFileHash != newPluginHash) {
       throw IOException(IdeBundle.message("hashes.doesnt.match"))
     }
 
-    val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
+    if (pluginFileUrl.endsWith(".zip")) {
+      return renameFileToZipRoot(file)
+    }
+    else {
+      val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
+      return guessPluginFile(connection, file, pluginUrl)
+    }
+  }
+
+  private fun guessPluginFile(connection: URLConnection, file: File, pluginUrl: String): File {
     val fileName: String = guessFileName(connection, file, pluginUrl)
     val newFile = File(file.parentFile, fileName)
     FileUtil.rename(file, newFile)
     return newFile
   }
 
+  private fun renameFileToZipRoot(zip: File): File {
+    val newName = "${PluginInstaller.rootEntryName(zip)}.zip"
+    val newZip = File("${zip.parent}/$newName")
+    if (newZip.exists()) {
+      FileUtil.delete(newZip)
+    }
+    FileUtil.rename(zip, newName)
+    return newZip
+  }
+
   private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
     val oldSet = oldBlockMap.chunks.toSet()
     val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
-    return newChunks.sumBy { chunk -> chunk.length }.toDouble()/
+    return newChunks.sumBy { chunk -> chunk.length }.toDouble() /
            newBlockMap.chunks.sumBy { chunk -> chunk.length }.toDouble()
   }
 
-  private fun getPluginFileUrl(pluginUrl: String) : String{
+  private fun getPluginFileUrl(pluginUrl: String): String {
     return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
       val url = request.connection.url
       "${url.protocol}://${url.host}${url.path}"
@@ -453,12 +479,12 @@ open class MarketplaceRequests {
   }
 
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
-    val suffix = if(prevPlugin.endsWith(".jar")) "" else ".zip"
+    val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
     return Paths.get("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
   }
 
   @Throws(IOException::class)
-  private fun getPluginTempFile() : File{
+  private fun getPluginTempFile(): File {
     val pluginsTemp = File(PathManager.getPluginTempPath())
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
