@@ -5,17 +5,22 @@
 
 package com.intellij.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.findAnnotationInstance
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
+import junit.framework.TestCase
 import kotlin.reflect.KClass
 
 abstract class AnnotationTestFixtureBase(
+    protected val testCase: TestCase,
     protected val codeInsightFixture: CodeInsightTestFixture,
     private val annotatorClasses: List<KClass<out AnnotatorBase>> = emptyList(),
     private val inspectionClasses: List<KClass<out InspectionProfileEntry>> = emptyList()
@@ -31,12 +36,43 @@ abstract class AnnotationTestFixtureBase(
         annotatorClasses.forEach { AnnotatorBase.enableAnnotator(it.java, testRootDisposable) }
         enabledInspections = InspectionTestUtil.instantiateTools(inspectionClasses.map { it.java })
         codeInsightFixture.enableInspections(*enabledInspections.toTypedArray())
+        if (testCase.findAnnotationInstance<BatchMode>() != null) {
+            enableBatchMode()
+        }
+    }
+
+    @Suppress("UnstableApiUsage")
+    private fun enableBatchMode() {
+        // Unfortunately, `DefaultHighlightVisitor` has package private visibility
+        // so use reflection to create its instance
+        val visitorClass = Class.forName("com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor")
+        val constructor = visitorClass.getDeclaredConstructor(
+            Project::class.java,
+            Boolean::class.java,
+            Boolean::class.java,
+            Boolean::class.java
+        )
+        constructor.isAccessible = true
+        val visitor = constructor.newInstance(
+            project,
+            /* highlightErrorElements = */ true,
+            /* runAnnotators = */ true,
+            /* batchMode = */ true
+        ) as HighlightVisitor
+        // BACKCOMPAT: 2020.1. Use com.intellij.testFramework.ExtensionTestUtil.maskExtensions and drop suppress annotation
+        val ep = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getPoint(project) as ExtensionPointImpl<HighlightVisitor>
+        ep.maskAll(listOf(visitor), testRootDisposable, true)
     }
 
     protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")
 
-    fun checkHighlighting(text: String) =
-        checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = false, ignoreExtraHighlighting = true)
+    fun checkHighlighting(text: String, ignoreExtraHighlighting: Boolean) = checkByText(
+        text,
+        checkWarn = false,
+        checkWeakWarn = false,
+        checkInfo = false,
+        ignoreExtraHighlighting = ignoreExtraHighlighting
+    )
     fun checkInfo(text: String) = checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = true)
     fun checkWarnings(text: String) = checkByText(text, checkWarn = true, checkWeakWarn = true, checkInfo = false)
     fun checkErrors(text: String) = checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = false)
