@@ -25,6 +25,9 @@ public interface TestIndexingModeSupporter {
     SMART {
       @Override
       public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {}
+
+      @Override
+      public void tearDownTest(@NotNull Project project) {}
     }, DUMB_FULL_INDEX {
       @Override
       public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
@@ -59,6 +62,12 @@ public interface TestIndexingModeSupporter {
 
     public abstract void setUpTest(@NotNull Project project,
                                    @NotNull Disposable testRootDisposable);
+
+    public void tearDownTest(@NotNull Project project) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        DumbServiceImpl.getInstance(project).setDumb(false);
+      });
+    }
 
     public void ensureIndexingStatus(@NotNull Project project) {
     }
