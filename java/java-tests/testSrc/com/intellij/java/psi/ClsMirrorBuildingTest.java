@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,7 +17,6 @@ import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -54,6 +52,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testGrTrait() { doTest(); }
   public void testSuspiciousParameterNames() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
+  public void testTypeAnno() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
@@ -185,15 +184,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
-    String expected;
-    try {
-      expected = StringUtil.trimTrailing(PlatformTestUtil.loadFileText(txtPath));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    assertEquals(expected, ClsFileImpl.decompile(file).toString());
+    assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
   }
 
   private static boolean isInner(String name) throws IOException {

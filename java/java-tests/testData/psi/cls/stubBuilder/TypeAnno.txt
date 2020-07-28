@@ -8,52 +8,43 @@ PsiJavaFileStub []
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiFieldStub[field:java.lang.String=""]
       PsiModifierListStub[mask=25]
-        PsiAnnotationStub[@TA(value=0)]
     PsiMethodStub[get1TypeParam:java.util.List<java.lang.String>]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=-1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[get2TypeParams:java.util.Map<java.lang.String,java.lang.String>]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=-1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getExtends:java.util.List<? extends java.lang.Object>]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=-1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getArray:java.lang.String[]]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getArray2D:java.lang.String[][]]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getArray3D:java.lang.String[][][]]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=1)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getArrayInList:java.util.List<java.lang.String[]>]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=0)]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getTypeParameter:M]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=1)]
       PsiTypeParameterListStub
         PsiTypeParameter[M]
           PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.CharSequence]
@@ -61,7 +52,6 @@ PsiJavaFileStub []
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[getTypeParameter2:M]
       PsiModifierListStub[mask=1025]
-        PsiAnnotationStub[@TA(value=2)]
       PsiTypeParameterListStub
         PsiTypeParameter[M]
           PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.CharSequence, java.io.Serializable]
@@ -78,10 +68,8 @@ PsiJavaFileStub []
       PsiParameterListStub
         PsiParameterStub[p1:java.util.List<java.lang.String>]
           PsiModifierListStub[mask=0]
-            PsiAnnotationStub[@TA(value=0)]
         PsiParameterStub[p2:java.util.List<java.lang.String>]
           PsiModifierListStub[mask=0]
-            PsiAnnotationStub[@TA(value=2)]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[inReceiver:void]
       PsiModifierListStub[mask=1025]

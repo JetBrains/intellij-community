@@ -20,7 +20,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<ClassFileDecompilers.Decompiler> {
   private static final Logger LOG = Logger.getInstance(ClassFileStubBuilder.class);
 
-  public static final int STUB_VERSION = 23 + JavaFileElementType.STUB_VERSION;
+  public static final int STUB_VERSION = 24 + JavaFileElementType.STUB_VERSION;
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
