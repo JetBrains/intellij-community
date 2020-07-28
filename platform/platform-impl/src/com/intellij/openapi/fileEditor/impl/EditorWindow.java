@@ -175,6 +175,7 @@ public final class EditorWindow {
             myRemovedTabs.push(pair);
             myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
             editorManager.disposeComposite(editor);
+            file.putUserData(INITIAL_INDEX_KEY, null);
           }
         }
         else {
