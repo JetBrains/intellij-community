@@ -130,22 +130,23 @@ public final class CommonJavaFragments {
                                            int index,
                                            boolean selected,
                                            boolean hasFocus) {
-        if (value != null) {
-          if (index == -1) {
-            append("java ");
-            if (value.getVersion() != null) {
-              JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
-              if (version != null) {
-                append(version.getDescription());
-              }
-            }
-            String description = value.getDescription();
-            if (description != null) {
-              append(" " + description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            }
-          }
-          else value.render(this, selected);
+        if (value == null) {
+          return;
         }
+        if (value.getPathOrName() == null && value.getVersion() == null) {
+          append(value.getDescription());
+          return;
+        }
+        if (index == -1) {
+          append("java ");
+        }
+        if (value.getVersion() != null) {
+          JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
+          if (version != null) {
+            append(version.getDescription() + " ");
+          }
+        }
+        append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     });
     UIUtil.setMonospaced(comboBox);
