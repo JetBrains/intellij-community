@@ -3,13 +3,14 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
+import java.util.*;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class ExceptionUtil extends ExceptionUtilRt {
@@ -29,6 +30,27 @@ public final class ExceptionUtil extends ExceptionUtilRt {
 
   public static boolean causedBy(Throwable e, Class<?> klass) {
     return ExceptionUtilRt.causedBy(e, klass);
+  }
+
+  /**
+   * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
+   */
+  public static <T> List<T> findCauseAndSuppressed(Throwable error, Class<T> klass) {
+    Collection<Throwable> allThrowables = new LinkedHashSet<>();
+    Deque<Throwable> deque = new ArrayDeque<>();
+    deque.add(error);
+    while (!deque.isEmpty()) {
+      Throwable t = deque.removeFirst();
+      if (allThrowables.add(t)) {
+        for (Throwable cause = t.getCause(); cause != null; cause = cause.getCause()) {
+          deque.addLast(cause);
+        }
+        for (Throwable s : t.getSuppressed()) {
+          deque.addLast(s);
+        }
+      }
+    }
+    return ContainerUtil.filterIsInstance(allThrowables, klass);
   }
 
   @NotNull
