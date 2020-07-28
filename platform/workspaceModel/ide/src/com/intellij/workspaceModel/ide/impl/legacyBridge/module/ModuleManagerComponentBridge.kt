@@ -288,23 +288,25 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Added -> {
-        val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-        val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
-        if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
-          moduleRootComponent.moduleLibraryTable.addLibrary(change.entity, null)
-        }
-        if (library != null) {
-          (library as LibraryBridgeImpl).entityStorage = entityStore
-          library.clearTargetBuilder()
+        val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
+        val moduleEntity = entityStore.current.resolve(tableId.moduleId)
+                           ?: error("Could not find module for module library: ${change.entity.persistentId()}")
+        if (moduleEntity.name !in unloadedModules) {
+
+          val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
+          if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
+            val module = entityStore.current.moduleMap.getDataByEntity(moduleEntity)
+                         ?: error("Could not find module bridge for module entity $moduleEntity")
+            val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
+            moduleRootComponent.moduleLibraryTable.addLibrary(change.entity, null)
+          }
+          if (library != null) {
+            (library as LibraryBridgeImpl).entityStorage = entityStore
+            library.clearTargetBuilder()
+          }
         }
       }
     }
-  }
-
-  private fun getModuleRootComponentByLibrary(entity: LibraryEntity): ModuleRootComponentBridge {
-    val tableId = entity.tableId as LibraryTableId.ModuleLibraryTableId
-    val module = findModuleByName(tableId.moduleId.name) ?: error("Could not find module for module library: ${entity.persistentId()}")
-    return ModuleRootComponentBridge.getInstance(module)
   }
 
   private fun addModule(moduleEntity: ModuleEntity): ModuleBridge {
