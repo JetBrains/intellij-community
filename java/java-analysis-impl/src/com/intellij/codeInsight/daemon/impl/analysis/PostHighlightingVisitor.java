@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -422,8 +423,14 @@ class PostHighlightingVisitor {
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
       HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       if (declarationMethod != null && declarationMethod.isConstructor()) {
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAssignFieldFromParameterFix());
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateFieldFromParameterFix());
+        IntentionAction assignFix = QuickFixFactory.getInstance().createAssignFieldFromParameterFix();
+        IntentionAction createFieldFix = QuickFixFactory.getInstance().createCreateFieldFromParameterFix();
+        if (!declarationMethod.isConstructor()) {
+          assignFix = PriorityIntentionActionWrapper.lowPriority(assignFix);
+          createFieldFix = PriorityIntentionActionWrapper.lowPriority(createFieldFix);
+        }
+        QuickFixAction.registerQuickFixAction(info, assignFix);
+        QuickFixAction.registerQuickFixAction(info, createFieldFix);
       }
       return info;
     }
