@@ -39,7 +39,7 @@ private class SeverityFilterAction(name: String, val severity: Int, val panel: H
     if (changed) {
       val wasEmpty = panel.tree.isEmpty
       panel.state.intIncrementModificationCount()
-      panel.treeModel.structureChanged()
+      panel.treeModel.structureChanged(null)
       panel.powerSaveStateChanged()
       // workaround to expand a root without handle
       if (wasEmpty) promiseExpandAll(panel.tree)

@@ -49,7 +49,7 @@ internal open class Root(val panel: ProblemsViewPanel, private val filter: Probl
     val node = add(file, problems) ?: return
     onValidThread {
       panel.updateToolWindowContent()
-      panel.treeModel.structureChanged(node)
+      panel.treeModel.structureChanged(node.getPath())
       if (!exist) synchronized(allProblems) {
         allProblems[file]?.getFileNode(getParentNode(file))
       }?.let {
@@ -62,14 +62,14 @@ internal open class Root(val panel: ProblemsViewPanel, private val filter: Probl
     val node = remove(file, problems) ?: return
     onValidThread {
       panel.updateToolWindowContent()
-      panel.treeModel.structureChanged(node)
+      panel.treeModel.structureChanged(node.getPath())
     }
   }
 
   open fun updateProblem(file: VirtualFile, problem: Problem) {
     val node = findProblemNode(file, problem) ?: return
     onValidThread {
-      if (node.update()) panel.treeModel.nodeChanged(node)
+      if (node.update()) panel.treeModel.nodeChanged(node.getPath())
     }
   }
 
