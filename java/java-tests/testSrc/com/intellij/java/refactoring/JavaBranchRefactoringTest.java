@@ -29,6 +29,9 @@ public class JavaBranchRefactoringTest {
       RenameMethodMultiTest.class,
       RenameModuleTest.class,
 
+      MoveClassTest.class,
+      MultipleJdksMoveClassTest.class,
+      
       MoveMembersTest.class,
       ConvertToInstanceMethodTest.class,
       ConvertToInstance8MethodTest.class

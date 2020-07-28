@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -444,45 +445,73 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(UsageInfo @NotNull [] usages) {
-    // If files are being moved then I need to collect some information to delete these
-    // files from CVS. I need to know all common parents of the moved files and relative
-    // paths.
+  protected boolean canPerformRefactoringInBranch() {
+    return true;
+  }
 
-    // Move files with correction of references.
+  @Override
+  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
+    performMove(usages, branch);
+  }
+
+  @Override
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
+    performMove(usages, null);
+  }
+
+  private void performMove(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
+    PsiElement[] elementsToMove = myElementsToMove;
+    List<RefactoringElementListener> listeners =
+      ContainerUtil.map(elementsToMove, psiElement -> getTransaction().getElementListener(psiElement));
+    List<@Nullable SmartPsiElementPointer<?>> movedElements = ContainerUtil.map(listeners, __ -> null);
+
+    if (branch != null) {
+      for (int i = 0; i < elementsToMove.length; i++) {
+        elementsToMove[i] = branch.obtainPsiCopy(elementsToMove[i]);
+      }
+    }
+
+    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
+    List<MoveRenameUsageInfo> codeUsages = new ArrayList<>();
+
+    for (UsageInfo usage : usages) {
+      if (!(usage instanceof MoveRenameUsageInfo)) continue;
+
+      if (usage instanceof NonCodeUsageInfo) {
+        nonCodeUsages.add((NonCodeUsageInfo) usage);
+      } else {
+        codeUsages.add(branch == null ? (MoveRenameUsageInfo) usage : ((MoveRenameUsageInfo) usage).branched(branch));
+      }
+    }
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
     }
     try {
-      final Map<PsiClass, Boolean> allClasses = new HashMap<>();
-      for (PsiElement element : myElementsToMove) {
+      Map<PsiClass, Boolean> allClasses = new HashMap<>();
+      for (PsiElement element : elementsToMove) {
         if (element instanceof PsiClass) {
           final PsiClass psiClass = (PsiClass)element;
           if (allClasses.containsKey(psiClass)) {
             continue;
           }
           for (MoveAllClassesInFileHandler fileHandler : MoveAllClassesInFileHandler.EP_NAME.getExtensionList()) {
-            fileHandler.processMoveAllClassesInFile(allClasses, psiClass, myElementsToMove);
+            fileHandler.processMoveAllClassesInFile(allClasses, psiClass, elementsToMove);
           }
         }
       }
 
-      for (PsiElement element : myElementsToMove) {
+      for (PsiElement element : elementsToMove) {
         if (element instanceof PsiClass) {
           MoveClassesOrPackagesUtil.prepareMoveClass((PsiClass)element);
         }
       }
 
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
-      final RefactoringElementListener[] listeners =
-        Arrays.stream(myElementsToMove)
-          .map(psiElement -> getTransaction().getElementListener(psiElement))
-          .toArray(RefactoringElementListener[]::new);
 
-      for (int idx = 0; idx < myElementsToMove.length; idx++) {
-        PsiElement element = myElementsToMove[idx];
+      for (int idx = 0; idx < elementsToMove.length; idx++) {
+        PsiElement element = elementsToMove[idx];
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
           final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
@@ -518,7 +547,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           PsiFile newElement = directory.findFile(((PsiClassOwner)element).getName());
           LOG.assertTrue(newElement != null);
 
-          DumbService.getInstance(myProject).completeJustSubmittedTasks();
+          if (branch == null) {
+            DumbService.getInstance(myProject).completeJustSubmittedTasks();
+          }
 
           final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);
           if (newPackage != null) {
@@ -534,22 +565,30 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         else {
           LOG.error("Unexpected element to move: " + element);
         }
-        listeners[idx].elementMoved(element);
-        myElementsToMove[idx] = element;
+        movedElements.set(idx, SmartPointerManager.createPointer(element));
+        elementsToMove[idx] = element;
       }
 
-      DumbService.getInstance(myProject).completeJustSubmittedTasks();
+      if (branch == null) {
+        DumbService.getInstance(myProject).completeJustSubmittedTasks();
+      }
 
-      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+      CommonMoveUtil.retargetUsages(codeUsages.toArray(UsageInfo.EMPTY_ARRAY), oldToNewElementsMapping);
+      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
 
-      for (PsiElement element : myElementsToMove) {
+      for (PsiElement element : elementsToMove) {
         if (element instanceof PsiClass) {
           MoveClassesOrPackagesUtil.finishMoveClass((PsiClass)element);
         }
       }
 
-      if (myOpenInEditor) {
-        ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(Arrays.stream(myElementsToMove).filter(PsiElement::isValid).toArray(PsiElement[]::new)));
+      if (branch != null) {
+        branch.runAfterMerge(() -> {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          afterMovement(listeners, movedElements, branch);
+        });
+      } else {
+        afterMovement(listeners, movedElements, branch);
       }
     }
     catch (IncorrectOperationException e) {
@@ -558,7 +597,32 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-    @Override
+  private void afterMovement(List<RefactoringElementListener> listeners,
+                             List<@Nullable SmartPsiElementPointer<?>> movedElements,
+                             @Nullable ModelBranch branch) {
+    for (int i = 0; i < listeners.size(); i++) {
+      PsiElement element = getOriginalPsi(branch, movedElements.get(i));
+      if (element != null) {
+        listeners.get(i).elementMoved(element);
+      }
+    }
+
+    if (myOpenInEditor) {
+      ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(
+        ContainerUtil.mapNotNull(movedElements, p -> getOriginalPsi(branch, p)).toArray(PsiElement.EMPTY_ARRAY)));
+    }
+  }
+
+  @Nullable
+  private PsiElement getOriginalPsi(@Nullable ModelBranch branch, SmartPsiElementPointer<?> pointer) {
+    PsiElement element = pointer == null ? null : pointer.getElement();
+    if (branch != null && element != null) {
+      element = branch.findOriginalPsi(element);
+    }
+    return element;
+  }
+
+  @Override
     protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {

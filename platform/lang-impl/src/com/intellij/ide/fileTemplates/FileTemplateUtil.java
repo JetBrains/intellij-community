@@ -4,6 +4,7 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -329,6 +330,10 @@ public final class FileTemplateUtil {
       classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
       () -> template.getText(props_));
     String templateText = StringUtil.convertLineSeparators(mergedText);
+
+    if (ModelBranch.getPsiBranch(directory) != null) {
+      return handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
+    }
 
     return WriteCommandAction
         .writeCommandAction(project)

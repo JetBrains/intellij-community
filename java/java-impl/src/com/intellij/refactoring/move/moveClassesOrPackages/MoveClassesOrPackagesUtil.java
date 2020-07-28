@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -244,12 +245,11 @@ public final class MoveClassesOrPackagesUtil {
     newClass = aClass;
     final PsiDirectory containingDirectory = file.getContainingDirectory();
     if (!Comparing.equal(moveDestination.getVirtualFile(), containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
-      LOG.assertTrue(file.getVirtualFile() != null, aClass);
-
-      Project project = file.getProject();
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
 
-      DumbService.getInstance(project).completeJustSubmittedTasks();
+      if (ModelBranch.getPsiBranch(moveDestination) == null) {
+        DumbService.getInstance(moveDestination.getProject()).completeJustSubmittedTasks();
+      }
 
       file = moveDestination.findFile(file.getName());
 

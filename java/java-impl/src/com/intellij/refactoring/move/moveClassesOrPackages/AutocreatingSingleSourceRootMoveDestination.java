@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -52,12 +52,12 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
 
   @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException {
-    return getDirectory();
+    return getDirectory(source);
   }
 
   @Override
   public PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException {
-    return getDirectory();
+    return getDirectory(source);
   }
 
   @Override
@@ -95,16 +95,14 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   PsiDirectory myTargetDirectory;
-  private PsiDirectory getDirectory() throws IncorrectOperationException {
+  private PsiDirectory getDirectory(PsiElement source) throws IncorrectOperationException {
     if (myTargetDirectory == null) {
-      myTargetDirectory = WriteAction.compute(() -> {
-        try {
-          return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
-        }
-        catch (IncorrectOperationException e) {
-          return null;
-        }
-      });
+      VirtualFile sourceRoot = mySourceRoot;
+      ModelBranch branch = ModelBranch.getPsiBranch(source);
+      if (branch != null) {
+        sourceRoot = branch.findFileCopy(mySourceRoot);
+      }
+      myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
     }
     return myTargetDirectory;
   }
