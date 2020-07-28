@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
@@ -69,7 +71,7 @@ open class SaveSessionProducerManager : SaveExecutor {
     }
 
     if (isVfsRequired) {
-      return withContext(storeEdtCoroutineDispatcher) {
+      return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         runWriteAction(task)
       }
     }

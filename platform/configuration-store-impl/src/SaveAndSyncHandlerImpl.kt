@@ -33,17 +33,17 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.pooledThreadSingleAlarm
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.CalledInAwt
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val LISTEN_DELAY = 15
 
-internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
+internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
@@ -52,20 +52,44 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   private val saveQueue = ArrayDeque<SaveTask>()
 
-  private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
-    val app = ApplicationManager.getApplication()
-    if (app != null && !app.isDisposed && blockSaveOnFrameDeactivationCount.get() == 0) {
-      processTasks()
-    }
-  }
+  private val currentJob = AtomicReference<Job?>()
 
   init {
     // add listeners after some delay - doesn't make sense to listen earlier
     EdtScheduledExecutorService.getInstance().schedule({ addListeners() }, LISTEN_DELAY.toLong(), TimeUnit.SECONDS)
   }
 
-  private fun processTasks() {
+  /**
+   * If there is already running job, it doesn't mean that queue is processed - maybe paused on delay.
+   * But even if `forceExecuteImmediately = true` specified, job is not re-added.
+   * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
+   */
+  private fun requestSave(forceExecuteImmediately: Boolean = false) {
+    if (currentJob.get() != null) {
+      return
+    }
+
+    val app = ApplicationManager.getApplication()
+    if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
+      return
+    }
+
+    currentJob.getAndSet(GlobalScope.launch {
+      if (!forceExecuteImmediately) {
+        delay(300)
+      }
+      processTasks()
+      currentJob.set(null)
+    })?.cancel(CancellationException("Superseded by another request"))
+  }
+
+  private suspend fun processTasks() {
     while (true) {
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
+        return
+      }
+
       val task = synchronized(saveQueue) {
         saveQueue.pollFirst() ?: return
       }
@@ -79,9 +103,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
       }
 
       LOG.runAndLogException {
-        runBlocking {
-          saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
-        }
+        saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }
     }
   }
@@ -125,9 +147,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
         (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
 
         if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
-          // do not cancel if there is already request - opposite to scheduleSave,
-          // on frame deactivation better to save as soon as possible
-          saveAlarm.request()
+          requestSave()
         }
       }
 
@@ -141,7 +161,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {
     if (addToSaveQueue(task) || forceExecuteImmediately) {
-      saveAlarm.cancelAndRequest(forceRun = forceExecuteImmediately)
+      requestSave(forceExecuteImmediately)
     }
   }
 
@@ -165,28 +185,9 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     }
   }
 
-  private fun waitForScheduledSave() {
-    if (saveAlarm.isEmpty) {
-      return
-    }
-
-    while (true) {
-      ApplicationManager.getApplication().invokeAndWait(Runnable {
-        edtPoolDispatcherManager.processTasks()
-      }, ModalityState.any())
-
-      if (saveAlarm.isEmpty) {
-        return
-      }
-
-      Thread.sleep(5)
-    }
-  }
-
   /**
    * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
    * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
-   * So, save on app or project closing uses this method to process scheduled for EDT activities - instead of using regular EDT queue special one is used.
    */
   @CalledInAwt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
@@ -197,21 +198,26 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     }
 
     var isSavedSuccessfully = true
-    runInAutoSaveDisabledMode {
-      edtPoolDispatcherManager.processTasks()
+    var isAutoSaveCancelled = false
+    disableAutoSave().use {
+      currentJob.getAndSet(null)?.let {
+        it.cancel(CancellationException("Superseded by explicit save"))
+        isAutoSaveCancelled = true
+      }
+
+      synchronized(saveQueue) {
+        if (componentManager is Application) {
+          saveQueue.removeAll { it.project == null }
+        }
+        else {
+          saveQueue.removeAll { it.project === componentManager }
+        }
+      }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
       ProgressManager.getInstance().run(object : Task.Modal(project, getProgressTitle(componentManager), /* canBeCancelled = */ false) {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
-
-          if (project != null) {
-            synchronized(saveQueue) {
-              saveQueue.removeAll { it.project === project }
-            }
-          }
-
-          waitForScheduledSave()
 
           runBlocking {
             isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
@@ -225,6 +231,10 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
           }
         }
       })
+    }
+
+    if (isAutoSaveCancelled) {
+      requestSave()
     }
     return isSavedSuccessfully
   }
@@ -290,7 +300,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   override fun blockSaveOnFrameDeactivation() {
     LOG.debug("save blocked")
-    saveAlarm.cancel()
+    currentJob.getAndSet(null)?.cancel(CancellationException("Save on frame deactivation is disabled"))
     blockSaveOnFrameDeactivationCount.incrementAndGet()
   }
 
@@ -311,10 +321,6 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 }
 
 private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
-
-internal abstract class BaseSaveAndSyncHandler : SaveAndSyncHandler() {
-  internal val edtPoolDispatcherManager = EdtPoolDispatcherManager()
-}
 
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return when {
