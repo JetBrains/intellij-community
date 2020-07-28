@@ -28,7 +28,7 @@ internal open class StorageIndexes(
   ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
 
   companion object {
-    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(), EntityStorageInternalIndex(),
+    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), EntityStorageInternalIndex(true),
                                HashMap())
   }
 

@@ -7,9 +7,10 @@ import com.intellij.workspaceModel.storage.impl.containers.copy
 import org.jetbrains.annotations.TestOnly
 
 open class EntityStorageInternalIndex<T> private constructor(
-  internal open val index: BidirectionalMap<EntityId, T>
+  internal open val index: BidirectionalMap<EntityId, T>,
+  protected val oneToOneAssociation: Boolean
 ) {
-  constructor() : this(BidirectionalMap<EntityId, T>())
+  constructor(oneToOneAssociation: Boolean) : this(BidirectionalMap<EntityId, T>(), oneToOneAssociation)
 
   internal fun getIdsByEntry(entitySource: T): List<EntityId>? =
     index.getKeysByValue(entitySource)
@@ -22,8 +23,9 @@ open class EntityStorageInternalIndex<T> private constructor(
 
   class MutableEntityStorageInternalIndex<T> private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMap<EntityId, T>
-  ) : EntityStorageInternalIndex<T>(index) {
+    override var index: BidirectionalMap<EntityId, T>,
+    oneToOneAssociation: Boolean
+  ) : EntityStorageInternalIndex<T>(index, oneToOneAssociation) {
 
     private var freezed = true
 
@@ -32,6 +34,9 @@ open class EntityStorageInternalIndex<T> private constructor(
       index.remove(id)
       if (entitySource == null) return
       index[id] = entitySource
+      if (oneToOneAssociation) {
+        if (index.getKeysByValue(entitySource)?.size ?: 0 > 1) error("One to one association is violated. Id: $id, Entity: $entitySource")
+      }
     }
 
     @TestOnly
@@ -56,12 +61,12 @@ open class EntityStorageInternalIndex<T> private constructor(
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
       freezed = true
-      return EntityStorageInternalIndex(index)
+      return EntityStorageInternalIndex(index, this.oneToOneAssociation)
     }
 
     companion object {
       fun <T> from(other: EntityStorageInternalIndex<T>): MutableEntityStorageInternalIndex<T> {
-        return MutableEntityStorageInternalIndex(other.index)
+        return MutableEntityStorageInternalIndex(other.index, other.oneToOneAssociation)
       }
     }
   }
