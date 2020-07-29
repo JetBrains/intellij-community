@@ -52,7 +52,7 @@ public class CommandLinePanel extends JPanel {
   }
 
   public static void setMinimumWidth(Component component, int width) {
-    Dimension size = new Dimension(width, Math.max(30, component.getMinimumSize().height));
+    Dimension size = new Dimension(width, Math.max(JBUI.scale(30), component.getMinimumSize().height));
     component.setMinimumSize(size);
     component.setPreferredSize(size);
   }
