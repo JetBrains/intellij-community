@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.mac.MacMessages
+import java.awt.Window
 import javax.swing.Icon
 
 abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constructor(protected val title: @NlsContexts.DialogTitle String,
@@ -74,22 +76,17 @@ abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constru
     fun show(): Int {
       val yesText = yesText ?: Messages.getYesButton()
       val noText = noText ?: Messages.getNoButton()
-      try {
-        if (Messages.canShowMacSheetPanel()) {
-          val window = WindowManager.getInstance().suggestParentWindow(project)
-          return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+      return showMessage(project, mac = { window ->
+        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+      }, other = {
+        val options = arrayOf(yesText, noText)
+        if (MessagesService.getInstance().showMessageDialog(project, null, message, title, options, 0, -1, icon, doNotAskOption, false) == 0) {
+          Messages.YES
         }
-      }
-      catch (ignored: Exception) {
-      }
-
-      val options = arrayOf(yesText, noText)
-      if (MessagesService.getInstance().showMessageDialog(project, null, message, title, options, 0, -1, icon, doNotAskOption, false) == 0) {
-        return Messages.YES
-      }
-      else {
-        return Messages.NO
-      }
+        else {
+          Messages.NO
+        }
+      })
     }
   }
 
@@ -108,21 +105,29 @@ abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constru
       val yesText = yesText ?: Messages.getYesButton()
       val noText = noText ?: Messages.getNoButton()
       val cancelText = cancelText ?: Messages.getCancelButton()
-      try {
-        if (Messages.canShowMacSheetPanel()) {
-          val window = WindowManager.getInstance().suggestParentWindow(project)
-          return MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+      return showMessage(project, mac = { window ->
+        MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+      }, other = {
+        val options = arrayOf(yesText, noText, cancelText)
+        when (Messages.showDialog(project, message, title, options, 0, icon, doNotAskOption)) {
+          0 -> Messages.YES
+          1 -> Messages.NO
+          else -> Messages.CANCEL
         }
-      }
-      catch (ignored: Exception) {
-      }
-
-      val options = arrayOf(yesText, noText, cancelText)
-      return when (Messages.showDialog(project, message, title, options, 0, icon, doNotAskOption)) {
-        0 -> Messages.YES
-        1 -> Messages.NO
-        else -> Messages.CANCEL
-      }
+      })
     }
   }
+}
+
+private inline fun showMessage(project: Project?, mac: (Window?) -> Int, other: () -> Int): Int {
+  try {
+    if (Messages.canShowMacSheetPanel()) {
+      val window = WindowManager.getInstance().suggestParentWindow(project)
+      return mac(window)
+    }
+  }
+  catch (e: Exception) {
+    logger<Messages>().error(e)
+  }
+  return other()
 }
