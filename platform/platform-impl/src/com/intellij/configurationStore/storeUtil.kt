@@ -24,6 +24,7 @@ import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
@@ -86,6 +87,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
+  }
+  catch (e: CancellationException) {
+    return false
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
