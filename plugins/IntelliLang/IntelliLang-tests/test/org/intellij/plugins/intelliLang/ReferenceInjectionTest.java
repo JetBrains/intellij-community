@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.lang.Language;
@@ -6,8 +7,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.injection.Injectable;
@@ -142,14 +143,14 @@ public class ReferenceInjectionTest extends AbstractLanguageInjectionTestCase {
 
   private void undo() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+      final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
         UndoManager undoManager = UndoManager.getInstance(getProject());
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
         undoManager.undo(textEditor);
       }
       finally {
-        Messages.setTestDialog(oldTestDialog);
+        TestDialogManager.setTestDialog(oldTestDialog);
       }
     });
   }

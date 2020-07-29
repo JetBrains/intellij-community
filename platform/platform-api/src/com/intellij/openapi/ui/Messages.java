@@ -77,47 +77,7 @@ public class Messages {
   public static String getNoButton() { return CommonBundle.getNoButtonText(); }
   public static @Nls String getCancelButton() { return CommonBundle.getCancelButtonText(); }
 
-  private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
-  private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
   private static final Logger LOG = Logger.getInstance(Messages.class);
-
-  @TestOnly
-  public static TestDialog setTestDialog(TestDialog newValue) {
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
-    }
-    if (newValue == null) {
-      ourTestImplementation = TestDialog.DEFAULT;
-      throw new IllegalArgumentException("Attempt to set TestDialog to null: default implementation was restored instead");
-    }
-    TestDialog oldValue = ourTestImplementation;
-    ourTestImplementation = newValue;
-    return oldValue;
-  }
-
-  @TestOnly
-  public static TestInputDialog setTestInputDialog(TestInputDialog newValue) {
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
-    }
-    if (newValue == null) {
-      ourTestInputImplementation = TestInputDialog.DEFAULT;
-      throw new IllegalArgumentException("Attempt to set TestInputDialog to null: default implementation was restored instead");
-    }
-    TestInputDialog oldValue = ourTestInputImplementation;
-    ourTestInputImplementation = newValue;
-    return oldValue;
-  }
-
-  public static TestDialog getTestImplementation() {
-    return ourTestImplementation;
-  }
-
-  public static TestInputDialog getTestInputImplementation() {
-    return ourTestInputImplementation;
-  }
 
   @NotNull
   public static Icon getErrorIcon() {

@@ -25,8 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -98,13 +98,13 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldTestDialogValue = Messages.setTestDialog(this);
+    myOldTestDialogValue = TestDialogManager.setTestDialog(this);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Messages.setTestDialog(myOldTestDialogValue);
+      TestDialogManager.setTestDialog(myOldTestDialogValue);
     }
     catch (Throwable e) {
       addSuppressedException(e);

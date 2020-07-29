@@ -19,8 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -57,13 +57,13 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldTestDialogValue = Messages.setTestDialog(this);
+    myOldTestDialogValue = TestDialogManager.setTestDialog(this);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Messages.setTestDialog(myOldTestDialogValue);
+      TestDialogManager.setTestDialog(myOldTestDialogValue);
       myContainingFile = null;
       myClass = null;
     }

@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.runInEdtAndWait
@@ -36,7 +37,7 @@ class ExternalSystemRunConfigurationJavaExtensionTest : ExecutionTestCase() {
     ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), testRootDisposable)
     val configuration = createExternalSystemRunConfiguration()
     val notificationsCollector = NotificationsCollector()
-    val oldTestDialog = Messages.setTestDialog(notificationsCollector)
+    val oldTestDialog = TestDialogManager.setTestDialog(notificationsCollector)
     try {
       LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
         override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
@@ -51,7 +52,7 @@ class ExternalSystemRunConfigurationJavaExtensionTest : ExecutionTestCase() {
       assertThat(assertOneElement(notificationsCollector.notifications), containsString(FakeExecutionException.MESSAGE))
     }
     finally {
-      Messages.setTestDialog(oldTestDialog)
+      TestDialogManager.setTestDialog(oldTestDialog)
     }
   }
 
