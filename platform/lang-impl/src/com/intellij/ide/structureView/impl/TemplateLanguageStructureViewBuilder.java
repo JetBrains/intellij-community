@@ -117,8 +117,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   }
 
   @NotNull
-  private JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
-    if (psiFile == null) return JBIterable.empty();
+  protected JBIterable<Language> getLanguagesUnfiltered(@NotNull PsiFile psiFile) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
 
     Language baseLanguage = viewProvider.getBaseLanguage();
@@ -127,10 +126,16 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     return JBIterable.of(baseLanguage)
       .append(dataLanguage)
       .append(viewProvider.getLanguages())
-      .unique()
+      .unique();
+  }
+
+  @NotNull
+  private JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return JBIterable.empty();
+    return getLanguagesUnfiltered(psiFile)
       .filter(language -> {
-        PsiFile psi = viewProvider.getPsi(language);
-        return psi != null && (language == baseLanguage || isAcceptableBaseLanguageFile(psi));
+        PsiFile psi = psiFile.getViewProvider().getPsi(language);
+        return psi != null && (language == psiFile.getViewProvider().getBaseLanguage() || isAcceptableBaseLanguageFile(psi));
       });
   }
 
