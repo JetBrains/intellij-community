@@ -106,6 +106,10 @@
     <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
+    <group id="Svn.WorkingCopiesView.Toolbar">
+      <action id="Svn.RefreshWorkingCopies" class="org.jetbrains.idea.svn.dialogs.RefreshWorkingCopiesAction"
+              icon="AllIcons.Actions.Refresh" use-shortcut-of="Refresh"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

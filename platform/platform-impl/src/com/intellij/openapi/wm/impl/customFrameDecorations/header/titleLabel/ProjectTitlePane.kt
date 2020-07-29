@@ -3,66 +3,60 @@
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import sun.swing.SwingUtilities2
 import java.awt.FontMetrics
-import java.io.File
 import javax.swing.JComponent
 
 
 class ProjectTitlePane : ShrinkingTitlePart {
+  private val openChat = " ["
+  private val closeChar = "]"
+
   private val unparsed = DefaultPartTitle()
   private val projectTitle = ProjectTitle()
 
-  var parsed = false
   override var active: Boolean
     get() = projectTitle.active
     set(value) {
       projectTitle.active = value
     }
 
-  fun setProject(lng: String, short: String) {
-    val long = if (lng.length > short.length) lng else short
+  var project: Project? = null
+    set(value) {
+      field = value
+      updatePath()
+    }
 
-    unparsed.longText = long
-    unparsed.shortText = short
+  fun updatePath() {
+    project?.let {
+      val name = it.name
+      val path = FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(it.basePath))
 
-    val regex = """(.*)(\[)(.*)(])(.*)""".toRegex()
-    val regex1 = """(.*)(\()(.*)(\))(.*)""".toRegex()
-    val regex2 = """(.*)(<)(.*)(>)(.*)""".toRegex()
-    val regex3 = """(.*)(\{)(.*)(})(.*)""".toRegex()
-    val match = regex.matchEntire(long)
-                ?: regex1.matchEntire(long)
-                ?: regex2.matchEntire(long)
-                ?: regex3.matchEntire(long)
+      projectTitle.project = name
+      projectTitle.path = path
 
-    parsed = match?.let {
-      val (before, open, path, close, after) = match.destructured
+      unparsed.shortText = name
+      unparsed.longText = "$name$openChat$path$closeChar"
 
-      val project = before.trim()
-      if (project == short && path.isNotEmpty()) {
-        projectTitle.project = project
-        projectTitle.openChar = " $open"
-        projectTitle.closeChar = close
-        projectTitle.path = path
-
-        true
-      }
-      else false
-    } ?: false
+      projectTitle.openChar = openChat
+      projectTitle.closeChar = closeChar
+    }
   }
 
   override val longWidth: Int
-    get() = if (parsed) projectTitle.longWidth else unparsed.longWidth
+    get() = projectTitle.longWidth
   override val shortWidth: Int
-    get() = if (parsed) projectTitle.shortWidth else unparsed.shortWidth
+    get() = projectTitle.shortWidth
   override val toolTipPart: String
     get() = unparsed.toolTipPart
   override fun getLong(): String {
-    return if(parsed) projectTitle.getLong() else unparsed.getLong()
+    return projectTitle.getLong()
   }
 
   override fun getShort(): String {
-    return if(parsed) projectTitle.getShort() else unparsed.getShort()
+    return projectTitle.getShort()
   }
 
   override fun refresh(label: JComponent, fm: FontMetrics) {
@@ -71,19 +65,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
   }
 
   override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
-    return when {
-      parsed -> {
-        projectTitle.shrink(label, fm, maxWidth)
-      }
-      else -> {
-        return if (maxWidth > unparsed.longWidth) {
-          unparsed.getLong()
-        }
-        else {
-          unparsed.getShort()
-        }
-      }
-    }
+      return projectTitle.shrink(label, fm, maxWidth)
   }
 }
 

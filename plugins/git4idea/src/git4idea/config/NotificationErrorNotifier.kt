@@ -2,6 +2,7 @@
 package git4idea.config
 
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -14,18 +15,20 @@ import org.jetbrains.annotations.Nls
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
                          @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
-                         fixOption: ErrorNotifier.FixOption) {
+                         fixOption: ErrorNotifier.FixOption?) {
     val notification = createNotification(text, description)
-    notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
-      fixOption.fix()
-    })
+    if (fixOption != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
+        fixOption.fix()
+      })
+    }
     GitExecutableProblemsNotifier.notify(project, notification)
   }
 
   private fun createNotification(text: String, description: String?): BadGitExecutableNotification {
     return BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId, null,
                                         getErrorTitle(text, description), null, getErrorMessage(text, description),
-                                        NotificationType.ERROR, null)
+                                        NotificationType.ERROR, NotificationListener.UrlOpeningListener(false))
   }
 
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {

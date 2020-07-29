@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
+class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @NonNls private static final String OUTPUT_TAG = JpsJavaModelSerializerExtension.OUTPUT_TAG;
   @NonNls private static final String TEST_OUTPUT_TAG = JpsJavaModelSerializerExtension.TEST_OUTPUT_TAG;
   @NonNls private static final String ATTRIBUTE_URL = JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
@@ -42,7 +42,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   private boolean myWritable;
   private boolean myDisposed;
 
-  public CompilerModuleExtensionImpl(@NotNull Module module) {
+  CompilerModuleExtensionImpl(@NotNull Module module) {
     myModule = module;
   }
 

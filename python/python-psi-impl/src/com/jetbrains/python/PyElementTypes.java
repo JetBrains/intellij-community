@@ -51,74 +51,74 @@ public interface PyElementTypes {
 
   TokenSet FORMAL_PARAMETER_SET = TokenSet.create(NAMED_PARAMETER);
 
-  PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl::new);
+  PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", node -> new PyArgumentListImpl(node));
 
-  PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", PyPrintTargetImpl::new);
-  PyElementType DECORATOR = new PyElementType("DECORATOR", PyDecoratorImpl::new);
+  PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", node -> new PyPrintTargetImpl(node));
+  PyElementType DECORATOR = new PyElementType("DECORATOR", node -> new PyDecoratorImpl(node));
 
   // Statements
-  PyElementType EXPRESSION_STATEMENT = new PyElementType("EXPRESSION_STATEMENT", PyExpressionStatementImpl::new);
-  PyElementType ASSIGNMENT_STATEMENT = new PyElementType("ASSIGNMENT_STATEMENT", PyAssignmentStatementImpl::new);
-  PyElementType AUG_ASSIGNMENT_STATEMENT = new PyElementType("AUG_ASSIGNMENT_STATEMENT", PyAugAssignmentStatementImpl::new);
-  PyElementType ASSERT_STATEMENT = new PyElementType("ASSERT_STATEMENT", PyAssertStatementImpl::new);
-  PyElementType BREAK_STATEMENT = new PyElementType("BREAK_STATEMENT", PyBreakStatementImpl::new);
-  PyElementType CONTINUE_STATEMENT = new PyElementType("CONTINUE_STATEMENT", PyContinueStatementImpl::new);
-  PyElementType DEL_STATEMENT = new PyElementType("DEL_STATEMENT", PyDelStatementImpl::new);
-  PyElementType EXEC_STATEMENT = new PyElementType("EXEC_STATEMENT", PyExecStatementImpl::new);
-  PyElementType FOR_STATEMENT = new PyElementType("FOR_STATEMENT", PyForStatementImpl::new);
-  PyElementType TYPE_DECLARATION_STATEMENT = new PyElementType("TYPE_DECLARATION_STATEMENT", PyTypeDeclarationStatementImpl::new);
+  PyElementType EXPRESSION_STATEMENT = new PyElementType("EXPRESSION_STATEMENT", node -> new PyExpressionStatementImpl(node));
+  PyElementType ASSIGNMENT_STATEMENT = new PyElementType("ASSIGNMENT_STATEMENT", node -> new PyAssignmentStatementImpl(node));
+  PyElementType AUG_ASSIGNMENT_STATEMENT = new PyElementType("AUG_ASSIGNMENT_STATEMENT", node -> new PyAugAssignmentStatementImpl(node));
+  PyElementType ASSERT_STATEMENT = new PyElementType("ASSERT_STATEMENT", node -> new PyAssertStatementImpl(node));
+  PyElementType BREAK_STATEMENT = new PyElementType("BREAK_STATEMENT", node -> new PyBreakStatementImpl(node));
+  PyElementType CONTINUE_STATEMENT = new PyElementType("CONTINUE_STATEMENT", node -> new PyContinueStatementImpl(node));
+  PyElementType DEL_STATEMENT = new PyElementType("DEL_STATEMENT", node -> new PyDelStatementImpl(node));
+  PyElementType EXEC_STATEMENT = new PyElementType("EXEC_STATEMENT", node -> new PyExecStatementImpl(node));
+  PyElementType FOR_STATEMENT = new PyElementType("FOR_STATEMENT", node -> new PyForStatementImpl(node));
+  PyElementType TYPE_DECLARATION_STATEMENT = new PyElementType("TYPE_DECLARATION_STATEMENT", node -> new PyTypeDeclarationStatementImpl(node));
 
-  PyElementType GLOBAL_STATEMENT = new PyElementType("GLOBAL_STATEMENT", PyGlobalStatementImpl::new);
-  PyElementType IF_STATEMENT = new PyElementType("IF_STATEMENT", PyIfStatementImpl::new);
-  PyElementType PASS_STATEMENT = new PyElementType("PASS_STATEMENT", PyPassStatementImpl::new);
-  PyElementType PRINT_STATEMENT = new PyElementType("PRINT_STATEMENT", PyPrintStatementImpl::new);
-  PyElementType RAISE_STATEMENT = new PyElementType("RAISE_STATEMENT", PyRaiseStatementImpl::new);
-  PyElementType RETURN_STATEMENT = new PyElementType("RETURN_STATEMENT", PyReturnStatementImpl::new);
-  PyElementType TRY_EXCEPT_STATEMENT = new PyElementType("TRY_EXCEPT_STATEMENT", PyTryExceptStatementImpl::new);
-  PyElementType WITH_STATEMENT = new PyElementType("WITH_STATEMENT", PyWithStatementImpl::new);
-  PyElementType WHILE_STATEMENT = new PyElementType("WHILE_STATEMENT", PyWhileStatementImpl::new);
-  PyElementType STATEMENT_LIST = new PyElementType("STATEMENT_LIST", PyStatementListImpl::new);
+  PyElementType GLOBAL_STATEMENT = new PyElementType("GLOBAL_STATEMENT", node -> new PyGlobalStatementImpl(node));
+  PyElementType IF_STATEMENT = new PyElementType("IF_STATEMENT", node -> new PyIfStatementImpl(node));
+  PyElementType PASS_STATEMENT = new PyElementType("PASS_STATEMENT", node -> new PyPassStatementImpl(node));
+  PyElementType PRINT_STATEMENT = new PyElementType("PRINT_STATEMENT", node -> new PyPrintStatementImpl(node));
+  PyElementType RAISE_STATEMENT = new PyElementType("RAISE_STATEMENT", node -> new PyRaiseStatementImpl(node));
+  PyElementType RETURN_STATEMENT = new PyElementType("RETURN_STATEMENT", node -> new PyReturnStatementImpl(node));
+  PyElementType TRY_EXCEPT_STATEMENT = new PyElementType("TRY_EXCEPT_STATEMENT", node -> new PyTryExceptStatementImpl(node));
+  PyElementType WITH_STATEMENT = new PyElementType("WITH_STATEMENT", node -> new PyWithStatementImpl(node));
+  PyElementType WHILE_STATEMENT = new PyElementType("WHILE_STATEMENT", node -> new PyWhileStatementImpl(node));
+  PyElementType STATEMENT_LIST = new PyElementType("STATEMENT_LIST", node -> new PyStatementListImpl(node));
 
-  PyElementType NONLOCAL_STATEMENT = new PyElementType("NONLOCAL_STATEMENT", PyNonlocalStatementImpl::new);
+  PyElementType NONLOCAL_STATEMENT = new PyElementType("NONLOCAL_STATEMENT", node -> new PyNonlocalStatementImpl(node));
 
-  PyElementType WITH_ITEM = new PyElementType("WITH_ITEM", PyWithItemImpl::new);
+  PyElementType WITH_ITEM = new PyElementType("WITH_ITEM", node -> new PyWithItemImpl(node));
 
   // Expressions
-  PyElementType EMPTY_EXPRESSION = new PyElementType("EMPTY_EXPRESSION", PyEmptyExpressionImpl::new);
-  PyElementType REFERENCE_EXPRESSION = new PyElementType("REFERENCE_EXPRESSION", PyReferenceExpressionImpl::new);
+  PyElementType EMPTY_EXPRESSION = new PyElementType("EMPTY_EXPRESSION", node -> new PyEmptyExpressionImpl(node));
+  PyElementType REFERENCE_EXPRESSION = new PyElementType("REFERENCE_EXPRESSION", node -> new PyReferenceExpressionImpl(node));
 
-  PyElementType INTEGER_LITERAL_EXPRESSION = new PyElementType("INTEGER_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl::new);
-  PyElementType FLOAT_LITERAL_EXPRESSION = new PyElementType("FLOAT_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl::new);
-  PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl::new);
-  PyElementType STRING_LITERAL_EXPRESSION = new PyElementType("STRING_LITERAL_EXPRESSION", PyStringLiteralExpressionImpl::new);
-  PyElementType NONE_LITERAL_EXPRESSION = new PyElementType("NONE_LITERAL_EXPRESSION", PyNoneLiteralExpressionImpl::new);
-  PyElementType BOOL_LITERAL_EXPRESSION = new PyElementType("BOOL_LITERAL_EXPRESSION", PyBoolLiteralExpressionImpl::new);
-  PyElementType PARENTHESIZED_EXPRESSION = new PyElementType("PARENTHESIZED_EXPRESSION", PyParenthesizedExpressionImpl::new);
-  PyElementType SUBSCRIPTION_EXPRESSION = new PyElementType("SUBSCRIPTION_EXPRESSION", PySubscriptionExpressionImpl::new);
-  PyElementType SLICE_EXPRESSION = new PyElementType("SLICE_EXPRESSION", PySliceExpressionImpl::new);
-  PyElementType SLICE_ITEM = new PyElementType("SLICE_ITEM", PySliceItemImpl::new);
-  PyElementType BINARY_EXPRESSION = new PyElementType("BINARY_EXPRESSION", PyBinaryExpressionImpl::new);
-  PyElementType PREFIX_EXPRESSION = new PyElementType("PREFIX_EXPRESSION", PyPrefixExpressionImpl::new);
-  PyElementType CALL_EXPRESSION = new PyElementType("CALL_EXPRESSION", PyCallExpressionImpl::new);
-  PyElementType LIST_LITERAL_EXPRESSION = new PyElementType("LIST_LITERAL_EXPRESSION", PyListLiteralExpressionImpl::new);
-  PyElementType TUPLE_EXPRESSION = new PyElementType("TUPLE_EXPRESSION", PyTupleExpressionImpl::new);
-  PyElementType KEYWORD_ARGUMENT_EXPRESSION = new PyElementType("KEYWORD_ARGUMENT_EXPRESSION", PyKeywordArgumentImpl::new);
-  PyElementType STAR_ARGUMENT_EXPRESSION = new PyElementType("STAR_ARGUMENT_EXPRESSION", PyStarArgumentImpl::new);
-  PyElementType LAMBDA_EXPRESSION = new PyElementType("LAMBDA_EXPRESSION", PyLambdaExpressionImpl::new);
-  PyElementType LIST_COMP_EXPRESSION = new PyElementType("LIST_COMP_EXPRESSION", PyListCompExpressionImpl::new);
-  PyElementType DICT_LITERAL_EXPRESSION = new PyElementType("DICT_LITERAL_EXPRESSION", PyDictLiteralExpressionImpl::new);
-  PyElementType KEY_VALUE_EXPRESSION = new PyElementType("KEY_VALUE_EXPRESSION", PyKeyValueExpressionImpl::new);
-  PyElementType REPR_EXPRESSION = new PyElementType("REPR_EXPRESSION", PyReprExpressionImpl::new);
-  PyElementType GENERATOR_EXPRESSION = new PyElementType("GENERATOR_EXPRESSION", PyGeneratorExpressionImpl::new);
-  PyElementType CONDITIONAL_EXPRESSION = new PyElementType("CONDITIONAL_EXPRESSION", PyConditionalExpressionImpl::new);
-  PyElementType YIELD_EXPRESSION = new PyElementType("YIELD_EXPRESSION", PyYieldExpressionImpl::new);
-  PyElementType STAR_EXPRESSION = new PyElementType("STAR_EXPRESSION", PyStarExpressionImpl::new);
-  PyElementType DOUBLE_STAR_EXPRESSION = new PyElementType("DOUBLE_STAR_EXPRESSION", PyDoubleStarExpressionImpl::new);
-  PyElementType ASSIGNMENT_EXPRESSION = new PyElementType("ASSIGNMENT_EXPRESSION", PyAssignmentExpressionImpl::new);
+  PyElementType INTEGER_LITERAL_EXPRESSION = new PyElementType("INTEGER_LITERAL_EXPRESSION", node -> new PyNumericLiteralExpressionImpl(node));
+  PyElementType FLOAT_LITERAL_EXPRESSION = new PyElementType("FLOAT_LITERAL_EXPRESSION", node -> new PyNumericLiteralExpressionImpl(node));
+  PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", node -> new PyNumericLiteralExpressionImpl(node));
+  PyElementType STRING_LITERAL_EXPRESSION = new PyElementType("STRING_LITERAL_EXPRESSION", node -> new PyStringLiteralExpressionImpl(node));
+  PyElementType NONE_LITERAL_EXPRESSION = new PyElementType("NONE_LITERAL_EXPRESSION", node -> new PyNoneLiteralExpressionImpl(node));
+  PyElementType BOOL_LITERAL_EXPRESSION = new PyElementType("BOOL_LITERAL_EXPRESSION", node -> new PyBoolLiteralExpressionImpl(node));
+  PyElementType PARENTHESIZED_EXPRESSION = new PyElementType("PARENTHESIZED_EXPRESSION", node -> new PyParenthesizedExpressionImpl(node));
+  PyElementType SUBSCRIPTION_EXPRESSION = new PyElementType("SUBSCRIPTION_EXPRESSION", node -> new PySubscriptionExpressionImpl(node));
+  PyElementType SLICE_EXPRESSION = new PyElementType("SLICE_EXPRESSION", node -> new PySliceExpressionImpl(node));
+  PyElementType SLICE_ITEM = new PyElementType("SLICE_ITEM", node -> new PySliceItemImpl(node));
+  PyElementType BINARY_EXPRESSION = new PyElementType("BINARY_EXPRESSION", node -> new PyBinaryExpressionImpl(node));
+  PyElementType PREFIX_EXPRESSION = new PyElementType("PREFIX_EXPRESSION", node -> new PyPrefixExpressionImpl(node));
+  PyElementType CALL_EXPRESSION = new PyElementType("CALL_EXPRESSION", node -> new PyCallExpressionImpl(node));
+  PyElementType LIST_LITERAL_EXPRESSION = new PyElementType("LIST_LITERAL_EXPRESSION", node -> new PyListLiteralExpressionImpl(node));
+  PyElementType TUPLE_EXPRESSION = new PyElementType("TUPLE_EXPRESSION", node -> new PyTupleExpressionImpl(node));
+  PyElementType KEYWORD_ARGUMENT_EXPRESSION = new PyElementType("KEYWORD_ARGUMENT_EXPRESSION", node -> new PyKeywordArgumentImpl(node));
+  PyElementType STAR_ARGUMENT_EXPRESSION = new PyElementType("STAR_ARGUMENT_EXPRESSION", node -> new PyStarArgumentImpl(node));
+  PyElementType LAMBDA_EXPRESSION = new PyElementType("LAMBDA_EXPRESSION", node -> new PyLambdaExpressionImpl(node));
+  PyElementType LIST_COMP_EXPRESSION = new PyElementType("LIST_COMP_EXPRESSION", node -> new PyListCompExpressionImpl(node));
+  PyElementType DICT_LITERAL_EXPRESSION = new PyElementType("DICT_LITERAL_EXPRESSION", node -> new PyDictLiteralExpressionImpl(node));
+  PyElementType KEY_VALUE_EXPRESSION = new PyElementType("KEY_VALUE_EXPRESSION", node -> new PyKeyValueExpressionImpl(node));
+  PyElementType REPR_EXPRESSION = new PyElementType("REPR_EXPRESSION", node -> new PyReprExpressionImpl(node));
+  PyElementType GENERATOR_EXPRESSION = new PyElementType("GENERATOR_EXPRESSION", node -> new PyGeneratorExpressionImpl(node));
+  PyElementType CONDITIONAL_EXPRESSION = new PyElementType("CONDITIONAL_EXPRESSION", node -> new PyConditionalExpressionImpl(node));
+  PyElementType YIELD_EXPRESSION = new PyElementType("YIELD_EXPRESSION", node -> new PyYieldExpressionImpl(node));
+  PyElementType STAR_EXPRESSION = new PyElementType("STAR_EXPRESSION", node -> new PyStarExpressionImpl(node));
+  PyElementType DOUBLE_STAR_EXPRESSION = new PyElementType("DOUBLE_STAR_EXPRESSION", node -> new PyDoubleStarExpressionImpl(node));
+  PyElementType ASSIGNMENT_EXPRESSION = new PyElementType("ASSIGNMENT_EXPRESSION", node -> new PyAssignmentExpressionImpl(node));
 
-  PyElementType SET_LITERAL_EXPRESSION = new PyElementType("SET_LITERAL_EXPRESSION", PySetLiteralExpressionImpl::new);
-  PyElementType SET_COMP_EXPRESSION = new PyElementType("SET_COMP_EXPRESSION", PySetCompExpressionImpl::new);
-  PyElementType DICT_COMP_EXPRESSION = new PyElementType("DICT_COMP_EXPRESSION", PyDictCompExpressionImpl::new);
+  PyElementType SET_LITERAL_EXPRESSION = new PyElementType("SET_LITERAL_EXPRESSION", node -> new PySetLiteralExpressionImpl(node));
+  PyElementType SET_COMP_EXPRESSION = new PyElementType("SET_COMP_EXPRESSION", node -> new PySetCompExpressionImpl(node));
+  PyElementType DICT_COMP_EXPRESSION = new PyElementType("DICT_COMP_EXPRESSION", node -> new PyDictCompExpressionImpl(node));
 
   TokenSet STATEMENT_LISTS = TokenSet.create(STATEMENT_LIST);
 
@@ -133,16 +133,16 @@ public interface PyElementTypes {
                                        PyTokenTypes.AWAIT_KEYWORD);
 
   // Parts
-  PyElementType IF_PART_IF = new PyElementType("IF_IF", PyIfPartIfImpl::new);
-  PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", PyIfPartElifImpl::new);
+  PyElementType IF_PART_IF = new PyElementType("IF_IF", node -> new PyIfPartIfImpl(node));
+  PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", node -> new PyIfPartElifImpl(node));
 
-  PyElementType FOR_PART = new PyElementType("FOR_PART", PyForPartImpl::new);
-  PyElementType WHILE_PART = new PyElementType("WHILE_PART", PyWhilePartImpl::new);
+  PyElementType FOR_PART = new PyElementType("FOR_PART", node -> new PyForPartImpl(node));
+  PyElementType WHILE_PART = new PyElementType("WHILE_PART", node -> new PyWhilePartImpl(node));
 
-  PyElementType TRY_PART = new PyElementType("TRY_PART", PyTryPartImpl::new);
-  PyElementType FINALLY_PART = new PyElementType("FINALLY_PART", PyFinallyPartImpl::new);
+  PyElementType TRY_PART = new PyElementType("TRY_PART", node -> new PyTryPartImpl(node));
+  PyElementType FINALLY_PART = new PyElementType("FINALLY_PART", node -> new PyFinallyPartImpl(node));
 
-  PyElementType ELSE_PART = new PyElementType("ELSE_PART", PyElsePartImpl::new);
+  PyElementType ELSE_PART = new PyElementType("ELSE_PART", node -> new PyElsePartImpl(node));
 
   TokenSet PARTS = TokenSet.create(IF_PART_IF, IF_PART_ELIF, FOR_PART, WHILE_PART, TRY_PART, FINALLY_PART, ELSE_PART, EXCEPT_PART);
   TokenSet ELIFS = TokenSet.create(IF_PART_ELIF);
@@ -150,7 +150,7 @@ public interface PyElementTypes {
   TokenSet CLASS_OR_FUNCTION = TokenSet.create(CLASS_DECLARATION, FUNCTION_DECLARATION);
   TokenSet IMPORT_STATEMENTS = TokenSet.create(IMPORT_STATEMENT, FROM_IMPORT_STATEMENT);
 
-  PyElementType FSTRING_NODE = new PyElementType("FSTRING_NODE", PyFormattedStringElementImpl::new);
-  PyElementType FSTRING_FRAGMENT = new PyElementType("FSTRING_FRAGMENT", PyFStringFragmentImpl::new);
-  PyElementType FSTRING_FRAGMENT_FORMAT_PART = new PyElementType("FSTRING_FRAGMENT_FORMAT_PART", PyFStringFragmentFormatPartImpl::new);
+  PyElementType FSTRING_NODE = new PyElementType("FSTRING_NODE", node -> new PyFormattedStringElementImpl(node));
+  PyElementType FSTRING_FRAGMENT = new PyElementType("FSTRING_FRAGMENT", node -> new PyFStringFragmentImpl(node));
+  PyElementType FSTRING_FRAGMENT_FORMAT_PART = new PyElementType("FSTRING_FRAGMENT_FORMAT_PART", node -> new PyFStringFragmentFormatPartImpl(node));
 }

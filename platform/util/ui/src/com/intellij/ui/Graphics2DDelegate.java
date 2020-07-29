@@ -120,7 +120,7 @@ public class Graphics2DDelegate extends Graphics2D{
 
   @Override
   public void drawLine(int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint((Graphics2D)myDelegate, x1, y1, x2, y2);
+    LinePainter2D.paint(myDelegate, x1, y1, x2, y2);
   }
 
   @Override

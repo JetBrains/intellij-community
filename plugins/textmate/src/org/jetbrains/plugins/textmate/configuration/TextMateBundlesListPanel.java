@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +56,7 @@ public class TextMateBundlesListPanel implements Disposable {
       }
     };
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    new ListSpeedSearch<>(myBundlesList, (Function<JCheckBox, String>)box -> box.getText());
+    new ListSpeedSearch<>(myBundlesList, box -> box.getText());
   }
 
   private static boolean isBuiltin(BundleConfigBean bean) {

@@ -335,4 +335,5 @@
   <action id="MoveStatementUp"/>
   <action id="MoveStatementDown"/>
   <action id="ToggleRenderedDocPresentation"/>
+  <action id="EditorAddCaretPerSelectedLine"/>
 </keymap>

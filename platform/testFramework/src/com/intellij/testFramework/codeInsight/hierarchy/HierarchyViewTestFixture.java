@@ -16,7 +16,7 @@ import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class HierarchyViewTestFixture {
+public final class HierarchyViewTestFixture {
   private static final String NODE_ELEMENT_NAME = "node";
   private static final String ANY_NODES_ELEMENT_NAME = "any";
   private static final String TEXT_ATTR_NAME = "text";

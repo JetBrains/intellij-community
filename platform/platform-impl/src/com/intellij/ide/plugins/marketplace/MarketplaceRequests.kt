@@ -276,6 +276,29 @@ open class MarketplaceRequests {
     return data?.let { loadPluginDescriptor(id, it, indicator) }
   }
 
+  private fun getCompatibleUpdatesByModules(module: String, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> = try {
+    val data = objectMapper.writeValueAsString(
+      CompatibleUpdateForModuleRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), module)
+    )
+    val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
+    HttpRequests
+      .post(url, HttpRequests.JSON_CONTENT_TYPE)
+      .productNameAsUserAgent()
+      .throwStatusCodeException(false)
+      .connect {
+        it.write(data)
+        objectMapper
+          .readValue(
+            it.inputStream,
+            object : TypeReference<List<IdeCompatibleUpdate>>() {}
+          )
+      }
+  }
+  catch (e: Exception) {
+    LOG.error("Can not get compatible update by module from Marketplace", e)
+    emptyList()
+  }
+
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 
   private fun parseJsonPluginMeta(reader: Reader) = objectMapper.readValue(reader, IntellijUpdateMetadata::class.java)
@@ -360,6 +383,7 @@ open class MarketplaceRequests {
   }
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
+  private data class CompatibleUpdateForModuleRequest(val build: String, val module: String)
 
   private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
     if (LOG.isDebugEnabled) {

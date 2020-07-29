@@ -1,21 +1,35 @@
 package circlet.vcs.share
 
-import circlet.client.*
-import circlet.client.api.*
-import circlet.components.*
-import circlet.platform.client.*
-import com.intellij.openapi.*
-import com.intellij.openapi.rd.*
-import com.intellij.openapi.ui.*
-import com.intellij.ui.components.*
-import com.intellij.ui.components.panels.*
+import circlet.client.api.PR_Project
+import circlet.client.api.ProjectKey
+import circlet.client.api.Projects
+import circlet.client.pr
+import circlet.components.circletWorkspace
+import circlet.platform.client.resolve
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.*
-import libraries.coroutines.extra.*
-import runtime.*
-import java.util.concurrent.*
-import javax.swing.*
-import javax.swing.text.*
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBUI
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.usingSource
+import runtime.RpcException
+import runtime.Ui
+import runtime.message
+import java.util.concurrent.CancellationException
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import javax.swing.text.AbstractDocument
+import javax.swing.text.AttributeSet
+import javax.swing.text.DocumentFilter
 
 internal class CircletCreateProjectDialog(parent: JComponent) : DialogWrapper(parent, false) {
     private val lifetime: LifetimeSource = LifetimeSource()
@@ -39,7 +53,7 @@ internal class CircletCreateProjectDialog(parent: JComponent) : DialogWrapper(pa
         title = "Create New Project on Space"
         setOKButtonText("Create")
         init()
-        disposable.attachChild(Disposable { lifetime.terminate() })
+        Disposer.register(disposable, Disposable { lifetime.terminate() })
     }
 
     override fun doOKAction() {

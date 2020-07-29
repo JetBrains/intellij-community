@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.FileContentHashing
 import com.intellij.psi.stubs.HashCodeDescriptor
@@ -15,6 +16,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.PersistentHashMap
 import java.io.File
+import java.io.FileFilter
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
@@ -46,10 +48,15 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   internal fun init() {
     myOpenCloseLock.writeLock().withLock {
       if (USE_PREBUILT_INDEX) {
-        val indexesRoot = findPrebuiltIndicesRoot()
+        var indexesRoot = findPrebuiltIndicesRoot()
         try {
           if (indexesRoot != null && indexesRoot.exists()) {
+            // we should copy prebuilt indexes to a writable folder
+            indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
+            // otherwise we can get access denied error, because persistent hash map opens file for read and write
+
             myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
+
             LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
           }
           else {
@@ -102,6 +109,15 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   }
 
   protected abstract fun getIndexRoot(): File
+
+  @Throws(IOException::class)
+  private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
+    val indexRoot = getIndexRoot()
+
+    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot, FileFilter { f -> f.name.startsWith(indexName) })
+
+    return indexRoot
+  }
 
   private fun findPrebuiltIndicesRoot(): File? {
     val path: String? = System.getProperty(PrebuiltStubsProviderBase.PREBUILT_INDICES_PATH_PROPERTY)

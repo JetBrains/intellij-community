@@ -9,7 +9,7 @@ public interface MessageView  {
 
   void runWhenInitialized(@NotNull Runnable runnable);
 
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 

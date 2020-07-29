@@ -115,6 +115,36 @@ public class WhileCanBeForeach {
         iterator.remove();
       }
   }
+
+  void insideTryBlockPositive1() {
+    try {
+      Iterator<String> iterator = Arrays.asList("1", "2").iterator();
+      <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+        System.out.println(iterator.next());
+      }
+    } catch (Exception e) {}
+  }
+
+  void insideTryBlockPositive2() {
+    Iterator<String> iterator = Arrays.asList("1", "2").iterator();
+    <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+      try {
+        System.out.println("Some string");
+      } catch (Exception e) {
+      }
+      System.out.println(iterator.next());
+    }
+  }
+
+  void insideTryBlockNegative() {
+    Iterator<String> iterator = Arrays.asList("1", "2").iterator();
+    while (iterator.hasNext()) {
+      try {
+        System.out.println(iterator.next());
+      } catch (Exception e) {
+      }
+    }
+  }
 }
 class Base implements Iterable<String> {
   @Override

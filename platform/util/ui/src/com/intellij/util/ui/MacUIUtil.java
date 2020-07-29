@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.MacUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,9 +11,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.GeneralPath;
 
-public class MacUIUtil {
+public final class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";

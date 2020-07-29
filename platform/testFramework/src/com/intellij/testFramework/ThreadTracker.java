@@ -30,9 +30,6 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-/**
- * @author cdr
- */
 public final class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Map<String, Thread> before;
@@ -85,11 +82,13 @@ public final class ThreadTracker {
     "Monitor Ctrl-Break",
     "Netty ",
     "ObjectCleanerThread",
+    "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
     "Reference Handler",
     "RMI GC Daemon",
     "RMI TCP ",
     "SeedGenerator Thread", // Android Studio: for failures on remote bazel execution
     "Signal Dispatcher",
+    "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
     "timer-int", //serverIm,
     "timer-sys", //clientim,
     "TimerQueue",

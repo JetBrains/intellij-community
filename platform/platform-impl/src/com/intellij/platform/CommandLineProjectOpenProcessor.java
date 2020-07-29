@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 /**
  * Handles requests to open a non-project file from the command line. This interface needs to be implemented by extensions registered
@@ -21,17 +22,15 @@ public interface CommandLineProjectOpenProcessor {
    * @param tempProject if true, always opens the file in a new temporary project. If false, searches the parent directories of the file
    *                    for a .idea subdirectory, and if found, opens that directory.
    */
-  @Nullable
-  Project openProjectAndFile(@NotNull VirtualFile file, int line, int column, boolean tempProject);
+  @Nullable Project openProjectAndFile(@NotNull Path file, int line, int column, boolean tempProject);
 
   static CommandLineProjectOpenProcessor getInstance() {
     CommandLineProjectOpenProcessor extension = getInstanceIfExists();
-    return extension != null ? extension : PlatformProjectOpenProcessor.getInstance();
+    return extension == null ? PlatformProjectOpenProcessor.getInstance() : extension;
   }
 
-  @Nullable
-  static CommandLineProjectOpenProcessor getInstanceIfExists() {
-    for (ProjectOpenProcessor extension : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
+  @Nullable static CommandLineProjectOpenProcessor getInstanceIfExists() {
+    for (ProjectOpenProcessor extension : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
       if (extension instanceof CommandLineProjectOpenProcessor) {
         return (CommandLineProjectOpenProcessor)extension;
       }

@@ -18,14 +18,14 @@ package com.intellij.junit4;
 import org.junit.internal.runners.SuiteMethod;
 
 class ClassAwareSuiteMethod extends SuiteMethod {
-  private final Class myKlass;
+  private final Class<?> myKlass;
 
-  ClassAwareSuiteMethod(Class klass) throws Throwable {
+  ClassAwareSuiteMethod(Class<?> klass) throws Throwable {
     super(klass);
     myKlass = klass;
   }
 
-  public Class getKlass() {
+  public Class<?> getKlass() {
     return myKlass;
   }
 }

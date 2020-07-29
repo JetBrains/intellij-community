@@ -10,11 +10,9 @@ import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import org.jetbrains.annotations.Nullable
 import java.awt.Dimension
 import javax.swing.JCheckBox
-import javax.swing.JList
 import javax.swing.ListSelectionModel
 
 /**
@@ -41,7 +39,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
                                           { settings.SYSTEM_NOTIFICATIONS = it }).component
       }
       row {
-        notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0))
+        notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
         cell {
           scrollPane(notificationsList)
         }

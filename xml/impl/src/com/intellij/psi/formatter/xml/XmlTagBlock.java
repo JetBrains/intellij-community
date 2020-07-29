@@ -284,7 +284,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
                 // out regular block ends within or after the next injected block - add a split if it's not empty
                 if (lastInjection < nextRange.getStartOffset()) {
                   ASTNode node = notNull(injectionHost.findLeafElementAt(lastInjection - injectionHostOffset), injectionHost);
-                  result.add(createSimpleChild(node, reg.getIndent(), reg.getWrap(), reg.getAlignment(),
+                  result.add(createSimpleChild(node, reg.getIndent(), null, reg.getAlignment(),
                                                new TextRange(lastInjection, nextRange.getStartOffset())));
                 }
                 lastInjection = nextRange.getEndOffset();
@@ -301,7 +301,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
             // which does not end within or after the next injected block - add a split
             if (lastInjection < regRange.getEndOffset()) {
               ASTNode node = notNull(injectionHost.findLeafElementAt(lastInjection - injectionHostOffset), injectionHost);
-              result.add(createSimpleChild(node, reg.getIndent(), reg.getWrap(), reg.getAlignment(),
+              result.add(createSimpleChild(node, reg.getIndent(), null, reg.getAlignment(),
                                            new TextRange(lastInjection, regRange.getEndOffset())));
             }
             i++;

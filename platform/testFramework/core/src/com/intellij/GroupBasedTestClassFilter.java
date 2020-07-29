@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  *   </li>
  * </ul>
  */
-public class GroupBasedTestClassFilter extends TestClassesFilter {
+public final class GroupBasedTestClassFilter extends TestClassesFilter {
   /**
    * Holds reserved test group name that serves as a negation of matching result.
    *
@@ -49,7 +49,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myTestGroupNames = new THashSet<>(testGroupNames);
+    myTestGroupNames = new HashSet<>(testGroupNames);
 
     for (String groupName : filters.keySet()) {
       Collection<String> groupFilters = filters.get(groupName);

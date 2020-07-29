@@ -8,7 +8,7 @@ import org.testng.remote.RemoteArgs;
 import java.util.Arrays;
 
 public class TestNGForkedStarter  {
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(null);
     CommandLineArgs cla = new CommandLineArgs();
     RemoteArgs ra = new RemoteArgs();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ant.ReflectedProject;
@@ -35,7 +35,7 @@ import static org.jetbrains.plugins.groovy.gant.AntBuilderMethod.methods;
 /**
  * @author ilyas, peter
  */
-public class AntTasksProvider {
+public final class AntTasksProvider {
   private static final Logger LOG = Logger.getInstance(AntTasksProvider.class);
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Object ourLock = new Object();
@@ -69,7 +69,7 @@ public class AntTasksProvider {
         methods.addAll(methods(file, name, antObjects.get(name), mapType, stringType, closureType));
       }
       return CachedValueProvider.Result
-        .create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        .create(methods, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
     }, false);
   }
 

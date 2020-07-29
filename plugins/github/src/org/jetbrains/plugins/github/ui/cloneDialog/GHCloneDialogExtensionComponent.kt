@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
@@ -29,7 +28,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.IconUtil
@@ -55,13 +53,11 @@ import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.*
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
-import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Paths
@@ -73,7 +69,6 @@ internal class GHCloneDialogExtensionComponent(
   private val project: Project,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
-  private val apiExecutorFactory: GithubApiRequestExecutor.Factory,
   private val accountInformationProvider: GithubAccountInformationProvider,
   private val avatarLoader: CachingGithubUserAvatarLoader,
   private val imageResizer: GithubImageResizer
@@ -200,11 +195,9 @@ internal class GHCloneDialogExtensionComponent(
   }
 
   private fun switchToLogin(account: GithubAccount? = null) {
-    val errorPanel = JPanel(VerticalLayout(10))
-    val githubLoginPanel = buildGitHubLoginPanel(account, errorPanel)
-    val loginPanel = JBUI.Panels.simplePanel()
-      .addToTop(githubLoginPanel)
-      .addToCenter(errorPanel)
+    val loginPanel = GHCloneDialogLoginPanel(account)
+    loginPanel.setCancelHandler { switchToRepositories() }
+
     wrapper.setContent(loginPanel)
     wrapper.repaint()
     inLoginState = true
@@ -387,47 +380,6 @@ internal class GHCloneDialogExtensionComponent(
 
   override fun getPreferredFocusedComponent(): JComponent? {
     return searchField
-  }
-
-  private fun buildGitHubLoginPanel(account: GithubAccount?,
-                                    errorPanel: JPanel): GithubLoginPanel {
-    val alwaysUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true }
-    return GithubLoginPanel(
-      apiExecutorFactory,
-      if (account == null) authenticationManager::isAccountUnique else alwaysUnique,
-      false
-    ).apply {
-      if (account != null) {
-        setCredentials(account.name, null, false)
-        setServer(account.server.toUrl(), false)
-      }
-
-      setLoginListener(ActionListener {
-        val modalityState = ModalityState.stateForComponent(this)
-        acquireLoginAndToken(EmptyProgressIndicator(modalityState))
-          .completionOnEdt(modalityState) { errorPanel.removeAll() }
-          .errorOnEdt(modalityState) {
-            for (validationInfo in doValidateAll()) {
-              val component = SimpleColoredComponent()
-              component.append(validationInfo.message, SimpleTextAttributes.ERROR_ATTRIBUTES)
-              errorPanel.add(component)
-              errorPanel.revalidate()
-            }
-            errorPanel.repaint()
-          }
-          .successOnEdt(modalityState) { (login, token) ->
-            if (account != null) {
-              authenticationManager.updateAccountToken(account, token)
-            }
-            else {
-              authenticationManager.registerAccount(login, getServer().host, token)
-            }
-          }
-      })
-      setCancelListener(ActionListener { switchToRepositories() })
-      setLoginButtonVisible(true)
-      setCancelButtonVisible(authenticationManager.hasAccounts())
-    }
   }
 
   private fun updateSelectedUrl() {

@@ -28,6 +28,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +37,14 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.*;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link LibraryEx} should be used instead.
+ */
+@ApiStatus.Internal
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
   private static final Logger LOG = Logger.getInstance(LibraryImpl.class);
-  @NonNls public static final String LIBRARY_NAME_ATTR = "name";
-  @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
-  @NonNls public static final String ROOT_PATH_ELEMENT = "root";
-  @NonNls public static final String ELEMENT = "library";
-  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
-  public static final String EXCLUDED_ROOTS_TAG = "excluded";
+  private static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(3);
@@ -116,7 +117,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Nullable
   private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
-    String typeString = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    String typeString = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeString == null) return null;
     LibraryKind kind = LibraryKind.findById(typeString);
     if (kind == null) {
@@ -293,7 +294,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void readProperties(@NotNull Element element) {
-    final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    final String typeId = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeId == null) return;
 
     myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
@@ -313,7 +314,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void readName(@NotNull Element element) {
-    myName = element.getAttributeValue(LIBRARY_NAME_ATTR);
+    myName = element.getAttributeValue(JpsLibraryTableSerializer.NAME_ATTRIBUTE);
   }
 
   private void readRoots(@NotNull Element element) throws InvalidDataException {
@@ -355,12 +356,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public void writeExternal(Element rootElement) {
     checkDisposed();
 
-    Element element = new Element(ELEMENT);
+    Element element = new Element(JpsLibraryTableSerializer.LIBRARY_TAG);
     if (myName != null) {
-      element.setAttribute(LIBRARY_NAME_ATTR, myName);
+      element.setAttribute(JpsLibraryTableSerializer.NAME_ATTRIBUTE, myName);
     }
     if (myKind != null) {
-      element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
+      element.setAttribute(JpsLibraryTableSerializer.TYPE_ATTRIBUTE, myKind.getKindId());
       LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {

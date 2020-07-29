@@ -5,32 +5,36 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.StartupUiUtil;
+import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 class MarkdownLAFListener implements LafManagerListener {
-  private boolean isLastLAFWasDarcula = StartupUiUtil.isUnderDarcula();
-
   @Override
   public void lookAndFeelChanged(@NotNull LafManager source) {
     final UIManager.LookAndFeelInfo newLookAndFeel = source.getCurrentLookAndFeel();
     final boolean isNewLookAndFeelDarcula = isDarcula(newLookAndFeel);
 
-    if (isNewLookAndFeelDarcula == isLastLAFWasDarcula) {
-      return;
-    }
-
-    updateCssSettingsForced(isNewLookAndFeelDarcula);
+    reinit(isNewLookAndFeelDarcula);
   }
 
-  public void updateCssSettingsForced(boolean isDarcula) {
+  /**
+   * Reinitialize plugin after change in look and feel.
+   * <p>
+   * For example, it would reinitialize preview and clear caches
+   */
+  public static void reinit(boolean isDarcula) {
+    MarkdownCodeFencePluginGeneratingProvider.Companion.notifyLAFChanged();
+    updateCssSettingsForced(isDarcula);
+  }
+
+  private static void updateCssSettingsForced(boolean isDarcula) {
     final MarkdownCssSettings currentCssSettings = MarkdownApplicationSettings.getInstance().getMarkdownCssSettings();
     final String stylesheetUri = StringUtil.isEmpty(currentCssSettings.getStylesheetUri())
-                       ? MarkdownCssSettings.getDefaultCssSettings(isDarcula).getStylesheetUri()
-                       : currentCssSettings.getStylesheetUri();
+                                 ? MarkdownCssSettings.getDefaultCssSettings(isDarcula).getStylesheetUri()
+                                 : currentCssSettings.getStylesheetUri();
 
     MarkdownApplicationSettings.getInstance().setMarkdownCssSettings(new MarkdownCssSettings(
       currentCssSettings.isUriEnabled(),
@@ -38,9 +42,9 @@ class MarkdownLAFListener implements LafManagerListener {
       currentCssSettings.isTextEnabled(),
       currentCssSettings.getStylesheetText()
     ));
-    isLastLAFWasDarcula = isDarcula;
 
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)
+    ApplicationManager.getApplication().getMessageBus()
+      .syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)
       .settingsChanged(MarkdownApplicationSettings.getInstance());
   }
 

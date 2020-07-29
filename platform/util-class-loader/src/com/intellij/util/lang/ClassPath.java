@@ -282,7 +282,7 @@ public final class ClassPath {
     }
   }
 
-  private class MyEnumeration implements Enumeration<URL> {
+  private final class MyEnumeration implements Enumeration<URL> {
     private int myIndex;
     private Resource myRes;
     @NotNull
@@ -362,7 +362,7 @@ public final class ClassPath {
     }
   }
 
-  private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
+  private static final class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
     Resource process(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath, @NotNull String shortName) {
       return loader.containsName(s, shortName) ? findInLoader(loader, s, classPath) : null;
@@ -428,7 +428,7 @@ public final class ClassPath {
 
   static final boolean ourClassLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
-  static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.synchronizedSet(new LinkedHashSet<String>()) : null;
+  private static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.synchronizedSet(new LinkedHashSet<String>()) : null;
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
   private static final ThreadLocal<Boolean> ourDoingTiming = new ThreadLocal<Boolean>();

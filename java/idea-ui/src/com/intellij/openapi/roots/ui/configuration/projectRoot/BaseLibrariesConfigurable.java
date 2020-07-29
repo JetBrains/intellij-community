@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
@@ -379,7 +378,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);
       } else {
-        e.getPresentation().setEnabled(getSelectedObject() instanceof LibraryImpl);
+        e.getPresentation().setEnabled(getSelectedObject() instanceof LibraryEx);
       }
     }
   }

@@ -216,7 +216,7 @@ public class GroovyTraitFieldsFileIndex
 
     @Override
     public int hashCode() {
-      int result = (int)flags;
+      int result = flags;
       result = 31 * result + typeString.hashCode();
       result = 31 * result + name.hashCode();
       return result;

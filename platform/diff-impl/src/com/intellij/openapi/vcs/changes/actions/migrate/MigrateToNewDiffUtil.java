@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class MigrateToNewDiffUtil {
+public final class MigrateToNewDiffUtil {
   @NotNull
   public static DiffRequest convertRequest(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();

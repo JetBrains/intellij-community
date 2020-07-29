@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -19,13 +20,11 @@ import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.psi.util.PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
-
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Collections.singletonList(JAVA_STRUCTURE_MODIFICATION_COUNT);
+  private final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);

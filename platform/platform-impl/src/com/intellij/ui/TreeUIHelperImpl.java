@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
@@ -42,7 +41,7 @@ public class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public <T> void installListSpeedSearch(JList<T> list, Convertor<? super T, String> convertor) {
-    new ListSpeedSearch<>(list, (Function<T, String>)convertor::convert);
+    new ListSpeedSearch<>(list, convertor::convert);
   }
 
   @Override

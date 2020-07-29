@@ -4,7 +4,7 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class DiffContentUtil {
+public final class DiffContentUtil {
   public static FileType getContentType(VirtualFile file) {
     if (file == null) return null;
     return file.getFileType();

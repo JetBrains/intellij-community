@@ -6,17 +6,18 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.count;
 
-public class ChangesBrowserSpecificFilePathsNode extends ChangesBrowserNode<Object> {
+public class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserNode<T> {
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
   private final int myManyFileCount;
   private final int myManyDirectoryCount;
 
-  protected ChangesBrowserSpecificFilePathsNode(Object userObject, @NotNull List<FilePath> files, @NotNull Runnable shower) {
+  protected ChangesBrowserSpecificFilePathsNode(T userObject, @NotNull Collection<FilePath> files, @NotNull Runnable shower) {
     super(userObject);
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
     myManyDirectoryCount = count(files, it -> it.isDirectory());

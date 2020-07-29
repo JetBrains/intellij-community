@@ -23,7 +23,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -54,7 +53,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -632,7 +630,9 @@ public final class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    });
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -1100,14 +1100,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    OpenProjectTask options = new OpenProjectTask();
-    // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
-    options.isRefreshVfsNeeded = false;
-    Project project = PlatformProjectOpenProcessor.openExistingProject(path, options);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      dispatchAllInvocationEventsInIdeEventQueue();
-    }
-    return Objects.requireNonNull(project);
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, FixtureRuleKt.createTestOpenProjectOptions()));
   }
 
   public static void openProject(@NotNull Project project) {
@@ -1124,5 +1117,10 @@ public final class PlatformTestUtil {
     Project project = FixtureRuleKt.createHeavyProject(file, /* useDefaultProjectAsTemplate = */ false);
     Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
     return project;
+  }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
+    ProjectRule.checkThatNoOpenProjects();
   }
 }

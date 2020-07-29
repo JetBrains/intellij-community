@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.impl;
 
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ConversionResultImpl implements ConversionResult {
+public final class ConversionResultImpl implements ConversionResult {
   public static final ConversionResultImpl CONVERSION_NOT_NEEDED = new ConversionResultImpl(false, false, false);
   public static final ConversionResultImpl CONVERSION_CANCELED = new ConversionResultImpl(true, true, false);
   public static final ConversionResultImpl ERROR_OCCURRED = new ConversionResultImpl(true, false, true);
@@ -57,8 +58,8 @@ public class ConversionResultImpl implements ConversionResult {
 
   @Override
   public void postStartupActivity(@NotNull Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isHeadlessEnvironment() || app.isUnitTestMode()) {
       return;
     }
 
@@ -67,20 +68,24 @@ public class ConversionResultImpl implements ConversionResult {
       EditAction.editFilesAndShowErrors(project, changedFiles);
     }
 
-    final List<VirtualFile> createdFiles = findVirtualFiles(myCreatedFiles);
-    if (containsFilesUnderVcs(createdFiles, project)) {
-      final Collection<VirtualFile> selected = AbstractVcsHelper.getInstance(project)
+    List<VirtualFile> createdFiles = findVirtualFiles(myCreatedFiles);
+    if (!containsFilesUnderVcs(createdFiles, project)) {
+      return;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Collection<VirtualFile> selected = AbstractVcsHelper.getInstance(project)
         .selectFilesToProcess(createdFiles, VcsBundle.message("dialog.title.files.created"),
                               VcsBundle.message("label.select.files.to.be.added.to.version.control"), null, null,
                               VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
       if (selected != null && !selected.isEmpty()) {
-        final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<>(selected));
       }
-    }
+    }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
-  private static boolean containsFilesUnderVcs(List<? extends VirtualFile> files, Project project) {
+  private static boolean containsFilesUnderVcs(@NotNull List<VirtualFile> files, Project project) {
     for (VirtualFile file : files) {
       if (ChangesUtil.getVcsForFile(file, project) != null) {
         return true;
@@ -89,8 +94,8 @@ public class ConversionResultImpl implements ConversionResult {
     return false;
   }
 
-  private static List<VirtualFile> findVirtualFiles(Collection<? extends Path> ioFiles) {
-    List<VirtualFile> files = new ArrayList<>();
+  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<Path> ioFiles) {
+    List<VirtualFile> files = new ArrayList<>(ioFiles.size());
     for (Path file : ioFiles) {
       ContainerUtil.addIfNotNull(files, LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString())));
     }

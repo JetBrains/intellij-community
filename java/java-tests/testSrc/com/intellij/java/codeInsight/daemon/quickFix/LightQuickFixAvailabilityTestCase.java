@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * tests corresponding intention for availability only, does not invoke action
- * @author cdr
  */
 public abstract class LightQuickFixAvailabilityTestCase extends LightQuickFixParameterizedTestCase {
   @Override

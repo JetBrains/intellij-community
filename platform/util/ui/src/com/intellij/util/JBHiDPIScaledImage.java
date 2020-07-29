@@ -29,7 +29,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @see #JBHiDPIScaledImage(double, double, int)
    */
   public JBHiDPIScaledImage(int width, int height, int type) {
-    this((double)width, (double)height, type);
+    this(width, (double)height, type);
   }
 
   /**
@@ -47,7 +47,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @see #JBHiDPIScaledImage(Graphics2D, double, double, int, RoundingMode rm)
    */
   public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
-    this(g, (double)width, (double)height, type, RoundingMode.FLOOR);
+    this(g, width, height, type, RoundingMode.FLOOR);
   }
 
   /**
@@ -67,7 +67,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
-    this(gc, (double)width, (double)height, type);
+    this(gc, width, (double)height, type);
   }
 
   /**
@@ -114,7 +114,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @see #JBHiDPIScaledImage(Image, double, double, int)
    */
   public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
-    this(image, (double)width, (double)height, type);
+    this(image, width, (double)height, type);
   }
 
   /**

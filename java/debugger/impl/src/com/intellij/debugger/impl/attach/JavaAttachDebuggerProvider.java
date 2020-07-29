@@ -187,7 +187,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
             try {
               address = param.split("=")[1];
               address = StringUtil.trimStart(address, "*:"); // handle java 9 format: *:5005
-              return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
+              return new DebuggerLocalAttachInfo(socket, address, null, pid, null, false);
             }
             catch (Exception e) {
               LOG.error(e);
@@ -249,7 +249,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
         }
         return new DebuggerLocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")),
                                            StringUtil.substringAfter(property, ":"),
-                                           command, pid, autoAddress);
+                                           command, pid, null, autoAddress);
       }
 
       //do not allow further for idea process
@@ -290,12 +290,14 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static class DebuggerLocalAttachInfo extends LocalAttachInfo {
     private final boolean myUseSocket;
     private final String myAddress;
+    private final String mySessionName;
     private final boolean myAutoAddress;
 
-    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid, boolean autoAddress) {
+    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid, @Nullable String sessionName, boolean autoAddress) {
       super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
+      mySessionName = sessionName;
       myAutoAddress = autoAddress;
     }
 
@@ -323,6 +325,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     String getSessionName() {
+      if (mySessionName != null) {
+        return mySessionName;
+      }
+
       if (myAutoAddress) {
         return super.getSessionName();
       }
@@ -525,8 +531,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  public static void attach(String transport, String address, Project project) {
-    attach(new DebuggerLocalAttachInfo(!"dt_shmem".equals(transport), address, null, null, false), project);
+  public static void attach(String transport, String address, String sessionName, Project project) {
+    attach(new DebuggerLocalAttachInfo(!"dt_shmem".equals(transport), address, null, null, sessionName, false), project);
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {

@@ -51,9 +51,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance(UsagePreviewPanel.class);
   private Editor myEditor;

@@ -227,30 +227,26 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
-    ActionToolbar toolbar = createActionsToolbar(mainGroup);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
+    toolbar.setTargetComponent(this);
 
     Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
 
     DefaultActionGroup rightCornerGroup =
       new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
-    ActionToolbar rightCornerToolbar = createActionsToolbar(rightCornerGroup);
+    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE,
+                                                                                       rightCornerGroup, true);
+    rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
     rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));
     GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
     panel.add(rightCornerToolbar.getComponent());
     return panel;
-  }
-
-  @NotNull
-  private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
-    toolbar.setTargetComponent(this);
-    return toolbar;
   }
 
   @Nullable
@@ -406,9 +402,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         if (visiblePack.getFilters().isEmpty()) {
           statusText.setText(VcsLogBundle.message("vcs.log.no.commits.status")).
             appendSecondaryText(VcsLogBundle.message("vcs.log.commit.status.action"), VcsLogUiUtil.getLinkAttributes(),
-                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
+                                ActionUtil.createActionListener(IdeActions.ACTION_CHECKIN_PROJECT, this,
                                                                 ActionPlaces.UNKNOWN));
-          String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
+          String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHECKIN_PROJECT);
           if (!shortcutText.isEmpty()) {
             statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
           }

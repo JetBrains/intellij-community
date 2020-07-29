@@ -139,7 +139,7 @@
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
@@ -147,6 +147,8 @@
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.filePrediction" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
     <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
     <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />

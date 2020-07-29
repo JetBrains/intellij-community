@@ -138,7 +138,7 @@ public class JavaModuleGraphUtil {
 
   @SuppressWarnings("deprecation")
   private static Object cacheDependency() {
-    return PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
+    return PsiModificationTracker.MODIFICATION_COUNT;
   }
 
   /*

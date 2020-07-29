@@ -40,10 +40,10 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String,
                 @Nls(capitalization = Sentence) description: String? = null,
-                fixOption: FixOption)
+                fixOption: FixOption?)
 
   @CalledInAny
-  fun showError(@Nls(capitalization = Sentence) text: String, fixOption: FixOption) {
+  fun showError(@Nls(capitalization = Sentence) text: String, fixOption: FixOption?) {
     showError(text, null, fixOption)
   }
 
@@ -80,7 +80,8 @@ interface ErrorNotifier {
 
 @CalledInAwt
 internal fun showUnsupportedVersionError(project: Project, version: GitVersion, errorNotifier: ErrorNotifier) {
-  errorNotifier.showError(unsupportedVersionMessage(version), unsupportedVersionDescription(), getLinkToConfigure(project))
+  val description = if (version.type == GitVersion.Type.WSL1) unsupportedWslVersionDescription() else unsupportedVersionDescription()
+  errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))
 }
 
 internal fun unsupportedVersionMessage(version: GitVersion): String =
@@ -88,6 +89,9 @@ internal fun unsupportedVersionMessage(version: GitVersion): String =
 
 internal fun unsupportedVersionDescription(): String =
   GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.presentation)
+
+internal fun unsupportedWslVersionDescription(): String =
+  GitBundle.message("git.executable.validation.error.wsl1.unsupported.message")
 
 internal fun getLinkToConfigure(project: Project): ErrorNotifier.FixOption = ErrorNotifier.FixOption.Configure(project)
 

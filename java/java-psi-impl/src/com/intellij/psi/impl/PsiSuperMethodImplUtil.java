@@ -360,7 +360,7 @@ public class PsiSuperMethodImplUtil {
         }
         return result;
       });
-      return CachedValueProvider.Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
     });
     return signatures.get(resolveScope);
   }

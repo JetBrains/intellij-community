@@ -3,7 +3,6 @@ package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -18,6 +17,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
+import com.intellij.util.indexing.diagnostic.TooLargeForIndexingFile;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,14 +48,14 @@ public final class IndexUpdateRunner {
 
   /**
    * Memory optimization to prevent OutOfMemory on loading file contents.
-   *
+   * <p>
    * "Soft" total limit of bytes loaded into memory in the whole application is {@link #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}.
    * It is "soft" because one (and only one) "indexable" file can exceed this limit.
-   *
+   * <p>
    * "Indexable" file is any file for which {@link FileBasedIndexImpl#isTooLarge(VirtualFile)} returns {@code false}.
    * Note that this method may return {@code false} even for relatively big files with size greater than {@link #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}.
    * This is because for some files (or file types) the size limit is ignored.
-   *
+   * <p>
    * So in its maximum we will load {@code SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY + <size of not "too large" file>}, which seems acceptable,
    * because we have to index this "not too large" file anyway (even if its size is 4 Gb), and {@code SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY}
    * additional bytes are insignificant.
@@ -89,20 +90,44 @@ public final class IndexUpdateRunner {
     else {
       ourIndexingJobs.add(indexingJob);
       try {
+        AtomicInteger numberOfRunningWorkers = new AtomicInteger();
+        Runnable worker = () -> {
+          try {
+            indexJobsFairly();
+          }
+          finally {
+            numberOfRunningWorkers.decrementAndGet();
+          }
+        };
         for (int i = 0; i < myNumberOfIndexingThreads; i++) {
-          myIndexingExecutor.execute(() -> indexJobsFairly());
+          myIndexingExecutor.execute(worker);
+          numberOfRunningWorkers.incrementAndGet();
         }
-        while (!project.isDisposed() && !indexingJob.areAllFilesProcessed()) {
+        while (!project.isDisposed() && !indexingJob.areAllFilesProcessed() && indexingJob.myError.get() == null) {
+          // Add a worker if the previous died for whatever reason, to avoid waiting for nothing.
+          if (numberOfRunningWorkers.get() < myNumberOfIndexingThreads) {
+            myIndexingExecutor.execute(worker);
+            numberOfRunningWorkers.incrementAndGet();
+          }
           indicator.checkCanceled();
           try {
-            //noinspection BusyWait
-            Thread.sleep(10);
+            if (indexingJob.myAllFilesAreProcessedLatch.await(100, TimeUnit.MILLISECONDS)) {
+              break;
+            }
           }
           catch (InterruptedException e) {
             throw new ProcessCanceledException(e);
           }
         }
-      } finally {
+        Throwable error = indexingJob.myError.get();
+        if (error instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException) error;
+        }
+        if (error != null) {
+          throw new RuntimeException("Indexing of " + project.getName() + " has failed", error);
+        }
+      }
+      finally {
         ourIndexingJobs.remove(indexingJob);
       }
     }
@@ -114,7 +139,10 @@ public final class IndexUpdateRunner {
   private void indexJobsFairly() {
     while (!ourIndexingJobs.isEmpty()) {
       for (IndexingJob job : ourIndexingJobs) {
-        if (job.myProject.isDisposed() || job.myNoMoreFilesToProcess.get() || job.myIndicator.isCanceled()) {
+        if (job.myProject.isDisposed()
+            || job.myNoMoreFilesInQueue.get()
+            || job.myIndicator.isCanceled()
+            || job.myError.get() != null) {
           ourIndexingJobs.remove(job);
           continue;
         }
@@ -122,9 +150,7 @@ public final class IndexUpdateRunner {
           indexOneFileOfJob(job);
         }
         catch (Throwable e) {
-          if (!(e instanceof ControlFlowException)) {
-            FileBasedIndexImpl.LOG.warn("Indexing job for " + job.myProject + " has failed", e);
-          }
+          job.myError.compareAndSet(null, e);
           ourIndexingJobs.remove(job);
         }
       }
@@ -139,13 +165,13 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      indexingJob.myStatistics.getNumberOfTooLargeFiles().incrementAndGet();
+      indexingJob.myStatistics.getNumberOfTooLargeForIndexingFiles().incrementAndGet();
+      indexingJob.myStatistics.getTooLargeForIndexingFiles().addElement(new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength()));
       FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
       return;
     }
     catch (FailedToLoadContentException e) {
       indexingJob.oneMoreFileProcessed();
-      indexingJob.myStatistics.getNumberOfFailedToLoadFiles().incrementAndGet();
       logFailedToLoadContentException(e);
       return;
     }
@@ -154,7 +180,7 @@ public final class IndexUpdateRunner {
     }
 
     if (loadingResult == null) {
-      indexingJob.myNoMoreFilesToProcess.set(true);
+      indexingJob.myNoMoreFilesInQueue.set(true);
       return;
     }
 
@@ -179,7 +205,6 @@ public final class IndexUpdateRunner {
     }
     catch (Throwable e) {
       indexingJob.oneMoreFileProcessed();
-      indexingJob.myStatistics.getNumberOfFailedToIndexFiles().incrementAndGet();
       FileBasedIndexImpl.LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" +
                                    "To reindex this file IDEA has to be restarted", e);
     }
@@ -301,10 +326,11 @@ public final class IndexUpdateRunner {
     final CachedFileContentLoader myContentLoader;
     final BlockingQueue<VirtualFile> myQueueOfFiles;
     final ProgressIndicator myIndicator;
-    final AtomicInteger myNumberOfProcessedFiles = new AtomicInteger();
     final int myTotalFiles;
-    final AtomicBoolean myNoMoreFilesToProcess = new AtomicBoolean();
+    final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
+    final CountDownLatch myAllFilesAreProcessedLatch;
     final IndexingJobStatistics myStatistics = new IndexingJobStatistics();
+    final AtomicReference<Throwable> myError = new AtomicReference<>();
 
     IndexingJob(@NotNull Project project,
                 @NotNull ProgressIndicator indicator,
@@ -315,10 +341,12 @@ public final class IndexUpdateRunner {
       myTotalFiles = files.size();
       myContentLoader = contentLoader;
       myQueueOfFiles = new ArrayBlockingQueue<>(files.size(), false, files);
+      myAllFilesAreProcessedLatch = new CountDownLatch(files.size());
     }
 
     public void oneMoreFileProcessed() {
-      double newFraction = myNumberOfProcessedFiles.incrementAndGet() / (double)myTotalFiles;
+      myAllFilesAreProcessedLatch.countDown();
+      double newFraction = 1.0 - myAllFilesAreProcessedLatch.getCount() / (double) myTotalFiles;
       try {
         myIndicator.setFraction(newFraction);
       }
@@ -328,7 +356,7 @@ public final class IndexUpdateRunner {
     }
 
     boolean areAllFilesProcessed() {
-      return myNumberOfProcessedFiles.get() == myTotalFiles;
+      return myAllFilesAreProcessedLatch.getCount() == 0;
     }
 
     public void setLocationBeingIndexed(@NotNull VirtualFile virtualFile) {

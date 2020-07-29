@@ -97,7 +97,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   @NotNull
   private <T> Collection<T> loadExtensions(Class<T> extensionClass) {
     JpsPluginManager pluginManager = myPluginManager;
-    if (pluginManager == null) {
+    if (pluginManager == null || !pluginManager.isFullyLoaded()) {
       Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
       if (managers.hasNext()) {
         try {
@@ -128,6 +128,11 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
       ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
       return ContainerUtil.newArrayList(loader);
+    }
+
+    @Override
+    public boolean isFullyLoaded() {
+      return true;
     }
 
     @Override

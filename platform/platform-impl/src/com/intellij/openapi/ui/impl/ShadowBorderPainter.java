@@ -15,7 +15,7 @@ import java.awt.image.BufferedImage;
  * @author spleaner
  * @author Konstantin Bulenkov
  */
-public class ShadowBorderPainter {
+public final class ShadowBorderPainter {
   public static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
                                                                          AllIcons.Ide.Shadow.TopRight,
                                                                          AllIcons.Ide.Shadow.Right,

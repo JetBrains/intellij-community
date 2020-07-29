@@ -144,28 +144,28 @@ public class Test {
 
   void testNoJavaStructureModificationOnSecondInvocation() {
     myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
-    def oldCount = PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+    def oldCount = PsiManager.getInstance(project).modificationTracker.modificationCount
     assert !myFixture.completeBasic()
     assert !myFixture.completeBasic()
-    assert oldCount == PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+    assert oldCount == PsiManager.getInstance(project).modificationTracker.modificationCount
   }
 
   void testNoJavaStructureModificationOnSecondInvocationAfterTyping() {
     myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
 
     def tracker = PsiManager.getInstance(project).modificationTracker
-    def oldCount = tracker.javaStructureModificationCount
+    def oldCount = tracker.modificationCount
     assert !myFixture.completeBasic()
-    assert oldCount == tracker.javaStructureModificationCount
+    assert oldCount == tracker.modificationCount
 
     myFixture.type 'x'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    assert oldCount != tracker.javaStructureModificationCount
-    oldCount = tracker.javaStructureModificationCount
+    assert oldCount != tracker.modificationCount
+    oldCount = tracker.modificationCount
 
     assert !myFixture.completeBasic()
     assert !myFixture.completeBasic()
-    assert oldCount == tracker.javaStructureModificationCount
+    assert oldCount == tracker.modificationCount
   }
 
   void testForbiddenApiVariants() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class KeymapUtil {
+public final class KeymapUtil {
 
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
   @NonNls private static final String BREAK_KEY_TEXT = "Break";
@@ -205,7 +205,7 @@ public class KeymapUtil {
 
   /**
    * @param actionId action to find the shortcut for
-   * @return first keyboard shortcut that activates given action in active keymap; null if not found 
+   * @return first keyboard shortcut that activates given action in active keymap; null if not found
    */
   @Nullable
   public static Shortcut getPrimaryShortcut(@Nullable @NonNls String actionId) {

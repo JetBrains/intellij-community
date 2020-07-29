@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +22,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * Do not forget to update the hash computation {@link SVGLoaderCache} if changing the format
  */
 @ApiStatus.Internal
-public class SVGLoaderCacheIO {
+public final class SVGLoaderCacheIO {
   private static final Set<OpenOption> OPEN_OPTION_SET = ContainerUtil.set(CREATE_NEW, WRITE);
 
   @Nullable

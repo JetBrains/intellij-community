@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public abstract class WolfTheProblemSolver {
   protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
 

@@ -124,7 +124,7 @@ class JpsOutputsDownloader {
                                    @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
-    indicator.setIndeterminate(true);
+    indicator.setIndeterminate(false);
 
     return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<File>() {
       @Override

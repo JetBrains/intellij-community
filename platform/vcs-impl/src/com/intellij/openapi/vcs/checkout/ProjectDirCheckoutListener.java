@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -21,7 +21,7 @@ final class ProjectDirCheckoutListener implements CheckoutListener {
       return false;
     }
 
-    PlatformProjectOpenProcessor.openExistingProject(directory, OpenProjectTask.withProjectToClose(project));
+    ProjectManagerEx.getInstanceEx().openProject(directory, OpenProjectTask.withProjectToClose(project));
     return true;
   }
 }

@@ -15,9 +15,6 @@ import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-/**
- * @author cdr
- */
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
 

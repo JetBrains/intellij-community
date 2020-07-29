@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Experimental
-public class IteratorUtils {
+public final class IteratorUtils {
   public static <T> boolean match(@NotNull Iterator<T> iterator1,
                                   @NotNull Iterator<T> iterator2,
                                   @NotNull BooleanBiFunction<? super T, ? super T> condition) {

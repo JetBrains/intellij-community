@@ -61,7 +61,7 @@ import java.util.*;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
 @SuppressWarnings({"OverlyComplexClass"})
-public class ControlFlowUtils {
+public final class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
   public static boolean statementMayCompleteNormally(@Nullable GrStatement statement) {

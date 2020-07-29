@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public class ActiveRules {
+public final class ActiveRules {
   public static UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project,
                                                              @NotNull UsageViewSettings usageViewSettings,
                                                              boolean supportsNonCodeRule,

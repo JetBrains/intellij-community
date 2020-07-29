@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeFileEditorListener.Companion.matchMode
-import com.intellij.icons.AllIcons
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -18,11 +18,11 @@ class ReaderModeAction : ToggleAction() {
       return
     }
     super.update(e)
-    val project = e.project ?: return
-    val file = PlatformDataKeys.VIRTUAL_FILE.getData(e.dataContext)?: return
+    val project = e.project
+    val file = PlatformDataKeys.VIRTUAL_FILE.getData(e.dataContext)
 
     e.presentation.isEnabledAndVisible = matchMode(project, file)
-    e.presentation.icon = if (ReaderModeSettings.instance(project).enabled) AllIcons.Actions.Edit else AllIcons.Actions.Show
+    e.presentation.text = LangBundle.message("action.ReaderMode.float.text")
   }
 
   override fun setSelected(e: AnActionEvent, readerMode: Boolean) {

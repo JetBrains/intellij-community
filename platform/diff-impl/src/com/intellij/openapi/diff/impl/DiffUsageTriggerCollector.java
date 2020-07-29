@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.diff.DiffTool;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DiffUsageTriggerCollector {
+public final class DiffUsageTriggerCollector {
 
   private static void trigger(@NotNull @NonNls String eventId, @NotNull FeatureUsageData data) {
     FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", eventId, data);

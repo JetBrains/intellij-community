@@ -322,8 +322,54 @@ if sys.platform == 'linux' and sys.version_info >= (3,):
 
     CAN_RAW_FD_FRAMES: int
 
+if sys.platform == 'linux' and sys.version_info >= (3, 8):
+    CAN_BCM_SETTIMER: int
+    CAN_BCM_STARTTIMER: int
+    CAN_BCM_TX_COUNTEVT: int
+    CAN_BCM_TX_ANNOUNCE: int
+    CAN_BCM_TX_CP_CAN_ID: int
+    CAN_BCM_RX_FILTER_ID: int
+    CAN_BCM_RX_CHECK_DLC: int
+    CAN_BCM_RX_NO_AUTOTIMER: int
+    CAN_BCM_RX_ANNOUNCE_RESUME: int
+    CAN_BCM_TX_RESET_MULTI_IDX: int
+    CAN_BCM_RX_RTR_FRAME: int
+    CAN_BCM_CAN_FD_FRAME: int
+
 if sys.platform == 'linux' and sys.version_info >= (3, 7):
     CAN_ISOTP: int
+
+if sys.platform == 'linux' and sys.version_info >= (3, 9):
+    CAN_J1939: int
+
+    J1939_MAX_UNICAST_ADDR: int
+    J1939_IDLE_ADDR: int
+    J1939_NO_ADDR: int
+    J1939_NO_NAME: int
+    J1939_PGN_REQUEST: int
+    J1939_PGN_ADDRESS_CLAIMED: int
+    J1939_PGN_ADDRESS_COMMANDED: int
+    J1939_PGN_PDU1_MAX: int
+    J1939_PGN_MAX: int
+    J1939_NO_PGN: int
+
+    SO_J1939_FILTER: int
+    SO_J1939_PROMISC: int
+    SO_J1939_SEND_PRIO: int
+    SO_J1939_ERRQUEUE: int
+
+    SCM_J1939_DEST_ADDR: int
+    SCM_J1939_DEST_NAME: int
+    SCM_J1939_PRIO: int
+    SCM_J1939_ERRQUEUE: int
+
+    J1939_NLA_PAD: int
+    J1939_NLA_BYTES_ACKED: int
+
+    J1939_EE_INFO_NONE: int
+    J1939_EE_INFO_TX_ABORT: int
+
+    J1939_FILTER_MAX: int
 
 if sys.platform == 'linux':
     AF_PACKET: AddressFamily
@@ -638,13 +684,11 @@ class socket:
     else:
         def listen(self, __backlog: int) -> None: ...
     # Note that the makefile's documented windows-specific behavior is not represented
-    if sys.version_info < (3,):
-        def makefile(self, mode: unicode = ..., buffering: int = ...) -> BinaryIO: ...
-    else:
+    if sys.version_info >= (3,):
         # mode strings with duplicates are intentionally excluded
         @overload
         def makefile(self,
-                     mode: Literal['r', 'w', 'rw', 'wr', ''],
+                     mode: Literal['r', 'w', 'rw', 'wr', ''] = ...,
                      buffering: Optional[int] = ...,
                      *,
                      encoding: Optional[str] = ...,
@@ -652,16 +696,18 @@ class socket:
                      newline: Optional[str] = ...) -> TextIO: ...
         @overload
         def makefile(self,
-                     mode: Literal['b', 'rb', 'br', 'wb', 'bw', 'rwb', 'rbw', 'wrb', 'wbr', 'brw', 'bwr'] = ...,
+                     mode: Literal['b', 'rb', 'br', 'wb', 'bw', 'rwb', 'rbw', 'wrb', 'wbr', 'brw', 'bwr'],
                      buffering: Optional[int] = ...,
                      *,
                      encoding: Optional[str] = ...,
                      errors: Optional[str] = ...,
                      newline: Optional[str] = ...) -> BinaryIO: ...
+    else:
+        def makefile(self, mode: unicode = ..., buffering: int = ...) -> BinaryIO: ...
     def recv(self, bufsize: int, flags: int = ...) -> bytes: ...
     def recvfrom(self, bufsize: int, flags: int = ...) -> Tuple[bytes, _RetAddress]: ...
 
-    if sys.version_info >= (3, 3):
+    if sys.version_info >= (3, 3) and sys.platform != "win32":
         def recvmsg(self, __bufsize: int, __ancbufsize: int = ..., __flags: int = ...) -> Tuple[bytes, List[_CMSG], int, Any]: ...
         def recvmsg_into(self,
                          __buffers: Iterable[_WriteBuffer],
@@ -675,7 +721,7 @@ class socket:
     def sendto(self, data: bytes, address: _Address) -> int: ...
     @overload
     def sendto(self, data: bytes, flags: int, address: _Address) -> int: ...
-    if sys.version_info >= (3, 3):
+    if sys.version_info >= (3, 3) and sys.platform != "win32":
         def sendmsg(self,
                     __buffers: Iterable[bytes],
                     __ancdata: Iterable[_CMSG] = ...,
@@ -713,7 +759,7 @@ if sys.version_info >= (3, 7):
 
 def create_connection(address: Tuple[Optional[str], int],
                       timeout: Optional[float] = ...,
-                      source_address: Tuple[Union[bytearray, bytes, Text], int] = ...) -> socket: ...
+                      source_address: Optional[Tuple[Union[bytearray, bytes, Text], int]] = ...) -> socket: ...
 
 if sys.version_info >= (3, 8):
     def create_server(address: _Address,
@@ -727,7 +773,7 @@ if sys.version_info >= (3, 8):
 def fromfd(fd: int, family: int, type: int, proto: int = ...) -> socket: ...
 
 if sys.platform == 'win32' and sys.version_info >= (3, 3):
-    def fromshare(data: bytes) -> socket: ...
+    def fromshare(info: bytes) -> socket: ...
 
 # the 5th tuple item is an address
 # TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
@@ -771,7 +817,10 @@ if sys.version_info >= (3, 3):
 def getdefaulttimeout() -> Optional[float]: ...
 def setdefaulttimeout(timeout: Optional[float]) -> None: ...
 if sys.version_info >= (3, 3):
-    def sethostname(name: str) -> None: ...
-    def if_nameindex() -> List[Tuple[int, str]]: ...
-    def if_nametoindex(name: str) -> int: ...
-    def if_indextoname(index: int) -> str: ...
+    if sys.platform != "win32":
+        def sethostname(name: str) -> None: ...
+    # Windows added these in 3.8, but didn't have them before
+    if sys.platform != "win32" or sys.version_info >= (3, 8):
+        def if_nameindex() -> List[Tuple[int, str]]: ...
+        def if_nametoindex(name: str) -> int: ...
+        def if_indextoname(index: int) -> str: ...

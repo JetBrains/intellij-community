@@ -43,8 +43,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class CompoundRendererConfigurable extends JPanel {
-  private CompoundTypeRenderer myRenderer;
-  private CompoundTypeRenderer myOriginalRenderer;
+  private CompoundReferenceRenderer myRenderer;
+  private CompoundReferenceRenderer myOriginalRenderer;
   private Project myProject;
   private final ClassNameEditorWithBrowseButton myClassNameField;
   private final JRadioButton myRbDefaultLabel;
@@ -197,9 +197,9 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   public void setRenderer(NodeRenderer renderer) {
-    if (renderer instanceof CompoundTypeRenderer) {
-      myRenderer = (CompoundTypeRenderer)renderer;
-      myOriginalRenderer = (CompoundTypeRenderer)renderer.clone();
+    if (renderer instanceof CompoundReferenceRenderer) {
+      myRenderer = (CompoundReferenceRenderer)renderer;
+      myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
     }
     else {
       myRenderer = myOriginalRenderer = null;
@@ -207,7 +207,7 @@ class CompoundRendererConfigurable extends JPanel {
     reset();
   }
 
-  public CompoundTypeRenderer getRenderer() {
+  public CompoundReferenceRenderer getRenderer() {
     return myRenderer;
   }
 
@@ -313,7 +313,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRenderer == null) {
       return false;
     }
-    final CompoundTypeRenderer cloned = (CompoundTypeRenderer)myRenderer.clone();
+    final CompoundReferenceRenderer cloned = myRenderer.clone();
     flushDataTo(cloned);
     return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
@@ -324,10 +324,10 @@ class CompoundRendererConfigurable extends JPanel {
     }
     flushDataTo(myRenderer);
     // update the renderer to compare with in order to find out whether we've been modified since last apply
-    myOriginalRenderer = (CompoundTypeRenderer)myRenderer.clone();
+    myOriginalRenderer = myRenderer.clone();
   }
 
-  private void flushDataTo(final CompoundTypeRenderer renderer) { // label
+  private void flushDataTo(final CompoundReferenceRenderer renderer) { // label
     LabelRenderer labelRenderer = null;
     renderer.setShowType(myShowTypeCheckBox.isSelected());
     if (myRbExpressionLabel.isSelected()) {

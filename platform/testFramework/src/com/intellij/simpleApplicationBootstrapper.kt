@@ -33,9 +33,14 @@ fun loadHeadlessAppInUnitTestMode() {
 }
 
 internal fun doLoadApp(setupEventQueue: () -> Unit) {
-  Main.setFlags(arrayOf("inspect", "", "", ""))
-  assert(Main.isHeadless())
-  assert(Main.isCommandLine())
+  var isHeadless = true
+  if (System.getProperty("java.awt.headless") == "false") {
+    isHeadless = false
+  }
+  else {
+    System.setProperty("java.awt.headless", "true")
+  }
+  Main.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
@@ -45,7 +50,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
 
   setupEventQueue()
 
-  val app = ApplicationImpl(true, true, true, true)
+  val app = ApplicationImpl(true, true, isHeadless, true)
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)

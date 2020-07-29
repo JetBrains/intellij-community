@@ -23,9 +23,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 
-/**
- * @author cdr
- */
 public class NullElementDescriptor implements XmlElementDescriptor {
   private static final NullElementDescriptor INSTANCE = new NullElementDescriptor();
 

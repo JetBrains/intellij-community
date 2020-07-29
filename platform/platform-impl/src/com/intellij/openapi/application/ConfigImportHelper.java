@@ -882,7 +882,7 @@ public final class ConfigImportHelper {
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
             i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
           }
-          else if (line.startsWith("-agentlib:yjpagent")) {
+          else if (line.startsWith("-agentlib:yjpagent") || "-Xverify:none".equals(line) || "-noverify".equals(line)) {
             i.remove(); updated = true;
           }
         }

@@ -322,4 +322,16 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN);
     checkResultByText("line1\nline2<caret>\nline3\nline4\nline5\n");
   }
+
+  public void testAddCaretPerSelectedLine() {
+    initText("<selection>line1\nline2\nline3<caret></selection>");
+    executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
+    checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
+
+  public void testAddCaretPerSelectedLineWholeLinesSelection() {
+    initText("<selection>line1\nline2\n<caret></selection>line3");
+    executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
+    checkResultByText("line1<caret>\nline2<caret>\nline3");
+  }
 }

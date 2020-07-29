@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ExtendableEditorSupport {
+public final class ExtendableEditorSupport {
   public static void setupExtension(@NotNull EditorEx editor,
                                      Color background,
                                      ExtendableTextComponent.Extension extension) {

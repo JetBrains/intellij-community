@@ -6,6 +6,7 @@ import com.intellij.ide.passwordSafe.*
 import com.intellij.openapi.*
 import com.intellij.openapi.rd.*
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
@@ -45,7 +46,7 @@ internal class CircletSetGitHttpPasswordDialog(
         title = "Set Git HTTP password"
         setOKButtonText("Save")
         init()
-        disposable.attachChild(Disposable { lifetime.terminate() })
+        Disposer.register(disposable, Disposable { lifetime.terminate() })
     }
 
     override fun doOKAction() {

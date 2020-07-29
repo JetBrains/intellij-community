@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * @author Max Medvedev
  */
-public class MixinMemberContributor {
+public final class MixinMemberContributor {
   public static boolean processClassMixins(@NotNull final PsiType qualifierType,
                                            @NotNull PsiScopeProcessor processor,
                                            @NotNull final PsiElement place,

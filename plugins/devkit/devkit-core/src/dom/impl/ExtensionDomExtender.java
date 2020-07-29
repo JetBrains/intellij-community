@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -78,16 +79,16 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
-        Class clazz = String.class;
-        if (withElement != null || Extension.isClassField(attributeName)) {
-          clazz = PsiClass.class;
-        }
-        else if (PsiType.BOOLEAN.equals(fieldType)) {
+        Class<?> clazz = String.class;
+        if (PsiType.BOOLEAN.equals(fieldType)) {
           clazz = Boolean.class;
         }
         else if (PsiType.INT.equals(fieldType) ||
                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
           clazz = Integer.class;
+        }
+        else if (withElement != null || Extension.isClassField(attributeName)) {
+          clazz = PsiClass.class;
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), clazz).setDeclaringElement(field);
@@ -105,7 +106,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
             }
           }
 
-          if ("language".equals(attributeName)) {
+          if ("language".equals(attributeName) ||
+              StringUtil.endsWith(attributeName, "Language")) {
             extension.setConverter(LANGUAGE_CONVERTER);
           }
           else if ("action".equals(attributeName)) {

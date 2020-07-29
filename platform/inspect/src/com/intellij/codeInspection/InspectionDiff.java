@@ -4,23 +4,18 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.util.JDOMUtil;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class InspectionDiff {
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
+public final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
     @NonNls
     private static final String FILE_ELEMENT = "file";

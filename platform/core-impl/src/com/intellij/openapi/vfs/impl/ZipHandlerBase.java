@@ -59,8 +59,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       entryName = entryName.substring(0, entryName.length() - 1);
       isDirectory = true;
     }
-    if (StringUtil.startsWithChar(entryName, '/')) {
-      entryName = StringUtil.trimStart(entryName, "/");
+    if (StringUtil.startsWithChar(entryName, '/') || StringUtil.startsWithChar(entryName, '\\')) {
+      entryName = entryName.substring(1);
     }
 
     EntryInfo info = map.get(entryName);

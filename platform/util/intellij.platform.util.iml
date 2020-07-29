@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.strings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.collections" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.diagnostic" exported="" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="library" name="HdrHistogram" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />

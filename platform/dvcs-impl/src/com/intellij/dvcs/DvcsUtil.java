@@ -46,7 +46,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-public class DvcsUtil {
+public final class DvcsUtil {
 
   private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 

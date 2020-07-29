@@ -16,9 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-/**
- * @author cdr
- */
 public class PropertiesElementFactory {
   private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
 

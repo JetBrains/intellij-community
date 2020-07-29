@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
 public class SliceTreeTest extends SliceTestCase {
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+ name +".java");

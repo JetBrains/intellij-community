@@ -17,9 +17,7 @@ public abstract class RecentProjectsManager {
     return ServiceManager.getService(RecentProjectsManager.class);
   }
 
-  @Nullable
-  @SystemIndependent
-  public abstract String getLastProjectCreationLocation();
+  public abstract @Nullable @SystemIndependent String getLastProjectCreationLocation();
 
   public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
 

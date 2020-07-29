@@ -34,9 +34,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
-*/
 public class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
   private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;

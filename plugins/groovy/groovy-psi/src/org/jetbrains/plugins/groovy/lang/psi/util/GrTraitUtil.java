@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author Max Medvedev
  */
-public class GrTraitUtil {
+public final class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
   private static final PsiTypeMapper ID_MAPPER = new PsiTypeMapper() {
     @Override
@@ -74,7 +74,7 @@ public class GrTraitUtil {
         }
         return true;
       });
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

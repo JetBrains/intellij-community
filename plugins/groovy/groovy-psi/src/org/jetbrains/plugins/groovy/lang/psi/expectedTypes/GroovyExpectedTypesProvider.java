@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -56,7 +57,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.impl.CallReferenceImplKt
 /**
  * @author ven
  */
-public class GroovyExpectedTypesProvider {
+public final class GroovyExpectedTypesProvider {
+  private static final ExtensionPointName<GroovyExpectedTypesContributor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.expectedTypesContributor");
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
     return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, () -> {
@@ -71,7 +73,7 @@ public class GroovyExpectedTypesProvider {
         final TypeConstraint[] result = calculator.getResult();
 
       List<TypeConstraint> custom = new ArrayList<>();
-        for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
+        for (GroovyExpectedTypesContributor contributor : EP_NAME.getExtensionList()) {
           custom.addAll(contributor.calculateTypeConstraints(expression));
         }
 

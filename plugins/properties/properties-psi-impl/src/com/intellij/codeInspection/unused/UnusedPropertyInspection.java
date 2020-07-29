@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class UnusedPropertyInspection extends PropertiesInspectionBase {
   public static final String SHORT_NAME = "UnusedProperty";
   private static final Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);

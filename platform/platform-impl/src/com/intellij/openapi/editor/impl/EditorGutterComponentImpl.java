@@ -503,10 +503,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private Font getFontForText(String text, EditorFontType style) {
     Font font = myEditor.getColorsScheme().getFont(style);
-    if (font.canDisplayUpTo(text) != -1) {
-      font = UIUtil.getFontWithFallback(font);
-    }
-    return font;
+    return UIUtil.getFontWithFallbackIfNeeded(font, text);
   }
 
   private void paintFoldingTree(@NotNull Graphics g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {

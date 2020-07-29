@@ -135,9 +135,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public boolean containsKey(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    boolean result = myMap.containsKey(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.containsKey(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -169,8 +172,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     public int hashCode() {
       return myHash;
     }
+
+    private void clear() {
+      setKey(null, 0);
+    }
   }
-  private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
+  private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey<>());
 
   @NotNull
   private HardKey<K> createHardKey(@Nullable Object o) {
@@ -186,16 +193,15 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     return hardKey;
   }
 
-  private static void releaseHardKey(@NotNull HardKey<?> key) {
-    key.setKey(null, 0);
-  }
-
   @Override
   public V get(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    V result = myMap.get(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.get(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -210,9 +216,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     processQueue();
 
     HardKey<?> hardKey = createHardKey(key);
-    V result = myMap.remove(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.remove(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -328,13 +337,18 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
       HardKey<K> key = createHardKey(e.getKey());
 
-      V hv = myMap.get(key);
-      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
-      if (toRemove) {
-        myMap.remove(key);
+      boolean toRemove;
+      try {
+        V hv = myMap.get(key);
+        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        if (toRemove) {
+          myMap.remove(key);
+        }
+      }
+      finally {
+        key.clear();
       }
 
-      releaseHardKey(key);
       return toRemove;
     }
 

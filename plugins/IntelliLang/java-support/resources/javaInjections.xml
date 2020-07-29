@@ -58,6 +58,10 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.Object", "javax.xml.namespace.QName").definedInClass("javax.xml.xpath.XPath"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "org.xml.sax.InputSource").definedInClass("javax.xml.xpath.XPath"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "org.xml.sax.InputSource", "javax.xml.namespace.QName").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluateExpression").withParameters("java.lang.String", "java.lang.Object").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluateExpression").withParameters("java.lang.String", "java.lang.Object", "java.lang.Class").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluateExpression").withParameters("java.lang.String", "org.xml.sax.InputSource").definedInClass("javax.xml.xpath.XPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluateExpression").withParameters("java.lang.String", "org.xml.sax.InputSource", "java.lang.Class").definedInClass("javax.xml.xpath.XPath"))]]></place>
   </injection>
   <injection language="XPath" injector-id="java">
     <display-name>XPath (org.jdom.xpath)</display-name>

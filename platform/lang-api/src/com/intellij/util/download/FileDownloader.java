@@ -18,6 +18,7 @@ package com.intellij.util.download;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
  */
+@ApiStatus.NonExtendable
 public interface FileDownloader {
   /**
    * Same as {@link #downloadWithProgress}, but async and with background progress.

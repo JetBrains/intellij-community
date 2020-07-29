@@ -5,7 +5,11 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProjects
 import com.intellij.openapi.project.Project
@@ -17,8 +21,11 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
+import java.lang.Exception
 
-private val LOG = Logger.getInstance(GradleManager::class.java)
+private val LOG = Logger.getInstance(GradleCommandLineProjectConfigurator::class.java)
+
+private val GRADLE_OUTPUT_LOG = Logger.getInstance("GradleOutput")
 
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
@@ -34,6 +41,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     val state = GradleImportHintService.getInstance(project).state
 
     if (state.skip) return
+    val progressManager = ExternalSystemProgressNotificationManager.getInstance()
+    progressManager.addNotificationListener(TaskNotificationListener())
+
     if (state.projectsToImport.isNotEmpty()) {
       for (projectPath in state.projectsToImport) {
         val buildFile = File(basePath).toPath().resolve(projectPath).toFile()
@@ -61,7 +71,36 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   }
 
   private fun getImportSpecBuilder(project: Project): ImportSpecBuilder =
-    ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-      .use(MODAL_SYNC)
-      //.callback(Callback()) Can't use this callback cause it has to be null for correct project structure importing
+    ImportSpecBuilder(project, GradleConstants.SYSTEM_ID).use(MODAL_SYNC)
+
+  class TaskNotificationListener : ExternalSystemTaskNotificationListener {
+    override fun onSuccess(id: ExternalSystemTaskId) {
+      LOG.info("Gradle import success")
+    }
+
+    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+      LOG.error("Gradle import failure", e)
+    }
+
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      GRADLE_OUTPUT_LOG.debug("[Gradle ${if (stdOut) "STDOUT" else "STDERR" } ] $text")
+    }
+
+    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
+    }
+
+    override fun onCancel(id: ExternalSystemTaskId) {
+      LOG.warn("Gradle import canceled")
+    }
+
+    override fun onEnd(id: ExternalSystemTaskId) {
+    }
+
+    override fun beforeCancel(id: ExternalSystemTaskId) {
+    }
+
+    override fun onStart(id: ExternalSystemTaskId) {
+      LOG.info("Gradle import started")
+    }
+  }
 }

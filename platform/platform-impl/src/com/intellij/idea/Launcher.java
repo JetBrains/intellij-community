@@ -4,7 +4,7 @@ package com.intellij.idea;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-public class Launcher {
+public final class Launcher {
   private Launcher() {
   }
 

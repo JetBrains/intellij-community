@@ -36,7 +36,6 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
   }
 
   /**
-   * @param method 
    * @return true if assignment SAM s = expr is correctly shaped
    */
   boolean isAcceptable(PsiType left, @Nullable PsiMethod method);
@@ -50,8 +49,8 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
    *  The name of the member is identical to the name of the method in the method invocation.
    *  The member is accessible (p6.6) to the class or interface in which the method invocation appears.
    *  If the member is a fixed arity method with arity n, the arity of the method invocation is equal to n,
-   *   and for all i (1 <= i <= n), the i'th argument of the method invocation is potentially compatible, as defined below,
-   *   with the type of the i'th parameter of the method.
+   *   and for all i (1 <= i <= n), the i-th argument of the method invocation is potentially compatible, as defined below,
+   *   with the type of the i-th parameter of the method.
    *  If the member is a variable arity method with arity n, etc
    */
   @Contract("null -> false")

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -58,7 +58,7 @@ import static com.intellij.util.ui.UIUtil.drawImage;
  * @author dsl
  * @author Konstantin Bulenkov
  */
-public class TipUIUtil {
+public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final String SHORTCUT_ENTITY = "&shortcut:";
 

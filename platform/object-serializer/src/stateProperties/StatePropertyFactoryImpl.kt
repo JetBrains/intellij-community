@@ -4,7 +4,6 @@ package com.intellij.serialization.stateProperties
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.StatePropertyFactory
 import com.intellij.openapi.components.StoredPropertyBase
-import gnu.trove.THashSet
 import java.util.*
 
 internal class StatePropertyFactoryImpl : StatePropertyFactory {
@@ -34,11 +33,11 @@ internal class StatePropertyFactoryImpl : StatePropertyFactory {
   override fun int(defaultValue: Int) = IntStoredProperty(defaultValue, null)
 
   override fun stringSet(defaultValue: String?): CollectionStoredProperty<String, MutableSet<String>> {
-    val collection = THashSet<String>()
+    val collection = HashSet<String>()
     defaultValue?.let {
       collection.add(defaultValue)
     }
-    return CollectionStoredProperty<String, MutableSet<String>>(collection, defaultValue)
+    return CollectionStoredProperty(collection, defaultValue)
   }
 
   override fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = CollectionStoredProperty(TreeSet(), null)

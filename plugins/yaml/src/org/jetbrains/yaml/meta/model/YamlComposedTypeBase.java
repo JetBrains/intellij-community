@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLMapping;
@@ -22,12 +23,11 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
       throw new IllegalArgumentException("Nothing to compose");
     }
     List<YamlMetaType> flattenedTypes = new SmartList<>();
-    Set<YamlMetaType> cerber = ContainerUtil.newIdentityTroveSet();
+    Set<YamlMetaType> cerber = new ReferenceOpenHashSet<>();
     for (YamlMetaType next : types) {
-      if (cerber.contains(next)) {
+      if (!cerber.add(next)) {
         continue;
       }
-      cerber.add(next);
       if (next instanceof YamlScalarType) {
         flattenedTypes.add(next);
       }

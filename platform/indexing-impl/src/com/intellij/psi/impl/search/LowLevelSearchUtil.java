@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
-public class LowLevelSearchUtil {
+public final class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance(LowLevelSearchUtil.class);
 
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;

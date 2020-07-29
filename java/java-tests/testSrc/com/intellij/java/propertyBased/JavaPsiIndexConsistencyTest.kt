@@ -119,7 +119,7 @@ class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
     override fun performAction(model: Model) {
       model as JavaModel
       PostponedFormatting.performAction(model)
-      val counterBefore = PsiManager.getInstance(model.project).modificationTracker.javaStructureModificationCount
+      val counterBefore = PsiManager.getInstance(model.project).modificationTracker.modificationCount
       model.docClassName = newClassName
       if (viaDocument) {
         model.getDocument().setText(newText)
@@ -131,7 +131,7 @@ class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
 
       if (model.isCommitted()) {
         model.onCommit()
-        assert(counterBefore != PsiManager.getInstance(model.project).modificationTracker.javaStructureModificationCount)
+        assert(counterBefore != PsiManager.getInstance(model.project).modificationTracker.modificationCount)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.idea.Bombed;
@@ -16,7 +16,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class TestFrameworkUtil {
+public final class TestFrameworkUtil {
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 

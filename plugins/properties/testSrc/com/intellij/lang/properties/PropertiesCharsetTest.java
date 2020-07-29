@@ -21,9 +21,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * @author cdr
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
   private boolean myOldIsNative;

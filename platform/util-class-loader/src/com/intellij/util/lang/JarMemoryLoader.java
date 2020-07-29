@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -17,7 +17,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Dmitry Avdeev
  */
-public class JarMemoryLoader {
+public final class JarMemoryLoader {
   /** Special entry to keep the number of reordered classes in jar. */
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
@@ -29,13 +29,16 @@ public class JarMemoryLoader {
     return myResources.remove(entryName);
   }
 
-  @Nullable
-  static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
+  @Nullable static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
-    if (!entries.hasMoreElements()) return null;
+    if (!entries.hasMoreElements()) {
+      return null;
+    }
 
     ZipEntry sizeEntry = entries.nextElement();
-    if (sizeEntry == null || !sizeEntry.getName().equals(SIZE_ENTRY)) return null;
+    if (sizeEntry == null || !sizeEntry.getName().equals(SIZE_ENTRY)) {
+      return null;
+    }
 
     byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
     int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);

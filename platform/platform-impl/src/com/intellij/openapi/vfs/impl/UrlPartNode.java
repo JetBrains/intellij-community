@@ -4,21 +4,23 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-/** Node which stores explicit 'name' instead of nameId.
+/**
+ * Node which stores explicit 'name' instead of nameId.
  * The latter can be unavailable (e.g. when creating the pointer from the url of non-yet-existing file)
  * or incorrect (e.g. when creating the pointer from the url "/x/y/Z.TXT" for the file "z.txt" on case-insensitive file system)
- * As soon as the corresponding file got created, this UrlPartNode is replaced with FilePointerPartNode, which contains nameId and is faster and more succinct
+ * As soon as the corresponding file got created, this UrlPartNode is replaced with FilePartNode, which contains nameId and is faster and more succinct
  */
-class UrlPartNode extends FilePointerPartNode {
+class UrlPartNode extends FilePartNode {
   @NotNull
   private final String name;
 
-  UrlPartNode(@NotNull String name, @NotNull FilePointerPartNode parent) {
-    super(parent);
+  UrlPartNode(@NotNull String name, @NotNull String parentUrl, @NotNull NewVirtualFileSystem fs) {
+    super(fs);
     this.name = name;
+    myFileOrUrl = childUrl(parentUrl, name, fs);
     if (SystemInfo.isUnix) {
       if (name.isEmpty()) {
         throw new IllegalArgumentException('\'' + name + '\'');
@@ -29,11 +31,6 @@ class UrlPartNode extends FilePointerPartNode {
         throw new IllegalArgumentException('\'' + name + '\'');
       }
     }
-  }
-
-  @Override
-  boolean urlEndsWithName(@NotNull String urlAfter, VirtualFile fileAfter) {
-    return StringUtil.endsWith(urlAfter, getName());
   }
 
   @NotNull

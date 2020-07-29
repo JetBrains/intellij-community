@@ -79,7 +79,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="module" module-name="intellij.groovy.jps" scope="TEST" />

@@ -6,34 +6,39 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.execution.filters.ExceptionFilter;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-class StackTraceElementObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
+class StackTraceElementObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
 
-  StackTraceElementObjectRenderer() {
-    super("StackTraceElement", null, null);
-    setClassName("java.lang.StackTraceElement");
-    setEnabled(true);
+  @Override
+  protected String getName() {
+    return "StackTraceElement";
   }
 
-  @Nullable
   @Override
-  public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
-    return new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"), evaluationContext) {
+  protected String getClassName() {
+    return "java.lang.StackTraceElement";
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
+  }
+
+  @Override
+  protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
+    return (evaluationContext, valueDescriptor) -> new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"),
+                                                                                        evaluationContext) {
       @Override
       public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
         Value value = valueDescriptor.getValue();
@@ -42,7 +47,8 @@ class StackTraceElementObjectRenderer extends CompoundReferenceRenderer implemen
         if (toString != null) {
           try {
             Value res =
-              evaluationContext.getDebugProcess().invokeMethod(evaluationContext, (ObjectReference)value, toString, Collections.emptyList());
+              evaluationContext.getDebugProcess()
+                .invokeMethod(evaluationContext, (ObjectReference)value, toString, Collections.emptyList());
             if (res instanceof StringReference) {
               callback.evaluated("");
               final String line = ((StringReference)res).value();

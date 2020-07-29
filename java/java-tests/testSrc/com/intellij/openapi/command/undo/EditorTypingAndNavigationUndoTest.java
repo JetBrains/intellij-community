@@ -10,16 +10,15 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ui.UIUtil;
@@ -83,6 +82,18 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     undoFirstEditor();
     checkEditorState("test", 4, 0, 0);
     assertUndoInFirstEditorNotAvailable();
+  }
+
+  public void testRangeMarkerOnMoveUndo() {
+    final DocumentEx document = (DocumentEx) getFirstEditor().getDocument();
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText("line1\nline2"));
+    int start = document.getLineStartOffset(1);
+    int end = document.getLineEndOffset(1);
+    RangeMarker rangeMarker = document.createRangeMarker(start, end);
+    moveCaret(getFirstEditor(), DOWN, false);
+    executeEditorAction(getFirstEditor(), IdeActions.ACTION_MOVE_LINE_UP_ACTION);
+    undoFirstEditor();
+    assertEquals(new TextRange(start, end), new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
   }
 
   public void testEnter() {

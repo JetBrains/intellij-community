@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorCoreUtil {
+public final class EditorCoreUtil {
   public static void indentLine(Project project, @NotNull Editor editor, int lineNumber, int indent, boolean shouldUseSmartTabs) {
     int caretOffset = editor.getCaretModel().getOffset();
     int newCaretOffset = indentLine(project, editor, lineNumber, indent, caretOffset, shouldUseSmartTabs);

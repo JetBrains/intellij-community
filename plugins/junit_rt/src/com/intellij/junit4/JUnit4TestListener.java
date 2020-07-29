@@ -59,6 +59,7 @@ public class JUnit4TestListener extends RunListener {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
   }
 
+  @Override
   public void testRunStarted(Description description) {
     if (myRootName != null && !myRootName.startsWith("[")) {
       JUnitTestTreeNodeManager.TestNodePresentation rootNodePresentation = NODE_NAMES_MANAGER.getRootNodePresentation(myRootName);
@@ -70,6 +71,7 @@ public class JUnit4TestListener extends RunListener {
     }
   }
 
+  @Override
   public void testRunFinished(Result result) {
     try {
       dumpQueue(true);
@@ -85,6 +87,7 @@ public class JUnit4TestListener extends RunListener {
     }
   }
 
+  @Override
   public void testStarted(Description description) {
     testStarted(description, null);
   }
@@ -167,6 +170,7 @@ public class JUnit4TestListener extends RunListener {
     return System.currentTimeMillis();
   }
 
+  @Override
   public void testFinished(Description description) {
     if (startedInParallel(description)) {
       TestEvent testEvent = myWaitingQueue.get(description);
@@ -201,6 +205,7 @@ public class JUnit4TestListener extends RunListener {
     myCurrentTest = null;
   }
 
+  @Override
   public void testFailure(Failure failure) {
     testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_FAILED);
   }
@@ -293,6 +298,7 @@ public class JUnit4TestListener extends RunListener {
     return failure.getTrace();
   }
 
+  @Override
   public void testAssumptionFailure(Failure failure) {
     testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_IGNORED);
   }
@@ -325,6 +331,7 @@ public class JUnit4TestListener extends RunListener {
     return methodName;
   }
   
+  @Override
   public void testIgnored(Description description) {
     final String methodName = getFullMethodName(description);
     if (methodName == null) {

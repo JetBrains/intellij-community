@@ -56,7 +56,7 @@ import java.util.function.Supplier;
 /**
  * @author Maxim.Mossienko
  */
-public class UIUtil {
+public final class UIUtil {
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =

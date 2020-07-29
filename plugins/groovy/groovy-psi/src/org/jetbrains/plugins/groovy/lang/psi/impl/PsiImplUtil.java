@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -78,7 +78,7 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
-public class PsiImplUtil {
+public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
 
   private static final String MAIN_METHOD = "main";
@@ -159,7 +159,7 @@ public class PsiImplUtil {
       return oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
-    //check priorities    
+    //check priorities
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression addedParenth = checkPrecedence(newExpr, oldExpr) ? parenthesize(newExpr, oldExpr.getContext()) : newExpr;
       if (newExpr != addedParenth) {

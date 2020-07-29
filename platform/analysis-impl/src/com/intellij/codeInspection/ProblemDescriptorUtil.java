@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ProblemDescriptorUtil {
+public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;

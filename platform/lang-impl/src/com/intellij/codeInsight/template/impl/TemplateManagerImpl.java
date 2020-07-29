@@ -179,7 +179,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       else {
         editor.getSelectionModel().removeSelection();
       }
-      templateState.start(substituteTemplate((TemplateImpl)template, editor), processor, predefinedVarValues);
+      templateState
+        .start(substituteTemplate((TemplateImpl)template, editor), processor, predefinedVarValues);
       myEventPublisher.templateStarted(templateState);
     };
     if (inSeparateCommand) {
@@ -445,6 +446,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @NotNull
   private TemplateImpl substituteTemplate(@NotNull TemplateImpl template, @NotNull Editor editor) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    if (psiFile == null) {
+      return template;
+    }
     for (TemplateSubstitutor substitutor : TemplateSubstitutor.EP_NAME.getExtensionList()) {
       final TemplateImpl substituted = substitutor.substituteTemplate(new TemplateSubstitutionContext(myProject, editor), template);
       if (substituted != null) {

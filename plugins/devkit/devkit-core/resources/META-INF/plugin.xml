@@ -39,6 +39,7 @@
     <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
+    <httpRequestHandler implementation="org.jetbrains.idea.devkit.debug.HttpDebugListener"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>

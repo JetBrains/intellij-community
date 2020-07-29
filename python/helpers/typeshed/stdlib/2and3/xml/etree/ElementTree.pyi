@@ -63,7 +63,11 @@ else:
     # _fixtext function in the source). Client code knows best:
     _str_result_type = Any
 
-_file_or_filename = Union[str, bytes, int, IO[Any]]
+if sys.version_info >= (3, 6):
+    from os import PathLike
+    _file_or_filename = Union[str, bytes, PathLike[str], int, IO[Any]]
+else:
+    _file_or_filename = Union[str, bytes, int, IO[Any]]
 
 if sys.version_info >= (3, 8):
     class _Writeable(Protocol):

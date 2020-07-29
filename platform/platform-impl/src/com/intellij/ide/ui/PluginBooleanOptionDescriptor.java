@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -27,9 +28,9 @@ import java.util.stream.Stream;
  */
 final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription implements BooleanOptionDescription.RequiresRebuild {
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
-    new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false, null, null, null, PluginManagerCore.CORE_ID);
+    new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID);
   private static final NotificationGroup PLUGINS_AUTO_SWITCH_GROUP =
-    new NotificationGroup("Plugins AutoSwitch", NotificationDisplayType.BALLOON, false, null, null, null, PluginManagerCore.CORE_ID);
+    new NotificationGroup("Plugins AutoSwitch", NotificationDisplayType.BALLOON, true, null, null, null, PluginManagerCore.CORE_ID);
 
   private static final Notifier ourRestartNeededNotifier = new Notifier();
 
@@ -189,7 +190,13 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
         .createNotification(
           IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION)
-        .setTitle(IdeBundle.message("plugins.changed.notification.title"));
+        .setTitle(IdeBundle.message("plugins.changed.notification.title"))
+        .addAction(new AnAction(IdeBundle.message("ide.restart.action")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            ApplicationManager.getApplication().restart();
+          }
+        });
 
       if (prevNotification.compareAndSet(prev, next)) {
         Notifications.Bus.notify(next);

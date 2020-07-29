@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="space-idea-sdk" type="repository">
+        <properties maven-id="com.jetbrains:space-idea-sdk:1.0.49205-pre" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/space-idea-sdk/1.0.49205-pre/space-idea-sdk-1.0.49205-pre.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module-library">
+      <library name="kotlinx-coroutines-slf4j" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.3.4" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.3.4/kotlinx-coroutines-slf4j-1.3.4.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.3.4/kotlinx-coroutines-slf4j-1.3.4-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.3.4/kotlinx-coroutines-slf4j-1.3.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="ktor-websockets" level="project" />
+    <orderEntry type="module-library">
+      <library name="io.ktor:ktor-client-apache" type="repository">
+        <properties maven-id="io.ktor:ktor-client-apache:1.3.2" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-apache/1.3.2/ktor-client-apache-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.3.70/kotlin-stdlib-1.3.70.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.70/kotlin-stdlib-common-1.3.70.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu/0.14.2/atomicfu-0.14.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.4/kotlinx-coroutines-core-1.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/1.3.2/ktor-client-core-jvm-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network/1.3.2/ktor-network-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.3.2/ktor-utils-jvm-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/1.3.2/ktor-io-jvm-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-common/1.3.4/kotlinx-coroutines-core-common-1.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/1.3.2/ktor-http-jvm-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.70/kotlin-stdlib-jdk7-1.3.70.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/1.3.2/ktor-http-cio-jvm-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpasyncclient/4.1.4/httpasyncclient-4.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore-nio/4.4.13/httpcore-nio-4.4.13.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-apache/1.3.2/ktor-client-apache-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.3.70/kotlin-stdlib-1.3.70-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.70/kotlin-stdlib-common-1.3.70-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu/0.14.2/atomicfu-0.14.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.4/kotlinx-coroutines-core-1.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/1.3.2/ktor-client-core-jvm-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network/1.3.2/ktor-network-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.3.2/ktor-utils-jvm-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/1.3.2/ktor-io-jvm-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-common/1.3.4/kotlinx-coroutines-core-common-1.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/1.3.2/ktor-http-jvm-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.70/kotlin-stdlib-jdk7-1.3.70-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/1.3.2/ktor-http-cio-jvm-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpasyncclient/4.1.4/httpasyncclient-4.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore-nio/4.4.13/httpcore-nio-4.4.13-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kotlin-scripting-intellij" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.3.72" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.3.72/kotlin-scripting-intellij-1.3.72.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.3.72/kotlin-script-runtime-1.3.72.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.3.72/kotlin-stdlib-1.3.72.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.72/kotlin-stdlib-common-1.3.72.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.3.72/kotlin-scripting-common-1.3.72.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.2.1/kotlinx-coroutines-core-1.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.2" type="repository">
+        <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.10.2" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.10.2/jackson-datatype-joda-2.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.10.2/jackson-annotations-2.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.10.2/jackson-core-2.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.10.2/jackson-databind-2.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.9.9/joda-time-2.9.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>

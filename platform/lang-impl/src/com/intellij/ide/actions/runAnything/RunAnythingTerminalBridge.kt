@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
-import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider
+import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -33,11 +33,15 @@ class RunAnythingTerminalBridge : TerminalShellCommandHandler {
         mutableMapOf<String, Any?>()
           .also {
             it[CommonDataKeys.PROJECT.name] = project
-            it[CommonDataKeys.VIRTUAL_FILE.name] =
+            val virtualFile =
               if (localSession && workingDirectory != null) LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
+            if (virtualFile != null) {
+              it[CommonDataKeys.VIRTUAL_FILE.name] = virtualFile
+              it[RunAnythingProvider.EXECUTING_CONTEXT.name] = RunAnythingContext.RecentDirectoryContext(virtualFile.path)
+            }
           }, null)
     }
 
-    private fun checkForCLI(it: RunAnythingProvider<*>?) = it !is RunAnythingCommandExecutionProvider && it !is RunAnythingRecentProjectProvider
+    private fun checkForCLI(it: RunAnythingProvider<*>?) = it !is RunAnythingCommandProvider && it !is RunAnythingRecentProjectProvider
   }
 }

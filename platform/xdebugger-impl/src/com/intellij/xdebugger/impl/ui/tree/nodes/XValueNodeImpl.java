@@ -24,6 +24,7 @@ import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopUtilKt;
 import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -307,21 +308,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         return null;
     }
 
-    if (!(myValueContainer instanceof PinToTopMemberValue)) {
+    if (!PinToTopUtilKt.canBePinned(this))
       return null;
-    }
-
-    final PinToTopMemberValue pinToTopMemberValue = (PinToTopMemberValue)myValueContainer;
-    if (!pinToTopMemberValue.canBePinned()) {
-      return null;
-    }
-    if(!(myParent instanceof XValueNodeImpl)) {
-      return null;
-    }
-
-    if (!(((XValueNodeImpl)myParent).myValueContainer instanceof PinToTopParentValue)) {
-      return null;
-    }
 
     return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.pin.to.top.action")) {
       @Override

@@ -46,23 +46,23 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
     performOn(file.getVirtualFile());
   }
 
-  public static void performOn(@NotNull VirtualFile currFile) throws IncorrectOperationException {
+  public static void performOn(@NotNull VirtualFile currentFile) throws IncorrectOperationException {
     LightEditorInfo editorInfo =
-      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
+      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
     if (editorInfo != null) {
-      Project openProject = findOpenProject(currFile);
+      Project openProject = findOpenProject(currentFile);
       if (openProject != null) {
         LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
       }
       else {
-        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
+        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currentFile);
         if (projectRoot != null) {
-          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
+          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot.toNioPath(), -1, -1, false);
         }
       }
       if (openProject != null) {
         ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(currFile, openProject);
+        OpenFileAction.openFile(currentFile, openProject);
       }
     }
   }

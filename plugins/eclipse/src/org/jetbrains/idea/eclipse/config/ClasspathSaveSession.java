@@ -8,7 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,7 +66,7 @@ final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, Sa
       oldClassPath = null;
     }
 
-    ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)component;
+    ModuleRootManager moduleRootManager = (ModuleRootManager)component;
     if (oldClassPath != null || moduleRootManager.getSourceRoots().length > 0 || moduleRootManager.getOrderEntries().length > 2) {
       Element newClassPathElement = new EclipseClasspathWriter().writeClasspath(oldClassPath, moduleRootManager);
       if (oldClassPath == null || !JDOMUtil.areElementsEqual(newClassPathElement, oldClassPath)) {

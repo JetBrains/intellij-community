@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * @author tav
  */
-class JBCefEventUtils {
+final class JBCefEventUtils {
   private static final Map<Integer, Integer> CEF_2_JAVA_KEYCODES = new HashMap<>();
   private static final Map<Integer, Integer> CEF_2_JAVA_MODIFIERS = new HashMap<>();
 

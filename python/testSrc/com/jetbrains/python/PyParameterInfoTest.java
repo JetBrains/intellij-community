@@ -1033,14 +1033,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-28127 PY-31424
   public void testInitializingTypeVar() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
+      LanguageLevel.getLatest(),
       () -> {
         final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-        feignCtrlP(offset).check("name: str, *constraints: Union[type, str], bound: Union[type, str] = ..., " +
-                                 "covariant: bool = False, contravariant: bool = False",
+        feignCtrlP(offset).check("self: TypeVar, name: str, *constraints: type, bound: Optional[type] = ..., " +
+                                 "covariant: bool = ..., contravariant: bool = ...",
                                  new String[]{"name: str, "},
-                                 ArrayUtilRt.EMPTY_STRING_ARRAY);
+                                 new String[]{"self: TypeVar, "});
       }
     );
   }

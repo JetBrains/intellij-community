@@ -7,7 +7,7 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class VFileContentChangeEvent extends VFileEvent {
+public final class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;

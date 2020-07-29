@@ -214,7 +214,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
     private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer, boolean selectionChanged) {
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : (Runnable)() -> {
+      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : () -> {
         graphUpdater.run();
         updatePrintElementGenerator();
       }, false, selectionChanged);

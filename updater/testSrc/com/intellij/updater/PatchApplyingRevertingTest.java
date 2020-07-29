@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
@@ -501,7 +502,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkAdded() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
 
@@ -510,7 +511,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRemoved() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
 
@@ -519,7 +520,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRenamed() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.lnk"));
@@ -529,7 +530,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRetargeted() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("./Readme.txt", new File(myNewerDir, "Readme.link"));
@@ -582,7 +583,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void multipleDirectorySymlinks() throws Exception {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     resetNewerDir();
 
@@ -612,6 +613,22 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     assertAppliedAndReverted();
   }
 
+  @Test
+  public void symlinksToFilesAndDirectories() throws Exception {
+    assumeSymLinkCreationIsSupported();
+
+    resetNewerDir();
+
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+
+    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib1.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib2.dylib"));
+
+    assertAppliedAndReverted();
+  }
 
   @Override
   protected Patch createPatch() throws IOException {

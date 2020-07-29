@@ -163,13 +163,17 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     }
 
     boolean installsRequiringRestart = myInstallsRequiringRestart;
+    List<PluginId> dynamicPluginsRequiringRestart = new ArrayList<>();
 
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
-      if (!uninstallsRequiringRestart.contains(pendingPluginInstall.getPluginDescriptor().getPluginId())) {
-        InstalledPluginsState.getInstance().trackPluginInstallation(() ->
-          PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
-                                                      pendingPluginInstall.getPluginDescriptor())
-        );
+      PluginId pluginId = pendingPluginInstall.getPluginDescriptor().getPluginId();
+      if (!uninstallsRequiringRestart.contains(pluginId)) {
+        InstalledPluginsState.getInstance().trackPluginInstallation(() -> {
+          if (!PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
+                                                           pendingPluginInstall.getPluginDescriptor())) {
+            dynamicPluginsRequiringRestart.add(pluginId);
+          }
+        });
       }
       else {
         try {
@@ -187,7 +191,10 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
 
     boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent, enabledMap);
     myDynamicPluginsToUninstall.clear();
-    boolean changesAppliedWithoutRestart = enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty() && !installsRequiringRestart;
+    boolean changesAppliedWithoutRestart = enableDisableAppliedWithoutRestart &&
+                                           uninstallsRequiringRestart.isEmpty() &&
+                                           !installsRequiringRestart &&
+                                           dynamicPluginsRequiringRestart.isEmpty();
     if (!changesAppliedWithoutRestart) {
       InstalledPluginsState.getInstance().setRestartRequired(true);
     }
@@ -400,14 +407,20 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       boolean finalRestartRequired = restartRequired;
       ApplicationManager.getApplication()
         .invokeLater(() -> {
+          boolean dynamicRestartRequired = false;
           for (PendingDynamicPluginInstall install : pluginsToInstallSynchronously) {
-            IdeaPluginDescriptorImpl installedDescriptor =
-              PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), myInstalledPanel, install.getPluginDescriptor());
-            if (installedDescriptor != null && installedDescriptor.getPluginId().equals(info.getDescriptor().getPluginId())) {
-              info.setInstalledDescriptor(installedDescriptor);
+            boolean installedWithoutRestart = PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), myInstalledPanel, install.getPluginDescriptor());
+            if (installedWithoutRestart) {
+              IdeaPluginDescriptor installedDescriptor = PluginManagerCore.getPlugin(info.getDescriptor().getPluginId());
+              if (installedDescriptor != null) {
+                info.setInstalledDescriptor((IdeaPluginDescriptorImpl)installedDescriptor);
+              }
+            }
+            else {
+              dynamicRestartRequired = true;
             }
           }
-          info.finish(success, _cancel, _showErrors, finalRestartRequired);
+          info.finish(success, _cancel, _showErrors, finalRestartRequired || dynamicRestartRequired);
         }, modalityState);
     });
   }

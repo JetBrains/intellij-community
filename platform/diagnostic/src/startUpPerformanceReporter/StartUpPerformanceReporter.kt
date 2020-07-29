@@ -110,7 +110,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val pluginCostMap = computePluginCostMap()
 
-      val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+      val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
       val startTime = items.first().start
       for (item in items) {
         val pluginId = item.pluginId ?: continue

@@ -66,9 +66,14 @@ public final class PluginEnabler {
       if (!needRestart) {
         List<IdeaPluginDescriptorImpl> sortedDescriptorsToEnable = PluginManagerCore.getPluginsSortedByDependency(pluginDescriptorsToEnable, true);
         for (IdeaPluginDescriptor descriptor : sortedDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
+          if (!DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor)) {
+            needRestart = true;
+            break;
+          }
         }
-        return true;
+        if (!needRestart) {
+          return true;
+        }
       }
     }
     InstalledPluginsState.getInstance().setRestartRequired(true);

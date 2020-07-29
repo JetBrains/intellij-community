@@ -34,7 +34,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  *  @author dsl
  */
 @ApiStatus.Internal
-public abstract class ContentFolderBaseImpl extends RootModelComponentBase implements ContentFolder, Comparable<ContentFolderBaseImpl> {
+abstract class ContentFolderBaseImpl extends RootModelComponentBase implements ContentFolder, Comparable<ContentFolderBaseImpl> {
   @NonNls public static final String URL_ATTRIBUTE = JpsModuleRootModelSerializer.URL_ATTRIBUTE;
 
   private static final Logger LOG = Logger.getInstance(ContentFolderBaseImpl.class);

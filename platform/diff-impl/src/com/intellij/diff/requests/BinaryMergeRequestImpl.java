@@ -144,6 +144,11 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
     }
   }
 
+  @Override
+  public void resultRetargeted() {
+    onAssigned(false);
+  }
+
   private void onAssigned(boolean assigned) {
     myFile.onAssigned(assigned);
     for (DiffContent content : myContents) {

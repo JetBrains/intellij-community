@@ -5,7 +5,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-public class BootstrapTests {
+public final class BootstrapTests {
   static {
     ExternalClasspathClassLoader.install();
   }

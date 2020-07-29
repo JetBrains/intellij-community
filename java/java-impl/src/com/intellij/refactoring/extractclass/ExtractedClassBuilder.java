@@ -182,7 +182,7 @@ class ExtractedClassBuilder {
 
   private void calculateBackpointerName() {
     final String baseName;
-    if (originalClassName.indexOf((int)'.') == 0) {
+    if (originalClassName.indexOf('.') == 0) {
       baseName = StringUtil.decapitalize(originalClassName);
     }
     else {

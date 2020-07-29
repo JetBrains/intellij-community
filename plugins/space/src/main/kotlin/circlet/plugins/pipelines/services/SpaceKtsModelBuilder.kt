@@ -1,26 +1,39 @@
 package circlet.plugins.pipelines.services
 
-import circlet.automation.bootstrap.*
-import circlet.components.*
-import circlet.pipelines.config.api.*
-import circlet.pipelines.config.dsl.script.exec.common.*
-import circlet.pipelines.config.utils.*
-import circlet.platform.client.*
-import circlet.plugins.pipelines.utils.*
-import circlet.plugins.pipelines.viewmodel.*
-import circlet.utils.*
-import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.vfs.*
-import libraries.coroutines.extra.*
+import circlet.automation.bootstrap.AutomationCompilerBootstrap
+import circlet.automation.bootstrap.embeddedMavenServer
+import circlet.automation.bootstrap.publicMavenServer
+import circlet.components.circletWorkspace
+import circlet.pipelines.config.api.ScriptConfig
+import circlet.pipelines.config.dsl.script.exec.common.evaluateModel
+import circlet.pipelines.config.utils.AutomationCompilerConfiguration
+import circlet.platform.client.backgroundDispatcher
+import circlet.plugins.pipelines.utils.ObservableQueue
+import circlet.plugins.pipelines.viewmodel.LogData
+import circlet.plugins.pipelines.viewmodel.ScriptModel
+import circlet.plugins.pipelines.viewmodel.ScriptState
+import circlet.utils.LifetimedDisposable
+import circlet.utils.LifetimedDisposableImpl
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.using
+import libraries.coroutines.extra.withContext
 import libraries.klogging.*
-import org.slf4j.event.*
-import org.slf4j.helpers.*
-import runtime.*
+import org.slf4j.event.Level
+import org.slf4j.event.SubstituteLoggingEvent
+import org.slf4j.helpers.SubstituteLogger
+import runtime.Ui
 import runtime.reactive.*
-import java.io.*
-import java.nio.file.*
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.nio.file.Paths
 
 private val log = logger<SpaceKtsModelBuilder>()
 
@@ -157,12 +170,13 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     val configuration = AutomationCompilerConfiguration.Remote(server = server)
 
                     val compile = AutomationCompilerBootstrap(eventLogger, configuration = configuration).compile(
-                        Path.of(scriptFile.path),
-                        Path.of(targetJar)
+                        Paths.get(scriptFile.path),
+                        Paths.get(targetJar)
                     )
 
                     if (compile == 0) {
-                        val config = evaluateModel(targetJar)
+                        // TODO: fix script runtime path
+                        val config = evaluateModel(targetJar, "")
                         _error.value = null
                         _config.value = config
                     } else {

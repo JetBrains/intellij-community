@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -49,7 +49,7 @@ import java.util.*;
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlUtil {
+public final class HtmlUtil {
   private static final Logger LOG = Logger.getInstance(HtmlUtil.class);
 
   @NonNls private static final String JSFC = "jsfc";
@@ -79,7 +79,7 @@ public class HtmlUtil {
   private HtmlUtil() {
   }
 
-  private static final Set<String> EMPTY_TAGS_MAP = new THashSet<>();
+  private static final Set<String> EMPTY_TAGS_MAP = new HashSet<>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
     "head",
@@ -87,7 +87,7 @@ public class HtmlUtil {
     "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed",
     "caption"
   };
-  private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<>();
+  private static final Set<String> OPTIONAL_END_TAGS_MAP = new HashSet<>();
 
   @NonNls private static final String[] BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
     "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
@@ -104,19 +104,19 @@ public class HtmlUtil {
       "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
       "strong", "sub", "sup", "textarea", "tt", "u", "var"};
 
-  private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
+  private static final Set<String> BLOCK_TAGS_MAP = new HashSet<>();
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
 
-  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
+  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new HashSet<>();
 
   @NonNls private static final String[] HTML5_TAGS = {
     "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header",
     "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
     "main"
   };
-  private static final Set<String> HTML5_TAGS_SET = new THashSet<>();
+  private static final Set<String> HTML5_TAGS_SET = new HashSet<>();
   private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<>();
 
   static {

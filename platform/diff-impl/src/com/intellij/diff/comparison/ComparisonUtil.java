@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ComparisonUtil {
+public final class ComparisonUtil {
   private static final int UNIMPORTANT_LINE_CHAR_COUNT = Registry.intValue("diff.unimportant.line.char.count");
 
   public static boolean isValidRanges(@NotNull CharSequence content1,

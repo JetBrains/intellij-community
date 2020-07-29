@@ -394,9 +394,18 @@ public class PsiImplUtil {
                                                  member.hasModifierProperty(PsiModifier.PUBLIC) &&
                                                  ((PsiMethod)member).findSuperMethods().length > 0)) {
       //member from anonymous class can be called from outside the class
-      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class)
-                                                                           : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
-      return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
+      PsiElement scope = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class)
+                                                                  : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
+      if (scope instanceof PsiDeclarationStatement) {
+        PsiElement[] elements = ((PsiDeclarationStatement)scope).getDeclaredElements();
+        if (elements.length == 1 &&
+            elements[0] instanceof PsiLocalVariable &&
+            ((PsiLocalVariable)elements[0]).getTypeElement().isInferredType()) {
+          // Inferred type: can be used in the surrounding code block as well
+          scope = scope.getParent();
+        }
+      }
+      return new LocalSearchScope(scope != null ? scope : aClass);
     }
 
     PsiModifierList modifierList = member.getModifierList();

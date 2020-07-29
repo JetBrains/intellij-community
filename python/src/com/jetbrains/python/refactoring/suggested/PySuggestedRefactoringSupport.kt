@@ -9,6 +9,7 @@ import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.refactoring.suggested.*
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
@@ -22,9 +23,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
       return element is PyFunction &&
              element.name.let { it != null && PyNames.isIdentifier(it) } &&
              element.property == null &&
-             element.annotation == null &&
-             element.parameterList.parameters.none { it.asNamed?.annotation != null } &&
-             !PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+             !shouldBeSuppressed(element)
     }
 
     internal fun defaultValue(parameter: SuggestedRefactoringSupport.Parameter): String? {
@@ -35,7 +34,15 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
       return element is PsiNameIdentifierOwner &&
              element.name.let { it != null && PyNames.isIdentifier(it) } &&
              (element !is PyParameter || containingFunction(element).let { it != null && !isAvailableForChangeSignature(it) }) &&
-             !PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+             !shouldBeSuppressed(element)
+    }
+
+    private fun shouldBeSuppressed(element: PsiElement): Boolean {
+      if (PyiUtil.isInsideStub(element)) return true
+      if (element is PyElement && PyiUtil.getPythonStub(element) != null) return true
+      if (PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))) return true
+
+      return false
     }
 
     private fun containingFunction(parameter: PyParameter): PyFunction? {

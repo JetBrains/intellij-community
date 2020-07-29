@@ -15,9 +15,6 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 @TestOnly
 public final class EditorListenerTracker {
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;

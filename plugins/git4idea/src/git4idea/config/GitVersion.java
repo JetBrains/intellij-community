@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     UNIX,
     MSYS,
     CYGWIN,
-    WSL,
+    WSL1,
+    WSL2,
     /**
      * The type doesn't matter or couldn't be detected.
      */
@@ -102,7 +104,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Parses output of "git version" command.
    */
   @NotNull
-  public static GitVersion parse(@NotNull String output, @Nullable GitExecutable executable) throws ParseException {
+  public static GitVersion parse(@NotNull String output, @Nullable Type type) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -115,22 +117,20 @@ public final class GitVersion implements Comparable<GitVersion> {
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
 
-    Type type;
-    if (SystemInfo.isWindows) {
-      String suffix = getStringGroup(m, 5);
-      if (executable instanceof GitExecutable.Wsl) {
-        type = Type.WSL;
-      }
-      else if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
-               StringUtil.toLowerCase(suffix).contains("windows")) {
-        type = Type.MSYS;
+    if (type == null) {
+      if (SystemInfo.isWindows) {
+        String suffix = getStringGroup(m, 5);
+        if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
+            StringUtil.toLowerCase(suffix).contains("windows")) {
+          type = Type.MSYS;
+        }
+        else {
+          type = Type.CYGWIN;
+        }
       }
       else {
-        type = Type.CYGWIN;
+        type = Type.UNIX;
       }
-    }
-    else {
-      type = Type.UNIX;
     }
 
     return new GitVersion(major, minor, rev, patch, type);
@@ -202,7 +202,10 @@ public final class GitVersion implements Comparable<GitVersion> {
    * @return true if the version is supported by the plugin
    */
   public boolean isSupported() {
-    return getType() != Type.NULL && compareTo(MIN) >= 0;
+    Type type = getType();
+    return type != Type.NULL &&
+           (Registry.is("git.allow.wsl1.executables") || type != Type.WSL1) &&
+           compareTo(MIN) >= 0;
   }
 
   /**

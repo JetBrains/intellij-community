@@ -13,9 +13,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author cdr
- */
 public class TitledSeparator extends JPanel {
   public static final int TOP_INSET = 7;
   public static final int BOTTOM_INSET = 5;

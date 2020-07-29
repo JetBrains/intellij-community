@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
@@ -13,13 +13,9 @@ import com.jetbrains.cef.JCefAppConfig;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
-import org.cef.browser.CefBrowser;
-import org.cef.browser.CefFrame;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
-import org.cef.handler.CefResourceHandler;
-import org.cef.network.CefRequest;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-
-import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
 
 /**
  * A wrapper over {@link CefApp}.
@@ -124,7 +118,7 @@ public final class JBCefApp {
     return Holder.INSTANCE;
   }
 
-  private static class Holder {
+  private static final class Holder {
     @Nullable static final JBCefApp INSTANCE;
 
     static {
@@ -285,12 +279,9 @@ public final class JBCefApp {
 
       getInstance().myCefApp.registerSchemeHandlerFactory(
         ourSourceSchemeHandlerFactory.getSchemeName(), ourSourceSchemeHandlerFactory.getDomainName(), ourSourceSchemeHandlerFactory);
-      getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
-        @Override
-        public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
-          return FILE_SCHEME_NAME.equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
-        }
-      });
+
+      getInstance().myCefApp.registerSchemeHandlerFactory(
+        JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
   }
 }

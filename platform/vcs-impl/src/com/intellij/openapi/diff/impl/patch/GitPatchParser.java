@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.PatchContentParser.stripPatchNameIfNeeded;
 
-public class GitPatchParser {
+public final class GitPatchParser {
   @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
   @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
   @NonNls private static final Pattern ourIndexHeaderLinePattern =
@@ -53,7 +53,7 @@ public class GitPatchParser {
     }
     if (patch == null) {
       patch = new TextFilePatch(null);
-      //maybe an exception should be thrown!  
+      //maybe an exception should be thrown!
     }
     applyPatchInfo(patch, patchInfo);
     return patch;

@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author yole
  */
-public class DocumentMarkupModel {
+public final class DocumentMarkupModel {
   private static final Key<MarkupModelEx> MARKUP_MODEL_KEY = Key.create("DocumentMarkupModel.MarkupModel");
   private static final Key<ConcurrentMap<Project, MarkupModelImpl>> MARKUP_MODEL_MAP_KEY = Key.create("DocumentMarkupModel.MarkupModelMap");
 

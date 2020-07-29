@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,6 +9,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
@@ -50,7 +52,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
 import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
 
@@ -77,26 +77,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final AntExplorerTreeStructure myTreeStructure;
   private StructureTreeModel myTreeModel;
 
-  private final TreeExpander myTreeExpander = new TreeExpander() {
+  private final TreeExpander myTreeExpander = new DefaultTreeExpander(() -> myTree) {
     @Override
-    public void expandAll() {
-      TreeUtil.expandAll(myTree);
-    }
-
-    @Override
-    public void collapseAll() {
-      TreeUtil.collapseAll(myTree, 1);
-    }
-
-    @Override
-    public boolean canExpand() {
+    protected boolean isEnabled(@NotNull JTree tree) {
       final AntConfiguration config = myConfig;
-      return config != null && !config.getBuildFileList().isEmpty();
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return canExpand();
+      return config != null && !config.getBuildFileList().isEmpty() && super.isEnabled(tree);
     }
   };
 
@@ -173,12 +158,28 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     setContent(ScrollPaneFactory.createScrollPane(myTree));
     ToolTipManager.sharedInstance().registerComponent(myTree);
 
-    final Object refresher = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-      new Class[]{KeymapManagerListener.class, DomEventListener.class},
-      (proxy, method, args) -> treeModel.invalidate()
-    );
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, (KeymapManagerListener)refresher);
-    DomManager.getDomManager(project).addDomEventListener((DomEventListener)refresher, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void keymapAdded(@NotNull Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void keymapRemoved(@NotNull Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        treeModel.invalidate();
+      }
+    });
+    DomManager.getDomManager(project).addDomEventListener(__ -> treeModel.invalidate(), this);
 
     project.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override

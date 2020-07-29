@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class UsageInfoToUsageConverter {
+public final class UsageInfoToUsageConverter {
   private UsageInfoToUsageConverter() {
   }
 

@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -163,14 +164,14 @@ public final class TemplateState implements Disposable {
     CaretListener listener = new CaretListener() {
       @Override
       public void caretAdded(@NotNull CaretEvent e) {
-        if (isMultiCaretMode()) {
+        if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
       }
 
       @Override
       public void caretRemoved(@NotNull CaretEvent e) {
-        if (isMultiCaretMode()) {
+        if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
       }
@@ -210,8 +211,8 @@ public final class TemplateState implements Disposable {
     return false;
   }
 
-  private boolean isMultiCaretMode() {
-    return myEditor != null && myEditor.getCaretModel().getCaretCount() > 1;
+  private boolean isInteractiveModeSupported() {
+    return myEditor != null && myEditor.getCaretModel().getCaretCount() <= 1 && !(myEditor instanceof ImaginaryEditor);
   }
 
   @Override
@@ -413,11 +414,13 @@ public final class TemplateState implements Disposable {
       }
       else {
         setCurrentVariableNumber(nextVariableNumber);
-        initTabStopHighlighters();
-        initListeners();
+        if (isInteractiveModeSupported()) {
+          initTabStopHighlighters();
+          initListeners();
+        }
         focusCurrentExpression();
         fireCurrentVariableChanged(-1);
-        if (isMultiCaretMode()) {
+        if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
       }
@@ -1048,8 +1051,7 @@ public final class TemplateState implements Disposable {
     myEditor.getSelectionModel().removeSelection();
     if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
 
-    int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
-    int endSegmentNumber = selectionSegment >= 0 && getSelectionBeforeTemplate() == null ? selectionSegment : myTemplate.getEndSegmentNumber();
+    int endSegmentNumber = getFinalSegmentNumber();
     int offset = -1;
     if (endSegmentNumber >= 0) {
       offset = mySegments.getSegmentStart(endSegmentNumber);
@@ -1060,7 +1062,7 @@ public final class TemplateState implements Disposable {
       }
     }
 
-    if (isMultiCaretMode() && getCurrentVariableNumber() > -1) {
+    if (!isInteractiveModeSupported() && getCurrentVariableNumber() > -1) {
       offset = -1; //do not move caret in multicaret mode if at least one tab had been made already
     }
 
@@ -1193,27 +1195,27 @@ public final class TemplateState implements Disposable {
 
   private void initTabStopHighlighters() {
     final Set<String> vars = new HashSet<>();
-    for (int i = 0; i < myTemplate.getVariableCount(); i++) {
-      String variableName = myTemplate.getVariableNameAt(i);
+    for (Variable variable : myTemplate.getVariables()) {
+      String variableName = variable.getName();
       if (!vars.add(variableName)) continue;
       int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
       if (segmentNumber < 0) continue;
-      RangeHighlighter segmentHighlighter = getSegmentHighlighter(segmentNumber, false, false);
+      RangeHighlighter segmentHighlighter = getSegmentHighlighter(segmentNumber, variable, false, false);
       myTabStopHighlighters.add(segmentHighlighter);
     }
 
     int endSegmentNumber = myTemplate.getEndSegmentNumber();
     if (endSegmentNumber >= 0) {
-      RangeHighlighter segmentHighlighter = getSegmentHighlighter(endSegmentNumber, false, true);
+      RangeHighlighter segmentHighlighter = getSegmentHighlighter(endSegmentNumber, null, false, true);
       myTabStopHighlighters.add(segmentHighlighter);
     }
   }
 
-  private RangeHighlighter getSegmentHighlighter(int segmentNumber, boolean isSelected, boolean isEnd) {
+  private RangeHighlighter getSegmentHighlighter(int segmentNumber, @Nullable Variable var, boolean isSelected, boolean isEnd) {
     boolean newStyle = Registry.is("live.templates.highlight.all.variables");
     TextAttributesKey attributesKey = isEnd ? null :
                                       isSelected ? EditorColors.LIVE_TEMPLATE_ATTRIBUTES :
-                                      newStyle ? EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT :
+                                      newStyle && mightStopAtVariable(var, segmentNumber) ? EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT :
                                       null;
 
     int start = mySegments.getSegmentStart(segmentNumber);
@@ -1235,6 +1237,12 @@ public final class TemplateState implements Disposable {
     return segmentHighlighter;
   }
 
+  private boolean mightStopAtVariable(@Nullable Variable var, int segmentNumber) {
+    if (var == null) return false;
+    if (var.isAlwaysStopAt()) return true;
+    return var.getDefaultValueExpression().calculateQuickResult(getExpressionContextForSegment(segmentNumber)) == null;
+  }
+
   private void focusCurrentHighlighter(boolean toSelect) {
     if (isFinished()) {
       return;
@@ -1245,7 +1253,7 @@ public final class TemplateState implements Disposable {
     RangeHighlighter segmentHighlighter = myTabStopHighlighters.get(myCurrentVariableNumber);
     if (segmentHighlighter != null) {
       final int segmentNumber = getCurrentSegmentNumber();
-      RangeHighlighter newSegmentHighlighter = getSegmentHighlighter(segmentNumber, toSelect, false);
+      RangeHighlighter newSegmentHighlighter = getSegmentHighlighter(segmentNumber, myTemplate.getVariables().get(myCurrentVariableNumber), toSelect, false);
       segmentHighlighter.dispose();
       myTabStopHighlighters.set(myCurrentVariableNumber, newSegmentHighlighter);
     }
@@ -1275,7 +1283,7 @@ public final class TemplateState implements Disposable {
       }
       if (myTemplate.isToReformat()) {
         try {
-          int endSegmentNumber = myTemplate.getEndSegmentNumber();
+          int endSegmentNumber = getFinalSegmentNumber();
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           RangeMarker dummyAdjustLineMarkerRange = null;
           int endVarOffset = -1;
@@ -1324,6 +1332,17 @@ public final class TemplateState implements Disposable {
         }
       }
     }
+  }
+
+  /**
+   * @return the segment template end on. Caret going to be positioned at this segment in the end.
+   */
+  private int getFinalSegmentNumber() {
+    int endSegmentNumber = myTemplate.getEndSegmentNumber();
+    if (endSegmentNumber < 0 && getSelectionBeforeTemplate() == null) {
+      endSegmentNumber = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+    }
+    return endSegmentNumber;
   }
 
   private void smartIndent(int startOffset, int endOffset) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.PicoContainer
-import java.util.function.BiConsumer
 
 @ApiStatus.Internal
 fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClass: Class<T>, processor: (T) -> Unit) {
@@ -22,14 +21,14 @@ fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClas
 }
 
 @ApiStatus.Internal
-fun processProjectComponents(container: PicoContainer, @Suppress("DEPRECATION") processor: BiConsumer<com.intellij.openapi.components.ProjectComponent, PluginDescriptor>) {
+fun processProjectComponents(container: PicoContainer, @Suppress("DEPRECATION") processor: (com.intellij.openapi.components.ProjectComponent, PluginDescriptor) -> Unit) {
   // we must use instances only from our adapter (could be service or something else)
   // unsafeGetAdapters should be not used here as ProjectManagerImpl uses it to call projectOpened
   for (adapter in (container as DefaultPicoContainer).componentAdapters) {
     if (adapter is MyComponentAdapter) {
       @Suppress("DEPRECATION")
       val instance = adapter.getInitializedInstance() as? com.intellij.openapi.components.ProjectComponent ?: continue
-      processor.accept(instance, adapter.pluginDescriptor)
+      processor(instance, adapter.pluginDescriptor)
     }
   }
 }

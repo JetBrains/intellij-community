@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
@@ -51,9 +51,9 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
 
 @Suppress("DEPRECATION")
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
-  return when {
-    this is NioEventLoopGroup -> NioServerSocketChannel::class.java
-    this is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
+  return when (this) {
+    is NioEventLoopGroup -> NioServerSocketChannel::class.java
+    is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
     //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
     else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
   }
@@ -197,12 +197,11 @@ val Channel.uriScheme: String
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
-val HttpRequest.hostName: String?
-  get() {
-    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
-    val portIndex = hostAndPort.lastIndexOf(':')
-    return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
-  }
+fun getHostName(httpRequest: HttpRequest): String? {
+  val hostAndPort = httpRequest.headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
+  val portIndex = hostAndPort.lastIndexOf(':')
+  return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
+}
 
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)

@@ -23,9 +23,6 @@ import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class PropertiesASTFactory extends ASTFactory {
   @Override
   @Nullable

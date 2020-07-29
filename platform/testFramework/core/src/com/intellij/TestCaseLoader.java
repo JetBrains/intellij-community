@@ -366,9 +366,9 @@ public class TestCaseLoader {
     System.out.println(message);
 
     if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
-      // There is build failure condition logic in TeamCity that depends on the logged message.
-      // Be careful with changing it.
-      System.out.println("Expected some tests to be executed, but no test classes were found.");
+      // Specially formatted error message will fail the build
+      // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
+      System.out.println("##teamcity[message text='Expected some tests to be executed, but no test classes were found.' status='ERROR']");
     }
   }
 

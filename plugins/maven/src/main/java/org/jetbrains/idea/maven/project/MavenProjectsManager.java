@@ -47,7 +47,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
-import com.intellij.workspace.api.TypedEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,7 +60,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -138,7 +138,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
-    Disposer.register(project, this::projectClosed);
+    Disposer.register(this, this::projectClosed);
   }
 
   @Override
@@ -1265,8 +1265,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public List<Module> importProjects() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      TypedEntityStorageBuilder builder = TypedEntityStorageBuilder.Companion.create();
-      return importProjects(new LegacyBrigdeIdeModifiableModelsProvider(myProject, builder));
+      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.Companion.create();
+      return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
     }
     else {
       return importProjects(new IdeModifiableModelsProviderImpl(myProject));

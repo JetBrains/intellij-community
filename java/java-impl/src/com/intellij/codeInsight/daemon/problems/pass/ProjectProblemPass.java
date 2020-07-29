@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.*;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
@@ -86,9 +85,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     EditorInfo oldInfo = editorInfos.remove(psiMember);
     if (oldInfo != null) Disposer.dispose(oldInfo.myInlay);
     if (brokenUsages.isEmpty() || hasOtherElementsOnSameLine(psiMember)) return;
-    PsiNameIdentifierOwner identifierOwner = tryCast(psiMember, PsiNameIdentifierOwner.class);
-    if (identifierOwner == null) return;
-    PsiElement identifier = identifierOwner.getNameIdentifier();
+    PsiElement identifier = getIdentifier(psiMember);
     if (identifier == null) return;
     int offset = getMemberOffset(psiMember);
     InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);

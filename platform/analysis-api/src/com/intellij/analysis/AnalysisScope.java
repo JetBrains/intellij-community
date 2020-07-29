@@ -341,8 +341,9 @@ public class AnalysisScope {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
         if (isFilteredOut(fileOrDir)) return false;
+        if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
         if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-        return searchScope == null || searchScope.contains(fileOrDir);
+        return true;
       });
       return !isInScope || processor.process(fileOrDir);
     };

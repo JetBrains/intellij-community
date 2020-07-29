@@ -236,6 +236,7 @@ public class TestRunnerUtil {
       return myMessage;
     }
 
+    @Override
     protected void runTest() {
       try {
         throw new RuntimeException(myMessage, myThrowable);
@@ -259,10 +260,12 @@ public class TestRunnerUtil {
       return myClassName;
     }
 
+    @Override
     public int countTestCases() {
       return mySuite.countTestCases();
     }
 
+    @Override
     public void run(TestResult result) {
       mySuite.run(result);
     }

@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="true"
+                 description="Enable new entities-based project model (workspace model)"/>
+    <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
+                 description="Enable cache for the workspace model"/>
+    <registryKey key="ide.new.project.model.strict.mode" defaultValue="false" restartRequired="true"
+                 description="Enable required registration for kryo serialization"/>
+
+    <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
+                 description="Enable .iml reading/writing including settings (temporary key)"/>
+
+    <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
+
+    <projectService serviceInterface="com.intellij.workspaceModel.storage.VirtualFileUrlManager"
+                    serviceImplementation="com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl" />
+    <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$MyProjectServiceContainerInitializedListener"/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.StoreReloadManagerBridge"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

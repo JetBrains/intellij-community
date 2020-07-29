@@ -13,9 +13,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
 
-/**
- * @author cdr
- */
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
   private final boolean myDefaultSoft;

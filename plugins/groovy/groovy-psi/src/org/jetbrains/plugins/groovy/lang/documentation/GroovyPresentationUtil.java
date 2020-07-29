@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,12 +18,15 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamData;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
  */
-public class GroovyPresentationUtil {
+public final class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
 
   public static void appendParameterPresentation(GrParameter parameter,

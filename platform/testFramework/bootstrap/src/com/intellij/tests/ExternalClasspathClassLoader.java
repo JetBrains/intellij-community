@@ -10,7 +10,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-public class ExternalClasspathClassLoader {
+public final class ExternalClasspathClassLoader {
 
   private static List<File> loadFilesPaths(String classpathFilePath) {
     try {

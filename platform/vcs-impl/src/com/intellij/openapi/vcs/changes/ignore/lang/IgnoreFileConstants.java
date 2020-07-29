@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * Class containing common constant variables.
  */
-public class IgnoreFileConstants {
+public final class IgnoreFileConstants {
   /**
    * New line character.
    */

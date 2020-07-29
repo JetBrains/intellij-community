@@ -714,6 +714,68 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-42285
+  fun testInvalidElementAccessOnNewParameter() {
+    doChangeSignatureTest(
+      """
+        def greeting(<caret>
+            number: int,
+            /,
+            position: float = 21234,
+            *,
+            name_family: str
+        ) -> str:
+            return 'Hello ' + name_family + " " + str(number)
+        
+        
+        greeting(12345432123, 1234, name_family="DIZEL")
+      """.trimIndent(),
+      """
+        def greeting(
+                minor: int,
+            number: int,
+            /,
+            position: float = 21234,
+            *,
+            name_family: str
+        ) -> str:
+            return 'Hello ' + name_family + " " + str(number)
+        
+        
+        greeting(0, 12345432123, 1234, name_family="DIZEL")
+      """.trimIndent(),
+      { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE) },
+      { myFixture.type("m") },
+      { myFixture.type("i") },
+      { myFixture.type("n") },
+      { myFixture.type("o") },
+      { myFixture.type("r") },
+      { myFixture.type(":") },
+      { myFixture.type(" ") },
+      { myFixture.type("i") },
+      { myFixture.type("n") },
+      { myFixture.type("t") },
+      { myFixture.type(",") } // don't squash actions, sequence is important
+    )
+  }
+
+  // PY-42285
+  fun testRenameParameterOfFunctionWithStub() {
+    val testDataPathPrefix = "refactoring/suggested/${getTestName(true)}"
+    val source = "aaa.pyi"
+
+    myFixture.copyFileToProject("$testDataPathPrefix/$source", source)
+
+    doNoIntentionTest(
+      """
+        def foo(p1<caret>):
+          print(p1)
+      """.trimIndent(),
+      { myFixture.type("2") },
+      intention = changeSignatureIntention()
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()

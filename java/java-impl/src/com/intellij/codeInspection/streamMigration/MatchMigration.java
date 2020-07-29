@@ -18,6 +18,8 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +37,10 @@ class MatchMigration extends BaseStreamApiMigration {
     CommentTracker ct = new CommentTracker();
     if(tb.getSingleStatement() instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
-      PsiExpression value = returnStatement.getReturnValue();
-      if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
-        boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
+      PsiLiteralExpression literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue()), 
+                                                         PsiLiteralExpression.class);
+      if (literal != null && literal.getValue() instanceof Boolean) {
+        boolean foundResult = (Boolean)literal.getValue();
         PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(sourceStatement);
         if (nextReturnStatement != null) {
           PsiExpression returnValue = nextReturnStatement.getReturnValue();
@@ -98,7 +101,7 @@ class MatchMigration extends BaseStreamApiMigration {
         }
       }
     }
-    String replacement = "if(" + streamText + "){" + ct.text(statement) + "}";
+    String replacement = "if(" + streamText + "){" + ct.text(statement) + "\n}";
     return ct.replaceAndRestoreComments(sourceStatement, replacement);
   }
 

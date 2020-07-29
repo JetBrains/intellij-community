@@ -235,7 +235,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   @Nullable
-  public ChangeProvider getChangeProvider() {
+  public GitChangeProvider getChangeProvider() {
     if (myProject.isDefault()) return null;
     return myProject.getService(GitChangeProvider.class);
   }

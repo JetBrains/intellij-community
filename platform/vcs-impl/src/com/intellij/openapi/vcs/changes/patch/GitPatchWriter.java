@@ -16,7 +16,7 @@ import java.io.Writer;
 import static com.intellij.openapi.diff.impl.patch.PatchUtil.EXECUTABLE_FILE_MODE;
 import static com.intellij.openapi.diff.impl.patch.PatchUtil.REGULAR_FILE_MODE;
 
-public class GitPatchWriter {
+public final class GitPatchWriter {
   final static @NonNls String GIT_DIFF_HEADER = "diff --git %s %s";
   private final static @NonNls String FILE_MODE_HEADER = "%s file mode %s";
   private final static @NonNls String INDEX_SHA1_HEADER = "index %s..%s";

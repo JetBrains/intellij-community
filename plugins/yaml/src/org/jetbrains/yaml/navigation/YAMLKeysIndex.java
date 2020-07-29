@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.navigation;
 
 import com.intellij.psi.PsiElement;
@@ -6,7 +6,8 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLUtil;
@@ -19,7 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
-public class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
+public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
   @NonNls
   public static final ID<String, Integer> KEY = ID.create("yaml.keys.name");
 
@@ -35,7 +36,7 @@ public class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
       @NotNull
       @Override
       public Map<String, Integer> map(@NotNull FileContent inputData) {
-        final Map<String, Integer> map = new THashMap<>();
+        Object2IntMap<String> map = new Object2IntOpenHashMap<>();
         inputData.getPsiFile().accept(new YamlRecursivePsiElementVisitor() {
           @Override
           public void visitKeyValue(@NotNull YAMLKeyValue keyValue) {

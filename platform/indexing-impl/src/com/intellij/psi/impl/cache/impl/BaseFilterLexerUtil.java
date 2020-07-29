@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
@@ -24,13 +10,14 @@ import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.THashMap;
 
 import java.util.Collections;
 import java.util.Map;
 
-public class BaseFilterLexerUtil {
+public final class BaseFilterLexerUtil {
   private static final Key<ScanContent> scanContentKey = Key.create("id.todo.scan.content");
   private static final ScanContent EMPTY = new ScanContent(Collections.emptyMap(), Collections.emptyMap());
 
@@ -44,7 +31,7 @@ public class BaseFilterLexerUtil {
       return data;
     }
 
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile());
+    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
     final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
 
     final IdDataConsumer consumer = needIdIndex ? new IdDataConsumer() : null;

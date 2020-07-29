@@ -8,12 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
+import com.intellij.testFramework.LightVirtualFileBase
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import javax.swing.Icon
+import kotlin.properties.Delegates.observable
 
 /**
  * [fileManagerId] is a [org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl.id] which is required to differentiate files
@@ -30,14 +32,15 @@ internal class GHPRVirtualFile(private val fileManagerId: String,
                                val project: Project,
                                val repository: GHRepositoryCoordinates,
                                val pullRequest: GHPRIdentifier)
-  : VirtualFile(), VirtualFileWithoutContent, VirtualFilePathWrapper {
+  : LightVirtualFileBase("", null, 0), VirtualFileWithoutContent, VirtualFilePathWrapper {
 
-  var valid: Boolean = true
-
-  var details: GHPullRequestShort? = pullRequest as? GHPullRequestShort
+  var details: GHPullRequestShort? by observable(pullRequest as? GHPullRequestShort) { _, _, _ ->
+    modificationStamp = modificationStamp++
+  }
 
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    isWritable = false
   }
 
   override fun getName() = "#${pullRequest.number}"
@@ -57,19 +60,10 @@ internal class GHPRVirtualFile(private val fileManagerId: String,
 
   override fun getFileSystem(): VirtualFileSystem = GHPRVirtualFileSystem.getInstance()
 
-  override fun isValid() = valid
-
-  override fun isDirectory() = false
   override fun getLength() = 0L
-  override fun getTimeStamp() = 0L
-  override fun isWritable() = false
-  override fun getParent() = null
-  override fun getChildren() = null
   override fun contentsToByteArray() = throw UnsupportedOperationException()
   override fun getInputStream() = throw UnsupportedOperationException()
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw UnsupportedOperationException()
-
-  override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

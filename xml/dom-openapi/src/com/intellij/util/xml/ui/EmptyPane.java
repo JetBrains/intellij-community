@@ -22,10 +22,6 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 
-/** 
- * @author cdr
- */
-
 public class EmptyPane {
   private JPanel myPanel;
   private JLabel myLabel;

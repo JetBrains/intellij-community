@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CommandLineWaitingManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.help.HelpManager
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.InplaceButton
-import com.intellij.vcs.log.ui.VcsLogActionPlaces
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryFiles
 import git4idea.repo.GitRepositoryManager
@@ -37,7 +37,7 @@ class GitEditorPromo : EditorNotifications.Provider<EditorNotificationPanel>() {
         text = GitBundle.message("editor.promo.commit.text", ApplicationNamesInfo.getInstance().fullProductName)
         val repository = GitRepositoryManager.getInstance(project).repositories.find { it.repositoryFiles.isCommitMessageFile(file.path) }
         if (repository != null) {
-          createActionLabel(GitBundle.message("editor.promo.commit.try.link"), VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, false)
+          createActionLabel(GitBundle.message("editor.promo.commit.try.link"), IdeActions.ACTION_CHECKIN_PROJECT, false)
         }
         else {
           createActionLabel(GitBundle.message("editor.promo.help.link")) {
@@ -46,7 +46,7 @@ class GitEditorPromo : EditorNotifications.Provider<EditorNotificationPanel>() {
         }
         add(InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
           PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
-          EditorNotifications.updateAll()
+          EditorNotifications.getInstance(project).updateNotifications(this@GitEditorPromo)
         }, BorderLayout.EAST)
       }
     }

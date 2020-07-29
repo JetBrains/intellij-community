@@ -84,6 +84,9 @@ public class DarculaButtonUI extends BasicButtonUI {
    */
   @SuppressWarnings("UseJBColor")
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
+    if (!((AbstractButton)c).isContentAreaFilled()) {
+      return true;
+    }
     Rectangle r = new Rectangle(c.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1));
 

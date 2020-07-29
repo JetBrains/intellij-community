@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ProjectTopics;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,7 @@ import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.ext.LibrarySearchHelper;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -27,20 +28,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class LibraryDependentToolWindowManager implements StartupActivity {
+final class LibraryDependentToolWindowManager implements StartupActivity {
+  private static final Executor ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager");
 
-  private static final Executor ourExecutor =
-    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager");
+  LibraryDependentToolWindowManager() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
 
   @Override
   public void runActivity(@NotNull Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() ||
-        application.isHeadlessEnvironment()) {
-      return;
-    }
-
-    final ModuleRootListener rootListener = new ModuleRootListener() {
+    ModuleRootListener rootListener = new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         checkToolWindowStatuses(project);
@@ -49,7 +49,7 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
 
     checkToolWindowStatuses(project);
 
-    final MessageBusConnection connection = project.getMessageBus().connect();
+    SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
     LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<LibraryDependentToolWindow>() {
       @Override

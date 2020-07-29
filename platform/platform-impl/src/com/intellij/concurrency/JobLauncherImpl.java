@@ -24,9 +24,6 @@ import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author cdr
- */
 public class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
 
@@ -291,7 +288,7 @@ public class JobLauncherImpl extends JobLauncher {
                   break;
                 }
               }
-              catch (RuntimeException e) {
+              catch (RuntimeException|Error e) {
                 failedToProcess.add(element);
                 throw e;
               }

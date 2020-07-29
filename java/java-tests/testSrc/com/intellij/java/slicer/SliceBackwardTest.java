@@ -30,9 +30,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 public class SliceBackwardTest extends SliceTestCase {
   private void doTest() throws Exception {
     doTest("");

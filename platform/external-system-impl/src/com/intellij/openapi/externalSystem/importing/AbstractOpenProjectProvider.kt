@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.importing
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.Project
@@ -34,16 +35,23 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     if (focusOnOpenedSameProject(projectDirectory.path)) {
       return null
     }
-    if (canOpenPlatformProject(projectDirectory)) {
+    else if (canOpenPlatformProject(projectDirectory)) {
       return openPlatformProject(projectDirectory, projectToClose, forceOpenInNewFrame)
     }
 
-    val project = createProject(projectDirectory) ?: return null
-    linkAndRefreshProject(projectDirectory.path, project)
-    updateLastProjectLocation(projectDirectory.path)
-    val path = Paths.get(projectDirectory.path)
-    PlatformProjectOpenProcessor.openExistingProject(path, OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, project = project))
-    return project
+    val options = OpenProjectTask(isNewProject = true,
+                                  forceOpenInNewFrame = forceOpenInNewFrame,
+                                  projectToClose = projectToClose,
+                                  runConfigurators = false,
+                                  beforeOpen = { project ->
+                                    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
+                                    ApplicationManager.getApplication().invokeAndWait {
+                                      linkAndRefreshProject(projectDirectory.path, project)
+                                    }
+                                    updateLastProjectLocation(projectDirectory.toNioPath())
+                                    true
+                                  })
+    return ProjectManagerEx.getInstanceEx().openProject(projectDirectory.toNioPath(), options)
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
@@ -94,13 +102,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
   private fun getProjectDirectory(file: VirtualFile): VirtualFile {
     if (!file.isDirectory) return file.parent
     return file
-  }
-
-  private fun createProject(projectDirectory: VirtualFile): Project? {
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    val project = projectManager.createProject(projectDirectory.name, projectDirectory.path)
-    project?.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-    return project
   }
 
   companion object {

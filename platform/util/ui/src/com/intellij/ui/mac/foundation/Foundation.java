@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
@@ -21,7 +21,7 @@ import java.util.*;
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 @NonNls
-public class Foundation {
+public final class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
 
   static {
@@ -159,7 +159,7 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  private static class NSString {
+  private static final class NSString {
     private static final ID nsStringCls = getObjcClass("NSString");
     private static final Pointer stringSel = createSelector("string");
     private static final Pointer allocSel = createSelector("alloc");

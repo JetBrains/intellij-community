@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author cdr
- */
 public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 

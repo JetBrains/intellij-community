@@ -109,7 +109,7 @@ public class PathMacroManagerTest {
     ReplacePathToMacroMap map = new ProjectPathMacroManager(createProject("/home/user/foo")).getReplacePathMap();
     String src = "-Dfoo=/home/user/foo/bar/home -Dbar=\"/home/user\"";
     String dst = "-Dfoo=$PROJECT_DIR$/bar/home -Dbar=\"$PROJECT_DIR$/..\"";
-    assertThat(map.substituteRecursively(src, true)).isEqualTo(dst);
+    assertThat(map.substituteRecursively(src, true).toString()).isEqualTo(dst);
   }
 
   @Test

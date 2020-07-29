@@ -26,9 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-/**
- * @author cdr
-*/
 public class ChooseEncodingDialog extends DialogWrapper {
   private final Charset[] myCharsets;
   private final Charset myDefaultCharset;

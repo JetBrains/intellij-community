@@ -234,5 +234,10 @@ public final class SerializedStubTree {
     public ObjectStubSerializer getStubType() {
       return null;
     }
+
+    @Override
+    public String toString() {
+      return "<no stub>";
+    }
   };
 }

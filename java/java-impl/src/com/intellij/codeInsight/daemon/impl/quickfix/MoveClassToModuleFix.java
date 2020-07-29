@@ -39,9 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 public class MoveClassToModuleFix implements IntentionAction {
   private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;

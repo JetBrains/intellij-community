@@ -218,34 +218,44 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       return !isTimeZoneIdString(string);
     }
 
+    /**
+     * Highlights the groups of backward and forward slashes in a string literal except backward slashes inside escape sequences.<br><br>
+     * <b>Examples:</b><br>
+     * <code> String str1 = "<b>/</b>without<b>/</b>escape<b>/</b>sequences";</code><br>
+     * <code> String str2 = "<b>//</b> with \n escape <b>\\</b>n sequences <b>//\\</b>";</code>
+     */
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
       String text = expression.getText();
-      int length = 0;
-      int slashInd = 0;
-      int prevSlashInd;
+      int allSlashes = 0, backslashes = 0;
+      int slashInd = 0, prevSlashInd;
       while (slashInd != -1) {
         prevSlashInd = slashInd;
         int nextSlashInd;
+        char symbol = '\0';
         for (nextSlashInd = slashInd; nextSlashInd < text.length(); nextSlashInd++) {
-          char symbol = text.charAt(nextSlashInd);
+          symbol = text.charAt(nextSlashInd);
           if (SLASH == symbol || BACKSLASH == symbol) {
             slashInd = nextSlashInd;
             break;
           }
         }
-        if (nextSlashInd == text.length()) {
-          slashInd = -1;
-        }
-        else {
-          slashInd++;
-        }
+        slashInd = nextSlashInd == text.length() ? -1 : slashInd + 1;
+
         if (prevSlashInd == 0 || slashInd - prevSlashInd == 1) {
-          length++;
+          allSlashes++;
+          backslashes = BACKSLASH == symbol ? backslashes + 1 : 0;
+          continue;
+        }
+        if (backslashes == 1 && allSlashes == 1) continue;
+
+        if (backslashes == 1) {
+          registerErrorAtOffset(expression, prevSlashInd - allSlashes, allSlashes - 1);
         }
         else {
-          registerErrorAtOffset(expression, prevSlashInd - length, length);
-          length = 1;
+          registerErrorAtOffset(expression, prevSlashInd - allSlashes, isEscapeSequence(backslashes) ? allSlashes - 1 : allSlashes);
         }
+        allSlashes = 1;
+        backslashes = BACKSLASH == symbol ? 1 : 0;
       }
     }
 
@@ -348,6 +358,10 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      */
     private boolean isTimeZoneIdString(String string) {
       return Holder.timeZoneIds.contains(string);
+    }
+
+    private boolean isEscapeSequence(int backslashCounter) {
+      return backslashCounter % 2 != 0;
     }
   }
 }

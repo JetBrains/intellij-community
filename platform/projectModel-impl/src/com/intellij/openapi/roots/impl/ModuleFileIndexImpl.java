@@ -7,12 +7,17 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
+/**
+ * This is an internal class, {@link ModuleFileIndex} must be used instead.
+ */
+@ApiStatus.Internal
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   @NotNull
   private final Module myModule;

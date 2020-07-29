@@ -12,6 +12,9 @@ public class DuplicateConditionInspectionTest extends LightJavaInspectionTestCas
   public void testDuplicateConditionNoSideEffect() {
     doTest();
   }
+  public void testDuplicateBooleanBranch() {
+    doTest();
+  }
 
   @Nullable
   @Override

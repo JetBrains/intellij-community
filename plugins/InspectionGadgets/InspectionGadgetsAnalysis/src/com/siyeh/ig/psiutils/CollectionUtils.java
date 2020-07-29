@@ -252,7 +252,7 @@ public class CollectionUtils {
   }
 
   public static String getInterfaceForClass(String name) {
-    final int parameterStart = name.indexOf((int)'<');
+    final int parameterStart = name.indexOf('<');
     final String baseName;
     if (parameterStart >= 0) {
       baseName = name.substring(0, parameterStart).trim();

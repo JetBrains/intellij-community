@@ -9,9 +9,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author cdr
-*/
 class PreviewUsageAction extends RuleAction {
   PreviewUsageAction(@NotNull UsageView usageView) {
     super(usageView, UsageViewBundle.messagePointer("preview.usages.action.text", StringUtil.capitalize(StringUtil.pluralize(usageView.getPresentation().getUsagesWord()))), AllIcons.Actions.PreviewDetails);

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -35,7 +34,6 @@ import kotlin.properties.Delegates
 internal class GHPRToolWindowComponentFactory(private val project: Project,
                                               private val remoteUrl: GitRemoteUrlCoordinates,
                                               private val parentDisposable: Disposable) {
-
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
@@ -48,7 +46,6 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
   }
 
   private inner class Controller(private val panel: JPanel) {
-
     private var selectedAccount: GithubAccount? = null
     private var requestExecutor: GithubApiRequestExecutor? = null
 
@@ -59,12 +56,11 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
 
     init {
       ApplicationManager.getApplication().messageBus.connect(parentDisposable)
-        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
-                   object : AccountTokenChangedListener {
-                     override fun tokenChanged(account: GithubAccount) {
-                       invokeLater { update() }
-                     }
-                   })
+        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+          override fun tokenChanged(account: GithubAccount) {
+            ApplicationManager.getApplication().invokeLater(Runnable { update() }, project.disposed)
+          }
+        })
       update()
     }
 

@@ -3,7 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.NotNull;
 
-class FixingLayoutTypoTolerantMatcher {
+final class FixingLayoutTypoTolerantMatcher {
   static MinusculeMatcher create(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     TypoTolerantMatcher mainMatcher = new TypoTolerantMatcher(pattern, options, hardSeparators);
     String s = FixingLayoutMatcher.fixLayout(pattern);

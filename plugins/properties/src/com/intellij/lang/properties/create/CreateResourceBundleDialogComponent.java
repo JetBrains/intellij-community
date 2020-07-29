@@ -29,7 +29,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateResourceBundleDialogComponent {
+public final class CreateResourceBundleDialogComponent {
   private final static Logger LOG = Logger.getInstance(CreateResourceBundleDialogComponent.class);
 
   private static final Comparator<Locale> LOCALE_COMPARATOR = (l1, l2) -> {
@@ -72,7 +71,7 @@ public class CreateResourceBundleDialogComponent {
     myProject = project;
     myDirectory = directory;
     myResourceBundle = resourceBundle;
-    myLocaleSuffixes = new THashMap<>();
+    myLocaleSuffixes = new HashMap<>();
     if (resourceBundle != null) {
       myResourceBundleNamePanel.setVisible(false);
       myUseXMLBasedPropertiesCheckBox.setVisible(false);
@@ -264,7 +263,7 @@ public class CreateResourceBundleDialogComponent {
       return Collections.emptyMap();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final Map<Locale, String> locales = new THashMap<>(splitRawLocales.length);
+    final Map<Locale, String> locales = new HashMap<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
       final Pair<Locale, String> localeAndSuffix = PropertiesUtil.getLocaleAndTrimmedSuffix("_" + rawLocale + ".properties");

@@ -20,7 +20,8 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
- * @author dsl
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link ModuleOrderEntry} should be used instead.
  */
 @ApiStatus.Internal
 public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOrderEntry, WritableOrderEntry, ClonableOrderEntry {

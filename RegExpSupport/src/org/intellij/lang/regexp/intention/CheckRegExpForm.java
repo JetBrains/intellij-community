@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -17,10 +20,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,8 +30,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
@@ -51,27 +53,17 @@ public class CheckRegExpForm {
 
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
 
-  private static final JBColor BACKGROUND_COLOR_MATCH = new JBColor(0xe7fadb, 0x445542);
-  private static final JBColor BACKGROUND_COLOR_NOMATCH = new JBColor(0xffb1a0, 0x6e2b28);
+  private final EditorTextField mySampleText;
 
-  private final PsiFile myRegexpFile;
-
-  private EditorTextField mySampleText;
-
-  private EditorTextField myRegExp;
-  private JPanel myRootPanel;
-  private JBLabel myMessage;
-  private Project myProject;
+  private final JPanel myRootPanel;
+  private final JBLabel myRegExpIcon = new JBLabel();
+  private final JBLabel mySampleIcon = new JBLabel();
 
   public CheckRegExpForm(@NotNull PsiFile regexpFile) {
-    myRegexpFile = regexpFile;
-  }
+    final Project project = regexpFile.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(regexpFile);
 
-  private void createUIComponents() {
-    myProject = myRegexpFile.getProject();
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
-
-    final Language language = myRegexpFile.getLanguage();
+    final Language language = regexpFile.getLanguage();
     final LanguageFileType fileType;
     if (language instanceof RegExpLanguage) {
       fileType = RegExpLanguage.INSTANCE.getAssociatedFileType();
@@ -80,7 +72,7 @@ public class CheckRegExpForm {
       // for correct syntax highlighting
       fileType = new RegExpFileType(language);
     }
-    myRegExp = new EditorTextField(document, myProject, fileType, false, false) {
+    final EditorTextField myRegExp = new EditorTextField(document, project, fileType, false, false) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -95,8 +87,10 @@ public class CheckRegExpForm {
         setupBorder(editor);
       }
     };
-    final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
-    mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
+    setupIcon(myRegExp, myRegExpIcon);
+
+    final String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, "Sample Text");
+    mySampleText = new EditorTextField(sampleText, project, PlainTextFileType.INSTANCE) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -110,12 +104,14 @@ public class CheckRegExpForm {
         setupBorder(editor);
       }
     };
+
+    setupIcon(mySampleText, mySampleIcon);
     mySampleText.setOneLineMode(false);
-    int preferredWidth = Math.max(JBUIScale.scale(250), myRegExp.getPreferredSize().width);
+    final int preferredWidth = Math.max(JBUIScale.scale(250), myRegExp.getPreferredSize().width);
     myRegExp.setPreferredWidth(preferredWidth);
     mySampleText.setPreferredWidth(preferredWidth);
 
-    myRootPanel = new JPanel(new BorderLayout()) {
+    myRootPanel = new JPanel(new GridBagLayout()) {
       Disposable disposable;
       Alarm updater;
 
@@ -132,7 +128,7 @@ public class CheckRegExpForm {
         registerFocusShortcut(mySampleText, "TAB", myRegExp);
 
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
-        DocumentListener documentListener = new DocumentListener() {
+        final DocumentListener documentListener = new DocumentListener() {
           @Override
           public void documentChanged(@NotNull DocumentEvent e) {
             update();
@@ -146,7 +142,7 @@ public class CheckRegExpForm {
       }
 
       private void registerFocusShortcut(JComponent source, String shortcut, EditorTextField target) {
-        AnAction action = new AnAction() {
+        final AnAction action = new AnAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             IdeFocusManager.findInstance().requestFocus(target.getFocusTarget(), true);
@@ -159,8 +155,8 @@ public class CheckRegExpForm {
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
-            final RegExpMatchResult result = isMatchingText(myRegexpFile, myRegExp.getText(), mySampleText.getText());
-            ApplicationManager.getApplication().invokeLater(() -> setBalloonState(result), ModalityState.any(), __ -> updater.isDisposed());
+            final RegExpMatchResult result = isMatchingText(regexpFile, myRegExp.getText(), mySampleText.getText());
+            ApplicationManager.getApplication().invokeLater(() -> reportResult(result), ModalityState.any(), __ -> updater.isDisposed());
           }, 0);
         }
       }
@@ -169,36 +165,77 @@ public class CheckRegExpForm {
       public void removeNotify() {
         super.removeNotify();
         Disposer.dispose(disposable);
-        PropertiesComponent.getInstance(myProject).setValue(LAST_EDITED_REGEXP, mySampleText.getText());
+        PropertiesComponent.getInstance(project).setValue(LAST_EDITED_REGEXP, mySampleText.getText());
       }
     };
     myRootPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.insets = JBUI.insets(UIUtil.DEFAULT_VGAP / 2, UIUtil.DEFAULT_HGAP / 2);
+    c.gridx = 0;
+    c.gridy = 0;
+    myRootPanel.add(createLabel(RegExpBundle.message("label.regexp"), myRegExp), c);
+    c.gridx = 1;
+    myRootPanel.add(myRegExp, c);
+    c.gridx = 0;
+    c.gridy++;
+    myRootPanel.add(createLabel(RegExpBundle.message("label.sample"), mySampleText), c);
+    c.gridx = 1;
+    myRootPanel.add(mySampleText, c);
   }
 
-  void setBalloonState(RegExpMatchResult result) {
-    mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+  private static JLabel createLabel(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
+    final JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
+    final int index = UIUtil.getDisplayMnemonicIndex(labelText);
+    if (index != -1) {
+      label.setDisplayedMnemonic(labelText.charAt(index + 1));
+      label.setDisplayedMnemonicIndex(index);
+    }
+    label.setLabelFor(component);
+    return label;
+  }
+
+  private static void setupIcon(@NotNull EditorTextField field, @NotNull JComponent icon) {
+    field.addSettingsProvider(editor -> {
+      icon.setBorder(JBUI.Borders.emptyLeft(2));
+      final JScrollPane scrollPane = editor.getScrollPane();
+      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      final JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+      verticalScrollBar.setBackground(editor.getBackgroundColor());
+      verticalScrollBar.add(JBScrollBar.LEADING, icon);
+      verticalScrollBar.setOpaque(true);
+    });
+  }
+
+  void reportResult(RegExpMatchResult result) {
     switch (result) {
-      case MATCHES:
-        myMessage.setText(RegExpBundle.message("intention.balloon.matches"));
-        break;
       case NO_MATCH:
-        myMessage.setText(RegExpBundle.message("intention.balloon.no.match"));
+        setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.no.match"));
+        setIconAndTooltip(myRegExpIcon, null, null);
         break;
-      case TIMEOUT:
-        myMessage.setText(RegExpBundle.message("intention.balloon.pattern.is.too.complex"));
-        break;
-      case BAD_REGEXP:
-        myMessage.setText(RegExpBundle.message("intention.balloon.bad.pattern"));
+      case MATCHES:
+        setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.matches"));
+        setIconAndTooltip(myRegExpIcon, null, null);
         break;
       case INCOMPLETE:
-        myMessage.setText(RegExpBundle.message("intention.balloon.more.input.expected"));
+        setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonWarning, RegExpBundle.message("tooltip.more.input.expected"));
+        setIconAndTooltip(myRegExpIcon, null, null);
         break;
-      default:
-        throw new AssertionError();
+      case BAD_REGEXP:
+        setIconAndTooltip(mySampleIcon, null, null);
+        setIconAndTooltip(myRegExpIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.bad.pattern"));
+        break;
+      case TIMEOUT:
+        setIconAndTooltip(mySampleIcon, null, null);
+        setIconAndTooltip(myRegExpIcon, AllIcons.General.BalloonWarning, RegExpBundle.message("tooltip.pattern.is.too.complex"));
+        break;
     }
-    myRootPanel.revalidate();
-    Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
-    if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
+  }
+
+  private static void setIconAndTooltip(JBLabel label, Icon icon, @NlsContexts.Tooltip String tooltip) {
+    label.setIcon(icon);
+    label.setToolTipText(tooltip);
   }
 
   @NotNull

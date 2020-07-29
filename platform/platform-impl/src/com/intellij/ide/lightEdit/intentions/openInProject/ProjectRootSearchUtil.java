@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Existing;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.New;
 
-class ProjectRootSearchUtil {
+final class ProjectRootSearchUtil {
   private final static ProjectRootFinder[] ROOT_FINDERS = {
     new IntellijProjectRootFinder(),
     new GradleProjectRootFinder(),

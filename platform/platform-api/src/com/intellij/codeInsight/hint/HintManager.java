@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 
-/**
- * @author cdr
- */
 public abstract class HintManager {
   public static HintManager getInstance() {
     return ServiceManager.getService(HintManager.class);

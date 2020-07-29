@@ -39,10 +39,13 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     private set
 
   override fun showError(@Nls(capitalization = Sentence) text: String,
-                         @Nls(capitalization = Sentence) description: String?, fixOption: ErrorNotifier.FixOption) {
+                         @Nls(capitalization = Sentence) description: String?,
+                         fixOption: ErrorNotifier.FixOption?) {
     invokeAndWaitIfNeeded(modalityState) {
-      val linkLabel = LinkLabel<Any>(fixOption.text, null) { _, _ ->
-        fixOption.fix()
+      val linkLabel = fixOption?.let {
+        LinkLabel<Any>(fixOption.text, null) { _, _ ->
+          fixOption.fix()
+        }
       }
       val message = if (description == null) text else "<html>$text<br/>$description</html>"
       inlineComponent.showError(message, linkLabel)

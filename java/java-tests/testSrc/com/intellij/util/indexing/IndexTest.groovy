@@ -553,7 +553,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
 
-    document.text = "class Foo { Runnable r = () -> {}; }"
+    document.text = "class Foo { Runnable r = ( ) -> {}; }"
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     stamp = FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
     document.text = "class Foo { Runnable x = () -> { }; }"

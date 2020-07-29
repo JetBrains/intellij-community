@@ -2,16 +2,16 @@
 package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   // @formatter:off
-  @NonNls @SuppressWarnings({"HardCodedStringLiteral"})
-  protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
+  @NonNls @SuppressWarnings("HardCodedStringLiteral")
+  protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new HashMap<String, String[][]>(){{
     put("$default", new String[][] {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -76,7 +76,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control MINUS",            "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "OpenElementInNewWindow", "JupyterRunCellSelectBelowAction"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "OpenElementInNewWindow", "NotebookRunCellSelectBelowAction"},
     { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
@@ -86,6 +86,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "NextEditorTab"},
     { "shift alt A",              "JupyterInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
     { "shift alt B",              "JupyterInsertCellBelowAction", "tasks.open.in.browser"},
+    { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction"},
@@ -374,7 +375,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
     { "ctrl alt DOWN",            "Console.TableResult.NextPage", "EditorCloneCaretBelow"},
     { "ctrl alt UP",              "Console.TableResult.PreviousPage", "EditorCloneCaretAbove"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorSplitLine", "ExpandExpandableComponent", "JupyterRunCellSelectBelowAction", "OpenElementInNewWindow"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenElementInNewWindow"},
     { "shift ctrl D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift ctrl DOWN",          "MoveLineDown", "ResizeToolWindowDown"},
     { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
@@ -398,7 +399,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta UP",                  "EditorTextStart", "SearchEverywhere.NavigateToPrevGroup"},
     { "meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
     { "meta alt G",               "DatabaseView.SqlGenerator", "FindWordAtCaret", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction"},
-    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "JupyterRunCellSelectBelowAction", "OpenElementInNewWindow"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenElementInNewWindow"},
     { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"}

@@ -9,15 +9,19 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
@@ -29,22 +33,28 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class BeforeRunComponent extends JPanel implements DnDTarget {
+public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
   private List<TaskButton> myTags;
   private final InplaceButton myAddButton;
+  private final JPanel myAddPanel;
   Runnable myChangeListener;
+  private BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> myTagListener;
   private RunConfiguration myConfiguration;
   private final LinkLabel<Object> myAddLabel;
 
   public BeforeRunComponent() {
-    super(new WrapLayout(FlowLayout.LEADING));
-    setBorder(JBUI.Borders.emptyLeft(-5));
-    add(new JLabel(ExecutionBundle.message("run.configuration.before.run.label")));
+    super(new WrapLayout(FlowLayout.LEADING, 0, 0));
+    add(Box.createVerticalStrut(35));
+    JBEmptyBorder border = JBUI.Borders.empty(5, 0, 0, 5);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
-    myAddLabel =
-      new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddPanel = new JPanel();
+    myAddPanel.setBorder(border);
+    myAddPanel.add(myAddButton);
+    myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddLabel.setBorder(border);
     DnDManager.getInstance().registerTarget(this, this);
   }
 
@@ -59,6 +69,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
       TaskButton button = new TaskButton(provider, () -> {
         myChangeListener.run();
         updateAddLabel();
+        myTagListener.accept(provider.getId(), false);
       });
       myTags.add(button);
     }
@@ -78,19 +89,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
       group.add(new AnAction(tag.myProvider.getName(), null, tag.myProvider.getIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          BeforeRunTask<?> task = tag.myProvider.createTask(myConfiguration);
-          if (task == null) return;
-          tag.myProvider.configureTask(e.getDataContext(), myConfiguration, task).onSuccess(changed -> {
-            if (!tag.myProvider.canExecuteTask(myConfiguration, task)) {
-              return;
-            }
-            task.setEnabled(true);
-            tag.setTask(task);
-            myTags.remove(tag);
-            myTags.add(tag);
-            buildPanel();
-            myChangeListener.run();
-          });
+          createTask(e, tag);
         }
       });
     }
@@ -100,6 +99,42 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
                                             DataManager.getInstance().getDataContext(myAddButton), false, false, false, null,
                                             -1, Conditions.alwaysTrue());
     popup.showUnderneathOf(myAddButton);
+  }
+
+  public void addOrRemove(Key<? extends BeforeRunTask<?>> providerId, boolean add) {
+    if (myTags == null) return;
+    TaskButton taskButton = ContainerUtil.find(myTags, button -> button.myProvider.getId() == providerId);
+    if (add) {
+      createTask(null, taskButton);
+    }
+    else {
+      taskButton.setVisible(false);
+    }
+  }
+
+  private void createTask(@Nullable AnActionEvent e, TaskButton tag) {
+    BeforeRunTask<?> task = tag.myProvider.createTask(myConfiguration);
+    if (task == null) return;
+    if (e == null) {
+      addTask(tag, task);
+      return;
+    }
+    tag.myProvider.configureTask(e.getDataContext(), myConfiguration, task).onSuccess(changed -> {
+      if (!tag.myProvider.canExecuteTask(myConfiguration, task)) {
+        return;
+      }
+      addTask(tag, task);
+    });
+  }
+
+  private void addTask(TaskButton tag, BeforeRunTask<?> task) {
+    task.setEnabled(true);
+    tag.setTask(task);
+    myTags.remove(tag);
+    myTags.add(tag);
+    buildPanel();
+    myChangeListener.run();
+    myTagListener.accept(tag.myProvider.getId(), true);
   }
 
   public void reset(RunnerAndConfigurationSettingsImpl s) {
@@ -120,7 +155,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
   }
 
   private void buildPanel() {
-    remove(myAddButton);
+    remove(myAddPanel);
     remove(myAddLabel);
     for (TaskButton tag : myTags) {
       remove(tag);
@@ -130,7 +165,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
         add(tag);
       }
     }
-    add(myAddButton);
+    add(myAddPanel);
     add(myAddLabel);
     updateAddLabel();
   }
@@ -153,13 +188,15 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
     if (!(object instanceof TaskButton)) {
       return;
     }
+    TaskButton button = (TaskButton)object;
     Rectangle area = new Rectangle(event.getPoint().x - 5, event.getPoint().y - 5, 10, 10);
-    int i = ContainerUtil.indexOf(myTags, button -> button.isVisible() && button.getBounds().intersects(area));
+    int i = ContainerUtil.indexOf(myTags, tag -> tag.isVisible() && tag.getBounds().intersects(area));
     if (i < 0 || myTags.get(i) == object) return;
     myTags.remove(object);
-    myTags.add(i, (TaskButton)object);
+    myTags.add(i, button);
     buildPanel();
     myChangeListener.run();
+    IdeFocusManager.getInstance(myConfiguration.getProject()).requestFocus(button, false);
   }
 
   @Override
@@ -171,15 +208,24 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
     return true;
   }
 
+  @Override
+  public void dispose() {
+    DnDManager.getInstance().unregisterTarget(this, this);
+  }
+
+  public void setTagListener(BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> tagListener) {
+    myTagListener = tagListener;
+  }
+
   private class TaskButton extends TagButton implements DnDSource {
-    @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
+    private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private BeforeRunTask<?> myTask;
 
     private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider, Runnable action) {
       super(provider.getName(), action);
       myProvider = provider;
       setVisible(false);
-      addMouseListener(new MouseAdapter() {
+      myButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
@@ -188,22 +234,22 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
           }
         }
       });
-      DnDManager.getInstance().registerSource(this, this);
+      DnDManager.getInstance().registerSource(this, myButton);
+      myButton.setToolTipText(ExecutionBundle.message("run.configuration.before.run.tooltip"));
     }
 
     private void setTask(@Nullable BeforeRunTask<?> task) {
       myTask = task;
       setVisible(task != null);
       if (task != null) {
-        setText(myProvider.getDescription(task));
-        setIcon(myProvider.getTaskIcon(task));
+        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task));
       }
     }
 
     @Override
     public void dispose() {
       super.dispose();
-      DnDManager.getInstance().unregisterSource(this, this);
+      DnDManager.getInstance().unregisterSource(this, myButton);
     }
 
     @Override

@@ -8,14 +8,11 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
-public class StatisticsEventLogUtil {
+public final class StatisticsEventLogUtil {
   @NonNls public static final String UTF8 = "UTF-8";
 
   @NotNull

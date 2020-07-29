@@ -14,11 +14,30 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.openapi.application.PathManager
-import java.io.File
+import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCache
+import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.ui.preview.MarkdownUtil
+import java.nio.file.Path
+import java.nio.file.Paths
 
-interface MarkdownCodeFenceCacheableProvider : MarkdownCodeFencePluginGeneratingProvider {
+abstract class MarkdownCodeFenceCacheableProvider(var collector: MarkdownCodeFencePluginCacheCollector?)
+  : MarkdownCodeFencePluginGeneratingProvider {
+
+
   /**
    * Code fence plugin cache path
    */
-  fun getCacheRootPath(): String = "${PathManager.getSystemPath()}${File.separator}markdown${File.separator}${javaClass.simpleName}"
+  fun getCacheRootPath(): Path {
+    return Paths.get(PathManager.getSystemPath(), "markdown", javaClass.simpleName).toAbsolutePath()
+  }
+
+  /**
+   * Get unique file for this text to cache. md5 will be used to generate file path.
+   */
+  fun getUniqueFile(language: String, text: String, extension: String): Path {
+    val collectorKey = MarkdownUtil.md5(collector?.file?.path, MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY)
+    val fileKey = MarkdownUtil.md5(text, "$language.${extension}")
+
+    return getCacheRootPath().resolve(collectorKey).resolve(fileKey)
+  }
 }

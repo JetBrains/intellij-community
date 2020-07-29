@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.impl.ProjectManagerExImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -315,7 +316,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         finally {
           // this concoction is to ensure close() is called on the mock ProjectManagerImpl
           assertTrue(project.get().isOpen());
-          ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.forceCloseProjectWithoutSaving(project.get()));
+          PlatformTestUtil.forceCloseProjectWithoutSaving(project.get());
         }
       }
     );
@@ -323,7 +324,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback, @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
-    ProjectManagerImpl test = new ProjectManagerImpl() {
+    ProjectManagerImpl test = new ProjectManagerExImpl() {
       @Override
       public @NotNull List<String> getAllExcludedUrls() {
         getAllExcludedCalled.set(true);

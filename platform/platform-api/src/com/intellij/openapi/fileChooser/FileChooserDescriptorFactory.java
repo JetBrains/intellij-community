@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * Common variants of {@link FileChooserDescriptor}.
  */
-public class FileChooserDescriptorFactory {
+public final class FileChooserDescriptorFactory {
   private FileChooserDescriptorFactory() { }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {

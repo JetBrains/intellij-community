@@ -18,8 +18,8 @@ if sys.version_info < (3, 8):
         def __init__(self, message: str, consumed: int) -> None: ...
 
 async def open_connection(
-    host: str = ...,
-    port: Union[int, str] = ...,
+    host: Optional[str] = ...,
+    port: Optional[Union[int, str]] = ...,
     *,
     loop: Optional[events.AbstractEventLoop] = ...,
     limit: int = ...,
@@ -46,7 +46,7 @@ if sys.platform != 'win32':
         _PathType = str
 
     async def open_unix_connection(
-        path: _PathType = ...,
+        path: Optional[_PathType] = ...,
         *,
         loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
@@ -55,7 +55,7 @@ if sys.platform != 'win32':
 
     async def start_unix_server(
         client_connected_cb: _ClientConnectedCallback,
-        path: _PathType = ...,
+        path: Optional[_PathType] = ...,
         *,
         loop: Optional[events.AbstractEventLoop] = ...,
         limit: int = ...,
@@ -66,7 +66,7 @@ class FlowControlMixin(protocols.Protocol): ...
 class StreamReaderProtocol(FlowControlMixin, protocols.Protocol):
     def __init__(self,
                  stream_reader: StreamReader,
-                 client_connected_cb: _ClientConnectedCallback = ...,
+                 client_connected_cb: Optional[_ClientConnectedCallback] = ...,
                  loop: Optional[events.AbstractEventLoop] = ...) -> None: ...
     def connection_made(self, transport: transports.BaseTransport) -> None: ...
     def connection_lost(self, exc: Optional[Exception]) -> None: ...

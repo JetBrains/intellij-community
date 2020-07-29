@@ -11,7 +11,7 @@ import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AstBufferUtil {
+public final class AstBufferUtil {
   private AstBufferUtil() { }
 
   public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset) {

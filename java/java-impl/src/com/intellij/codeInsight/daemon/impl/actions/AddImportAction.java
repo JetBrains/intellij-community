@@ -1,4 +1,3 @@
-
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiClass;
@@ -129,11 +129,11 @@ public class AddImportAction implements QuestionAction {
           return aValue.getIcon(0);
         }
       };
-    ListPopupImpl popup = new ListPopupImpl(myProject, step) {
+    JBPopup popup = new ListPopupImpl(myProject, step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
-        final PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
-        final DefaultPsiElementCellRenderer psiRenderer = new DefaultPsiElementCellRenderer();
+        PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
+        ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
         return (list, value, index, isSelected, cellHasFocus) -> {
           JPanel panel = new JPanel(new BorderLayout());
           baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -211,7 +211,7 @@ public class AddImportAction implements QuestionAction {
   private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     try{
       bindReference(ref, targetClass);
-      if (CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly) {
+      if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();

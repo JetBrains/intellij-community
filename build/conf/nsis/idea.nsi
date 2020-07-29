@@ -44,8 +44,6 @@ Var productDir
 Var silentMode
 Var pathEnvVar
 Var requiredDiskSpace
-Var bundledJavaPath
-Var regenerationSharedArchive
 
 ; position of controls for Uninstall Old Installations dialog
 Var control_fields
@@ -658,17 +656,10 @@ update_context_menu:
 download_jbr_x86:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
-  IfErrors regeneration_shared_archive
+  IfErrors associations
   ${LogText} "  download x86 runtime: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
-
-regeneration_shared_archive:
-  ClearErrors
-  ${ConfigRead} "$R1" "regenerationSharedArchive=" $R3
-  IfErrors associations
-  ${LogText} "  regenerationSharedArchive: $R3"
-  StrCpy $regenerationSharedArchive $R3
 
 associations:
   ClearErrors
@@ -1359,21 +1350,6 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  ; Regenerating the Shared Archive
-  ; https://docs.oracle.com/en/java/javase/11/vm/class-data-sharing.html
-  IfSilent 0 regeneration_shared_archive
-  StrCmp $regenerationSharedArchive "1" 0 skip_regeneration_shared_archive
-regeneration_shared_archive:
-  StrCpy $bundledJavaPath "$INSTDIR\jbr\bin\javaw.exe"
-  IfFileExists $bundledJavaPath do_regeneration_shared_archive 0
-  StrCpy $bundledJavaPath "$INSTDIR\jre64\bin\javaw.exe"
-  IfFileExists $bundledJavaPath 0 skip_regeneration_shared_archive
-do_regeneration_shared_archive:
-  ${LogText} ""
-  ${LogText} "Regenerating the Shared Archive using $bundledJavaPath"
-  ExecDos::exec /NOUNLOAD /ASYNC '"$bundledJavaPath" -Xshare:dump'
-
-skip_regeneration_shared_archive:
   SetOutPath $INSTDIR\bin
 ; set the current time for installation files under $INSTDIR\bin
   ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'

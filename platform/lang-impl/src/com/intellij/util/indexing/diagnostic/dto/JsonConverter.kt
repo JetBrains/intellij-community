@@ -2,17 +2,13 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
-import com.intellij.util.text.DateFormatUtil
 import java.time.Duration
-import java.time.Instant
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 
 // Int value that is greater than zero.
 // Can be used to skip int value from JSON if it is equal to 0 (to not pollute the JSON report).
 typealias PositiveInt = Int?
-
-typealias PresentableTime = String
 
 fun Int.toPositiveInt() = takeIf { it > 0 }
 
@@ -24,10 +20,9 @@ fun FileProviderIndexStatistics.toJson(): JsonFileProviderIndexStatistics {
   return JsonFileProviderIndexStatistics(
     providerDebugName,
     numberOfFiles,
-    JsonTime(totalTime),
-    indexingStatistics.numberOfTooLargeFiles.get().toPositiveInt(),
-    indexingStatistics.numberOfFailedToLoadFiles.get().toPositiveInt(),
-    indexingStatistics.numberOfFailedToIndexFiles.get().toPositiveInt(),
+    JsonDuration(totalTime),
+    indexingStatistics.numberOfTooLargeForIndexingFiles.get().toPositiveInt(),
+    indexingStatistics.tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     statsPerFileType.sortedByDescending { it.partOfTotalIndexingTime.percentages },
     statsPerIndexer.sortedByDescending { it.partOfTotalIndexingTime.percentages },
     fastIndexers.map { it.indexId }.sorted()
@@ -72,23 +67,20 @@ private fun FileProviderIndexStatistics.aggregateStatsPerIndexer(): List<JsonFil
     }
 }
 
-private fun Instant.toPresentableTime(): PresentableTime =
-  DateFormatUtil.getIso8601Format().format(this.toEpochMilli())
-
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
-    JsonTime(Duration.between(indexingStart, indexingEnd).toNanos()),
-    JsonTime(Duration.between(scanFilesStart, scanFilesEnd).toNanos()),
-    JsonTime(Duration.between(pushPropertiesStart, pushPropertiesEnd).toNanos()),
-    JsonTime(Duration.between(indexExtensionsStart, indexExtensionsEnd).toNanos()),
-    indexingStart!!.toPresentableTime(),
-    indexingEnd!!.toPresentableTime(),
-    pushPropertiesStart!!.toPresentableTime(),
-    pushPropertiesEnd!!.toPresentableTime(),
-    indexExtensionsStart!!.toPresentableTime(),
-    indexExtensionsEnd!!.toPresentableTime(),
-    scanFilesStart!!.toPresentableTime(),
-    scanFilesEnd!!.toPresentableTime()
+    JsonDuration(Duration.between(indexingStart, indexingEnd).toNanos()),
+    JsonDuration(Duration.between(scanFilesStart, scanFilesEnd).toNanos()),
+    JsonDuration(Duration.between(pushPropertiesStart, pushPropertiesEnd).toNanos()),
+    JsonDuration(Duration.between(indexExtensionsStart, indexExtensionsEnd).toNanos()),
+    JsonDateTime(pushPropertiesStart!!),
+    JsonDateTime(pushPropertiesEnd!!),
+    JsonDateTime(scanFilesStart!!),
+    JsonDateTime(scanFilesEnd!!),
+    JsonDateTime(indexExtensionsStart!!),
+    JsonDateTime(indexExtensionsEnd!!),
+    JsonDateTime(indexingStart!!),
+    JsonDateTime(indexingEnd!!)
   )
 
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages =
@@ -104,10 +96,10 @@ fun ProjectIndexingHistory.toJson() =
     projectName,
     providerStatistics.size,
     aggregateTotalNumberOfFiles(),
-    totalNumberOfTooLargeFiles.toPositiveInt(),
-    totalNumberOfFailedToLoadFiles.toPositiveInt(),
-    totalNumberOfFailedToIndexFiles.toPositiveInt(),
     times.toJson(),
+    numberOfIndexingThreads,
+    totalNumberOfTooLargeFiles.toPositiveInt(),
+    totalTooLargeFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
@@ -153,14 +145,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
   }
 }
 
-private fun IndexedFileStat.toJson() =
-  JsonIndexedFileStat(
-    fileName,
-    fileType,
-    JsonFileSize(fileSize),
-    JsonTime(indexingTime),
-    JsonTime(contentLoadingTime)
-  )
+private fun TooLargeForIndexingFile.toJson() = JsonTooLargeForIndexingFile(fileName, JsonFileSize(fileSize))
 
 private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
   val totalIndexingTime = totalStatsPerIndexer.values.map { it.totalIndexingTimeInAllThreads }.sum()

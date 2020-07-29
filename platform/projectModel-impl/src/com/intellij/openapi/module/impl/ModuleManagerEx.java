@@ -10,6 +10,8 @@ import java.util.Collection;
 
 @ApiStatus.Internal
 public abstract class ModuleManagerEx extends ModuleManager {
+  public static final String IML_EXTENSION = ".iml";
+  public static final String MODULE_GROUP_SEPARATOR = "/";
 
   @ApiStatus.Experimental
   public abstract Collection<ModulePath> getFailedModulePaths();

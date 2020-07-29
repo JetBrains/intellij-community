@@ -45,7 +45,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassT
 /**
  * @author Max Medvedev
  */
-public class GdkMethodUtil {
+public final class GdkMethodUtil {
 
   public static final Set<String> COLLECTION_METHOD_NAMES = ContainerUtil.newHashSet(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
@@ -413,7 +413,7 @@ public class GdkMethodUtil {
     return CachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
       @Override
       public Result<PsiClassType> compute() {
-        return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.MODIFICATION_COUNT);
       }
 
       @Nullable

@@ -14,6 +14,7 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.LongStreamEx;
@@ -40,7 +41,7 @@ public class DfaExpressionFactory {
 
   @Nullable
   @Contract("null -> null")
-  public DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
+  DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
     if (expression == null) return null;
 
     if (expression instanceof PsiParenthesizedExpression) {
@@ -386,13 +387,23 @@ public class DfaExpressionFactory {
     }
   }
 
-  private static final class GetterDescriptor implements VariableDescriptor {
+  public static final class GetterDescriptor implements VariableDescriptor {
+    private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
+      CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+      CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
+      CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
+      CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
+      CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
+      CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
+                               "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass", 
+                               "getSimpleName", "getCanonicalName")
+    );
     private final @NotNull PsiMethod myGetter;
     private final boolean myStable;
 
-    GetterDescriptor(@NotNull PsiMethod getter) {
+    public GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
-      if (PsiTypesUtil.isGetClass(getter)) {
+      if (STABLE_METHODS.methodMatches(getter)) {
         myStable = true;
       } else {
         PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
@@ -211,7 +212,7 @@ public class RemoveUnusedVariableUtil {
             deleteReferences(variable, references, deleteMode);
           }
           else if (deleteMode == RemoveMode.DELETE_ALL) {
-            element.delete();
+            deleteVariable(variable);
           }
           return true;
         }
@@ -220,7 +221,7 @@ public class RemoveUnusedVariableUtil {
             if (element instanceof PsiField) {
               ((PsiField)element).normalizeDeclaration();
             }
-            element.delete();
+            deleteVariable(variable);
           }
           return !sideEffectsFound;
         }
@@ -228,6 +229,12 @@ public class RemoveUnusedVariableUtil {
       element = element.getParent();
     }
     return true;
+  }
+
+  private static void deleteVariable(PsiVariable variable) {
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(variable.getInitializer()); // assume that initializer is used (e.g. inlined)
+    tracker.deleteAndRestoreComments(variable);
   }
 
   @NotNull

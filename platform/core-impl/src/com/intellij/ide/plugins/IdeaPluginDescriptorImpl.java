@@ -834,6 +834,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean unloadClassLoader(int timeoutMs) {
+    if (timeoutMs == 0) {
+      myLoader = null;
+      return true;
+    }
+
     GCWatcher watcher = GCWatcher.tracking(myLoader);
     myLoader = null;
     return watcher.tryCollect(timeoutMs);

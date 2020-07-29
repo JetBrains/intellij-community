@@ -18,7 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -140,8 +140,8 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public ExistingLibraryEditor getLibraryEditor(Library library){
-    if (library instanceof LibraryImpl) {
-      final Library source = ((LibraryImpl)library).getSource();
+    if (library instanceof LibraryEx) {
+      final Library source = ((LibraryEx)library).getSource();
       if (source != null) {
         return getLibraryEditor(source);
       }

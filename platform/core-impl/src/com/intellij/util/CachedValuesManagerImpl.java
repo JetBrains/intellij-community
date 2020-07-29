@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,8 +98,14 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   @Override
   protected void trackKeyHolder(@NotNull UserDataHolder dataHolder,
                                 @NotNull Key<?> key) {
-    myCacheHolders.put(dataHolder, NULL);
-    myKeys.add(key);
+    if (!isClearedOnPluginUnload(dataHolder)) {
+      myCacheHolders.put(dataHolder, NULL);
+      myKeys.add(key);
+    }
+  }
+
+  private static boolean isClearedOnPluginUnload(@NotNull UserDataHolder dataHolder) {
+    return dataHolder instanceof PsiElement || dataHolder instanceof ASTNode || dataHolder instanceof FileViewProvider;
   }
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {

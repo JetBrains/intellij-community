@@ -15,9 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @author cdr
- */
 public final class ConcurrencyUtil {
   /**
    * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way

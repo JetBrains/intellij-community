@@ -1,9 +1,9 @@
 package circlet.plugins.pipelines.services
 
-import circlet.pipelines.config.utils.*
-import circlet.plugins.pipelines.utils.*
-import java.io.*
-import kotlin.script.experimental.intellij.*
+import circlet.pipelines.config.utils.ScriptConstants
+import circlet.plugins.pipelines.utils.JarFinder
+import java.io.File
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
 
@@ -25,5 +25,4 @@ class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
     override fun useDiscovery(): Boolean {
         return true
     }
-
 }

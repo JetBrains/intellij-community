@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author ven
  */
-public class PsiUtil {
+public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
   public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<>("Java Identifier");
@@ -1129,7 +1130,6 @@ public class PsiUtil {
         return false;
       }
     }
-    //noinspection SuspiciousMethodCalls
     return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(statement);
   }
 

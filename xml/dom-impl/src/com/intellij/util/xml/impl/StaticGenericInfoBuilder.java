@@ -266,7 +266,7 @@ public class StaticGenericInfoBuilder {
   }
 
   private static final Set<JavaMethodSignature> ourDomElementMethods =
-    ContainerUtil.map2Set(DomElement.class.getMethods(), JavaMethodSignature::new);
+    ContainerUtil.map2Set(DomElement.class.getMethods(), method -> new JavaMethodSignature(method));
 
   private static boolean isCoreMethod(final JavaMethod method) {
     if (ourDomElementMethods.contains(method.getSignature())) return true;

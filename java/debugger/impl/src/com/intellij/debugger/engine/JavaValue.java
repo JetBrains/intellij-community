@@ -185,8 +185,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             XValuePresentation presentation = createPresentation(myValueDescriptor);
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
             boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
-            if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
-              fullEvaluatorSet = setFullValueEvaluator(((CompoundNodeRenderer)lastRenderer).getLabelRenderer());
+            if (!fullEvaluatorSet && lastRenderer instanceof CompoundReferenceRenderer) {
+              fullEvaluatorSet = setFullValueEvaluator(((CompoundReferenceRenderer)lastRenderer).getLabelRenderer());
             }
             if (!fullEvaluatorSet) {
               String text = myValueDescriptor.getValueText();

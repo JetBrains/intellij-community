@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +26,7 @@ public interface Iconable {
 
   Icon getIcon(@IconFlags int flags);
 
-  class LastComputedIcon {
+  final class LastComputedIcon {
     private static final Key<IntObjectMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable

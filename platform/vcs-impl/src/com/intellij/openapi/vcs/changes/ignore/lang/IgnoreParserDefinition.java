@@ -45,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
  * Defines the implementation of a parser for a custom language.
  */
 public class IgnoreParserDefinition implements ParserDefinition {
-  public static class Lazy {
+  public static final class Lazy {
     /**
      * Whitespaces.
      */

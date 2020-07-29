@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -43,15 +42,12 @@ import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyExtractChooser {
+public final class GroovyExtractChooser {
   private static final Logger LOG = Logger.getInstance(GroovyExtractChooser.class);
 
   public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end, boolean forceStatements) throws GrRefactoringError {

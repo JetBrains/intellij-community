@@ -115,10 +115,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public PsiFile getCachedPsiFile(@NotNull Document document) {
-    final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null || !virtualFile.isValid()) return null;
-    return getCachedPsiFile(virtualFile);
+  public final PsiFile getCachedPsiFile(@NotNull Document document) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile);
   }
 
   @Nullable

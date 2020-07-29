@@ -540,7 +540,7 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> union(@NotNull Collection<? extends T> set, @NotNull Collection<? extends T> set2) {
-    Set<T> result = new THashSet<>(set.size() + set2.size());
+    Set<T> result = new HashSet<>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);
     return result;
@@ -623,8 +623,8 @@ public class ContainerUtil {
     };
   }
 
-  public static class ImmutableMapBuilder<K, V> {
-    private final Map<K, V> myMap = new THashMap<>();
+  public static final class ImmutableMapBuilder<K, V> {
+    private final Map<K, V> myMap = new HashMap<>();
 
     public @NotNull ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);

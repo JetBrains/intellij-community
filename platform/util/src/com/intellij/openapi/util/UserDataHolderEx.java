@@ -19,9 +19,6 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public interface UserDataHolderEx extends UserDataHolder {
   /**
    * @return written or already existing value

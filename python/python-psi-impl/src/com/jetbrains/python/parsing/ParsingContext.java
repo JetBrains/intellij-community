@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.parsing;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;

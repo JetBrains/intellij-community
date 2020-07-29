@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.text.StringFactory;
@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @deprecated Please use {@link java.util.Base64} instead
  */
 @Deprecated
-public class Base64Converter {
+public final class Base64Converter {
   private static final char[] alphabet = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',   //  0 to  7
     'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',   //  8 to 15

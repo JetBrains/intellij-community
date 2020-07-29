@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl.INIT_INSPECTIONS
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.options.SchemeState
@@ -16,7 +17,12 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
 
 const val DEFAULT_PROFILE_NAME: String = "Default"
-val BASE_PROFILE: InspectionProfileImpl by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
+
+val BASE_PROFILE: InspectionProfileImpl by lazy {
+  object : InspectionProfileImpl(DEFAULT_PROFILE_NAME) {
+    override fun isAppLevel(): Boolean = true
+  }
+}
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   @Volatile

@@ -54,9 +54,7 @@ class StartupManagerTest {
       done.await(1, TimeUnit.SECONDS)
     }
     finally {
-      runInEdtAndWait {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      }
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,7 +14,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-public class CommandLineWrapperUtil {
+public final class CommandLineWrapperUtil {
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX;
 
   public static @NotNull File createClasspathJarFile(@NotNull Manifest manifest, @NotNull List<String> pathList) throws IOException {
@@ -110,7 +110,7 @@ public class CommandLineWrapperUtil {
 
   public static void writeWrapperFile(@NotNull File wrapperFile,
                                       @NotNull List<String> classpath,
-                                      @NotNull String lineSeparator, 
+                                      @NotNull String lineSeparator,
                                       @NotNull Charset cs) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(wrapperFile), cs))) {
       for (String path : classpath) {

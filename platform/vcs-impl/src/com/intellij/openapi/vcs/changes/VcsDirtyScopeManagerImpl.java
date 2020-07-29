@@ -95,7 +95,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
-      myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).everythingDirty();
     }
   }
 
@@ -154,7 +153,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     if (hasSomethingDirty) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
-    myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).filePathsDirty(filesConverted, dirsConverted);
   }
 
   @Override

@@ -20,9 +20,6 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class ResourceBundleFileType extends FakeFileType {
   public static final ResourceBundleFileType INSTANCE = new ResourceBundleFileType();
 

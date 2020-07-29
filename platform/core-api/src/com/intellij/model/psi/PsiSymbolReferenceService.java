@@ -30,6 +30,13 @@ public interface PsiSymbolReferenceService {
   Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints);
 
   /**
+   * @param <T> type of desired reference
+   * @return external references from this element
+   */
+  <@NotNull T extends PsiSymbolReference> @NotNull Iterable<T> getExternalReferences(@NotNull PsiExternalReferenceHost host,
+                                                                                     @NotNull Class<T> referenceClass);
+
+  /**
    * @return external references from this element, which match {@code hints}
    */
   @NotNull

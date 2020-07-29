@@ -78,7 +78,7 @@ public class JavaSuppressionUtil {
     }
     return CachedValuesManager.getCachedValue(annotation, () ->
       CachedValueProvider.Result.create(getInspectionIdsSuppressedInAnnotation(annotation),
-                                        PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+                                        PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull

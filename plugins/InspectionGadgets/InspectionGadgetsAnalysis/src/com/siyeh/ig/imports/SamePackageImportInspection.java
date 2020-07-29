@@ -78,7 +78,7 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
           if (text == null) {
             return;
           }
-          final int classNameIndex = text.lastIndexOf((int)'.');
+          final int classNameIndex = text.lastIndexOf('.');
           final String parentName;
           if (classNameIndex < 0) {
             parentName = "";

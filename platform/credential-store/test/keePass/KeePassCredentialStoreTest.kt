@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
-import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
@@ -49,7 +48,7 @@ class KeePassCredentialStoreTest {
     var provider = createStore(baseDir)
 
     assertThat(baseDir).doesNotExist()
-    val credentialMap = THashMap<CredentialAttributes, Credentials>()
+    val credentialMap = HashMap<CredentialAttributes, Credentials>()
     for (i in 0..9) {
       val accountName = randomString()
       val attributes = CredentialAttributes(randomString(), accountName)

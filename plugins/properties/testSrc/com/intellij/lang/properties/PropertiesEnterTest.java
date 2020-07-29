@@ -23,9 +23,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/propertiesFile/enter/";
 

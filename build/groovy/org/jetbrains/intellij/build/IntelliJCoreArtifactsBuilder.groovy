@@ -34,6 +34,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.platform.util.text.matching",
     "intellij.platform.util.collections",
     "intellij.platform.util.strings",
+    "intellij.platform.util.diagnostic",
     "intellij.platform.util.classLoader",
     "intellij.xml.analysis",
     "intellij.xml.psi",
@@ -112,6 +113,7 @@ class IntelliJCoreArtifactsBuilder {
         module("intellij.platform.util.text.matching")
         module("intellij.platform.util.collections")
         module("intellij.platform.util.strings")
+        module("intellij.platform.util.diagnostic")
         module("intellij.platform.util")
         module("intellij.platform.core")
         module("intellij.platform.core.impl")

@@ -495,6 +495,7 @@
         <reference ref="EditorToggleColumnMode"/>
         <group id="EditSelectGroup">
           <action id="$SelectAll" class="com.intellij.ide.actions.SelectAllAction"/>
+          <action id="EditorAddCaretPerSelectedLine" class="com.intellij.openapi.editor.actions.AddCaretPerSelectedLineAction"/>
         </group>
         <separator/>
         <group id="EditSmartGroup">
@@ -1231,7 +1232,7 @@
     <group id="AnalyzeStacktraceToolbar"/>
 
     <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
-      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Edit"/>
+      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Show"/>
     </group>
   </actions>
 </idea-plugin>

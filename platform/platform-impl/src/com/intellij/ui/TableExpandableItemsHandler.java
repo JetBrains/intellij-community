@@ -17,9 +17,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<TableCell, JTable> {
+  private final TableHeaderExpandableItemsHandler myHeaderItemsHandler;
+
   protected TableExpandableItemsHandler(final JTable table) {
     super(table);
-
+    myHeaderItemsHandler = new TableHeaderExpandableItemsHandler(table.getTableHeader());
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -114,6 +116,12 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
     columnVisibleRect.x = Math.min(columnVisibleRect.x, cellRect.x);
     columnVisibleRect.width = Math.max(0, visibleRight - columnVisibleRect.x);
     return columnVisibleRect;
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    myHeaderItemsHandler.setEnabled(enabled);
   }
 
   @Override

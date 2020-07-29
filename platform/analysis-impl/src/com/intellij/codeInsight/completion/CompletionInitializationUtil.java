@@ -28,9 +28,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.ApiStatus;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
  * @author yole
  */
 @ApiStatus.Internal
-public class CompletionInitializationUtil {
+public final class CompletionInitializationUtil {
   private static final Logger LOG = Logger.getInstance(CompletionInitializationUtil.class);
 
   public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,

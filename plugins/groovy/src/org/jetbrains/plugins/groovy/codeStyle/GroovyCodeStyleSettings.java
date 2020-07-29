@@ -61,7 +61,8 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
-  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  @Property(externalName = "imports_layout")
+  public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   public int IMPORT_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;

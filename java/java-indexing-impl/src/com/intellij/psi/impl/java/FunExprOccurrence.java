@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
@@ -99,8 +99,8 @@ public class FunExprOccurrence {
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public boolean canHaveType(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
-    if (referenceContext.isEmpty()) return true;
+  public ThreeState checkHasTypeLight(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+    if (referenceContext.isEmpty()) return ThreeState.UNSURE;
 
     Set<PsiClass> qualifiers = null;
     int maxPossiblePackageComponent = referenceContext.size() - 2;
@@ -123,46 +123,52 @@ public class FunExprOccurrence {
       }
 
       if (i == referenceContext.size() - 1) {
-        return ContainerUtil.exists(candidates, m -> isCompatible(link, m, samClasses));
+        return candidates.isEmpty() ? ThreeState.NO :
+               ThreeState.merge(JBIterable.from(candidates).map(m -> isCompatible(link, m, samClasses)));
       }
       qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, qualifiers != null ? qualifiers : Collections.emptySet());
     }
 
-    return true;
+    return ThreeState.UNSURE;
   }
 
-  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
+  private ThreeState isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
     if (link.isCall) {
-      return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
+      return member instanceof PsiMethod && argIndex >= 0 ? hasCompatibleParameter((PsiMethod)member, argIndex, samClasses) : ThreeState.NO;
     }
     if (member instanceof PsiClass) {
-      return samClasses.contains(member);
+      return ThreeState.fromBoolean(samClasses.contains(member));
     }
-    return member instanceof PsiField &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType(), member));
+    return member instanceof PsiField ? canPassFunctionalExpression(samClasses, ((PsiField)member).getType(), member) : ThreeState.NO;
   }
 
-  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
+  public static ThreeState hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
-    return paramIndex < parameters.length &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, parameters[paramIndex].getType(), method));
+    return paramIndex < parameters.length ? canPassFunctionalExpression(samClasses, parameters[paramIndex].getType(), method) : ThreeState.NO;
   }
 
-  private static boolean canPassFunctionalExpression(PsiClass sam, PsiType paramType, PsiElement place) {
+  private static ThreeState canPassFunctionalExpression(List<? extends PsiClass> samClasses, PsiType type, PsiElement place) {
+    return ThreeState.mostPositive(JBIterable.from(samClasses).map(c -> canPassFunctionalExpression(c, type, place)));
+  }
+
+  private static ThreeState canPassFunctionalExpression(PsiClass sam, PsiType paramType, PsiElement place) {
     if (paramType instanceof PsiEllipsisType) {
       paramType = ((PsiEllipsisType)paramType).getComponentType();
     }
     String paramClassName = paramType instanceof PsiClassType ? ((PsiClassType)paramType).getClassName() : null;
-    if (paramClassName == null) return false;
+    if (paramClassName == null) return ThreeState.NO;
 
     if (paramClassName.equals(sam.getName()) && sam.getManager().areElementsEquivalent(sam, ((PsiClassType)paramType).resolve())) {
-      return true;
+      return ThreeState.YES;
     }
 
-    return isTypeParameterVisible(paramClassName, place) &&
-           ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter &&
-           hasSuperTypeAssignableFromSam(sam, paramType);
+    if (isTypeParameterVisible(paramClassName, place) &&
+        ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter &&
+        hasSuperTypeAssignableFromSam(sam, paramType)) {
+      return ThreeState.UNSURE;
+    }
+    return ThreeState.NO;
   }
 
   private static boolean isTypeParameterVisible(String name, PsiElement fromPlace) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BrowserUtil {
+public final class BrowserUtil {
   // The pattern for 'scheme' mainly according to RFC1738.
   // We have to violate the RFC since we need to distinguish real schemes from local Windows paths;
   // the only difference with RFC is that we do not allow schemes with length=1

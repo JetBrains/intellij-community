@@ -8,16 +8,12 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.SystemProperties;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/**
- * @author cdr
- */
 public class ProjectWizardUtil {
   private ProjectWizardUtil() { }
 

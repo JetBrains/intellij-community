@@ -40,11 +40,11 @@ class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
     def cls = ((PsiJavaFile)file).classes[0]
     assert file.stub
 
-    def oldCount = psiManager.modificationTracker.javaStructureModificationCount
+    def oldCount = psiManager.modificationTracker.modificationCount
 
     ApplicationManager.application.runWriteAction { file.virtualFile.setBinaryContent(file.virtualFile.contentsToByteArray()) }
 
-    assert psiManager.modificationTracker.javaStructureModificationCount != oldCount
+    assert psiManager.modificationTracker.modificationCount != oldCount
 
     assert !cls.valid
     assert file.stub

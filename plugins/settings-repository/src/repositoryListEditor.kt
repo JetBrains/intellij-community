@@ -44,7 +44,7 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
       builder.apply {
         repositoryRow = row("Repository:") {
           cell {
-            editor.comboBox(comment = "Use File -> Settings Repository... to configure")
+            editor.comboBox(comment = "Use File -> Manage IDE Settings -> Settings Repository... to configure")
             deleteButton()
           }
         }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.highlighter;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 
@@ -34,12 +33,7 @@ public class LightHighlighterClient implements HighlighterClient {
   }
 
   @Override
-  public void fireHighlighterChanged(int start, int end) {
-  }
-
-  @Override
-  public void addHighlighterClientListener(HighlighterClientListener listener,
-                                           Disposable parentDisposable) {
+  public void repaint(int start, int end) {
   }
 
   @Override

@@ -2,6 +2,8 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class ReopenProjectAction extends AnAction implements DumbAware {
+public class ReopenProjectAction extends AnAction implements DumbAware, LightEditCompatible {
   private final String myProjectPath;
   private final String myProjectName;
   private boolean myIsRemoved = false;
@@ -58,8 +60,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     int modifiers = e.getModifiers();
     boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
                                   || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
-                                  || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
-    RecentProjectsManagerBase.getInstanceEx().openProject(file, new OpenProjectTask(forceOpenInNewFrame, project));
+                                  || e.getPlace() == ActionPlaces.WELCOME_SCREEN
+                                  || LightEdit.owns(project);
+    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame));
   }
 
   @SystemIndependent

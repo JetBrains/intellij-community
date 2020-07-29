@@ -1235,7 +1235,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return canonicalized == var ? null : myVariableTypes.get(canonicalized);
   }
 
-  void forRecordedVariableTypes(BiConsumer<? super DfaVariableValue, ? super DfType> consumer) {
+  public void forRecordedVariableTypes(BiConsumer<? super DfaVariableValue, ? super DfType> consumer) {
     myVariableTypes.forEach(consumer);
   }
 

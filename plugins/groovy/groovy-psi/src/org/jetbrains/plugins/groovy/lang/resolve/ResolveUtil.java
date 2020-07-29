@@ -76,7 +76,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialSta
 /**
  * @author ven
  */
-public class ResolveUtil {
+public final class ResolveUtil {
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
@@ -293,7 +293,7 @@ public class ResolveUtil {
     final Map<String, Set<String>> cache =
       CachedValuesManager.getManager(project).getCachedValue(project, () -> {
         final Map<String, Set<String>> result = new ConcurrentHashMap<>();
-        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       });
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);

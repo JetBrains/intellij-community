@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author cdr
  * @author Tagir Valeev
  */
 public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {

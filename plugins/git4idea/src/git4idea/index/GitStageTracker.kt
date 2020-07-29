@@ -3,91 +3,74 @@ package git4idea.index
 
 import com.intellij.AppTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.VcsRoot
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerListener
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
-import com.intellij.vcs.log.sendRequests
 import git4idea.GitVcs
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import git4idea.util.toMapOfSets
+import git4idea.status.GitChangeProvider
 import git4idea.util.toShortenedString
 import java.util.*
-import kotlin.collections.HashSet
 
 private val PROCESSED = Key.create<Boolean>("GitStageTracker.file.processed")
 
 class GitStageTracker(val project: Project) : Disposable {
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
-  private val singleTaskController = MySingleTaskController()
-
-  var isRefreshInProgress = false
-    private set
+  private val dirtyScopeManager
+    get() = VcsDirtyScopeManager.getInstance(project)
 
   @Volatile
-  var state: State = State.EMPTY
+  var state: State = State(gitRoots().associateWith { RootState.empty(it) })
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        scheduleUpdateForEvents(events)
-      }
-    })
-    connection.subscribe(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED, object : VcsDirtyScopeManagerListener {
-      override fun everythingDirty() {
-        scheduleUpdateAll()
-      }
-
-      override fun filePathsDirty(filesConverted: Map<VcsRoot, Set<FilePath>>, dirsConverted: Map<VcsRoot, Set<FilePath>>) {
-        val files = filesConverted.filterKeys { it.vcs?.keyInstanceMethod == GitVcs.getKey() }.mapKeys { it.key.path }
-        val dirs = dirsConverted.filterKeys { it.vcs?.keyInstanceMethod == GitVcs.getKey() }.mapKeys { it.key.path }
-        singleTaskController.sendRequests(refreshFiles(files, dirs))
+        markDirty(events)
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt(this) {
         val roots = gitRoots()
-        update { oldState -> State(oldState.rootStates.filterKeys { roots.contains(it) }) }
+        update { oldState -> State(roots.associateWith { oldState.rootStates[it] ?: RootState.empty(it) }) }
       }
     })
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
       override fun unsavedDocumentDropped(document: Document) {
         val file = FileDocumentManager.getInstance().getFile(document) ?: return
         file.putUserData(PROCESSED, null)
-        scheduleUpdateFile(file)
+        markDirty(file)
       }
 
       override fun fileContentReloaded(file: VirtualFile, document: Document) {
         file.putUserData(PROCESSED, null)
-        scheduleUpdateFile(file)
+        markDirty(file)
       }
 
       override fun fileWithNoDocumentChanged(file: VirtualFile) {
         file.putUserData(PROCESSED, null)
-        scheduleUpdateFile(file)
+        markDirty(file)
       }
 
       override fun beforeDocumentSaving(document: Document) {
@@ -95,67 +78,92 @@ class GitStageTracker(val project: Project) : Disposable {
         file.putUserData(PROCESSED, null)
       }
     })
+    connection.subscribe(GitChangeProvider.TOPIC, GitChangeProvider.ChangeProviderListener { repository ->
+      doUpdateState(repository)
+    })
 
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
         if (file.getUserData(PROCESSED) == null) {
           file.putUserData(PROCESSED, true)
-          scheduleUpdateFile(file)
+          markDirty(file)
         }
       }
     }, this)
   }
 
   fun scheduleUpdateAll() {
-    singleTaskController.sendRequests(refreshRoots(gitRoots()))
+    val gitRoots = gitRoots()
+    LOG.debug("Mark dirty ${gitRoots}")
+    dirtyScopeManager.filesDirty(emptyList(), gitRoots)
   }
 
-  private fun scheduleUpdateFile(file: VirtualFile) {
+  private fun markDirty(file: VirtualFile) {
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
-    singleTaskController.request(Request.RefreshFiles(mutableMapOf(Pair(root, setOf(file.filePath()))), emptyMap()))
+    LOG.debug("Mark dirty ${file.filePath()}")
+    dirtyScopeManager.fileDirty(file.filePath())
   }
 
-  private fun scheduleUpdateForEvents(events: List<VFileEvent>) {
+  private fun markDirty(events: List<VFileEvent>) {
     val gitRoots = gitRoots()
+
     val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
       events.any { e -> GitUntrackedFilesHolder.totalRefreshNeeded(repo, e.path) }
     }.map { it.root }.intersect(gitRoots)
-    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.map { Pair(it.root, it.filePath) }.filter {
-      gitRoots.contains(it.first)
-    }.toMapOfSets()
-    singleTaskController.sendRequests(refreshRoots(roots), refreshFiles(files))
+
+    val files = events.mapNotNull { it.file as? GitIndexVirtualFile }.filter {
+      gitRoots.contains(it.root)
+    }.map { it.filePath }
+
+    LOG.debug("Mark dirty", files, roots)
+    dirtyScopeManager.filesDirty(emptyList(), roots)
+    dirtyScopeManager.filePathsDirty(files, emptyList())
+  }
+
+  private fun doUpdateState(repository: GitRepository) {
+    LOG.debug("Updating ${repository.root}")
+
+    val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { untrackedStatus(it) }
+    val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }.toMutableMap()
+
+    for (document in FileDocumentManager.getInstance().unsavedDocuments) {
+      val file = FileDocumentManager.getInstance().getFile(document) ?: continue
+      if (!file.isValid || !FileDocumentManager.getInstance().isFileModified(file)) continue
+      val root = getRoot(project, file) ?: continue
+      if (root != repository.root) continue
+
+      val filePath = file.filePath()
+      if (repository.ignoredFilesHolder.containsFile(filePath)) continue
+      val fileStatus: GitFileStatus? = status[filePath]
+      if (fileStatus?.isTracked() == false) continue
+
+      if (file is GitIndexVirtualFile && fileStatus?.getStagedStatus() == null) {
+        status[filePath] = GitFileStatus('M', fileStatus?.workTree ?: ' ', filePath, fileStatus?.origPath)
+      }
+      else if (file.isInLocalFileSystem && fileStatus?.getUnStagedStatus() == null) {
+        status[filePath] = GitFileStatus(fileStatus?.index ?: ' ', 'M', filePath, fileStatus?.origPath)
+      }
+    }
+
+    val newRootState = RootState(repository.root, status)
+
+    runInEdt(this) {
+      update { it.updatedWith(repository.root, newRootState) }
+    }
   }
 
   fun addListener(listener: GitStageTrackerListener, disposable: Disposable) {
     eventDispatcher.addListener(listener, disposable)
   }
 
-  private fun gitRoots(): List<VirtualFile> {
-    return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
-  }
+  private fun gitRoots(): List<VirtualFile> = gitRoots(project)
 
   private fun update(updater: (State) -> State) {
-    this.state = updater(this.state)
+    state = updater(state)
+    LOG.debug("New state", state)
     eventDispatcher.multicaster.update()
-  }
-
-  private fun update(stateAndScopes: Pair<State, Map<VirtualFile, DirtyScope>>) {
-    update { oldState ->
-      oldState.updatedWith(stateAndScopes.first, stateAndScopes.second)
-    }
-  }
-
-  private fun refreshRoots(roots: Collection<VirtualFile>): Request.RefreshRoots? {
-    if (roots.isEmpty()) return null
-    return Request.RefreshRoots(roots)
-  }
-
-  private fun refreshFiles(files: Map<VirtualFile, Set<FilePath>>,
-                           dirs: Map<VirtualFile, Set<FilePath>> = emptyMap()): Request.RefreshFiles? {
-    if (files.values.isEmpty() && dirs.values.isEmpty()) return null
-    return Request.RefreshFiles(files, dirs)
   }
 
   override fun dispose() {
@@ -163,60 +171,28 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   companion object {
+    private val LOG = Logger.getInstance(GitStageTracker::class.java)
+
     @JvmStatic
     fun getInstance(project: Project) = project.getService(GitStageTracker::class.java)
   }
 
-  private sealed class Request {
-    class RefreshRoots(val roots: Collection<VirtualFile>) : Request() {
-      override fun toString(): String = "Request.RefreshRoots(roots=${roots.joinToString(",") { it.name }})"
-    }
-
-    class RefreshFiles(val files: Map<VirtualFile, Set<FilePath>>, val dirs: Map<VirtualFile, Set<FilePath>>) : Request() {
-      override fun toString(): String = "Request.RefreshFiles(files=${files.toShortenedString(",\n")},\n" +
-                                        " dirs=${dirs.toShortenedString(",\n")})"
-    }
-  }
-
   data class RootState(val root: VirtualFile,
-                       val statuses: Map<FilePath, GitFileStatus>,
-                       val unsavedIndex: List<GitIndexVirtualFile>,
-                       val unsavedWorkTree: List<VirtualFile>) {
+                       val statuses: Map<FilePath, GitFileStatus>) {
     fun hasStagedFiles(): Boolean {
-      return statuses.values.any { line -> line.getStagedStatus() != null } || unsavedIndex.isNotEmpty()
-    }
-
-    internal fun updateWith(newState: RootState, scope: DirtyScope): RootState {
-      val newStatuses = mutableMapOf<FilePath, GitFileStatus>()
-      newStatuses.putAll(newState.statuses)
-      for ((file, record) in statuses) {
-        if (!scope.belongsTo(root, file)) {
-          newStatuses.putIfAbsent(file, record)
-        }
-      }
-
-      val newUnsavedIndex = mutableListOf<GitIndexVirtualFile>()
-      newUnsavedIndex.addAll(newState.unsavedIndex)
-      newUnsavedIndex.addAll(unsavedIndex.filter { file -> !scope.belongsTo(root, file.filePath) })
-
-      val newUnsavedWorkTree = mutableListOf<VirtualFile>()
-      newUnsavedWorkTree.addAll(newState.unsavedWorkTree)
-      newUnsavedWorkTree.addAll(newUnsavedWorkTree.filter { file -> !scope.belongsTo(root, file.filePath()) })
-      return RootState(root, newStatuses, newUnsavedIndex, newUnsavedWorkTree)
+      return statuses.values.any { line -> line.getStagedStatus() != null }
     }
 
     fun isEmpty(): Boolean {
-      return statuses.isEmpty() && unsavedIndex.isEmpty() && unsavedWorkTree.isEmpty()
+      return statuses.isEmpty()
     }
 
     override fun toString(): String {
-      return "RootState(root=${root.name}, statuses=${statuses.toShortenedString(",\n")},\n " +
-             "unsavedIndex=${unsavedIndex.toShortenedString(",\n")},\n " +
-             "unsavedWorkTree=${unsavedWorkTree.toShortenedString(",\n")})"
+      return "RootState(root=${root.name}, statuses=${statuses.toShortenedString(",\n")})"
     }
 
     companion object {
-      fun empty(root: VirtualFile) = RootState(root, emptyMap(), emptyList(), emptyList())
+      fun empty(root: VirtualFile) = RootState(root, emptyMap())
     }
   }
 
@@ -226,18 +202,10 @@ class GitStageTracker(val project: Project) : Disposable {
 
     fun hasStagedRoots(): Boolean = rootStates.any { it.value.hasStagedFiles() }
 
-    internal fun updatedWith(newState: State, scopes: Map<VirtualFile, DirtyScope>): State {
+    internal fun updatedWith(root: VirtualFile, newState: RootState): State {
       val result = mutableMapOf<VirtualFile, RootState>()
       result.putAll(rootStates)
-      for ((root, scope) in scopes) {
-        if (scope is DirtyScope.Root) {
-          result[root] = newState.rootStates.getValue(root)
-        }
-        else {
-          val newRootState = newState.rootStates[root] ?: RootState.empty(root)
-          result[root] = rootStates[root]?.updateWith(newRootState, scope) ?: newRootState
-        }
-      }
+      result[root] = newState
       return State(result)
     }
 
@@ -249,110 +217,10 @@ class GitStageTracker(val project: Project) : Disposable {
       internal val EMPTY = State(emptyMap())
     }
   }
-
-  private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, Pair<State, Map<VirtualFile, DirtyScope>>>("stage", this::update, this) {
-    override fun process(requests: List<Request>,
-                         previousState: Pair<State, Map<VirtualFile, DirtyScope>>?): Pair<State, Map<VirtualFile, DirtyScope>> {
-      val rootRequests = requests.filterIsInstance<Request.RefreshRoots>()
-      val filesRequests = requests.filterIsInstance<Request.RefreshFiles>()
-
-      val scopes = mutableMapOf<VirtualFile, DirtyScope>()
-      scopes.putAll(rootRequests.flatMapTo(HashSet()) { it.roots }.associateWith { DirtyScope.Root(it) }.toMap())
-
-      for (request in filesRequests) {
-        for (root in request.files.keys.union(request.dirs.keys).toHashSet()) {
-          val scope = scopes.getOrPut(root) { DirtyScope.Paths(root) }
-          if (scope is DirtyScope.Root) continue
-          request.files[root]?.let { files -> scope.addDirtyPaths(files, false) }
-          request.dirs[root]?.let { files -> scope.addDirtyPaths(files, true) }
-        }
-      }
-      scopes.values.forEach { it.pack() }
-
-      val unsaved = mutableMapOf<VirtualFile, MutableCollection<VirtualFile>>()
-      for (document in FileDocumentManager.getInstance().unsavedDocuments) {
-        val file = FileDocumentManager.getInstance().getFile(document) ?: continue
-        if (!file.isValid || !FileDocumentManager.getInstance().isFileModified(file)) continue
-        val root = getRoot(project, file) ?: continue
-        if (scopes[root]?.belongsTo(root, file.filePath()) == true) {
-          unsaved.getOrPut(root) { mutableSetOf() }.add(file)
-        }
-      }
-
-      val newRootState = mutableMapOf<VirtualFile, RootState>()
-      for ((root, scope) in scopes) {
-        val status = getStatus(project, root, scope.dirtyPaths()).associateBy { it.path }
-        val (index, workTree) = getUnsaved(unsaved.getOrDefault(root, mutableSetOf()), status)
-        newRootState[root] = RootState(root, status, index, workTree)
-      }
-
-      val newState = State(newRootState)
-      return Pair(previousState?.first?.updatedWith(newState, scopes) ?: newState,
-                  mergeScopes(previousState?.second, scopes))
-    }
-
-    private fun getUnsaved(unsaved: Collection<VirtualFile>,
-                           status: Map<FilePath, GitFileStatus>): Pair<List<GitIndexVirtualFile>, List<VirtualFile>> {
-      val index = mutableListOf<GitIndexVirtualFile>()
-      val workTree = mutableListOf<VirtualFile>()
-      for (file in unsaved) {
-        val fileStatus: GitFileStatus? = status[file.filePath()]
-        if (fileStatus?.isTracked() == false) continue
-        if (file is GitIndexVirtualFile && fileStatus?.getStagedStatus() == null) {
-          index.add(file)
-        }
-        else if (file.isInLocalFileSystem && fileStatus?.getUnStagedStatus() == null) {
-          workTree.add(file)
-        }
-      }
-      return Pair(index, workTree)
-    }
-
-    private fun mergeScopes(previousScopes: Map<VirtualFile, DirtyScope>?,
-                            newScopes: Map<VirtualFile, DirtyScope>): Map<VirtualFile, DirtyScope> {
-      if (previousScopes == null) return newScopes
-
-      val result = mutableMapOf<VirtualFile, DirtyScope>()
-      result.putAll(previousScopes)
-      for ((root, newScope) in newScopes) {
-        val oldScope = result[root]
-        if (oldScope is DirtyScope.Root) continue
-        if (oldScope == null || newScope is DirtyScope.Root) {
-          result[root] = newScope
-          continue
-        }
-        if (newScope is DirtyScope.Paths) newScope.addTo(oldScope)
-      }
-      return result
-    }
-
-    override fun createProgressIndicator(): ProgressIndicator = MyProgressIndicator()
-  }
-
-  private inner class MyProgressIndicator : ProgressIndicatorBase() {
-    override fun start() {
-      super.start()
-      runInEdt(this@GitStageTracker) {
-        isRefreshInProgress = true
-        eventDispatcher.multicaster.progressStarted()
-      }
-    }
-
-    override fun stop() {
-      super.stop()
-      runInEdt(this@GitStageTracker) {
-        eventDispatcher.multicaster.progressStopped()
-        isRefreshInProgress = false
-      }
-    }
-  }
 }
 
 interface GitStageTrackerListener : EventListener {
   fun update()
-  fun progressStarted() = Unit
-  fun progressStopped() = Unit
 }
 
 private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
@@ -363,8 +231,17 @@ private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
   }
 }
 
+private fun gitRoots(project: Project): List<VirtualFile> {
+  return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
+}
+
 fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
   val root = getRoot(project, file) ?: return null
+  val filePath = file.filePath()
+
+  if (GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.ignoredFilesHolder?.containsFile(filePath) == true) {
+    return ignoredStatus(filePath)
+  }
   val rootState = state.rootStates[root] ?: return null
-  return rootState.statuses[file.filePath()]
+  return rootState.statuses[filePath] ?: return notChangedStatus(filePath)
 }

@@ -9,7 +9,6 @@ import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
@@ -135,11 +134,11 @@ fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyN
 private val serializer = MyXmlSerializer()
 
 private abstract class OldBindingProducer<ROOT_BINDING> {
-  private val cache: MutableMap<Type, ROOT_BINDING> = THashMap()
+  private val cache: MutableMap<Type, ROOT_BINDING> = HashMap()
   private val cacheLock = ReentrantReadWriteLock()
 
   @get:TestOnly
-  internal val bindingCount: Int
+  val bindingCount: Int
     get() = cacheLock.read { cache.size }
 
   fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {

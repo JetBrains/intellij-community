@@ -923,7 +923,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return;
     }
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
     if (file == null) {
       return;
     }

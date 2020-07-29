@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -92,6 +93,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, Strings.class);  // intellij.platform.util.strings
+    appendPath(cp, StartUpMeasurer.class);  // intellij.platform.util.diagnostic
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));

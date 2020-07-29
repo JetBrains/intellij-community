@@ -52,6 +52,14 @@ public class MergeCallback {
     return callback != null ? callback : EMPTY;
   }
 
+  // original request lifecycle is ended, MergeCallback is transferred from original to target
+  public static void retarget(@NotNull MergeRequest original, @NotNull MergeRequest target) {
+    original.resultRetargeted();
+
+    MergeCallback callback = original.getUserData(KEY);
+    original.putUserData(KEY, null);
+    target.putUserData(KEY, callback);
+  }
 
   public interface Listener extends EventListener {
     default void fireConflictInvalid() {

@@ -1,5 +1,5 @@
 {
-  "version": "0.3",
+  "version": "0.4",
   "definitions": {
     "color": {
       "type": "string",
@@ -9,6 +9,71 @@
       "examples": [
         "#123abc", "#123abc80"
       ]
+    },
+    "background": {
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "Background image",
+        "description": "Background image for entire window",
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Path to the background image",
+            "description": "Path to the background image starting with '/'",
+            "default": "",
+            "examples": [
+              "/background.jpg"
+            ]
+          },
+          "transparency": {
+            "type": "integer",
+            "title": "Transparency for background image.",
+            "description": "An integer from 0 to 100.",
+            "default": 10,
+            "minimum": 0,
+            "maximum": 100,
+            "examples": [
+              10
+            ]
+          },
+          "fill": {
+            "type": "string",
+            "title": "Background image filling options",
+            "default": "scale",
+            "description": "Background image filling options. One of the following values: plain, scale, tile",
+            "enum": [
+              "plain",
+              "scale",
+              "tile"
+            ],
+            "examples": [
+              "scale"
+            ]
+          },
+          "anchor": {
+            "type": "string",
+            "title": "Background image anchor",
+            "default": "center",
+            "description": "Background image anchor. One of the following values: top_left, top_center, top_right, middle_left, center, middle_right, bottom_left, bottom_center, bottom_right",
+            "enum": [
+              "top_left",
+              "top_center",
+              "top_right",
+              "middle_left",
+              "center",
+              "middle_right",
+              "bottom_left",
+              "bottom_center",
+              "bottom_right"
+            ],
+            "examples": [
+              "center"
+            ]
+          }
+        }
+
     },
     "ColorPaletteBase": {
       "type": "object",
@@ -222,68 +287,10 @@
       "type": "object"
     },
     "background": {
-      "type": "object",
-      "required": [
-        "image"
-      ],
-      "title": "Background image",
-      "description": "Background image for entire window",
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "Path to the background image",
-          "description": "Path to the background image starting with '/'",
-          "default": "",
-          "examples": [
-            "/background.jpg"
-          ]
-        },
-        "transparency": {
-          "type": "integer",
-          "title": "Transparency for background image.",
-          "description": "An integer from 0 to 100.",
-          "default": 10,
-          "minimum": 0,
-          "maximum": 100,
-          "examples": [
-            10
-          ]
-        },
-        "fill": {
-          "type": "string",
-          "title": "Background image filling options",
-          "default": "scale",
-          "description": "Background image filling options. One of the following values: plain, scale, tile",
-          "enum": [
-            "plain",
-            "scale",
-            "tile"
-          ],
-          "examples": [
-            "scale"
-          ]
-        },
-        "anchor": {
-          "type": "string",
-          "title": "Background image anchor",
-          "default": "center",
-          "description": "Background image anchor. One of the following values: top_left, top_center, top_right, middle_left, center, middle_right, bottom_left, bottom_center, bottom_right",
-          "enum": [
-            "top_left",
-            "top_center",
-            "top_right",
-            "middle_left",
-            "center",
-            "middle_right",
-            "bottom_left",
-            "bottom_center",
-            "bottom_right"
-          ],
-          "examples": [
-            "center"
-          ]
-        }
-      }
+      "$ref": "#/definitions/background"
+    },
+    "emptyFrameBackground": {
+      "$ref": "#/definitions/background"
     },
     "icons": {
       "type": "object",

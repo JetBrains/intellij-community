@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NameUtilCore {
+public final class NameUtilCore {
   /**
    * Splits an identifier into words, separated with underscores or upper-case characters
    * (camel-case).

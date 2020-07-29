@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -29,7 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class EditorModificationUtil {
+public final class EditorModificationUtil {
   private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
 
   /**
@@ -169,7 +167,7 @@ public class EditorModificationUtil {
     else {
       return producer.produce();
     }
-  } 
+  }
 
   @Nullable
   public static String getStringContent(@NotNull Transferable content) {
@@ -349,9 +347,9 @@ public class EditorModificationUtil {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
-  
+
   @NotNull
-  public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor, 
+  public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
                                                          @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
     int startLine = MathUtil.clamp(blockStart.line, 0, editor.getDocument().getLineCount() - 1);
     int endLine = MathUtil.clamp(blockEnd.line, 0, editor.getDocument().getLineCount() - 1);

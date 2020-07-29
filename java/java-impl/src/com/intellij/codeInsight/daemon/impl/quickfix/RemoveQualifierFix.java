@@ -27,9 +27,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class RemoveQualifierFix implements IntentionAction {
   private final PsiExpression myQualifier;
   private final PsiReferenceExpression myExpression;

@@ -587,7 +587,7 @@ class A {{
                           "} }")
   }
 
-  void "test stop at SELECTION when invoked surround template by tab"() {
+  void "test stop at END when invoked surround template by tab"() {
     myFixture.configureByText "a.txt", "<caret>"
 
     final TemplateManager manager = TemplateManager.getInstance(getProject())
@@ -598,7 +598,21 @@ class A {{
     myFixture.type('arg')
     state.nextTab()
     assert !state
-    checkResultByText 'foo arg bar  goo <caret> after'
+    checkResultByText 'foo arg bar <caret> goo  after'
+  }
+
+  void "test stop at SELECTION when invoked surround template by tab and END missing"() {
+    myFixture.configureByText "a.txt", "<caret>"
+
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar goo $SELECTION$ after')
+    template.addVariable("ARG", "", "", true)
+
+    startTemplate(template)
+    myFixture.type('arg')
+    state.nextTab()
+    assert !state
+    checkResultByText 'foo arg bar goo <caret> after'
   }
 
   void "test concat macro"() {

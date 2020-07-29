@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dennis.Ushakov
  */
 public interface ModifiableModelsProvider {
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 
@@ -21,7 +22,7 @@ public interface ModifiableModelsProvider {
       return ServiceManager.getService(ModifiableModelsProvider.class);
     }
   }
-  
+
   ModifiableRootModel getModuleModifiableModel(@NotNull Module module);
   void commitModuleModifiableModel(@NotNull ModifiableRootModel model);
   void disposeModuleModifiableModel(@NotNull ModifiableRootModel model);

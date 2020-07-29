@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -11,7 +12,7 @@ import java.util.List;
 /**
  * @author Sergey Simonchik
  */
-public class MarkdownUtil {
+public final class MarkdownUtil {
 
   private MarkdownUtil() {}
 

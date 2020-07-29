@@ -23,7 +23,10 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
  * Represents a type of source roots of modules in JPS model.
  *
  * <p>
- * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface
+ * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface. In order to support
+ * loading and saving of custom source root types, provide an implementation of {@link org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer}.
+ * if you want to allow users add and remove roots of the custom type in Project Structure dialog, provide an implementation of
+ * {@link com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler} extension point.
  * </p>
  */
 public interface JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P>, JpsElementTypeWithDefaultProperties<P> {

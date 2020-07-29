@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,7 @@ import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.getIndexHeader;
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.writeGitHeader;
 
-public class BinaryPatchWriter {
+public final class BinaryPatchWriter {
 
   private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 

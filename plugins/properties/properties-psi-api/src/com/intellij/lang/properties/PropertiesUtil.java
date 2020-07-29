@@ -25,9 +25,6 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class PropertiesUtil {
   private static final Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
   public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');

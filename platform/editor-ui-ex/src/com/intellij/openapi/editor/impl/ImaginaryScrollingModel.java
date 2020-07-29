@@ -22,12 +22,12 @@ public class ImaginaryScrollingModel implements ScrollingModel {
 
   @Override
   public @NotNull Rectangle getVisibleArea() {
-    throw notImplemented();
+    return new Rectangle(0, 0);
   }
 
   @Override
   public @NotNull Rectangle getVisibleAreaOnScrollingFinished() {
-    throw notImplemented();
+    return new Rectangle(0, 0);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -805,12 +805,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        //noinspection unchecked
         final List<Trinity<String, String, String>> variants = Arrays.asList(
-          (Trinity<String, String, String>[])new Trinity[]{Trinity.create("yes", "barkling", "dog"),
-            Trinity.create("yes", "meowing", "cat"), Trinity.create("yes", "crowling", "mouse"),
-            Trinity.create("not", "apparel", "schrank"), Trinity.create("not", "dinner", "tisch"),
-            Trinity.create("not", "rest", "sessel")});
+          Trinity.create("yes", "barkling", "dog"),
+          Trinity.create("yes", "meowing", "cat"), Trinity.create("yes", "crowling", "mouse"),
+          Trinity.create("not", "apparel", "schrank"), Trinity.create("not", "dinner", "tisch"),
+          Trinity.create("not", "rest", "sessel"));
         variants.forEach(
           t -> {
             final PsiFile file = myFixture.configureByText(

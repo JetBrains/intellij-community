@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.testFramework.EditorTestUtil;
 
-/**
- * @author cdr
- */
 public class EditorInfo {
   private final String newFileText;
   public EditorTestUtil.CaretAndSelectionState caretState;

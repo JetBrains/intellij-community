@@ -9,12 +9,22 @@ import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 
 overload = object()
 Any = object()
-TypeVar = object()
+
+class TypeVar:
+    __name__: str
+    __bound__: Optional[Type[Any]]
+    __constraints__: Tuple[Type[Any], ...]
+    __covariant__: bool
+    __contravariant__: bool
+    def __init__(self, name: str, *constraints: Type[Any], bound: Optional[Type[Any]] = ..., covariant: bool = ..., contravariant: bool = ...) -> None: ...
+
 _promote = object()
 
 class _SpecialForm(object):
     def __getitem__(self, typeargs: Any) -> object: ...
 
+Union: _SpecialForm = ...
+Optional: _SpecialForm = ...
 Tuple: _SpecialForm = ...
 Generic: _SpecialForm = ...
 Protocol: _SpecialForm = ...
@@ -53,20 +63,17 @@ def no_type_check_decorator(decorator: _C) -> _C: ...
 
 # Type aliases and type constructors
 
-class TypeAlias:
+class _Alias:
     # Class for defining generic aliases for library types.
-    def __init__(self, target_type: type) -> None: ...
     def __getitem__(self, typeargs: Any) -> Any: ...
 
-Union = TypeAlias(object)
-Optional = TypeAlias(object)
-List = TypeAlias(object)
-Dict = TypeAlias(object)
-DefaultDict = TypeAlias(object)
-Set = TypeAlias(object)
-FrozenSet = TypeAlias(object)
-Counter = TypeAlias(object)
-Deque = TypeAlias(object)
+List = _Alias()
+Dict = _Alias()
+DefaultDict = _Alias()
+Set = _Alias()
+FrozenSet = _Alias()
+Counter = _Alias()
+Deque = _Alias()
 
 # Predefined type variables.
 AnyStr = TypeVar('AnyStr', str, unicode)

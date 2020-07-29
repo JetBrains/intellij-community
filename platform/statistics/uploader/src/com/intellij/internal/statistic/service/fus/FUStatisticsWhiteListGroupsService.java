@@ -33,7 +33,7 @@ import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpac
  * }</pre>
  * </ol>
  */
-public class FUStatisticsWhiteListGroupsService {
+public final class FUStatisticsWhiteListGroupsService {
 
   @NotNull
   public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogWhitelistParseException {

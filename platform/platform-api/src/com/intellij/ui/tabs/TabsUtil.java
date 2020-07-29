@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
@@ -13,7 +13,7 @@ import java.awt.*;
 /**
  * @author pegov
  */
-public class TabsUtil {
+public final class TabsUtil {
   public static final JBValue TAB_VERTICAL_PADDING = new JBValue.Float(2);
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
   private static final @NonNls String FAKE_LABEL_TEXT = "XXX";

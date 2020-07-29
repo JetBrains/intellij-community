@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-class NSScrollerHelper {
+final class NSScrollerHelper {
   private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {

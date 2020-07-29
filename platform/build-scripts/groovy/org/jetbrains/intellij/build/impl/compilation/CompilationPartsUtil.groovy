@@ -292,7 +292,7 @@ class CompilationPartsUtil {
     }
     String persistentCache = System.getProperty('agent.persistent.cache')
     String cache = persistentCache ?: new File(classesOutput).parentFile.getAbsolutePath()
-    File tempDownloadsStorage = new File(cache, 'idea-compile-parts')
+    File tempDownloadsStorage = new File(cache, "idea-compile-parts-${metadata.branch}")
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 

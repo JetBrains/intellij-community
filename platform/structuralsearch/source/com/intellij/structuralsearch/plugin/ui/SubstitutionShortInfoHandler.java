@@ -198,7 +198,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     final String script = namedScriptableDefinition.getScriptCodeConstraint();
-    if (script != null && script.length() > 2) {
+    if (script.length() > 2) {
       append(buf, SSRBundle.message("script.tooltip.message"));
     }
 

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VFileCopyEvent extends VFileEvent {
+public final class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final VirtualFile myNewParent;
   private final String myNewChildName;

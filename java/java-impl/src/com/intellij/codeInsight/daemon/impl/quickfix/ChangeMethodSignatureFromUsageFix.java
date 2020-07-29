@@ -46,9 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, HighPriorityAction*/ {
   final PsiMethod myTargetMethod;
   final PsiExpression[] myExpressions;

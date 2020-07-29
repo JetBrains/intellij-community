@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,32 +14,31 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PythonSourceRootConfigurator implements DirectoryProjectConfigurator {
+final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator {
   @NonNls private static final String SETUP_PY = "setup.py";
 
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isNewProject) {
     VirtualFile setupPy = baseDir.findChild(SETUP_PY);
-    if (setupPy != null) {
-      final CharSequence content = LoadTextUtil.loadText(setupPy);
-      PyFile setupPyFile = (PyFile) PsiFileFactory.getInstance(project).createFileFromText(SETUP_PY, PythonFileType.INSTANCE, content.toString());
-      final SetupCallVisitor visitor = new SetupCallVisitor();
-      setupPyFile.accept(visitor);
-      String dir = visitor.getRootPackageDir();
-      if (dir != null) {
-        final VirtualFile rootPackageVFile = baseDir.findFileByRelativePath(dir);
-        addSourceRoot(project, baseDir, rootPackageVFile, true);
-      }
+    if (setupPy == null) {
+      return;
     }
 
+    CharSequence content = LoadTextUtil.loadText(setupPy);
+    PsiElement setupPyFile = PsiFileFactory.getInstance(project).createFileFromText(SETUP_PY, PythonFileType.INSTANCE, content.toString());
+    final SetupCallVisitor visitor = new SetupCallVisitor();
+    setupPyFile.accept(visitor);
+    String dir = visitor.getRootPackageDir();
+    if (dir != null) {
+      VirtualFile rootPackageVFile = baseDir.findFileByRelativePath(dir);
+      addSourceRoot(project, baseDir, rootPackageVFile, true);
+    }
   }
 
   private static void addSourceRoot(Project project, final VirtualFile baseDir, final VirtualFile root, final boolean unique) {

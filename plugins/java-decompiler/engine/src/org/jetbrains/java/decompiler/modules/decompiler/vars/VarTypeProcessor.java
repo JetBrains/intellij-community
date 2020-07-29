@@ -170,7 +170,7 @@ public class VarTypeProcessor {
       case Exprent.EXPRENT_VAR:
         VarVersionPair pair = null;
         if (exprent.type == Exprent.EXPRENT_CONST) {
-          pair = new VarVersionPair(((ConstExprent)exprent).id, -1);
+          pair = new VarVersionPair(exprent.id, -1);
         }
         else if (exprent.type == Exprent.EXPRENT_VAR) {
           pair = new VarVersionPair((VarExprent)exprent);

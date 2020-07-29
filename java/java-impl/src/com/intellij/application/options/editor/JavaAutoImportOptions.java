@@ -61,7 +61,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
 
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
-    myCbOptimizeImports.setSelected(CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly);
+    myCbOptimizeImports.setSelected(CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly());
     myCbAddUnambiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     myCbAddMethodImports.setSelected(codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 
@@ -75,7 +75,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
-    CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly = myCbOptimizeImports.isSelected();
+    CodeInsightWorkspaceSettings.getInstance(myProject).setOptimizeImportsOnTheFly(myCbOptimizeImports.isSelected());
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImports.isSelected();
     codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY = myCbAddMethodImports.isSelected();
 
@@ -97,7 +97,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
     boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
-    isModified |= isModified(myCbOptimizeImports, CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly);
+    isModified |= isModified(myCbOptimizeImports, CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly());
     isModified |= isModified(myCbAddUnambiguousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     isModified |= isModified(myCbAddMethodImports, codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 

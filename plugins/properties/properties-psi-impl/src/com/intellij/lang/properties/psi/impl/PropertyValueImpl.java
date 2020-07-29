@@ -22,9 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class PropertyValueImpl extends LeafPsiElement {
   public PropertyValueImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.ui.SelectionSaver
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
@@ -15,9 +16,15 @@ object GHPRChangesTree {
 
   fun create(project: Project, model: GHPRChangesModel): ChangesTree {
     val tree = object : ChangesTree(project, false, false) {
-      override fun rebuildTree() = updateTreeModel(model.buildChangesTree(grouping))
+      override fun rebuildTree() {
+        updateTreeModel(model.buildChangesTree(grouping))
+        if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
+      }
+
       override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+
     }.also<ChangesTree> {
+      SelectionSaver.installOn(it)
       it.addFocusListener(object : FocusAdapter() {
         override fun focusGained(e: FocusEvent?) {
           if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)

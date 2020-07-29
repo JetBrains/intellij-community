@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-public class DuplocatorUtil {
+public final class DuplocatorUtil {
   private DuplocatorUtil() {
   }
 

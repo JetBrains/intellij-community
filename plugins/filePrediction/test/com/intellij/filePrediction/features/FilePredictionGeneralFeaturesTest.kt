@@ -16,11 +16,9 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.util.io.URLUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.junit.Test
 import java.io.File
 
 class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
-
   private fun doTestGeneralFeatures(prevPath: String, newPath: String, featuresProvider: FileFeaturesProducer) {
     val prevFile = myFixture.addFileToProject(prevPath, "PREVIOUS FILE")
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
@@ -51,7 +49,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     }
   }
 
-  @Test
   fun `test file name prefix for completely different files`() {
     doTestGeneralFeatures(
       "prevFile.txt", "nextFile.txt",
@@ -61,7 +58,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file name prefix for files with common prefix`() {
     doTestGeneralFeatures(
       "myPrevFile.txt", "myNextFile.txt",
@@ -71,7 +67,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file name prefix for equal files`() {
     doTestGeneralFeatures(
       "file.txt", "src/file.txt",
@@ -81,7 +76,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file name of different length`() {
     doTestGeneralFeatures(
       "someFile.txt", "src/file.txt",
@@ -91,7 +85,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file name in child directory`() {
     doTestGeneralFeatures(
       "src/someFile.txt", "src/file.txt",
@@ -101,7 +94,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file name in neighbour directories`() {
     doTestGeneralFeatures(
       "src/com/site/ui/someFile.txt", "src/com/site/component/file.txt",
@@ -111,7 +103,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files path in project root`() {
     doTestGeneralFeatures(
       "prevFile.txt", "nextFile.txt",
@@ -121,7 +112,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files path in the same directory`() {
     doTestGeneralFeatures(
       "src/prevFile.txt", "src/nextFile.txt",
@@ -131,7 +121,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files path in the neighbour directories`() {
     doTestGeneralFeatures(
       "src/ui/prevFile.txt", "src/components/nextFile.txt",
@@ -141,7 +130,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files path of different length`() {
     doTestGeneralFeatures(
       "firstFile.txt", "another/nextFile.txt",
@@ -151,7 +139,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files in the root directory`() {
     doTestGeneralFeatures(
       "prevFile.txt", "nextFile.txt",
@@ -162,7 +149,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files in same child directory`() {
     doTestGeneralFeatures(
       "src/prevFile.txt", "src/nextFile.txt",
@@ -173,7 +159,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test files in different directories`() {
     doTestGeneralFeatures(
       "src/prevFile.txt", "test/nextFile.txt",
@@ -184,7 +169,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file not in a source root`() {
     doTestGeneralFeatures(
       "file.txt",
@@ -202,7 +186,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file in source root`() {
     doTestGeneralFeatures(
       "nextFile.txt",
@@ -216,7 +199,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file not in a custom source root`() {
     doTestGeneralFeatures(
       "nextFile.txt",
@@ -235,7 +217,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file in a custom source root`() {
     doTestGeneralFeatures(
       "src/nextFile.txt",
@@ -254,7 +235,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file in a library source root`() {
     doTestGeneralFeatures(
       "lib/nextFile.txt",
@@ -273,7 +253,6 @@ class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtu
     )
   }
 
-  @Test
   fun `test file in library classes`() {
     doTestGeneralFeatures(
       "lib/nextFile.txt",

@@ -204,7 +204,7 @@ public class JUnitUtil {
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
 
     return CachedValuesManager.getCachedValue(psiClass, () ->
-      CachedValueProvider.Result.create(hasTestOrSuiteMethods(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+      CachedValueProvider.Result.create(hasTestOrSuiteMethods(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static boolean hasTestOrSuiteMethods(@NotNull PsiClass psiClass) {
@@ -321,7 +321,7 @@ public class JUnitUtil {
           }
         }
       }
-      return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

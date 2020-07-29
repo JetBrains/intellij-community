@@ -1,0 +1,8 @@
+os.MFD_HUGE_32MB
+os.MFD_HUGE_512MB
+site.getsitepackages
+site.getuserbase
+site.getusersitepackages
+time.CLOCK_PROF
+time.CLOCK_UPTIME
+typing.IO.closed  # Incorrect definition in CPython, fixed in bpo-39493

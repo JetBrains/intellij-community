@@ -17,9 +17,6 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class ReverseCharSequence implements CharSequence{
   private final CharSequence mySequence;
 

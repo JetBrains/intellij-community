@@ -19,31 +19,37 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
-  @Nullable
-  public static ProjectManagerEx getInstanceExIfCreated() {
+  public static @Nullable ProjectManagerEx getInstanceExIfCreated() {
     return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
   }
 
   /**
-   * @param filePath path to .ipr file or directory where .idea directory is located
+   * @deprecated Use {@link #newProject(Path, OpenProjectTask)}
    */
-  @Nullable
-  public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+  @Deprecated
+  public abstract @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
-  @Nullable
-  public abstract Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
+  /**
+   * @deprecated Pass {@code projectName} using {@link OpenProjectTask#projectName}.
+   */
+  @Deprecated
+  public final @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options) {
+    return newProject(file, projectName == null ? options : options.withProjectName(projectName));
+  }
+
+  public abstract @Nullable Project newProject(@NotNull Path file, @NotNull OpenProjectTask options);
 
   /**
    * @deprecated Use {@link #loadProject(Path)}
    */
-  @NotNull
   @Deprecated
-  public final Project loadProject(@NotNull String filePath) {
+  public final @NotNull Project loadProject(@NotNull String filePath) {
     return loadProject(Paths.get(filePath).toAbsolutePath());
   }
 
-  @NotNull
-  public abstract Project loadProject(@NotNull Path path);
+  public abstract @Nullable Project openProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+
+  public abstract @NotNull Project loadProject(@NotNull Path path);
 
   public abstract boolean openProject(@NotNull Project project);
 
@@ -62,20 +68,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
 
-  /**
-   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
-   * @return true on success
-   */
-  public abstract boolean closeAndDispose(@NotNull Project project);
-
-  @Nullable
-  @Override
-  public Project createProject(@Nullable String name, @NotNull String path) {
-    return newProject(name, path, true, false);
-  }
-
-  @Nullable
-  public abstract Project findOpenProjectByHash(@Nullable String locationHash);
+  public abstract @Nullable Project findOpenProjectByHash(@Nullable String locationHash);
 
   @ApiStatus.Internal
   public abstract @NotNull List<String> getAllExcludedUrls();

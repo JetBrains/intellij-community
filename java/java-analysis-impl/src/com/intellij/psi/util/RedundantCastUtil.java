@@ -8,9 +8,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
@@ -22,11 +21,13 @@ import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance(RedundantCastUtil.class);
-  private static final Key<PsiElement> SELF_REFERENCE = Key.create("SELF_REFERENCE");
 
   private RedundantCastUtil() { }
 
@@ -268,9 +269,9 @@ public class RedundantCastUtil {
           if (newCall == null) return false;
           PsiExpression newQualifier = deparenthesizeExpression(newCall.getMethodExpression().getQualifierExpression());
           LOG.assertTrue(newQualifier != null);
-          PsiElement oldReference = newQualifier.getCopyableUserData(SELF_REFERENCE);
+          PsiElement oldReference = newQualifier.getCopyableUserData(RecaptureTypeMapper.SELF_REFERENCE);
           PsiElement replace = newQualifier.replace(getInnerMostOperand(newQualifier));
-          replace.putCopyableUserData(SELF_REFERENCE, oldReference);
+          replace.putCopyableUserData(RecaptureTypeMapper.SELF_REFERENCE, oldReference);
 
           final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
           if (!newResult.isValidResult()) return false;
@@ -281,7 +282,7 @@ public class RedundantCastUtil {
           PsiType newReturnType = newCall.getType();
           PsiType oldReturnType = ((PsiMethodCallExpression)parent).getType();
 
-          if (Comparing.equal(newReturnType == null ? null : createTypeMapper().mapType(newReturnType), oldReturnType) &&
+          if (Comparing.equal(newReturnType == null ? null : new RecaptureTypeMapper().mapType(newReturnType), oldReturnType) &&
               (Comparing.equal(newTargetMethod, targetMethod) ||
                !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&
                MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) &&
@@ -390,7 +391,7 @@ public class RedundantCastUtil {
       return oldMethod.equals(newResult.getElement()) &&
              newResult.isValidResult() &&
              !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) &&
-             recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor());
+             new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor());
     }
 
     private static boolean castForBoxing(PsiExpression operand, PsiType oppositeType, PsiType conditionalType) {
@@ -537,50 +538,6 @@ public class RedundantCastUtil {
       return newArgType;
     }
 
-    private static PsiSubstitutor recapture(PsiSubstitutor substitutor) {
-      PsiTypeMapper typeMapper = createTypeMapper();
-      PsiSubstitutor result = PsiSubstitutor.EMPTY;
-      for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
-        PsiType value = entry.getValue();
-        result = result.put(entry.getKey(), value == null ? null : typeMapper.mapType(value));
-      }
-      return result;
-    }
-
-    @NotNull
-    private static PsiTypeMapper createTypeMapper() {
-      return new PsiTypeMapper() {
-        @Override
-        public PsiType visitType(@NotNull PsiType type) {
-          return type;
-        }
-
-        @Override
-        public PsiType visitClassType(@NotNull PsiClassType classType) {
-          final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
-          final PsiClass psiClass = classResolveResult.getElement();
-          final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-          if (psiClass == null) return classType;
-          return new PsiImmediateClassType(psiClass, recapture(substitutor));
-        }
-
-        @Override
-        public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
-          PsiElement context = capturedWildcardType.getContext();
-          @Nullable PsiElement original = context.getCopyableUserData(SELF_REFERENCE);
-          if (original != null) {
-            context = original;
-          }
-          PsiCapturedWildcardType mapped =
-            PsiCapturedWildcardType.create(capturedWildcardType.getWildcard(), context, capturedWildcardType.getTypeParameter());
-
-          mapped.setUpperBound(capturedWildcardType.getUpperBound(false).accept(this));
-
-          return mapped;
-        }
-      };
-    }
-
     @NotNull
     private static JavaResolveResult resolveNewResult(PsiCall oldCall, PsiCall newCall) {
       final JavaResolveResult newResult;
@@ -600,43 +557,16 @@ public class RedundantCastUtil {
 
     @Nullable
     private static PsiCall copyCallExpression(PsiCall expression, PsiType typeByParent) {
-      class Encoder {
-        private void encode(PsiElement expression) {
-          expression.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-              if (element instanceof PsiExpression) {
-                element.putCopyableUserData(SELF_REFERENCE, element);
-              }
-              super.visitElement(element);
-            }
-          });
-        }
-
-        private void clean(PsiElement expression) {
-          expression.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-              if (element instanceof PsiExpression) {
-                element.putCopyableUserData(SELF_REFERENCE, null);
-              }
-              super.visitElement(element);
-            }
-          });
-        }
-      }
-      
-      Encoder encoder = new Encoder();
       PsiElement encoded = null;
       try {
         if (typeByParent != null && PsiTypesUtil.isDenotableType(typeByParent, expression)) {
-          encoder.encode(encoded = expression);
+          RecaptureTypeMapper.encode(encoded = expression);
           return  (PsiCall)LambdaUtil.copyWithExpectedType(expression, typeByParent);
         }
         else {
           final PsiCall call = LambdaUtil.treeWalkUp(expression);
           if (call != null) {
-            encoder.encode(encoded = call);
+            RecaptureTypeMapper.encode(encoded = call);
             Object marker = new Object();
             PsiTreeUtil.mark(expression, marker);
             final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
@@ -644,7 +574,7 @@ public class RedundantCastUtil {
             return  (PsiCall)PsiTreeUtil.releaseMark(callCopy, marker);
           }
           else {
-            encoder.encode(encoded = expression);
+            RecaptureTypeMapper.encode(encoded = expression);
             return (PsiCall)expression.copy();
           }
         }
@@ -654,7 +584,7 @@ public class RedundantCastUtil {
       }
       finally {
         if (encoded != null) {
-          encoder.clean(encoded);
+          RecaptureTypeMapper.clean(encoded);
         }
       }
     }

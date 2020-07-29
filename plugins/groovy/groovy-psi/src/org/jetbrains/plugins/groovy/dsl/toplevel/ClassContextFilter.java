@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author peter
  */
-public class ClassContextFilter {
+public final class ClassContextFilter {
 
   public static ContextFilter fromClassPattern(ElementPattern pattern) {
     return (descriptor, ctx) -> {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.DefaultLookup;
 
@@ -44,7 +45,7 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
   @Override
   public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
     setComponentOrientation(list.getComponentOrientation());
-    setBorder(JBUI.Borders.empty(1));
+    setBorder(JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()));
     Color bg, fg;
     JList.DropLocation dropLocation = list.getDropLocation();
     if (dropLocation != null && !dropLocation.isInsert() && dropLocation.getIndex() == index) {

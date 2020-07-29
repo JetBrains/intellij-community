@@ -73,6 +73,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testInstanceOfDisjunctionCircular() { doTest() }
   void testAfterGetClass() { doTest() }
   void testNoCastForCompatibleCapture() { doTest() }
+  void testBooleanFlagDfa() { doTest() }
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'

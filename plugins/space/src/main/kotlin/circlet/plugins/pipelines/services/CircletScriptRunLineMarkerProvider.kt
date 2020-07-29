@@ -1,15 +1,7 @@
 package circlet.plugins.pipelines.services
 
-import circlet.plugins.pipelines.services.run.*
-import com.intellij.execution.*
-import com.intellij.execution.lineMarker.*
-import com.intellij.icons.*
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.components.*
-import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.refactoring.fqName.*
-import org.jetbrains.kotlin.idea.references.*
-import org.jetbrains.kotlin.psi.*
+import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.psi.PsiElement
 
 class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
 

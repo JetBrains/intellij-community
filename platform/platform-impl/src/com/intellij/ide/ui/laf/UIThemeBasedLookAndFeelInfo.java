@@ -99,31 +99,35 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   }
 
   private void installBackgroundImage() {
+    installBackgroundImage(myTheme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
+    installBackgroundImage(myTheme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP);
+  }
+
+  private void installBackgroundImage(Map<String, Object> backgroundProps, String bgImageProperty) {
     try {
-      Map<String, Object> background = myTheme.getBackground();
-      if (background != null) {
-        Object path = background.get("image");
+      if (backgroundProps != null) {
+        Object path = backgroundProps.get("image");
         if (path instanceof String) {
           File tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true);
-          URL resource = myTheme.getProviderClassLoader().getResource((String)path);
+          URL resource = myTheme.getResource((String)path);
           if (resource != null) {
-            try (InputStream input = myTheme.getProviderClassLoader().getResourceAsStream((String)path)) {
+            try (InputStream input = myTheme.getResourceAsStream((String)path)) {
               try (FileOutputStream output = new FileOutputStream(tmpImage)) {
                 FileUtil.copy(input, output);
               }
             }
 
             String image = tmpImage.getPath();
-            Object transparency = background.get("transparency");
+            Object transparency = backgroundProps.get("transparency");
             String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
-            String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
-            String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
+            String fill = parseEnumValue(backgroundProps.get("fill"), IdeBackgroundUtil.Fill.SCALE);
+            String anchor = parseEnumValue(backgroundProps.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
 
             String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
-            String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
-            PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
+            String currentSpec = PropertiesComponent.getInstance().getValue(bgImageProperty);
+            PropertiesComponent.getInstance().setValue("old." + bgImageProperty, currentSpec);
 
-            PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
+            PropertiesComponent.getInstance().setValue(bgImageProperty, spec);
             IdeBackgroundUtil.repaintAllWindows();
           }
           else {
@@ -156,15 +160,20 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
     SVGLoader.setColorPatcherProvider(null);
 
+    unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
+    unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
+  }
+
+  private void unsetBackgroundProperties(String backgroundPropertyKey) {
     PropertiesComponent propertyManager = PropertiesComponent.getInstance();
-    String value = propertyManager.getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
-    propertyManager.unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);
+    String value = propertyManager.getValue("old." + backgroundPropertyKey);
+    propertyManager.unsetValue("old." + backgroundPropertyKey);
     if (value == null) {
       if (myTheme.getBackground() != null) {
-        propertyManager.unsetValue(IdeBackgroundUtil.EDITOR_PROP);
+        propertyManager.unsetValue(backgroundPropertyKey);
       }
     } else {
-      propertyManager.setValue(IdeBackgroundUtil.EDITOR_PROP, value);
+      propertyManager.setValue(backgroundPropertyKey, value);
     }
   }
 }

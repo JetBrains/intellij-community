@@ -40,9 +40,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
                                       LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {

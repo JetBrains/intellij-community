@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
 
-public class VcsLocaleHelper {
+public final class VcsLocaleHelper {
 
   private static final String DEFAULT_EXECUTABLE_LOCALE_VALUE = "en_US.UTF-8";
   private static final String REGISTRY_KEY_SUFFIX = ".executable.locale";

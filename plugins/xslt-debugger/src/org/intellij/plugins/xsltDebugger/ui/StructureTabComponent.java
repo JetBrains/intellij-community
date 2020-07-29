@@ -1,7 +1,9 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -29,7 +31,7 @@ public class StructureTabComponent extends AbstractTabComponent {
     myEventModel.addTreeModelListener(new SmartStructureTracker(tree, disposable));
 
     final DefaultActionGroup structureActions = new DefaultActionGroup();
-    final StructureTreeExpander expander = new StructureTreeExpander(tree);
+    final DefaultTreeExpander expander = new DefaultTreeExpander(tree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     structureActions.add(new HideWhitespaceAction(tree, myEventModel));
     structureActions.add(actionsManager.createExpandAllAction(expander, tree));

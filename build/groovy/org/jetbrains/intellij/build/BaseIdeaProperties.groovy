@@ -54,6 +54,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
+    "intellij.webp",
     /* Disabled in Android Studio
     "intellij.android.plugin",
     "intellij.android.smali",

@@ -285,7 +285,7 @@ public abstract class NlsInfo {
       UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
       while (parent instanceof UCallExpression &&
              (UastExpressionUtils.isArrayInitializer(parent) || UastExpressionUtils.isNewArrayWithInitializer(parent))) {
-        parent = parent.getUastParent();
+        parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
       }
       if (parent == null) return Unspecified.UNKNOWN;
       final UReturnExpression returnStmt =

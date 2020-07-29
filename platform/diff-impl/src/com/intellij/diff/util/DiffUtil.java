@@ -112,14 +112,14 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 
-public class DiffUtil {
+public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static class Lazy {
+  public static final class Lazy {
     public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
   }
 
@@ -1746,7 +1746,6 @@ public class DiffUtil {
   // Helpers
   //
 
-
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<? extends JComponent> myComponents;
 
@@ -1758,17 +1757,25 @@ public class DiffUtil {
     }
 
     @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = getPreferredHeight();
+    public Dimension getMinimumSize() {
+      Dimension size = super.getMinimumSize();
+      size.height = getMaximumHeight(JComponent::getMinimumSize);
       return size;
     }
 
-    private int getPreferredHeight() {
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = getMaximumHeight(JComponent::getPreferredSize);
+      return size;
+    }
+
+    private int getMaximumHeight(@NotNull Function<JComponent, Dimension> getter) {
       int height = 0;
       for (JComponent component : myComponents) {
-        if (component == null) continue;
-        height = Math.max(height, component.getPreferredSize().height);
+        if (component != null) {
+          height = Math.max(height, getter.fun(component).height);
+        }
       }
       return height;
     }

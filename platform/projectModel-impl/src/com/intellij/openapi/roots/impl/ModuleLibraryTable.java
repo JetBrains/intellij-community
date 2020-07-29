@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +32,7 @@ import java.util.Iterator;
 /**
  *  @author dsl
  */
-@ApiStatus.Internal
-public class ModuleLibraryTable extends ModuleLibraryTableBase {
+class ModuleLibraryTable extends ModuleLibraryTableBase {
   @NotNull
   protected final RootModelImpl myRootModel;
   @NotNull

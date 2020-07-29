@@ -75,7 +75,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     val currentSdk = module.pythonSdk
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      PyBundle.message("python.sdk.popup.title"),
+      PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"),
       group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

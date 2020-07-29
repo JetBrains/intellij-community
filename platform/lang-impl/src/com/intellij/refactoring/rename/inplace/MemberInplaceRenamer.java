@@ -2,6 +2,8 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -18,9 +20,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -36,10 +41,7 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
@@ -156,7 +158,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    boolean showChooser = super.appendAdditionalElement(refs, stringUsages);
+    boolean showChooser = Registry.is("enable.rename.options.inplace", false) || super.appendAdditionalElement(refs, stringUsages);
     PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -165,9 +167,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(substituted);
         final HashMap<PsiElement, String> allRenames = new HashMap<>();
         PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-        processor.prepareRenaming(substituted, "", allRenames, new LocalSearchScope(currentFile));
-        for (PsiElement element : allRenames.keySet()) {
-          appendAdditionalElement(stringUsages, variable, element);
+        if (currentFile != null) {
+          processor.prepareRenaming(substituted, "", allRenames, new LocalSearchScope(currentFile));
+          for (PsiElement element : allRenames.keySet()) {
+            appendAdditionalElement(stringUsages, variable, element);
+          }
         }
       }
     }
@@ -267,7 +271,20 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
-    //do not highlight non-code usages in file
+    if (!Registry.is("enable.rename.options.inplace", false)) return;
+    if (!RenamePsiElementProcessor.forElement(myElementToRename).isToSearchInComments(myElementToRename)) {
+      return;
+    }
+    final String stringToSearch = myElementToRename.getName();
+    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (!StringUtil.isEmptyOrSpaces(stringToSearch) && currentFile != null) {
+      TextOccurrencesUtil.processUsagesInStringsAndComments(
+        myElementToRename, GlobalSearchScope.fileScope(currentFile),
+        stringToSearch, true, (psiElement, textRange) -> {
+          stringUsages.add(Pair.create(psiElement, textRange));
+          return true;
+        });
+    }
   }
 
   @Override
@@ -304,6 +321,29 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     return getVariable();
+  }
+
+  @Override
+  public void afterTemplateStart() {
+    super.afterTemplateStart();
+    if (Registry.is("enable.rename.options.inplace", false)) {
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+      PsiNamedElement variable = getVariable();
+      if (templateState == null || variable == null) return;
+      TextRange variableRange = templateState.getCurrentVariableRange();
+      if (variableRange == null) return;
+
+      Runnable restartCallback = () -> {
+        TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+        PsiNamedElement var = getVariable();
+        if (state == null || var == null) return;
+        String insertedName = var.getName();
+        Editor editor = state.getEditor();
+        state.gotoEnd(true);
+        createInplaceRenamerToRestart(var, editor, insertedName).performInplaceRefactoring(new LinkedHashSet<>());
+      };
+      TemplateInlayUtil.createRenameSettingsInlay(templateState, variableRange.getEndOffset(), variable, restartCallback);
+    }
   }
 
   protected class MyRenameProcessor extends RenameProcessor {

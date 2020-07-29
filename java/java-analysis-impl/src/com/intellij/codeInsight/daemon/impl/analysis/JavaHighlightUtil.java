@@ -60,29 +60,33 @@ public class JavaHighlightUtil {
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     @NonNls String name = method.getName();
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType returnType = method.getReturnType();
     if ("readObjectNoData".equals(name)) {
+      PsiType returnType = method.getReturnType();
       return parameters.length == 0 && TypeConversionUtil.isVoidType(returnType) && isSerializable(containingClass);
     }
     if ("readObject".equals(name)) {
+      PsiType returnType = method.getReturnType();
       return parameters.length == 1
              && parameters[0].getType().equalsToText("java.io.ObjectInputStream")
              && TypeConversionUtil.isVoidType(returnType) && method.hasModifierProperty(PsiModifier.PRIVATE)
              && isSerializable(containingClass);
     }
     if ("readResolve".equals(name)) {
+      PsiType returnType = method.getReturnType();
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
              && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || isSerializable(containingClass));
     }
     if ("writeReplace".equals(name)) {
+      PsiType returnType = method.getReturnType();
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
              && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || isSerializable(containingClass));
     }
     if ("writeObject".equals(name)) {
+      PsiType returnType = method.getReturnType();
       return parameters.length == 1
              && TypeConversionUtil.isVoidType(returnType)
              && parameters[0].getType().equalsToText("java.io.ObjectOutputStream")

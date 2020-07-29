@@ -17,6 +17,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +31,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
-public class PathManagerEx {
+public final class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
@@ -348,7 +349,7 @@ public class PathManagerEx {
     }
 
     try {
-      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
+      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), JpsProjectLoader.MODULE_MANAGER_COMPONENT);
       assert element != null;
       for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
         ourCommunityModules.add(file.getModuleName());

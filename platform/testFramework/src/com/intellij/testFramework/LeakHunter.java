@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.function.Supplier;
 
-public class LeakHunter {
+public final class LeakHunter {
 
   // Android Studio: to avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
   private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(

@@ -15,18 +15,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
 
   protected BasicRendererProperties myProperties;
   private final String myDefaultName;
+  private Function<Type, CompletableFuture<Boolean>> myIsApplicableChecker = null;
 
   protected NodeRendererImpl() {
     this(DEFAULT_NAME, false);
@@ -78,6 +82,19 @@ public abstract class NodeRendererImpl implements NodeRenderer {
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return null;
+  }
+
+  @ApiStatus.Internal
+  public void setIsApplicableChecker(@NotNull Function<Type, CompletableFuture<Boolean>> isApplicableAsync) {
+    myIsApplicableChecker = isApplicableAsync;
+  }
+
+  @Override
+  public final CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    if (myIsApplicableChecker != null) {
+      return myIsApplicableChecker.apply(type);
+    }
+    return NodeRenderer.super.isApplicableAsync(type);
   }
 
   @Override
@@ -169,7 +186,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof CompoundTypeRenderer.Overhead && myRenderer.equals(((CompoundTypeRenderer.Overhead)obj).myRenderer);
+      return obj instanceof Overhead && myRenderer.equals(((Overhead)obj).myRenderer);
     }
   }
 

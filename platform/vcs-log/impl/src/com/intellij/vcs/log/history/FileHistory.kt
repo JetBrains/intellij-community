@@ -4,7 +4,6 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.MultiMap
@@ -18,6 +17,7 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.*
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcsUtil.VcsFileUtil
 import gnu.trove.THashSet
 import gnu.trove.TIntHashSet
 import gnu.trove.TIntObjectHashMap
@@ -562,26 +562,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: Hash.Strategy<FilePath> = FilePathCaseSensitiveStrategy()
-
-private class FilePathCaseSensitiveStrategy : Hash.Strategy<FilePath> {
-  override fun equals(path1: FilePath?, path2: FilePath?): Boolean {
-    if (path1 === path2) return true
-    if (path1 == null || path2 == null) return false
-
-    if (path1.isDirectory != path2.isDirectory) return false
-    val canonical1 = FileUtil.toCanonicalPath(path1.path)
-    val canonical2 = FileUtil.toCanonicalPath(path2.path)
-    return canonical1 == canonical2
-  }
-
-  override fun hashCode(path: FilePath?): Int {
-    if (path == null) return 0
-
-    var result = if (path.path.isEmpty()) 0 else FileUtil.toCanonicalPath(path.path).hashCode()
-    result = 31 * result + if (path.isDirectory) 1 else 0
-    return result
-  }
-}
+val FILE_PATH_HASHING_STRATEGY: Hash.Strategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
 data class EdgeData<T>(val parent: T, val child: T)

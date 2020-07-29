@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 /**
  * A service used to create and store {@link CachedValue} objects.<p/>
@@ -111,22 +112,34 @@ public abstract class CachedValuesManager {
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
-   * The passed cached value provider may only depend on the passed PSI element and project/application components/services,
+   * The passed cached value provider may only depend on the passed context PSI element and project/application components/services,
    * see {@link CachedValue} documentation for more details.
    * @return The cached value
    */
-  public static <T> T getCachedValue(final @NotNull PsiElement psi, final @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(psi, getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
+  public static <T> T getCachedValue(final @NotNull PsiElement context, final @NotNull CachedValueProvider<T> provider) {
+    return getCachedValue(context, getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
+  }
+
+  /**
+   * Create a cached value with the given provider, store it in PSI element's user data. If it's already stored, reuse it.
+   * Invalidate on any PSI change in the project.
+   * The passed cached value provider may only depend on the passed context PSI element and project/application components/services,
+   * see {@link CachedValue} documentation for more details.
+   * @return The cached value
+   */
+  public static <E extends PsiElement, T> T getProjectPsiDependentCache(@NotNull E context, @NotNull Function<? super E, ? extends T> provider) {
+    return getCachedValue(context, getKeyForClass(provider.getClass(), globalKeyForProvider), () ->
+      CachedValueProvider.Result.create(provider.apply(context), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
-   * The passed cached value provider may only depend on the passed PSI element and project/application components/services,
+   * The passed cached value provider may only depend on the passed context PSI element and project/application components/services,
    * see {@link CachedValue} documentation for more details.
    * @return The cached value
    */
-  public static <T> T getCachedValue(final @NotNull PsiElement psi, @NotNull Key<CachedValue<T>> key, final @NotNull CachedValueProvider<T> provider) {
-    CachedValue<T> value = psi.getUserData(key);
+  public static <T> T getCachedValue(final @NotNull PsiElement context, @NotNull Key<CachedValue<T>> key, final @NotNull CachedValueProvider<T> provider) {
+    CachedValue<T> value = context.getUserData(key);
     if (value != null) {
       Getter<T> data = value.getUpToDateOrNull();
       if (data != null) {
@@ -134,12 +147,12 @@ public abstract class CachedValuesManager {
       }
     }
 
-    return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
+    return getManager(context.getProject()).getCachedValue(context, key, new CachedValueProvider<T>() {
       @Override
       public @Nullable Result<T> compute() {
         CachedValueProvider.Result<T> result = provider.compute();
-        if (result != null && !psi.isPhysical()) {
-          PsiFile file = psi.getContainingFile();
+        if (result != null && !context.isPhysical()) {
+          PsiFile file = context.getContainingFile();
           if (file != null) {
             return CachedValueProvider.Result
               .create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));

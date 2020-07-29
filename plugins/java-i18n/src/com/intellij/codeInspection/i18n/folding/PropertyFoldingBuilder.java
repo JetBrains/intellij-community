@@ -82,7 +82,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (!isI18nProperty(expression)) return;
     final IProperty property = getI18nProperty(expression);
     final HashSet<Object> set = new HashSet<>();
-    set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    set.add(property != null ? property : PsiModificationTracker.MODIFICATION_COUNT);
     final String msg = formatI18nProperty(expression, property);
 
     final UElement parent = expression.getUastParent();

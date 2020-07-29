@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class FilenameIndex {
+public final class FilenameIndex {
 
   @ApiStatus.Internal
   @NonNls

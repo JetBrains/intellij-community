@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -80,6 +81,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       paths.add(PathUtil.getJarPathForClass(Strings.class));                   // intellij.platform.util.strings
       paths.add(PathUtil.getJarPathForClass(FList.class));                     // intellij.platform.util.collections
       paths.add(PathUtil.getJarPathForClass(MinusculeMatcher.class));          // intellij.platform.util.text.matching
+      paths.add(PathUtil.getJarPathForClass(StartUpMeasurer.class));           // intellij.platform.util.diagnostic
       paths.add(PathUtil.getJarPathForClass(UrlClassLoader.class));            // intellij.platform.util.classLoader
       paths.add(PathUtil.getJarPathForClass(Navigatable.class));               // intellij.platform.core
       paths.add(PathUtil.getJarPathForClass(AreaInstance.class));              // intellij.platform.extensions

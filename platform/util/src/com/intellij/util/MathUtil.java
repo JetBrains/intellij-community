@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-public class MathUtil {
+public final class MathUtil {
   /**
    * Returns the closest non-negative {@code int} value to the absolute value of {@code a}. Works the same way as {@link Math#abs(int)} for all values except {@link Integer#MIN_VALUE},
    * for which {@link Math#abs(int)} returns negative value but this method returns {@link Integer#MAX_VALUE}.

@@ -4,7 +4,7 @@ package com.intellij.ide.lightEdit;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 
-public class LightEditFeatureUsagesUtil {
+public final class LightEditFeatureUsagesUtil {
 
   private final static String USAGE_GROUP_ID = "light.edit";
 

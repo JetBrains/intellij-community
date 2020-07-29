@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatisticsStringUtil {
+public final class StatisticsStringUtil {
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }

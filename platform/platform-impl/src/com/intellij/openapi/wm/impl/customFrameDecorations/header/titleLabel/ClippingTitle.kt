@@ -8,7 +8,7 @@ import java.awt.FontMetrics
 import java.io.File
 import javax.swing.JComponent
 
-class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTitle(prefix, suffix), ShrinkingTitlePart {
+open class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTitle(prefix, suffix), ShrinkingTitlePart {
   companion object {
     const val ellipsisSymbol = "\u2026"
 

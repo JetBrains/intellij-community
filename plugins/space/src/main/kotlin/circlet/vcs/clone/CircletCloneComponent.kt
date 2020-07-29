@@ -1,50 +1,63 @@
 package circlet.vcs.clone
 
-import circlet.client.*
-import circlet.client.api.*
-import circlet.components.*
-import circlet.platform.api.oauth.*
-import circlet.platform.client.*
+import circlet.client.api.Navigator
+import circlet.client.api.englishFullName
+import circlet.client.repoService
+import circlet.client.td
+import circlet.components.CircletUserAvatarProvider
+import circlet.components.circletWorkspace
+import circlet.platform.api.oauth.OAuthTokenResponse
+import circlet.platform.client.KCircletClient
 import circlet.settings.*
 import circlet.ui.*
-import circlet.ui.AccountMenuItem
-import circlet.ui.AccountMenuPopupStep
-import circlet.ui.AccountsMenuListPopup
-import circlet.vcs.*
-import com.intellij.dvcs.*
-import com.intellij.dvcs.repo.*
-import com.intellij.dvcs.ui.*
-import com.intellij.icons.*
-import com.intellij.ide.*
-import com.intellij.openapi.*
-import com.intellij.openapi.fileChooser.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.rd.*
-import com.intellij.openapi.ui.*
-import com.intellij.openapi.util.text.*
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.ui.cloneDialog.*
-import com.intellij.openapi.vfs.*
-import com.intellij.openapi.wm.*
+import circlet.vcs.CircletHttpPasswordState
+import circlet.vcs.CircletKeysState
+import circlet.vcs.CircletSetGitHttpPasswordDialog
+import com.intellij.dvcs.DvcsRememberedInputs
+import com.intellij.dvcs.repo.ClonePathProvider
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.*
-import com.intellij.ui.components.*
-import com.intellij.ui.components.labels.*
-import com.intellij.ui.components.panels.*
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
-import com.intellij.util.containers.*
-import com.intellij.util.ui.*
-import com.intellij.util.ui.cloneDialog.*
-import git4idea.*
-import git4idea.checkout.*
-import git4idea.commands.*
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.cloneDialog.ListWithSearchComponent
+import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
+import git4idea.GitUtil
+import git4idea.checkout.GitCheckoutProvider
+import git4idea.commands.Git
 import libraries.coroutines.extra.*
-import runtime.*
-import runtime.reactive.*
-import java.awt.event.*
-import java.nio.file.*
-import java.util.concurrent.*
+import runtime.Ui
+import runtime.reactive.MutableProperty
+import runtime.reactive.SequentialLifetimes
+import runtime.reactive.mutableProperty
+import runtime.reactive.view
+import java.awt.event.AdjustmentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.nio.file.Paths
+import java.util.concurrent.CancellationException
 import javax.swing.*
-import javax.swing.event.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExtensionComponent() {
     // state
@@ -61,7 +74,7 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
     private lateinit var cloneView: CloneView
 
     init {
-        this.attachChild(Disposable { uiLifetime.terminate() })
+        Disposer.register(this, Disposable { uiLifetime.terminate() })
 
         circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
             if (workspace == null) {

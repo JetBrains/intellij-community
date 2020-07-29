@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ProjectOrderEnumerator extends OrderEnumeratorBase {
+class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
-  public ProjectOrderEnumerator(@NotNull Project project, @Nullable OrderRootsCache rootsCache) {
+  ProjectOrderEnumerator(@NotNull Project project, @Nullable OrderRootsCache rootsCache) {
     super(rootsCache);
     myProject = project;
   }

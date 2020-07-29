@@ -8,7 +8,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TObjectLongHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -16,7 +15,6 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
-import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.DataInputStream;
@@ -232,16 +230,6 @@ public class BuildFSState {
     }
 
     return delta.isMarkedRecompile(rd, file);
-  }
-
-  /**
-   * @deprecated use {@link #markDirty(CompileContext, CompilationRound, File, BuildRootDescriptor, StampsStorage, boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd,
-                           @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
-    return markDirty(context, round, file, rd, (StampsStorage<? extends StampsStorage.Stamp>)tsStorage, saveEventStamp);
   }
 
   /**

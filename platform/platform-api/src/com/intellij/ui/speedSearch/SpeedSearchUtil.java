@@ -108,6 +108,7 @@ public final class SpeedSearchUtil {
     }
 
     final Iterable<TextRange> iterable = ((MinusculeMatcher)matcher).matchingFragments(text);
+    component.setDynamicSearchMatchHighlighting(iterable != null);
     if (iterable != null) {
       final Color fg = attributes.getFgColor();
       final int style = attributes.getStyle();

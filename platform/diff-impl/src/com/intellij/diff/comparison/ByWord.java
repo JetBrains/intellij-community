@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
@@ -23,7 +23,7 @@ import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
-public class ByWord {
+public final class ByWord {
   @NotNull
   public static List<DiffFragment> compare(@NotNull CharSequence text1,
                                            @NotNull CharSequence text2,

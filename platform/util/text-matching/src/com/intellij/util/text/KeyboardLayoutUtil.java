@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author gregsh
  */
-public class KeyboardLayoutUtil {
+public final class KeyboardLayoutUtil {
 
   private static final Map<Character, Character> ourLLtoASCII = new ConcurrentHashMap<>();
 

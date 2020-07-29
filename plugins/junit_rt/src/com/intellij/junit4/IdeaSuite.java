@@ -34,16 +34,17 @@ import java.util.*;
 class IdeaSuite extends Suite {
   private final String myName;
 
-  IdeaSuite(List runners, String name) throws InitializationError {
+  IdeaSuite(List<Runner> runners, String name) throws InitializationError {
     super(null, runners);
     myName = name;
   }
 
-  IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
+  IdeaSuite(final RunnerBuilder builder, Class<?>[] classes, String name) throws InitializationError {
     super(builder, classes);
     myName = name;
   }
 
+  @Override
   public Description getDescription() {
     Description description = Description.createSuiteDescription(myName, getTestClass().getAnnotations());
     try {
@@ -60,6 +61,7 @@ class IdeaSuite extends Suite {
     return description;
   }
 
+  @Override
   protected Description describeChild(Runner child) {
     final Description superDescription = super.describeChild(child);
     if (child instanceof ClassAwareSuiteMethod) {
@@ -73,6 +75,7 @@ class IdeaSuite extends Suite {
     return superDescription;
   }
 
+  @Override
   protected List<Runner> getChildren() {
     final List<Runner> children = new ArrayList<Runner>(super.getChildren());
     boolean containsSuiteInside = false;

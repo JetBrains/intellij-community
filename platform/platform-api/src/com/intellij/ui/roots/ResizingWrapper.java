@@ -18,9 +18,6 @@ package com.intellij.ui.roots;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author cdr
- */
 public class ResizingWrapper extends JComponent {
   protected final JComponent myWrappedComponent;
   public ResizingWrapper(JComponent wrappedComponent) {

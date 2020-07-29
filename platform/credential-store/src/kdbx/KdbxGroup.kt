@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.credentialStore.LOG
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.getOrCreate
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.time.Instant
 import java.time.LocalDateTime
@@ -27,7 +26,7 @@ internal class KdbxGroup(internal val element: Element, private val database: Ke
       database.isDirty = true
     }
 
-  private val groups: MutableMap<String, KdbxGroup> = THashMap()
+  private val groups: MutableMap<String, KdbxGroup> = HashMap()
   private val entries: MutableList<KdbxEntry> by lazy {
     ContainerUtil.createLockFreeCopyOnWriteList(element.getChildren(KdbxDbElementNames.entry).map { KdbxEntry(it, database, this) })
   }

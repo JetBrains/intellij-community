@@ -50,9 +50,6 @@ import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Comparator.comparingInt;
 import static org.junit.Assert.*;
 
-/**
- * @author cdr
- */
 public class ExpectedHighlightingData {
   public static final String EXPECTED_DUPLICATION_MESSAGE =
     "Expected duplication problem. Please remove this wrapper, if there is no such problem any more";

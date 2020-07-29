@@ -170,7 +170,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   @Nullable
   public GrTypeArgumentList getTypeArgumentList() {
-    return (GrTypeArgumentList)findChildByType(GroovyElementTypes.TYPE_ARGUMENTS);
+    return findChildByType(GroovyElementTypes.TYPE_ARGUMENTS);
   }
 
   @Override

@@ -32,16 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
   private final Function<? super H, ? extends T> myFunction;
-  /**
-   * One of {@link PsiModificationTracker} constants that marks when to flush cache
-   */
-  @NotNull
-  private final Key<?> myModifyCause;
 
-  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function, @NotNull Key<?> modifyCause) {
+  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function) {
     super(name);
     myFunction = function;
-    myModifyCause = modifyCause;
   }
 
   public final T getValue(@NotNull H h) {
@@ -69,13 +63,12 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
 
 
   /**
-   * Gets modification count from tracker based on {@link #myModifyCause}
-   *
-   * @param element track to get modification count from
-   * @return modification count
-   * @throws AssertionError if {@link #myModifyCause} is junk
+   * Return a modification count changed every time anything is changed that {@code place} element might need.
+   * For physical PSI, this is equivalent to {@link PsiModificationTracker#getModificationCount()}.
+   * For non-physical PSI, modifications of other non-physical PSI that {@code place} can resolve into
+   * are included (to the best of platform's knowledge: e.g. the file which contains {@code place}).
    */
-  private long getModificationCount(@NotNull PsiElement element) {
+  private static long getModificationCount(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     long nonPhysicalStamp = file == null || file.isPhysical() ? 0 : file.getModificationStamp();
 
@@ -84,19 +77,8 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
       nonPhysicalStamp += branch.getBranchedPsiModificationCount();
     }
 
-    PsiModificationTracker tracker = file == null ? element.getManager().getModificationTracker()
-                                                  : file.getManager().getModificationTracker();
-
-    if (myModifyCause.equals(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)) {
-      return nonPhysicalStamp + tracker.getJavaStructureModificationCount();
-    }
-    if (myModifyCause.equals(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT)) {
-      return nonPhysicalStamp + tracker.getOutOfCodeBlockModificationCount();
-    }
-    if (myModifyCause.equals(PsiModificationTracker.MODIFICATION_COUNT)) {
-      return nonPhysicalStamp + tracker.getModificationCount();
-    }
-    throw new AssertionError("No modification tracker found for key " + myModifyCause);
+    PsiElement root = file != null ? file : element;
+    return nonPhysicalStamp + root.getManager().getModificationTracker().getModificationCount();
   }
 
   /**
@@ -104,28 +86,13 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    *
    * @param name        key name
    * @param function    function to reproduce new value when old value is stale
-   * @param modifyCause one one {@link PsiModificationTracker}'s constants that marks when to flush cache
-   * @param <T>         value type
-   * @param <H>         key type
+   * @param <T>         cached value type
+   * @param <H>         PSI element type that holds the user data with the cache
    * @return instance
    */
   public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name,
-                                                                   @NotNull Function<? super H, ? extends T> function,
-                                                                   @NotNull Key<?> modifyCause) {
-    return new PsiCacheKey<>(name, function, modifyCause);
+                                                                   @NotNull Function<? super H, ? extends T> function) {
+    return new PsiCacheKey<>(name, function);
   }
 
-  /**
-   * Creates cache key value using {@link PsiModificationTracker#JAVA_STRUCTURE_MODIFICATION_COUNT} as
-   * modification count to flush cache
-   *
-   * @param name     key name
-   * @param function function to reproduce new value when old value is stale
-   * @param <T>      value type
-   * @param <H>      key type
-   * @return instance
-   */
-  public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function) {
-    return create(name, function, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-  }
 }

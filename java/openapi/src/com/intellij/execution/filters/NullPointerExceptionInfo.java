@@ -17,7 +17,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class NullPointerExceptionInfo extends ExceptionInfo {
   // See JEP 358 Helpful NullPointerExceptions for details
-  private static final Pattern NPE_MESSAGE = Pattern.compile("Cannot (?:invoke \"(?<invoke>.+)\\(\\)\"|" +
+  private static final Pattern NPE_MESSAGE = Pattern.compile("Cannot (?:invoke \"(?<invoke>.+)\\(.*\\)\"|" +
                                                              "assign field \"(?<putfield>.+)\"|" +
                                                              "read field \"(?<getfield>.+)\"|" +
                                                              "store to (?<xastore>[a-z]+) array|" +

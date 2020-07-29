@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -67,7 +68,7 @@ import java.util.Map;
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
-  private JCheckBox preferKeyPositionOverCharOption;
+  private JCheckBox nationalKeyboardsSupport;
 
   private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);
   private final KeymapSchemeManager myManager = myKeymapSelector.getManager();
@@ -95,21 +96,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     keymapPanel.add(createKeymapSettingsPanel(), BorderLayout.CENTER);
 
     IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    if (ideFrame != null && KeyboardSettingsExternalizable.isSupportedKeyboardLayout(ideFrame.getComponent())) {
-      preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(KeyMapBundle.message("prefer.key.position")) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
-          VMOptions.writeOption(KeyboardSettingsExternalizable.VMOption, "=",
-                                Boolean.toString(!KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
-          ApplicationManager.getApplication().invokeLater(
-            () -> ApplicationManager.getApplication().restart(),
-            ModalityState.NON_MODAL
-          );
-        }
-      });
-      preferKeyPositionOverCharOption.setBorder(JBUI.Borders.empty());
-      keymapPanel.add(preferKeyPositionOverCharOption, BorderLayout.SOUTH);
+    if (ideFrame != null && NationalKeyboardSupport.isSupportedKeyboardLayout(ideFrame.getComponent())) {
+      nationalKeyboardsSupport = new JCheckBox(
+        new AbstractAction(KeyMapBundle.message(NationalKeyboardSupport.getKeymapBundleKey())) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            NationalKeyboardSupport.getInstance().setEnabled(nationalKeyboardsSupport.isSelected());
+            VMOptions.writeOption(NationalKeyboardSupport.getVMOption(), "=",
+                                  Boolean.toString(NationalKeyboardSupport.getInstance().getEnabled()));
+            ApplicationManager.getApplication().invokeLater(
+              () -> ApplicationManager.getApplication().restart(),
+              ModalityState.NON_MODAL
+            );
+          }
+        });
+      nationalKeyboardsSupport.setSelected(NationalKeyboardSupport.getInstance().getEnabled());
+      nationalKeyboardsSupport.setBorder(JBUI.Borders.empty());
+      keymapPanel.add(nationalKeyboardsSupport, BorderLayout.SOUTH);
     }
 
     add(keymapPanel, BorderLayout.CENTER);
@@ -433,29 +436,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return panel;
   }
 
-  @NotNull
-  public static TreeExpander createTreeExpander(ActionsTree actionsTree) {
-    return new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(actionsTree.getTree());
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(actionsTree.getTree(), 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+  public static @NotNull TreeExpander createTreeExpander(@NotNull ActionsTree actionsTree) {
+    return new DefaultTreeExpander(actionsTree::getTree);
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
@@ -575,8 +557,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void reset() {
-    if (preferKeyPositionOverCharOption != null) {
-      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption());
+    if (nationalKeyboardsSupport != null) {
+      nationalKeyboardsSupport.setSelected(NationalKeyboardSupport.getInstance().getEnabled());
     }
     myManager.reset();
   }

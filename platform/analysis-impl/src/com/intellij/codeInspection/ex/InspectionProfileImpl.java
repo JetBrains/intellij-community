@@ -458,7 +458,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     if (myBaseProfile != null) {
-      myBaseProfile.initInspectionTools(project);
+      myBaseProfile.initInspectionTools(myBaseProfile.isAppLevel() ? null : project);
     }
 
     List<InspectionToolWrapper<?, ?>> tools;
@@ -539,6 +539,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       // should be only after set myInitialized
       dataHolder.updateDigest(this);
     }
+  }
+
+  protected boolean isAppLevel() {
+    return false;
   }
 
   protected void copyToolsConfigurations(@Nullable Project project) {

@@ -214,9 +214,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return false;
     // optimization:
     myHardKeyInstance.set((K)key);
-    boolean result = myMap.containsKey(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.containsKey(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -229,9 +232,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return null;
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result = myMap.get(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.get(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -247,9 +253,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     // optimization:
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result = myMap.remove(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.remove(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -366,15 +375,20 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       V ev = e.getValue();
 
       // optimization: do not recreate the key
-      myHardKeyInstance.set(e.getKey());
-      Key<K> key = myHardKeyInstance;
+      HardKey key = myHardKeyInstance;
+      boolean toRemove;
+      try {
+        key.set(e.getKey());
 
-      V hv = myMap.get(key);
-      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
-      if (toRemove) {
-        myMap.remove(key);
+        V hv = myMap.get(key);
+        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        if (toRemove) {
+          myMap.remove(key);
+        }
       }
-      myHardKeyInstance.clear();
+      finally {
+        key.clear();
+      }
       return toRemove;
     }
 

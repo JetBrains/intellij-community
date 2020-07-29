@@ -112,7 +112,7 @@ public class ChangeBrowserSettings {
       createDateFilter(getDateAfterFilter(), false),
       createChangeFilter(getChangeBeforeFilter(), true),
       createChangeFilter(getChangeAfterFilter(), false),
-      USE_USER_FILTER ? (Filter)changeList -> Comparing.equal(changeList.getCommitterName(), USER, false) : null
+      USE_USER_FILTER ? changeList -> Comparing.equal(changeList.getCommitterName(), USER, false) : null
     );
   }
 

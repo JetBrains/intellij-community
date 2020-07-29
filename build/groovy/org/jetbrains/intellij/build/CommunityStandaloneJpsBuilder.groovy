@@ -26,6 +26,7 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.collections")
           module("intellij.platform.util.strings")
+          module("intellij.platform.util.diagnostic")
         }
 
         jar("jps-launcher.jar") {

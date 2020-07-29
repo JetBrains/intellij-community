@@ -226,6 +226,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testEscapes27() throws IOException { doCodeTest("[^\\]]"); }
   public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
   public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
+  public void testEscapes30() throws IOException { doCodeTest("\\[\\]$"); }
 
   public void testAnchors1() throws IOException { doCodeTest("^*"); }
   public void testAnchors2() throws IOException { doCodeTest("$*"); }

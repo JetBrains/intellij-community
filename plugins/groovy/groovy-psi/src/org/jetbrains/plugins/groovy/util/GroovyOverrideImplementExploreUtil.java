@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.*;
 
-public class GroovyOverrideImplementExploreUtil {
+public final class GroovyOverrideImplementExploreUtil {
 
   @NotNull
   public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {

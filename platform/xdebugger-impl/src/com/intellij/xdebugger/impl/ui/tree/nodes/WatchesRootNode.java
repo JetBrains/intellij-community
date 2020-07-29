@@ -14,6 +14,7 @@ import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,35 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
 
+  static class RootContainerNode extends XValueContainer implements PinToTopParentValue {
+    private final XStackFrame stackFrame;
+    private final boolean watchesInVariables;
+
+    public RootContainerNode(@Nullable XStackFrame stackFrame,
+                             boolean watchesInVariables) {
+      this.stackFrame = stackFrame;
+      this.watchesInVariables = watchesInVariables;
+    }
+
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      if (stackFrame != null && watchesInVariables) {
+        stackFrame.computeChildren(node);
+      }
+      else {
+        node.addChildren(XValueChildrenList.EMPTY, true);
+      }
+    }
+
+    @Nullable
+    @Override
+    public String getTag() {
+      if (stackFrame instanceof PinToTopParentValue)
+        return ((PinToTopParentValue) stackFrame).getTag();
+      return null;
+    }
+  }
+
   @SuppressWarnings("unused")
   // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
@@ -41,17 +71,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                          @NotNull List<? extends XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
-    super(tree, null, false, new XValueContainer() {
-      @Override
-      public void computeChildren(@NotNull XCompositeNode node) {
-        if (stackFrame != null && watchesInVariables) {
-          stackFrame.computeChildren(node);
-        }
-        else {
-          node.addChildren(XValueChildrenList.EMPTY, true);
-        }
-      }
-    });
+    super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables));
     myWatchesView = watchesView;
     myChildren = new ArrayList<>();
     for (XExpression watchExpression : expressions) {

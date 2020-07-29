@@ -60,7 +60,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
       InlayPresentation presentation = factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Attach debugger")),
                                                                 (event, point) -> {
                                                                   JavaAttachDebuggerProvider
-                                                                    .attach(myTransport, myAddress, editor.getProject());
+                                                                    .attach(myTransport, myAddress, null, editor.getProject());
                                                                 });
       return new PresentationRenderer(presentation);
     }

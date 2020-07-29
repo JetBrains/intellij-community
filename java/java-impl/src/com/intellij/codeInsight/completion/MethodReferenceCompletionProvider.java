@@ -81,11 +81,8 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
             }
           };
 
-          final Runnable runnable = ReferenceExpressionCompletionContributor
+          ReferenceExpressionCompletionContributor
             .fillCompletionVariants(new JavaSmartCompletionParameters(parameters, typeInfo), noTypeCheck);
-          if (runnable != null) {
-            runnable.run();
-          }
         }
       }
     }

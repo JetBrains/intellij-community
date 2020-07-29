@@ -9,10 +9,19 @@ import com.sun.jdi.Value;
 
 import java.nio.charset.StandardCharsets;
 
-final class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
-  ByteArrayAsStringRenderer() {
-    super("String", null, null);
-    setClassName("byte[]");
+final class ByteArrayAsStringRenderer extends CompoundRendererProvider {
+  @Override
+  protected String getName() {
+    return "String";
+  }
+
+  @Override
+  protected String getClassName() {
+    return "byte[]";
+  }
+
+  @Override
+  protected ValueLabelRenderer getValueLabelRenderer() {
     LabelRenderer labelRenderer = new LabelRenderer() {
       @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
@@ -31,6 +40,6 @@ final class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
       }
     };
     labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "new String(this)"));
-    setLabelRenderer(labelRenderer);
+    return labelRenderer;
   }
 }

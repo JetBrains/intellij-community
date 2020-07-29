@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public class BundleUtil {
+public final class BundleUtil {
   private final static Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
   private final static Logger LOG = Logger.getInstance(BundleUtil.class);
 

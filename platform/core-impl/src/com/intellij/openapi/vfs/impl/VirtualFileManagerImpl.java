@@ -198,8 +198,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @ApiStatus.Internal
-  public List<AsyncFileListener> getAsyncFileListeners() {
-    return Collections.unmodifiableList(myAsyncFileListeners);
+  public void addAsyncFileListenersTo(@NotNull List<? super AsyncFileListener> listeners) {
+    listeners.addAll(myAsyncFileListeners);
   }
 
   @Override

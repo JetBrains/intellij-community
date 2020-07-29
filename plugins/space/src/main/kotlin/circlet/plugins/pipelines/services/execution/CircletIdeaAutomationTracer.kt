@@ -1,8 +1,12 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.common.api.*
-import circlet.pipelines.engine.api.utils.*
-import com.intellij.execution.process.*
+import circlet.pipelines.common.api.CommitHash
+import circlet.pipelines.common.api.GraphExecId
+import circlet.pipelines.common.api.StepExecId
+import circlet.pipelines.common.api.TraceLevel
+import circlet.pipelines.engine.api.utils.AutomationTracer
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessOutputTypes
 
 class CircletIdeaAutomationTracer(private val processHandler: TaskProcessHandler) : AutomationTracer {
 
@@ -10,11 +14,11 @@ class CircletIdeaAutomationTracer(private val processHandler: TaskProcessHandler
         processHandler.message("Commit $commit [$level]: $message", level)
     }
 
-    override fun traceStep(executionId: Long, message: String, level: TraceLevel) {
+    override fun traceStep(executionId: StepExecId, message: String, level: TraceLevel) {
         processHandler.message("Step execution $executionId [$level]: $message", level)
     }
 
-    override fun traceGraph(executionId: Long, message: String, level: TraceLevel) {
+    override fun traceGraph(executionId: GraphExecId, message: String, level: TraceLevel) {
         processHandler.message("Graph execution $executionId [$level]: $message", level)
     }
 

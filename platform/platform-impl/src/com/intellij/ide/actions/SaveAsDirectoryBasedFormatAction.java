@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +53,9 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
       store.clearStorages();
       store.setPath(baseDir);
       // closeAndDispose will also force save project
-      ProjectManagerEx.getInstanceEx().closeAndDispose(project);
-      PlatformProjectOpenProcessor.openExistingProject(ideaDir.getParent());
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+      projectManager.closeAndDispose(project);
+      projectManager.openProject(ideaDir.getParent(), new OpenProjectTask());
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s): " + e.getMessage(), ideaDir),

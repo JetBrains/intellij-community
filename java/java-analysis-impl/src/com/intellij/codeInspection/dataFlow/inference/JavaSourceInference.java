@@ -116,9 +116,14 @@ public class JavaSourceInference {
     if (type == null || ClassUtils.isImmutable(type, false)) return Mutability.UNKNOWN;
     MethodReturnInferenceResult result = data.getMethodReturn();
     if (result == null) return Mutability.UNKNOWN;
-    Mutability mutability = RecursionManager.doPreventingRecursion(
-      method, true, () -> result.getMutability(method, data.methodBody(method)));
-    return mutability == null ? Mutability.UNKNOWN : mutability;
+    try {
+      Mutability mutability = RecursionManager.doPreventingRecursion(
+        method, true, () -> result.getMutability(method, data.methodBody(method)));
+      return mutability == null ? Mutability.UNKNOWN : mutability;
+    }
+    catch (ClassCastException e) {
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
+    }
   }
   
   private static @NotNull MutationSignature findMutationSignature(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
@@ -141,8 +146,14 @@ public class JavaSourceInference {
       return JavaMethodContractUtil.parseContracts(method, explicitContract);
     }
     List<PreContract> preContracts = data.getContracts();
-    List<StandardMethodContract> contracts = RecursionManager.doPreventingRecursion(
-      method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
+    List<StandardMethodContract> contracts;
+    try {
+      contracts = RecursionManager.doPreventingRecursion(
+        method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
+    }
+    catch (ClassCastException e) {
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
+    }
     if (contracts == null || contracts.isEmpty()) return Collections.emptyList();
     if (contracts.size() == 2) {
       StandardMethodContract collapsed = contracts.get(0).tryCollapse(contracts.get(1));

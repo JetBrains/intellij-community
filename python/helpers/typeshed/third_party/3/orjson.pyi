@@ -12,7 +12,9 @@ def loads(__obj: Union[bytes, bytearray, str]) -> Any: ...
 class JSONDecodeError(ValueError): ...
 class JSONEncodeError(TypeError): ...
 
+OPT_INDENT_2: int
 OPT_NAIVE_UTC: int
+OPT_NON_STR_KEYS: int
 OPT_OMIT_MICROSECONDS: int
 OPT_SERIALIZE_DATACLASS: int
 OPT_SERIALIZE_NUMPY: int

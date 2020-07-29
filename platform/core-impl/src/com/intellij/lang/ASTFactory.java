@@ -91,7 +91,7 @@ public abstract class ASTFactory {
     return w;
   }
 
-  public static class DefaultFactoryHolder {
+  public static final class DefaultFactoryHolder {
     public static final DefaultASTFactoryImpl DEFAULT = new DefaultASTFactoryImpl();
 
     private DefaultFactoryHolder() {

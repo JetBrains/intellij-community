@@ -37,9 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author cdr
- */
 public class PropertiesAnnotator implements Annotator {
 
   @Override

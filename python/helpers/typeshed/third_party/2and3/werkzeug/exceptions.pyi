@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict, Tuple, List, Text, NoReturn, Optional, Protocol, Type, Union, Iterable
 
 from wsgiref.types import WSGIEnvironment, StartResponse
@@ -124,7 +125,16 @@ class PreconditionRequired(HTTPException):
     code: int
     description: Text
 
-class TooManyRequests(HTTPException):
+class _RetryAfter(HTTPException):
+    retry_after: Union[None, int, datetime.datetime]
+    def __init__(
+        self,
+        description: Optional[Text] = ...,
+        response: Optional[Response] = ...,
+        retry_after: Union[None, int, datetime.datetime] = ...,
+    ) -> None: ...
+
+class TooManyRequests(_RetryAfter):
     code: int
     description: Text
 
@@ -148,7 +158,7 @@ class BadGateway(HTTPException):
     code: int
     description: Text
 
-class ServiceUnavailable(HTTPException):
+class ServiceUnavailable(_RetryAfter):
     code: int
     description: Text
 

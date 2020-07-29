@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author cdr
- */
 public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   private final DocumentFragment myDocumentFragment;
 

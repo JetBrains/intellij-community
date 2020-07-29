@@ -80,8 +80,8 @@ public final class CommandLineWaitingManager {
     return result;
   }
 
-  public boolean hasHookFor(@NotNull Object fileOrProject) {
-    return myFileOrProjectToCallback.containsKey(fileOrProject);
+  public boolean hasHookFor(@NotNull VirtualFile file) {
+    return myFileOrProjectToCallback.containsKey(file);
   }
 
   private void freeObject(@NotNull Object fileOrProject) {

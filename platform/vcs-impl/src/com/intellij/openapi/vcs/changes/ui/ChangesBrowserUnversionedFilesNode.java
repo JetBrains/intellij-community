@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilePathsNode {
+public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilePathsNode<Object> {
 
   public ChangesBrowserUnversionedFilesNode(@NotNull Project project,
                                             @NotNull List<FilePath> files) {

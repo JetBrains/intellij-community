@@ -20,43 +20,49 @@ public class JUnitForkedSplitter extends ForkedSplitter {
   }
 
 
+  @Override
   protected String getStarterName() {
     return JUnitForkedStarter.class.getName();
   }
 
+  @Override
   protected Object createRootDescription(String[] args, String configName)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass((String)myNewArgs.get(0)).newInstance();
+    myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(myNewArgs.get(0)).newInstance();
     return myTestRunner.getTestToStart(args, configName);
   }
 
+  @Override
   protected String getTestClassName(Object child) {
     return myTestRunner.getTestClassName(child);
   }
 
-  protected List createChildArgs(Object child) {
-    List newArgs = new ArrayList();
+  @Override
+  protected List<String> createChildArgs(Object child) {
+    List<String> newArgs = new ArrayList<String>();
     newArgs.add(myTestRunner.getStartDescription(child));
     newArgs.addAll(myNewArgs);
     return newArgs;
   }
-  
-  protected List createPerModuleArgs(String packageName,
-                                     String workingDir,
-                                     List classNames,
-                                     Object rootDescription, 
-                                     String filters) throws IOException {
+
+  @Override
+  protected List<String> createPerModuleArgs(String packageName,
+                                             String workingDir,
+                                             List<String> classNames,
+                                             Object rootDescription,
+                                             String filters) throws IOException {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
     JUnitStarter.printClassesList(classNames, packageName, "", filters, tempFile);
-    final List childArgs = new ArrayList();
+    final List<String> childArgs = new ArrayList<String>();
     childArgs.add("@" + tempFile.getAbsolutePath());
     childArgs.addAll(myNewArgs);
     return childArgs;
   }
 
 
-  protected List getChildren(Object child) {
+  @Override
+  protected List<?> getChildren(Object child) {
     return myTestRunner.getChildTests(child);
   }
 }

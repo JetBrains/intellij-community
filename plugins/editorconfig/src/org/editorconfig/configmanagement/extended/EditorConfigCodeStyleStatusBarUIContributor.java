@@ -1,14 +1,20 @@
 package org.editorconfig.configmanagement.extended;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.editorconfig.configmanagement.EditorConfigActionUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarUIContributor {
 
@@ -43,12 +49,23 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   @NotNull
   @Override
   public String getStatusText(@NotNull PsiFile psiFile) {
-    return EditorConfigBundle.message("config.title");
+    IndentOptions fileOptions = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile);
+    String indentInfo = IndentStatusBarUIContributor.getIndentInfo(fileOptions);
+    IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
+    if (projectOptions.INDENT_SIZE != fileOptions.INDENT_SIZE || projectOptions.USE_TAB_CHARACTER != fileOptions.USE_TAB_CHARACTER) {
+      indentInfo += "*";
+    }
+    return indentInfo;
   }
 
   @Nullable
   @Override
   public AnAction createShowAllAction(@NotNull Project project) {
     return EditorConfigActionUtil.createShowEditorConfigFilesAction();
+  }
+
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Ide.ConfigFile;
   }
 }

@@ -294,7 +294,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @NotNull
-  public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
+  public Result doFix(@NotNull Editor editor, boolean allowPopup, boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<PsiClass> classesToImport = getClassesToImport();
     //do not show popups for already imported classes when library is missing (show them for explicit action)

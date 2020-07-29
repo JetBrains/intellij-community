@@ -27,7 +27,7 @@ import java.util.Objects;
  * The available method Throwable.getStackTrace() unfortunately can't be used for that because it's
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
-public class ThrowableInterner {
+public final class ThrowableInterner {
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
@@ -132,5 +132,12 @@ public class ThrowableInterner {
   @NotNull
   public static Throwable intern(@NotNull Throwable throwable) {
     return getBacktrace(throwable) == null ? throwable : myTraceInterner.intern(throwable);
+  }
+
+  public static void clearInternedBacktraces() {
+    for (Throwable t : myTraceInterner.getValues()) {
+      clearBacktrace(t);
+    }
+    myTraceInterner.clear();
   }
 }

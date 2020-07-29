@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
+  private final int myMoveOffset;
   private final Object myOldString;
   private final Object myNewString;
   private final long myOldTimeStamp;
@@ -19,16 +20,18 @@ final class EditorChangeAction extends BasicUndoableAction {
   private final int myNewLength;
 
   EditorChangeAction(@NotNull DocumentEvent e) {
-    this((DocumentImpl)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
+    this((DocumentImpl)e.getDocument(), e.getOffset(), e.getMoveOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
   }
 
   private EditorChangeAction(@NotNull DocumentImpl document,
                              int offset,
+                             int moveOffset,
                              @NotNull CharSequence oldString,
                              @NotNull CharSequence newString,
                              long oldTimeStamp) {
     super(document);
     myOffset = offset;
+    myMoveOffset = moveOffset;
     myOldString = CompressionUtil.compressStringRawBytes(oldString);
     myNewString = CompressionUtil.compressStringRawBytes(newString);
     myOldTimeStamp = oldTimeStamp;
@@ -57,7 +60,7 @@ final class EditorChangeAction extends BasicUndoableAction {
     try {
       CharSequence toString = CompressionUtil.uncompressStringRawBytes(to);
       int fromStringLength = toString.length() - toLength + fromLength;
-      document.replaceString(myOffset, myOffset + fromStringLength, toString, toTimeStamp, false);
+      document.replaceString(myOffset, myOffset + fromStringLength, myMoveOffset, toString, toTimeStamp, false);
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(document);

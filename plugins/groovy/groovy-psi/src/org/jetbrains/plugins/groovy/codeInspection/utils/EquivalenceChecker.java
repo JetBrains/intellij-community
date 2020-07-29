@@ -48,7 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
     "SwitchStatement",
     "OverlyComplexClass",
     "ClassWithTooManyMethods"})
-public class EquivalenceChecker {
+public final class EquivalenceChecker {
 
   private EquivalenceChecker() {
     super();

@@ -12,7 +12,7 @@ import java.util.Map;
 public class TestNGForkedSplitter extends ForkedByModuleSplitter {
 
 
-  public TestNGForkedSplitter(String workingDirsPath, List newArgs) {
+  public TestNGForkedSplitter(String workingDirsPath, List<String> newArgs) {
     super(workingDirsPath, "none", newArgs);
   }
 
@@ -29,11 +29,11 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
 
   @Override
   protected int startPerModuleFork(String moduleName,
-                                   List classNames,
+                                   List<String> classNames,
                                    String packageName,
                                    String workingDir,
                                    String classpath,
-                                   List moduleOptions,
+                                   List<String> moduleOptions,
                                    String repeatCount, int result, final String filters) throws Exception {
     final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<String, Map<String, List<String>>>();
     for (Object className : classNames) {
@@ -42,7 +42,7 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
 
     String rootPath = null;
     if (!myNewArgs.isEmpty()) {
-      rootPath = new File((String)myNewArgs.get(0)).getParent();
+      rootPath = new File(myNewArgs.get(0)).getParent();
     }
 
     final File file =

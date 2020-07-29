@@ -74,7 +74,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
-    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index]:null);
+    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? objectsToView[index] : null);
   }
 
   @Override

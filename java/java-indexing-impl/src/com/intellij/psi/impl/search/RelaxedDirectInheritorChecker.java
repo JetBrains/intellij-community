@@ -47,7 +47,7 @@ public class RelaxedDirectInheritorChecker {
   private static @NotNull Pair<PsiClass[], Boolean> getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
     Map<String, Reference<Pair<PsiClass[],Boolean>>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<String, Reference<Pair<PsiClass[], Boolean>>> map = new ConcurrentHashMap<>();
-      return CachedValueProvider.Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
     });
     Pair<PsiClass[], Boolean> result = SoftReference.dereference(cache.get(classShortName));
     if (result == null) {

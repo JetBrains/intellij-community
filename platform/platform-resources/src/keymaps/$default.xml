@@ -133,6 +133,9 @@
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
   </action>
+  <action id="EditorAddCaretPerSelectedLine">
+    <keyboard-shortcut first-keystroke="shift alt G"/>
+  </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>

@@ -22,6 +22,8 @@ fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
   }
   else {
-    PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, null, callbackData.pluginDescriptor)
+    if (!PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, null, callbackData.pluginDescriptor)) {
+      PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
+    }
   }
 }

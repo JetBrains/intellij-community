@@ -19,14 +19,16 @@ _ExcInfo = Tuple[Type[BaseException], BaseException, TracebackType]
 _OptExcInfo = Union[_ExcInfo, Tuple[None, None, None]]
 
 # ----- sys variables -----
-abiflags: str
+if sys.platform != "win32":
+    abiflags: str
 argv: List[str]
 base_exec_prefix: str
 base_prefix: str
 byteorder: str
 builtin_module_names: Sequence[str]  # actually a tuple of strings
 copyright: str
-# dllhandle = 0  # Windows only
+if sys.platform == "win32":
+    dllhandle: int
 dont_write_bytecode: bool
 displayhook: Callable[[object], Any]
 excepthook: Callable[[Type[BaseException], BaseException, TracebackType], Any]
@@ -45,6 +47,8 @@ path: List[str]
 path_hooks: List[Any]  # TODO precise type; function, path to finder
 path_importer_cache: Dict[str, Any]  # TODO precise type
 platform: str
+if sys.version_info >= (3, 9):
+    platlibdir: str
 prefix: str
 if sys.version_info >= (3, 8):
     pycache_prefix: Optional[str]
@@ -62,7 +66,8 @@ api_version: int
 warnoptions: Any
 #  Each entry is a tuple of the form (action, message, category, module,
 #    lineno)
-# winver = ''  # Windows only
+if sys.platform == "win32":
+    winver: str
 _xoptions: Dict[Any, Any]
 
 
@@ -137,10 +142,8 @@ def __excepthook__(type_: Type[BaseException], value: BaseException,
 def exc_info() -> _OptExcInfo: ...
 # sys.exit() accepts an optional argument of anything printable
 def exit(__status: object = ...) -> NoReturn: ...
-def getcheckinterval() -> int: ...  # deprecated
 def getdefaultencoding() -> str: ...
 if sys.platform != 'win32':
-    # Unix only
     def getdlopenflags() -> int: ...
 def getfilesystemencoding() -> str: ...
 def getrefcount(__object: Any) -> int: ...
@@ -178,8 +181,8 @@ class _WinVersion(Tuple[int, int, int, int,
     product_type: int
     platform_version: Tuple[int, int, int]
 
-
-def getwindowsversion() -> _WinVersion: ...  # Windows only
+if sys.platform == "win32":
+    def getwindowsversion() -> _WinVersion: ...
 
 def intern(__string: str) -> str: ...
 
@@ -189,12 +192,16 @@ if sys.version_info >= (3, 7):
     __breakpointhook__: Any  # contains the original value of breakpointhook
     def breakpointhook(*args: Any, **kwargs: Any) -> Any: ...
 
-def setcheckinterval(__n: int) -> None: ...  # deprecated
-def setdlopenflags(__flags: int) -> None: ...  # Linux only
+if sys.platform != "win32":
+    def setdlopenflags(__flags: int) -> None: ...
 def setrecursionlimit(__limit: int) -> None: ...
 def setswitchinterval(__interval: float) -> None: ...
 
 def gettotalrefcount() -> int: ...  # Debug builds only
+
+if sys.version_info < (3, 9):
+    def getcheckinterval() -> int: ...  # deprecated
+    def setcheckinterval(__n: int) -> None: ...  # deprecated
 
 if sys.version_info >= (3, 8):
     # not exported by sys

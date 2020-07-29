@@ -96,7 +96,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
                                                   FormInspectionUtil.getText(module, oldComponent),
                                                   FormInspectionUtil.getText(module, component)),
-                         (EditorQuickFixProvider)(editor, component1) -> new AssignMnemonicFix(editor, component1,
+                         (editor, component1) -> new AssignMnemonicFix(editor, component1,
                                                                                                UIDesignerBundle.message("inspection.duplicate.mnemonics.quickfix")));
     }
     else {
@@ -140,7 +140,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     }
 
     public int hashCode() {
-      int result = (int)myMnemonicChar;
+      int result = myMnemonicChar;
       result = 31 * result + myExclusiveContainerStack.hashCode();
       return result;
     }

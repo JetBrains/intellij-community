@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing.worktree
 
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.workspace.ide.ExternalEntitySource
+import com.intellij.workspaceModel.ide.ExternalEntitySource
 
 object MavenExternalSource {
   @JvmStatic

@@ -4,12 +4,7 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.DfaCondition;
-import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -27,7 +22,6 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +34,6 @@ public final class GuessManagerImpl extends GuessManager {
     initMethodPatterns();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
@@ -119,37 +112,78 @@ public final class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace, boolean honorAssignments) {
-    MultiMap<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace, false, honorAssignments);
-    return typeMap != null ? typeMap : MultiMap.empty();
-  }
-
-  @Nullable
-  private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace, boolean onlyForPlace, boolean honorAssignments) {
-    PsiType type = forPlace.getType();
     PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
       if (!(file instanceof PsiCodeFragment)) {
         return MultiMap.empty();
       }
-
       scope = file;
     }
 
-    DataFlowRunner runner = new DataFlowRunner(scope.getProject()) {
-      @NotNull
-      @Override
-      protected DfaMemoryState createMemoryState() {
-        return new ExpressionTypeMemoryState(getFactory(), honorAssignments);
-      }
-    };
+    DataFlowRunner runner = createRunner(honorAssignments, scope);
 
-    TypeConstraint initial = type == null ? null : TypeConstraints.instanceOf(type);
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
     }
+    return MultiMap.empty();
+  }
+
+  @Nullable
+  private static PsiType getTypeFromDataflow(PsiExpression forPlace, boolean honorAssignments) {
+    PsiType type = forPlace.getType();
+    TypeConstraint initial = type == null ? TypeConstraints.TOP : TypeConstraints.instanceOf(type);
+    PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
+    if (scope == null) {
+      PsiFile file = forPlace.getContainingFile();
+      if (!(file instanceof PsiCodeFragment)) {
+        return null;
+      }
+      scope = file;
+    }
+
+    DataFlowRunner runner = createRunner(honorAssignments, scope);
+
+    class Visitor extends CastTrackingVisitor {
+      TypeConstraint constraint = TypeConstraints.BOTTOM;
+
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        if (expression == forPlace && range == null) {
+          if (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) {
+            value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
+          }
+          constraint = constraint.join(TypeConstraint.fromDfType(state.getDfType(value)));
+        }
+        super.beforeExpressionPush(value, expression, range, state);
+      }
+
+      @Override
+      boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
+        return (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) &&
+               ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression, forPlace);
+      }
+    }
+    final Visitor visitor = new Visitor();
+    if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
+      return visitor.constraint.meet(initial).getPsiType(scope.getProject());
+    }
     return null;
+  }
+
+  @NotNull
+  private static DataFlowRunner createRunner(boolean honorAssignments, PsiElement scope) {
+    return honorAssignments ? new DataFlowRunner(scope.getProject()) : new DataFlowRunner(scope.getProject()) {
+      @NotNull
+      @Override
+      protected DfaMemoryState createMemoryState() {
+        return new AssignmentFilteringMemoryState(getFactory());
+      }
+    };
   }
 
   private static PsiElement getTopmostBlock(PsiElement scope) {
@@ -335,8 +369,16 @@ public final class GuessManagerImpl extends GuessManager {
       }
     }
     if (result == null) {
-      MultiMap<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr, true, honorAssignments);
-      result = flattenConjuncts(expr, fromDfa != null ? fromDfa.get(expr) : Collections.emptyList());
+      PsiType psiType = getTypeFromDataflow(expr, honorAssignments);
+      if (psiType instanceof PsiIntersectionType) {
+        result = ContainerUtil.mapNotNull(((PsiIntersectionType)psiType).getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));
+      }
+      else if (psiType != null) {
+        result = Collections.singletonList(DfaPsiUtil.tryGenerify(expr, psiType));
+      }
+      else {
+        result = Collections.emptyList();
+      }
     }
     result = ContainerUtil.filter(result, t -> {
       PsiClass typeClass = PsiUtil.resolveClassInType(t);
@@ -367,15 +409,6 @@ public final class GuessManagerImpl extends GuessManager {
       List<PsiElement> list = SyntaxTraverser.psiTraverser(topmostBlock).filter(e -> e instanceof PsiExpression || e instanceof PsiLocalVariable).toList();
       return new CachedValueProvider.Result<>(list, topmostBlock);
     });
-  }
-
-  @NotNull
-  private static List<PsiType> flattenConjuncts(@NotNull PsiExpression expr, Collection<PsiType> conjuncts) {
-    if (!conjuncts.isEmpty()) {
-      Set<PsiType> flatTypes = PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>());
-      return ContainerUtil.mapNotNull(flatTypes, type -> DfaPsiUtil.tryGenerify(expr, type));
-    }
-    return Collections.emptyList();
   }
 
   private static class GuessTypeVisitor extends JavaElementVisitor {
@@ -410,7 +443,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
+      if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
         handleAssignment(expression.getRExpression());
       }
       super.visitAssignmentExpression(expression);
@@ -428,7 +461,7 @@ public final class GuessManagerImpl extends GuessManager {
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       PsiExpression operand = expression.getOperand();
-      if (operand != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
+      if (operand != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
       }
       super.visitTypeCastExpression(expression);
@@ -438,7 +471,7 @@ public final class GuessManagerImpl extends GuessManager {
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       if (OBJECT_GET_CLASS.test(call)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
-        if (qualifier != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
+        if (qualifier != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
           myNeedDfa = true;
         }
       }
@@ -447,7 +480,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     @Override
     public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
-      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+      if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
       }
       super.visitInstanceOfExpression(expression);
@@ -461,127 +494,74 @@ public final class GuessManagerImpl extends GuessManager {
       return !mySpecificType.equals(rawType);
     }
   }
-  private static final class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
-    private final TypeConstraint myInitial;
-    private MultiMap<PsiExpression, PsiType> myResult;
-    private final PsiElement myForPlace;
-    private TypeConstraint myConstraint = null;
-    private final boolean myOnlyForPlace;
 
-    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace,
-                                             boolean onlyForPlace,
-                                             TypeConstraint initial) {
-      myOnlyForPlace = onlyForPlace;
-      myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
-      myInitial = initial;
-    }
-
-    MultiMap<PsiExpression, PsiType> getResult() {
-      if (myConstraint != null && myForPlace instanceof PsiExpression) {
-        PsiType type = myConstraint.getPsiType(myForPlace.getProject());
-        if (type instanceof PsiIntersectionType) {
-          myResult.putValues((PsiExpression)myForPlace, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
-        }
-        else if (type != null) {
-          myResult.putValue((PsiExpression)myForPlace, type);
-        }
-      }
-      return myResult;
-    }
-
-    @Contract("null -> false")
-    private boolean isInteresting(PsiExpression expression) {
-      if (expression == null) return false;
-      return !myOnlyForPlace ||
-             (myForPlace instanceof PsiExpression &&
-              ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals((PsiExpression)myForPlace, expression));
-    }
-
-    @Override
-    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression psiOperand = instruction.getLeft();
-      if (!isInteresting(psiOperand) || instruction.isClassObjectCheck()) {
-        return super.visitInstanceof(instruction, runner, memState);
-      }
-      DfaValue type = memState.pop();
-      DfaValue operand = memState.pop();
-      DfaCondition relation = operand.cond(RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation));
-      return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
-    }
-
+  abstract static class CastTrackingVisitor extends StandardInstructionVisitor {
     @Override
     public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression psiOperand = instruction.getCasted();
-      if (isInteresting(psiOperand)) {
-        ((ExpressionTypeMemoryState)memState).setExpressionType(psiOperand, instruction.getCastTo());
-      }
+      DfaValue value = memState.pop();
+      memState.push(adjustValue(runner, value, instruction.getCasted()));
       return super.visitTypeCast(instruction, runner, memState);
     }
 
     @Override
-    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression left = instruction.getLExpression();
-      PsiExpression right = instruction.getRExpression();
-      if (left != null && right != null) {
-        ((ExpressionTypeMemoryState)memState).removeExpressionType(left);
-      }
-      return super.visitAssign(instruction, runner, memState);
+    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+      DfaValue dfaRight = memState.pop();
+      DfaValue dfaLeft = memState.pop();
+      memState.push(adjustValue(runner, dfaLeft, instruction.getLeft()));
+      memState.push(dfaRight);
+      return super.visitInstanceof(instruction, runner, memState);
     }
 
-    @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myForPlace == instruction.getCallExpression()) {
-        addToResult(((ExpressionTypeMemoryState)memState).getStates());
+    private DfaValue adjustValue(DataFlowRunner runner, DfaValue value, @Nullable PsiExpression expression) {
+      if (expression != null && isInteresting(value, expression)) {
+        value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
       }
-      DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-      if (myForPlace == instruction.getCallExpression()) {
-        addConstraints(states);
-      }
-      return states;
+      return value;
     }
 
-    @Override
-    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
-                                           DataFlowRunner runner,
-                                           DfaMemoryState memState,
-                                           DfaValue value) {
-      if (myForPlace == instruction.getExpression()) {
-        addToResult(((ExpressionTypeMemoryState)memState).getStates());
-      }
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState, value);
-      if (myForPlace == instruction.getExpression()) {
-        addConstraints(states);
-      }
-      return states;
+    boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
+      return true;
+    }
+  }
+
+  private static final class ExpressionTypeInstructionVisitor extends CastTrackingVisitor {
+    private final Map<DfaVariableValue, TypeConstraint> myResult = new HashMap<>();
+    private final PsiElement myForPlace;
+
+    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
+      myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
     }
 
-    private void addConstraints(DfaInstructionState[] states) {
-      for (DfaInstructionState state : states) {
-        DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraints.TOP) return;
-        DfType type = memoryState.getDfType(memoryState.peek());
-        TypeConstraint constraint = type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : myInitial;
-        if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.join(constraint);
-        }
-      }
-    }
-
-    private void addToResult(MultiMap<PsiExpression, PsiType> map) {
-      if (myResult == null) {
-        myResult = MultiMap.createSet(new Object2ObjectOpenCustomHashMap<>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY));
-        myResult.putAllValues(map);
-      }
-      else {
-        final Iterator<PsiExpression> iterator = myResult.keySet().iterator();
-        while (iterator.hasNext()) {
-          PsiExpression psiExpression = iterator.next();
-          if (!myResult.get(psiExpression).equals(map.get(psiExpression))) {
-            iterator.remove();
+    MultiMap<PsiExpression, PsiType> getResult() {
+      MultiMap<PsiExpression, PsiType> result = MultiMap.createSet(
+        new Object2ObjectOpenCustomHashMap<>(ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY));
+      Project project = myForPlace.getProject();
+      myResult.forEach((value, constraint) -> {
+        if (value.getDescriptor() instanceof ExpressionVariableDescriptor) {
+          PsiExpression expression = ((ExpressionVariableDescriptor)value.getDescriptor()).getExpression();
+          PsiType type = constraint.getPsiType(project);
+          if (type instanceof PsiIntersectionType) {
+            result.putValues(expression, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
+          }
+          else if (type != null) {
+            result.putValue(expression, type);
           }
         }
+      });
+      return result;
+    }
+
+    @Override
+    protected void beforeExpressionPush(@NotNull DfaValue value,
+                                        @NotNull PsiExpression expression,
+                                        @Nullable TextRange range,
+                                        @NotNull DfaMemoryState state) {
+      if (range == null && myForPlace == expression) {
+        ((DfaMemoryStateImpl)state).forRecordedVariableTypes((var, dfType) -> {
+          myResult.merge(var, TypeConstraint.fromDfType(dfType), TypeConstraint::join);
+        });
       }
+      super.beforeExpressionPush(value, expression, range, state);
     }
   }
 }

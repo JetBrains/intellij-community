@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ChangeUtil {
+public final class ChangeUtil {
 
   private static final Logger LOG = Logger.getInstance(ChangeUtil.class);
 
