@@ -8,6 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade.Companion.createFromTopConcatenation
+import org.junit.Assert
+import java.util.*
 
 private const val i18nizedExpr = "i18nizedExpr"
 
@@ -106,4 +110,22 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
       }
     }
   """.trimIndent(), i18nized = """p.MyBundle().message("key")""")
+
+  fun testConcatenationWithIfExpr() {
+    myFixture.configureByText("Test.kt", """
+      class MyTest {
+        fun f(prefix : Boolean){
+          val s = "Not a valid java identifier<caret> part in " + (if (prefix) "prefix" else "suffix"))
+        }
+      }
+    """.trimIndent())
+    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
+    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    assertNotNull(concatenation)
+    val args = ArrayList<UExpression?>()
+    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}",
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+    assertSize(1, args)
+    assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
+  }
 }
