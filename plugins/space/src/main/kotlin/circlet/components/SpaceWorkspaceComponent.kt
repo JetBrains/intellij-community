@@ -53,13 +53,6 @@ internal val space: SpaceWorkspaceComponent
  */
 @Service
 internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
-  private val log: KLogger = logger<SpaceWorkspaceComponent>()
-
-  private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
-    FeatureFlagsVmPersistenceKey,
-    PersistenceKey.Arena
-  )
-
   private val workspacesLifetimes = SequentialLifetimes(lifetime)
 
   private val manager = mutableProperty<WorkspaceManager?>(null)
@@ -72,12 +65,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
   init {
     initApp()
-    val settingsOnStartup = settings.serverSettings
     val wsLifetime = workspacesLifetimes.next()
 
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
-      if (!autoSignIn(settingsOnStartup, wsLifetime)) {
+      if (!autoSignIn(wsLifetime)) {
         SpaceAuthNotifier.notifyDisconnected()
       }
     }
@@ -101,36 +93,34 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   }
 
   suspend fun signIn(lifetime: Lifetime, server: String): OAuthTokenResponse {
-    log.assert(manager.value == null, "manager.value == null")
+    LOG.assert(manager.value == null, "manager.value == null")
 
     val lt = workspacesLifetimes.next()
-    val wsConfig = ideaConfig(server)
-    val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration,
-                               wsConfig)
+    val newManager = createWorkspaceManager(lt, server)
 
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
     val (port, redirectUrl) = startRedirectHandling(lifetime, ports)
-                              ?: return OAuthTokenResponse.Error(wsConfig.server, "", "The ports required for authorization are busy")
+                              ?: return OAuthTokenResponse.Error(server, "", "The ports required for authorization are busy")
 
     val authUrl = portsMapping.getValue(port)
-    val codeFlow = CodeFlowConfig(wsConfig, authUrl.toExternalForm())
+    val codeFlow = CodeFlowConfig(newManager.wsConfig, authUrl.toExternalForm())
     val uri = URI(codeFlow.codeFlowURL())
     try {
       BrowserLauncher.instance.browse(uri)
     }
     catch (th: Throwable) {
-      return OAuthTokenResponse.Error(wsConfig.server, "", "Can't open '${wsConfig.server}' in system browser.")
+      return OAuthTokenResponse.Error(server, "", "Can't open '$server' in system browser.")
     }
 
     val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
       codeFlow.handleCodeFlowRedirect(redirectUrl.await())
     }
     if (response is OAuthTokenResponse.Success) {
-      log.info { "A personal token was received" }
-      wss.signInWithToken(response.toTokenInfo())
+      LOG.info { "A personal token was received" }
+      newManager.signInWithToken(response.toTokenInfo())
       settings.serverSettings = CircletServerSettings(true, server)
-      manager.value = wss
+      manager.value = newManager
       SpaceAuthNotifier.notifyConnected()
     }
     return response
@@ -144,25 +134,30 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     settings.serverSettings = settings.serverSettings.copy(enabled = false)
   }
 
-  private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
-    if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
-      val wsConfig = ideaConfig(settingsOnStartup.server)
-      val wss = WorkspaceManager(wsLifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence,
-                                 ideaClientPersistenceConfiguration, wsConfig)
-      if (wss.signInNonInteractive()) {
-        manager.value = wss
+  private suspend fun autoSignIn(wsLifetime: Lifetime): Boolean {
+    val serverSettings = CircletSettings.getInstance().serverSettings
+    val server = serverSettings.server
+    if (serverSettings.enabled && server.isNotBlank()) {
+      val newManager = createWorkspaceManager(wsLifetime, server)
+      if (newManager.signInNonInteractive()) {
+        manager.value = newManager
         return true
       }
     }
     return false
   }
 
-}
+  private fun createWorkspaceManager(lifetime: Lifetime, server: String): WorkspaceManager {
+    val persistenceConfig = PersistenceConfiguration(
+      FeatureFlagsVmPersistenceKey,
+      PersistenceKey.Arena
+    )
+    val workspaceConfig = WorkspaceConfiguration(server, IdeaOAuthConfig.clientId, IdeaOAuthConfig.clientSecret)
+    return WorkspaceManager(lifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, persistenceConfig, workspaceConfig)
+  }
 
-fun ideaConfig(server: String): WorkspaceConfiguration {
-  return WorkspaceConfiguration(
-    server,
-    IdeaOAuthConfig.clientId,
-    IdeaOAuthConfig.clientSecret)
+  companion object {
+    private val LOG: KLogger = logger<SpaceWorkspaceComponent>()
+  }
 }
 
