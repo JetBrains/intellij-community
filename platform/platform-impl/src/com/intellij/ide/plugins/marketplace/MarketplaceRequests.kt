@@ -6,8 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.Companion.downloadPlugin
-import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.Companion.downloadPluginViaBlockmap
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.Companion.downloadPluginViaBlockMap
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -370,11 +369,12 @@ open class MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) = MarketplacePluginDownloadService.downloadPlugin(pluginUrl, indicator)
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) = MarketplacePluginDownloadService.downloadPlugin(pluginUrl,
+                                                                                                                             indicator)
 
   @Throws(IOException::class)
-  open fun downloadPluginViaBlockmap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
-    return downloadPluginViaBlockmap(pluginUrl, prevPlugin, indicator)
+  open fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+    return MarketplacePluginDownloadService.downloadPluginViaBlockMap(pluginUrl, prevPlugin, indicator)
   }
 
   private fun URLConnection.setUpETag(eTag: String?) {

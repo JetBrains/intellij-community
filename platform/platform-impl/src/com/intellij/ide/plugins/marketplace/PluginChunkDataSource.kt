@@ -29,17 +29,15 @@ class PluginChunkDataSource(
   }
 
   override fun next(): ByteArray {
-    if (curChunkData.size != 0) {
+    return if (curChunkData.size != 0) {
       if (pointer < curChunkData.size) {
-        return curChunkData[pointer++]
-      }
-      else {
+        curChunkData[pointer++]
+      } else {
         curChunkData = getRange(nextRange())
         pointer = 0
-        return next()
+        next()
       }
-    }
-    else throw NoSuchElementException()
+    } else throw NoSuchElementException()
   }
 
   private fun nextRange(): String {
@@ -85,7 +83,7 @@ class PluginChunkDataSource(
         val byte = input.read()
         baos.write(byte)
         if (baos.size() >= MAX_STRING_LENGTH) {
-          throw IOException(IdeBundle.message("wrong.http.range.responce",
+          throw IOException(IdeBundle.message("wrong.http.range.response",
                                               String(baos.toByteArray(), Charset.defaultCharset())))
         }
       }

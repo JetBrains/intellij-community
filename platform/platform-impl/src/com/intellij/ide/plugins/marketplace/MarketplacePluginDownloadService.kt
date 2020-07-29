@@ -13,7 +13,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.exists
 import com.jetbrains.plugin.blockmap.core.BlockMap
-import com.jetbrains.plugin.blockmap.core.makeFileHash
+import com.jetbrains.plugin.blockmap.core.FileHash
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -22,7 +22,7 @@ import java.net.URLConnection
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class MarketplacePluginDownloadService private constructor(){
+internal class MarketplacePluginDownloadService{
   companion object {
     private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
@@ -53,7 +53,7 @@ internal class MarketplacePluginDownloadService private constructor(){
     }
 
     @Throws(IOException::class)
-    fun downloadPluginViaBlockmap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+    fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
 
       val prevPluginArchive = getPrevPluginArchive(prevPlugin)
       if (!prevPluginArchive.exists()) {
@@ -75,7 +75,9 @@ internal class MarketplacePluginDownloadService private constructor(){
       }
       LOG.debug("Plugin's blockmap file downloaded")
       val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
-        request.inputStream.reader().buffered().use { input -> input.readText() }
+        request.inputStream.reader().buffered().use { input ->
+          objectMapper.readValue(input.readText(), FileHash::class.java)
+        }
       }
       LOG.debug("Plugin's hash file downloaded")
 
@@ -89,7 +91,7 @@ internal class MarketplacePluginDownloadService private constructor(){
       val merger = PluginChunkMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator)
       FileOutputStream(file).use { output -> merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, pluginFileUrl)) }
 
-      val curFileHash = FileInputStream(file).use { input -> makeFileHash(input) }
+      val curFileHash = FileInputStream(file).use { input -> FileHash(input, newPluginHash.algorithm) }
       if (curFileHash != newPluginHash) {
         throw IOException(IdeBundle.message("hashes.doesnt.match"))
       }
