@@ -1,6 +1,7 @@
 package circlet.components
 
 import circlet.arenas.initCircletArenas
+import circlet.auth.startRedirectHandling
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.common.oauth.IdeaOAuthConfig
@@ -21,11 +22,11 @@ import circlet.utils.LifetimedDisposableImpl
 import circlet.utils.notify
 import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
+import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.suspendCancellableCoroutine
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.withContext
@@ -40,16 +41,8 @@ import runtime.persistence.PersistenceKey
 import runtime.reactive.SequentialLifetimes
 import runtime.reactive.flatMapInit
 import runtime.reactive.mutableProperty
-import runtime.utils.selectFreePort
-import java.awt.Desktop
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.ServerSocket
-import java.net.Socket
 import java.net.URI
 import java.net.URL
-import kotlin.coroutines.resume
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
 class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
@@ -107,53 +100,25 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     val wsConfig = ideaConfig(server)
     val wss = WorkspaceManager(lt, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, ideaClientPersistenceConfiguration,
                                wsConfig)
-    val ioDispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
-    val freePort = withContext(lifetime, ioDispatcher) {
-      selectFreePort(ports.min()!!, ports.max()!!)
-    }
-    val authUrl = portsMapping.getValue(freePort)
+    val (port, redirectUrl) = startRedirectHandling(lifetime, ports)
+                              ?: return OAuthTokenResponse.Error(wsConfig.server, "", "The ports required for authorization are busy")
+
+    val authUrl = portsMapping.getValue(port)
     val codeFlow = CodeFlowConfig(wsConfig, authUrl.toExternalForm())
-
-    val response: OAuthTokenResponse = suspendCancellableCoroutine { cnt ->
-      launch(lifetime, ioDispatcher) {
-        ServerSocket(freePort).use { serverSocket ->
-          val socket: Socket = serverSocket.accept()
-          socket.getInputStream().use { inputStream ->
-            BufferedReader(InputStreamReader(inputStream)).use { reader ->
-              var line = reader.readLine()
-
-              line = line.substringAfter("/").substringBefore(" ")
-              val token = codeFlow.handleCodeFlowRedirect("/$line")
-              cnt.resume(token)
-
-              PrintWriter(socket.getOutputStream()).use { out ->
-                val response = "<script>close()</script>"
-                out.println("HTTP/1.1 200 OK")
-                out.println("Content-Type: text/html")
-                out.println("Content-Length: " + response.length)
-                out.println()
-                out.println(response)
-                out.flush()
-              }
-            }
-          }
-        }
-      }
-
-      try {
-        val uri = URI(codeFlow.codeFlowURL())
-        Desktop.getDesktop().browse(uri)
-      }
-      catch (th: Throwable) {
-        val message = "Can't open '${wsConfig.server}' in system browser"
-        log.warn(th, message)
-        cnt.resume(OAuthTokenResponse.Error(wsConfig.server, "", "Can't open '${wsConfig.server}' in system browser."))
-      }
+    val uri = URI(codeFlow.codeFlowURL())
+    try {
+      BrowserLauncher.instance.browse(uri)
+    }
+    catch (th: Throwable) {
+      return OAuthTokenResponse.Error(wsConfig.server, "", "Can't open '${wsConfig.server}' in system browser.")
     }
 
+    val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+      codeFlow.handleCodeFlowRedirect(redirectUrl.await())
+    }
     if (response is OAuthTokenResponse.Success) {
       log.info { "A personal token was received" }
       wss.signInWithToken(response.toTokenInfo())
