@@ -35,6 +35,7 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
     severity = (problem as? HighlightingProblem)?.severity ?: -1
     presentation.addText(text, REGULAR_ATTRIBUTES)
     presentation.setIcon(problem.icon)
+    presentation.tooltip = problem.description
     val document = ProblemsView.getDocument(project, file) ?: return // add nothing if no document
     if (!isValidOffset(offset, document)) return
     val line = document.getLineNumber(offset) + 1
