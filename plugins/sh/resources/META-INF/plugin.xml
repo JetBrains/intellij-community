@@ -60,7 +60,7 @@ Adds support for working with shell script files
     <experimentalFeature id="com.intellij.sh.run.with.wsl" percentOfUsers="0">
       <description>Run shell scripts with WSL when needed</description>
     </experimentalFeature>
-    <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>

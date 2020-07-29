@@ -23,7 +23,7 @@ public class ShRunFileAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (!(file instanceof ShFile)) return;
+    if (file == null) return;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
 
@@ -33,8 +33,13 @@ public class ShRunFileAction extends DumbAwareAction {
     ShRunConfiguration runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
     runConfiguration.setScriptPath(virtualFile.getPath());
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
-    String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
-    runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
+    if (file instanceof ShFile) {
+      String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
+      runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
+    }
+    else {
+      runConfiguration.setInterpreterPath("");
+    }
 
     ExecutionEnvironmentBuilder builder =
       ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), runConfiguration);
@@ -49,6 +54,6 @@ public class ShRunFileAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getProject() != null && e.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
+    return e.getProject() != null && e.getData(CommonDataKeys.PSI_FILE) != null;
   }
 }
