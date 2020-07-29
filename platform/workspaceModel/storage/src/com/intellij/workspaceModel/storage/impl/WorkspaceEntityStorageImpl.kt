@@ -6,6 +6,7 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ObjectUtils
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.adFailed
@@ -30,13 +31,16 @@ internal class WorkspaceEntityStorageImpl constructor(
 ) : AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
-  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity?>()
+  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
 
+  @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return persistentIdCache.getOrPut(id) { super.resolve(id) } as E?
+    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULl_ENTITY }
+    return if (entity !== NULl_ENTITY) entity as E else null
   }
 
   companion object {
+    private val NULl_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
   }
 }
