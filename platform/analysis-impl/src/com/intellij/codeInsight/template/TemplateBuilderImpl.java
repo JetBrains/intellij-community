@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +177,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     template.setInline(true);
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    PostprocessReformattingAspect.assertDocumentChangeIsAllowed(myFile);
 
     //this is kinda hacky way of doing things, but have not got a better idea
     //DocumentUtil.executeInBulk(myDocument, true, () -> {

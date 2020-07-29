@@ -37,6 +37,8 @@
     <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
     <applicationService serviceInterface="com.intellij.find.TextSearchService"
                         serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
+                        serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
