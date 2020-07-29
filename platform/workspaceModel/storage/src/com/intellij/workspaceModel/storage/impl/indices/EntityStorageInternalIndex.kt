@@ -34,7 +34,9 @@ open class EntityStorageInternalIndex<T> private constructor(
       if (entry == null) return
       index[id] = entry
       if (oneToOneAssociation) {
-        if (index.getKeysByValue(entry)?.size ?: 0 > 1) error("One to one association is violated. Id: $id, Entity: $entry")
+        if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
+          error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
+        }
       }
     }
 

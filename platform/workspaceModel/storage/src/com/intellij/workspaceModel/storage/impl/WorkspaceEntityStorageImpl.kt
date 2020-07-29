@@ -920,7 +920,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
     if (pids.isEmpty()) return null
-    if (pids.size > 1) error("Cannot resolve persistent id $id. The store contains more than one associated entities")
+    if (pids.size > 1) {
+      val entities = pids.associateWith { this.entityDataById(it) }.entries.joinToString("\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
+      error("""Cannot resolve persistent id $id. The store contains ${pids.size} associated entities:
+        |$entities
+      """.trimMargin())
+    }
     val pid = pids.single()
     return entityDataById(pid)?.createEntity(this) as E?
   }
