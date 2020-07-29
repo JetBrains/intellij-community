@@ -71,10 +71,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
-    if (container.getService(ExternalStorageConfigurationManager::class.java) != null) {
-      container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java,
-                                pluginDescriptor, true)
-    }
+    container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java, pluginDescriptor, true)
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
     container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)
