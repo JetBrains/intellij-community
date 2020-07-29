@@ -167,15 +167,15 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
     }
     catch (Exception ignored) {
     }
-    if (visitor.mapping.isEmpty()) {
-      return EMPTY;
-    }
     String varArgComponent = null;
     if (visitor.canonicalSignature != null) {
       visitor.canonicalSignature.append(")V");
       if (visitor.varArgConstructors.contains(visitor.canonicalSignature.toString())) {
         varArgComponent = visitor.lastComponent;
       }
+    }
+    if (varArgComponent == null && visitor.mapping.isEmpty()) {
+      return EMPTY;
     }
     return new FirstPassData(visitor.mapping, varArgComponent);
   }
