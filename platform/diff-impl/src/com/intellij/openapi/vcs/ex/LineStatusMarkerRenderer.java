@@ -274,7 +274,9 @@ public abstract class LineStatusMarkerRenderer {
     return shouldPaintGutter();
   }
 
-  protected abstract void paint(@NotNull Editor editor, @NotNull Graphics g);
+  protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+    paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, 0);
+  }
 
   protected static void paintDefault(@NotNull Editor editor,
                                      @NotNull Graphics g,

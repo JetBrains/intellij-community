@@ -35,8 +35,19 @@ public class RollbackLineStatusAction extends LineStatusActionBase {
     tracker.rollbackChanges(range);
   }
 
+  /**
+   * @deprecated Use {@link #rollback(LineStatusTrackerI, Range, Editor)}
+   */
+  @Deprecated
+  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
+    rollback((LineStatusTrackerI<?>)tracker, range, editor);
+  }
+
+  /**
+   * @deprecated Use {@link #rollback(LineStatusTrackerI, Editor)}
+   */
   @Deprecated
   public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
-    rollback((LineStatusTrackerI)tracker, editor);
+    rollback((LineStatusTrackerI<?>)tracker, editor);
   }
 }
