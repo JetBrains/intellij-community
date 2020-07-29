@@ -264,7 +264,7 @@ public class ExpressionParsing extends Parsing {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
     while (true) {
       myBuilder.advanceLexer();
-      parseExpression(true, true);
+      parseStarTargets();
       parseComprehensionRange(exprType == PyElementTypes.GENERATOR_EXPRESSION);
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
@@ -282,6 +282,32 @@ public class ExpressionParsing extends Parsing {
       break;
     }
     expr.done(exprType);
+  }
+
+  public boolean parseStarTargets() {
+    SyntaxTreeBuilder.Marker expr = myBuilder.mark();
+    if (!parseStarExpression(true)) {
+      myBuilder.error(message("PARSE.expected.expression"));
+      expr.drop();
+      return false;
+    }
+    if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+      while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+        myBuilder.advanceLexer();
+        SyntaxTreeBuilder.Marker expr2 = myBuilder.mark();
+        if (!parseStarExpression(true)) {
+          myBuilder.error(message("PARSE.expected.expression"));
+          expr2.rollbackTo();
+          break;
+        }
+        expr2.drop();
+      }
+      expr.done(PyElementTypes.TUPLE_EXPRESSION);
+    }
+    else {
+      expr.drop();
+    }
+    return true;
   }
 
   protected void parseComprehensionRange(boolean generatorExpression) {

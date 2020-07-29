@@ -670,7 +670,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected void parseForPart() {
     final SyntaxTreeBuilder.Marker forPart = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseExpression(true, true);
+    getExpressionParser().parseStarTargets();
     checkMatches(PyTokenTypes.IN_KEYWORD, PyPsiBundle.message("PARSE.expected.in"));
     getExpressionParser().parseExpression();
     parseColonAndSuite();

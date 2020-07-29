@@ -24,9 +24,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
 
@@ -79,6 +81,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
+      checkTargetIsNotAssignmentExpression(target);
     }
   }
 
@@ -107,6 +110,20 @@ public class AssignTargetAnnotator extends PyAnnotator {
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
       getHolder().newAnnotation(HighlightSeverity.ERROR,
                                 PyBundle.message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
+    }
+  }
+
+  @Override
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
+    node.getForComponents().forEach(it -> checkTargetIsNotAssignmentExpression(it.getIteratorVariable()));
+  }
+
+  private void checkTargetIsNotAssignmentExpression(@Nullable PyExpression expression) {
+    if (PyPsiUtils.flattenParens(expression) instanceof PyAssignmentExpression) {
+      getHolder()
+        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.expression.as.a.target"))
+        .range(expression)
+        .create();
     }
   }
 
