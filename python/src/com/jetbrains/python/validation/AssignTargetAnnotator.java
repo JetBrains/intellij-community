@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -81,7 +82,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
-      checkTargetIsNotAssignmentExpression(target);
+      checkNotAssignmentExpression(target, PyBundle.message("ANN.assignment.expression.as.a.target"));
     }
   }
 
@@ -115,13 +116,27 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
-    node.getForComponents().forEach(it -> checkTargetIsNotAssignmentExpression(it.getIteratorVariable()));
+    final String targetMessage = PyBundle.message("ANN.assignment.expression.as.a.target");
+    final String iterableMessage = PyBundle.message("ANN.assignment.expression.in.an.iterable");
+
+    node.getForComponents().forEach(
+      it -> {
+        checkNotAssignmentExpression(it.getIteratorVariable(), targetMessage);
+        checkNoAssignmentExpressionAsChild(it.getIteratedList(), iterableMessage);
+      }
+    );
   }
 
-  private void checkTargetIsNotAssignmentExpression(@Nullable PyExpression expression) {
+  private void checkNoAssignmentExpressionAsChild(@Nullable PyExpression expression, @NotNull @InspectionMessage String message) {
+    PsiTreeUtil
+      .findChildrenOfType(expression, PyAssignmentExpression.class)
+      .forEach(it -> checkNotAssignmentExpression(it, message));
+  }
+
+  private void checkNotAssignmentExpression(@Nullable PyExpression expression, @NotNull @InspectionMessage String message) {
     if (PyPsiUtils.flattenParens(expression) instanceof PyAssignmentExpression) {
       getHolder()
-        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.expression.as.a.target"))
+        .newAnnotation(HighlightSeverity.ERROR, message)
         .range(expression)
         .create();
     }
