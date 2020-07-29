@@ -42,28 +42,21 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     entityStorage = VersionedEntityStorageImpl(projectEntities.toStorage())
   }
 
-  override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R = doUpdateProject(updater, true)
-
-  override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R = doUpdateProject(updater, false)
-
-  // TODO We need transaction semantics here, failed updates should not poison everything
-  private fun <R> doUpdateProject(updater: (WorkspaceEntityStorageBuilder) -> R, notify: Boolean): R {
+  override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
     val before = projectEntities.toStorage()
-
     val result = updater(projectEntities)
-
     val changes = projectEntities.collectChanges(before)
     projectEntities.resetChanges()
+    entityStorage.replace(projectEntities.toStorage(), changes, this::onBeforeChanged, this::onChanged)
+    return result
+  }
 
-    if (notify) {
-      entityStorage.replace(projectEntities.toStorage(), changes, this::onBeforeChanged, this::onChanged)
-    }
-    else {
-      entityStorage.replace(projectEntities.toStorage(), changes, {}, {})
-    }
-
+  override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val result = updater(projectEntities)
+    projectEntities.resetChanges()
+    entityStorage.replaceSilently(projectEntities.toStorage())
     return result
   }
 

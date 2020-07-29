@@ -139,6 +139,13 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
     afterChanged(change)
   }
+
+  @Synchronized
+  fun replaceSilently(newStorage: WorkspaceEntityStorage) {
+    val oldCopy = currentPointer
+    if (oldCopy.storage == newStorage) return
+    currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
+  }
 }
 
 private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
