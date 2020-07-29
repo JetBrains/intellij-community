@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -17,9 +18,7 @@ import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -62,6 +61,14 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     return mapConstructor;
   }
 
+  private static @NotNull List<@NotNull String> getIdentifierList(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    String rawIdentifiers = GrAnnotationUtil.inferStringAttribute(annotation, attributeName);
+    if (rawIdentifiers != null) {
+      return Arrays.asList(rawIdentifiers.split(","));
+    }
+    return GrAnnotationUtil.getStringArrayValue(annotation, attributeName, false);
+  }
+
   @NotNull
   private static GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
                                                                @Nullable PsiAnnotation tupleConstructor,
@@ -75,7 +82,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
 
     Set<String> excludes = new HashSet<>();
     if (tupleConstructor != null) {
-      for (String s : PsiUtil.getAnnoAttributeValue(tupleConstructor, "excludes", "").split(",")) {
+      for (String s : getIdentifierList(tupleConstructor, "excludes")) {
         final String name = s.trim();
         if (StringUtil.isNotEmpty(name)) {
           excludes.add(name);
