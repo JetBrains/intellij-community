@@ -1216,19 +1216,6 @@ public class Messages {
   }
 
   /**
-   * @deprecated It looks awful!
-   */
-  @Deprecated
-  public static int showChooseDialog(@NotNull Component parent,
-                                     @DialogMessage String message,
-                                     @DialogTitle String title,
-                                     String[] values,
-                                     String initialValue,
-                                     Icon icon) {
-    return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
-  }
-
-  /**
    * @see DialogWrapper#DialogWrapper(Project, boolean)
    * @deprecated It looks awful!
    */
@@ -1554,5 +1541,4 @@ public class Messages {
       return messagePanel;
     }
   }
-
 }
