@@ -460,6 +460,11 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   }
 
   @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
+  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
