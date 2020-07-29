@@ -369,7 +369,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected")
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected for $matchedEntityData")
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
@@ -436,7 +436,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
-            else rbsFailed("Cannot link old entity to the new one")
+            else rbsFailed("Cannot remove link to parent entity. $connectionId")
           }
         }
         for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
@@ -446,7 +446,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailed("Cannot link old entity to the new one")
+              else rbsFailed("Cannot remove link to child entity. $connectionId")
             }
           }
         }
@@ -474,7 +474,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // TODO: 05.06.2020 The similar logic should exist for children references
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
-          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId")
+          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId; $connectionId")
         }
 
         // ----------------- Update children references -----------------------
@@ -505,7 +505,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
           if (!connectionId.isParentNullable) {
             val localParent = this.entityDataById(parentId)
-            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation")
+            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation; $connectionId")
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -737,7 +737,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies")
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies; $connectionId")
       refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
@@ -746,7 +746,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parent) != null) {
         refs.updateParentOfChild(connection, entityId, parent)
       }
-      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies")
+      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies; $connection")
     }
   }
 
@@ -786,7 +786,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       for (addedChild in addedChildrenSet) {
         if (addedChild !in mutableChildren) {
           val addedEntityData = this.entityDataById(addedChild)
-          if (addedEntityData == null && !connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+          if (addedEntityData == null && !connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
           mutableChildren.add(addedChild)
         }
       }
@@ -824,7 +824,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else if (parent == null || this.entityDataById(parent) != null) {
           // This child doesn't have a pareny anymore
-          if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+          if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
           else refs.removeParentToChildRef(connectionId, existingParent, id)
         }
         modifiedParentsMap.remove(connectionId)
@@ -836,7 +836,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parentId) != null) {
         refs.updateParentOfChild(connectionId, id, parentId)
       }
-      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
     }
   }
 
