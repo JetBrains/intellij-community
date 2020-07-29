@@ -41,9 +41,10 @@ abstract class SuggestedRefactoringUI {
   data class NewParameterData(
     val presentableName: String,
     val valueFragment: PsiCodeFragment,
-    val offerToUseAnyVariable: Boolean,
+    val offerToUseAnyVariable: Boolean  /* Android Studio: b/162426982
     @Nls(capitalization = Nls.Capitalization.Sentence) val placeholderText: String? = null,
     val additionalData: NewParameterAdditionalData? = null
+Android Studio: b/162426982 */
   )
 
   /**
