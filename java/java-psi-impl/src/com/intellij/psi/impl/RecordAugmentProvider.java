@@ -27,7 +27,8 @@ public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAwa
     if (element instanceof PsiExtensibleClass) {
       PsiExtensibleClass aClass = (PsiExtensibleClass)element;
       if (!aClass.isRecord()) return Collections.emptyList();
-      if (type == PsiMethod.class) {
+      if (type == PsiMethod.class && !(element instanceof PsiCompiledElement)) {
+        // We do not remove constructor and accessors in compiled records, so no need to augment
         return getAccessorsAugments(element, aClass);
       }
       if (type == PsiField.class) {
@@ -134,14 +135,10 @@ public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAwa
   private static String getTypeText(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
-    StringBuilder sb = new StringBuilder(); // not allowed to use types because of dumb mode
-    for (PsiElement child : typeElement.getChildren()) {
-      if (child.getNode().getElementType() != JavaTokenType.ELLIPSIS) {
-        sb.append(child.getText());
-      } else {
-        sb.append("[]");
-      }
+    String typeText = typeElement.getText();
+    if (typeText.endsWith("...")) {
+      typeText = typeText.substring(0, typeText.length() - 3) + "[]";
     }
-    return sb.toString();
+    return typeText;
   }
 }

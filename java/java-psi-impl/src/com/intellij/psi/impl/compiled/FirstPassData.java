@@ -8,9 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,9 +16,9 @@ import java.util.*;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
- * Information about inner classes stored in a class file
+ * Information retrieved during the first pass of a class file parsing
  */
-class InnerClassInfo implements Function<@NotNull String, @NotNull String> {
+class FirstPassData implements Function<@NotNull String, @NotNull String> {
   private static class InnerClassEntry {
     final @NotNull String myOuterName;
     final @Nullable String myInnerName;
@@ -33,12 +31,14 @@ class InnerClassInfo implements Function<@NotNull String, @NotNull String> {
     }
   }
 
-  private static final InnerClassInfo EMPTY = new InnerClassInfo(null);
+  private static final FirstPassData EMPTY = new FirstPassData(null, null);
   private final @Nullable Map<String, InnerClassEntry> myMap;
   private final @NotNull Set<String> myNonStatic;
+  private final @Nullable String myVarArgRecordComponent;
 
-  private InnerClassInfo(@Nullable Map<String, InnerClassEntry> map) {
+  private FirstPassData(@Nullable Map<String, InnerClassEntry> map, @Nullable String component) {
     myMap = map;
+    myVarArgRecordComponent = component;
     if (map != null) {
       List<String> jvmNames = EntryStream.of(map).filterValues(e -> !e.myStatic).keys().toList();
       myNonStatic = ContainerUtil.map2Set(jvmNames, this::mapJvmClassNameToJava);
@@ -64,6 +64,10 @@ class InnerClassInfo implements Function<@NotNull String, @NotNull String> {
       javaName = StringUtil.getPackageName(javaName);
     }
     return depth;
+  }
+  
+  public boolean isVarArgComponent(@NotNull String componentName) {
+    return componentName.equals(myVarArgRecordComponent);
   }
 
   /**
@@ -91,7 +95,7 @@ class InnerClassInfo implements Function<@NotNull String, @NotNull String> {
     return className.replace('/', '.');
   }
 
-  static @NotNull InnerClassInfo create(Object classSource) {
+  static @NotNull FirstPassData create(Object classSource) {
     byte[] bytes = null;
     if (classSource instanceof ClsFileImpl.FileContentPair) {
       bytes = ((ClsFileImpl.FileContentPair)classSource).getContent();
@@ -111,24 +115,68 @@ class InnerClassInfo implements Function<@NotNull String, @NotNull String> {
     return EMPTY;
   }
 
-  private static @NotNull InnerClassInfo fromClassBytes(byte[] classBytes) {
-    final Map<String, InnerClassEntry> mapping = new HashMap<>();
+  private static @NotNull FirstPassData fromClassBytes(byte[] classBytes) {
+    
+    class FirstPassVisitor extends ClassVisitor {
+      final Map<String, InnerClassEntry> mapping = new HashMap<>();
+      Set<String> varArgConstructors;
+      StringBuilder canonicalSignature;
+      String lastComponent;
 
-    try {
-      new ClassReader(classBytes).accept(new ClassVisitor(StubBuildingVisitor.ASM_API) {
-        @Override
-        public void visitInnerClass(String name, String outerName, String innerName, int access) {
-          if (outerName != null && innerName != null) {
-            mapping.put(name, new InnerClassEntry(outerName, innerName, isSet(access, Opcodes.ACC_STATIC)));
-          }
+      FirstPassVisitor() {
+        super(StubBuildingVisitor.ASM_API);
+      }
+
+      @Override
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        if (isSet(access, Opcodes.ACC_RECORD)) {
+          varArgConstructors = new HashSet<>();
+          canonicalSignature = new StringBuilder("(");
         }
-      }, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+      }
+
+      @Override
+      public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+        if (canonicalSignature != null) {
+          canonicalSignature.append(descriptor);
+          lastComponent = name;
+        }
+        return null;
+      }
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+        if (varArgConstructors != null && name.equals("<init>") && isSet(access, Opcodes.ACC_VARARGS)) {
+          varArgConstructors.add(descriptor);
+        }
+        return null;
+      }
+
+      @Override
+      public void visitInnerClass(String name, String outerName, String innerName, int access) {
+        if (outerName != null && innerName != null) {
+          mapping.put(name, new InnerClassEntry(outerName, innerName, isSet(access, Opcodes.ACC_STATIC)));
+        }
+      }
+    }
+
+    FirstPassVisitor visitor = new FirstPassVisitor();
+    try {
+      new ClassReader(classBytes).accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, 
+                                         ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
     }
     catch (Exception ignored) {
     }
-    if (mapping.isEmpty()) {
+    if (visitor.mapping.isEmpty()) {
       return EMPTY;
     }
-    return new InnerClassInfo(mapping);
+    String varArgComponent = null;
+    if (visitor.canonicalSignature != null) {
+      visitor.canonicalSignature.append(")V");
+      if (visitor.varArgConstructors.contains(visitor.canonicalSignature.toString())) {
+        varArgComponent = visitor.lastComponent;
+      }
+    }
+    return new FirstPassData(visitor.mapping, varArgComponent);
   }
 }

@@ -175,11 +175,11 @@ public class TypeAnnotationContainer {
   static class Builder {
     private final @NotNull ArrayList<TypeAnnotationEntry> myList = new ArrayList<>();
     private final @NotNull TypeInfo myTypeInfo;
-    private final @NotNull InnerClassInfo myInnerClassInfo;
+    private final @NotNull FirstPassData myFirstPassData;
 
-    Builder(@NotNull TypeInfo info, @NotNull InnerClassInfo classInfo) {
+    Builder(@NotNull TypeInfo info, @NotNull FirstPassData classInfo) {
       myTypeInfo = info;
-      myInnerClassInfo = classInfo;
+      myFirstPassData = classInfo;
     }
 
     void add(TypePath path, String text) {
@@ -190,7 +190,7 @@ public class TypeAnnotationContainer {
     }
 
     AnnotationVisitor collect(@Nullable TypePath path, @Nullable String desc) {
-      return new AnnotationTextCollector(desc, myInnerClassInfo, text -> add(path, text));
+      return new AnnotationTextCollector(desc, myFirstPassData, text -> add(path, text));
     }
 
     void build() {
@@ -217,7 +217,7 @@ public class TypeAnnotationContainer {
       String typeText = myTypeInfo.text;
       int arrayLevel = myTypeInfo.arrayCount + (myTypeInfo.isEllipsis ? 1 : 0);
       String qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
-      int depth = myInnerClassInfo.getInnerDepth(qualifiedName);
+      int depth = myFirstPassData.getInnerDepth(qualifiedName);
       boolean atWildcard = false;
       if (path == null) {
         if (depth == 0 || arrayLevel > 0) {
@@ -267,7 +267,7 @@ public class TypeAnnotationContainer {
               atWildcard = true;
             }
             qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
-            depth = myInnerClassInfo.getInnerDepth(qualifiedName);
+            depth = myFirstPassData.getInnerDepth(qualifiedName);
             result.write(TypeAnnotationEntry.TYPE_ARGUMENT);
             result.write(argumentIndex);
             break;
