@@ -119,6 +119,21 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (target == psiClass) return;
 
+    if (targetClass.hasModifierProperty(PsiModifier.SEALED)) {
+      PsiReferenceList permitsList = targetClass.getPermitsList();
+      if (permitsList != null) {
+        Arrays.stream(permitsList.getReferenceElements())
+          .filter(r -> r.resolve() == psiClass).findFirst()
+          .ifPresent(r -> r.delete());
+        PsiModifierList modifiers = psiClass.getModifierList();
+        if (modifiers != null && modifiers.hasExplicitModifier(PsiModifier.NON_SEALED)) {
+          boolean hasAnotherSealedParent = hasSealedParent(psiClass.getExtendsListTypes(), targetClass);
+          if (!hasAnotherSealedParent) hasAnotherSealedParent = hasSealedParent(psiClass.getImplementsListTypes(), targetClass);
+          if (!hasAnotherSealedParent) modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
+        }
+      }
+    }
+
     final Set<PsiMethod> superMethods = new HashSet<>();
     for (PsiClass aClass : psiClass.getSupers()) {
       Collections.addAll(superMethods, aClass.getAllMethods());
@@ -129,6 +144,12 @@ public class UnimplementInterfaceAction implements IntentionAction {
       final PsiMethod impl = implementations.get(psiMethod);
       if (impl != null) impl.delete();
     }
+  }
+
+  private static boolean hasSealedParent(PsiClassType[] types, PsiClass toExclude) {
+    return Arrays.stream(types)
+      .map(t -> t.resolve())
+      .anyMatch(parent -> parent != null && parent != toExclude && parent.hasModifierProperty(PsiModifier.SEALED));
   }
 
   @Override
