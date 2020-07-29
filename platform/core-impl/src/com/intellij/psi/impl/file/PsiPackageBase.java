@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
@@ -56,12 +56,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public PsiDirectory @NotNull [] getDirectories() {
-    return getDirectories(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(getProject())) {
-      @Override
-      public boolean isForceSearchingInLibrarySources() {
-        return true;
-      }
-    });
+    return getDirectories(new EverythingGlobalScope(getProject()));
   }
 
   @Override
