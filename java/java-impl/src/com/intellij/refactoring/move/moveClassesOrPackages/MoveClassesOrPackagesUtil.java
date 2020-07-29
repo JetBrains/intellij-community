@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -120,8 +122,10 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
-                                         @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
+  @NotNull
+  static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+                                  @NotNull GlobalSearchScope scope,
+                                  @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
     final String newPrefix;
@@ -135,8 +139,7 @@ public final class MoveClassesOrPackagesUtil {
     final String newPackageQualifiedName = newPrefix + aPackage.getName();
 
     // do actual move
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(aPackage.getProject());
-    PsiDirectory[] dirs = aPackage.getDirectories(projectScope);
+    PsiDirectory[] dirs = aPackage.getDirectories(scope);
     for (PsiDirectory dir : dirs) {
       final PsiDirectory targetDirectory = moveDestination.getTargetDirectory(dir);
       if (targetDirectory != null) {
@@ -144,9 +147,14 @@ public final class MoveClassesOrPackagesUtil {
       }
     }
 
-    aPackage.handleQualifiedNameChange(newPackageQualifiedName);
+    return new PsiPackageImpl(aPackage.getManager(), newPackageQualifiedName) {
+      @Override
+      public boolean isValid() {
+        return !getProject().isDisposed() &&
+               PackageIndex.getInstance(getProject()).getDirsByPackageName(newPackageQualifiedName, scope).findFirst() != null;
+      }
 
-    return JavaPsiFacade.getInstance(targetPackage.getManager().getProject()).findPackage(newPackageQualifiedName);
+    };
   }
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)

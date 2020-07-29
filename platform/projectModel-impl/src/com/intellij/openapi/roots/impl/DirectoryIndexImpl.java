@@ -24,7 +24,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This is an internal class, {@link DirectoryIndex} must be used instead.
@@ -128,6 +129,21 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
+  }
+
+  @Override
+  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
+                                                        @NotNull GlobalSearchScope scope) {
+    Collection<ModelBranch> branches = scope.getModelBranchesAffectingScope();
+    if (branches.isEmpty()) {
+      return super.getDirectoriesByPackageName(packageName, scope);
+    }
+
+    List<RootIndex> indices = ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex);
+    indices.add(getRootIndex());
+    return new CollectionQuery<>(indices)
+      .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
+      .filtering(scope::contains);
   }
 
   @NotNull

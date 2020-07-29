@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,13 @@ public abstract class PackageIndex {
    * @return the list of directories.
    */
   public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+
+  /**
+   * @return all directories in the given scope corresponding to the given package name.
+   */
+  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope) {
+    return getDirsByPackageName(packageName, true).filtering(scope::contains);
+  }
 
   /**
    * Returns all directories in content sources and libraries (and optionally library sources)

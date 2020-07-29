@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -220,6 +221,11 @@ public final class GlobalSearchScopesCore {
       myDirectory = directory;
     }
 
+    @Override
+    public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+      return ContainerUtil.createMaybeSingletonSet(ModelBranch.getFileBranch(myDirectory));
+    }
+
     @NotNull
     public VirtualFile getDirectory() {
       return myDirectory;
@@ -251,7 +257,6 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
     }
 
@@ -338,7 +343,6 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "Directories scope: directories " + myDirectories + ", directories with subdirectories " + myDirectoriesWithSubdirectories;
     }
 

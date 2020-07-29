@@ -4,6 +4,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -460,14 +461,16 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private void performMove(UsageInfo @NotNull [] usages, @Nullable ModelBranch branch) {
-    PsiElement[] elementsToMove = myElementsToMove;
+    PsiElement[] elementsToMove = myElementsToMove.clone();
     List<RefactoringElementListener> listeners =
       ContainerUtil.map(elementsToMove, psiElement -> getTransaction().getElementListener(psiElement));
     List<@Nullable SmartPsiElementPointer<?>> movedElements = ContainerUtil.map(listeners, __ -> null);
 
     if (branch != null) {
       for (int i = 0; i < elementsToMove.length; i++) {
-        elementsToMove[i] = branch.obtainPsiCopy(elementsToMove[i]);
+        if (!(elementsToMove[i] instanceof PsiPackage)) {
+          elementsToMove[i] = branch.obtainPsiCopy(elementsToMove[i]);
+        }
       }
     }
 
@@ -513,12 +516,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       for (int idx = 0; idx < elementsToMove.length; idx++) {
         PsiElement element = elementsToMove[idx];
         if (element instanceof PsiPackage) {
-          final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
-          final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
-          LOG.assertTrue(newElement != null, element);
+          GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
+          if (branch != null) {
+            scope = ((ModelBranchImpl) branch).modifyScope(scope);
+          }
+          PsiDirectory[] directories = ((PsiPackage)element).getDirectories(scope);
+          PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, scope, myMoveDestination);
           oldToNewElementsMapping.put(element, newElement);
           int i = 0;
-          final PsiDirectory[] newDirectories = newElement.getDirectories();
+          PsiDirectory[] newDirectories = newElement.getDirectories(scope);
           if (newDirectories.length == 1) {//everything is moved in one directory
             for (PsiDirectory directory : directories) {
               oldToNewElementsMapping.put(directory, newDirectories[0]);
@@ -603,6 +609,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (int i = 0; i < listeners.size(); i++) {
       PsiElement element = getOriginalPsi(branch, movedElements.get(i));
       if (element != null) {
+        if (myElementsToMove[i] instanceof PsiPackage) {
+          ((PsiPackage) myElementsToMove[i]).handleQualifiedNameChange(((PsiPackage) element).getQualifiedName());
+        }
         listeners.get(i).elementMoved(element);
       }
     }
@@ -614,9 +623,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Nullable
-  private PsiElement getOriginalPsi(@Nullable ModelBranch branch, SmartPsiElementPointer<?> pointer) {
+  private static PsiElement getOriginalPsi(@Nullable ModelBranch branch, SmartPsiElementPointer<?> pointer) {
     PsiElement element = pointer == null ? null : pointer.getElement();
-    if (branch != null && element != null) {
+    if (branch != null && element != null && !(element instanceof PsiPackage)) {
       element = branch.findOriginalPsi(element);
     }
     return element;
