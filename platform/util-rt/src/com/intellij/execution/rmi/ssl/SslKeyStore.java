@@ -38,21 +38,23 @@ public class SslKeyStore extends DelegateKeyStore {
   private static void loadUserCert() {
     String certPath = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH);
     String keyPath = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH);
-    if (certPath != null && keyPath != null) loadKey(certPath, keyPath, null);
+    if (certPath != null && keyPath != null) {
+      try {
+        loadKey(certPath, keyPath, null);
+      }
+      catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
   }
 
   public static void loadKey(@NotNull String clientCertPath,
                              @NotNull String clientKeyPath,
-                             @Nullable char[] password) {
-    try {
-      PrivateKey key = SslSocketFactory.readPrivateKey(clientKeyPath, password);
-      if (ourAutoAdded.containsKey(key)) return;
-      X509Certificate cert = SslSocketFactory.readCertificate(clientCertPath);
-      ourAutoAdded.put(key, cert);
-    }
-    catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
+                             @Nullable char[] password) throws CertificateException, IOException {
+    PrivateKey key = SslSocketFactory.readPrivateKey(clientKeyPath, password);
+    if (ourAutoAdded.containsKey(key)) return;
+    X509Certificate cert = SslSocketFactory.readCertificate(clientCertPath);
+    ourAutoAdded.put(key, cert);
   }
 
   @Override
