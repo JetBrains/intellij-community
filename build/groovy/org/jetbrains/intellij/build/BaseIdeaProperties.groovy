@@ -63,6 +63,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
     "intellij.android.smali",
+    "intellij.mlCompletionModels",
     "intellij.statsCollector",
     "intellij.sh",
     "intellij.vcs.changeReminder",
