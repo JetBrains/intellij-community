@@ -26,6 +26,7 @@ interface WorkspaceModelChangeListener : EventListener {
  */
 class WorkspaceModelTopics : Disposable {
   companion object {
+    /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
     private val CHANGED = Topic("Workspace Model Changed", WorkspaceModelChangeListener::class.java)
 
     fun getInstance(project: Project): WorkspaceModelTopics = ServiceManager.getService(project, WorkspaceModelTopics::class.java)
