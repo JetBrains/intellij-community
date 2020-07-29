@@ -70,7 +70,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {
     final List<UExpression> args = new ArrayList<>();
     String formatString = JavaI18nUtil
-      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(literalExpression)), args);
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(literalExpression)), args, project);
 
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
       @Override

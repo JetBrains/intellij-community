@@ -28,8 +28,11 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
+import org.junit.Assert;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 
 /**
@@ -93,5 +96,16 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
 
   public void testShortenClassReferences() {
     doTest("p.MyBundle.message(\"key\")");
+  }
+
+  public void testGeneratedChoicePattern() {
+    configureByFile(getBasePath() + "/before" + getTestName(false) + "." + "java");
+    UInjectionHost enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
+    UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral);
+    assertNotNull(concatenation);
+    ArrayList<UExpression> args = new ArrayList<>();
+    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
+    assertSize(1, args);
+    assertEquals("prefix ? 0 : 1", args.get(0).getSourcePsi().getText());
   }
 }

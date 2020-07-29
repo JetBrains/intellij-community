@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.text.ChoiceFormat;
@@ -437,15 +438,23 @@ public final class JavaI18nUtil extends I18nUtil {
     return paramsCount;
   }
 
-  static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
+  public static String buildUnescapedFormatString(UStringConcatenationsFacade cf,
+                                                  List<? super UExpression> formatParameters,
+                                                  @NotNull Project project) {
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
+      while (expression instanceof UParenthesizedExpression) {
+        expression = ((UParenthesizedExpression)expression).getExpression();
+      }
       if (expression instanceof ULiteralExpression) {
         Object value = ((ULiteralExpression)expression).getValue();
         if (value != null) {
           result.append(PsiConcatenationUtil.formatString(value.toString(), false));
         }
+      }
+      else if (expression instanceof UIfExpression && addChoicePattern(expression, formatParameters, project, result, elIndex)) {
+        elIndex++;
       }
       else {
         result.append("{").append(elIndex++).append("}");
@@ -453,6 +462,47 @@ public final class JavaI18nUtil extends I18nUtil {
       }
     }
     return result.toString();
+  }
+
+  private static boolean addChoicePattern(UExpression expression, 
+                                          List<? super UExpression> formatParameters,
+                                          @NotNull Project project,
+                                          StringBuilder result,
+                                          int elIndex) {
+    PsiElement sourcePsi = expression.getSourcePsi();
+    if (sourcePsi == null) return false;
+    UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(sourcePsi.getLanguage());
+    if (generationPlugin == null) return false;
+
+    UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
+    UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
+    if (!(thenExpression instanceof ULiteralExpression) || 
+        !(elseExpression instanceof ULiteralExpression)) return false;
+
+    Object thenValue = ((ULiteralExpression)thenExpression).getValue();
+    Object elseValue = ((ULiteralExpression)elseExpression).getValue();
+    if (thenValue == null || 
+        elseValue == null) return false;
+
+    result.append("{")
+      .append(elIndex)
+      .append(", choice, 0#").append(PsiConcatenationUtil.formatString(thenValue.toString(), false))
+      .append("|1#").append(PsiConcatenationUtil.formatString(elseValue.toString(), false))
+      .append("}");
+
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    UIfExpression exCopy = UastContextKt.toUElement(sourcePsi.copy(), UIfExpression.class);
+    assert exCopy != null;
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getThenExpression()), 
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("0", null), ULiteralExpression.class)), 
+                             ULiteralExpression.class);
+
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getElseExpression()), 
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("1", null), ULiteralExpression.class)), 
+                             ULiteralExpression.class);
+    formatParameters.add(exCopy);
+    return true;
   }
 
   static String composeParametersText(final List<UExpression> args) {

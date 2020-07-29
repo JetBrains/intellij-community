@@ -77,7 +77,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         }
         else if (distinct.add(concatenation.getRootUExpression().getSourcePsi())) {
           ArrayList<UExpression> args = new ArrayList<>();
-          String value = JavaI18nUtil.buildUnescapedFormatString(concatenation, args);
+          String value = JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project);
           String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
                                            I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           HardcodedStringContextData contextData = new HardcodedStringContextData(
