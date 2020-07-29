@@ -51,6 +51,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -332,11 +333,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
           if (result == MergeResult.RESOLVED &&
               (getChangesCount() > 0 || getConflictsCount() > 0) &&
-              Messages.showConfirmationDialog(myPanel.getRootPane(),
-                                              DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                              DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                              DiffBundle.message("apply.changes.and.mark.resolved"),
-                                              DiffBundle.message("continue.merge")) != Messages.YES) {
+              !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
+                .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+                .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+                .noText(DiffBundle.message("continue.merge"))
+                .ask(myPanel.getRootPane())) {
             return;
           }
           if (result == MergeResult.CANCEL &&

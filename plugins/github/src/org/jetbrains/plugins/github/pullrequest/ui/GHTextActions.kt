@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.MessageDialogBuilder
 import icons.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.InlineIconButton
@@ -12,29 +12,26 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal object GHTextActions {
-
   fun createDeleteButton(delete: () -> CompletableFuture<out Any?>): JComponent {
     val icon = GithubIcons.Delete
     val hoverIcon = GithubIcons.DeleteHovered
-    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete")).apply {
-      actionListener = ActionListener {
-        if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.review.comment.delete.dialog.msg"),
-                                            GithubBundle.message("pull.request.review.comment.delete.dialog.title"),
-                                            Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-          delete()
-        }
+    val button = InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete"))
+    button.actionListener = ActionListener {
+      if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.review.comment.delete.dialog.title"),
+                                     GithubBundle.message("pull.request.review.comment.delete.dialog.msg")).ask(button)) {
+        delete()
       }
     }
+    return button
   }
 
   fun createEditButton(paneHandle: GHEditableHtmlPaneHandle): JComponent {
-    val action = ActionListener {
-      paneHandle.showAndFocusEditor()
-    }
     val icon = AllIcons.General.Inline_edit
     val hoverIcon = AllIcons.General.Inline_edit_hovered
-    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit")).apply {
-      actionListener = action
+    val button = InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit"))
+    button.actionListener = ActionListener {
+      paneHandle.showAndFocusEditor()
     }
+    return button
   }
 }

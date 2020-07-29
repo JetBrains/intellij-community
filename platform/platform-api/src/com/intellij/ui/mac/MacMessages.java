@@ -53,20 +53,12 @@ public abstract class MacMessages {
 
   public abstract void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window);
 
-  public abstract void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText);
-
-  /**
-   * @return {@link Messages#YES} if user pressed "Yes" or {@link Messages#NO} if user pressed "No" button.
-   */
-  @Messages.YesNoResult
-  public abstract int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window);
-
-  /**
-   * @return {@link Messages#YES} if user pressed "Yes" or {@link Messages#NO} if user pressed "No" button.
-   */
-  @Messages.YesNoResult
-  public abstract int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window,
-                                      @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
+  public abstract boolean showYesNoDialog(@NotNull String title,
+                                          @NotNull String message,
+                                          @NotNull String yesButton,
+                                          @NotNull String noButton,
+                                          @Nullable Window window,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
   public abstract void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window);
 }

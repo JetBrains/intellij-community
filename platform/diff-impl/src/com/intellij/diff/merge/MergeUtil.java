@@ -10,7 +10,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -137,9 +137,7 @@ public final class MergeUtil {
     if (customMessage != null) {
       String title = customMessage.first;
       String message = customMessage.second;
-      return Messages.showConfirmationDialog(component, message, title,
-                                             CommonBundle.message("button.without.mnemonic.yes"),
-                                             CommonBundle.message("button.without.mnemonic.no")) == Messages.YES;
+      return MessageDialogBuilder.yesNo(title, message).ask(component);
     }
 
     return showConfirmDiscardChangesDialog(component, DiffBundle.message("button.cancel.merge"), true);
@@ -148,23 +146,26 @@ public final class MergeUtil {
   public static boolean showConfirmDiscardChangesDialog(@NotNull JComponent parent,
                                                         @NotNull @Nls String actionName,
                                                         boolean contentWasModified) {
-    if (!contentWasModified) return true;
-    return Messages.showConfirmationDialog(
-      parent,
-      DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway", actionName.toLowerCase(Locale.ENGLISH)),
-      actionName,
-      DiffBundle.message("button.discard.changes.and.do", actionName),
-      DiffBundle.message("button.continue.merge")) == Messages.YES;
+    if (!contentWasModified) {
+      return true;
+    }
+    return MessageDialogBuilder
+      .yesNo(actionName, DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway", actionName.toLowerCase(Locale.ENGLISH)))
+      .yesText(DiffBundle.message("button.discard.changes.and.do", actionName))
+      .noText(DiffBundle.message("button.continue.merge"))
+      .ask(parent);
   }
 
   public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
     MergeCallback callback = MergeCallback.getCallback(request);
-    if (callback.checkIsValid()) return true;
-    return Messages.showYesNoDialog(DiffBundle.message("merge.conflict.is.outdated"),
-                                    DiffBundle.message("cancel.visual.merge.dialog.title"),
-                                    CommonBundle.message("button.without.mnemonic.restore"),
-                                    CommonBundle.message("button.without.mnemonic.do.nothing"),
-                                    Messages.getQuestionIcon()) == Messages.YES;
+    if (callback.checkIsValid()) {
+      return true;
+    }
+    return MessageDialogBuilder
+             .yesNo(DiffBundle.message("cancel.visual.merge.dialog.title"), DiffBundle.message("merge.conflict.is.outdated"))
+             .yesText(CommonBundle.message("button.without.mnemonic.restore"))
+             .noText(CommonBundle.message("button.without.mnemonic.do.nothing"))
+             .guessWindowAndAsk();
   }
 
   public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {

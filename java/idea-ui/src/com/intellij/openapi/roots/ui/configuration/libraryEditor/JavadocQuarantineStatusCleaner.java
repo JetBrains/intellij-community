@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +55,7 @@ public final class JavadocQuarantineStatusCleaner {
           ApplicationManager.getApplication().invokeLater(() -> {
             String title = JavaUiBundle.message("quarantine.cleaner");
             String message = JavaUiBundle.message("quarantine.dialog.message", StringUtil.join(quarantined, "\n"));
-            if (Messages.showYesNoDialog(message, title, null) == Messages.YES) {
+            if (MessageDialogBuilder.yesNo(title, message).show() == Messages.YES) {
               cleanQuarantineStatusInBackground(quarantined);
             }
           }, ModalityState.any());

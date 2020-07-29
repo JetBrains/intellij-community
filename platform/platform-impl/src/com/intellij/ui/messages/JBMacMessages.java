@@ -2,44 +2,48 @@
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
-import com.intellij.ui.mac.MacMessagesEmulation;
+import com.intellij.ui.mac.MacMessages;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public final class JBMacMessages extends MacMessagesEmulation {
+@Service
+@ApiStatus.Internal
+public final class JBMacMessages extends MacMessages {
   @Override
   public int showYesNoCancelDialog(@NotNull String title,
-                                   String message,
-                                   @NotNull String defaultButton,
-                                   String alternateButton,
-                                   String otherButton,
+                                   @NotNull String message,
+                                   @NotNull String yesText,
+                                   @NotNull String noText,
+                                   @NotNull String cancelText,
                                    @Nullable Window window,
                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (window == null) {
       window = getForemostWindow();
     }
 
-    String defaultButtonCleaned = defaultButton.replace(BundleBase.MNEMONIC_STRING, "");
-    String otherButtonCleaned = otherButton.replace(BundleBase.MNEMONIC_STRING, "");
-    String alternateButtonCleaned = alternateButton.replace(BundleBase.MNEMONIC_STRING, "");
+    String defaultButtonCleaned = yesText.replace(BundleBase.MNEMONIC_STRING, "");
+    String otherButtonCleaned = cancelText.replace(BundleBase.MNEMONIC_STRING, "");
+    String alternateButtonCleaned = noText.replace(BundleBase.MNEMONIC_STRING, "");
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
                                                  new String [] {
                                                    defaultButtonCleaned,
                                                    otherButtonCleaned,
                                                    alternateButtonCleaned
                                                  },
-                                                 doNotAskOption, defaultButton, alternateButton);
+                                                 doNotAskOption, yesText, noText);
 
     String resultString = sheetMessage.getResult();
     int result = resultString.equals(defaultButtonCleaned) ? Messages.YES : resultString.equals(alternateButtonCleaned) ? Messages.NO : Messages.CANCEL;
@@ -82,15 +86,11 @@ public final class JBMacMessages extends MacMessagesEmulation {
 
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window) {
-    new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, okText, okText);
+    new SheetMessage(window == null ? getForemostWindow() : window, title, message,
+                     UIUtil.getInformationIcon(), new String[]{okText}, null, okText, okText);
   }
 
-  @Override
-  public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText) {
-    new SheetMessage(getForemostWindow(), title, message, UIUtil.getInformationIcon(), new String [] {okText}, null, null, okText);
-  }
-
-  private static @NotNull Window getForemostWindow() {
+  static @NotNull Window getForemostWindow() {
     Window window = null;
     IdeFocusManager ideFocusManager = IdeFocusManager.getGlobalInstance();
 
@@ -147,28 +147,17 @@ public final class JBMacMessages extends MacMessagesEmulation {
   }
 
   @Override
-  public int showYesNoDialog(@NotNull String title,
-                             String message,
-                             @NotNull String yesButton,
-                             @NotNull String noButton,
-                             @Nullable Window window) {
+  public boolean showYesNoDialog(@NotNull String title,
+                                 @NotNull String message,
+                                 @NotNull String yesText,
+                                 @NotNull String noText,
+                                 @Nullable Window window,
+                                 @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {yesButton, noButton}, null, yesButton, noButton);
-    return sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
-  }
-
-  @Override
-  public int showYesNoDialog(@NotNull String title,
-                             String message,
-                             @NotNull String yesButton,
-                             @NotNull String noButton,
-                             @Nullable Window window,
-                             @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
-    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {yesButton, noButton}, doNotAskDialogOption, yesButton, noButton);
-    int result = sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
-    if (doNotAskDialogOption != null && (result == Messages.YES || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
-      doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result);
+                                                 new String[]{yesText, noText}, null, yesText, noText);
+    boolean result = sheetMessage.getResult().equals(yesText);
+    if (doNotAskDialogOption != null && (result || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
+      doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result ? Messages.YES : Messages.NO);
     }
     return result;
   }

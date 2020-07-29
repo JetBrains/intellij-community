@@ -1,24 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
-import com.intellij.openapi.ui.Messages.YesNoCancelResult
-import com.intellij.openapi.ui.Messages.YesNoResult
+import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.mac.MacMessages
+import com.intellij.util.ui.UIUtil
+import java.awt.Component
 import java.awt.Window
 import javax.swing.Icon
 
-abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constructor(protected val title: @NlsContexts.DialogTitle String,
-                                                                                     protected val message: @DialogMessage String) {
+sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val title: @NlsContexts.DialogTitle String,
+                                                               protected val message: @DialogMessage String) {
   protected var yesText: String? = null
   protected var noText: String? = null
+
   protected var project: Project? = null
+  protected var parentComponent: Component? = null
+
   protected var icon: Icon? = null
   protected var doNotAskOption: DoNotAskOption? = null
   protected abstract fun getThis(): T
@@ -26,32 +32,50 @@ abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constru
   companion object {
     @JvmStatic
     fun yesNo(title: @NlsContexts.DialogTitle String, message: @DialogMessage String): YesNo {
-      return YesNo(title, message).icon(Messages.getQuestionIcon())
+      return YesNo(title, message).icon(UIUtil.getQuestionIcon())
+    }
+
+    @JvmStatic
+    fun okCancel(title: @NlsContexts.DialogTitle String, message: @DialogMessage String): OkCancelDialogBuilder {
+      return OkCancelDialogBuilder(title, message).icon(UIUtil.getQuestionIcon())
     }
 
     @JvmStatic
     fun yesNoCancel(title: @NlsContexts.DialogTitle String, message: @DialogMessage String): YesNoCancel {
-      return YesNoCancel(title, message).icon(Messages.getQuestionIcon())
+      return YesNoCancel(title, message).icon(UIUtil.getQuestionIcon())
     }
   }
 
+  @Deprecated(message = "Pass parentComponent to show", level = DeprecationLevel.ERROR)
+  fun parentComponent(parentComponent: Component?): T {
+    this.parentComponent = parentComponent
+    return getThis()
+  }
+
+  @Deprecated(message = "Pass project to show", level = DeprecationLevel.ERROR)
   fun project(project: Project?): T {
     this.project = project
     return getThis()
   }
 
   /**
-   * @see Messages.getInformationIcon
-   * @see Messages.getWarningIcon
-   * @see Messages.getErrorIcon
-   * @see Messages.getQuestionIcon
+   * @see asWarning
+   * @see UIUtil.getInformationIcon
+   * @see UIUtil.getWarningIcon
+   * @see UIUtil.getErrorIcon
+   * @see UIUtil.getQuestionIcon
    */
-  fun icon(icon: Icon): T {
+  fun icon(icon: Icon?): T {
     this.icon = icon
     return getThis()
   }
 
-  fun doNotAsk(doNotAskOption: DoNotAskOption): T {
+  fun asWarning(): T {
+    icon = UIUtil.getWarningIcon()
+    return getThis()
+  }
+
+  fun doNotAsk(doNotAskOption: DoNotAskOption?): T {
     this.doNotAskOption = doNotAskOption
     return getThis()
   }
@@ -69,23 +93,32 @@ abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constru
   class YesNo internal constructor(title: String, message: String) : MessageDialogBuilder<YesNo>(title, message) {
     override fun getThis() = this
 
-    val isYes: Boolean
-      get() = show() == Messages.YES
+    fun ask(project: Project?) = show(project = project, parentComponent = null)
+
+    fun ask(parentComponent: Component?) = show(project = null, parentComponent = parentComponent)
+
+    /**
+     * Use this method only if you know neither project nor component.
+     */
+    fun guessWindowAndAsk() = show(project = null, parentComponent = null)
+
+    @Deprecated(message = "Use ask(project)", level = DeprecationLevel.ERROR)
+    fun isYes(): Boolean = show(project = null, parentComponent = null)
+
+    @Deprecated(message = "Use ask(project)", level = DeprecationLevel.ERROR)
+    fun show(): Int = if (show(project = project, parentComponent = parentComponent)) YES else NO
 
     @YesNoResult
-    fun show(): Int {
-      val yesText = yesText ?: Messages.getYesButton()
-      val noText = noText ?: Messages.getNoButton()
-      return showMessage(project, mac = { window ->
+    private fun show(project: Project?, parentComponent: Component?): Boolean {
+      val yesText = yesText ?: CommonBundle.getYesButtonText()
+      val noText = noText ?: CommonBundle.getNoButtonText()
+      return showMessage(project, parentComponent, mac = { window ->
         MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
       }, other = {
-        val options = arrayOf(yesText, noText)
-        if (MessagesService.getInstance().showMessageDialog(project, null, message, title, options, 0, -1, icon, doNotAskOption, false) == 0) {
-          Messages.YES
-        }
-        else {
-          Messages.NO
-        }
+        (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
+                                                         message = message, title = title, icon = icon,
+                                                         options = arrayOf(yesText, noText),
+                                                         doNotAskOption = doNotAskOption) == 0)
       })
     }
   }
@@ -101,33 +134,79 @@ abstract class MessageDialogBuilder<T : MessageDialogBuilder<T>> private constru
     override fun getThis() = this
 
     @YesNoCancelResult
-    fun show(): Int {
-      val yesText = yesText ?: Messages.getYesButton()
-      val noText = noText ?: Messages.getNoButton()
-      val cancelText = cancelText ?: Messages.getCancelButton()
-      return showMessage(project, mac = { window ->
+    fun show(project: Project?) = show(project = project, parentComponent = null)
+
+    @YesNoCancelResult
+    fun show(parentComponent: Component?) = show(project = null, parentComponent = parentComponent)
+
+    @YesNoCancelResult
+    fun guessWindowAndAsk() = show(project = null, parentComponent = null)
+
+    @Deprecated(message = "Use show(project)", level = DeprecationLevel.ERROR)
+    fun show() = show(project = project, parentComponent = parentComponent)
+
+    @YesNoCancelResult
+    private fun show(project: Project?, parentComponent: Component?): Int {
+      val yesText = yesText ?: CommonBundle.getYesButtonText()
+      val noText = noText ?: CommonBundle.getNoButtonText()
+      val cancelText = cancelText ?: CommonBundle.getCancelButtonText()
+      return showMessage(project, parentComponent, mac = { window ->
         MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
       }, other = {
         val options = arrayOf(yesText, noText, cancelText)
-        when (Messages.showDialog(project, message, title, options, 0, icon, doNotAskOption)) {
-          0 -> Messages.YES
-          1 -> Messages.NO
-          else -> Messages.CANCEL
+        when (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
+                                                              message = message, title = title, icon = icon,
+                                                              options = options,
+                                                              doNotAskOption = doNotAskOption)) {
+          0 -> YES
+          1 -> NO
+          else -> CANCEL
         }
       })
     }
   }
 }
 
-private inline fun showMessage(project: Project?, mac: (Window?) -> Int, other: () -> Int): Int {
+class OkCancelDialogBuilder internal constructor(title: String, message: String) : MessageDialogBuilder<OkCancelDialogBuilder>(title, message) {
+  override fun getThis() = this
+
+  fun ask(project: Project?) = show(project = project, parentComponent = null)
+
+  fun ask(parentComponent: Component?) = show(project = null, parentComponent = parentComponent)
+
+  /**
+   * Use this method only if you know neither project nor component.
+   */
+  fun guessWindowAndAsk() = show(project = null, parentComponent = null)
+
+  private fun show(project: Project?, parentComponent: Component?): Boolean {
+    val yesText = yesText ?: CommonBundle.getOkButtonText()
+    val noText = noText ?: CommonBundle.getCancelButtonText()
+    return showMessage(project, parentComponent, mac = { window ->
+      MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+    }, other = {
+      MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
+                                                      message = message, title = title, icon = icon,
+                                                      options = arrayOf(yesText, noText),
+                                                      doNotAskOption = doNotAskOption) == 0
+    })
+  }
+}
+
+private inline fun <T> showMessage(project: Project?, parentComponent: Component?, mac: (Window?) -> T, other: () -> T): T {
   try {
-    if (Messages.canShowMacSheetPanel()) {
-      val window = WindowManager.getInstance().suggestParentWindow(project)
+    if (canShowMacSheetPanel()) {
+      val window = if (parentComponent == null) {
+        WindowManager.getInstance().suggestParentWindow(project)
+      }
+      else {
+        ComponentUtil.getWindow(parentComponent)
+      }
       return mac(window)
     }
   }
   catch (e: Exception) {
-    logger<Messages>().error(e)
+    logger<MessagesService>().error(e)
   }
   return other()
 }

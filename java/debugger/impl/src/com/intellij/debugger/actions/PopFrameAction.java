@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -115,47 +115,45 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
           int res = MessageDialogBuilder
             .yesNoCancel(title,
                          JavaDebuggerBundle.message("warning.finally.block.detected") + sb)
-            .project(project)
             .icon(Messages.getWarningIcon())
             .yesText(JavaDebuggerBundle.message("button.execute.finally"))
             .noText(JavaDebuggerBundle.message("button.drop.anyway"))
             .cancelText(CommonBundle.getCancelButtonText())
-            .doNotAsk(
-              new DialogWrapper.DoNotAskOption() {
-                @Override
-                public boolean isToBeShown() {
-                  return !DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME) &&
-                         !DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME);
-                }
+            .doNotAsk(new DialogWrapper.DoNotAskOption() {
+              @Override
+              public boolean isToBeShown() {
+                return !DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME) &&
+                       !DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME);
+              }
 
-                @Override
-                public void setToBeShown(boolean value, int exitCode) {
-                  if (!value) {
-                    DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME =
-                      exitCode == Messages.YES ? DebuggerSettings.EVALUATE_FINALLY_ALWAYS : DebuggerSettings.EVALUATE_FINALLY_NEVER;
-                  }
-                  else {
-                    DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
-                  }
+              @Override
+              public void setToBeShown(boolean value, int exitCode) {
+                if (!value) {
+                  DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME =
+                    exitCode == Messages.YES ? DebuggerSettings.EVALUATE_FINALLY_ALWAYS : DebuggerSettings.EVALUATE_FINALLY_NEVER;
                 }
+                else {
+                  DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
+                }
+              }
 
-                @Override
-                public boolean canBeHidden() {
-                  return true;
-                }
+              @Override
+              public boolean canBeHidden() {
+                return true;
+              }
 
-                @Override
-                public boolean shouldSaveOptionsOnCancel() {
-                  return false;
-                }
+              @Override
+              public boolean shouldSaveOptionsOnCancel() {
+                return false;
+              }
 
-                @NotNull
-                @Override
-                public String getDoNotShowMessage() {
-                  return UIBundle.message("dialog.options.do.not.show");
-                }
-              })
-            .show();
+              @NotNull
+              @Override
+              public String getDoNotShowMessage() {
+                return UIBundle.message("dialog.options.do.not.show");
+              }
+            })
+            .show(project);
 
           switch (res) {
             case Messages.CANCEL:

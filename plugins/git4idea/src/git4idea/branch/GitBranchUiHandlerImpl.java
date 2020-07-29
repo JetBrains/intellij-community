@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -171,8 +171,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
     Ref<Boolean> deleteChoice = Ref.create(false);
     boolean delete =
-      MessageDialogBuilder.yesNo(title, message).project(myProject).yesText(deleteButtonText).noText(getCancelButtonText()).doNotAsk(
-        new DialogWrapper.DoNotAskOption.Adapter() {
+      MessageDialogBuilder.yesNo(title, message).yesText(deleteButtonText).noText(getCancelButtonText())
+        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(boolean isSelected, int exitCode) {
             deleteChoice.set(isSelected);
@@ -183,7 +183,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
           public String getDoNotShowMessage() {
             return checkboxMessage;
           }
-        }).show() == YES;
+        })
+        .ask(myProject);
       boolean deleteTracking = deleteChoice.get();
       return delete
              ? deleteTracking ? DeleteRemoteBranchDecision.DELETE_WITH_TRACKING : DELETE

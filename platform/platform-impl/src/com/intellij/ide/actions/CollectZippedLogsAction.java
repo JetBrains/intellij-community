@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,18 +48,20 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
     if (!doNotShowDialog) {
-      int result = Messages.showOkCancelDialog(
-        project, IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"),
-        IdeBundle.message("dialog.title.sensitive.data"),
-        "Show in " + RevealFileAction.getFileManagerName(), "Cancel", Messages.getWarningIcon(),
-        new DialogWrapper.DoNotAskOption.Adapter() {
+      if (!MessageDialogBuilder.okCancel(IdeBundle.message("dialog.title.sensitive.data"),
+                                         IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"))
+        .yesText("Show in " + RevealFileAction.getFileManagerName())
+        .noText("Cancel")
+        .icon(Messages.getWarningIcon())
+        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(final boolean selected, final int exitCode) {
             PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
           }
-        }
-      );
-      if (result == Messages.CANCEL) return;
+        })
+        .ask(project)) {
+        return;
+      }
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {

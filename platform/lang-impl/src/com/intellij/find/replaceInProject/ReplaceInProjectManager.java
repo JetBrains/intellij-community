@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -50,7 +49,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-public class ReplaceInProjectManager {
+public final class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
@@ -240,12 +239,10 @@ public class ReplaceInProjectManager {
                                           StringUtil.trimMiddle(StringUtil.escapeXmlEntities(stringToFind), 400),
                                           filesCount,
                                           StringUtil.trimMiddle(StringUtil.escapeXmlEntities(stringToReplace), 400));
-    return Messages.YES == MessageDialogBuilder.yesNo(
-      FindBundle.message("find.replace.all.confirmation.title"),
-      message)
-                                               .yesText(FindBundle.message("find.replace.command"))
-                                               .project(myProject)
-                                               .noText(Messages.getCancelButton()).show();
+    return MessageDialogBuilder.yesNo(FindBundle.message("find.replace.all.confirmation.title"), message)
+      .yesText(FindBundle.message("find.replace.command"))
+      .noText(Messages.getCancelButton())
+      .ask(myProject);
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {

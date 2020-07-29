@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -276,7 +276,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
     override fun actionPerformed(event: AnActionEvent) {
       if (!MessageDialogBuilder.yesNo(CredentialStoreBundle.message("passwordSafeConfigurable.clear.passwords"),
                                       CredentialStoreBundle.message("passwordSafeConfigurable.are.you.sure")).yesText(
-          CredentialStoreBundle.message("passwordSafeConfigurable.remove.passwords")).isYes) {
+          CredentialStoreBundle.message("passwordSafeConfigurable.remove.passwords")).ask(event.project)) {
         return
       }
 

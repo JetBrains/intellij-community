@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -812,10 +811,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   private boolean confirmDeletion(int count) {
     return MessageDialogBuilder.yesNo(DiffBundle.message("confirm.delete"),
-                                      DiffBundle.message("delete.0.items", count)).project(myProject)
-             .yesText(CommonBundle.message("button.delete"))
-             .noText(CommonBundle.getCancelButtonText()).doNotAsk(
-      new DialogWrapper.DoNotAskOption() {
+                                      DiffBundle.message("delete.0.items", count))
+      .yesText(CommonBundle.message("button.delete"))
+      .noText(CommonBundle.getCancelButtonText())
+      .doNotAsk(new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return WarnOnDeletion.isWarnWhenDeleteItems();
@@ -841,7 +840,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         public String getDoNotShowMessage() {
           return DiffBundle.message("do.not.ask.me.again");
         }
-      }).show() == Messages.YES;
+      })
+      .ask(myProject);
   }
 
   private void syncElement(DirDiffElementImpl element) {

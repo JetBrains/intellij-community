@@ -24,7 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -199,26 +199,26 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     boolean confirmed;
     if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
       popup.myPopup.cancel();
-      confirmed = Messages.YES == Messages.showYesNoDialog(project,
-                                                           ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()),
-                                                           CommonBundle.message("title.confirmation"),
-                                                           Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption.Adapter() {
-          @Override
-          public void rememberChoice(boolean isSelected, int exitCode) {
-            runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
-          }
+      confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
+                                             ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
+                    .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+                      @Override
+                      public void rememberChoice(boolean isSelected, int exitCode) {
+                        runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
+                      }
 
-          @NotNull
-          @Override
-          public String getDoNotShowMessage() {
-            return ExecutionBundle.message("don.t.ask.again");
-          }
+                      @NotNull
+                      @Override
+                      public String getDoNotShowMessage() {
+                        return ExecutionBundle.message("don.t.ask.again");
+                      }
 
-          @Override
-          public boolean shouldSaveOptionsOnCancel() {
-            return true;
-          }
-        });
+                      @Override
+                      public boolean shouldSaveOptionsOnCancel() {
+                        return true;
+                      }
+                    })
+                    .ask(project);
     }
     else {
       confirmed = true;

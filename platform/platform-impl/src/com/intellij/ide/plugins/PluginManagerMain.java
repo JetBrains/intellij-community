@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
@@ -21,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
@@ -292,14 +292,17 @@ public abstract class PluginManagerMain {
       }
       message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";
 
-      int result;
+      boolean result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
-        result =
-          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), IdeBundle.message("dialog.title.dependent.plugins.found"),
-                                         IdeBundle.message("button.enable.all"),
-                                         IdeBundle.message("button.enable.updated.plugin.0", disabled.size()), CommonBundle.getCancelButtonText(),
-                                         Messages.getQuestionIcon());
-        if (result == Messages.CANCEL) return false;
+        int code =
+          MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
+            .yesText(IdeBundle.message("button.enable.all"))
+            .noText(IdeBundle.message("button.enable.updated.plugin.0", disabled.size()))
+            .guessWindowAndAsk();
+        if (code == Messages.CANCEL) {
+          return false;
+        }
+        result = code == Messages.YES;
       }
       else {
         message += "<br>Would you like to enable ";
@@ -311,15 +314,17 @@ public abstract class PluginManagerMain {
                      StringUtil.pluralize("dependency", disabledDependants.size());
         }
         message += "?";
-        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), IdeBundle.message("dialog.title.dependent.plugins.found"), Messages.getQuestionIcon());
-        if (result == Messages.NO) return false;
+        result = MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
+        if (!result) {
+          return false;
+        }
       }
 
-      if (result == Messages.YES) {
+      if (result) {
         disabled.addAll(disabledDependants);
         pluginEnabler.enablePlugins(disabled);
       }
-      else if (result == Messages.NO && !disabled.isEmpty()) {
+      else if (!disabled.isEmpty()) {
         pluginEnabler.enablePlugins(disabled);
       }
       return true;
