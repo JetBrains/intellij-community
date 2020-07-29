@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -336,6 +337,31 @@ public final class ClassUtils {
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
     return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
+  }
+
+  /**
+   * Removes exChild class reference from permits list of a parent.
+   * If this was the last element in permits list then parent class is converted to final if possible (sealed modifier is removed).
+   */
+  public static void removeFromPermitsList(@NotNull PsiClass parent, @NotNull PsiClass exChild) {
+    PsiReferenceList permitsList = parent.getPermitsList();
+    if (permitsList == null) return;
+    PsiJavaCodeReferenceElement[] childRefs = permitsList.getReferenceElements();
+    PsiJavaCodeReferenceElement exChildRef = ContainerUtil.find(childRefs, ref -> ref.resolve() == exChild);
+    if (exChildRef == null) return;
+    exChildRef.delete();
+    if (childRefs.length != 1) return;
+    PsiModifierList modifiers = parent.getModifierList();
+    if (modifiers == null) return;
+    modifiers.setModifierProperty(PsiModifier.SEALED, false);
+    if (!parent.hasModifierProperty(PsiModifier.ABSTRACT)) modifiers.setModifierProperty(PsiModifier.FINAL, true);
+  }
+
+  public static boolean hasSealedParent(@NotNull PsiClass psiClass) {
+    return StreamEx.of(psiClass.getExtendsListTypes())
+      .append(psiClass.getImplementsListTypes())
+      .map(r -> r.resolve())
+      .anyMatch(parent -> parent != null && parent.hasModifierProperty(PsiModifier.SEALED));
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {

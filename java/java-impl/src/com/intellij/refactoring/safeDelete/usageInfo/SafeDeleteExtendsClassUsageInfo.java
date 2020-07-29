@@ -15,13 +15,17 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.codeInsight.intention.impl.FillPermitsListFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
  * @author ven
@@ -55,6 +59,14 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     copyExtendsList(refClass.getImplementsList(), targetTypeParameter, elementFactory);
 
     getElement().delete();
+
+    if (!refClass.hasModifierProperty(PsiModifier.SEALED)) return;
+    ClassUtils.removeFromPermitsList(refClass, myExtendingClass);
+    final PsiModifierList modifiers = myExtendingClass.getModifierList();
+    if (modifiers == null || !modifiers.hasModifierProperty(PsiModifier.NON_SEALED)) return;
+    if (!ClassUtils.hasSealedParent(myExtendingClass)) {
+      modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
+    }
   }
 
   private void copyExtendsList(@Nullable PsiReferenceList sourceExtendsList,
@@ -68,6 +80,10 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
         if (ArrayUtilRt.find(existingRefTypes, referenceType) > -1) continue;
         PsiClassType classType = (PsiClassType)mySubstitutor.substitute(referenceType);
         PsiElement extendsRef = targetExtendsList.add(elementFactory.createReferenceElementByType(classType));
+        PsiClass classToExtend = classType.resolve();
+        if (classToExtend != null && classToExtend.hasModifierProperty(PsiModifier.SEALED)) {
+          FillPermitsListFix.fillPermitsList(classToExtend, Collections.singleton(myExtendingClass.getQualifiedName()));
+        }
         CodeStyleManager.getInstance(myExtendingClass.getProject()).reformat(extendsRef);
       }
     }
