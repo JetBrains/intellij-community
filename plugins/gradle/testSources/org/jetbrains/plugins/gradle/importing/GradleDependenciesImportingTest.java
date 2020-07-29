@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.MultiMap;
 import org.gradle.util.GradleVersion;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -39,11 +40,13 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.containers.ContainerUtil.ar;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
@@ -1914,9 +1917,20 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test", "project.customSrc");
-    assertModuleLibDeps("project.main", "Gradle: junit:junit:4.12", "Gradle: org.hamcrest:hamcrest-core:1.3");
     assertModuleLibDeps("project.test");
-    assertModuleLibDeps("project.customSrc", "Gradle: org.hamcrest:hamcrest-core:1.3");
+    if (isGradleNewerOrSameAs("3.0") && isGradleOlderOrSameAs("4.0")) {
+      MultiMap<String, String> expectedVariants = MultiMap.create();
+      expectedVariants.putValues("junit", asList("junit:junit:4.12", "junit-4.12.jar"));
+      expectedVariants.putValues("hamcrest", asList("org.hamcrest:hamcrest-core:1.3", "hamcrest-core-1.3.jar"));
+      BiPredicate<String, String> endsWithVariant = (actual, expected) -> expectedVariants.get(expected).stream().anyMatch(actual::endsWith);
+
+      assertModuleLibDeps(endsWithVariant, "project.main", "junit", "hamcrest");
+      assertModuleLibDeps(endsWithVariant, "project.customSrc", "hamcrest");
+
+    } else {
+      assertModuleLibDeps("project.main", "Gradle: junit:junit:4.12", "Gradle: org.hamcrest:hamcrest-core:1.3");
+      assertModuleLibDeps("project.customSrc", "Gradle: org.hamcrest:hamcrest-core:1.3");
+    }
   }
 
   @SuppressWarnings("SameParameterValue")
