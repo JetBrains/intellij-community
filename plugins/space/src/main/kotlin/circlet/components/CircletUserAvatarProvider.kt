@@ -8,7 +8,6 @@ import circlet.ui.CircletImageLoader
 import circlet.utils.application
 import kotlinx.coroutines.CancellationException
 import libraries.coroutines.extra.LifetimeSource
-import libraries.klogging.KLogger
 import libraries.klogging.logger
 import runtime.reactive.Property
 import runtime.reactive.awaitFirst
@@ -16,7 +15,7 @@ import runtime.reactive.filter
 import runtime.reactive.mapInit
 
 class CircletUserAvatarProvider {
-  private val log: KLogger = logger<CircletWorkspaceComponent>()
+  private val log = logger<CircletUserAvatarProvider>()
 
   private val lifetime: LifetimeSource = LifetimeSource()
 
