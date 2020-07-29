@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
@@ -201,7 +202,7 @@ class FeatureUsageData {
     if (place == null) return this
 
     var reported = ActionPlaces.UNKNOWN
-    if (isCommonPlace(place)) {
+    if (isCommonPlace(place) || ActionPlaceHolder.isCustomActionPlace(place)) {
       reported = place
     }
     else if (ActionPlaces.isPopupPlace(place)) {
