@@ -71,7 +71,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewPanel panel) {
-    Content content = manager.getFactory().createContent(panel, panel.getDisplayName(), false);
+    Content content = manager.getFactory().createContent(panel, panel.getName(0), false);
     content.setCloseable(false);
     manager.addContent(content);
   }
@@ -109,8 +109,12 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(isToolbarVisible(window, PropertiesComponent.getInstance(project)));
     ContentManager manager = window.getContentManager();
     createContent(manager, new HighlightingPanel(project, state));
-    if (isProjectErrorsEnabled())
-    createContent(manager, new ProjectErrorsPanel(project, state));
+    if (isProjectErrorsEnabled()) {
+      ProblemsViewPanel panel = new ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.project"));
+      panel.getTreeModel().setRoot(new CollectorBasedRoot(panel));
+      panel.getTree().getEmptyText().setText(ProblemsViewBundle.message("problems.view.project.empty"));
+      createContent(manager, panel);
+    }
     selectContent(manager, state.getSelectedIndex());
     selectionChanged(true, manager.getSelectedContent());
     manager.addContentManagerListener(new ContentManagerListener() {

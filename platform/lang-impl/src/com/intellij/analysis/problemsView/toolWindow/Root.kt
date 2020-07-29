@@ -22,7 +22,7 @@ internal abstract class Root(val panel: ProblemsViewPanel)
 
   override fun getLeafState() = LeafState.NEVER
 
-  override fun getName() = panel.displayName
+  override fun getName() = panel.getName(0)
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)

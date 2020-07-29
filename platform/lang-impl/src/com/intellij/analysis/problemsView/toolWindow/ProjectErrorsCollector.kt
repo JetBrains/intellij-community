@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -71,17 +72,17 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private fun notify(problem: Problem, state: SetUpdateState) {
     when (state) {
       SetUpdateState.ADDED -> {
-        getProblemsListener()?.problemAppeared(problem)
+        project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)
         val emptyBefore = problemCount.getAndIncrement() == 0
         if (emptyBefore) updateToolWindowIcon()
       }
       SetUpdateState.REMOVED -> {
-        getProblemsListener()?.problemDisappeared(problem)
+        project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemDisappeared(problem)
         val emptyAfter = problemCount.decrementAndGet() == 0
         if (emptyAfter) updateToolWindowIcon()
       }
       SetUpdateState.UPDATED -> {
-        getProblemsListener()?.problemUpdated(problem)
+        project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemUpdated(problem)
       }
       SetUpdateState.IGNORED -> {
       }
@@ -97,12 +98,4 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     true -> Toolwindows.ToolWindowProblemsEmpty
     else -> Toolwindows.ToolWindowProblems
   }
-
-  private fun getProblemsListener() = ProblemsView.getToolWindow(project)
-    ?.contentManagerIfCreated
-    ?.contents
-    ?.mapNotNull { it.component as? ProjectErrorsPanel }
-    ?.firstOrNull()
-    ?.treeModel
-    ?.root
 }

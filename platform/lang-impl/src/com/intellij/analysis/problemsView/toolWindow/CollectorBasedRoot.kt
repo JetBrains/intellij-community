@@ -2,26 +2,13 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.ProblemsCollector
-import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
-import com.intellij.openapi.project.Project
+import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, state) {
-
-  init {
-    treeModel.root = ProjectErrorsRoot(this)
-    tree.emptyText.text = ProblemsViewBundle.message("problems.view.project.empty")
+internal class CollectorBasedRoot(panel: ProblemsViewPanel, val collector: ProblemsCollector) : Root(panel) {
+  internal constructor(panel: ProblemsViewPanel) : this(panel, ProblemsCollector.getInstance(panel.project)) {
+    panel.project.messageBus.connect(this).subscribe(ProblemsListener.TOPIC, this)
   }
-
-  override fun getDisplayName() = ProblemsViewBundle.message("problems.view.project")
-  override fun getSortFoldersFirst(): Option? = null
-  override fun getSortBySeverity(): Option? = null
-}
-
-
-private class ProjectErrorsRoot(panel: ProblemsViewPanel) : Root(panel) {
-  private val collector = ProblemsCollector.getInstance(panel.project)
 
   override fun getProblemCount() = collector.getProblemCount()
   override fun getProblemFiles() = collector.getProblemFiles()

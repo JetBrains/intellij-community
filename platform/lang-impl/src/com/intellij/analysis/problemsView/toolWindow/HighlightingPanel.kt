@@ -21,7 +21,8 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.Icon
 
 internal class HighlightingPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, state), FileEditorManagerListener, PowerSaveMode.Listener {
+  : ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
+    FileEditorManagerListener, PowerSaveMode.Listener {
 
   private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
   private var previousStatus: Status? = null
@@ -35,7 +36,6 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
       .subscribe(PowerSaveMode.TOPIC, this)
   }
 
-  override fun getDisplayName() = ProblemsViewBundle.message("problems.view.highlighting")
   override fun getSortFoldersFirst(): Option? = null
   override fun getTreeExpander(): TreeExpander? = null
 
