@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
@@ -217,18 +217,24 @@ public class Messages {
   public static Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
     //noinspection SSBasedInspection
-    return () -> SwingUtilities.invokeLater(() -> makeCurrentMessageDialogGoAway(
-      projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
+    return () -> SwingUtilities.invokeLater(() -> {
+      makeCurrentMessageDialogGoAway(projectWindow == null ? Window.getWindows() : projectWindow.getOwnedWindows());
+    });
   }
 
   private static void makeCurrentMessageDialogGoAway(Window @NotNull [] checkWindows) {
     for (Window w : checkWindows) {
       JDialog dialog = w instanceof JDialog ? (JDialog)w : null;
-      if (dialog == null || !dialog.isModal()) continue;
-      JButton cancelButton = UIUtil.uiTraverser(dialog.getRootPane()).filter(JButton.class)
+      if (dialog == null || !dialog.isModal()) {
+        continue;
+      }
+      JButton cancelButton = UIUtil.uiTraverser(dialog.getRootPane())
+        .filter(JButton.class)
         .filter(b -> CommonBundle.getCancelButtonText().equals(b.getText()))
         .first();
-      if (cancelButton != null) cancelButton.doClick();
+      if (cancelButton != null) {
+        cancelButton.doClick();
+      }
     }
   }
 
@@ -264,11 +270,11 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfo.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfoRt.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static boolean isMacSheetEmulation() {
-    return SystemInfo.isMac
+    return SystemInfoRt.isMac
            && Registry.is("ide.mac.message.dialogs.as.sheets", true)
            && Registry.is("ide.mac.message.sheets.java.emulation", false);
   }

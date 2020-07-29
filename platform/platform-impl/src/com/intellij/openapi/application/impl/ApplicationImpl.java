@@ -43,7 +43,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
@@ -737,7 +736,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                             ApplicationBundle.message("exit.confirm.prompt", name))
           .yesText(ApplicationBundle.message("command.exit"))
           .noText(CommonBundle.getCancelButtonText())
-          .doNotAsk(option).show();
+          .doNotAsk(option)
+          .show();
       }
       return result == Messages.YES;
     }

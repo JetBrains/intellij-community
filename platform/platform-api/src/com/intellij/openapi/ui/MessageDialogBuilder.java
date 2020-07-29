@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.MacMessages;
-import com.intellij.util.ObjectUtils;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,15 +84,16 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
 
     @Messages.YesNoResult
     public int show() {
-      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.getYesButton());
-      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.getNoButton());
+      String yesText = myYesText == null ? Messages.getYesButton() : myYesText;
+      String noText = myNoText == null ? Messages.getNoButton() : myNoText;
       try {
-        if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
+        if (!Messages.isApplicationInUnitTestOrHeadless() && Messages.canShowMacSheetPanel()) {
           Window window = WindowManager.getInstance().suggestParentWindow(myProject);
           return MacMessages.getInstance().showYesNoDialog(myTitle, myMessage, yesText, noText, window, myDoNotAskOption);
         }
       }
-      catch (Exception ignored) { }
+      catch (Exception ignored) {
+      }
 
       String[] options = {yesText, noText};
       return Messages.showDialog(myProject, myMessage, myTitle, options, 0, myIcon, myDoNotAskOption) == 0 ? Messages.YES : Messages.NO;
@@ -123,9 +123,9 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
 
     @Messages.YesNoCancelResult
     public int show() {
-      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.getYesButton());
-      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.getNoButton());
-      String cancelText = ObjectUtils.chooseNotNull(myCancelText, Messages.getCancelButton());
+      String yesText = myYesText == null ? Messages.getYesButton() : myYesText;
+      String noText = myNoText == null ? Messages.getNoButton() : myNoText;
+      String cancelText = myCancelText == null ? Messages.getCancelButton() : myCancelText;
       try {
         if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
           Window window = WindowManager.getInstance().suggestParentWindow(myProject);
