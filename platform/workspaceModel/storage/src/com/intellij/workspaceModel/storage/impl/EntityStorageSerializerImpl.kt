@@ -347,7 +347,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       val refsTable = kryo.readClassAndObject(input) as RefsTable
 
       // Read indexes
-      val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex<PersistentEntityId<*>>
+      val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
       val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>

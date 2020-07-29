@@ -14,14 +14,14 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
-  internal open val softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
+  internal open val softLinks: MultimapStorageIndex,
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   internal open val persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>,
   internal open val externalMappings: Map<String, ExternalEntityMappingImpl<*>>
 ) {
 
-  constructor(softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
+  constructor(softLinks: MultimapStorageIndex,
               virtualFileIndex: VirtualFileIndex,
               entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
               persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>
@@ -85,7 +85,7 @@ internal open class StorageIndexes(
 }
 
 internal class MutableStorageIndexes(
-  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex<PersistentEntityId<*>>,
+  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val persistentIdIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<PersistentEntityId<*>>,
