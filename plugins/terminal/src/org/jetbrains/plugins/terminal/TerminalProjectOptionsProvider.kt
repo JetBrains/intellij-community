@@ -118,6 +118,8 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         provider.state.shellPath = oldState.myShellPath
         provider.state.envDataOptions.set(oldState.envDataOptions.get())
       }
+      @Suppress("DEPRECATION")
+      provider.state.shellPath = provider.state.shellPath ?: TerminalOptionsProvider.instance.getShellPathAndClear()
       return provider
     }
   }

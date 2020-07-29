@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
@@ -55,6 +56,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
+    var myShellPath: String? = null
     var myTabName: String = "Local"
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -112,6 +114,13 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated("To be removed")
+  fun getShellPathAndClear(): String? {
+    val value = myState.myShellPath
+    myState.myShellPath = null
+    return value
+  }
 
   companion object {
     val instance: TerminalOptionsProvider
