@@ -1,51 +1,51 @@
 package circlet.auth
 
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.asCoroutineDispatcher
+import io.ktor.network.selector.ActorSelectorManager
+import io.ktor.network.sockets.ServerSocket
+import io.ktor.network.sockets.aSocket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
+import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeStringUtf8
+import kotlinx.coroutines.*
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.ServerSocket
-import java.net.Socket
+
+private val ioDispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
 internal suspend fun startRedirectHandling(lifetime: Lifetime, ports: Collection<Int>): SpaceRedirectHandlingInfo? {
   val redirectUrl = CompletableDeferred<String>()
   val freePort = occupyAvailablePort(lifetime, ports) { serverSocket ->
-    val socket: Socket = serverSocket.accept()
-    socket.getInputStream().use { inputStream ->
-      BufferedReader(InputStreamReader(inputStream)).use { reader ->
-        var line = reader.readLine()
-
-        line = line.substringAfter("/").substringBefore(" ")
-
-        redirectUrl.complete(line)
-
-        PrintWriter(socket.getOutputStream()).use { out ->
-          val response = "<script>close()</script>"
-          out.println("HTTP/1.1 200 OK")
-          out.println("Content-Type: text/html")
-          out.println("Content-Length: " + response.length)
-          out.println()
-          out.println(response)
-          out.flush()
-        }
-      }
+    val socket = serverSocket.accept()
+    launch(lifetime, ioDispatcher) {
+      val response = "<script>close()</script>"
+      val output = socket.openWriteChannel(autoFlush = true)
+      output.writeStringUtf8(
+        """
+        HTTP/1.1 200 OK
+        Content-Type: text/html
+        Content-Length: ${response.length}
+        
+        $response
+      """.trimIndent()
+      )
     }
+
+    val input = socket.openReadChannel()
+    val line = input.readUTF8Line()!!.substringAfter("/").substringBefore(" ")
+    redirectUrl.complete(line)
   } ?: return null
   return SpaceRedirectHandlingInfo(freePort, redirectUrl)
 }
 
-private suspend fun occupyAvailablePort(lifetime: Lifetime, ports: Collection<Int>, withFreePort: (ServerSocket) -> Unit): Int? {
+private suspend fun occupyAvailablePort(lifetime: Lifetime, ports: Collection<Int>, withFreePort: suspend (ServerSocket) -> Unit): Int? {
   val reservedPort = CompletableDeferred<Int?>()
-  launch(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+  launch(lifetime, ioDispatcher) {
     for (port in ports.distinct().shuffled()) {
       try {
-        ServerSocket(port).use { socket ->
+        aSocket(ActorSelectorManager(ioDispatcher)).tcp().bind(port = port).use { socket ->
           reservedPort.complete(port)
           withFreePort(socket)
         }
