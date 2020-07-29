@@ -196,6 +196,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    * For shared indexes it is a good idea to index JDKs in the last turn (because they likely have shared index available)
    * so this method moves all SDK providers to the end.
    */
+  @SuppressWarnings("ReturnValueIgnored")  // commit 6c268108 seems to abuse Collectors.toCollection and Stream.collect
   @NotNull
   private List<IndexableFilesProvider> getOrderedProviders() {
     List<IndexableFilesProvider> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
