@@ -1,6 +1,7 @@
 package circlet.components
 
 import circlet.arenas.initCircletArenas
+import circlet.auth.SpaceAuthNotifier
 import circlet.auth.startRedirectHandling
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
@@ -15,11 +16,9 @@ import circlet.platform.workspaces.WorkspaceManagerHost
 import circlet.runtime.ApplicationDispatcher
 import circlet.settings.CircletServerSettings
 import circlet.settings.CircletSettings
-import circlet.settings.CircletSettingsPanel
 import circlet.utils.IdeaPasswordSafePersistence
 import circlet.utils.LifetimedDisposable
 import circlet.utils.LifetimedDisposableImpl
-import circlet.utils.notify
 import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
 import com.intellij.ide.browsers.BrowserLauncher
@@ -71,7 +70,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
       if (!autoSignIn(settingsOnStartup, wsLifetime)) {
-        notifyDisconnected()
+        SpaceAuthNotifier.notifyDisconnected()
       }
     }
   }
@@ -89,7 +88,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
 
 
   override suspend fun authFailed() {
-    authCheckFailedNotification()
+    SpaceAuthNotifier.authCheckFailedNotification()
     manager.value?.signOut(false)
   }
 
@@ -124,7 +123,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
       wss.signInWithToken(response.toTokenInfo())
       settings.serverSettings = CircletServerSettings(true, server)
       manager.value = wss
-      notifyConnected()
+      SpaceAuthNotifier.notifyConnected()
     }
     return response
   }
@@ -154,24 +153,6 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
 
 val circletWorkspace: CircletWorkspaceComponent
   get() = ServiceManager.getService(CircletWorkspaceComponent::class.java)
-
-
-private fun notifyDisconnected() {
-  notify("Disconnected.<br><a href=\"switch-on\">Configure Server</a>", ::configure)
-}
-
-private fun notifyConnected() {
-  notify("Connected")
-}
-
-private fun authCheckFailedNotification() {
-  notify("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>") {
-  }
-}
-
-private fun configure() {
-  CircletSettingsPanel.openSettings(null)
-}
 
 fun ideaConfig(server: String): WorkspaceConfiguration {
   return WorkspaceConfiguration(
