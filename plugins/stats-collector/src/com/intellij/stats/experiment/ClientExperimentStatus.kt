@@ -55,12 +55,8 @@ class ClientExperimentStatus : ExperimentStatus {
       val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
       else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
       language2group[languageSettings.id] = groupInfo
-      val propertyName = "$EXPERIMENT_GROUP_PROPERTY_KEY.$languageSettings"
-      val experimentChanged = properties.getInt(propertyName, experimentConfig.version) != groupNumber
+      val experimentChanged = properties.getInt(experimentChangedProperty(languageSettings.id), experimentConfig.version) != groupNumber
       language2experimentChanged[languageSettings.id] = experimentChanged
-      if (experimentChanged) {
-        properties.setValue(propertyName, groupNumber, experimentConfig.version)
-      }
     }
   }
 
@@ -73,10 +69,14 @@ class ClientExperimentStatus : ExperimentStatus {
     val matchingLanguage = findMatchingLanguage(language) ?: return false
     val experimentChanged = language2experimentChanged[matchingLanguage] ?: return false
     if (experimentChanged) {
+      val groupNumber = language2group[matchingLanguage]?.version ?: experimentConfig.version
+      PropertiesComponent.getInstance().setValue(experimentChangedProperty(matchingLanguage), groupNumber, experimentConfig.version)
       language2experimentChanged[matchingLanguage] = false
     }
     return experimentChanged
   }
+
+  private fun experimentChangedProperty(languageId: String) = "$EXPERIMENT_GROUP_PROPERTY_KEY.$languageId"
 
   private fun findMatchingLanguage(language: Language): String? {
     val baseLanguages = Language.getRegisteredLanguages().filter { language.isKindOf(it) }
