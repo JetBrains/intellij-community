@@ -1202,9 +1202,12 @@ public final class RefactoringUtil {
       return existing[0];
     }
     String qNameToCreate = qNameToCreateInSourceRoot(aPackage, sourceRoot);
-    final String[] shortNames = qNameToCreate.split("\\.");
     PsiDirectory current = aPackage.getManager().findDirectory(sourceRoot);
     LOG.assertTrue(current != null);
+    if (qNameToCreate.isEmpty()) {
+      return current;
+    }
+    final String[] shortNames = qNameToCreate.split("\\.");
     for (String shortName : shortNames) {
       PsiDirectory subdirectory = current.findSubdirectory(shortName);
       if (subdirectory == null) {
