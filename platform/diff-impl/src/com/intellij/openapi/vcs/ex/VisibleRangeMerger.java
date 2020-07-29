@@ -6,34 +6,47 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.diff.util.DiffDrawUtil.yToLine;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class VisibleRangeMerger {
+public class VisibleRangeMerger<T> {
   private static final Logger LOG = Logger.getInstance(VisibleRangeMerger.class);
 
   @NotNull private final Editor myEditor;
+  @NotNull private final FlagsProvider<T> myFlagsProvider;
 
-  @NotNull private ChangesBlock myBlock = new ChangesBlock();
+  @NotNull private ChangesBlock<T> myBlock = new ChangesBlock<>();
 
-  @NotNull private final List<ChangesBlock> myResult = new ArrayList<>();
+  @NotNull private final List<ChangesBlock<T>> myResult = new ArrayList<>();
 
-  public VisibleRangeMerger(@NotNull Editor editor) {
+  private VisibleRangeMerger(@NotNull Editor editor, @NotNull FlagsProvider<T> flagsProvider) {
     myEditor = editor;
+    myFlagsProvider = flagsProvider;
   }
 
-  protected boolean isIgnored(@NotNull Range range) {
-    return false;
+  public static List<ChangesBlock<Unit>> merge(@NotNull Editor editor,
+                                               @NotNull List<? extends Range> ranges,
+                                               @NotNull Rectangle clip) {
+    return new VisibleRangeMerger<>(editor, FlagsProvider.EMPTY).run(ranges, clip);
+  }
+
+  public static <T> List<ChangesBlock<T>> merge(@NotNull Editor editor,
+                                                @NotNull List<? extends Range> ranges,
+                                                @NotNull FlagsProvider<T> flagsProvider,
+                                                @NotNull Rectangle clip) {
+    return new VisibleRangeMerger<>(editor, flagsProvider).run(ranges, clip);
   }
 
   @NotNull
-  public List<ChangesBlock> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+  private List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
     int visibleLineStart = yToLine(myEditor, clip.y);
     int visibleLineEnd = yToLine(myEditor, clip.y + clip.height) + 1;
 
@@ -44,11 +57,11 @@ public class VisibleRangeMerger {
       if (line2 < visibleLineStart) continue;
       if (line1 > visibleLineEnd) break;
 
-      boolean isIgnored = isIgnored(range);
+      T flags = myFlagsProvider.getFlags(range);
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
 
-      if (innerRanges == null || isIgnored) {
-        processLine(range, line1, line2, range.getType(), isIgnored);
+      if (innerRanges == null || myFlagsProvider.shouldIgnoreInnerRanges(flags)) {
+        processLine(range, line1, line2, range.getType(), flags);
       }
       else {
         for (Range.InnerRange innerRange : innerRanges) {
@@ -56,7 +69,7 @@ public class VisibleRangeMerger {
           int innerLine2 = line1 + innerRange.getLine2();
           byte innerType = innerRange.getType();
 
-          processLine(range, innerLine1, innerLine2, innerType, isIgnored);
+          processLine(range, innerLine1, innerLine2, innerType, flags);
         }
       }
     }
@@ -65,7 +78,7 @@ public class VisibleRangeMerger {
     return myResult;
   }
 
-  private void processLine(@NotNull Range range, int start, int end, byte type, boolean isIgnored) {
+  private void processLine(@NotNull Range range, int start, int end, byte type, @NotNull T flags) {
     EditorImpl editorImpl = (EditorImpl)myEditor;
     Document document = myEditor.getDocument();
     int lineCount = getLineCount(document);
@@ -86,10 +99,10 @@ public class VisibleRangeMerger {
 
     if (start == end) {
       if (startHasFolding) {
-        appendChange(range, new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+        appendChange(range, new ChangedLines<>(visualStart, visualStart + 1, Range.MODIFIED, flags));
       }
       else {
-        appendChange(range, new ChangedLines(visualStart, visualStart, type, isIgnored));
+        appendChange(range, new ChangedLines<>(visualStart, visualStart, type, flags));
       }
     }
     else {
@@ -108,33 +121,33 @@ public class VisibleRangeMerger {
       }
 
       if (type == Range.EQUAL || type == Range.MODIFIED) {
-        appendChange(range, new ChangedLines(visualStart, visualEnd, type, isIgnored));
+        appendChange(range, new ChangedLines<>(visualStart, visualEnd, type, flags));
       }
       else {
         if (startHasFolding && visualEnd - visualStart > 1) {
-          appendChange(range, new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+          appendChange(range, new ChangedLines<>(visualStart, visualStart + 1, Range.MODIFIED, flags));
           startHasFolding = false;
           visualStart++;
         }
         if (endHasFolding && visualEnd - visualStart > 1) {
-          appendChange(range, new ChangedLines(visualStart, visualEnd - 1, type, isIgnored));
-          appendChange(range, new ChangedLines(visualEnd - 1, visualEnd, Range.MODIFIED, isIgnored));
+          appendChange(range, new ChangedLines<>(visualStart, visualEnd - 1, type, flags));
+          appendChange(range, new ChangedLines<>(visualEnd - 1, visualEnd, Range.MODIFIED, flags));
         }
         else {
           byte bodyType = startHasFolding || endHasFolding ? Range.MODIFIED : type;
-          appendChange(range, new ChangedLines(visualStart, visualEnd, bodyType, isIgnored));
+          appendChange(range, new ChangedLines<>(visualStart, visualEnd, bodyType, flags));
         }
       }
     }
   }
 
-  private void appendChange(@NotNull Range range, @NotNull ChangedLines newChange) {
-    ChangedLines lastItem = ContainerUtil.getLastItem(myBlock.changes);
+  private void appendChange(@NotNull Range range, @NotNull ChangedLines<T> newChange) {
+    ChangedLines<T> lastItem = ContainerUtil.getLastItem(myBlock.changes);
     if (lastItem != null && lastItem.line2 < newChange.line1) {
       finishBlock();
     }
 
-    List<ChangedLines> changes = myBlock.changes;
+    List<ChangedLines<T>> changes = myBlock.changes;
     List<Range> ranges = myBlock.ranges;
 
     if (ContainerUtil.getLastItem(ranges) != range) {
@@ -146,14 +159,14 @@ public class VisibleRangeMerger {
       return;
     }
 
-    ChangedLines lastChange = changes.remove(changes.size() - 1);
+    ChangedLines<T> lastChange = changes.remove(changes.size() - 1);
 
     if (lastChange.line1 == lastChange.line2 &&
         newChange.line1 == newChange.line2) {
       assert lastChange.line1 == newChange.line1;
-      byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
-      boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
-      changes.add(new ChangedLines(lastChange.line1, lastChange.line2, type, isIgnored));
+      byte type = mergeTypes(lastChange, newChange);
+      T flags = myFlagsProvider.mergeFlags(lastChange.flags, newChange.flags);
+      changes.add(new ChangedLines<>(lastChange.line1, lastChange.line2, type, flags));
     }
     else if (lastChange.line1 == lastChange.line2 && newChange.type == Range.EQUAL ||
              newChange.line1 == newChange.line2 && lastChange.type == Range.EQUAL) {
@@ -161,27 +174,27 @@ public class VisibleRangeMerger {
       changes.add(newChange);
     }
     else if (lastChange.type == newChange.type &&
-             lastChange.isIgnored == newChange.isIgnored) {
+             Objects.equals(lastChange.flags, newChange.flags)) {
       int union1 = Math.min(lastChange.line1, newChange.line1);
       int union2 = Math.max(lastChange.line2, newChange.line2);
-      changes.add(new ChangedLines(union1, union2, lastChange.type, lastChange.isIgnored));
+      changes.add(new ChangedLines<>(union1, union2, lastChange.type, lastChange.flags));
     }
     else {
       int intersection1 = Math.max(lastChange.line1, newChange.line1);
       int intersection2 = Math.min(lastChange.line2, newChange.line2);
 
       if (lastChange.line1 != intersection1) {
-        changes.add(new ChangedLines(lastChange.line1, intersection1, lastChange.type, lastChange.isIgnored));
+        changes.add(new ChangedLines<>(lastChange.line1, intersection1, lastChange.type, lastChange.flags));
       }
 
       if (intersection1 != intersection2) {
-        byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
-        boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
-        changes.add(new ChangedLines(intersection1, intersection2, type, isIgnored));
+        byte type = mergeTypes(lastChange, newChange);
+        T flags = myFlagsProvider.mergeFlags(lastChange.flags, newChange.flags);
+        changes.add(new ChangedLines<>(intersection1, intersection2, type, flags));
       }
 
       if (newChange.line2 != intersection2) {
-        changes.add(new ChangedLines(intersection2, newChange.line2, newChange.type, newChange.isIgnored));
+        changes.add(new ChangedLines<>(intersection2, newChange.line2, newChange.type, newChange.flags));
       }
     }
   }
@@ -189,6 +202,40 @@ public class VisibleRangeMerger {
   private void finishBlock() {
     if (myBlock.changes.isEmpty()) return;
     myResult.add(myBlock);
-    myBlock = new ChangesBlock();
+    myBlock = new ChangesBlock<>();
+  }
+
+  private byte mergeTypes(@NotNull ChangedLines<T> change1, @NotNull ChangedLines<T> change2) {
+    return change1.type == change2.type ? change1.type : Range.MODIFIED;
+  }
+
+  public interface FlagsProvider<T> {
+    @NotNull
+    T getFlags(@NotNull Range range);
+
+    @NotNull
+    T mergeFlags(@NotNull T flags1, @NotNull T flags2);
+
+    default boolean shouldIgnoreInnerRanges(@NotNull T flag) {
+      return false;
+    }
+
+
+    FlagsProvider<Unit> EMPTY = new FlagsProvider<Unit>() {
+      @Override
+      public @NotNull Unit getFlags(@NotNull Range range) {
+        return Unit.INSTANCE;
+      }
+
+      @Override
+      public @NotNull Unit mergeFlags(@NotNull Unit flags1, @NotNull Unit flags2) {
+        return Unit.INSTANCE;
+      }
+
+      @Override
+      public boolean shouldIgnoreInnerRanges(@NotNull Unit flag) {
+        return true;
+      }
+    };
   }
 }

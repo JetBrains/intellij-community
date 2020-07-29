@@ -1341,11 +1341,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected int getFramingBorderSize() {
-        return JBUIScale.scale(2);
-      }
-
-      @Override
       public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
         if (!myTracker.isValid()) return;
         final Document document = myTracker.getDocument();
@@ -1393,6 +1388,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
           myTracker.rollbackChanges(range);
         }
+      }
+
+      @Override
+      protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+        paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
       }
     }
 

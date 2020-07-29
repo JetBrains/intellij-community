@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import java.awt.Graphics
 import java.awt.Point
 import java.util.*
 
@@ -120,6 +121,10 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     }
 
     override fun getFileType(): FileType = tracker.virtualFile.fileType
+
+    override fun paint(editor: Editor, g: Graphics) {
+      LineStatusMarkerRenderer.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, 0)
+    }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
       : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {

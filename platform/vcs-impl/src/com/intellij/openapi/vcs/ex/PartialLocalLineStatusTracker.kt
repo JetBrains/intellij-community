@@ -39,6 +39,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
+import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
@@ -521,11 +522,15 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   protected class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
     LocalLineStatusTrackerImpl.LocalLineStatusMarkerRenderer(tracker) {
 
-    override fun createMerger(editor: Editor): VisibleRangeMerger {
-      return object : VisibleRangeMerger(editor) {
-        override fun isIgnored(range: Range): Boolean {
-          return range is LocalRange && range.changelistId != tracker.defaultMarker.changelistId
-        }
+    override fun paint(editor: Editor, g: Graphics) {
+      val flagsProvider = MyFlagsProvider(tracker.defaultMarker.changelistId)
+      LineStatusMarkerRenderer.paintDefault(editor, g, myTracker, flagsProvider, 0)
+    }
+
+    class MyFlagsProvider(val defaultChangelistId: String) : DefaultFlagsProvider() {
+      override fun getFlags(range: Range): DefaultLineFlags {
+        val ignored = range is LocalRange && range.changelistId != defaultChangelistId
+        return if (ignored) DefaultLineFlags.IGNORED else DefaultLineFlags.DEFAULT
       }
     }
 

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangesBlock {
-  @NotNull public final List<ChangedLines> changes = new ArrayList<>();
+public class ChangesBlock<T> {
+  @NotNull public final List<ChangedLines<T>> changes = new ArrayList<>();
   @NotNull public final List<Range> ranges = new ArrayList<>();
 }
