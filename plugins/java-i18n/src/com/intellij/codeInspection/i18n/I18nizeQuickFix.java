@@ -28,8 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,11 +102,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     Project project = psiFile.getProject();
     propertyCreationHandler.createProperty(project, propertiesFiles, key, value, parameters);
     try {
-      PsiElement newExpression = doReplacement(psiFile, editor, literalExpression, i18nizedText);
-      if (newExpression == null) {
-        return;
-      }
-      reformatAndCorrectReferences(newExpression);
+      doReplacement(psiFile, editor, literalExpression, i18nizedText);
     }
     catch (IncorrectOperationException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
@@ -153,10 +147,10 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     }), PropertiesBundle.message("quickfix.i18n.command.name"), project);
   }
 
-  protected @Nullable PsiElement doReplacement(@NotNull PsiFile psiFile,
-                                               Editor editor,
-                                               UInjectionHost literalExpression,
-                                               String i18nizedText) throws IncorrectOperationException {
+  protected void doReplacement(@NotNull PsiFile psiFile,
+                               Editor editor,
+                               UInjectionHost literalExpression,
+                               String i18nizedText) throws IncorrectOperationException {
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(literalExpression.getLang());
     Document document = editor.getDocument();
     if (mySelectionRange != null && generationPlugin != null) {
@@ -176,46 +170,37 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
         LOG.error(e);
       }
     }
-    PsiElement notShortenPsi = doDocumentReplacement(psiFile, literalExpression, i18nizedText, document);
-    return generationPlugin != null ? shortReferences(notShortenPsi, generationPlugin) : null;
+    doDocumentReplacement(psiFile, literalExpression, i18nizedText, document, generationPlugin);
   }
 
-  @Nullable
-  protected static PsiElement doDocumentReplacement(@NotNull PsiFile psiFile,
-                                                    UElement literalExpression,
-                                                    String i18nizedText,
-                                                    Document document) {
+  protected static void doDocumentReplacement(@NotNull PsiFile psiFile,
+                                              UElement literalExpression,
+                                              String i18nizedText,
+                                              Document document,
+                                              @Nullable UastCodeGenerationPlugin generationPlugin) {
     PsiElement psi = literalExpression.getSourcePsi();
     if (psi == null) {
-      return null;
+      return;
     }
-
     Language language = psi.getLanguage();
     int startOffset = psi.getTextRange().getStartOffset();
     document.replaceString(startOffset, psi.getTextRange().getEndOffset(), i18nizedText);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
-    return CodeInsightUtilCore.findElementInRange(psiFile, startOffset, startOffset + i18nizedText.length(), PsiElement.class, language);
+    if (generationPlugin == null) {
+      return;
+    }
+    PsiElement notShortenPsi =
+      CodeInsightUtilCore.findElementInRange(psiFile, startOffset, startOffset + i18nizedText.length(), PsiElement.class, language);
+    shortenReferences(notShortenPsi, generationPlugin);
   }
 
-  private static @Nullable PsiElement shortReferences(@Nullable PsiElement element,
-                                                      @NotNull UastCodeGenerationPlugin generationPlugin) {
+  private static void shortenReferences(@Nullable PsiElement element, @NotNull UastCodeGenerationPlugin generationPlugin) {
     UElement uElement = UastContextKt.toUElement(element);
     if (uElement == null) {
-      return null;
+      return;
     }
     // Here we rely on that replacing same element will shorten references
-    UElement replace = generationPlugin.replace(uElement, uElement, UElement.class);
-    if (replace == null) {
-      return null;
-    }
-    return replace.getSourcePsi();
-  }
-
-
-  private static void reformatAndCorrectReferences(PsiElement newExpression) throws IncorrectOperationException {
-    final Project project = newExpression.getProject();
-    newExpression = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpression);
-    CodeStyleManager.getInstance(project).reformat(newExpression);
+    generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {

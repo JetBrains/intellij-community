@@ -18,6 +18,7 @@ import org.jetbrains.uast.UPolyadicExpression;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,13 +56,14 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   }
 
   @Override
-  protected PsiElement doReplacement(@NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor,
-                                     @Nullable UInjectionHost literalExpression,
-                                     String i18nizedText) throws IncorrectOperationException {
+  protected void doReplacement(@NotNull final PsiFile psiFile,
+                               @NotNull final Editor editor,
+                               @Nullable UInjectionHost literalExpression,
+                               String i18nizedText) throws IncorrectOperationException {
     @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     assert concatenation != null;
-    return doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument());
+    UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(psiFile.getLanguage());
+    doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument(), generationPlugin);
   }
 
   @Override
