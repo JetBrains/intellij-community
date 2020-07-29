@@ -619,11 +619,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
-    protected void setTextValue(@NotNull String text) {
-      super.setTextValue(StringUtil.shortenPathWithEllipsis(text, 50));
-    }
-
-    @Override
     protected JBIterable<ProgressButton> createEastButtons() {
       return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
     }
@@ -838,6 +833,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
           if (indicator.isVisible()) {
             int preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right;
+            Dimension indicatorSize = null;
+
+            if (preferredWidth > width) {
+              int progressWidth2x = myIndicator.myProgress.getPreferredSize().width * 2;
+              if (width > progressWidth2x && myIndicator.myText.getPreferredSize().width > progressWidth2x) {
+                preferredWidth = width;
+                indicatorSize = new Dimension(width, indicator.getPreferredSize().height);
+                if (myMultiProcessLink.isVisible()) {
+                  indicatorSize.width -= myMultiProcessLink.getPreferredSize().width + gap;
+                }
+              }
+            }
 
             if (preferredWidth > width) {
               indicator.setBounds(0, 0, 0, 0);
@@ -881,7 +888,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                 rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
               }
 
-              setBounds(indicator, rightX, centerY, null, true);
+              setBounds(indicator, rightX, centerY, indicatorSize, true);
             }
           }
           else {
