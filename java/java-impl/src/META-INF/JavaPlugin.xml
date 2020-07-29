@@ -639,9 +639,17 @@
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
     <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
 
+    <stacktrace.fold substring="at java.util.concurrent.Executors$"/>
+    <stacktrace.fold substring="at java.util.concurrent.ThreadPoolExecutor"/>
+    <stacktrace.fold substring="at java.util.concurrent.FutureTask."/>
+    <stacktrace.fold substring="at java.util.concurrent.CompletableFuture$AsyncSupply.run("/>
+
+    <stacktrace.fold substring="java.lang.Thread.run("/>
+
     <stacktrace.fold substring="java.lang.reflect.Method.invoke("/>
     <stacktrace.fold substring="java.lang.reflect.Constructor.newInstance("/>
     <stacktrace.fold substring="at java.base/jdk.internal"/>
+    <stacktrace.fold substring="at java.security.AccessController.doPrivileged("/>
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
