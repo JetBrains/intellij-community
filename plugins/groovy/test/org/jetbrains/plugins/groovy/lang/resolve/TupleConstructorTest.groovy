@@ -47,4 +47,43 @@ static void main(String[] args) {
 }
 """
   }
+
+  @Test
+  void 'many constructors with includes'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = ['actionType', 'referrerUrl'])
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    String referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr()
+    new Rr("")
+    new Rr("a", "groovy")
+}
+"""
+  }
+
+
+  @Test
+  void 'many constructors with raw includes'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = 'actionType,  referrerUrl ')
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    String referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr()
+    new Rr("")
+    new Rr("a", "groovy")
+}
+"""
+  }
 }
