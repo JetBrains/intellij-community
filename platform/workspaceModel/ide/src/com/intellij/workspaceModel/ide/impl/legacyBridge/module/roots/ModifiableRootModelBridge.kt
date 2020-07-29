@@ -459,7 +459,6 @@ class ModifiableRootModelBridge(
     RootModelBridgeImpl(
       moduleEntity = storage.findModuleEntity(moduleBridge),
       storage = storage,
-      moduleLibraryTable = moduleLibraryTable,
       itemUpdater = { index, transformer -> updateDependencies { dependencies ->
           val mutableList = dependencies.toMutableList()
 

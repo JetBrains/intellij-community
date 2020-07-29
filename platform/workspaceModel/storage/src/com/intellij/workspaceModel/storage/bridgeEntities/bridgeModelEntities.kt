@@ -322,13 +322,6 @@ open class ContentRootEntity(
   }
 }
 
-class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : ContentRootEntity(url, emptyList(), emptyList()) {
-  override val module: ModuleEntity = moduleEntity
-  override var entitySource: EntitySource = moduleEntity.entitySource
-  override fun hasEqualProperties(e: WorkspaceEntity): Boolean = throw UnsupportedOperationException()
-  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = throw UnsupportedOperationException()
-}
-
 /**
  * This entity stores order of artifacts in file. This is needed to ensure that source roots are saved in the same order to avoid
  * unnecessary modifications of file.
