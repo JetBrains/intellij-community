@@ -726,8 +726,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       AppExecutorUtil.getAppScheduledExecutorService().schedule(task, 1, TimeUnit.SECONDS);
     }
 
-    String name = ApplicationNamesInfo.getInstance().getFullProductName();
-    String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
+    String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt");
     exitConfirmed = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
       .yesText(ApplicationBundle.message("command.exit"))
       .noText(CommonBundle.getCancelButtonText())
@@ -737,7 +736,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (!option.isToBeShown()) {
         return true;
       }
-      exitConfirmed = MessageDialogBuilder.okCancel(ApplicationBundle.message("exit.confirm.title"), ApplicationBundle.message("exit.confirm.prompt", name))
+      exitConfirmed = MessageDialogBuilder.okCancel(ApplicationBundle.message("exit.confirm.title"), ApplicationBundle.message("exit.confirm.prompt"))
         .yesText(ApplicationBundle.message("command.exit"))
         .doNotAsk(option)
         .guessWindowAndAsk();
