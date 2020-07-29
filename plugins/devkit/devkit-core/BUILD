@@ -83,7 +83,9 @@ iml_module(
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:netty-codec-http",
     ],
 )
 

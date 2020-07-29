@@ -73,5 +73,6 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8[test]",
         "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:jcef[test]",
     ],
 )

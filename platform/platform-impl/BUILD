@@ -51,7 +51,7 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",

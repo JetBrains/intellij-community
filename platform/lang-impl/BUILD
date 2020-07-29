@@ -30,7 +30,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -134,7 +134,7 @@ iml_module(
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",

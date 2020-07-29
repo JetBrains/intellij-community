@@ -43,7 +43,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
-        "//tools/idea/platform/workspaceModel-core:intellij.platform.workspaceModel.core[module]",
+        "//tools/idea/platform/workspaceModel/storage:intellij.platform.workspaceModel.storage[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/.idea/libraries:Guava",

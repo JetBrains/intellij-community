@@ -4,7 +4,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.platform.workspaceModel.ide.tests",
     iml_files = ["intellij.platform.workspaceModel.ide.tests.iml"],
-    test_friends = ["//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide"],
+    test_friends = ["//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide"],
     test_resources = ["testResources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -43,11 +43,12 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/workspaceModel-core:intellij.platform.workspaceModel.core[module]",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide[module]",
+        "//tools/idea/platform/workspaceModel/storage:intellij.platform.workspaceModel.storage[module]",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide[module]",
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.tests[module]",
+        "//tools/idea/platform/workspaceModel/storage/tests:intellij.platform.workspaceModel.storage.tests[module, test]",
     ],
 )

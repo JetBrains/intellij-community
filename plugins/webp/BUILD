@@ -2,13 +2,9 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.regexp",
-    # do not sort: must match IML order
-    srcs = [
-        "src",
-        "gen",
-    ],
-    iml_files = ["intellij.regexp.iml"],
+    name = "intellij.webp",
+    srcs = ["src"],
+    iml_files = ["intellij.webp.iml"],
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -16,11 +12,12 @@ iml_module(
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
         "//tools/idea/images:intellij.platform.images",
     ],
-    test_srcs = ["test"],
-    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/inspect:intellij.platform.inspect",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -33,9 +30,6 @@ iml_module(
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
-        "//tools/idea/.idea/libraries:rhino",
-        "//tools/idea/.idea/libraries:netty-handler-proxy",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:javax.activation",
@@ -49,12 +43,10 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
+        "//tools/idea/xml/openapi:intellij.xml[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
-        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
-        "//tools/idea/.idea/libraries:Jaxen",
-        "//tools/idea/xml/xml-psi-api:intellij.xml.psi[module]",
-        "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/plugins/webp/lib:libwebp",
     ],
 )

@@ -26,7 +26,7 @@ iml_module(
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
@@ -61,6 +61,7 @@ iml_module(
         "//tools/idea/.idea/libraries:netty-codec-http",
         "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:jackson",
     ],
 )
 
@@ -89,7 +90,7 @@ iml_module(
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",

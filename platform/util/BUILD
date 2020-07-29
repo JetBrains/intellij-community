@@ -20,6 +20,7 @@ iml_module(
         "//tools/idea/platform/util/strings:intellij.platform.util.strings",
         "//tools/idea/platform/util/collections:intellij.platform.util.collections",
         "//tools/idea/platform/util/text-matching:intellij.platform.util.text.matching",
+        "//tools/idea/platform/util/diagnostic:intellij.platform.util.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [
@@ -37,6 +38,7 @@ iml_module(
         "//tools/idea/platform/util/strings:intellij.platform.util.strings[module]",
         "//tools/idea/platform/util/collections:intellij.platform.util.collections[module]",
         "//tools/idea/platform/util/text-matching:intellij.platform.util.text.matching[module]",
+        "//tools/idea/platform/util/diagnostic:intellij.platform.util.diagnostic[module]",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:HdrHistogram",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",

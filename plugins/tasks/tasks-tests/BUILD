@@ -38,7 +38,7 @@ iml_module(
         "//tools/idea/.idea/libraries:netty-handler-proxy",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
+        "//tools/idea/platform/workspaceModel/ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
