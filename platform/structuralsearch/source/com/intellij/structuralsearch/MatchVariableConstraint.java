@@ -1,16 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -81,13 +83,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
   @NonNls private static final String TRUE = Boolean.TRUE.toString();
-
-  private static final Set<String> ALL_ATTRIBUTES = ContainerUtil.set(
-    REFERENCE_CONDITION, NAME_OF_EXPRTYPE, NAME_OF_FORMALTYPE, REGEXP, EXPRTYPE_WITHIN_HIERARCHY, FORMALTYPE_WITHIN_HIERARCHY,
-    WITHIN_HIERARCHY, MAX_OCCURS, MIN_OCCURS, NEGATE_NAME_CONDITION, NEGATE_EXPRTYPE_CONDITION, NEGATE_FORMALTYPE_CONDITION,
-    NEGATE_CONTAINS_CONDITION, NEGATE_WITHIN_CONDITION, NEGATE_REFERENCE_CONDITION, WITHIN_CONDITION, CONTAINS_CONDITION,
-    TARGET, CONTEXT, WHOLE_WORDS_ONLY
-  );
 
   public MatchVariableConstraint() {}
 
@@ -361,7 +356,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   }
 
   private static boolean isValidConstraintName(String name) {
-    return !ALL_ATTRIBUTES.contains(name) && VALID_CONSTRAINT_NAME.matcher(name).matches();
+    return VALID_CONSTRAINT_NAME.matcher(name).matches();
   }
 
   public void putAdditionalConstraint(String name, String value) {
@@ -386,10 +381,14 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   }
 
   public String getAdditionalConstraint(String name) {
-    if (additionalConstraints == null) {
-      return null;
-    }
-    return additionalConstraints.get(name);
+    return (additionalConstraints == null) ? null : additionalConstraints.get(name);
+  }
+
+  /**
+   * @return an unmodifiable map of all additional constraints.
+   */
+  public Map<String, String> getAllAdditionalConstraints() {
+    return (additionalConstraints == null) ? Collections.emptyMap() : Collections.unmodifiableMap(additionalConstraints);
   }
 
   public boolean equals(Object o) {
@@ -501,13 +500,18 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     contextConstraint = StringUtil.notNullize(element.getAttributeValue(CONTEXT));
 
     for (Attribute attribute : element.getAttributes()) {
-      final String name = attribute.getName();
-      if (isValidConstraintName(name)) {
-        if (additionalConstraints == null) {
-          additionalConstraints = new HashMap<>();
-        }
-        additionalConstraints.put(name, attribute.getValue());
+      final String mangledName = attribute.getName();
+      if (!StringUtil.startsWith(mangledName, "_")) {
+        continue;
       }
+      final String name = mangledName.substring(1);
+      if (!isValidConstraintName(name)) {
+        throw new InvalidDataException();
+      }
+      if (additionalConstraints == null) {
+        additionalConstraints = new HashMap<>();
+      }
+      additionalConstraints.put(name, attribute.getValue());
     }
   }
 
@@ -570,7 +574,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
       for (String key : list) {
         final String value = additionalConstraints.get(key);
         if (value != null) {
-          element.setAttribute(key, value);
+          element.setAttribute('_' + key, value);
         }
       }
     }
