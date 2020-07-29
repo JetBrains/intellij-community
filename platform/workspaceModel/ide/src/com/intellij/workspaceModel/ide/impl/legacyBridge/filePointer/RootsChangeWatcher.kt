@@ -31,7 +31,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -66,7 +66,7 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
   init {
     val messageBusConnection = project.messageBus.connect()
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         //VirtualFilePointers are automatically updated when files are moved or renamed; if we try to create new instances inside that process,
         //this may leave them in incorrect state
         if (rootFilePointers.isInsideFilePointersUpdate) {

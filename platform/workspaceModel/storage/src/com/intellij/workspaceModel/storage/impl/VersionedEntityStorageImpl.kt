@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.intellij.workspaceModel.storage.*
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 internal class ValuesCache {
@@ -131,33 +130,25 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
   private var currentPointer: Current = Current(0, initialStorage)
 
   @Synchronized
-  fun replace(newStorage: WorkspaceEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
+  fun replace(newStorage: WorkspaceEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>,
+              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
-
-    onBeforeChanged(before = oldCopy.storage, after = newStorage, changes = changes)
+    val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
+    beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
-    onChanged(before = oldCopy.storage, after = newStorage, changes = changes)
-  }
-
-  protected open fun onBeforeChanged(before: WorkspaceEntityStorage,
-                                     after: WorkspaceEntityStorage,
-                                     changes: Map<Class<*>, List<EntityChange<*>>>) {
-
-  }
-
-  protected open fun onChanged(before: WorkspaceEntityStorage,
-                               after: WorkspaceEntityStorage,
-                               changes: Map<Class<*>, List<EntityChange<*>>>) {
-
+    afterChanged(change)
   }
 }
 
-abstract class VersionedStorageChanged(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
-  abstract val storageBefore: WorkspaceEntityStorage
-  abstract val storageAfter: WorkspaceEntityStorage
+private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
+                                         override val storageBefore: WorkspaceEntityStorage,
+                                         override val storageAfter: WorkspaceEntityStorage,
+                                         private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChange(
+  entityStorage) {
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> =
+    (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
 
-  abstract fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
-
-  abstract fun getAllChanges(): Sequence<EntityChange<*>>
+  override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }

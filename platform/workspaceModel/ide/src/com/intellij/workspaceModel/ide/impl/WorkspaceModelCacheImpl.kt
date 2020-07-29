@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -52,7 +52,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     LOG.debug("Project Model Cache at $cacheFile")
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         LOG.debug("Schedule cache update")
         saveAlarm.request()
       }

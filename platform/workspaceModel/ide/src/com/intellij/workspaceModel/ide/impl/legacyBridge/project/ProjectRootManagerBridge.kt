@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -38,7 +38,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     val bus = project.messageBus.connect(this)
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
 
         // Roots changed event should be fired for the global libraries linked with module

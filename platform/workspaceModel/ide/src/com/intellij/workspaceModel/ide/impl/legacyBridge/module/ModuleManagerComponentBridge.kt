@@ -42,7 +42,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -116,7 +116,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
       val rootsChangeListener = ProjectRootsChangeListener(project)
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChanged) {
+        override fun beforeChanged(event: VersionedStorageChange) {
           for (change in event.getChanges(FacetEntity::class.java)) {
             LOG.debug { "Fire 'before' events for facet change $change" }
             FacetEntityChangeListener.getInstance(project).processBeforeChange(change)
@@ -138,7 +138,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
         }
 
-        override fun changed(event: VersionedStorageChanged) {
+        override fun changed(event: VersionedStorageChange) {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
           val facetChanges = event.getChanges(FacetEntity::class.java)
@@ -213,7 +213,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private fun processModuleChange(change: EntityChange<ModuleEntity>,
                                   unloadedModulesSet: MutableSet<String>,
                                   oldModuleNames: MutableMap<Module, String>,
-                                  event: VersionedStorageChanged) {
+                                  event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
         // It's possible case then idToModule doesn't contain element e.g if unloaded module was removed
@@ -267,7 +267,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, event: VersionedStorageChanged) {
+  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
         val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)

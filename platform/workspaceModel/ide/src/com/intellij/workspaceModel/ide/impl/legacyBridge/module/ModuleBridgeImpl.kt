@@ -24,7 +24,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.picocontainer.MutablePicoContainer
 import java.nio.file.Path
 
@@ -44,7 +44,7 @@ internal class ModuleBridgeImpl(
       val busConnection = project.messageBus.connect(this)
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChanged) {
+        override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
             if (it.entity.persistentId() == moduleEntityId) entityStorage = VersionedEntityStorageOnStorage(entityStorage.current)
           }

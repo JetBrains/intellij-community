@@ -22,7 +22,6 @@ import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -41,7 +40,7 @@ import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -132,7 +131,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       }
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach {
           when (it) {

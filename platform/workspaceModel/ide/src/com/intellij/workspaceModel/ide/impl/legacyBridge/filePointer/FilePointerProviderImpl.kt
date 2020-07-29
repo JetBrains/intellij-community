@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -76,7 +76,7 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
     }, this)
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         synchronized(this@FilePointerProviderImpl) {
           event.getAllChanges().filterIsInstance<EntityChange.Removed<*>>().forEach { change ->
             val toRemove = ArrayList<Pair<VirtualFileUrl, Disposable>>()
