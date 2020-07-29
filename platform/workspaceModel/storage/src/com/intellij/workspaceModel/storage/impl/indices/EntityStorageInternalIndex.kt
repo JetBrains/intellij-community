@@ -12,8 +12,7 @@ open class EntityStorageInternalIndex<T> private constructor(
 ) {
   constructor(oneToOneAssociation: Boolean) : this(BidirectionalMap<EntityId, T>(), oneToOneAssociation)
 
-  internal fun getIdsByEntry(entitySource: T): List<EntityId>? =
-    index.getKeysByValue(entitySource)
+  internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)
 
   internal fun getEntryById(id: EntityId): T? = index[id]
 
@@ -29,13 +28,13 @@ open class EntityStorageInternalIndex<T> private constructor(
 
     private var freezed = true
 
-    internal fun index(id: EntityId, entitySource: T? = null) {
+    internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
       index.remove(id)
-      if (entitySource == null) return
-      index[id] = entitySource
+      if (entry == null) return
+      index[id] = entry
       if (oneToOneAssociation) {
-        if (index.getKeysByValue(entitySource)?.size ?: 0 > 1) error("One to one association is violated. Id: $id, Entity: $entitySource")
+        if (index.getKeysByValue(entry)?.size ?: 0 > 1) error("One to one association is violated. Id: $id, Entity: $entry")
       }
     }
 
