@@ -209,7 +209,10 @@ class FilePartNode {
       FilePartNode child = children[i];
       // the parent can't be an url and the child a file
       if (!(this instanceof FilePartNodeRoot)) {
-        assert !(myFile == null && child.myFile() != null) : "this: " + this + "; myFileOrUrl: " + myFileOrUrl + "; child: " + child + "; child.myFile: " + child.myFile() + "; parent: " + parent + "; urlFromRoot: " + urlFromRoot;
+        VirtualFile childFile = child.myFile();
+        assert myFile != null || childFile == null : "this: " + this + "; myFileOrUrl: " + myFileOrUrl + " (" +myFileOrUrl.getClass()+")"+
+                                                     "; child: " + child + "; child.myFile: " + childFile + " (" +childFile.getClass()+")"+
+                                                     "; parent: " + parent + "; urlFromRoot: " + urlFromRoot +"; name: "+name;
       }
       String childName = child.getName().toString();
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
@@ -337,10 +340,24 @@ class FilePartNode {
       thisNode.fixUrlPartNodes(myOldPath, myNewPath);
     }
 
-    if (changed) {
-      for (FilePartNode child : thisNode.children) {
+    FilePartNode[] children = thisNode.children;
+    VirtualFile toReplaceParent = null;
+    for (int i = 0; i < children.length; i++) {
+      FilePartNode child = children[i];
+      if (changed) {
         child.update(thisNode, root, debugSource, debugInvalidationReason);
+        child = thisNode.children[i];
       }
+      if (file == null) {
+        VirtualFile childFile = child.myFile();
+        if (childFile != null) {
+          // child found which has a file but this node doesn't, should replace me with FPPN
+          toReplaceParent = getParentThroughJar(childFile, child.myFS);
+        }
+      }
+    }
+    if (toReplaceParent != null) {
+      replaceWithFPPN(toReplaceParent, parent);
     }
   }
 
