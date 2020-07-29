@@ -37,22 +37,24 @@ object IndexContentDiagnosticDumper {
       val providerFileIds = hashSetOf<Int>()
       providerNameToOriginalFileIds[provider.debugName] = providerFileIds
       provider.iterateFiles(project, { fileOrDir ->
-        val fileId = FileBasedIndex.getFileId(fileOrDir)
-        for (extension in fileBasedIndexExtensions) {
-          if (infrastructureExtensions.any { it.hasIndexForFile(fileOrDir, fileId, extension) }) {
-            providedIndexIdToIndexedFiles.getOrPut(extension.name.name) { hashSetOf() } += fileId
+        if (!fileOrDir.isDirectory) {
+          val fileId = FileBasedIndex.getFileId(fileOrDir)
+          for (extension in fileBasedIndexExtensions) {
+            if (infrastructureExtensions.any { it.hasIndexForFile(fileOrDir, fileId, extension) }) {
+              providedIndexIdToIndexedFiles.getOrPut(extension.name.name) { hashSetOf() } += fileId
+            }
           }
-        }
 
-        val indexedFilePath = createIndexedFilePath(fileOrDir, project)
-        if (PortableFilePaths.isSupportedFileSystem(fileOrDir)) {
-          indexedFilePaths += indexedFilePath
-          providerFileIds += indexedFilePath.originalFileSystemId
-        }
-        else {
-          // TODO: consider not excluding any file systems.
-          filesFromUnsupportedFileSystem += indexedFilePath
-          return@iterateFiles true
+          val indexedFilePath = createIndexedFilePath(fileOrDir, project)
+          if (PortableFilePaths.isSupportedFileSystem(fileOrDir)) {
+            indexedFilePaths += indexedFilePath
+            providerFileIds += indexedFilePath.originalFileSystemId
+          }
+          else {
+            // TODO: consider not excluding any file systems.
+            filesFromUnsupportedFileSystem += indexedFilePath
+            return@iterateFiles true
+          }
         }
         true
       }, visitedFiles)
