@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -29,7 +30,7 @@ internal class WorkspaceEntityStorageImpl constructor(
 ) : AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
-  private val persistentIdCache = HashMap<PersistentEntityId<*>, WorkspaceEntity?>()
+  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity?>()
 
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     return persistentIdCache.getOrPut(id) { super.resolve(id) } as E?
