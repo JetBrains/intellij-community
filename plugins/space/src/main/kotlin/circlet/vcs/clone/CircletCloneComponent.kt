@@ -3,7 +3,7 @@ package circlet.vcs.clone
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
 import circlet.components.CircletUserAvatarProvider
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.BatchResult
 import circlet.platform.client.KCircletClient
@@ -65,7 +65,7 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
   private var loginState: MutableProperty<CircletLoginState> = mutableProperty(initialState())
 
   private fun initialState(): CircletLoginState {
-    val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
+    val workspace = space.workspace.value ?: return CircletLoginState.Disconnected("")
     return CircletLoginState.Connected(workspace.client.server, workspace)
   }
 
@@ -75,7 +75,7 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
   init {
     Disposer.register(this, Disposable { uiLifetime.terminate() })
 
-    circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
+    space.workspace.forEach(uiLifetime) { workspace ->
       if (workspace == null) {
         val settings = CircletSettings.getInstance()
         loginState.value = CircletLoginState.Disconnected(settings.serverSettings.server)
@@ -123,7 +123,7 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
       uiLifetime.usingSource { connectLt ->
         try {
           loginState.value = CircletLoginState.Connecting(serverName, connectLt)
-          when (val response = circletWorkspace.signIn(connectLt, serverName)) {
+          when (val response = space.signIn(connectLt, serverName)) {
             is OAuthTokenResponse.Error -> {
               loginState.value = CircletLoginState.Disconnected(serverName, response.description)
             }
@@ -309,7 +309,7 @@ private class CloneView(
                                               updateSelectedUrl()
                                             },
                                             showSeparatorAbove = true)
-        menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
+        menuItems += AccountMenuItem.Action("Log Out...", { space.signOut() })
 
         AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
           .showUnderneathOf(accountLabel)

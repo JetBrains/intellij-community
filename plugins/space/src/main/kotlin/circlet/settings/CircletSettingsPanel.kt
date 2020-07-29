@@ -3,7 +3,7 @@ package circlet.settings
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
 import circlet.components.CircletUserAvatarProvider
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.ui.cleanupUrl
 import circlet.ui.resizeIcon
@@ -46,7 +46,7 @@ class CircletSettingsPanel :
   private val uiLifetime = LifetimeSource()
   private var loginState = mutableProperty(initialState())
   private fun initialState(): CircletLoginState {
-    val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
+    val workspace = space.workspace.value ?: return CircletLoginState.Disconnected("")
     return CircletLoginState.Connected(workspace.client.server, workspace)
   }
 
@@ -61,7 +61,7 @@ class CircletSettingsPanel :
   }
 
   init {
-    circletWorkspace.workspace.forEach(uiLifetime) { ws ->
+    space.workspace.forEach(uiLifetime) { ws ->
       if (ws == null) {
         loginState.value = CircletLoginState.Disconnected(settings.serverSettings.server)
       }
@@ -117,7 +117,7 @@ class CircletSettingsPanel :
         }
         val logoutButton = JButton("Log Out").apply {
           addActionListener {
-            circletWorkspace.signOut()
+            space.signOut()
             loginState.value = CircletLoginState.Disconnected(st.server)
           }
         }
@@ -147,7 +147,7 @@ class CircletSettingsPanel :
     when (st) {
       is CircletLoginState.Connected -> {
         linkLabel.isVisible = true
-        val profile = circletWorkspace.workspace.value?.me?.value ?: return
+        val profile = space.workspace.value?.me?.value ?: return
         val gitConfigPage = Navigator.m.member(profile.username).git.absoluteHref(st.server)
         linkLabel.setListener({ _, _ -> BrowserUtil.browse(gitConfigPage) }, null)
       }
@@ -163,7 +163,7 @@ class CircletSettingsPanel :
       uiLifetime.usingSource { connectLt ->
         try {
           loginState.value = CircletLoginState.Connecting(serverName, connectLt)
-          when (val response = circletWorkspace.signIn(connectLt, serverName)) {
+          when (val response = space.signIn(connectLt, serverName)) {
             is OAuthTokenResponse.Error -> {
               loginState.value = CircletLoginState.Disconnected(serverName, response.description)
             }

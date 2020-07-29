@@ -3,7 +3,7 @@ package circlet.vcs
 import circlet.actions.CircletActionUtils
 import circlet.client.api.Navigator
 import circlet.client.api.ProjectLocation
-import circlet.components.circletWorkspace
+import circlet.components.space
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -83,7 +83,7 @@ abstract class CircletOpenInBrowserAction(groupName: String) :
     internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location,
                                      context: DataContext): List<Pair<CircletProjectInfo, String>>? {
       val project = context.getData(CommonDataKeys.PROJECT) ?: return null
-      val server = circletWorkspace.workspace.value?.client?.server?.removeSuffix("/") ?: return null
+      val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
       val description = CircletProjectContext.getInstance(project).context.value
 
       return description.reposInProject.keys.map {
@@ -125,7 +125,7 @@ class CircletVcsOpenInBrowserActionGroup :
 
   override fun getData(dataContext: DataContext): List<OpenData>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
-    val server = circletWorkspace.workspace.value?.client?.server?.removeSuffix("/") ?: return null
+    val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
 
     return getDataFromHistory(dataContext, project, server)
            ?: getDataFromLog(dataContext, project, server)

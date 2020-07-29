@@ -6,7 +6,7 @@ import circlet.client.api.Projects
 import circlet.client.api.RepositoryService
 import circlet.client.pr
 import circlet.client.repoService
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
@@ -24,7 +24,7 @@ class CircletProjectContext(project: Project) : Disposable {
 
   private val remoteUrls: MutableProperty<Set<String>> = Property.createMutable(findRemoteUrls(project))
 
-  val context: Property<Context> = lifetime.mapInit(circletWorkspace.workspace, remoteUrls, EMPTY) { ws, urls ->
+  val context: Property<Context> = lifetime.mapInit(space.workspace, remoteUrls, EMPTY) { ws, urls ->
     ws ?: return@mapInit EMPTY
     ws.client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
     reloadProjectKeys(ws, urls)

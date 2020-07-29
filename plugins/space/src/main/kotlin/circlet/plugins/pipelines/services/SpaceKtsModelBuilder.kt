@@ -3,7 +3,7 @@ package circlet.plugins.pipelines.services
 import circlet.automation.bootstrap.AutomationCompilerBootstrap
 import circlet.automation.bootstrap.embeddedMavenServer
 import circlet.automation.bootstrap.publicMavenServer
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.dsl.script.exec.common.ProjectConfigValidationResult
 import circlet.pipelines.config.dsl.script.exec.common.evaluateModel
@@ -174,7 +174,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
           val jarFile = File(outputFolder, "compiledJar.jar")
 
           // Primary option is to download from currently connected server, fallback on the public maven
-          val server = circletWorkspace.workspace.value?.client?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
+          val server = space.workspace.value?.client?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
 
           val configuration = AutomationCompilerConfiguration.Remote(server = server)
 

@@ -1,6 +1,6 @@
 package circlet.actions
 
-import circlet.components.circletWorkspace
+import circlet.components.space
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,7 +14,7 @@ import runtime.Ui
 class TestCircletAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = circletWorkspace.workspace.value != null
+    e.presentation.isEnabledAndVisible = space.workspace.value != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

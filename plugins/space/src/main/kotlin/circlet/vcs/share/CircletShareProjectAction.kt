@@ -5,7 +5,7 @@ import circlet.client.api.RepoDetails
 import circlet.client.api.identifier
 import circlet.client.api.impl.vcsPasswords
 import circlet.client.td
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.settings.CircletSettings
 import circlet.settings.CloneType
 import circlet.vcs.CircletHttpPasswordState
@@ -142,8 +142,8 @@ class CircletShareProjectAction : DumbAwareAction() {
   }
 
   private suspend fun checkAndSetGitHttpPassword(): CircletHttpPasswordState {
-    val client = circletWorkspace.workspace.value?.client ?: return CircletHttpPasswordState.NotSet
-    val me = circletWorkspace.workspace.value?.me?.value ?: return CircletHttpPasswordState.NotSet
+    val client = space.workspace.value?.client ?: return CircletHttpPasswordState.NotSet
+    val me = space.workspace.value?.me?.value ?: return CircletHttpPasswordState.NotSet
     val td = client.td
     val gitHttpPassword = client.api.vcsPasswords().getVcsPassword(me.identifier)
     if (gitHttpPassword == null) {

@@ -4,7 +4,7 @@ import circlet.client.api.PR_Project
 import circlet.client.api.ProjectKey
 import circlet.client.api.Projects
 import circlet.client.pr
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.client.resolve
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
@@ -63,7 +63,7 @@ internal class CircletCreateProjectDialog(parent: JComponent) : DialogWrapper(pa
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true
       lifetime.usingSource {
-        val ws = circletWorkspace.workspace.value ?: return@launch
+        val ws = space.workspace.value ?: return@launch
         val client = ws.client
         val projectService: Projects = client.pr
         try {

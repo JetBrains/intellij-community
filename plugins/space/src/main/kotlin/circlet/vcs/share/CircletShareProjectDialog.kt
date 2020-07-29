@@ -2,7 +2,7 @@ package circlet.vcs.share
 
 import circlet.client.api.*
 import circlet.client.repoService
-import circlet.components.circletWorkspace
+import circlet.components.space
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -99,7 +99,7 @@ class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true)
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true
       lifetime.usingSource {
-        val ws = circletWorkspace.workspace.value ?: return@launch
+        val ws = space.workspace.value ?: return@launch
         val client = ws.client
         val repoService: RepositoryService = client.repoService
         val prKey = projectComboBoxModel.selected!!.key

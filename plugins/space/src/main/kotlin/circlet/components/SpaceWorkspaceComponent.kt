@@ -23,7 +23,8 @@ import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.asCoroutineDispatcher
 import libraries.coroutines.extra.Lifetime
@@ -43,9 +44,16 @@ import runtime.reactive.mutableProperty
 import java.net.URI
 import java.net.URL
 
-// monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
-class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
-  private val log: KLogger = logger<CircletWorkspaceComponent>()
+internal val space: SpaceWorkspaceComponent
+  get() = service()
+
+/**
+ * The main plugin's component that allows to log in to the Space server or disconnect from it.
+ * If possible, the component is automatically authorized when the app starts
+ */
+@Service
+internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by LifetimedDisposableImpl() {
+  private val log: KLogger = logger<SpaceWorkspaceComponent>()
 
   private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
     FeatureFlagsVmPersistenceKey,
@@ -139,7 +147,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
   private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
     if (settingsOnStartup.server.isNotBlank() && settingsOnStartup.enabled) {
       val wsConfig = ideaConfig(settingsOnStartup.server)
-      val wss = WorkspaceManager(wsLifetime, null, this@CircletWorkspaceComponent, InMemoryPersistence(), IdeaPasswordSafePersistence,
+      val wss = WorkspaceManager(wsLifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence,
                                  ideaClientPersistenceConfiguration, wsConfig)
       if (wss.signInNonInteractive()) {
         manager.value = wss
@@ -150,9 +158,6 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
   }
 
 }
-
-val circletWorkspace: CircletWorkspaceComponent
-  get() = ServiceManager.getService(CircletWorkspaceComponent::class.java)
 
 fun ideaConfig(server: String): WorkspaceConfiguration {
   return WorkspaceConfiguration(

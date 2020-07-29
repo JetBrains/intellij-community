@@ -3,7 +3,7 @@ package circlet.actions
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
 import circlet.components.CircletUserAvatarProvider
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.ConnectionStatus
 import circlet.settings.*
@@ -45,7 +45,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = isOnNavBar
     if (!isOnNavBar) return
     val avatars = CircletUserAvatarProvider.getInstance().avatars.value
-    val isConnected = circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
+    val isConnected = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
     e.presentation.icon = if (isConnected) avatars.online
     else avatars.offline
 
@@ -53,7 +53,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val component = e.inputEvent.component
-    val workspace = circletWorkspace.workspace.value
+    val workspace = space.workspace.value
     if (workspace != null) {
       buildMenu(workspace, CircletUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
         .showUnderneathOf(component)
@@ -68,7 +68,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
         .setRequestFocus(true)
         .setFocusable(true)
         .createPopup()
-      loginState.view(circletWorkspace.lifetime) { _: Lifetime, st: CircletLoginState ->
+      loginState.view(space.lifetime) { _: Lifetime, st: CircletLoginState ->
         val view = createView(st, loginState, component)
         if (view == null) {
           popup.cancel()
@@ -107,11 +107,11 @@ class CircletMainToolBarAction : DumbAwareAction() {
   }
 
   private fun login(serverName: String, loginState: MutableProperty<CircletLoginState>, component: Component) {
-    launch(circletWorkspace.lifetime, Ui) {
-      circletWorkspace.lifetime.usingSource { connectLt ->
+    launch(space.lifetime, Ui) {
+      space.lifetime.usingSource { connectLt ->
         try {
           loginState.value = CircletLoginState.Connecting(serverName, connectLt)
-          when (val response = circletWorkspace.signIn(connectLt, serverName)) {
+          when (val response = space.signIn(connectLt, serverName)) {
             is OAuthTokenResponse.Error -> {
               loginState.value = CircletLoginState.Disconnected(serverName, response.description)
             }
@@ -173,7 +173,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
     menuItems += AccountMenuItem.Action("Settings...",
                                         { CircletSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
+    menuItems += AccountMenuItem.Action("Log Out...", { space.signOut() })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }

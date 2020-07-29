@@ -21,7 +21,7 @@ class CircletUserAvatarProvider {
 
   private val avatarPlaceholders: CircletAvatars = CircletAvatars.MainIcon
 
-  val avatars: Property<CircletAvatars> = lifetime.mapInit(circletWorkspace.workspace, avatarPlaceholders) { ws ->
+  val avatars: Property<CircletAvatars> = lifetime.mapInit(space.workspace, avatarPlaceholders) { ws ->
     ws ?: return@mapInit avatarPlaceholders
     val id = ws.me.value.username
     val name = ws.me.value.englishFullName()

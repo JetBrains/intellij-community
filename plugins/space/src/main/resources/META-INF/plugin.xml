@@ -19,7 +19,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
     <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
-    <applicationService serviceImplementation="circlet.components.CircletWorkspaceComponent"/>
 
 
     <applicationConfigurable

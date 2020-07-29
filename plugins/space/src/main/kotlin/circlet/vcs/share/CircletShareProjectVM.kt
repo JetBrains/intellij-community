@@ -4,7 +4,7 @@ import circlet.client.api.PR_Project
 import circlet.client.api.Projects
 import circlet.client.pr
 import circlet.common.permissions.ProjectRight
-import circlet.components.circletWorkspace
+import circlet.components.space
 import circlet.platform.api.batchAll
 import circlet.platform.api.map
 import circlet.platform.client.ConnectionStatus
@@ -20,7 +20,7 @@ class CircletShareProjectVM(val lifetime: LifetimeSource) {
 
   @Suppress("RemoveExplicitTypeArguments")
   internal val projectsListState: MutableProperty<ProjectListState> = lifetime.mapInit<ProjectListState>(ProjectListState.Loading) {
-    val ws = circletWorkspace.workspace.value ?: return@mapInit ProjectListState.Error()
+    val ws = space.workspace.value ?: return@mapInit ProjectListState.Error()
     val client = ws.client
     client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
 
