@@ -3,7 +3,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
@@ -24,11 +23,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider,
-             TargetEnvironmentAwareRunProfile {
-  private ShortenCommandLine myShortenCommandLine = null;
+public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
+  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider, TargetEnvironmentAwareRunProfile {
 
+  private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
   private static final String USE_CLASS_PATH_ONLY = "useClassPathOnly";
 

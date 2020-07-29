@@ -3,8 +3,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -118,7 +118,7 @@ public final class CommonJavaFragments {
   }
 
   @NotNull
-  public static SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
+  public static <T extends CommonJavaRunConfigurationParameters> SettingsEditorFragment<T, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
     //noinspection unchecked
@@ -154,7 +154,7 @@ public final class CommonJavaFragments {
     setMinimumWidth(jrePathEditor, 200);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
-    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath =
+    SettingsEditorFragment<T, JrePathEditor> jrePath =
       new SettingsEditorFragment<>("jrePath", ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
                                    (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
                                                                                    configuration.isAlternativeJrePathEnabled()),

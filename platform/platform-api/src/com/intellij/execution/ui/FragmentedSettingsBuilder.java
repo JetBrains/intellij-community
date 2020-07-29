@@ -167,7 +167,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
-    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+    for (SettingsEditorFragment<Settings, ?> fragment : restoreGroups(fragments)) {
       if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));
@@ -182,6 +182,17 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       }
     }
     return actionGroup;
+  }
+
+  private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<SettingsEditorFragment<Settings, ?>> fragments) {
+    HashMap<String, Integer> groups = new HashMap<>();
+    ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
+    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+      String group = fragment.getGroup();
+      int last = ContainerUtil.lastIndexOf(result, f -> f.getGroup() == group);
+      result.add(last >= 0 ? last + 1 : result.size(), fragment);
+    }
+    return result;
   }
 
   private void buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
