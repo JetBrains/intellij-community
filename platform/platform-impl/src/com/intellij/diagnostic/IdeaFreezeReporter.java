@@ -324,6 +324,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
                        "Sampled time: " + sampledTime + "ms, sampling rate: " + dumpInterval + "ms";
+      String jitProblem = PerformanceWatcher.getInstance().getJitProblem();
+      if (jitProblem != null) {
+        message += ", " + jitProblem;
+      }
       long total = dumpTask.getTotalTime();
       long gcTime = dumpTask.getGcTime();
       if (total > 0) {

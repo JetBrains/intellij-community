@@ -405,16 +405,25 @@ public final class PerformanceWatcher implements Disposable {
       diagnosticInfo = "High memory usage (free " + (freeMemory / 1024 / 1024) + " of " + (maxMemory / 1024 / 1024) + " MB)";
     }
 
-    if (myCompilationStateLastValue == CompilerState.DISABLED || myCompilationStateLastValue == CompilerState.STOPPED_FOREVER) {
+    String jitProblem = getJitProblem();
+    if (jitProblem != null) {
       if (!diagnosticInfo.isEmpty()) {
         diagnosticInfo += ", ";
       }
-      diagnosticInfo += "JIT " + myCompilationStateLastValue;
+      diagnosticInfo += jitProblem;
     }
 
     if (!diagnosticInfo.isEmpty()) {
       LOG.info(diagnosticInfo + " while dumping threads to " + file);
     }
+  }
+
+  @Nullable
+  String getJitProblem() {
+    if (myCompilationStateLastValue == CompilerState.DISABLED || myCompilationStateLastValue == CompilerState.STOPPED_FOREVER) {
+      return "JIT compiler " + myCompilationStateLastValue;
+    }
+    return null;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
