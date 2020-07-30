@@ -18,7 +18,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "DELETE",                   "$Delete", "DatabaseView.DropAction"},
     { "ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
                                   "EditorEnter", "Images.Thumbnails.EnterAction", "NextTemplateVariable",
-                                  "SearchEverywhere.SelectItem"},
+                                  "SearchEverywhere.SelectItem", "Git.Log.Branches.Change.Branch.Filter"},
     { "F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
