@@ -2403,6 +2403,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(4, findMatchesCount(source, pattern));
   }
 
+  public void testFindLambdaParameter() {
+    String source = "class LambdaParameter {" +
+                    "\n" +
+                    "    void x() {" +
+                    "        java.util.function.Consumer<String> c = a -> System.out.println(a);" +
+                    "    }" +
+                    "}";
+    assertEquals("should find lambda parameter", 1, findMatchesCount(source, "String '_a;"));
+  }
+
   public void testFindLambdas() {
     String source = "public interface IntFunction<R> {" +
                     "    R apply(int value);" +

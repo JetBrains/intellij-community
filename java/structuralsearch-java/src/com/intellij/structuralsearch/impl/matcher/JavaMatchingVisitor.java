@@ -930,6 +930,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else if (element instanceof PsiJavaCodeReferenceElement) {
       result = ((PsiJavaCodeReferenceElement)element).getCanonicalText();
     }
+    else if (element instanceof PsiTypeElement) {
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      result = typeElement.isInferredType() ? typeElement.getText() : typeElement.getType().getCanonicalText();
+    }
     else {
       result = element.getText();
     }
@@ -1003,7 +1007,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiTypeElement typeElement1 = var.getTypeElement();
       if (typeElement1 != null) {
         PsiTypeElement typeElement2 = other.getTypeElement();
-        if (typeElement2 == null) {
+        if (typeElement2 == null) { // e.g. lambda parameter without explicit type
           typeElement2 = JavaPsiFacade.getElementFactory(other.getProject()).createTypeElement(other.getType());
         }
         if (!myMatchingVisitor.setResult(myMatchingVisitor.match(typeElement1, typeElement2))) return;
