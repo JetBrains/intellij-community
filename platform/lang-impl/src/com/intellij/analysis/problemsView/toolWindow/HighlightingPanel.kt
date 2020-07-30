@@ -40,14 +40,13 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getTreeExpander(): TreeExpander? = null
 
   override fun getData(dataId: String): Any? {
-    val root = treeModel.root as? HighlightingFileRoot
-    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return root?.file
+    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return currentFile
     return super.getData(dataId)
   }
 
   override fun getToolWindowIcon(count: Int): Icon? {
     if (ProblemsView.isProjectErrorsEnabled()) return null
-    val root = treeModel.root as? HighlightingFileRoot ?: return Toolwindows.ToolWindowProblemsEmpty
+    val root = currentRoot ?: return Toolwindows.ToolWindowProblemsEmpty
     val problem = root.getChildren(root.file).any {
       val severity = (it as? ProblemNode)?.severity
       severity != null && severity >= HighlightSeverity.ERROR.myVal
@@ -70,23 +69,29 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun selectionChanged(event: FileEditorManagerEvent) = updateCurrentFile()
 
   private fun updateCurrentFile() {
-    val file = findCurrentFile()
-    val root = treeModel.root as? HighlightingFileRoot
-    if (file == null) {
-      if (root == null) return
-      treeModel.root = null
-    }
-    else {
-      if (root != null && root.file == file) return
-      treeModel.root = HighlightingFileRoot(this, file)
-      TreeUtil.promiseSelectFirstLeaf(tree)
-    }
-    powerSaveStateChanged()
+    currentFile = findCurrentFile()
   }
 
+  val currentRoot
+    get() = treeModel.root as? HighlightingFileRoot
+
+  var currentFile
+    get() = currentRoot?.file
+    set(file) {
+      if (file == null) {
+        if (currentRoot == null) return
+        treeModel.root = null
+      }
+      else {
+        if (currentRoot?.file == file) return
+        treeModel.root = HighlightingFileRoot(this, file)
+        TreeUtil.promiseSelectFirstLeaf(tree)
+      }
+      powerSaveStateChanged()
+    }
+
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
-    val root = treeModel.root as? HighlightingFileRoot ?: return
-    val problem = root.findProblem(highlighter) ?: return
+    val problem = currentRoot?.findProblem(highlighter) ?: return
     TreeUtil.promiseSelect(tree, ProblemNodeFinder(problem))
   }
 
@@ -110,8 +115,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 
   private fun getCurrentStatus(): Status {
-    val root = treeModel.root as? HighlightingFileRoot
-    val file = root?.file ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
+    val file = currentFile ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = ProblemsView.getDocument(project, file) ?: return statusAnalyzing(file)
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)

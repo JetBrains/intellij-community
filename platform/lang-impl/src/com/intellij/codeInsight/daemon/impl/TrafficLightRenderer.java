@@ -611,7 +611,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     @Override
     public void toggleProblemsView() {
-      toggleCurrentFileProblems(getProject());
+      PsiFile file = getPsiFile();
+      toggleCurrentFileProblems(getProject(), file == null ? null : file.getVirtualFile());
     }
   }
 
