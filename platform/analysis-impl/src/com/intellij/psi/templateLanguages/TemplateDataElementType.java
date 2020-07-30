@@ -160,8 +160,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     baseLexer.start(sourceCode);
 
     TextRange currentRange = TextRange.EMPTY_RANGE;
+    int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
-      ProgressManager.checkCanceled();
+      if (++tokenCounter % 100 == 0) {
+        ProgressManager.checkCanceled();
+      }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
@@ -189,8 +192,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     TemplateDataModifications modifications = new TemplateDataModifications();
     baseLexer.start(sourceCode);
     TextRange currentRange = TextRange.EMPTY_RANGE;
+    int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
-      ProgressManager.checkCanceled();
+      if (++tokenCounter % 100 == 0) {
+        ProgressManager.checkCanceled();
+      }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
