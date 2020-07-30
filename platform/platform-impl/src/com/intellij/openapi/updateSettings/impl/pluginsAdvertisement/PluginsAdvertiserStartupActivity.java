@@ -138,8 +138,16 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       if (!plugins.isEmpty() || !disabledPlugins.isEmpty()) {
         message = getAddressedMessagePresentation(plugins, disabledPlugins, features);
         if (!disabledPlugins.isEmpty()) {
+          String title;
+          if (disabledPlugins.size() == 1) {
+            IdeaPluginDescriptor descriptor = disabledPlugins.values().iterator().next();
+            title = IdeBundle.message("plugins.advertiser.action.enable.plugin", descriptor.getName());
+          }
+          else {
+            title = IdeBundle.message("plugins.advertiser.action.enable.plugins");
+          }
           notificationActions.add(NotificationAction.createSimpleExpiring(
-            IdeBundle.message("plugins.advertiser.action.enable.plugins"), () -> {
+            title, () -> {
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
                 .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
@@ -214,6 +222,16 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
             entry -> entry.getKey() + ": " + StringUtil.join(entry.getValue(), ", "), "; ");
     final int addressedFeaturesNumber = addressedFeatures.keySet().size();
     final int pluginsNumber = ids.size();
+
+    if (addressedFeaturesNumber == 1) {
+      Map.Entry<String, Collection<String>> feature = addressedFeatures.entrySet().iterator().next();
+      String featureName = StringUtil.join(feature.getValue(), ", ");
+      if (plugins.isEmpty()) {
+        return IdeBundle.message("plugins.advertiser.notification.disabled", pluginsNumber, feature.getKey(), featureName);
+      }
+      return IdeBundle.message("plugins.advertiser.notification.not.installed", pluginsNumber, feature.getKey(), featureName);
+    }
+
     return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
            " (" + addressedFeaturesPresentation + ") " + (pluginsNumber == 1 ? "is" : "are") + " currently " + (plugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
   }
