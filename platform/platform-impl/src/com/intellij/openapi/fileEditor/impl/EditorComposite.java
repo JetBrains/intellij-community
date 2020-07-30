@@ -467,6 +467,10 @@ public class EditorComposite implements Disposable {
     }
   }
 
+  public static boolean isEditorComposite(@Nullable Component component) {
+    return component instanceof MyComponent;
+  }
+
   private class MyComponent extends JPanel implements DataProvider{
     private @NotNull Supplier<? extends JComponent> myFocusComponent;
 
