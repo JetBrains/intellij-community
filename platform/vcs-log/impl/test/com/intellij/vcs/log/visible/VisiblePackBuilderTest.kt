@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.Consumer
-import com.intellij.util.Function
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.graph.GraphCommit
@@ -22,6 +21,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Rule
 import org.junit.Test
 import java.util.*
+import java.util.function.Predicate
 import kotlin.random.nextInt
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -444,11 +444,12 @@ class VisiblePackBuilderTest {
 
     override fun getRefIndex(ref: VcsRef): Int = storagesByRoot.getValue(ref.root).refsReversed.getValue(ref)
 
-    override fun iterateCommits(consumer: Function<in CommitId, Boolean>) {
+    override fun iterateCommits(consumer: Predicate<CommitId>) {
       storagesByRoot.entries.forEach { (root, storage) ->
         storage.hashes.values.forEach {
-          val stop = consumer.`fun`(CommitId(it, root))
-          if (stop) return
+          if (!consumer.test(CommitId(it, root))) {
+            return
+          }
         }
       }
     }

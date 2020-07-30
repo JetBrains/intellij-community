@@ -90,13 +90,12 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
 
         if (!unResolvedHashes.isEmpty()) {
           myLogData.getStorage().iterateCommits(commitId -> {
-
             for (String hashString : unResolvedHashes) {
               if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
                 resolvedHashes.putValue(hashString, commitId);
               }
             }
-            return false;
+            return true;
           });
         }
 
