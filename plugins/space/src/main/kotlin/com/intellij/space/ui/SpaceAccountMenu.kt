@@ -15,28 +15,33 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.GridBagLayout
 import java.awt.Point
 import javax.swing.*
 
 sealed class AccountMenuItem(val showSeparatorAbove: Boolean) {
-  class Account(val title: String,
-                val info: String,
-                val icon: Icon,
-                val actions: List<AccountMenuItem> = emptyList(),
-                showSeparatorAbove: Boolean = false
+  class Account(
+    @Nls val title: String,
+    @Nls val info: String,
+    val icon: Icon,
+    val actions: List<AccountMenuItem> = emptyList(),
+    showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 
-  class Action(val text: String,
-               val runnable: () -> Unit,
-               val rightIcon: Icon = EmptyIcon.create(AllIcons.Ide.External_link_arrow),
-               showSeparatorAbove: Boolean = false
+  class Action(
+    @Nls val text: String,
+    val runnable: () -> Unit,
+    val rightIcon: Icon = EmptyIcon.create(AllIcons.Ide.External_link_arrow),
+    showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 
-  class Group(val text: String,
-              val actions: List<AccountMenuItem> = emptyList(),
-              showSeparatorAbove: Boolean = false
+  class Group(
+    @Nls val text: String,
+    val actions: List<AccountMenuItem> = emptyList(),
+    showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 }
 
@@ -230,6 +235,6 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   }
 }
 
-fun browseAction(text: String, link: String, showSeparatorAbove: Boolean = false): AccountMenuItem.Action {
+fun browseAction(@Nls text: String, @NonNls link: String, showSeparatorAbove: Boolean = false): AccountMenuItem.Action {
   return AccountMenuItem.Action(text, { BrowserUtil.browse(link) }, AllIcons.Ide.External_link_arrow, showSeparatorAbove)
 }

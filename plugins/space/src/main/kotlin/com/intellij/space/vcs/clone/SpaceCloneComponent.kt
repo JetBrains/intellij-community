@@ -2,14 +2,9 @@ package com.intellij.space.vcs.clone
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.BatchResult
 import circlet.platform.client.KCircletClient
-import com.intellij.space.vcs.SpaceHttpPasswordState
-import com.intellij.space.vcs.SpaceKeysState
-import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.dvcs.DvcsRememberedInputs
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -29,10 +24,14 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.space.components.SpaceUserAvatarProvider
+import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.*
-import com.intellij.space.settings.buildConnectingPanel
-import com.intellij.space.settings.buildLoginPanel
 import com.intellij.space.ui.*
+import com.intellij.space.vcs.SpaceHttpPasswordState
+import com.intellij.space.vcs.SpaceKeysState
+import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
@@ -136,7 +135,8 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
         }
         catch (th: Throwable) {
           com.intellij.space.settings.log.warn(th)
-          loginState.value = SpaceLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+          loginState.value = SpaceLoginState.Disconnected(serverName, th.localizedMessage ?: SpaceBundle.message(
+            "login.disconnected.unexpected.error.text", th.javaClass.simpleName))
         }
         val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, getView())
         AppIcon.getInstance().requestFocus(frame as IdeFrame?)
@@ -150,7 +150,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
 
   override fun onComponentSelected() {
     val isConnected = loginState.value is SpaceLoginState.Connected
-    dialogStateListener.onOkActionNameChanged("Clone")
+    dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))
     dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
   }
 
@@ -227,7 +227,7 @@ private class CloneView(
 
   val cloneViewModel = SpaceCloneComponentViewModel(lifetime, st.workspace)
 
-  private val linkLabel: LinkLabel<*> = LinkLabel.create("Set password...", null).apply {
+  private val linkLabel: LinkLabel<*> = LinkLabel.create(SpaceBundle.message("clone.dialog.link.set.password.text"), null).apply {
     horizontalTextPosition = SwingConstants.LEFT
     iconTextGap = 0
   }
@@ -267,9 +267,9 @@ private class CloneView(
     cloneViewModel.spaceHttpPasswordState.forEach(lifetime) {
       if (cloneViewModel.cloneType.value == CloneType.HTTP) {
         passwordStatus.clear()
-        passwordStatus.append("Git HTTP password not set", SimpleTextAttributes.ERROR_ATTRIBUTES)
+        passwordStatus.append(SpaceBundle.message("clone.dialog.error.http.password.not.set.text"), SimpleTextAttributes.ERROR_ATTRIBUTES)
         linkLabel.setListener({ _, _ -> setGitHttpPassword() }, null)
-        linkLabel.text = "Set Git HTTP password..."
+        linkLabel.text = SpaceBundle.message("clone.dialog.link.set.http.password.text")
         linkLabel.icon = null
 
         passwordStatus.isVisible = it is SpaceHttpPasswordState.NotSet
@@ -280,9 +280,9 @@ private class CloneView(
     cloneViewModel.circletKeysState.forEach(lifetime) {
       if (cloneViewModel.cloneType.value == CloneType.SSH) {
         passwordStatus.clear()
-        passwordStatus.append("SSH keys are not configured", SimpleTextAttributes.ERROR_ATTRIBUTES)
+        passwordStatus.append(SpaceBundle.message("clone.dialog.error.ssh.is.not.configured.text"), SimpleTextAttributes.ERROR_ATTRIBUTES)
         linkLabel.setListener({ _, _ -> openSshKeysPage() }, null)
-        linkLabel.text = "Configure..."
+        linkLabel.text = SpaceBundle.message("clone.dialog.link.configure.ssh.text")
         linkLabel.icon = AllIcons.Ide.External_link_arrow
 
         passwordStatus.isVisible = it is SpaceKeysState.NotSet
@@ -303,15 +303,15 @@ private class CloneView(
                                              serverUrl,
                                              resizeIcon(SpaceUserAvatarProvider.getInstance().avatars.value.circle,
                                                         VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-                                             listOf(browseAction("Open $serverUrl", host)))
-        menuItems += browseAction("Projects", Navigator.p.absoluteHref(host), true)
-        menuItems += AccountMenuItem.Action("Settings...",
+                                             listOf(browseAction(SpaceBundle.message("clone.dialog.browse.server.action", serverUrl), host)))
+        menuItems += browseAction(SpaceBundle.message("clone.dialog.open.projects.action"), Navigator.p.absoluteHref(host), true)
+        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.open.settings.action"),
                                             {
                                               SpaceSettingsPanel.openSettings(project)
                                               updateSelectedUrl()
                                             },
                                             showSeparatorAbove = true)
-        menuItems += AccountMenuItem.Action("Log Out...", { space.signOut() })
+        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"), { space.signOut() })
 
         AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
           .showUnderneathOf(accountLabel)
@@ -351,7 +351,7 @@ private class CloneView(
 
         scrollableList(push, grow)
       }
-      row("Directory:") {
+      row(SpaceBundle.message("clone.dialog.directory.to.clone.label.text")) {
         directoryField(growX, pushX)
       }
       row {
