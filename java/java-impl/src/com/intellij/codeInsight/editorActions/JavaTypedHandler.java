@@ -42,8 +42,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,6 +135,17 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
 
+    if (c == '?') {
+      handleQuestionMark(project, editor, file, offsetBefore);
+      return Result.STOP;
+    }
+    
+    if (c == '=') {
+      if (handleEquality(project, editor, file, offsetBefore)) {
+        return Result.STOP;
+      }
+    }
+
     if (c == ';') {
       if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
@@ -169,6 +185,67 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     return Result.CONTINUE;
+  }
+
+  private static boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    if (offsetBefore == 0) return false;
+    Document doc = editor.getDocument();
+    char prevChar = doc.getCharsSequence().charAt(offsetBefore - 1);
+    if (prevChar != '=' && prevChar != '!') return false;
+    doc.insertString(offsetBefore, "=");
+    // a&b== => (a&b)==
+    editor.getCaretModel().moveToOffset(offsetBefore + 1);
+    PsiDocumentManager.getInstance(project).commitDocument(doc);
+    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offsetBefore), PsiJavaToken.class);
+    if (token == null) return true;
+    IElementType type = token.getTokenType();
+    if (type != JavaTokenType.EQEQ && type != JavaTokenType.NE) return true;
+    PsiBinaryExpression comparison = ObjectUtils.tryCast(token.getParent(), PsiBinaryExpression.class);
+    if (comparison == null || comparison.getROperand() != null) return true;
+    PsiBinaryExpression bitwiseOp = ObjectUtils.tryCast(comparison.getParent(), PsiBinaryExpression.class);
+    if (bitwiseOp == null || bitwiseOp.getROperand() != comparison) return true;
+    IElementType bitwiseOpType = bitwiseOp.getOperationTokenType();
+    if (bitwiseOpType != JavaTokenType.AND && bitwiseOpType != JavaTokenType.OR && bitwiseOpType != JavaTokenType.XOR) return true;
+    PsiExpression left = bitwiseOp.getLOperand();
+    PsiExpression right = comparison.getLOperand();
+    if (!TypeConversionUtil.isIntegralNumberType(left.getType()) || !TypeConversionUtil.isIntegralNumberType(right.getType())) {
+      return true;
+    }
+    doc.insertString(right.getTextRange().getEndOffset(), ")");
+    doc.insertString(left.getTextRange().getStartOffset(), "(");
+    editor.getCaretModel().moveToOffset(offsetBefore + 3);
+    return true;
+  }
+
+  private static void handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    Document doc = editor.getDocument();
+    doc.insertString(offsetBefore, "?");
+    editor.getCaretModel().moveToOffset(offsetBefore + 1);
+    PsiDocumentManager.getInstance(project).commitDocument(doc);
+    PsiElement element = file.findElementAt(offsetBefore);
+    if (!(element instanceof PsiJavaToken) || !((PsiJavaToken)element).getTokenType().equals(JavaTokenType.QUEST)) return;
+    PsiConditionalExpression cond = ObjectUtils.tryCast(element.getParent(), PsiConditionalExpression.class);
+    if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return;
+    PsiExpression condition = cond.getCondition();
+    if (PsiUtilCore.hasErrorElementChild(condition)) return;
+    PsiExpression parenthesisStart = null;
+    // intVal+bool? => intVal+(bool?)
+    if (condition instanceof PsiPolyadicExpression && !PsiType.BOOLEAN.equals(condition.getType())) {
+      PsiExpression lastOperand = ArrayUtil.getLastElement(((PsiPolyadicExpression)condition).getOperands());
+      if (lastOperand != null && PsiType.BOOLEAN.equals(lastOperand.getType())) {
+        parenthesisStart = lastOperand;
+      }
+    }
+    // bool? in void context => (bool?)
+    if (ExpressionUtils.isVoidContext(cond) && PsiType.BOOLEAN.equals(condition.getType())) {
+      parenthesisStart = cond;
+    }
+    if (parenthesisStart != null) {
+      int offset = parenthesisStart.getTextRange().getStartOffset();
+      doc.insertString(offsetBefore + 1, ")");
+      doc.insertString(offset, "(");
+      editor.getCaretModel().moveToOffset(offsetBefore + 2);
+    }
   }
 
   private static boolean shouldInsertPairedBrace(@NotNull PsiElement leaf) {

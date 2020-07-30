@@ -141,6 +141,16 @@ public class JavaTypingTest extends BasePlatformTestCase {
   }
 
   public void testCommaInDefaultAnnotationStringArgumentWhenArrayIsExpected() { doTest(','); }
+  
+  public void testQuestionAfterPolyadic() { doTest('?'); }
+  
+  public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
+  
+  public void testQuestionInVoidContext() { doTest('?'); }
+  
+  public void testEqualAfterBitwiseOp() { doTest('='); }
+  
+  public void testEqualAfterBitwiseOp2() { doTest('='); }
 
   private void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
