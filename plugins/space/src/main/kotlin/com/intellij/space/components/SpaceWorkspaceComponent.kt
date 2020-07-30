@@ -14,8 +14,8 @@ import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
 import com.intellij.space.runtime.ApplicationDispatcher
-import com.intellij.space.settings.CircletServerSettings
-import com.intellij.space.settings.CircletSettings
+import com.intellij.space.settings.SpaceServerSettings
+import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.utils.IdeaPasswordSafePersistence
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
@@ -61,7 +61,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     (it?.workspace ?: mutableProperty<Workspace?>(null))
   }
 
-  private val settings = CircletSettings.getInstance()
+  private val settings = SpaceSettings.getInstance()
 
   init {
     initApp()
@@ -119,7 +119,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     if (response is OAuthTokenResponse.Success) {
       LOG.info { "A personal token was received" }
       newManager.signInWithToken(response.toTokenInfo())
-      settings.serverSettings = CircletServerSettings(true, server)
+      settings.serverSettings = SpaceServerSettings(true, server)
       manager.value = newManager
       SpaceAuthNotifier.notifyConnected()
     }
@@ -135,7 +135,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   }
 
   private suspend fun autoSignIn(wsLifetime: Lifetime): Boolean {
-    val serverSettings = CircletSettings.getInstance().serverSettings
+    val serverSettings = SpaceSettings.getInstance().serverSettings
     val server = serverSettings.server
     if (serverSettings.enabled && server.isNotBlank()) {
       val newManager = createWorkspaceManager(wsLifetime, server)

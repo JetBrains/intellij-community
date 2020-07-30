@@ -1,6 +1,6 @@
 package com.intellij.space.utils
 
-import com.intellij.space.messages.CircletBundle
+import com.intellij.space.messages.SpaceBundle
 import java.time.*
 import java.time.format.DateTimeFormatter
 
@@ -90,108 +90,108 @@ private fun LocalDateTime.formatOnDateMonth3DayYear4(): String = formatOnDate(MO
 private fun LocalDateTime.formatOnDateMonth3Day(): String = formatOnDate(MONTH3_DAY_DATE_TIME_FORMATTER)
 
 private fun LocalDateTime.formatOnDate(formatter: DateTimeFormatter): String =
-  CircletBundle.message("date-time.format.on-date", format(formatter))
+  SpaceBundle.message("date-time.format.on-date", format(formatter))
 
 private fun LocalDateTime.formatAtTimeHour2Minute2(): String = formatAtTime(HOUR2_MINUTE2_DATE_TIME_FORMATTER)
 
 private fun LocalDateTime.formatAtTime(formatter: DateTimeFormatter): String =
-  CircletBundle.message("date-time.format.at-time", format(formatter))
+  SpaceBundle.message("date-time.format.at-time", format(formatter))
 
 private fun MomentJSLikeDuration.format(): String {
   if (seconds < 45) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-few-seconds")
+      SpaceBundle.message("date-time.format.difference.in-few-seconds")
     }
   }
 
   if (minutes <= 1) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.minute-ago")
+      SpaceBundle.message("date-time.format.difference.minute-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-minute")
+      SpaceBundle.message("date-time.format.difference.in-minute")
     }
   }
 
   if (minutes < 45) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.minutes-ago", minutes)
+      SpaceBundle.message("date-time.format.difference.minutes-ago", minutes)
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-minutes", minutes)
+      SpaceBundle.message("date-time.format.difference.in-minutes", minutes)
     }
   }
 
   if (hours <= 1) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.hour-ago")
+      SpaceBundle.message("date-time.format.difference.hour-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-hour")
+      SpaceBundle.message("date-time.format.difference.in-hour")
     }
   }
 
   if (hours < 22) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.hours-ago", hours)
+      SpaceBundle.message("date-time.format.difference.hours-ago", hours)
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-hours", hours)
+      SpaceBundle.message("date-time.format.difference.in-hours", hours)
     }
   }
 
   if (days <= 1) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.day-ago")
+      SpaceBundle.message("date-time.format.difference.day-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-day")
+      SpaceBundle.message("date-time.format.difference.in-day")
     }
   }
 
   if (days < 26) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.days-ago", days)
+      SpaceBundle.message("date-time.format.difference.days-ago", days)
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-days", days)
+      SpaceBundle.message("date-time.format.difference.in-days", days)
     }
   }
 
   if (months <= 1) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.month-ago")
+      SpaceBundle.message("date-time.format.difference.month-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-month")
+      SpaceBundle.message("date-time.format.difference.in-month")
     }
   }
 
   if (months < 11) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.months-ago", months)
+      SpaceBundle.message("date-time.format.difference.months-ago", months)
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-months", months)
+      SpaceBundle.message("date-time.format.difference.in-months", months)
     }
   }
 
   if (years <= 1) {
     return if (positive) {
-      CircletBundle.message("date-time.format.difference.year-ago")
+      SpaceBundle.message("date-time.format.difference.year-ago")
     }
     else {
-      CircletBundle.message("date-time.format.difference.in-year")
+      SpaceBundle.message("date-time.format.difference.in-year")
     }
   }
 
   return if (positive) {
-    CircletBundle.message("date-time.format.difference.years-ago", years)
+    SpaceBundle.message("date-time.format.difference.years-ago", years)
   }
   else {
-    CircletBundle.message("date-time.format.difference.in-years", years)
+    SpaceBundle.message("date-time.format.difference.in-years", years)
   }
 }

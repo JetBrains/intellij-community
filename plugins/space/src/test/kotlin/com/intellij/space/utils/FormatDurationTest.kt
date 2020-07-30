@@ -1,6 +1,6 @@
 package com.intellij.space.utils
 
-import com.intellij.space.messages.CircletBundle
+import com.intellij.space.messages.SpaceBundle
 import junit.framework.TestCase
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -12,7 +12,7 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     )
   }
 
@@ -21,11 +21,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:01"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-few-seconds")
+      end, start, SpaceBundle.message("date-time.format.difference.in-few-seconds")
     )
   }
 
@@ -34,11 +34,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:30"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-few-seconds")
+      end, start, SpaceBundle.message("date-time.format.difference.in-few-seconds")
     )
   }
 
@@ -47,11 +47,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:43"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-few-seconds")
+      end, start, SpaceBundle.message("date-time.format.difference.in-few-seconds")
     )
   }
 
@@ -60,11 +60,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:44"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.few-seconds-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.few-seconds-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-few-seconds")
+      end, start, SpaceBundle.message("date-time.format.difference.in-few-seconds")
     )
   }
 
@@ -73,11 +73,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:45"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minute-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.minute-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minute")
+      end, start, SpaceBundle.message("date-time.format.difference.in-minute")
     )
   }
 
@@ -86,11 +86,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:00:46"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minute-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.minute-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minute")
+      end, start, SpaceBundle.message("date-time.format.difference.in-minute")
     )
   }
 
@@ -99,11 +99,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:01:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minute-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.minute-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minute")
+      end, start, SpaceBundle.message("date-time.format.difference.in-minute")
     )
   }
 
@@ -112,11 +112,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:01:29"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minute-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.minute-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minute")
+      end, start, SpaceBundle.message("date-time.format.difference.in-minute")
     )
   }
 
@@ -125,11 +125,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:01:30"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 2)
     )
   }
 
@@ -138,11 +138,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:01:31"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 2)
     )
   }
 
@@ -151,11 +151,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:02:29"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 2)
     )
   }
 
@@ -164,11 +164,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:02:30"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 3)
     )
   }
 
@@ -177,11 +177,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:02:31"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 3)
     )
   }
 
@@ -190,11 +190,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:30:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 30)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 30)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 30)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 30)
     )
   }
 
@@ -203,11 +203,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:44:29"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.minutes-ago", 44)
+      start, end, SpaceBundle.message("date-time.format.difference.minutes-ago", 44)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-minutes", 44)
+      end, start, SpaceBundle.message("date-time.format.difference.in-minutes", 44)
     )
   }
 
@@ -216,11 +216,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:44:30"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hour-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.hour-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hour")
+      end, start, SpaceBundle.message("date-time.format.difference.in-hour")
     )
   }
 
@@ -229,11 +229,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:44:31"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hour-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.hour-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hour")
+      end, start, SpaceBundle.message("date-time.format.difference.in-hour")
     )
   }
 
@@ -242,11 +242,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 00:45:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hour-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.hour-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hour")
+      end, start, SpaceBundle.message("date-time.format.difference.in-hour")
     )
   }
 
@@ -255,11 +255,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 01:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hour-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.hour-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hour")
+      end, start, SpaceBundle.message("date-time.format.difference.in-hour")
     )
   }
 
@@ -268,11 +268,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 01:29:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hour-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.hour-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hour")
+      end, start, SpaceBundle.message("date-time.format.difference.in-hour")
     )
   }
 
@@ -281,11 +281,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 01:30:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hours-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.hours-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hours", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-hours", 2)
     )
   }
 
@@ -294,11 +294,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 02:29:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hours-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.hours-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hours", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-hours", 2)
     )
   }
 
@@ -307,11 +307,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 02:30:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hours-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.hours-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hours", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-hours", 3)
     )
   }
 
@@ -320,11 +320,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hours-ago", 12)
+      start, end, SpaceBundle.message("date-time.format.difference.hours-ago", 12)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hours", 12)
+      end, start, SpaceBundle.message("date-time.format.difference.in-hours", 12)
     )
   }
 
@@ -333,11 +333,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 21:29:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.hours-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.hours-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-hours", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-hours", 21)
     )
   }
 
@@ -346,11 +346,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 21:30:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -359,11 +359,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 21:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -372,11 +372,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 22:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -385,11 +385,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-09 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -398,11 +398,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-10 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -411,11 +411,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-10 11:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.day-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.day-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-day")
+      end, start, SpaceBundle.message("date-time.format.difference.in-day")
     )
   }
 
@@ -424,11 +424,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-10 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 2)
     )
   }
 
@@ -437,11 +437,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-11 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 2)
     )
   }
 
@@ -450,11 +450,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-11 11:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 2)
     )
   }
 
@@ -463,11 +463,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-11 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 3)
     )
   }
 
@@ -476,11 +476,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 23)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 23)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 23)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 23)
     )
   }
 
@@ -489,11 +489,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-01 11:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 23)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 23)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 23)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 23)
     )
   }
 
@@ -502,11 +502,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-01 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 24)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 24)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 24)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 24)
     )
   }
 
@@ -515,11 +515,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-03 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 25)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 25)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 25)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 25)
     )
   }
 
@@ -528,11 +528,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-25 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 25)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 25)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 25)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 25)
     )
   }
 
@@ -541,11 +541,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-03 11:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 25)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 25)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 25)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 25)
     )
   }
 
@@ -554,11 +554,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-03 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -567,11 +567,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-25 11:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.days-ago", 25)
+      start, end, SpaceBundle.message("date-time.format.difference.days-ago", 25)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-days", 25)
+      end, start, SpaceBundle.message("date-time.format.difference.in-days", 25)
     )
   }
 
@@ -580,11 +580,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-25 12:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -593,11 +593,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-04 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -606,11 +606,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -619,11 +619,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-24 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -632,11 +632,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-24 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -645,11 +645,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-26 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -658,11 +658,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-04-12 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -671,11 +671,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-04-12 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -684,11 +684,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-24 23:59:59" // moment.js: 2018-08-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -697,11 +697,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-25 00:00:00" // moment.js: 2018-08-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -710,11 +710,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-24 23:59:59" // moment.js: 2018-07-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -723,11 +723,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-25 00:00:00" // moment.js: 2018-07-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -736,11 +736,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-04-12 23:59:59" // moment.js: 2018-04-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -749,11 +749,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-04-13 00:00:00" // moment.js: 2018-04-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -762,11 +762,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-04-12 23:59:59" // moment.js: 2016-04-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.month-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.month-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-month")
+      end, start, SpaceBundle.message("date-time.format.difference.in-month")
     )
   }
 
@@ -775,11 +775,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-04-13 00:00:00" // moment.js: 2016-04-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -788,11 +788,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-09-23 23:59:59" // moment.js: 2018-09-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -801,11 +801,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-09-24 00:00:00" // moment.js: 2018-09-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 3)
     )
   }
 
@@ -814,11 +814,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-24 23:59:59" // moment.js: 2018-08-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -827,11 +827,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-25 00:00:00" // moment.js: 2018-08-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 3)
     )
   }
 
@@ -840,11 +840,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-05-12 23:59:59" // moment.js: 2018-05-13 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -853,11 +853,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-05-13 00:00:00" // moment.js: 2018-05-13 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 3)
     )
   }
 
@@ -866,11 +866,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-05-12 23:59:59" // moment.js: 2016-05-13 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 2)
     )
   }
 
@@ -879,11 +879,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-05-13 00:00:00" // moment.js: 2016-05-13 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 3)
     )
   }
 
@@ -892,11 +892,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-01-24 23:59:59" // moment.js: 2019-01-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -905,11 +905,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-01-25 00:00:00" // moment.js: 2019-01-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -918,11 +918,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-12-24 23:59:59" // moment.js: 2018-12-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -931,11 +931,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-12-25 00:00:00" // moment.js: 2018-12-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -944,11 +944,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-09-12 23:59:59" // moment.js: 2018-09-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -957,11 +957,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-09-13 00:00:00" // moment.js: 2018-09-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -970,11 +970,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-09-12 23:59:59" // moment.js: 2016-09-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -983,11 +983,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-09-13 00:00:00" // moment.js: 2016-09-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -996,11 +996,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-16 23:59:59" // moment.js: 2018-07-16 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -1009,11 +1009,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-17 00:00:00" // moment.js: 2018-07-16 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -1022,11 +1022,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-07-16 23:59:59" // moment.js: 2016-07-16 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 6)
     )
   }
 
@@ -1035,11 +1035,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-07-17 00:00:00" // moment.js: 2016-07-16 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 7)
     )
   }
 
@@ -1048,11 +1048,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-05-24 23:59:59" // moment.js: 2019-05-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1061,11 +1061,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-05-25 00:00:00" // moment.js: 2019-05-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1074,11 +1074,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-04-23 23:59:59" // moment.js: 2019-04-24 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1087,11 +1087,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-04-24 00:00:00" // moment.js: 2019-04-24 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1100,11 +1100,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-01-12 23:59:59" // moment.js: 2019-01-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1113,11 +1113,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-01-13 00:00:00" // moment.js: 2019-01-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1126,11 +1126,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-01-12 23:59:59" // moment.js: 2017-01-12 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1139,11 +1139,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-01-13 00:00:00" // moment.js: 2017-01-12 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1152,11 +1152,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-11-15 23:59:59" // moment.js: 2018-11-16 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1165,11 +1165,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-11-16 00:00:00" // moment.js: 2018-11-16 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1178,11 +1178,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-11-15 23:59:59" // moment.js: 2016-11-16 05:14:32
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.months-ago", 10)
+      start, end, SpaceBundle.message("date-time.format.difference.months-ago", 10)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-months", 10)
+      end, start, SpaceBundle.message("date-time.format.difference.in-months", 10)
     )
   }
 
@@ -1191,11 +1191,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-11-16 00:00:00" // moment.js: 2016-11-16 05:14:33
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1204,11 +1204,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-07-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1217,11 +1217,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-06-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1230,11 +1230,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-02-28 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1243,11 +1243,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-02-28 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1256,11 +1256,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-01-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1269,11 +1269,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-01-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1282,11 +1282,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-01-08 23:59:59" // moment.js: 2020-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1295,11 +1295,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-01-09 00:00:00" // moment.js: 2020-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1308,11 +1308,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-12-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1321,11 +1321,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-12-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1334,11 +1334,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-08-27 23:59:59" // moment.js: 2019-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1347,11 +1347,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-08-28 00:00:00" // moment.js: 2019-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1360,11 +1360,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-08-27 23:59:59" // moment.js: 2017-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1373,11 +1373,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-08-28 00:00:00" // moment.js: 2017-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1386,11 +1386,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1399,11 +1399,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1412,11 +1412,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1425,11 +1425,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1438,11 +1438,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1451,11 +1451,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1464,11 +1464,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1477,11 +1477,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1490,11 +1490,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1503,11 +1503,11 @@ class FormatDurationTest : TestCase() {
     val end = "2016-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1516,11 +1516,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-01-24 23:59:59" // moment.js: 2020-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.year-ago")
+      start, end, SpaceBundle.message("date-time.format.difference.year-ago")
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-year")
+      end, start, SpaceBundle.message("date-time.format.difference.in-year")
     )
   }
 
@@ -1529,11 +1529,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-01-25 00:00:00" // moment.js: 2020-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1542,11 +1542,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-01-08 23:59:59" // moment.js: 2021-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1555,11 +1555,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-01-09 00:00:00" // moment.js: 2021-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1568,11 +1568,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-12-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1581,11 +1581,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-12-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1594,11 +1594,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-08-27 23:59:59" // moment.js: 2020-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1607,11 +1607,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-08-28 00:00:00" // moment.js: 2020-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1620,11 +1620,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-27 23:59:59" // moment.js: 2018-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1633,11 +1633,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-08-28 00:00:00" // moment.js: 2018-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1646,11 +1646,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1659,11 +1659,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1672,11 +1672,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1685,11 +1685,11 @@ class FormatDurationTest : TestCase() {
     val end = "2018-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1698,11 +1698,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1711,11 +1711,11 @@ class FormatDurationTest : TestCase() {
     val end = "2020-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1724,11 +1724,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1737,11 +1737,11 @@ class FormatDurationTest : TestCase() {
     val end = "2019-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1750,11 +1750,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1763,11 +1763,11 @@ class FormatDurationTest : TestCase() {
     val end = "2017-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1776,11 +1776,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-01-24 23:59:59" // moment.js: 2021-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 2)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 2)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 2)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 2)
     )
   }
 
@@ -1789,11 +1789,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-01-25 00:00:00" // moment.js: 2021-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 3)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 3)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 3)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 3)
     )
   }
 
@@ -1802,11 +1802,11 @@ class FormatDurationTest : TestCase() {
     val end = "2025-01-08 23:59:59" // moment.js: 2025-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1815,11 +1815,11 @@ class FormatDurationTest : TestCase() {
     val end = "2025-01-09 00:00:00" // moment.js: 2025-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1828,11 +1828,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-12-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1841,11 +1841,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-12-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1854,11 +1854,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-08-27 23:59:59" // moment.js: 2024-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1867,11 +1867,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-08-28 00:00:00" // moment.js: 2024-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1880,11 +1880,11 @@ class FormatDurationTest : TestCase() {
     val end = "2022-08-27 23:59:59" // moment.js: 2022-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1893,11 +1893,11 @@ class FormatDurationTest : TestCase() {
     val end = "2022-08-28 00:00:00" // moment.js: 2022-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1906,11 +1906,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1919,11 +1919,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1932,11 +1932,11 @@ class FormatDurationTest : TestCase() {
     val end = "2022-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1945,11 +1945,11 @@ class FormatDurationTest : TestCase() {
     val end = "2022-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1958,11 +1958,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1971,11 +1971,11 @@ class FormatDurationTest : TestCase() {
     val end = "2024-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -1984,11 +1984,11 @@ class FormatDurationTest : TestCase() {
     val end = "2023-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -1997,11 +1997,11 @@ class FormatDurationTest : TestCase() {
     val end = "2023-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -2010,11 +2010,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -2023,11 +2023,11 @@ class FormatDurationTest : TestCase() {
     val end = "2021-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -2036,11 +2036,11 @@ class FormatDurationTest : TestCase() {
     val end = "2025-01-24 23:59:59" // moment.js: 2025-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 6)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 6)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 6)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 6)
     )
   }
 
@@ -2049,11 +2049,11 @@ class FormatDurationTest : TestCase() {
     val end = "2025-01-25 00:00:00" // moment.js: 2025-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 7)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 7)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 7)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 7)
     )
   }
 
@@ -2062,11 +2062,11 @@ class FormatDurationTest : TestCase() {
     val end = "2039-01-08 23:59:59" // moment.js: 2039-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2075,11 +2075,11 @@ class FormatDurationTest : TestCase() {
     val end = "2039-01-09 00:00:00" // moment.js: 2039-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2088,11 +2088,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-12-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2101,11 +2101,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-12-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2114,11 +2114,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-08-27 23:59:59" // moment.js: 2038-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2127,11 +2127,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-08-28 00:00:00" // moment.js: 2038-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2140,11 +2140,11 @@ class FormatDurationTest : TestCase() {
     val end = "2036-08-27 23:59:59" // moment.js: 2036-08-27 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2153,11 +2153,11 @@ class FormatDurationTest : TestCase() {
     val end = "2036-08-28 00:00:00" // moment.js: 2036-08-27 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2166,11 +2166,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2179,11 +2179,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2192,11 +2192,11 @@ class FormatDurationTest : TestCase() {
     val end = "2036-06-30 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2205,11 +2205,11 @@ class FormatDurationTest : TestCase() {
     val end = "2036-07-01 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2218,11 +2218,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2231,11 +2231,11 @@ class FormatDurationTest : TestCase() {
     val end = "2038-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2244,11 +2244,11 @@ class FormatDurationTest : TestCase() {
     val end = "2037-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2257,11 +2257,11 @@ class FormatDurationTest : TestCase() {
     val end = "2037-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2270,11 +2270,11 @@ class FormatDurationTest : TestCase() {
     val end = "2035-03-08 23:59:59"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2283,11 +2283,11 @@ class FormatDurationTest : TestCase() {
     val end = "2035-03-09 00:00:00"
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 
@@ -2296,11 +2296,11 @@ class FormatDurationTest : TestCase() {
     val end = "2039-01-24 23:59:59" // moment.js: 2039-01-08 10:29:05
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 20)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 20)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 20)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 20)
     )
   }
 
@@ -2309,11 +2309,11 @@ class FormatDurationTest : TestCase() {
     val end = "2039-01-25 00:00:00" // moment.js: 2039-01-08 10:29:06
 
     testFormatDuration(
-      start, end, CircletBundle.message("date-time.format.difference.years-ago", 21)
+      start, end, SpaceBundle.message("date-time.format.difference.years-ago", 21)
     )
 
     testFormatDuration(
-      end, start, CircletBundle.message("date-time.format.difference.in-years", 21)
+      end, start, SpaceBundle.message("date-time.format.difference.in-years", 21)
     )
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.space.auth
 
-import com.intellij.space.settings.CircletSettingsPanel
+import com.intellij.space.settings.SpaceSettingsPanel
 import com.intellij.space.utils.notify
 
 internal object SpaceAuthNotifier {
@@ -18,6 +18,6 @@ internal object SpaceAuthNotifier {
   }
 
   private fun configure() {
-    CircletSettingsPanel.openSettings(null)
+    SpaceSettingsPanel.openSettings(null)
   }
 }
