@@ -186,8 +186,8 @@
     <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
-                        serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
+    <applicationService serviceInterface="com.intellij.ui.mac.MacMessages$MacMessageManagerProvider"
+                        serviceImplementation="com.intellij.ui.messages.MacMessageManagerProviderImpl"/>
 
     <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
 

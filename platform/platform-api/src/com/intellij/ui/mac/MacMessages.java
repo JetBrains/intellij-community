@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,20 +13,20 @@ import java.awt.*;
  * @author pegov
  */
 public abstract class MacMessages {
+  public interface MacMessageManagerProvider {
+    @NotNull MacMessages getMessageManager();
+  }
+
   @Messages.YesNoCancelResult
   public abstract int showYesNoCancelDialog(@NotNull String title,
-                                            String message,
-                                            @NotNull String defaultButton,
-                                            String alternateButton,
-                                            String otherButton,
+                                            @NotNull String message,
+                                            @NotNull String yesText,
+                                            @NotNull String noText,
+                                            @NotNull String cancelText,
                                             @Nullable Window window,
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
-
-  public static MacMessages getInstance() {
-    Application app = ApplicationManager.getApplication();
-    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs", true)
-                  ? app.getService(MacMessagesEmulation.class)
-                  : app.getService(MacMessages.class);
+  public static @NotNull MacMessages getInstance() {
+    return ApplicationManager.getApplication().getService(MacMessageManagerProvider.class).getMessageManager();
   }
 
   /**
@@ -55,8 +53,8 @@ public abstract class MacMessages {
 
   public abstract boolean showYesNoDialog(@NotNull String title,
                                           @NotNull String message,
-                                          @NotNull String yesButton,
-                                          @NotNull String noButton,
+                                          @NotNull String yesText,
+                                          @NotNull String noText,
                                           @Nullable Window window,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
