@@ -494,13 +494,20 @@ public final class PluginManagerCore {
     ourShadowedBundledPlugins = null;
   }
 
-  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull[] plugins) {
+  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull [] plugins,
+                                 Collection<IdeaPluginDescriptorImpl> incompletePlugins) {
     StringBuilder bundled = new StringBuilder();
     StringBuilder disabled = new StringBuilder();
     StringBuilder custom = new StringBuilder();
+    Set<PluginId> disabledPlugins = new HashSet<>();
     for (IdeaPluginDescriptor descriptor : plugins) {
       StringBuilder target;
       if (!descriptor.isEnabled()) {
+        if (!DisabledPluginsState.getDisabledIds().contains(descriptor.getPluginId())) {
+          // plugin will be logged as part of "Problems found loading plugins"
+          continue;
+        }
+        disabledPlugins.add(descriptor.getPluginId());
         target = disabled;
       }
       else if (descriptor.isBundled() || descriptor.getPluginId() == SPECIAL_IDEA_PLUGIN_ID) {
@@ -510,14 +517,12 @@ public final class PluginManagerCore {
         target = custom;
       }
 
-      if (target.length() > 0) {
-        target.append(", ");
-      }
-
-      target.append(descriptor.getName());
-      String version = descriptor.getVersion();
-      if (version != null) {
-        target.append(" (").append(version).append(')');
+      appendPlugin(descriptor, target);
+    }
+    for (IdeaPluginDescriptorImpl plugin : incompletePlugins) {
+      // log only explicitly disabled plugins
+      if (DisabledPluginsState.getDisabledIds().contains(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
+        appendPlugin(plugin, disabled);
       }
     }
 
@@ -528,6 +533,18 @@ public final class PluginManagerCore {
     }
     if (disabled.length() > 0) {
       logger.info("Disabled plugins: " + disabled);
+    }
+  }
+
+  private static void appendPlugin(IdeaPluginDescriptor descriptor, StringBuilder target) {
+    if (target.length() > 0) {
+      target.append(", ");
+    }
+
+    target.append(descriptor.getName());
+    String version = descriptor.getVersion();
+    if (version != null) {
+      target.append(" (").append(version).append(')');
     }
   }
 
@@ -1462,7 +1479,7 @@ public final class PluginManagerCore {
 
       activity.end();
       activity.setDescription("plugin count: " + ourLoadedPlugins.size());
-      logPlugins(initResult.sortedPlugins);
+      logPlugins(initResult.sortedPlugins, result.incompletePlugins.values());
     }
     catch (ExtensionInstantiationException e) {
       throw new PluginException(e, e.getExtensionOwnerId());
