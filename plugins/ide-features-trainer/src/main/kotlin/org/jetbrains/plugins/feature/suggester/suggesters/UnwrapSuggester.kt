@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
@@ -30,15 +32,14 @@ class UnwrapSuggester : FeatureSuggester {
                             psiFile.findElementAt(selection.startOffset + countStartDelimiters) ?: return NoSuggestion
                         val parent = curElement.parent ?: return NoSuggestion
                         if (parent.isSurroundingStatement()) {
-                            unwrappingStatements =
-                                parent.children.lastOrNull()?.children?.lastOrNull()?.children?.filterIsInstance<PsiStatement>()
-                                    ?: return NoSuggestion
+                            val codeBlock = parent.getCodeBlock() ?: return NoSuggestion
+                            unwrappingStatements = codeBlock.getStatements()
                         }
                     } else if (unwrappingStatements != null) {
                         val curElement = psiFile.findElementAt(caretOffset - 1) ?: return NoSuggestion
                         if (curElement.text != "}") return NoSuggestion
-                        val codeBlock = curElement.getParentOfType<PsiCodeBlock>() ?: return NoSuggestion
-                        val statements = codeBlock.statements.toList()
+                        val codeBlock = curElement.getContainingCodeBlock() ?: return NoSuggestion
+                        val statements = codeBlock.getStatements()
                         if (intersectsByText(unwrappingStatements!!, statements)) {
                             unwrappingStatements = null
                             return createSuggestion(
@@ -63,6 +64,7 @@ class UnwrapSuggester : FeatureSuggester {
         if (unwrappingStatements.isEmpty() || unwrappingStatements.size > blockStatements.size) return false
         val first = unwrappingStatements[0]
         var index = blockStatements.indexOfFirst { it.text == first.text }
+        if (index == -1) return false
         return unwrappingStatements.all {
             if (index < blockStatements.size) {
                 it.text == blockStatements[index++].text
@@ -72,8 +74,35 @@ class UnwrapSuggester : FeatureSuggester {
         }
     }
 
+    /**
+     * @receiver need to be a code block @see [getContainingCodeBlock] [getCodeBlock]
+     */
+    private fun PsiElement.getStatements(): List<PsiElement> {
+        return if (this is PsiCodeBlock) {
+            statements.toList()
+        } else {
+            val statements = children.toList()
+            if (statements.any { it !is KtExpression }) {
+                emptyList()
+            } else {
+                statements
+            }
+        }
+    }
+
+    private fun PsiElement.getCodeBlock(): PsiElement? {
+        return findDescendantOfType<PsiCodeBlock>()
+            ?: findDescendantOfType<KtBlockExpression>()
+    }
+
+    private fun PsiElement.getContainingCodeBlock(): PsiElement? {
+        return getParentOfType<PsiCodeBlock>()
+            ?: getParentOfType<KtBlockExpression>()
+    }
+
     private fun PsiElement.isSurroundingStatement(): Boolean {
         return this is PsiIfStatement || this is PsiForStatement || this is PsiWhileStatement
+                || this is KtIfExpression || this is KtForExpression || this is KtWhileExpression
     }
 
     override val suggestingActionDisplayName: String = "Unwrap"

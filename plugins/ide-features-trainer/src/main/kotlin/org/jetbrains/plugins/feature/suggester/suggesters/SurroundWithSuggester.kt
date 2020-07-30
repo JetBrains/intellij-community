@@ -1,13 +1,15 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.PsiAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 
 class SurroundWithSuggester : FeatureSuggester {
@@ -17,17 +19,33 @@ class SurroundWithSuggester : FeatureSuggester {
         const val SUGGESTING_TIP_FILENAME = "neue-SurroundWith.html"
     }
 
-    private class SurroundingStatementData(val surroundingStatement: PsiStatement) {
-        var isLeftBraceAdded = false
+    private class SurroundingStatementData(var surroundingStatement: PsiElement) {
+        val startOffset: Int = surroundingStatement.startOffset
         var expectedCloseBraceErrorElement: PsiErrorElement? = null
         var firstStatementInBlockText: String = ""
         var initialStatementsCount: Int = -1
 
-        fun getStatementsFromBlock(): Array<PsiStatement> {
-            val codeBlockStatement =
-                surroundingStatement.children.lastOrNull()?.children?.lastOrNull() as? PsiCodeBlock
-                    ?: return emptyArray()
-            return codeBlockStatement.statements
+        fun getStatementsFromBlock(): List<PsiElement> {
+            val codeBlock = surroundingStatement.children.lastOrNull()?.children?.lastOrNull() ?: return emptyList()
+            return if (codeBlock is PsiCodeBlock) {
+                val statements = codeBlock.statements.toList()
+                if (statements.any { it !is PsiStatement }) {
+                    emptyList()
+                } else {
+                    statements
+                }
+            } else {
+                val statements = codeBlock.children.toList()
+                if (statements.any { it !is KtExpression }) {
+                    emptyList()
+                } else {
+                    statements
+                }
+            }
+        }
+
+        fun isValid(): Boolean {
+            return surroundingStatement.isValid
         }
     }
 
@@ -35,19 +53,24 @@ class SurroundWithSuggester : FeatureSuggester {
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val lastAction = actions.lastOrNull() ?: return NoSuggestion
+        if (surroundingStatementData != null
+            && lastAction is PsiAction
+            && !surroundingStatementData!!.isValid()
+        ) {
+            updateStatementReference(lastAction)
+        }
         when (lastAction) {
             is ChildReplacedAction -> {
                 val (parent, newChild, oldChild) = lastAction
                 if (parent == null || newChild == null || oldChild == null) return NoSuggestion
-                if (newChild is PsiIfStatement && oldChild.text == "i"
-                    || newChild is PsiForStatement && oldChild.text == "fo"
-                    || newChild is PsiWhileStatement && oldChild.text == "whil"
+                if (newChild.isIfStatement() && oldChild.text == "i"
+                    || newChild.isForStatement() && oldChild.text == "fo"
+                    || newChild.isWhileStatement() && oldChild.text == "whil"
                 ) {
-                    surroundingStatementData = SurroundingStatementData(newChild as PsiStatement)
+                    surroundingStatementData = SurroundingStatementData(newChild)
                 } else if (surroundingStatementData != null) {
                     if (newChild is PsiErrorElement
-                        && newChild.errorDescription == """'}' expected"""
-                        && surroundingStatementData!!.isLeftBraceAdded
+                        && newChild.isMissedCloseBrace()
                     ) {
                         surroundingStatementData!!.apply {
                             expectedCloseBraceErrorElement = newChild
@@ -56,7 +79,7 @@ class SurroundWithSuggester : FeatureSuggester {
                             firstStatementInBlockText = statements.firstOrNull()?.text ?: ""
                         }
                     } else if (oldChild is PsiErrorElement
-                        && oldChild.errorDescription == """'}' expected"""
+                        && oldChild.isMissedCloseBrace()
                         && surroundingStatementData!!.expectedCloseBraceErrorElement === oldChild
                     ) {
                         if (isStatementsSurrounded()) {
@@ -76,17 +99,7 @@ class SurroundWithSuggester : FeatureSuggester {
                 val (parent, newChild) = lastAction
                 if (parent == null || newChild == null) return NoSuggestion
                 if (newChild.isSurroundingStatement()) {
-                    surroundingStatementData = SurroundingStatementData(newChild as PsiStatement)
-                }
-            }
-            is BeforeChildReplacedAction -> {
-                val parent = lastAction.parent
-                val newChild = lastAction.newChild
-                if (surroundingStatementData != null
-                    && parent === surroundingStatementData!!.surroundingStatement
-                    && newChild is PsiBlockStatement
-                ) {
-                    surroundingStatementData!!.isLeftBraceAdded = true
+                    surroundingStatementData = SurroundingStatementData(newChild)
                 }
             }
             else -> NoSuggestion
@@ -94,18 +107,49 @@ class SurroundWithSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
+    private fun updateStatementReference(action: PsiAction) {
+        val psiFile = action.parent?.containingFile ?: return
+        val element = psiFile.findElementAt(surroundingStatementData!!.startOffset) ?: return
+        val parent = element.parent ?: return
+        if (parent.isSurroundingStatement()) {
+            surroundingStatementData!!.surroundingStatement = parent
+        } else {
+            surroundingStatementData = null
+        }
+    }
+
     private fun isStatementsSurrounded(): Boolean {
         if (surroundingStatementData == null) return false
         with(surroundingStatementData!!) {
             val statements = getStatementsFromBlock()
-            return isLeftBraceAdded
-                    && statements.size in 1..initialStatementsCount
+            return statements.size in 1..initialStatementsCount
                     && statements.first().text == firstStatementInBlockText
         }
     }
 
+    private fun PsiErrorElement.isMissedCloseBrace(): Boolean {
+        return errorDescription == """'}' expected"""
+                || errorDescription == """Missing '}"""
+    }
+
     private fun PsiElement.isSurroundingStatement(): Boolean {
-        return this is PsiIfStatement || this is PsiForStatement || this is PsiWhileStatement
+        return isIfStatement() || isForStatement() || isWhileStatement()
+    }
+
+    private fun PsiElement.isIfStatement(): Boolean {
+        return this is PsiIfStatement || this is KtIfExpression
+    }
+
+    private fun PsiElement.isForStatement(): Boolean {
+        return this is PsiForStatement || this is KtForExpression
+    }
+
+    private fun PsiElement.isWhileStatement(): Boolean {
+        return this is PsiWhileStatement || this is KtWhileExpression
+    }
+
+    private fun PsiElement.isCodeBlock(): Boolean {
+        return this is PsiCodeBlock || this is KtBlockExpression
     }
 
     override val suggestingActionDisplayName: String = "Surround with"
