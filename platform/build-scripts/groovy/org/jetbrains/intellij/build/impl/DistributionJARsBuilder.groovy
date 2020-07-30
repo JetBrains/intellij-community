@@ -164,6 +164,7 @@ class DistributionJARsBuilder {
 
       addModule("intellij.platform.builtInServer.impl")
       addModule("intellij.platform.credentialStore")
+      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.json")
       addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics")
