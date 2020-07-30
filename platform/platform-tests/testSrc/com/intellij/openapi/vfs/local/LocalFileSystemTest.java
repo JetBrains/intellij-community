@@ -629,7 +629,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     File target = tempDir.newDirectory("target");
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), target.toPath()).toFile();
+    createSymbolicLink(link.toPath(), target.toPath()).toFile();
 
     VirtualFile vTop = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
     assertNotNull(vTop);
@@ -763,7 +763,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newDirectory("src");
       File link = new File(tempDir.getRoot(), "link");
-      Files.createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
+      createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
       File dstDir = tempDir.newDirectory("dst");
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(link);

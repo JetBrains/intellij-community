@@ -206,11 +206,11 @@ public class FileUtilHeavyTest {
     File targetDir = tempDir.newDirectory("target");
     File targetFile = tempDir.newFile("target/file");
     File directDirLink = new File(tempDir.getRoot(), "dirLink");
-    Files.createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
+    IoTestUtil.createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
     File directFileLink = new File(tempDir.getRoot(), "fileLink");
-    Files.createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
+    IoTestUtil.createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
     File linkParentDir = tempDir.newDirectory("linkParent");
-    Files.createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
+    IoTestUtil.createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
 
     FileUtil.delete(directFileLink);
     FileUtil.delete(directDirLink);
@@ -247,7 +247,7 @@ public class FileUtilHeavyTest {
 
     File top = tempDir.newDirectory("top");
     tempDir.newFile("top/a-dir/file");
-    Files.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
+    IoTestUtil.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
 
     FileUtil.delete(top);
     assertThat(top).doesNotExist();
@@ -300,9 +300,9 @@ public class FileUtilHeavyTest {
     String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
 
     // non-recursive link
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
+    IoTestUtil.createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
     // recursive links to a parent dir
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
+    IoTestUtil.createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
 
     // I) links should NOT be resolved when ../ stays inside the linked path
     // I.I) non-recursive links

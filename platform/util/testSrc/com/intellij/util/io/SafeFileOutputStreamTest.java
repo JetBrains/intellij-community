@@ -68,7 +68,7 @@ public class SafeFileOutputStreamTest {
 
     File target = tempDir.newFile("test.txt");
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), target.toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), target.toPath());
     checkWriteSucceed(link);
     assertThat(link.toPath()).isSymbolicLink();
   }

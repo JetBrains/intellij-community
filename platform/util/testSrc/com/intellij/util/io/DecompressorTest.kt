@@ -2,7 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -173,7 +173,7 @@ class DecompressorTest {
   }
 
   @Test fun tarSymlinks() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
@@ -186,7 +186,7 @@ class DecompressorTest {
   }
 
   @Test fun zipSymlinks() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use {
@@ -245,7 +245,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathsFilesInTarWithSymlinks() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
@@ -316,7 +316,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathTarSymlink() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
@@ -331,7 +331,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathZipSymlink() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use {

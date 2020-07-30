@@ -191,7 +191,7 @@ public abstract class FileAttributesReadingTest {
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), file.toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), file.toPath());
 
     FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
@@ -216,9 +216,9 @@ public abstract class FileAttributesReadingTest {
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
     File link1 = new File(tempDir.getRoot(), "link1");
-    Files.createSymbolicLink(link1.toPath(), file.toPath());
+    IoTestUtil.createSymbolicLink(link1.toPath(), file.toPath());
     File link2 = new File(tempDir.getRoot(), "link2");
-    Files.createSymbolicLink(link2.toPath(), link1.toPath());
+    IoTestUtil.createSymbolicLink(link2.toPath(), link1.toPath());
 
     FileAttributes attributes = getAttributes(link2);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
@@ -242,7 +242,7 @@ public abstract class FileAttributesReadingTest {
     if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false));
     assertTrue(dir.setLastModified(dir.lastModified() - 5000));
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), dir.toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), dir.toPath());
 
     FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType());
@@ -265,7 +265,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(file.exists());
     File link = new File(tempDir.getRoot(), "link");
     assertFalse(link.exists());
-    Files.createSymbolicLink(link.toPath(), file.toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), file.toPath());
 
     FileAttributes attributes = getAttributes(link);
     assertNull(attributes.getType());
@@ -284,7 +284,7 @@ public abstract class FileAttributesReadingTest {
 
     File dir = tempDir.newDirectory("dir");
     File link = new File(dir, "link");
-    Files.createSymbolicLink(link.toPath(), dir.toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), dir.toPath());
 
     FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType());
@@ -303,7 +303,7 @@ public abstract class FileAttributesReadingTest {
 
     File file = tempDir.newFile("dir/file.txt");
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), file.getParentFile().toPath());
+    IoTestUtil.createSymbolicLink(link.toPath(), file.getParentFile().toPath());
 
     String target = resolveSymLink(new File(link.getPath() + '/' + file.getName()));
     assertEquals(file.getPath(), target);
