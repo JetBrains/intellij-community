@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
+import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
@@ -89,7 +89,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     AnAction restoreSizeButton =
-      new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), CollapseComponentHover) {
+      new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
