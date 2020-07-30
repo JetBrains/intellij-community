@@ -439,8 +439,15 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   public static String buildUnescapedFormatString(UStringConcatenationsFacade cf,
-                                                  List<? super UExpression> formatParameters,
-                                                  @NotNull Project project) {
+                                                List<? super UExpression> formatParameters,
+                                                @NotNull Project project) {
+    return buildUnescapedFormatString(cf, formatParameters, project, false);
+  }
+
+  private static String buildUnescapedFormatString(UStringConcatenationsFacade cf,
+                                                   List<? super UExpression> formatParameters,
+                                                   @NotNull Project project,
+                                                   boolean nested) {
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
@@ -450,11 +457,12 @@ public final class JavaI18nUtil extends I18nUtil {
       if (expression instanceof ULiteralExpression) {
         Object value = ((ULiteralExpression)expression).getValue();
         if (value != null) {
-          result.append(PsiConcatenationUtil.formatString(value.toString(), false));
+          String formatString = PsiConcatenationUtil.formatString(value.toString(), false);
+          result.append(nested ? PsiConcatenationUtil.formatString(formatString, false) : formatString);
         }
       }
-      else if (expression instanceof UIfExpression && addChoicePattern(expression, formatParameters, project, result, elIndex)) {
-        elIndex++;
+      else if (addChoicePattern(expression, formatParameters, project, result)) {
+        elIndex = formatParameters.size();
       }
       else {
         result.append("{").append(elIndex++).append("}");
@@ -464,11 +472,11 @@ public final class JavaI18nUtil extends I18nUtil {
     return result.toString();
   }
 
-  private static boolean addChoicePattern(UExpression expression, 
+  private static boolean addChoicePattern(UExpression expression,
                                           List<? super UExpression> formatParameters,
                                           @NotNull Project project,
-                                          StringBuilder result,
-                                          int elIndex) {
+                                          StringBuilder result) {
+    if (!(expression instanceof UIfExpression)) return false;
     PsiElement sourcePsi = expression.getSourcePsi();
     if (sourcePsi == null) return false;
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(sourcePsi.getLanguage());
@@ -476,18 +484,18 @@ public final class JavaI18nUtil extends I18nUtil {
 
     UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
     UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
-    if (!(thenExpression instanceof ULiteralExpression) || 
+    if (!(thenExpression instanceof ULiteralExpression) && 
         !(elseExpression instanceof ULiteralExpression)) return false;
 
-    Object thenValue = ((ULiteralExpression)thenExpression).getValue();
-    Object elseValue = ((ULiteralExpression)elseExpression).getValue();
-    if (thenValue == null || 
-        elseValue == null) return false;
+    boolean nested = !(thenExpression instanceof ULiteralExpression && elseExpression instanceof ULiteralExpression);
+
+    String thenStr = getSideText(formatParameters, project, thenExpression, nested);
+    String elseStr = getSideText(formatParameters, project, elseExpression, nested);
 
     result.append("{")
-      .append(elIndex)
-      .append(", choice, 0#").append(PsiConcatenationUtil.formatString(thenValue.toString(), false))
-      .append("|1#").append(PsiConcatenationUtil.formatString(elseValue.toString(), false))
+      .append(formatParameters.size())
+      .append(", choice, 0#").append(thenStr)
+      .append("|1#").append(elseStr)
       .append("}");
 
 
@@ -503,6 +511,35 @@ public final class JavaI18nUtil extends I18nUtil {
                              ULiteralExpression.class);
     formatParameters.add(exCopy);
     return true;
+  }
+
+  @NotNull
+  private static String getSideText(List<? super UExpression> formatParameters,
+                                    @NotNull Project project,
+                                    UExpression expression,
+                                    boolean nested) {
+    String elseStr;
+    if (expression instanceof ULiteralExpression) {
+      Object elseValue = ((ULiteralExpression)expression).getValue();
+      if (elseValue != null) {
+        elseStr = PsiConcatenationUtil.formatString(elseValue.toString(), false);
+        elseStr = nested ? PsiConcatenationUtil.formatString(elseStr, false) : elseStr;
+      }
+      else {
+        elseStr = "null";
+      }
+    }
+    else {
+      UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(expression);
+      if (concatenation != null) {
+        elseStr = buildUnescapedFormatString(concatenation, formatParameters, project, true);
+      }
+      else {
+        elseStr = "{" + formatParameters.size() + "}";
+        formatParameters.add(expression);
+      }
+    }
+    return elseStr;
   }
 
   static String composeParametersText(final List<UExpression> args) {

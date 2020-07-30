@@ -128,4 +128,23 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertSize(1, args)
     assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
   }
+  
+  fun testConcatenationWithIfExprNested() {
+    myFixture.configureByText("Test.kt", """
+      class MyTest {
+        fun f(list : java.util.List<String>){
+          val s = "Not a valid java identifier<caret> part in " + (if (list.size() == 1) list.get(0) + " prefix's" else "suffix's"))
+        }
+      }
+    """.trimIndent())
+    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
+    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    assertNotNull(concatenation)
+    val args = ArrayList<UExpression?>()
+    Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+    assertSize(2, args)
+    assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
+    assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+  }
 }
