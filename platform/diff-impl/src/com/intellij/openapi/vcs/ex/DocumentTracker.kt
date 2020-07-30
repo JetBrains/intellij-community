@@ -507,6 +507,12 @@ class DocumentTracker(
     fun onRangesChanged(before: List<Block>, after: Block) {}
     fun onRangeShifted(before: Block, after: Block) {}
 
+    /**
+     * In some cases, we might want to refresh multiple adjustent blocks together.
+     * This method allows to veto such merging (ex: if blocks share conflicting sets of flags).
+     *
+     * @return true if blocks are allowed to be merged
+     */
     fun onRangesMerged(block1: Block, block2: Block, merged: Block): Boolean = true
 
     fun afterBulkRangeChange(isDirty: Boolean) {}

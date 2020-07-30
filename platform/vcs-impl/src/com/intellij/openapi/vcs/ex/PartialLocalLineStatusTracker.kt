@@ -401,23 +401,21 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesMerged(block1: Block, block2: Block, merged: Block): Boolean {
-      merged.excludedFromCommit = mergeExcludedFromCommitRanges(listOf(block1, block2))
-
-      if (block1.marker == block2.marker) {
+      if (block1.marker == block2.marker &&
+          block1.excludedFromCommit == block2.excludedFromCommit) {
         merged.marker = block1.marker
+        merged.excludedFromCommit = block1.excludedFromCommit
         return true
       }
 
-      if (block1.range.isEmpty || block2.range.isEmpty) {
-        if (block1.range.isEmpty && block2.range.isEmpty) {
-          merged.marker = defaultMarker
-        }
-        else if (block1.range.isEmpty) {
-          merged.marker = block2.marker
-        }
-        else {
-          merged.marker = block1.marker
-        }
+      if (block1.range.isEmpty) {
+        merged.marker = block2.marker
+        merged.excludedFromCommit = block2.excludedFromCommit
+        return true
+      }
+      if (block2.range.isEmpty) {
+        merged.marker = block1.marker
+        merged.excludedFromCommit = block1.excludedFromCommit
         return true
       }
 
