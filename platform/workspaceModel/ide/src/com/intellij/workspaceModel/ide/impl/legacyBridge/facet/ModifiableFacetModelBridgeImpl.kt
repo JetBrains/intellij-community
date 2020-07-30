@@ -23,13 +23,14 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 
-internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceEntityStorage,
-                                          private val diff: WorkspaceEntityStorageDiffBuilder,
-                                          moduleBridge: ModuleBridge,
-                                          private val facetManager: FacetManagerBridge)
-  : FacetModelBridge(moduleBridge), ModifiableFacetModel {
+internal class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
+                                              private val diff: WorkspaceEntityStorageDiffBuilder,
+                                              moduleBridge: ModuleBridge,
+                                              private val facetManager: FacetManagerBridge)
+  : FacetModelBridge(moduleBridge), ModifiableFacetModelBridge {
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   init {
@@ -102,14 +103,18 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
     updateFacetConfiguration()
     if (moduleDiff != null) {
       val res = moduleDiff.addDiff(diff)
-      populateModel(res)
+      populateFacetManager(res)
     }
     else {
       WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel {
         val res = it.addDiff(diff)
-        populateModel(res)
+        populateFacetManager(res)
       }
     }
+  }
+
+  override fun commitWithoutStorageUpdate() {
+    updateFacetConfiguration()
   }
 
   // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
@@ -125,7 +130,7 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
     }
   }
 
-  private fun populateModel(replaceMap: Map<WorkspaceEntity, WorkspaceEntity>) {
+  override fun populateFacetManager(replaceMap: Map<WorkspaceEntity, WorkspaceEntity>) {
     val mapInNewStore: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
     entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
     facetManager.model.populateFrom(mapInNewStore)

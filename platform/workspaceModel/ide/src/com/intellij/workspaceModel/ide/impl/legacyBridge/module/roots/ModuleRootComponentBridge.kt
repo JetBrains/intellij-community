@@ -29,7 +29,7 @@ class ModuleRootComponentBridge(
 
   override val moduleBridge = currentModule as ModuleBridge
 
-  private val orderRootsCache =  OrderRootsCache(currentModule)
+  private val orderRootsCache = OrderRootsCache(currentModule)
 
   private val modelValue = DisposableCachedValue(
     { moduleBridge.entityStorage },
@@ -94,41 +94,26 @@ class ModuleRootComponentBridge(
   override fun getFileIndex(): ModuleFileIndex = currentModule.getService(ModuleFileIndex::class.java)!!
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
-  override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
+  override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
     moduleBridge.entityStorage.current, accessor)
 
   /**
-   * If the model creates from IdeModifiableModelsProviderImpl it should use the same storage which uses in the module.
-   * Modules and ModifiableRootModels(AbstractModuleDataService#createModules) created far earlier than
-   * `AbstractModuleDataService#setModuleOptions` applies its changes for module's entitySource and these changes don't
-   * reflect in created earlier ModifiableRootModel. Other entities become created with different entitySource.
-   * During the commit(AbstractIdeModifiableModelsProvider#commit) we get absolutely unusable store because the latest
-   * applied diff will become the true state of the store.
-   *
-   * Why we can use the same diff for all entries created from IdeModifiableModelsProviderImpl?
-   * Because it applies and discards all changes at once. We will not get the state when ModifiableModuleModel will be rolled back but
-   * ModifiableRootModel will be applied.
-   *
-   * How entries with different entitySource affect us?
-   * Different serializers will be used ExternalModuleImlFileEntitiesSerializer and ModuleImlFileEntitiesSerializer
-   * which leads to store settings in different folders. For example, the content root will not be recognized as belonging
-   * to the module because entitySource is different (ModuleImlFileEntitiesSerializer#saveModuleEntities).
-   *
-   * Also this method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
+   * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
    * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
-  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
     moduleBridge.entityStorage.current, accessor)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
-                         accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(diff,
-                                                                                                               moduleBridge,
-                                                                                                               moduleBridge.entityStorage.current,
-                                                                                                               accessor)
+                         accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff,
+                                                                                                                   moduleBridge,
+                                                                                                                   moduleBridge.entityStorage.current,
+                                                                                                                   accessor,
+                                                                                                                   false)
 
 
   override fun getDependencies(): Array<Module> = moduleDependencies

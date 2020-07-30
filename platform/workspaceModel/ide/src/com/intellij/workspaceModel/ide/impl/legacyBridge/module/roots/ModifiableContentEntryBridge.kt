@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertie
 
 internal class ModifiableContentEntryBridge(
   private val diff: WorkspaceEntityStorageDiffBuilder,
-  private val modifiableRootModel: ModifiableRootModelBridge,
+  private val modifiableRootModel: ModifiableRootModelBridgeImpl,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   private val LOG = Logger.getInstance(javaClass)
