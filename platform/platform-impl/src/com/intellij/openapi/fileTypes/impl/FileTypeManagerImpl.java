@@ -30,6 +30,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -446,6 +447,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       myStandardFileTypes.put(bean.name, standardFileType);
       List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
       registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
+
+      for (FileNameMatcher matcher : standardFileType.matchers) {
+        PluginAdvertiserExtensionsStateService.getInstance().registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
+      }
 
       myPendingAssociations.removeAllAssociations(bean);
       myPendingFileTypes.remove(bean.name);
