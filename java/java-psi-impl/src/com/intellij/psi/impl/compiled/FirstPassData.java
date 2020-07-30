@@ -3,9 +3,11 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -65,9 +67,23 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
     }
     return depth;
   }
-  
+
+  /**
+   * @param componentName record component name
+   * @return true if given component is var-arg
+   */
   public boolean isVarArgComponent(@NotNull String componentName) {
     return componentName.equals(myVarArgRecordComponent);
+  }
+
+  /**
+   * @param jvmNames array JVM type names (e.g. throws list, implements list)
+   * @return list of TypeInfo objects that correspond to given types
+   */
+  @Contract("null -> null; !null -> !null")
+  public List<TypeInfo> createTypes(String @Nullable [] jvmNames) {
+    return jvmNames == null ? null :
+           ContainerUtil.map(jvmNames, jvmName -> new TypeInfo(mapJvmClassNameToJava(jvmName)));
   }
 
   /**

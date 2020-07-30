@@ -35,6 +35,8 @@ public class TypeInfo {
   private static final int HAS_TYPE_ANNOTATIONS = 0x20;
   private static final int HAS_ARRAY_COUNT = 0x40;
   private static final int HAS_ELLIPSIS = 0x80;
+  
+  public static final TypeInfo[] EMPTY_ARRAY = {}; 
 
   private static final String[] ourIndexFrequentType;
   private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
@@ -54,7 +56,7 @@ public class TypeInfo {
     assert ourFrequentTypeIndex.size() < FREQUENT_INDEX_MASK;
   }
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false);
+  private static final TypeInfo NULL = new TypeInfo(null);
 
   public final String text;
   public final byte arrayCount;
@@ -73,6 +75,20 @@ public class TypeInfo {
     }
   }
 
+  /**
+   * Creates a non-array type info
+   * 
+   * @param text type text (not array)
+   */
+  public TypeInfo(String text) {
+    this(text, (byte)0, false);
+  }
+
+  /**
+   * @param text type text (not array)
+   * @param arrayCount number of array components (including vararg component, if any)
+   * @param ellipsis if true, the last array component should be interpreted as vararg
+   */
   public TypeInfo(String text, byte arrayCount, boolean ellipsis) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
@@ -80,7 +96,7 @@ public class TypeInfo {
   }
 
   /**
-   * @param typeAnnotations set type annotations. Could be called only once during the creation.
+   * @param typeAnnotations set type annotations. Could be called only once.
    */
   public void setTypeAnnotations(@NotNull TypeAnnotationContainer typeAnnotations) {
     if (myTypeAnnotations != null) {
@@ -89,6 +105,9 @@ public class TypeInfo {
     myTypeAnnotations = typeAnnotations;
   }
 
+  /**
+   * @return type annotations associated with this type.
+   */
   public @NotNull TypeAnnotationContainer getTypeAnnotations() {
     return myTypeAnnotations == null ? TypeAnnotationContainer.EMPTY : myTypeAnnotations;
   }

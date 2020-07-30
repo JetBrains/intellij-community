@@ -6,7 +6,7 @@ import java.lang.annotation.Target;
 import java.util.List;
 import java.util.Map;
 
-public interface TypeAnno<@TA(10) T extends @TA(11) Object> extends @TA(12) Serializable {
+public interface TypeAnno<@TA(10) T extends @TA(11) Object> extends @TA(12) Serializable, @TA(13) Comparable<@TA(14) T> {
   @TA(-1) List<@TA String> get1TypeParam();
 
   @TA(-1) Map<@TA(0) String, @TA(1) String> get2TypeParams();
@@ -35,6 +35,8 @@ public interface TypeAnno<@TA(10) T extends @TA(11) Object> extends @TA(12) Seri
   <M extends @TA(0) CharSequence> @TA(1) M getTypeParameter();
 
   <M extends @TA(0) CharSequence & @TA(1) Serializable> @TA(2) M getTypeParameter2();
+  
+  <M extends @TA(0) Object & @TA(1) List<@TA(2) ? super @TA(3) String @TA(4) []>, N extends @TA(5) Object, P extends Object> @TA(6) M getTypeParameterComplex();
 
   @TA(0) Outer.@TA(1) Middle.@TA(2) Inner getInner();
   

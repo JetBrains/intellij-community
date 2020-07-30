@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 49;
+  public static final int STUB_VERSION = 50;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
