@@ -115,7 +115,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
     if (!myTracker.isValid()) return;
     final Document document = myTracker.getDocument();
-    int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
+    int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
     final int lastOffset = document.getLineStartOffset(line);
     editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -191,7 +191,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   @Nullable
   private List<DiffFragment> computeWordDiff(@NotNull Range range) {
     if (!isShowInnerDifferences()) return null;
-    if (range.getType() != Range.MODIFIED) return null;
+    if (!range.hasLines() || !range.hasVcsLines()) return null;
 
     final CharSequence vcsContent = getVcsContent(range);
     final CharSequence currentContent = getCurrentContent(range);
@@ -223,7 +223,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   private JComponent createEditorComponent(@NotNull Editor editor,
                                            @NotNull Range range,
                                            @Nullable List<? extends DiffFragment> wordDiff) {
-    if (range.getType() == Range.INSERTED) return null;
+    if (!range.hasVcsLines()) return null;
 
     TextRange vcsTextRange = getVcsTextRange(range);
     String content = getVcsContent(range).toString();
@@ -500,7 +500,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return Range.DELETED == range.getType() || Range.MODIFIED == range.getType();
+      return range.hasVcsLines();
     }
 
     @Override

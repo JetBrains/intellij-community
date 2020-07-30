@@ -1344,7 +1344,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
         if (!myTracker.isValid()) return;
         final Document document = myTracker.getDocument();
-        int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
+        int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
         int[] startLines = new int[]{
           transferPosition(ThreeSide.BASE, ThreeSide.LEFT, new LogicalPosition(line, 0)).line,

@@ -181,8 +181,10 @@ public final class VcsFacadeImpl extends VcsFacade {
 
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
-      if (range.getType() == Range.DELETED) {
-        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
+      if (!range.hasLines()) {
+        if (range.hasVcsLines()) {
+          changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
+        }
       }
       else {
         changedLines.set(range.getLine1(), range.getLine2());
@@ -287,7 +289,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     final List<TextRange> insertedRanges = new ArrayList<>();
 
     for (Range range : changedRanges) {
-      if (range.getType() != Range.DELETED) {
+      if (range.hasLines()) {
         int changeStartLine = range.getLine1();
         int changeEndLine = range.getLine2();
 
@@ -296,7 +298,7 @@ public final class VcsFacadeImpl extends VcsFacade {
 
         TextRange changedTextRange = new TextRange(lineStartOffset, lineEndOffset);
         ranges.add(changedTextRange);
-        if (range.getType() == Range.INSERTED) {
+        if (!range.hasVcsLines()) {
           insertedRanges.add(changedTextRange);
         }
       }
