@@ -4,12 +4,14 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 
-class GHPRShowDiffAction : DumbAwareAction() {
+class GHPRShowDiffActionProvider : AnActionExtensionProvider {
+
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(GHPRChangesDiffHelper.DATA_KEY) != null
 
   override fun update(e: AnActionEvent) {
     val project = e.project

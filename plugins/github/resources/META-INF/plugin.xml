@@ -65,6 +65,9 @@
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
                 anchor="left" canCloseContents="true" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
   </extensions>
 
   <applicationListeners>
@@ -168,6 +171,22 @@
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadChangesAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+
+    <action id="Github.PullRequest.Review.Submit"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction"/>
+
+    <group id="Github.PullRequest.Changes.Toolbar">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Review.Submit"/>
+      <separator/>
+      <reference id="ChangesView.GroupBy"/>
+    </group>
+
+    <group id="Github.PullRequest.Changes.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Changes.Reload"/>
+    </group>
+
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
