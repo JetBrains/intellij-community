@@ -95,10 +95,10 @@ object RankingSupport {
       StatsCollectorBundle.message("ml.completion.show.diff.notification.content"),
       NotificationType.INFORMATION
     ).addAction(object : NotificationAction(StatsCollectorBundle.message("ml.completion.show.diff.notification.ok")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-        }
-      })
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        notification.expire()
+      }
+    })
       .addAction(object : NotificationAction(StatsCollectorBundle.message("ml.completion.show.diff.notification.disable")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false

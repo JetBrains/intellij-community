@@ -52,8 +52,7 @@
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
+                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"

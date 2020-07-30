@@ -18,7 +18,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.castSafelyTo
 import com.intellij.completion.ranker.ExperimentModelProvider
 import com.intellij.mocks.TestExperimentStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.experiment.ExperimentStatus
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import java.beans.PropertyChangeListener
 
@@ -35,11 +37,12 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     }
 
     RankingSupport.enableInTests(testRootDisposable)
+    ApplicationManager.getApplication().replaceService(ExperimentStatus::class.java, TestExperimentStatus(), testRootDisposable)
     val experimentStatus = ExperimentStatus.getInstance() as TestExperimentStatus
     experimentStatus.updateExperimentSettings(inExperiment = true,
                                               shouldRank = true,
                                               shouldShowArrows = true,
-                                              shouldCalculateFeatures = false)
+                                              shouldCalculateFeatures = true)
     Disposer.register(testRootDisposable, Disposable { settingsStateBefore.restore(CompletionMLRankingSettings.getInstance()) })
     LookupManager.getInstance(project)
       .addPropertyChangeListener(
