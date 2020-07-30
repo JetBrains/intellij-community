@@ -11,10 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
@@ -215,7 +212,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
     }
     final String[] filteredPackageNames = getFilteredPackageNames();
     for (final String packName : filteredPackageNames) {
-      if (packName.equals(packageFQName) || packageFQName.startsWith(packName) && packageFQName.charAt(packName.length()) == '.') {
+      if (PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
         return true;
       }
     }
