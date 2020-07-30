@@ -42,6 +42,7 @@ import java.util.function.Function;
  * @author peter
  */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
+  private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
@@ -162,7 +163,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     TextRange currentRange = TextRange.EMPTY_RANGE;
     int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
-      if (++tokenCounter % 100 == 0) {
+      if (++tokenCounter % CHECK_PROGRESS_AFTER_TOKENS == 0) {
         ProgressManager.checkCanceled();
       }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
@@ -194,7 +195,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     TextRange currentRange = TextRange.EMPTY_RANGE;
     int tokenCounter = 0;
     while (baseLexer.getTokenType() != null) {
-      if (++tokenCounter % 100 == 0) {
+      if (++tokenCounter % CHECK_PROGRESS_AFTER_TOKENS == 0) {
         ProgressManager.checkCanceled();
       }
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
