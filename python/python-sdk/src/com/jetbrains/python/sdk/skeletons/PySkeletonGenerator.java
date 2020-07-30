@@ -395,12 +395,11 @@ public class PySkeletonGenerator {
   public void prepare() {
   }
 
-  @NotNull
-  protected ProcessOutput getProcessOutput(@Nullable String homePath,
-                                           String @NotNull [] commandLine,
-                                           @Nullable String stdin,
-                                           @Nullable Map<String, String> extraEnv,
-                                           int timeout) throws InvalidSdkException {
+  protected @NotNull ProcessOutput getProcessOutput(@Nullable String homePath,
+                                                    String @NotNull [] commandLine,
+                                                    @Nullable String stdin,
+                                                    @Nullable Map<String, String> extraEnv,
+                                                    int timeout) throws InvalidSdkException {
     final byte[] bytes = stdin != null ? stdin.getBytes(StandardCharsets.UTF_8) : null;
     return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout, bytes, true);
   }
