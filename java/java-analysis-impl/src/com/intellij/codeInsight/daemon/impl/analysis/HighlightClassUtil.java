@@ -607,7 +607,7 @@ public class HighlightClassUtil {
     }
     else if (aClass.isInterface()) {
       token = JavaTokenType.INTERFACE_KEYWORD;
-      feature = HighlightingFeature.LOCAL_INTERFACES;
+      feature = aClass.isAnnotationType() ? null : HighlightingFeature.LOCAL_INTERFACES;
     }
     else {
       return null;
@@ -617,6 +617,12 @@ public class HighlightClassUtil {
       .findFirst(e -> e instanceof PsiKeyword && ((PsiKeyword)e).getTokenType().equals(token))
       .orElseThrow(NoSuchElementException::new);
     PsiFile file = aClass.getContainingFile();
+    if (feature == null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(anchor)
+        .descriptionAndTooltip(JavaErrorBundle.message("annotation.cannot.be.local"))
+        .create();
+    }
     return HighlightUtil.checkFeature(anchor, feature, PsiUtil.getLanguageLevel(file), file);
   }
 
