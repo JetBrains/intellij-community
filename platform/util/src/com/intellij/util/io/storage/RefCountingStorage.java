@@ -70,7 +70,7 @@ public class RefCountingStorage extends AbstractStorage {
 
     try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-      StreamUtil.copyStreamContent(in, outputStream);
+      StreamUtil.copy(in, outputStream);
       return outputStream;
     }
   }

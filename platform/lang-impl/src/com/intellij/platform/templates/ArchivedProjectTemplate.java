@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -7,7 +7,6 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -124,14 +123,5 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
         return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
       });
-  }
-
-  protected static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
-    try {
-      return consumer.consume(stream);
-    }
-    finally {
-      StreamUtil.closeStream(stream);
-    }
   }
 }

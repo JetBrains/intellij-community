@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -166,11 +167,9 @@ public final class TemporaryCacheServerClient implements JpsServerClient {
               return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<Map<String, List<String>>>() {});
             }
             else {
-              String statusLine = httpConnection.getResponseCode() + " " + httpConnection.getRequestMethod();
-              InputStream errorStream = httpConnection.getErrorStream();
-              String errorText = StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
-              LOG.info("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " +
-                        errorText);
+              String statusLine = httpConnection.getResponseCode() + ' ' + httpConnection.getRequestMethod();
+              String errorText = StreamUtil.readText(new InputStreamReader(httpConnection.getErrorStream(), StandardCharsets.UTF_8));
+              LOG.info("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " + errorText);
             }
           }
           return null;

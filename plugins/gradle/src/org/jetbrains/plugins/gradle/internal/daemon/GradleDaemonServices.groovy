@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileStatic
@@ -128,16 +127,10 @@ class GradleDaemonServices {
 
   private static Object getObject(byte[] bytes) {
     if (bytes != null) {
-      ObjectInputStream oIn = null
       try {
-        oIn = new ObjectInputStream(new ByteArrayInputStream(bytes))
-        return oIn.readObject()
+        return new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject()
       }
-      catch (ignore) {
-      }
-      finally {
-        StreamUtil.closeStream(oIn)
-      }
+      catch (ignore) { }
     }
     return null
   }

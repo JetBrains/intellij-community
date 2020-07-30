@@ -35,7 +35,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,6 +54,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -248,9 +250,13 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
           String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)myProcessHandler).getProcess()));
           if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-            InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
-              .invoke(vm, new Object[]{ArrayUtilRt.EMPTY_OBJECT_ARRAY});
-            String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
+            InputStream inputStream = (InputStream)vm.getClass()
+              .getMethod("remoteDataDump", Object[].class)
+              .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
+            String text;
+            try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+              text = StreamUtil.readText(reader);
+            }
             List<ThreadState> threads = ThreadDumpParser.parse(text);
             DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
             return;

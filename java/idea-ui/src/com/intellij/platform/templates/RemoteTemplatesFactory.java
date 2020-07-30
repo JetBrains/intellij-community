@@ -133,8 +133,12 @@ public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     }
 
     @Override
-    public <T> T processStream(@NotNull final StreamProcessor<T> consumer) throws IOException {
-      return HttpRequests.request(URL + myPath).connect(request -> consumeZipStream(consumer, new ZipInputStream(request.getInputStream())));
+    public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
+      return HttpRequests.request(URL + myPath).connect(request -> {
+        try (ZipInputStream zip = new ZipInputStream(request.getInputStream())) {
+          return consumer.consume(zip);
+        }
+      });
     }
 
     @Nullable

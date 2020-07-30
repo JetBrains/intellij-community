@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -19,22 +18,7 @@ import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Vector;
-import java.util.regex.Pattern;
-import org.apache.commons.httpclient.Cookie;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.StatusLine;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
@@ -42,6 +26,15 @@ import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -290,8 +283,13 @@ public class JiraRepository extends BaseRepositoryImpl {
     int statusCode = client.executeMethod(method);
     LOG.debug("Status code: " + statusCode);
     // may be null if 204 No Content received
-    final InputStream stream = method.getResponseBodyAsStream();
-    String entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
+    InputStream stream = method.getResponseBodyAsStream();
+    String entityContent = "";
+    if (stream != null) {
+      try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+        entityContent = StreamUtil.readText(reader);
+      }
+    }
     //TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus

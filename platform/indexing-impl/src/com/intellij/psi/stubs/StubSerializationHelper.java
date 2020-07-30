@@ -358,7 +358,7 @@ final class StubSerializationHelper {
       String name = myIdToName.get(id);
       return name == null ? 0 : newSerializationHelper.myNameToId.getInt(name);
     });
-    StreamUtil.copyStreamContent(inStub, outStub);
+    StreamUtil.copy(inStub, outStub);
   }
 
   private ObjectStubSerializer<?, Stub> getClassById(int localId, @Nullable Stub parentStub, IntEnumerator enumerator) throws SerializerNotFoundException {

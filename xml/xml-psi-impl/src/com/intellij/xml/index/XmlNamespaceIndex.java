@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -55,16 +54,11 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Nullable
   public static String computeNamespace(@NotNull VirtualFile file) {
-    InputStream stream = null;
-    try {
-      stream = file.getInputStream();
+    try (InputStream stream = file.getInputStream()) {
       return XsdNamespaceBuilder.computeNamespace(stream);
     }
     catch (IOException e) {
       return null;
-    }
-    finally {
-      StreamUtil.closeStream(stream);
     }
   }
 
