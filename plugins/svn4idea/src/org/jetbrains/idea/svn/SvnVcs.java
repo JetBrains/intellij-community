@@ -402,7 +402,8 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  @NotNull
+  public SvnHistoryProvider getVcsHistoryProvider() {
     // no heavy state, but it would be useful to have place to keep state in -> do not reuse instance
     return new SvnHistoryProvider(this);
   }

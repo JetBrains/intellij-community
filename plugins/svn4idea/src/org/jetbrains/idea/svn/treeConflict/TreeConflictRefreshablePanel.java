@@ -14,14 +14,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
 import gnu.trove.TLongArrayList;
@@ -68,10 +66,9 @@ public class TreeConflictRefreshablePanel implements Disposable {
   public TreeConflictRefreshablePanel(@NotNull Project project,
                                       @NotNull String loadingTitle,
                                       @NotNull BackgroundTaskQueue queue,
-                                      Change change) {
+                                      @NotNull ConflictedSvnChange change) {
     myVcs = SvnVcs.getInstance(project);
-    assert change instanceof ConflictedSvnChange;
-    myChange = (ConflictedSvnChange)change;
+    myChange = change;
     myPath = ChangesUtil.getFilePath(myChange);
     myRightRevisionsList = new TLongArrayList();
 
@@ -229,17 +226,15 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   private void addResolveButtons(TreeConflictDescription description, JPanel main, GridBagConstraints gb) {
-    final FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, 5, 5);
-    JPanel wrapper = new JPanel(flowLayout);
-    final JButton both = new JButton("Both");
+    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+
     final JButton merge = new JButton("Merge");
     final JButton left = new JButton("Accept Yours");
     final JButton right = new JButton("Accept Theirs");
-    enableAndSetListener(createBoth(description), both);
     enableAndSetListener(createMerge(description), merge);
     enableAndSetListener(createLeft(description), left);
     enableAndSetListener(createRight(description), right);
-    //wrapper.add(both);
+
     if (merge.isEnabled()) {
       wrapper.add(merge);
     }
@@ -368,10 +363,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return newFilePath.getName() + " (" + Objects.requireNonNull(newFilePath.getParentPath()).getPath() + ")";
   }
 
-  private static ActionListener createBoth(TreeConflictDescription description) {
-    return null;
-  }
-
   private static void enableAndSetListener(final ActionListener al, final JButton b) {
     if (al == null) {
       b.setEnabled(false);
@@ -396,9 +387,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     if (before != null) {
       JPanel panel = before.createPanel();
       if (panel != null) {
-        //gb.fill = GridBagConstraints.HORIZONTAL;
         main.add(panel, gb);
-        //gb.fill = GridBagConstraints.NONE;
         ++gb.gridy;
       }
     }
@@ -437,46 +426,31 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
   }
 
-  private abstract static class AbstractConflictSide<T> implements ConflictSidePresentation, Convertor<T, VcsRevisionNumber> {
-    protected final Project myProject;
-    protected final ConflictVersion myVersion;
-
-    private AbstractConflictSide(Project project, ConflictVersion version) {
-      myProject = project;
-      myVersion = version;
-    }
-  }
-
-  private static final class HistoryConflictSide extends AbstractConflictSide<VcsFileRevision> {
+  private static final class HistoryConflictSide implements ConflictSidePresentation {
     public static final int LIMIT = 10;
+
     private final VcsAppendableHistoryPartnerAdapter mySessionAdapter;
     private final SvnHistoryProvider myProvider;
     private final FilePath myPath;
     private final SvnVcs myVcs;
+    private final ConflictVersion myVersion;
     private final Revision myPeg;
     private FileHistoryPanelImpl myFileHistoryPanel;
     private TLongArrayList myListToReportLoaded;
 
     private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final Revision peg) throws VcsException {
-      super(vcs.getProject(), version);
       myVcs = vcs;
+      myVersion = version;
       myPeg = peg;
       myPath =
         getFilePathOnNonLocal(version.getRepositoryRoot().appendPath(version.getPath(), false).toDecodedString(), version.isDirectory());
 
       mySessionAdapter = new VcsAppendableHistoryPartnerAdapter();
-      /*mySessionAdapter.reportCreatedEmptySession(new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(),
-        myPath, SvnUtil.checkRepositoryVersion15(myVcs, version.getPath()), null, true));*/
-      myProvider = (SvnHistoryProvider)myVcs.getVcsHistoryProvider();
+      myProvider = myVcs.getVcsHistoryProvider();
     }
 
     public void setListToReportLoaded(TLongArrayList listToReportLoaded) {
       myListToReportLoaded = listToReportLoaded;
-    }
-
-    @Override
-    public VcsRevisionNumber convert(VcsFileRevision o) {
-      return o.getRevisionNumber();
     }
 
     @Override
@@ -508,7 +482,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
         return EmptyConflictSide.getInstance().createPanel();
       }
       VcsFileRevision last = null;
-      if (!list.isEmpty() && myPeg == null && list.size() == LIMIT ||
+      if (myPeg == null && list.size() == LIMIT ||
           myPeg != null && myPeg.getNumber() > 0 &&
           myPeg.equals(((SvnRevisionNumber)list.get(list.size() - 1).getRevisionNumber()).getRevision())) {
         last = list.remove(list.size() - 1);
