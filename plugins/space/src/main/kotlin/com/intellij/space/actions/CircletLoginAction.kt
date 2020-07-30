@@ -1,7 +1,7 @@
-package circlet.actions
+package com.intellij.space.actions
 
-import circlet.components.space
-import circlet.settings.CircletSettingsPanel
+import com.intellij.space.components.space
+import com.intellij.space.settings.CircletSettingsPanel
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 

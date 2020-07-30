@@ -1,9 +1,9 @@
-package circlet.vcs
+package com.intellij.space.vcs
 
-import circlet.actions.CircletActionUtils
+import com.intellij.space.actions.CircletActionUtils
 import circlet.client.api.Navigator
 import circlet.client.api.ProjectLocation
-import circlet.components.space
+import com.intellij.space.components.space
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*

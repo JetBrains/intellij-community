@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.utils
+package com.intellij.space.plugins.pipelines.utils
 
 import runtime.reactive.Signal
 import runtime.reactive.Source

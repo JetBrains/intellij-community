@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.viewmodel
+package com.intellij.space.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.ScriptConfig
 import com.intellij.build.events.BuildEvent

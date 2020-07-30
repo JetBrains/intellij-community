@@ -1,4 +1,4 @@
-package circlet.ui
+package com.intellij.space.ui
 
 import circlet.platform.api.TID
 import circlet.platform.api.oauth.TokenSource

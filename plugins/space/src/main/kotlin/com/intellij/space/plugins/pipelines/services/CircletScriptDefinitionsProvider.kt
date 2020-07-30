@@ -1,7 +1,7 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
 import circlet.pipelines.config.utils.ScriptConstants
-import circlet.plugins.pipelines.utils.JarFinder
+import com.intellij.space.plugins.pipelines.utils.JarFinder
 import java.io.File
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 

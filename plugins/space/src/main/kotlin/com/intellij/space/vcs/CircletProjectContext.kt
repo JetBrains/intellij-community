@@ -1,4 +1,4 @@
-package circlet.vcs
+package com.intellij.space.vcs
 
 import circlet.client.api.PR_Project
 import circlet.client.api.ProjectKey
@@ -6,7 +6,7 @@ import circlet.client.api.Projects
 import circlet.client.api.RepositoryService
 import circlet.client.pr
 import circlet.client.repoService
-import circlet.components.space
+import com.intellij.space.components.space
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace

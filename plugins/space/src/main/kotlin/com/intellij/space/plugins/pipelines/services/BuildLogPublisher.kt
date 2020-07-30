@@ -1,7 +1,7 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
-import circlet.plugins.pipelines.viewmodel.LogData
-import circlet.utils.application
+import com.intellij.space.plugins.pipelines.viewmodel.LogData
+import com.intellij.space.utils.application
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent

@@ -1,11 +1,12 @@
-package circlet.plugins.pipelines.services.run
+package com.intellij.space.plugins.pipelines.services.run
 
-import circlet.plugins.pipelines.services.execution.CircletTaskRunner
+import com.intellij.space.plugins.pipelines.services.execution.CircletTaskRunner
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.service
+import com.intellij.space.plugins.pipelines.services.run.CircletRunTaskConfigurationOptions
 
 class CircletRunTaskState(private val settings: CircletRunTaskConfigurationOptions, environment: ExecutionEnvironment) : CommandLineState(
   environment) {

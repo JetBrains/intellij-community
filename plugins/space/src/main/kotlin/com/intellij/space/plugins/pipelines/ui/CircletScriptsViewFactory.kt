@@ -1,14 +1,14 @@
-package circlet.plugins.pipelines.ui
+package com.intellij.space.plugins.pipelines.ui
 
-import circlet.messages.CircletBundle
+import com.intellij.space.messages.CircletBundle
 import circlet.pipelines.DefaultDslFileName
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.api.ScriptStep
-import circlet.plugins.pipelines.services.SpaceKtsModelBuilder
-import circlet.plugins.pipelines.viewmodel.CircletModelTreeNode
-import circlet.plugins.pipelines.viewmodel.ScriptState
-import circlet.utils.LifetimedDisposable
-import circlet.utils.LifetimedDisposableImpl
+import com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder
+import com.intellij.space.plugins.pipelines.viewmodel.CircletModelTreeNode
+import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle

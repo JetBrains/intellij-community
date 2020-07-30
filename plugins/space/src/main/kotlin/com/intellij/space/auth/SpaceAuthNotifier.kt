@@ -1,11 +1,11 @@
-package circlet.auth
+package com.intellij.space.auth
 
-import circlet.settings.CircletSettingsPanel
-import circlet.utils.notify
+import com.intellij.space.settings.CircletSettingsPanel
+import com.intellij.space.utils.notify
 
 internal object SpaceAuthNotifier {
   fun notifyDisconnected() {
-    notify("Disconnected.<br><a href=\"switch-on\">Configure Server</a>", ::configure)
+    notify("Disconnected.<br><a href=\"switch-on\">Configure Server</a>", SpaceAuthNotifier::configure)
   }
 
   fun notifyConnected() {

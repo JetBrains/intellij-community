@@ -1,10 +1,10 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
-import circlet.plugins.pipelines.utils.DslFileFinder
-import circlet.tools.spaceKtsToolwindow
-import circlet.utils.LifetimedDisposable
-import circlet.utils.LifetimedDisposableImpl
-import circlet.vcs.PostStartupActivity
+import com.intellij.space.plugins.pipelines.utils.DslFileFinder
+import com.intellij.space.tools.spaceKtsToolwindow
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
+import com.intellij.space.vcs.PostStartupActivity
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

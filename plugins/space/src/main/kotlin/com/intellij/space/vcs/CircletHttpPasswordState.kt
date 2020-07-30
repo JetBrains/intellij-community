@@ -1,4 +1,4 @@
-package circlet.vcs
+package com.intellij.space.vcs
 
 import circlet.client.api.SshKeyData
 import circlet.client.api.td.VcsHostingPassword

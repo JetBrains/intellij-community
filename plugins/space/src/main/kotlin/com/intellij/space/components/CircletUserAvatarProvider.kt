@@ -1,11 +1,11 @@
-package circlet.components
+package com.intellij.space.components
 
 import circlet.client.api.englishFullName
 import circlet.platform.client.ConnectionStatus
-import circlet.ui.CircletAvatarUtils
-import circlet.ui.CircletAvatars
-import circlet.ui.CircletImageLoader
-import circlet.utils.application
+import com.intellij.space.ui.CircletAvatarUtils
+import com.intellij.space.ui.CircletAvatars
+import com.intellij.space.ui.CircletImageLoader
+import com.intellij.space.utils.application
 import kotlinx.coroutines.CancellationException
 import libraries.coroutines.extra.LifetimeSource
 import libraries.klogging.logger

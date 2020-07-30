@@ -1,7 +1,7 @@
-package circlet.vcs.clone
+package com.intellij.space.vcs.clone
 
-import circlet.settings.CircletSettings
-import circlet.ui.cleanupUrl
+import com.intellij.space.settings.CircletSettings
+import com.intellij.space.ui.cleanupUrl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension

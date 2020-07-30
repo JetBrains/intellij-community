@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.api.parseProjectConfig

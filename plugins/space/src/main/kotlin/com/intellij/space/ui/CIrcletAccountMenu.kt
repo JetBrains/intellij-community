@@ -1,4 +1,4 @@
-package circlet.ui
+package com.intellij.space.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil

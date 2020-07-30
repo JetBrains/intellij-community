@@ -1,10 +1,10 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
 import circlet.client.api.ProjectKey
 import circlet.client.api.Projects
 import circlet.client.pr
-import circlet.components.space
+import com.intellij.space.components.space
 import circlet.platform.client.resolve
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
@@ -131,7 +131,7 @@ internal class CircletCreateProjectDialog(parent: JComponent) : DialogWrapper(pa
     return list
   }
 
-  override fun getDimensionServiceKey(): String = "circlet.vcs.share.CircletCreateProjectDialog"
+  override fun getDimensionServiceKey(): String = "com.intellij.space.vcs.share.CircletCreateProjectDialog"
 
   private class ProjectKeyFilter : DocumentFilter() {
     override fun replace(fb: FilterBypass?, offset: Int, length: Int, text: String?, attrs: AttributeSet?) {

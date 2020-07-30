@@ -1,4 +1,4 @@
-package circlet.vcs
+package com.intellij.space.vcs
 
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier

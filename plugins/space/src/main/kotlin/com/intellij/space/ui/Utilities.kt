@@ -1,4 +1,4 @@
-package circlet.ui
+package com.intellij.space.ui
 
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.IconUtil

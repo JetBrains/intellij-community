@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
 import com.intellij.build.AbstractViewManager
 import com.intellij.openapi.project.Project

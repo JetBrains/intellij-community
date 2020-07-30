@@ -1,6 +1,6 @@
-package circlet.runtime
+package com.intellij.space.runtime
 
-import circlet.utils.application
+import com.intellij.space.utils.application
 import com.intellij.mock.MockApplication
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState

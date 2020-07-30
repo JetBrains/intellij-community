@@ -1,4 +1,4 @@
-package circlet.settings
+package com.intellij.space.settings
 
 data class CircletServerSettings(
   var enabled: Boolean = false,

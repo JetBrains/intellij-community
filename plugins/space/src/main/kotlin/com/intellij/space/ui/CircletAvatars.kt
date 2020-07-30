@@ -1,6 +1,6 @@
 @file:Suppress("UndesirableClassUsage")
 
-package circlet.ui
+package com.intellij.space.ui
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor

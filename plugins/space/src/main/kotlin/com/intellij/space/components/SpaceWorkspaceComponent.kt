@@ -1,8 +1,8 @@
-package circlet.components
+package com.intellij.space.components
 
 import circlet.arenas.initCircletArenas
-import circlet.auth.SpaceAuthNotifier
-import circlet.auth.startRedirectHandling
+import com.intellij.space.auth.SpaceAuthNotifier
+import com.intellij.space.auth.startRedirectHandling
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.common.oauth.IdeaOAuthConfig
@@ -13,12 +13,12 @@ import circlet.platform.api.serialization.ExtendableSerializationRegistry
 import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
-import circlet.runtime.ApplicationDispatcher
-import circlet.settings.CircletServerSettings
-import circlet.settings.CircletSettings
-import circlet.utils.IdeaPasswordSafePersistence
-import circlet.utils.LifetimedDisposable
-import circlet.utils.LifetimedDisposableImpl
+import com.intellij.space.runtime.ApplicationDispatcher
+import com.intellij.space.settings.CircletServerSettings
+import com.intellij.space.settings.CircletSettings
+import com.intellij.space.utils.IdeaPasswordSafePersistence
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
 import com.intellij.ide.browsers.BrowserLauncher

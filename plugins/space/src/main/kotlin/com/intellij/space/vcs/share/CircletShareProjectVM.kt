@@ -1,10 +1,10 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
 import circlet.client.api.Projects
 import circlet.client.pr
 import circlet.common.permissions.ProjectRight
-import circlet.components.space
+import com.intellij.space.components.space
 import circlet.platform.api.batchAll
 import circlet.platform.api.map
 import circlet.platform.client.ConnectionStatus

@@ -1,7 +1,7 @@
-package circlet.tools
+package com.intellij.space.tools
 
-import circlet.plugins.pipelines.ui.CircletToolWindowService
-import circlet.utils.computeSafe
+import com.intellij.space.plugins.pipelines.ui.CircletToolWindowService
+import com.intellij.space.utils.computeSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project

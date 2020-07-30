@@ -1,6 +1,6 @@
-package circlet.vcs.clone
+package com.intellij.space.vcs.clone
 
-import circlet.actions.CircletActionUtils
+import com.intellij.space.actions.CircletActionUtils
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction

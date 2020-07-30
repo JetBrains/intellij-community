@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services.run
+package com.intellij.space.plugins.pipelines.services.run
 
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.SimpleConfigurationType

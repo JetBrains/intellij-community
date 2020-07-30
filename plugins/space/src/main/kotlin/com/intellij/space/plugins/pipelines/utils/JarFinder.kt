@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.utils
+package com.intellij.space.plugins.pipelines.utils
 
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.extensions.PluginId

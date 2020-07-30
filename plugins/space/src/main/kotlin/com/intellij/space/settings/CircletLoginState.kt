@@ -1,4 +1,4 @@
-package circlet.settings
+package com.intellij.space.settings
 
 import circlet.workspaces.Workspace
 import libraries.coroutines.extra.LifetimeSource

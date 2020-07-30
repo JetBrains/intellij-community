@@ -1,12 +1,12 @@
-package circlet.settings
+package com.intellij.space.settings
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.components.CircletUserAvatarProvider
-import circlet.components.space
+import com.intellij.space.components.CircletUserAvatarProvider
+import com.intellij.space.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
-import circlet.ui.cleanupUrl
-import circlet.ui.resizeIcon
+import com.intellij.space.ui.cleanupUrl
+import com.intellij.space.ui.resizeIcon
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable

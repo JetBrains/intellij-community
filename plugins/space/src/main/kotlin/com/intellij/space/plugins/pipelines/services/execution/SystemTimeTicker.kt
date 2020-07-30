@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services.execution
+package com.intellij.space.plugins.pipelines.services.execution
 
 import circlet.pipelines.engine.Ticker
 

@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services
+package com.intellij.space.plugins.pipelines.services
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement

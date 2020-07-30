@@ -1,4 +1,4 @@
-package circlet.messages
+package com.intellij.space.messages
 
 import com.intellij.BundleBase
 import org.jetbrains.annotations.PropertyKey
@@ -7,7 +7,7 @@ import java.lang.ref.SoftReference
 import java.util.*
 
 object CircletBundle {
-  private const val BUNDLE = "circlet.messages.CircletBundle"
+  private const val BUNDLE = "space.messages.CircletBundle"
 
   private var bundleReference: Reference<ResourceBundle>? = null
 

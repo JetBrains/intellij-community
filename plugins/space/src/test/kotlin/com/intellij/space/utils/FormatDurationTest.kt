@@ -1,6 +1,6 @@
-package circlet.utils
+package com.intellij.space.utils
 
-import circlet.messages.CircletBundle
+import com.intellij.space.messages.CircletBundle
 import junit.framework.TestCase
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

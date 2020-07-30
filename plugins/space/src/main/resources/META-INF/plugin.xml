@@ -17,47 +17,47 @@
   <depends>Git4Idea</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
-    <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
+    <applicationService serviceImplementation="com.intellij.space.settings.CircletSettings"/>
+    <applicationService serviceImplementation="com.intellij.space.components.CircletUserAvatarProvider"/>
 
 
     <applicationConfigurable
       groupId="tools"
       groupWeight="239"
       displayName="Space"
-      instance="circlet.settings.CircletSettingsPanel"/>
+      instance="com.intellij.space.settings.CircletSettingsPanel"/>
 
     <toolWindow id="Space Automation"
                 icon="SpaceIcons.MainToolwindow"
                 anchor="right"
                 canCloseContents="true"
-                factoryClass="circlet.tools.CircletToolWindowFactory"/>
+                factoryClass="com.intellij.space.tools.CircletToolWindowFactory"/>
 
-    <projectService serviceImplementation="circlet.plugins.pipelines.services.SpaceKtsFileDetector"/>
-    <projectService serviceImplementation="circlet.plugins.pipelines.services.SpaceKtsModelBuilder"/>
-    <projectService serviceImplementation="circlet.plugins.pipelines.services.SyncDslViewManager"/>
-    <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
-    <projectService serviceImplementation="circlet.plugins.pipelines.ui.CircletToolWindowService"/>
-    <projectService serviceImplementation="circlet.vcs.CircletProjectContext"/>
+    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetector"/>
+    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder"/>
+    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SyncDslViewManager"/>
+    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.execution.CircletTaskRunner"/>
+    <projectService serviceImplementation="com.intellij.space.plugins.pipelines.ui.CircletToolWindowService"/>
+    <projectService serviceImplementation="com.intellij.space.vcs.CircletProjectContext"/>
     <runLineMarkerContributor
       language="kotlin"
-      id="circletScriptRunLineMarkerProvider"
-      implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>
+      id="spaceScriptRunLineMarkerProvider"
+      implementationClass="com.intellij.space.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>
 
-    <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
+    <configurationType implementation="com.intellij.space.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
-    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="circlet.vcs.clone.CircletCloneExtension"/>
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="com.intellij.space.vcs.clone.CircletCloneExtension"/>
 
-    <postStartupActivity implementation="circlet.vcs.PostStartupActivity"/>
-    <postStartupActivity implementation="circlet.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
+    <postStartupActivity implementation="com.intellij.space.vcs.PostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
 
   </extensions>
 
   <actions>
-    <group id="circlet.actions.MainToolbarActionGroup">
+    <group id="space.actions.MainToolbarActionGroup">
       <separator/>
-      <action id="circlet.actions.CircletMainToolBarAction"
-              class="circlet.actions.CircletMainToolBarAction"
+      <action id="com.intellij.space.actions.CircletMainToolBarAction"
+              class="com.intellij.space.actions.CircletMainToolBarAction"
               icon="SpaceIcons.MainToolwindow"
               text="Space Toolbar Menu">
       </action>
@@ -65,36 +65,36 @@
     </group>
 
 
-    <action id="circlet.vcs.clone.CircletCloneAction"
-            class="circlet.vcs.clone.CircletCloneAction"
+    <action id="com.intellij.space.vcs.clone.CircletCloneAction"
+            class="com.intellij.space.vcs.clone.CircletCloneAction"
             text="Clone Repository..."/>
 
-    <action id="circlet.actions.CircletLoginAction"
-            class="circlet.actions.CircletLoginAction"
+    <action id="com.intellij.space.actions.CircletLoginAction"
+            class="com.intellij.space.actions.CircletLoginAction"
             text="Log In to Space..."/>
-    <action id="circlet.actions.CircletLogoutAction"
-            class="circlet.actions.CircletLogoutAction"
+    <action id="com.intellij.space.actions.CircletLogoutAction"
+            class="com.intellij.space.actions.CircletLogoutAction"
             text="Log Out..."/>
 
-    <group id="circlet.vcs.OpenReviews" class="circlet.vcs.OpenReviews" text="Open Code Reviews..."/>
-    <group id="circlet.vcs.OpenChecklists" class="circlet.vcs.OpenChecklists" text="Open Checklists..."/>
-    <group id="circlet.vcs.OpenIssues" class="circlet.vcs.OpenIssues" text="Open Issues..."/>
+    <group id="com.intellij.space.vcs.OpenReviews" class="com.intellij.space.vcs.OpenReviews" text="Open Code Reviews..."/>
+    <group id="com.intellij.space.vcs.OpenChecklists" class="com.intellij.space.vcs.OpenChecklists" text="Open Checklists..."/>
+    <group id="com.intellij.space.vcs.OpenIssues" class="com.intellij.space.vcs.OpenIssues" text="Open Issues..."/>
     <!--        <group id="circlet.vcs.OpenProjects" class="circlet.vcs.OpenProjects" text="Open Projects..."/>-->
 
-    <group text="Space" id="CircletGroup" popup="true" icon="SpaceIcons.Main">
+    <group text="Space" id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <reference id="circlet.vcs.clone.CircletCloneAction"/>
+      <reference id="com.intellij.space.vcs.clone.CircletCloneAction"/>
       <separator/>
-      <reference id="circlet.vcs.OpenReviews"/>
-      <reference id="circlet.vcs.OpenChecklists"/>
-      <reference id="circlet.vcs.OpenIssues"/>
+      <reference id="com.intellij.space.vcs.OpenReviews"/>
+      <reference id="com.intellij.space.vcs.OpenChecklists"/>
+      <reference id="com.intellij.space.vcs.OpenIssues"/>
       <separator/>
-      <reference id="circlet.actions.CircletLoginAction"/>
-      <reference id="circlet.actions.CircletLogoutAction"/>
+      <reference id="com.intellij.space.actions.CircletLoginAction"/>
+      <reference id="com.intellij.space.actions.CircletLogoutAction"/>
     </group>
 
-    <group id="circlet.vcs.CircletVcsOpenInBrowserActionGroup"
-           class="circlet.vcs.CircletVcsOpenInBrowserActionGroup"
+    <group id="com.intellij.space.vcs.CircletVcsOpenInBrowserActionGroup"
+           class="com.intellij.space.vcs.CircletVcsOpenInBrowserActionGroup"
            text="Open On Space">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
@@ -103,10 +103,10 @@
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </group>
-    <action id="circlet.vcs.share.CircletShareProjectAction"
-            class="circlet.vcs.share.CircletShareProjectAction"
+    <action id="com.intellij.space.vcs.share.CircletShareProjectAction"
+            class="com.intellij.space.vcs.share.CircletShareProjectAction"
             text="Share Project on Space">
-      <add-to-group group-id="CircletGroup" anchor="first"/>
+      <add-to-group group-id="SpaceGroup" anchor="first"/>
       <add-to-group group-id="Vcs.Import" anchor="last"/>
     </action>
   </actions>

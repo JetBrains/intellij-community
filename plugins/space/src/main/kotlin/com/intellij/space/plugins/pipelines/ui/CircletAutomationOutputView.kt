@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.ui
+package com.intellij.space.plugins.pipelines.ui
 
 import com.intellij.execution.impl.ConsoleViewImpl
 

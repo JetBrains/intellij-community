@@ -1,16 +1,16 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
-import circlet.actions.CircletActionUtils
+import com.intellij.space.actions.CircletActionUtils
 import circlet.client.api.RepoDetails
 import circlet.client.api.identifier
 import circlet.client.api.impl.vcsPasswords
 import circlet.client.td
-import circlet.components.space
-import circlet.settings.CircletSettings
-import circlet.settings.CloneType
-import circlet.vcs.CircletHttpPasswordState
-import circlet.vcs.CircletProjectContext
-import circlet.vcs.CircletSetGitHttpPasswordDialog
+import com.intellij.space.components.space
+import com.intellij.space.settings.CircletSettings
+import com.intellij.space.settings.CloneType
+import com.intellij.space.vcs.CircletHttpPasswordState
+import com.intellij.space.vcs.CircletProjectContext
+import com.intellij.space.vcs.CircletSetGitHttpPasswordDialog
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.actionSystem.AnActionEvent

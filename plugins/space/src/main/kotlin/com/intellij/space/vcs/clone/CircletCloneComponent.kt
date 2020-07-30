@@ -1,17 +1,15 @@
-package circlet.vcs.clone
+package com.intellij.space.vcs.clone
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.components.CircletUserAvatarProvider
-import circlet.components.space
+import com.intellij.space.components.CircletUserAvatarProvider
+import com.intellij.space.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.BatchResult
 import circlet.platform.client.KCircletClient
-import circlet.settings.*
-import circlet.ui.*
-import circlet.vcs.CircletHttpPasswordState
-import circlet.vcs.CircletKeysState
-import circlet.vcs.CircletSetGitHttpPasswordDialog
+import com.intellij.space.vcs.CircletHttpPasswordState
+import com.intellij.space.vcs.CircletKeysState
+import com.intellij.space.vcs.CircletSetGitHttpPasswordDialog
 import com.intellij.dvcs.DvcsRememberedInputs
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -31,6 +29,10 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.space.settings.*
+import com.intellij.space.settings.buildConnectingPanel
+import com.intellij.space.settings.buildLoginPanel
+import com.intellij.space.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
@@ -133,7 +135,7 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
           throw th
         }
         catch (th: Throwable) {
-          log.warn(th)
+          com.intellij.space.settings.log.warn(th)
           loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
         }
         val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, getView())

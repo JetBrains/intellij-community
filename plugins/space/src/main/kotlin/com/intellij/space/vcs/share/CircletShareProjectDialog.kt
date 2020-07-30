@@ -1,8 +1,8 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
 import circlet.client.api.*
 import circlet.client.repoService
-import circlet.components.space
+import com.intellij.space.components.space
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -169,7 +169,7 @@ class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true)
     return list
   }
 
-  override fun getDimensionServiceKey(): String = "circlet.vcs.share.CircletShareProjectDialog"
+  override fun getDimensionServiceKey(): String = "com.intellij.space.vcs.share.CircletShareProjectDialog"
 
   data class Result(
     val project: PR_RepositoryInfo,

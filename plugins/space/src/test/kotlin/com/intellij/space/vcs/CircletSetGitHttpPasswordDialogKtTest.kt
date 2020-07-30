@@ -1,4 +1,4 @@
-package circlet.vcs
+package com.intellij.space.vcs
 
 import org.junit.Test
 import kotlin.test.assertEquals

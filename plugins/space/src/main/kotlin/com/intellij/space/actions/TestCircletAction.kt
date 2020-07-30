@@ -1,6 +1,6 @@
-package circlet.actions
+package com.intellij.space.actions
 
-import circlet.components.space
+import com.intellij.space.components.space
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction

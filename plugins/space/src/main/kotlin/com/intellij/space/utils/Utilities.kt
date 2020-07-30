@@ -1,4 +1,4 @@
-package circlet.utils
+package com.intellij.space.utils
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener

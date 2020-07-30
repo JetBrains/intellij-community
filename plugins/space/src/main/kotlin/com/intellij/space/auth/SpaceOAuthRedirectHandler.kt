@@ -1,4 +1,4 @@
-package circlet.auth
+package com.intellij.space.auth
 
 import com.intellij.util.concurrency.AppExecutorUtil
 import io.ktor.network.selector.ActorSelectorManager

@@ -1,15 +1,13 @@
-package circlet.actions
+package com.intellij.space.actions
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.components.CircletUserAvatarProvider
-import circlet.components.space
+import com.intellij.space.components.CircletUserAvatarProvider
+import com.intellij.space.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.ConnectionStatus
-import circlet.settings.*
-import circlet.ui.*
-import circlet.vcs.CircletProjectContext
-import circlet.vcs.clone.CircletCloneAction
+import com.intellij.space.vcs.CircletProjectContext
+import com.intellij.space.vcs.clone.CircletCloneAction
 import circlet.workspaces.Workspace
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +15,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.space.settings.*
+import com.intellij.space.settings.buildConnectingPanel
+import com.intellij.space.settings.buildLoginPanel
+import com.intellij.space.ui.*
 import com.intellij.ui.AppIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
@@ -121,7 +123,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
           throw th
         }
         catch (th: Throwable) {
-          log.warn(th)
+          com.intellij.space.settings.log.warn(th)
           loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
         }
         val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, component)

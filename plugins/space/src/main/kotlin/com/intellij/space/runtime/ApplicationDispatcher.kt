@@ -1,4 +1,4 @@
-package circlet.runtime
+package com.intellij.space.runtime
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ModalityState

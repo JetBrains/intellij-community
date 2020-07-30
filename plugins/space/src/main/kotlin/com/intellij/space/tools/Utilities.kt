@@ -1,4 +1,4 @@
-package circlet.tools
+package com.intellij.space.tools
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager

@@ -1,4 +1,4 @@
-package circlet.plugins.pipelines.services.run
+package com.intellij.space.plugins.pipelines.services.run
 
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.components.JBTextField

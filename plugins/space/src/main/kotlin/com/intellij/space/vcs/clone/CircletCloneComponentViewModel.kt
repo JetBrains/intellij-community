@@ -1,4 +1,4 @@
-package circlet.vcs.clone
+package com.intellij.space.vcs.clone
 
 import circlet.client.api.*
 import circlet.client.api.impl.vcsPasswords
@@ -10,11 +10,11 @@ import circlet.platform.api.Ref
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveRefsOrFetch
 import circlet.platform.client.xTransformedPagedListOnFlux
-import circlet.settings.CircletSettings
-import circlet.settings.CloneType
-import circlet.settings.CloneType.HTTP
-import circlet.vcs.CircletHttpPasswordState
-import circlet.vcs.CircletKeysState
+import com.intellij.space.settings.CircletSettings
+import com.intellij.space.settings.CloneType
+import com.intellij.space.settings.CloneType.HTTP
+import com.intellij.space.vcs.CircletHttpPasswordState
+import com.intellij.space.vcs.CircletKeysState
 import circlet.workspaces.Workspace
 import com.intellij.util.ui.cloneDialog.SearchableListItem
 import libraries.coroutines.extra.Lifetime

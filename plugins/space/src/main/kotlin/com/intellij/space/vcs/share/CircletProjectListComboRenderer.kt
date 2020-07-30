@@ -1,4 +1,4 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
 import com.intellij.ui.ColoredListCellRenderer

@@ -1,4 +1,4 @@
-package circlet.klogging.impl
+package com.intellij.space.klogging.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import libraries.klogging.BaseLogger

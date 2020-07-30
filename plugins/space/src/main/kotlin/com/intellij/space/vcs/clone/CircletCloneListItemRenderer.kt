@@ -1,4 +1,4 @@
-package circlet.vcs.clone
+package com.intellij.space.vcs.clone
 
 import circlet.client.api.PR_RepositoryInfo
 import circlet.client.api.RepoDetails

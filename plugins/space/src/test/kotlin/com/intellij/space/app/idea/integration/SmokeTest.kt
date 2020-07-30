@@ -1,4 +1,4 @@
-package circlet.app.idea.integration
+package com.intellij.space.app.idea.integration
 
 /*
 class SmokeTest : HeavyPlatformTestCase() {

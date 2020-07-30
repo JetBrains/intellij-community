@@ -1,4 +1,4 @@
-package circlet.actions
+package com.intellij.space.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent

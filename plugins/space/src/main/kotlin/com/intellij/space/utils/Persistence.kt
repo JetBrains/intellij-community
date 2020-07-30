@@ -1,4 +1,4 @@
-package circlet.utils
+package com.intellij.space.utils
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.ide.passwordSafe.PasswordSafe

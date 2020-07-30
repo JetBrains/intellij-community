@@ -1,4 +1,4 @@
-package circlet.vcs.share
+package com.intellij.space.vcs.share
 
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.project.Project
