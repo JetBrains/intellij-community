@@ -75,7 +75,7 @@ private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentC
     .yesText(message("login.via.github.action"))
     .noText(message("button.use.token"))
     .icon(Messages.getWarningIcon())
-  if (project == null) {
+  if (parentComponent != null) {
     return builder.show(parentComponent)
   }
   else {
