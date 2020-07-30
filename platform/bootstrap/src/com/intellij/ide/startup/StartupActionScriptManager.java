@@ -25,13 +25,13 @@ public final class StartupActionScriptManager {
 
   public static synchronized void executeActionScript() throws IOException {
     try {
-      List<ActionCommand> commands = loadActionScript(getActionScriptFile());
-      for (ActionCommand command : commands) {
+      for (ActionCommand command : loadActionScript(getActionScriptFile())) {
         command.execute();
       }
     }
     finally {
-      saveActionScript(null);  // deleting a file should not cause an exception
+      // deleting a file should not cause an exception
+      saveActionScript(null);
     }
   }
 
@@ -81,13 +81,12 @@ public final class StartupActionScriptManager {
     return Paths.get(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
-  @NotNull
-  public static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
+  public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
     if (!Files.isRegularFile(scriptFile)) {
       return new ArrayList<>();
     }
 
-    try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
+    try (ObjectInput ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
       Object data = ois.readObject();
       if (data instanceof ActionCommand[]) {
         return new ArrayList<>(Arrays.asList((ActionCommand[])data));
@@ -109,16 +108,16 @@ public final class StartupActionScriptManager {
     saveActionScript(commands, scriptFile);
   }
 
-  public static void saveActionScript(@Nullable List<ActionCommand> commands, Path scriptFile)
+  public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile)
     throws IOException {
-    if (commands != null) {
+    if (commands == null) {
+      Files.deleteIfExists(scriptFile);
+    }
+    else {
       Files.createDirectories(scriptFile.getParent());
-      try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
+      try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
         oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
       }
-    }
-    else if (Files.exists(scriptFile)) {
-      FileUtilRt.delete(scriptFile.toFile());
     }
   }
 
