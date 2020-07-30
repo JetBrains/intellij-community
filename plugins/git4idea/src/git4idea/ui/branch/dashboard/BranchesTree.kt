@@ -47,6 +47,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   var searchField: SearchTextField? = null
 
   init {
+    putClientProperty(AUTO_SELECT_ON_MOUSE_PRESSED, false)
     setCellRenderer(BranchTreeCellRenderer(project))
     isRootVisible = false
     setShowsRootHandles(true)
