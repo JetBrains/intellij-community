@@ -17,10 +17,6 @@ internal object SpaceAuthNotifier {
     )
   }
 
-  fun notifyConnected() {
-    notify(SpaceBundle.message("auth.notification.connected.message"))
-  }
-
   fun authCheckFailedNotification() {
     notify(SpaceBundle.message("auth.notification.not.authenticated.message"))
   }

@@ -121,7 +121,6 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       newManager.signInWithToken(response.toTokenInfo())
       settings.serverSettings = SpaceServerSettings(true, server)
       manager.value = newManager
-      SpaceAuthNotifier.notifyConnected()
     }
     return response
   }
