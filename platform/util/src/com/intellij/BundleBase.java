@@ -30,6 +30,53 @@ public abstract class BundleBase {
     assertOnMissedKeys = doAssert;
   }
 
+  /**
+   * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
+   * 
+   * @param bundle resource bundle to find the message in
+   * @param key resource key
+   * @param unassignedParams number of unassigned parameters
+   * @param params assigned parameters
+   * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
+   */
+  public static @Nls String partialMessage(@NotNull ResourceBundle bundle,
+                                           @NotNull String key,
+                                           int unassignedParams,
+                                           Object @NotNull ... params) {
+    if (unassignedParams <= 0) throw new IllegalArgumentException();
+    Object[] newParams = new Object[params.length + unassignedParams];
+    System.arraycopy(params, 0, newParams, 0, params.length);
+    final String prefix = "#$$$TemplateParameter$$$#";
+    final String suffix = "#$$$/TemplateParameter$$$#";
+    for (int i = 0; i < unassignedParams; i++) {
+      newParams[i + params.length] = prefix + i + suffix;
+    }
+    String message = message(bundle, key, newParams);
+    return quotePattern(message).replace(prefix, "{").replace(suffix, "}"); //NON-NLS
+  }
+
+  private static String quotePattern(String message) {
+    boolean inQuotes = false;
+    StringBuilder sb = new StringBuilder(message.length()+5);
+    for (int i = 0; i < message.length(); i++) {
+      char c = message.charAt(i);
+      boolean needToQuote = c == '{' || c == '}';
+      if (needToQuote != inQuotes) {
+        inQuotes = needToQuote;
+        sb.append('\'');
+      }
+      if (c == '\'') {
+        sb.append("''");
+      } else {
+        sb.append(c);
+      }
+    }
+    if (inQuotes) {
+      sb.append('\'');
+    }
+    return sb.toString();
+  }
+
   @NotNull
   public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return messageOrDefault(bundle, key, null, params);

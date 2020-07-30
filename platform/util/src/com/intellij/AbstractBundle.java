@@ -9,6 +9,7 @@ import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -44,6 +45,19 @@ public abstract class AbstractBundle {
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull String key, Object @NotNull ... params) {
     return message(getResourceBundle(), key, params);
+  }
+
+  /**
+   * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
+   *
+   * @param key resource key
+   * @param unassignedParams number of unassigned parameters
+   * @param params assigned parameters
+   * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
+   */
+  @Contract(pure = true)
+  public @NotNull @Nls String getPartialMessage(@NotNull String key, int unassignedParams, Object @NotNull ... params) {
+    return BundleBase.partialMessage(getResourceBundle(), key, unassignedParams, params);
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull String key, Object @NotNull ... params) {
