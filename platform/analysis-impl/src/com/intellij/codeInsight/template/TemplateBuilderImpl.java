@@ -3,6 +3,8 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.NonInteractiveTemplateUtil;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -173,7 +175,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   public Template buildInlineTemplate() {
-    Template template = buildTemplate();
+    return initInlineTemplate(buildTemplate());
+  }
+
+  public Template initInlineTemplate(Template template) {
     template.setInline(true);
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -193,7 +198,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public Template buildTemplate() {
     TemplateManager manager = TemplateManager.getInstance(myFile.getProject());
     final Template template = manager.createTemplate("", "");
+    return initTemplate(template);
+  }
 
+  public Template initTemplate(Template template) {
     String text = getDocumentTextFragment(myContainerElement.getStartOffset(),myContainerElement.getEndOffset());
     final int containerStart = myContainerElement.getStartOffset();
     int start = 0;
@@ -286,6 +294,19 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
     assert editor != null : "Editor is null";
     run(editor, false);
+  }
+
+  @Override
+  public void runNonInteractively(final boolean inline) {
+    Template template = new TemplateImpl("", "");
+    if (inline) {
+      template = initInlineTemplate(template);
+    }
+    else {
+      template = initTemplate(template);
+      myDocument.replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
+    }
+    NonInteractiveTemplateUtil.runNonInteractively(myFile, myDocument, template, myContainerElement);
   }
 
   @Override

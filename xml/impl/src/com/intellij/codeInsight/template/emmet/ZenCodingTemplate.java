@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -324,7 +324,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                                                 XmlBundle.message("emmet.error"), "");
           }
         }
-      }), CodeInsightBundle.message("insert.code.template.command"), null));
+      }), AnalysisBundle.message("insert.code.template.command"), null));
   }
 
   @Override

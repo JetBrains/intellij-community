@@ -1,30 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -36,8 +29,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -50,12 +41,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +53,7 @@ import java.util.*;
 
 public final class TemplateState extends TemplateStateBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(TemplateState.class);
+  private final @NotNull TemplateStateProcessor myLiveTemplateProcessor;
   private Project myProject;
 
   private TemplateImpl myPrevTemplate;
@@ -71,7 +62,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private final List<RangeHighlighter> myTabStopHighlighters = new ArrayList<>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
-  private boolean ourLookupShown;
 
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged;
@@ -85,9 +75,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private boolean mySelectionCalculated;
   private boolean myStarted;
 
-  TemplateState(@NotNull Project project, @NotNull final Editor editor) {
-    super(editor);
+  TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
+                @NotNull TemplateStateProcessor processor) {
+    super(editor, document);
     myProject = project;
+    myLiveTemplateProcessor = processor;
   }
 
   private void initListeners() {
@@ -95,7 +87,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myEditorDocumentListener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
-        if (CommandProcessor.getInstance().getCurrentCommand() != null && !UndoManager.getInstance(myProject).isUndoOrRedoInProgress()) {
+        if (CommandProcessor.getInstance().getCurrentCommand() != null && !isUndoOrRedoInProgress()) {
           myDocumentChanged = true;
         }
       }
@@ -131,7 +123,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
       @Override
       public void commandStarted(@NotNull CommandEvent event) {
-        if (!UndoManager.getInstance(myProject).isUndoOrRedoInProgress()) {
+        if (!isUndoOrRedoInProgress()) {
           myDocumentChangesTerminateTemplate = isCaretOutsideCurrentSegment(event.getCommandName());
           started = true;
         }
@@ -139,9 +131,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
       @Override
       public void beforeCommandFinished(@NotNull CommandEvent event) {
-        if (started && !isDisposed() && !UndoManager.getInstance(myProject).isUndoOrRedoInProgress()) {
+        if (started && !isDisposed() && !isUndoOrRedoInProgress()) {
           Runnable runnable = () -> afterChangedUpdate();
-          final LookupImpl lookup = getEditor() != null ? (LookupImpl)LookupManager.getActiveLookup(getEditor()) : null;
+          final LookupEx lookup = getEditor() != null ? LookupManager.getActiveLookup(getEditor()) : null;
           if (lookup != null) {
             lookup.performGuardedChange(runnable);
           }
@@ -151,6 +143,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
       }
     });
+  }
+
+  private boolean isUndoOrRedoInProgress() {
+    return myLiveTemplateProcessor.isUndoOrRedoInProgress(myProject);
   }
 
   private void installCaretListener(@NotNull Editor editor) {
@@ -189,19 +185,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   private boolean isCaretOutsideCurrentSegment(String commandName) {
-    if (getEditor() != null && myCurrentSegmentNumber >= 0) {
-      final int offset = getEditor().getCaretModel().getOffset();
-      boolean hasSelection = getEditor().getSelectionModel().hasSelection();
-
-      final int segmentStart = getSegments().getSegmentStart(myCurrentSegmentNumber);
-      if (offset < segmentStart ||
-          !hasSelection && offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
-
-      final int segmentEnd = getSegments().getSegmentEnd(myCurrentSegmentNumber);
-      if (offset > segmentEnd ||
-          !hasSelection && offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
-    }
-    return false;
+    return myLiveTemplateProcessor.isCaretOutsideCurrentSegment(getEditor(), getSegments(), myCurrentSegmentNumber, commandName);
   }
 
   private boolean isInteractiveModeSupported() {
@@ -233,14 +217,14 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (isCaretOutsideCurrentSegment(null)) {
       return false;
     }
-    if (ourLookupShown) {
+    if (myLiveTemplateProcessor.isLookupShown()) {
       final Lookup lookup = LookupManager.getActiveLookup(getEditor());
       if (lookup != null && !lookup.isFocused()) {
         return true;
       }
     }
 
-    return !ourLookupShown;
+    return !myLiveTemplateProcessor.isLookupShown();
   }
 
   private void setCurrentVariableNumber(int variableNumber) {
@@ -307,6 +291,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   void start(@NotNull TemplateImpl template,
              @Nullable PairProcessor<? super String, ? super String> processor,
              @Nullable Map<String, String> predefinedVarValues) {
+    start(template, processor, predefinedVarValues, getEditor().getCaretModel().getOffset());
+  }
+
+  void start(@NotNull TemplateImpl template,
+             @Nullable PairProcessor<? super String, ? super String> processor,
+             @Nullable Map<String, String> predefinedVarValues, int caretOffset) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
 
@@ -314,30 +304,26 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     setTemplate(template);
     myProcessor = processor;
 
-    MyBasicUndoableAction undoableAction = new MyBasicUndoableAction(this, getDocument());
-    UndoManager.getInstance(myProject).undoableActionPerformed(undoableAction);
-    Disposer.register(this, undoableAction);
+    myLiveTemplateProcessor.registerUndoableAction(this, myProject, getDocument());
 
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
-    setSegments(new TemplateSegments(getEditor().getDocument()));
+    setSegments(new TemplateSegments(getDocument()));
     myPrevTemplate = getTemplate();
 
     setPredefinedVariableValues(predefinedVarValues);
 
     if (getTemplate().isInline()) {
-      int caretOffset = getEditor().getCaretModel().getOffset();
       myTemplateRange = getDocument().createRangeMarker(caretOffset, caretOffset + getTemplate().getTemplateText().length());
     }
     else {
-      preprocessTemplate(file, getEditor().getCaretModel().getOffset(), getTemplate().getTemplateText());
-      int caretOffset = getEditor().getCaretModel().getOffset();
+      preprocessTemplate(file, caretOffset, getTemplate().getTemplateText());
       myTemplateRange = getDocument().createRangeMarker(caretOffset, caretOffset);
     }
     myTemplateRange.setGreedyToLeft(true);
     myTemplateRange.setGreedyToRight(true);
 
-    LiveTemplateRunLogger.log(myProject, template, file.getLanguage());
+    myLiveTemplateProcessor.logTemplate(myProject, template, file.getLanguage());
 
     processAllExpressions(getTemplate());
   }
@@ -509,20 +495,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       Expression expressionNode = getCurrentExpression();
-      List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
+      LookupElement[] lookupItems = getCurrentExpressionLookupItems();
       final PsiFile psiFile = getPsiFile();
-      if (!lookupItems.isEmpty()) {
-        if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
-          insertSingleItem(lookupItems);
-        }
-        else {
-          for (LookupElement lookupItem : lookupItems) {
-            assert lookupItem != null : expressionNode;
-          }
-
-          AsyncEditorLoader.performWhenLoaded(getEditor(), () ->
-            runLookup(lookupItems, expressionNode.getAdvertisingText(), expressionNode.getLookupFocusDegree()));
-        }
+      if (lookupItems.length != 0) {
+        myLiveTemplateProcessor.runLookup(this, myProject, getEditor(), lookupItems, expressionNode);
       }
       else {
         try {
@@ -544,26 +520,15 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument()) : null;
   }
 
-  private void insertSingleItem(List<TemplateExpressionLookupElement> lookupItems) {
-    TemplateExpressionLookupElement first = lookupItems.get(0);
-    EditorModificationUtil.insertStringAtCaret(getEditor(), first.getLookupString());
-    first.handleTemplateInsert(lookupItems, Lookup.AUTO_INSERT_SELECT_CHAR);
-  }
-
-  @NotNull
-  private List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
+  private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
     LookupElement[] elements = null;
     try {
       elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
     }
     catch (IndexNotReadyException ignored) { }
-    if (elements == null) return Collections.emptyList();
+    if (elements == null) return LookupElement.EMPTY_ARRAY;
 
-    List<TemplateExpressionLookupElement> result = new ArrayList<>();
-    for (int i = 0; i < elements.length; i++) {
-      result.add(new TemplateExpressionLookupElement(this, elements[i], i));
-    }
-    return result;
+    return elements;
   }
 
   public ExpressionContext getCurrentExpressionContext() {
@@ -577,53 +542,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   @NotNull
   private Expression getCurrentExpression() {
     return getTemplate().getExpressionAt(myCurrentVariableNumber);
-  }
-
-  private void runLookup(final List<TemplateExpressionLookupElement> lookupItems,
-                         @Nullable String advertisingText,
-                         @NotNull LookupFocusDegree lookupFocusDegree) {
-    if (isDisposed()) return;
-
-    final LookupManager lookupManager = LookupManager.getInstance(myProject);
-
-    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(getEditor(), lookupItems.toArray(LookupElement.EMPTY_ARRAY));
-    if (lookup == null) return;
-
-    if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && getEditor().getUserData(InplaceRefactoring.INPLACE_RENAMER) == null) {
-      lookup.setStartCompletionWhenNothingMatches(true);
-    }
-
-    if (advertisingText != null) {
-      lookup.addAdvertisement(advertisingText, null);
-    }
-    else {
-      ActionManager am = ActionManager.getInstance();
-      String enterShortcut = KeymapUtil.getFirstKeyboardShortcutText(am.getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
-      String tabShortcut = KeymapUtil.getFirstKeyboardShortcutText(am.getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
-      lookup.addAdvertisement(LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut), null);
-    }
-    lookup.setLookupFocusDegree(lookupFocusDegree);
-    lookup.refreshUi(true, true);
-    ourLookupShown = true;
-    lookup.addLookupListener(new LookupListener() {
-      @Override
-      public void lookupCanceled(@NotNull LookupEvent event) {
-        lookup.removeLookupListener(this);
-        ourLookupShown = false;
-      }
-
-      @Override
-      public void itemSelected(@NotNull LookupEvent event) {
-        lookup.removeLookupListener(this);
-        if (isFinished()) return;
-        ourLookupShown = false;
-
-        LookupElement item = event.getItem();
-        if (item instanceof TemplateExpressionLookupElement) {
-          ((TemplateExpressionLookupElement)item).handleTemplateInsert(lookupItems, event.getCompletionChar());
-        }
-      }
-    });
   }
 
   private void unblockDocument() {
@@ -997,7 +915,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     finally {
       try {
         cleanupTemplateState();
-        TemplateManagerImpl.clearTemplateState(editor);
+        TemplateManagerUtilBase.clearTemplateState(editor);
         fireTemplateFinished(broken);
       }
       finally {
@@ -1009,7 +927,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private void setFinalEditorState(boolean brokenOff) {
     if (isDisposed()) return;
     getEditor().getSelectionModel().removeSelection();
-    if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
+    if (brokenOff && skipSettingFinalEditorState()) return;
 
     int endSegmentNumber = getFinalSegmentNumber();
     int offset = -1;
@@ -1038,7 +956,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private void cancelTemplate() {
+  private boolean skipSettingFinalEditorState() {
+    return myLiveTemplateProcessor.skipSettingFinalEditorState(myProject);
+  }
+
+  @ApiStatus.Internal
+  void cancelTemplate() {
     if (isDisposed()) return;
     try {
       fireTemplateCancelled();
@@ -1225,7 +1148,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           int endVarOffset = -1;
           if (endSegmentNumber >= 0) {
             endVarOffset = getSegments().getSegmentStart(endSegmentNumber);
-            TextRange range = CodeStyleManagerImpl.insertNewLineIndentMarker(file, getDocument(), endVarOffset);
+            TextRange range = myLiveTemplateProcessor.insertNewLineIndentMarker(file, getDocument(), endVarOffset);
             if (range != null) dummyAdjustLineMarkerRange = getDocument().createRangeMarker(range);
           }
           int reformatStartOffset = myTemplateRange.getStartOffset();
@@ -1233,7 +1156,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           if (dummyAdjustLineMarkerRange == null && endVarOffset >= 0) {
             // There is a possible case that indent marker element was not inserted (e.g. because there is no blank line
             // at the target offset). However, we want to reformat white space adjacent to the current template (if any).
-            PsiElement whiteSpaceElement = CodeStyleManagerImpl.findWhiteSpaceNode(file, endVarOffset);
+            PsiElement whiteSpaceElement = myLiveTemplateProcessor.findWhiteSpaceNode(file, endVarOffset);
             if (whiteSpaceElement != null) {
               TextRange whiteSpaceRange = whiteSpaceElement.getTextRange();
               if (whiteSpaceElement.getContainingFile() != null) {
@@ -1388,30 +1311,4 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return (TemplateImpl) super.getTemplate();
   }
 
-  private static final class MyBasicUndoableAction extends BasicUndoableAction implements Disposable {
-    @Nullable
-    private TemplateState myTemplateState;
-
-    private MyBasicUndoableAction(@NotNull TemplateState templateState, @Nullable Document document) {
-      super(document != null ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)} : null);
-      myTemplateState = templateState;
-    }
-
-    @Override
-    public void undo() {
-      if (myTemplateState != null) {
-        LookupManager.getInstance(myTemplateState.myProject).hideActiveLookup();
-        myTemplateState.cancelTemplate();
-      }
-    }
-
-    @Override
-    public void redo() {
-    }
-
-    @Override
-    public void dispose() {
-      myTemplateState = null;
-    }
-  }
 }
