@@ -1,7 +1,7 @@
 package com.intellij.space.plugins.pipelines.services
 
 import circlet.pipelines.config.utils.ScriptConstants
-import com.intellij.space.plugins.pipelines.utils.JarFinder
+import com.intellij.openapi.application.PathManager
 import java.io.File
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
@@ -14,12 +14,8 @@ class SpaceScriptDefinitionsProvider : ScriptDefinitionsProvider {
   }
 
   override fun getDefinitionsClassPath(): Iterable<File> {
-    val defFile = JarFinder.find("pipelines-config-scriptdefinition-compile")
-    if (!defFile.exists()) {
-      throw Exception("File with ProjectScriptDefinition doesn't exist")
-    }
-
-    return listOf(defFile)
+    val jarName = "space-idea-script-definition.jar"
+    return listOf(File("${PathManager.getHomePath()}/community/build/dependencies/build/space/$jarName"))
   }
 
   override fun useDiscovery(): Boolean {

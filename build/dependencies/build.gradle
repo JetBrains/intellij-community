@@ -51,6 +51,7 @@ apply from: 'setupCidr.gradle'
 apply from: 'setupCodeWithMe.gradle'
 apply from: 'setupDelve.gradle'
 apply from: 'setupRpluginDeps.gradle'
+apply from: 'setupSpacePlugin.gradle'
 apply from: 'setupZkm.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins',

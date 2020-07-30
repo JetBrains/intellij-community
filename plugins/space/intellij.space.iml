@@ -87,7 +87,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="kotlin-scripting-intellij" type="repository">
         <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.3.72">
           <exclude>
