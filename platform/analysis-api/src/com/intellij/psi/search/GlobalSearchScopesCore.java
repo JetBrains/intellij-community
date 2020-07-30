@@ -237,12 +237,8 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      VirtualFile parent = file.getParent();
-      return parent != null && in(parent);
-    }
-
-    private boolean in(@NotNull VirtualFile parent) {
-      return myWithSubdirectories ? VfsUtilCore.isAncestor(myDirectory, parent, false) : myDirectory.equals(parent);
+      return myWithSubdirectories ? VfsUtilCore.isAncestor(myDirectory, file, false)
+                                  : myDirectory.equals(file) || myDirectory.equals(file.getParent());
     }
 
     @Override
@@ -278,13 +274,18 @@ public final class GlobalSearchScopesCore {
       if (equals(scope)) return this;
       if (scope instanceof DirectoryScope) {
         DirectoryScope other = (DirectoryScope)scope;
-        if (in(other.myDirectory)) return this;
-        if (other.in(myDirectory)) return other;
+        if (containsScope(other)) return this;
+        if (other.containsScope(this)) return other;
         return new DirectoriesScope(getProject(),
                                     union(!myWithSubdirectories, myDirectory, !other.myWithSubdirectories, other.myDirectory),
                                     union(myWithSubdirectories, myDirectory, other.myWithSubdirectories, other.myDirectory));
       }
       return super.uniteWith(scope);
+    }
+
+    private boolean containsScope(DirectoryScope other) {
+      if (myWithSubdirectories) return contains(other.myDirectory);
+      return myDirectory.equals(other.myDirectory) && !other.myWithSubdirectories;
     }
 
     @NotNull
@@ -320,15 +321,9 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      VirtualFile parent = file.getParent();
-      return parent != null && in(parent);
-    }
-
-    private boolean in(@NotNull VirtualFile parent) {
-      if (myDirectories.contains(parent)) {
-        return true;
-      }
-      return VfsUtilCore.isUnder(parent, myDirectoriesWithSubdirectories);
+      return myDirectories.contains(file) ||
+             myDirectories.contains(file.getParent()) ||
+             VfsUtilCore.isUnder(file, myDirectoriesWithSubdirectories);
     }
 
     @Override
@@ -368,7 +363,7 @@ public final class GlobalSearchScopesCore {
       }
       if (scope instanceof DirectoryScope) {
         DirectoryScope other = (DirectoryScope)scope;
-        if (in(other.myDirectory)) {
+        if (myDirectories.contains(other.myDirectory) || VfsUtilCore.isUnder(other.myDirectory, myDirectoriesWithSubdirectories)) {
           return this;
         }
         Set<? extends VirtualFile> directories = myDirectories;
