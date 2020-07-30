@@ -285,7 +285,7 @@ open class MarketplaceRequests {
           }
         } catch (e: Exception) {
           val fileText = file?.readText()
-          LOG.error("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
+          LOG.warn("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
           throw e
         }
       }
