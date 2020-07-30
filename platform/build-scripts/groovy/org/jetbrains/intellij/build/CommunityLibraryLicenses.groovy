@@ -637,6 +637,7 @@ class CommunityLibraryLicenses {
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
+    jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-python"),
@@ -654,7 +655,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("kotlinx-coroutines-slf4j"),
-    jetbrainsLibrary("log-events"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),

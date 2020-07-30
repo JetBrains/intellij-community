@@ -14,13 +14,15 @@
     <orderEntry type="library" scope="TEST" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.jetbrains.intellij.deps.completion:log-events" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:log-events:0.0.1" />
+      <library name="completion-log-events" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-log-events:0.0.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/log-events/0.0.1/log-events-0.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.1/completion-log-events-0.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.1/completion-log-events-0.0.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" scope="TEST" />
