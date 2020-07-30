@@ -209,8 +209,8 @@ abstract class LineStatusTrackerBase<R : Range>(
       }
     }
 
-    private fun calcInnerRanges(block: Block): List<Range.InnerRange> {
-      if (block.start == block.end || block.vcsStart == block.vcsEnd) return emptyList()
+    private fun calcInnerRanges(block: Block): List<Range.InnerRange>? {
+      if (block.start == block.end || block.vcsStart == block.vcsEnd) return null
       return createInnerRanges(block.range,
                                vcsDocument.immutableCharSequence, document.immutableCharSequence,
                                vcsDocument.lineOffsets, document.lineOffsets)
