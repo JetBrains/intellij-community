@@ -5,6 +5,8 @@
 
 package org.toml.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
+
 class TomlHighlightingAnnotatorTest : TomlAnnotatorTestBase(TomlHighlightingAnnotator::class) {
 
     fun `test numbers`() = checkHighlighting("""
@@ -28,4 +30,13 @@ class TomlHighlightingAnnotatorTest : TomlAnnotatorTestBase(TomlHighlightingAnno
         <KEY>k5 = { <KEY>k6</KEY> = 123, <KEY>k7</KEY> = 2019-11-08 }
         [<KEY>foo</KEY>.<KEY>bar</KEY>]
     """)
+
+    @BatchMode
+    fun `test no highlighting in batch mode`() = checkHighlighting("""
+        k1 = 123
+        k2 = 1.0
+        k3 = [ 2020-07-30 ]
+        k4 = { f1 = 10, f2 = 20.0 }
+        [foo.bar]
+    """, ignoreExtraHighlighting = false)
 }
