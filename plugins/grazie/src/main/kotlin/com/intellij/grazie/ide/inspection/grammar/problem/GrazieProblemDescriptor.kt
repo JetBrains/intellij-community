@@ -37,7 +37,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
       if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
         if (this.fixes.isNotEmpty()) {
           GrazieFUSCounter.typoFound(this@toFixes)
-          fixes.add(GrazieReplaceTypoQuickFix(this@toFixes))
+          fixes.addAll(GrazieReplaceTypoQuickFix(this@toFixes).getAllAsFixes())
         }
         fixes.add(GrazieAddExceptionQuickFix(this))
         fixes.add(GrazieDisableRuleQuickFix(this))

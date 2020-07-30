@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public boolean isSelectable(final IntentionActionWithTextCaching action) {
-    return true;
+    return action.isSelectable();
   }
 
   @Override
@@ -153,6 +154,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       IntentionAction action = cached.getAction();
       if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) continue;
 
+      if (!cached.isShowSubmenu()) {
+        result.put(action, Collections.emptyList());
+        continue;
+      }
+
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
       List<IntentionAction> options = subActions.stream()
           .map(IntentionActionWithTextCaching::getAction)
@@ -165,6 +171,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
+    if (!action.isShowSubmenu()) return false;
+
     return action.getOptionIntentions().size() + action.getOptionErrorFixes().size() > 0;
   }
 
@@ -186,6 +194,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public Icon getIconFor(final IntentionActionWithTextCaching value) {
+    if (!value.isShowIcon()) return null;
+
     return myCachedIntentions.getIcon(value);
   }
 

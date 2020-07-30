@@ -30,7 +30,7 @@
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
 
-    <registryKey key="spellchecker.corrections.limit" defaultValue="5" description="Spellchecker corrections limit" restartRequired="false"/>
+    <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
     
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>

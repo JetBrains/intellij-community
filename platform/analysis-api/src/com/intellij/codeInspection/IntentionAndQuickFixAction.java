@@ -12,8 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Interface implementing at once LocalQuickFix and IntentionAction.
+ *
  * @author Gregory.Shrago
  * @see LocalQuickFixAndIntentionActionOnPsiElement
+ * <p>
+ * Other possible usage is in-depth customization of quick-fix's UI.
+ * <p>
+ * For example, user can implement {@link com.intellij.codeInsight.intention.CustomizableIntentionAction}
+ * and this interface. During creation of popup quick-fix will not be wrapped into QuickFixWrapper and
+ * UI will be customized as {@link com.intellij.codeInsight.intention.CustomizableIntentionAction} instructs to.
  */
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
