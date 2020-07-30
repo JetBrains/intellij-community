@@ -254,7 +254,8 @@ class CommunityRepositoryModules {
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
-    }
+    },
+    plugin("intellij.gauge")
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
