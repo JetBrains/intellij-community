@@ -28,13 +28,15 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
     this(UNKNOWN_ID_YET, FileNameCache.storeName(name), attributes, children, symLinkTarget);
   }
 
-  private static final FileAttributes UNKNOWN = new FileAttributes((byte)-1, 0, 0){};
   public ChildInfoImpl(int id,
                        int nameId,
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
     super(attributes == null ? UNKNOWN : attributes);
+    if (!hasCaseSensitivityInformation()) {
+      throw new IllegalArgumentException("Must supply case sensitivity information but got: "+attributes);
+    }
     this.nameId = nameId;
     this.id = id;
     this.children = children;
@@ -85,7 +87,10 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
     boolean isSymLink = BitUtil.isSet(flags, FileAttributes.SYM_LINK);
     boolean isSpecial = type == FileAttributes.Type.SPECIAL;
     boolean isHidden = BitUtil.isSet(flags, FileAttributes.HIDDEN);
-    return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden);
+    CaseSensitivity sensitivity = isCaseSensitive();
+    assert isDirectory == (sensitivity != FileAttributes.CaseSensitivity.UNSPECIFIED) : this;
+    boolean isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
+    return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, isCaseSensitive);
   }
 
   @Override

@@ -40,8 +40,8 @@ import java.util.List;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
-  private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
+  private final FileAttributes FAKE_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
@@ -659,9 +659,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    else {
-      return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
-    }
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
   }
 
   private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);

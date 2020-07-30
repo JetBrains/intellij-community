@@ -336,7 +336,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     final FSItem item = convert(file);
     if (item == null) return null;
     final long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
-    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable);
+    // let's make TempFileSystem is case-sensitive
+    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable, item.isDirectory() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.UNSPECIFIED);
   }
 
   @NotNull

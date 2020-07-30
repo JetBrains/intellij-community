@@ -139,7 +139,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile f = WriteAction.compute(() -> dir.createChildData(this, "file.txt"));
 
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir.getUrl()+"/file.txt", disposable, new VirtualFilePointerListener() {});
-    FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true);
+    FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true, FileAttributes.CaseSensitivity.UNSPECIFIED);
     List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, true, null));
     List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f, true));
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -388,7 +389,7 @@ final class LocalFileSystemRefreshWorker {
 
         String symLinkTarget = isLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         try {
-          FileAttributes fa = toFileAttributes(file, attributes, isLink);
+          FileAttributes fa = toFileAttributesWithCaseInformation(file, attributes, isLink);
           myHelper.scheduleCreation(parent, name, fa, symLinkTarget, () -> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
@@ -416,7 +417,7 @@ final class LocalFileSystemRefreshWorker {
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
         String symLinkTarget = isLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         try {
-          FileAttributes fa = toFileAttributes(file, attributes, isLink);
+          FileAttributes fa = toFileAttributesWithCaseInformation(file, attributes, isLink);
           myHelper.scheduleCreation(parent, child.getName(), fa, symLinkTarget, () -> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
@@ -536,20 +537,23 @@ final class LocalFileSystemRefreshWorker {
   }
 
   @NotNull
-  static FileAttributes toFileAttributes(@NotNull Path path, @NotNull BasicFileAttributes a, boolean isSymlink) {
+  private static FileAttributes toFileAttributesWithCaseInformation(@NotNull Path path, @NotNull BasicFileAttributes a, boolean isSymlink) {
     if (isSymlink && a == BROKEN_SYMLINK_ATTRIBUTES) {
       return FileAttributes.BROKEN_SYMLINK;
     }
 
     long lastModified = a.lastModifiedTime().toMillis();
     boolean writable = isWritable(path, a, a.isDirectory());
+    boolean isHidden;
     if (SystemInfo.isWindows) {
-      boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
-      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
+      isHidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
     }
     else {
-      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
+      isHidden = false;
     }
+    // todo CaseSensitiveDir read case sensitivity too
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.stubCaseSensitivity(a.isDirectory());
+    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, isHidden, a.size(), lastModified, writable, sensitivity);
   }
 
   private static final BasicFileAttributes BROKEN_SYMLINK_ATTRIBUTES = new BasicFileAttributes() {

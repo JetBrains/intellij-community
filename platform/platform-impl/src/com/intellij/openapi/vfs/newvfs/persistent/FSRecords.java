@@ -65,9 +65,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
-  //             and drop path conversion from `readSymlinkTarget`
-  private static final int VERSION = 53 +
+  private static final int VERSION = 54 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -112,9 +110,7 @@ public final class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
-  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET_2");
-  private static final FileAttribute ourSymlinkTargetAttr_old = new FileAttribute("FsRecords.SYMLINK_TARGET");
-
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
   private static final ReentrantReadWriteLock.WriteLock w;
@@ -1155,9 +1151,6 @@ public final class FSRecords {
     String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
-      }
-      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr_old)) {
-        if (stream != null) return StringUtil.nullize(stream.readUTF());
       }
       return null;
     });

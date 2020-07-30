@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -74,7 +75,7 @@ public final class RefreshWorker {
     }
     PersistentFS persistence = PersistentFS.getInstance();
 
-    FileAttributes attributes = fs.getAttributes(root);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(root, fs);
     if (attributes == null) {
       myHelper.scheduleDeletion(root);
       root.markClean();
@@ -234,7 +235,7 @@ public final class RefreshWorker {
     List<String> wanted = snapshot.getSecond();
 
     ObjectOpenCustomHashSet<String> actualNames;
-    if (fs.isCaseSensitive() || cached.isEmpty()) {
+    if (dir.isCaseSensitive() || cached.isEmpty()) {
       actualNames = null;
     }
     else {
@@ -295,7 +296,7 @@ public final class RefreshWorker {
   @Nullable
   private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
-    FileAttributes attributes = fs.getAttributes(file);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(file, fs);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;

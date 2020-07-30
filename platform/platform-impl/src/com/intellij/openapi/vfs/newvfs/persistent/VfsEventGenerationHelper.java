@@ -9,6 +9,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,13 +146,8 @@ final class VfsEventGenerationHelper {
           checkCanceled.run();
         }
         String name = file.getFileName().toString();
-        boolean isSymLink = false;
-        if (attrs.isSymbolicLink()) {
-          isSymLink = true;
-          attrs = Files.readAttributes(file, BasicFileAttributes.class); // under Windows, the isDirectory attribute for symlink is incorrect, re-read
-        }
-        FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
-        String symLinkTarget = isSymLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
+        FileAttributes attributes = FileSystemUtil.getAttributes(file.toString());
+        String symLinkTarget = attrs.isSymbolicLink() ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         ChildInfo info = new ChildInfoImpl(name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;

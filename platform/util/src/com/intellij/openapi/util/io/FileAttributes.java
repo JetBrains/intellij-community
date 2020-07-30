@@ -31,11 +31,13 @@ public class FileAttributes {
   public static final byte HIDDEN = 0x02;
   public static final byte READ_ONLY = 0x04;
   private static final int TYPE_SHIFT = 3; // two bits encoding Type: 00: unknown, 01: FILE, 10: DIRECTORY, 11: SPECIAL
+  private static final int CASE_SENSITIVITY_SHIFT = 5; // two bits encoding case-sensitivity: 00: unknown, 01: case-sensitive, 10: case-insensitive
 
   @MagicConstant(flags = {SYM_LINK, HIDDEN, READ_ONLY})
   public @interface Flags { }
 
   public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(SYM_LINK, 0, 0);
+  protected static final FileAttributes UNKNOWN = new FileAttributes((byte)-1, 0, 0);
 
   @Flags
   protected final byte flags;
@@ -52,13 +54,44 @@ public class FileAttributes {
    */
   public final long lastModified;
 
+  /**
+   * @deprecated Use {@link FileAttributes#FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean, com.intellij.openapi.util.io.FileAttributes.CaseSensitivity)} instead to supply file case sensitivity information
+   */
+  @Deprecated
+  public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable) {
+    this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, CaseSensitivity.UNSPECIFIED), length, lastModified);
+  }
+  public enum CaseSensitivity {
+    SENSITIVE,   // files in this directory are case-sensitive
+    INSENSITIVE, // files in this directory are case-insensitive
+    UNSPECIFIED  // case sensitivity is not specified, either because the file is not a directory or because sensitivity is unknown
+  }
 
-  public FileAttributes(boolean directory, boolean special, boolean symlink, boolean hidden, long length, long lastModified, boolean writable) {
-    this(flags(symlink, hidden, !writable, directory, special), length, lastModified);
+  /**
+   *
+   * File attributes
+   * @param caseSensitivity flag for this directory case sensitivity.
+   *    Directory is considered "case-sensitive" if it's able to contain both files "readme.txt" and "README.TXT" and consider them different.
+   *    Examples of case-sensitive directories are regular directories on Linux, directories in case-sensitive volumes on Mac
+   *    or NTFS directories configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.
+   *    In case of {@code isDirectory==false} the caseSensitivity argument must be {@link CaseSensitivity#UNSPECIFIED} because case sensitivity configured on a directory level,
+   */
+  public FileAttributes(boolean isDirectory,
+                        boolean isSpecial,
+                        boolean isSymlink,
+                        boolean isHidden,
+                        long length,
+                        long lastModified,
+                        boolean isWritable,
+                        @NotNull CaseSensitivity caseSensitivity) {
+    this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
+    if (isDirectory == (caseSensitivity == CaseSensitivity.UNSPECIFIED)) {
+      throw new IllegalArgumentException("For a directory case-sensitivity must be defined, for a file it must be UNSPECIFIED, but got: "+this);
+    }
   }
 
   protected FileAttributes(@Flags byte flags, long length, long lastModified) {
-    if (flags != -1 && (flags & 0b11100000) != 0) {
+    if (flags != -1 && (flags & 0b10000000) != 0) {
       throw new IllegalArgumentException("Invalid flags: " + Integer.toBinaryString(flags));
     }
     this.flags = flags;
@@ -73,26 +106,31 @@ public class FileAttributes {
   }
 
   @Flags
-  private static byte flags(boolean isSymlink, boolean isHidden, boolean isReadOnly, boolean directory, boolean special) {
+  private static byte flags(boolean isDirectory, boolean isSpecial, boolean isSymlink,
+                            boolean isHidden,
+                            boolean isWritable,
+                            @NotNull CaseSensitivity sensitivity) {
     @Flags byte flags = 0;
     if (isSymlink) flags |= SYM_LINK;
     if (isHidden) flags |= HIDDEN;
-    if (isReadOnly) flags |= READ_ONLY;
-    int type_flags = special ? 0b11 : !directory ? 0b01 : 0b10;
-    flags |= (type_flags << TYPE_SHIFT);
+    if (!isWritable) flags |= READ_ONLY;
+    int type_flags = isSpecial ? 0b11 : isDirectory ? 0b10 : 0b01;
+    flags |= type_flags << TYPE_SHIFT;
+    int sensitivity_flags = sensitivity == CaseSensitivity.UNSPECIFIED ? 0 : sensitivity == CaseSensitivity.SENSITIVE ? 1 : 2;
+    flags |= sensitivity_flags << CASE_SENSITIVITY_SHIFT;
     return flags;
   }
 
   public boolean isFile() {
-    return ((flags >> TYPE_SHIFT) & 0xff) == 0b01;
+    return ((flags >> TYPE_SHIFT) & 0b11) == 0b01;
   }
 
   public boolean isDirectory() {
-    return ((flags >> TYPE_SHIFT) & 0xff) == 0b10;
+    return ((flags >> TYPE_SHIFT) & 0b11) == 0b10;
   }
 
   public boolean isSpecial() {
-    return ((flags >> TYPE_SHIFT) & 0xff) == 0b11;
+    return !isDirectory() && ((flags >> TYPE_SHIFT) & 0b11) == 0b11;
   }
 
   public boolean isSymLink() {
@@ -105,6 +143,20 @@ public class FileAttributes {
 
   public boolean isWritable() {
     return !isSet(flags, READ_ONLY);
+  }
+
+  @NotNull
+  public CaseSensitivity isCaseSensitive() {
+    if (!isDirectory()) {
+      return CaseSensitivity.UNSPECIFIED;
+    }
+    int sensitivity_flags = (flags >> CASE_SENSITIVITY_SHIFT) & 0b11;
+    switch (sensitivity_flags) {
+      case 0: return CaseSensitivity.UNSPECIFIED;
+      case 1: return CaseSensitivity.SENSITIVE;
+      case 2: return CaseSensitivity.INSENSITIVE;
+    }
+    throw new IllegalStateException("Invalid sensitivity flags: "+Integer.toBinaryString(sensitivity_flags));
   }
 
   @Override
@@ -135,15 +187,14 @@ public class FileAttributes {
     sb.append("[type:");
     sb.append(getType());
 
-    if (isSet(flags, SYM_LINK)) sb.append('l');
-    if (isSet(flags, HIDDEN)) sb.append('.');
-
+    if (isSet(flags, SYM_LINK)) sb.append(" l");
+    if (isSet(flags, HIDDEN)) sb.append(" .");
     if (isSet(flags, READ_ONLY)) sb.append(" ro");
 
     sb.append(" length:").append(length);
 
     sb.append(" modified:").append(lastModified);
-
+    sb.append(" case sensitive: ").append(isCaseSensitive());
     sb.append(']');
     return sb.toString();
   }
@@ -152,7 +203,7 @@ public class FileAttributes {
    * {@code null} means unknown type - typically broken symlink.
    */
   public Type getType() {
-    int type = (flags >> TYPE_SHIFT) & 0xff;
+    int type = (flags >> TYPE_SHIFT) & 0b11;
     switch (type) {
       case 0b00: return null;
       case 0b01: return Type.FILE;
@@ -160,5 +211,15 @@ public class FileAttributes {
       case 0b11: return Type.SPECIAL;
     }
     throw new IllegalStateException(Integer.toBinaryString(flags));
+  }
+
+  @NotNull
+  public FileAttributes withCaseSensitivity(boolean isCaseSensitive) {
+    return new FileAttributes(isDirectory(), isSpecial(), isSymLink(), isHidden(),
+                              length, lastModified, isWritable(), isCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE);
+  }
+
+  public boolean hasCaseSensitivityInformation() {
+    return !isDirectory() || isCaseSensitive() != CaseSensitivity.UNSPECIFIED;
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
@@ -286,6 +287,15 @@ public final class VfsImplUtil {
     }
 
     return state;
+  }
+
+  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem fs) {
+    FileAttributes attributes = fs.getAttributes(file);
+    if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
+      LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " + attributes + " for path '" + file.getPath() + "'");
+      return attributes.withCaseSensitivity(fs.isCaseSensitive());
+    }
+    return attributes;
   }
 
   private static class InvalidationState {
