@@ -357,6 +357,16 @@ class GitStageLineStatusTracker(
           val start = editor.visualLineToY(change.line1)
           val gutterColor = LineStatusMarkerRenderer.getGutterColor(change.type, editor)
           LineStatusMarkerRenderer.paintTriangle(g, editor, gutterColor, null, x, endX, start)
+
+          val editorScale = editor.scale
+          if (change.flags.isUnstaged) {
+            val size = JBUIScale.scale(4 * editorScale).toInt()
+            paintThickLine(g, JBColor.RED, x, start - size, start + size, stripeThickness)
+          }
+          if (change.flags.isStaged) {
+            val size = JBUIScale.scale(2 * editorScale).toInt()
+            paintThickLine(g, JBColor.GREEN, endX - stripeThickness, start - size, start + size, stripeThickness)
+          }
         }
       }
     }
