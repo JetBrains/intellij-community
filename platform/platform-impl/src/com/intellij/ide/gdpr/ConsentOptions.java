@@ -12,9 +12,9 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,9 +71,8 @@ public final class ConsentOptions {
 
         private @NotNull String loadText(InputStream stream) {
           if (stream != null) {
-            try (Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)),
-                                                       StandardCharsets.UTF_8)) {
-              return new String(FileUtil.adaptiveLoadText(reader));
+            try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
+              return new String(FileUtilRt.loadBytes(inputStream), StandardCharsets.UTF_8);
             }
             catch (IOException e) {
               LOG.info(e);
@@ -192,9 +191,18 @@ public final class ConsentOptions {
   }
 
   public void setConsents(@NotNull Collection<Consent> confirmedByUser) {
-    saveConfirmedConsents(
-      ContainerUtil.map(confirmedByUser, c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L))
-    );
+    List<ConfirmedConsent> result;
+    if (confirmedByUser.isEmpty()) {
+      result = Collections.emptyList();
+    }
+    else {
+      List<ConfirmedConsent> list = new ArrayList<>(confirmedByUser.size());
+      for (Consent t : confirmedByUser) {
+        list.add(new ConfirmedConsent(t.getId(), t.getVersion(), t.isAccepted(), 0L));
+      }
+      result = list;
+    }
+    saveConfirmedConsents(result);
   }
 
   private @Nullable ConfirmedConsent getConfirmedConsent(String consentId) {
@@ -241,7 +249,7 @@ public final class ConsentOptions {
     return false;
   }
 
-  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<? extends ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final ConfirmedConsent current = base.get(update.consentId);

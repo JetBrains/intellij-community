@@ -276,7 +276,10 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      Files.deleteIfExists(Paths.get(mySource));
+      File source = new File(mySource);
+      if (source.exists() && !FileUtilRt.delete(source)) {
+        throw new IOException("Cannot delete: " + source);
+      }
     }
 
     @Override
