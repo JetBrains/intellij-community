@@ -376,7 +376,15 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesChanged(before: List<Block>, after: Block) {
-      after.excludedFromCommit = mergeExcludedFromCommitRanges(before)
+      if (before.isEmpty()) {
+        val marker = currentMarker ?: defaultMarker
+        val changeListBlocks = blocks.filter { it.marker == marker }
+        // only include if all changed blocks from this change list are included
+        after.excludedFromCommit = changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
+      }
+       else {
+        after.excludedFromCommit = before.all { it.excludedFromCommit }
+      }
 
       val affectedMarkers = before.map { it.marker }.distinct()
 
@@ -434,16 +442,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       }
 
       if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@ChangelistsLocalLineStatusTracker)
-    }
-
-    private fun mergeExcludedFromCommitRanges(ranges: List<Block>): Boolean {
-      if (ranges.isEmpty()) {
-        val marker = currentMarker ?: defaultMarker
-        val changeListBlocks = blocks.filter { it.marker == marker }
-        // only include if all changed blocks from this change list are included
-        return changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
-      }
-      return ranges.all { it.excludedFromCommit }
     }
   }
 
