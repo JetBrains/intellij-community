@@ -1,10 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.javafx;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -13,9 +13,10 @@ import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -67,9 +68,9 @@ enum JavaFXInstallator {
         continue;
       }
 
-      final File archiveFile = VfsUtilCore.virtualToIoFile(file);
+      Path archiveFile = file.toNioPath();
       try {
-        ZipUtil.extract(archiveFile, new File(getInstallationPath()), null, true);
+        ZipUtil.extract(archiveFile, Paths.get(getInstallationPath()), null, true);
         Logger.getInstance(JavaFXInstallator.class).info("Downloaded and installed OpenJFX in " + archiveFile.getParent());
         success = true;
       }

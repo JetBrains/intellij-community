@@ -665,7 +665,7 @@ public final class ConfigImportHelper {
     }
 
     // apply stale plugin updates
-    StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir.toFile(), newPluginsDir.toFile());
+    StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
     updateVMOptions(newConfigDir, log);
   }
 
@@ -806,7 +806,7 @@ public final class ConfigImportHelper {
           downloader.setMarketplaceRequests(options.marketplaceRequests);
         }
         if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
-          PluginInstaller.unpackPlugin(downloader.getFile(), newPluginsDir.toFile().getPath());
+          PluginInstaller.unpackPlugin(downloader.getFile().toPath(), newPluginsDir);
           log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
           iterator.remove();
         }

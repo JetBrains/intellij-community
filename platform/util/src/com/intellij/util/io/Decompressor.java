@@ -24,6 +24,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -216,14 +217,23 @@ public abstract class Decompressor {
     //</editor-fold>
   }
 
-  @Nullable private Condition<? super String> myFilter = null;
+  @Nullable private Predicate<? super String> myFilter = null;
   @Nullable private Condition<? super Entry> myEntryFilter = null;
   @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   @Nullable private java.util.function.Consumer<? super Path> myConsumer;
 
-  public Decompressor filter(@Nullable Condition<? super String> filter) {
+  public Decompressor filter(@Nullable Predicate<? super String> filter) {
     myFilter = filter;
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #filter(Predicate)}
+   */
+  @Deprecated
+  public Decompressor filter(@Nullable Condition<? super String> filter) {
+    myFilter = filter == null ? null : it -> filter.value(it);
     return this;
   }
 
@@ -282,7 +292,7 @@ public abstract class Decompressor {
       while ((entry = nextEntry()) != null) {
         if (myFilter != null) {
           String entryName = entry.type == Type.DIR && !Strings.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
-          if (!myFilter.value(entryName)) {
+          if (!myFilter.test(entryName)) {
             continue;
           }
         }

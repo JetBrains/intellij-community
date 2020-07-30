@@ -712,17 +712,6 @@ public class FileUtil extends FileUtilRt {
     return URLUtil.unescapePercentSequences(urlString);
   }
 
-  public static boolean isFilePathAcceptable(@NotNull File root, @Nullable FileFilter fileFilter) {
-    if (fileFilter == null) return true;
-    File file = root;
-    do {
-      if (!fileFilter.accept(file)) return false;
-      file = file.getParentFile();
-    }
-    while (file != null);
-    return true;
-  }
-
   public static boolean rename(@NotNull File source, @NotNull String newName) throws IOException {
     File target = new File(source.getParent(), newName);
     if (!SystemInfo.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {

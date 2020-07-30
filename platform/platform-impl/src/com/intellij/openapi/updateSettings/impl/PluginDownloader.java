@@ -247,7 +247,7 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.installAfterRestart(myFile, true, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile.toPath(), true, myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
@@ -274,7 +274,7 @@ public final class PluginDownloader {
       }
     }
 
-    return PluginInstaller.installAndLoadDynamicPlugin(myFile, ownerComponent, descriptorImpl);
+    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptorImpl);
   }
 
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
