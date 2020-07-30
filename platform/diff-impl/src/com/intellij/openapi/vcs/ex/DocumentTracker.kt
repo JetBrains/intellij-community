@@ -550,7 +550,12 @@ private class LineTracker(private val handlers: List<Handler>,
 
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
-    blocks = ranges.map { Block(it, dirty, false) }
+    val newBlocks = ranges.map { Block(it, dirty, false) }
+    for (block in newBlocks) {
+      onRangesChanged(emptyList(), block)
+    }
+
+    blocks = newBlocks
     isDirty = dirty
 
     afterBulkRangeChange(isDirty)

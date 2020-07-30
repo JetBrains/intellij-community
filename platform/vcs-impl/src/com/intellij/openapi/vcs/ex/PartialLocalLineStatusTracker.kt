@@ -423,13 +423,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
 
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      blocks.forEach {
-        // do not override markers, that are set via other methods of this listener
-        if (it.ourData.marker == null) {
-          it.marker = defaultMarker
-        }
-      }
-
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
     }
