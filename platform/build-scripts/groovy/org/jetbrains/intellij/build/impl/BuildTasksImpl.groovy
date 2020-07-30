@@ -484,6 +484,15 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  static def addDbusJava(BuildContext buildContext, String distDir) {
+    def library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
+    library.getFiles(JpsOrderRootType.COMPILED).each { f ->
+      buildContext.ant.copy(todir: "$distDir/lib") {
+        fileset(file: f.absolutePath)
+      }
+    }
+  }
+
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
