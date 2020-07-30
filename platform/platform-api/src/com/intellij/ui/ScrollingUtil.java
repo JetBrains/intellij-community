@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -558,7 +559,7 @@ public final class ScrollingUtil {
     installActions(table, UISettings.getInstance().getCycleScrolling());
   }
 
-  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction {
+  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction, LightEditCompatible {
     private final JComponent myComponent;
 
     MyScrollingAction(@NotNull JComponent component) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -58,7 +59,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, icon);
   }
 
-  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
+  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>>,
+                                                                        LightEditCompatible {
     private final Consumer<? super AnActionEvent> myActionPerformed;
 
     SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
