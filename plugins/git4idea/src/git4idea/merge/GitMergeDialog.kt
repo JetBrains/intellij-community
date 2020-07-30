@@ -313,7 +313,7 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply {
       item = defaultRoot.name
       isSwingPopup = false
-      ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
+      setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
 
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
@@ -346,9 +346,9 @@ class GitMergeDialog(private val project: Project,
         }
       }
 
-      ui = FlatComboBoxUI(
+      setUI(FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
-        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
     }
   }
 
