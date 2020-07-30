@@ -1329,15 +1329,17 @@ public final class FSRecords {
     });
   }
 
+  @PersistentFS.Attributes
   static int getFlags(int id) {
     return readAndHandleErrors(() -> doGetFlags(id));
   }
 
+  @PersistentFS.Attributes
   private static int doGetFlags(int id) {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 
-  static void setFlags(int id, int flags, final boolean markAsChange) {
+  static void setFlags(int id, @PersistentFS.Attributes int flags, final boolean markAsChange) {
     writeAndHandleErrors(() -> {
       if (markAsChange) {
         incModCount(id);
