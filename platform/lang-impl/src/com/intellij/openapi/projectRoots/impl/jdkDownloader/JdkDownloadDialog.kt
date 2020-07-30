@@ -19,8 +19,8 @@ import com.intellij.ui.layout.*
 import com.intellij.util.text.VersionComparatorUtil
 import java.awt.Component
 import java.awt.event.ItemEvent
-import java.io.File
-import java.util.Comparator
+import java.nio.file.Path
+import java.util.*
 import java.util.function.Function
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -275,11 +275,15 @@ internal class JdkDownloadDialog(
 
   override fun createCenterPanel() = panel
 
-  fun selectJdkAndPath(): Pair<JdkItem, File>? {
-    if (!showAndGet()) return null
+  fun selectJdkAndPath(): Pair<JdkItem, Path>? {
+    if (!showAndGet()) {
+      return null
+    }
 
     val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(selectedPath)
-    if (selectedFile == null) return null
+    if (selectedFile == null) {
+      return null
+    }
     return selectedItem to selectedFile
   }
 

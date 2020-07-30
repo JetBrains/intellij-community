@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.execution.ExecutionException;
@@ -37,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
@@ -242,9 +245,9 @@ public class ShShellcheckUtil {
 
     Decompressor.Tar tar = new Decompressor.Tar(archive);
     File tmpDir = new File(directory, "tmp");
-    tar.postprocessor(outputFile -> {
+    tar.postProcessor(outputFile -> {
       try {
-        FileUtil.copyDir(outputFile.getParentFile(), directory);
+        FileUtil.copyDir(outputFile.getParent().toFile(), directory);
       }
       catch (IOException e) {
         LOG.warn("Can't decompressor shellcheck", e);

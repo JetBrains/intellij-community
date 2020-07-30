@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -199,16 +200,14 @@ public final class ZipUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
-    File outputFile = Decompressor.entryFile(outputDir, entry.getName());
+    Path outputFile = Decompressor.entryFile(outputDir.toPath(), entry.getName());
     try {
       if (entry.isDirectory()) {
-        FileUtil.createDirectory(outputFile);
+        Files.createDirectories(outputFile);
       }
-      else if (!outputFile.exists() || overwrite) {
-        FileUtil.createParentDirs(outputFile);
-        try (FileOutputStream os = new FileOutputStream(outputFile)) {
-          FileUtilRt.copy(inputStream, os);
-        }
+      else if (!Files.exists(outputFile) || overwrite) {
+        Files.createDirectories(outputFile.getParent());
+        Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
       }
     }
     finally {

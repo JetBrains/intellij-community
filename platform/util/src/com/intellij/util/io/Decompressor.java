@@ -2,9 +2,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -16,10 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -32,6 +34,10 @@ public abstract class Decompressor {
    * The Tar decompressor automatically detects the compression of an input file/stream.
    */
   public static class Tar extends Decompressor {
+    public Tar(@NotNull Path file) {
+      mySource = file.toFile();
+    }
+
     public Tar(@NotNull File file) {
       mySource = file;
     }
@@ -40,7 +46,7 @@ public abstract class Decompressor {
       mySource = stream;
     }
 
-    public Tar withSymlinks() {
+    public @NotNull Tar withSymlinks() {
       symlinks = true;
       return this;
     }
@@ -95,6 +101,10 @@ public abstract class Decompressor {
 
   //NOTE. This class should work without CommonsCompress!
   public static class Zip extends Decompressor {
+    public Zip(@NotNull Path file) {
+      mySource = file.toFile();
+    }
+
     public Zip(@NotNull File file) {
       mySource = file;
     }
@@ -210,7 +220,7 @@ public abstract class Decompressor {
   @Nullable private Condition<? super Entry> myEntryFilter = null;
   @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
-  @Nullable private Consumer<? super File> myConsumer;
+  @Nullable private java.util.function.Consumer<? super Path> myConsumer;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
@@ -227,7 +237,16 @@ public abstract class Decompressor {
     return this;
   }
 
+  /**
+   * @deprecated Use {@link #postProcessor}
+   */
+  @Deprecated
   public Decompressor postprocessor(@Nullable Consumer<? super File> consumer) {
+    myConsumer = consumer == null ? null : path -> consumer.consume(path.toFile());
+    return this;
+  }
+
+  public Decompressor postProcessor(@Nullable java.util.function.Consumer<? super Path> consumer) {
     myConsumer = consumer;
     return this;
   }
@@ -248,13 +267,21 @@ public abstract class Decompressor {
     return this;
   }
 
+  /**
+   * @deprecated Use {@link #extract(Path)}
+   */
+  @Deprecated
   public final void extract(@NotNull File outputDir) throws IOException {
+    extract(outputDir.toPath());
+  }
+
+  public final void extract(@NotNull Path outputDir) throws IOException {
     openStream();
     try {
       Entry entry;
       while ((entry = nextEntry()) != null) {
         if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
+          String entryName = entry.type == Type.DIR && !Strings.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
           if (!myFilter.value(entryName)) {
             continue;
           }
@@ -269,26 +296,41 @@ public abstract class Decompressor {
           if (entry == null) continue;
         }
 
-        File outputFile = entryFile(outputDir, entry.name);
-
+        Path outputFile = entryFile(outputDir, entry.name);
         switch (entry.type) {
           case DIR:
-            FileUtil.createDirectory(outputFile);
+            Files.createDirectories(outputFile);
             break;
 
           case FILE:
-            if (!outputFile.exists() || myOverwrite) {
+            if (!Files.exists(outputFile) || myOverwrite) {
               InputStream inputStream = openEntryStream(entry);
               try {
-                FileUtil.createParentDirs(outputFile);
-                try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-                  FileUtil.copy(inputStream, outputStream);
-                }
-                if (!entry.isWritable && !outputFile.setWritable(false, false)) {
-                  throw new IOException("Can't make file read-only: " + outputFile);
-                }
-                if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
-                  throw new IOException("Can't make file executable: " + outputFile);
+                Files.createDirectories(outputFile.getParent());
+                Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
+                if (!entry.isWritable || entry.isExecutable) {
+                  if (SystemInfoRt.isWindows) {
+                    if (!entry.isWritable) {
+                      DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
+                      if (attrs != null) {
+                        attrs.setReadOnly(true);
+                      }
+                    }
+                  }
+                  else {
+                    PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
+                    if (attrs != null) {
+                      EnumSet<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ);
+                      if (entry.isWritable) {
+                        permissions.add(PosixFilePermission.OWNER_WRITE);
+                        permissions.add(PosixFilePermission.GROUP_WRITE);
+                      }
+                      if (entry.isExecutable) {
+                        permissions.add(PosixFilePermission.OWNER_EXECUTE);
+                      }
+                      attrs.setPermissions(permissions);
+                    }
+                  }
                 }
               }
               finally {
@@ -298,13 +340,13 @@ public abstract class Decompressor {
             break;
 
           case SYMLINK:
-            if (StringUtil.isEmpty(entry.linkTarget)) {
+            if (Strings.isEmpty(entry.linkTarget)) {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
             try {
               Path outputTarget = Paths.get(entry.linkTarget);
-              FileUtil.createParentDirs(outputFile);
-              Files.createSymbolicLink(outputFile.toPath(), outputTarget);
+              Files.createDirectories(outputFile.getParent());
+              Files.createSymbolicLink(outputFile, outputTarget);
             }
             catch (InvalidPathException e) {
               throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
@@ -313,7 +355,7 @@ public abstract class Decompressor {
         }
 
         if (myConsumer != null) {
-          myConsumer.consume(outputFile);
+          myConsumer.accept(outputFile);
         }
       }
     }
@@ -349,9 +391,10 @@ public abstract class Decompressor {
     @Nullable
     protected Entry mapPathPrefix(@NotNull List<String> prefix) throws IOException {
       List<String> ourPathSplit = normalizePathAndSplit(name);
-      if (prefix.size() >= ourPathSplit.size()) return null;
-      if (!ourPathSplit.subList(0,prefix.size()).equals(prefix)) return null;
-      String newName = StringUtil.join(ourPathSplit.subList(prefix.size(), ourPathSplit.size()), "/");
+      if (prefix.size() >= ourPathSplit.size() || !ourPathSplit.subList(0, prefix.size()).equals(prefix)) {
+        return null;
+      }
+      String newName = String.join("/", ourPathSplit.subList(prefix.size(), ourPathSplit.size()));
       return new Entry(newName, this.type, this.isWritable, isExecutable, linkTarget);
     }
   }
@@ -363,10 +406,10 @@ public abstract class Decompressor {
   protected abstract void closeStream() throws IOException;
   //</editor-fold>
 
-  private static List<String> normalizePathAndSplit(@NotNull String path) throws IOException {
+  private static @NotNull List<String> normalizePathAndSplit(@NotNull String path) throws IOException {
     ensureValidPath(path);
-    String canonicalPath = FileUtil.toCanonicalPath(path, '/');
-    return FileUtil.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
+    String canonicalPath = FileUtilRt.toCanonicalPath(path, '/', true);
+    return FileUtilRt.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
   private static void ensureValidPath(@NotNull String entryName) throws IOException {
@@ -375,9 +418,8 @@ public abstract class Decompressor {
     }
   }
 
-  @NotNull
-  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+  public static @NotNull Path entryFile(@NotNull Path outputDir, @NotNull String entryName) throws IOException {
     ensureValidPath(entryName);
-    return new File(outputDir, entryName);
+    return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
   }
 }

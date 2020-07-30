@@ -1448,19 +1448,6 @@ public class FileUtil extends FileUtilRt {
     return splitPath(path, File.separatorChar);
   }
 
-  @NotNull
-  public static List<String> splitPath(@NotNull String path, char separatorChar) {
-    List<String> list = new ArrayList<>();
-    int index = 0;
-    int nextSeparator;
-    while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
-      list.add(path.substring(index, nextSeparator));
-      index = nextSeparator + 1;
-    }
-    list.add(path.substring(index));
-    return list;
-  }
-
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
