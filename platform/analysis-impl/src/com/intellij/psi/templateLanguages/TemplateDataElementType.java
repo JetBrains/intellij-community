@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -160,6 +161,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
     TextRange currentRange = TextRange.EMPTY_RANGE;
     while (baseLexer.getTokenType() != null) {
+      ProgressManager.checkCanceled();
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
@@ -188,6 +190,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     baseLexer.start(sourceCode);
     TextRange currentRange = TextRange.EMPTY_RANGE;
     while (baseLexer.getTokenType() != null) {
+      ProgressManager.checkCanceled();
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
         "Inconsistent tokens stream from " + baseLexer +
