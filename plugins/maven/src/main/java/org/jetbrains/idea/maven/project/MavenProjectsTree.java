@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
@@ -40,9 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
-
-public class MavenProjectsTree {
-
+public final class MavenProjectsTree {
   private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
 
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".7";
@@ -1199,8 +1198,7 @@ public class MavenProjectsTree {
         projectIds.add(project.getMavenId());
       }
 
-      final Set<File> projectPaths = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-
+      Set<File> projectPaths = FileCollectionFactory.createCanonicalFileSet();
       for (MavenProject project : projects) {
         projectPaths.add(new File(project.getFile().getPath()));
       }

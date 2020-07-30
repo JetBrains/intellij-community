@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.NotNull;
@@ -159,12 +159,12 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   private static void syncPaths(final Collection<? extends File> required, @NotNull Collection<? extends File> resolved) throws Exception {
-    final THashSet<File> libFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> libFiles = FileCollectionFactory.createCanonicalFileSet();
     libFiles.addAll(required);
     libFiles.removeAll(resolved);
 
     if (!libFiles.isEmpty()) {
-      final Map<String, File> nameToArtifactMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Map<String, File> nameToArtifactMap = CollectionFactory.createFilePathMap();
       for (File f : resolved) {
         final File prev = nameToArtifactMap.put(f.getName(), f);
         if (prev != null) {

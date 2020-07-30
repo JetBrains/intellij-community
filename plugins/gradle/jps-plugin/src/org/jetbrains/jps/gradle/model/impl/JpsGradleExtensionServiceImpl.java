@@ -3,8 +3,8 @@ package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ import java.util.Map;
 public final class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsGradleExtensionServiceImpl.class);
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("gradle production on test");
-  private final Map<File, GradleProjectConfiguration> myLoadedConfigs = CollectionFactory.createFileMap();
+  private final Map<File, GradleProjectConfiguration> myLoadedConfigs = FileCollectionFactory.createCanonicalFileMap();
   private final Map<File, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> key.exists());
 
   public JpsGradleExtensionServiceImpl() {

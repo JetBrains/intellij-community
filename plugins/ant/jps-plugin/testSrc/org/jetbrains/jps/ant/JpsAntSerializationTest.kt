@@ -4,7 +4,7 @@ package org.jetbrains.jps.ant
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.ant.model.JpsAntExtensionService
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl
@@ -32,7 +32,7 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
     assertEquals(getUrl("build.xml"), preprocessing.fileUrl)
     assertEquals("show-message", preprocessing.targetName)
     assertEquals(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY,
-                          assertOneElement(preprocessing.antProperties).getPropertyName())
+                 assertOneElement(preprocessing.antProperties).getPropertyName())
 
     val postprocessing = JpsAntExtensionService.getPostprocessingExtension(dir)!!
     assertEquals(getUrl("build.xml"), postprocessing.fileUrl)
@@ -62,7 +62,8 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
     val installation = JpsAntExtensionService.findAntInstallation(myModel, "Apache Ant version 1.8.2")
     assertNotNull(installation)
     assertEquals(FileUtil.toSystemIndependentName(installation!!.antHome.absolutePath),
-                          FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), "applications/apache-ant-1.8.2").absolutePath))
+                 FileUtil.toSystemIndependentName(
+                   File(SystemProperties.getUserHome(), "applications/apache-ant-1.8.2").absolutePath))
 
     val installation2 = JpsAntExtensionService.findAntInstallation(myModel, "Patched Ant")
     assertNotNull(installation2)
@@ -85,8 +86,8 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
     assertEquals(128, options.maxHeapSize)
     assertEquals("-J-Dmy.ant.prop=123", options.antCommandLineParameters)
     assertContainsElements(toFiles(options.additionalClasspath),
-                                          File(getAbsolutePath("lib/jdom.jar")),
-                                          File(getAbsolutePath("ant-lib/a.jar")))
+                           File(getAbsolutePath("lib/jdom.jar")),
+                           File(getAbsolutePath("ant-lib/a.jar")))
     val property = assertOneElement(options.properties)
     assertEquals("my.property", property.getPropertyName())
     assertEquals("its value", property.getPropertyValue())
@@ -110,7 +111,7 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
     const val OPTIONS_PATH = "plugins/ant/jps-plugin/testData/config/options"
 
     private fun toFiles(classpath: List<String>): Set<File> {
-      val result = CollectionFactory.createFileSet()
+      val result = FileCollectionFactory.createCanonicalFileSet()
       for (path in classpath) {
         result.add(File(path))
       }

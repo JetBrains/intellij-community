@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -28,13 +28,13 @@ import java.util.Set;
 /**
 * @author Eugene Zhuravlev
 */
-class OutputFilesSink implements OutputFileConsumer {
+final class OutputFilesSink implements OutputFileConsumer {
   private static final Logger LOG = Logger.getInstance(OutputFilesSink.class);
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
-  private final Set<File> mySuccessfullyCompiled = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> mySuccessfullyCompiled = FileCollectionFactory.createCanonicalFileSet();
 
   OutputFilesSink(CompileContext context,
                          ModuleLevelBuilder.OutputConsumer outputConsumer,

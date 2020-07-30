@@ -1,20 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.types;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 
 public final class JvmPrimitiveTypeKind {
-
   public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN, "Z");
   public static final JvmPrimitiveTypeKind BYTE = new JvmPrimitiveTypeKind("byte", JAVA_LANG_BYTE, "B");
   public static final JvmPrimitiveTypeKind CHAR = new JvmPrimitiveTypeKind("char", JAVA_LANG_CHARACTER, "C");
@@ -58,14 +56,12 @@ public final class JvmPrimitiveTypeKind {
 
   static {
     JvmPrimitiveTypeKind[] values = {BOOLEAN, BYTE, CHAR, DOUBLE, FLOAT, INT, LONG, SHORT, VOID};
-    Map<String, JvmPrimitiveTypeKind> nameToKind = new THashMap<>();
-    Map<String, JvmPrimitiveTypeKind> fqnToKind = new THashMap<>();
+    Map<String, JvmPrimitiveTypeKind> nameToKind = new HashMap<>(values.length);
+    Map<String, JvmPrimitiveTypeKind> fqnToKind = new HashMap<>(values.length);
     for (JvmPrimitiveTypeKind kind : values) {
       nameToKind.put(kind.getName(), kind);
       fqnToKind.put(kind.getBoxedFqn(), kind);
     }
-    ContainerUtil.trimMap(nameToKind);
-    ContainerUtil.trimMap(fqnToKind);
     ourNameToKind = nameToKind;
     ourFqnToKind = fqnToKind;
   }

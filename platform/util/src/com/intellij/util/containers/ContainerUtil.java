@@ -5,10 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.*;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -617,30 +613,6 @@ public class ContainerUtil {
         iterator.remove();
       }
     };
-  }
-
-  public static void trimMap(@NotNull Map<?,?> map) {
-    if (map instanceof Object2ObjectOpenHashMap<?, ?>) {
-      ((Object2ObjectOpenHashMap<?, ?>)map).trim();
-    }
-    else if (map instanceof THashMap) {
-      ((THashMap<?, ?>)map).trimToSize();
-    }
-    else if (map instanceof Object2ObjectOpenCustomHashMap) {
-      ((Object2ObjectOpenCustomHashMap<?, ?>)map).trim();
-    }
-  }
-
-  public static void trimSet(@NotNull Set<?> set) {
-    if (set instanceof ObjectOpenHashSet<?>) {
-      ((ObjectOpenHashSet<?>)set).trim();
-    }
-    else if (set instanceof THashSet) {
-      ((THashSet<?>)set).trimToSize();
-    }
-    else if (set instanceof ObjectOpenCustomHashSet) {
-      ((ObjectOpenCustomHashSet<?>)set).trim();
-    }
   }
 
   public static final class ImmutableMapBuilder<K, V> {

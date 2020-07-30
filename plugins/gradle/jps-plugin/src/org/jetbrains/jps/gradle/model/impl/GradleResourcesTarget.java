@@ -3,7 +3,7 @@ package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -101,7 +101,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
   public Collection<File> getOutputRoots(CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
-    final Set<File> result = CollectionFactory.createFileSet();
+    final Set<File> result = FileCollectionFactory.createCanonicalFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);

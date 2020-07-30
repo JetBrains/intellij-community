@@ -3,7 +3,7 @@ package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -105,7 +105,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     if (configuration == null) return Collections.emptyList();
 
-    final Set<File> result = CollectionFactory.createFileSet();
+    Set<File> result = FileCollectionFactory.createCanonicalFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);

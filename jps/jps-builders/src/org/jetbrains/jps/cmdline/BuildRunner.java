@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
@@ -37,7 +23,10 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.incremental.storage.*;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -49,7 +38,7 @@ import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-public class BuildRunner {
+public final class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
@@ -102,7 +91,7 @@ public class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      FileUtil.delete(dataStorageRoot);
+      FileUtilRt.delete(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
@@ -210,7 +199,7 @@ public class BuildRunner {
         for (BuildRootDescriptor descriptor : descriptors) {
           Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
-            fileSet = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+            fileSet = FileCollectionFactory.createCanonicalFileSet();
             files.put(descriptor.getTarget(), fileSet);
           }
           final boolean added = fileSet.add(file);

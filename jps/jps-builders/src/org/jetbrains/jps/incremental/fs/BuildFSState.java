@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildFSState {
+public final class BuildFSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance(BuildFSState.class);
   private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");

@@ -776,11 +776,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int fileHashCode(@Nullable File file) {
-    return pathHashCode(file == null ? null : file.getPath());
+    return FileUtilRt.pathHashCode(file == null ? null : file.getPath());
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return Strings.isEmpty(path) ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
+    return FileUtilRt.pathHashCode(path);
   }
 
   /**

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +193,7 @@ public final class JavaBuilderUtil {
           // unmark as affected all successfully compiled
           allAffectedFiles.removeAll(successfullyCompiled);
 
-          final Set<File> affectedBeforeDif = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> affectedBeforeDif = FileCollectionFactory.createCanonicalFileSet();
           affectedBeforeDif.addAll(allAffectedFiles);
 
           final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
@@ -438,7 +439,7 @@ public final class JavaBuilderUtil {
   private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
     Set<File> files = dataKey.get(context);
     if (files == null) {
-      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      files = FileCollectionFactory.createCanonicalFileSet();
       dataKey.set(context, files);
     }
     return files;

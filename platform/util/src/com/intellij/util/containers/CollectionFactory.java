@@ -2,14 +2,11 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TObjectHashingStrategy;
-import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
@@ -17,18 +14,6 @@ import java.util.concurrent.ConcurrentMap;
 
 // ContainerUtil requires trove in classpath
 public final class CollectionFactory {
-  private static final Hash.Strategy<File> FILE_HASH_STRATEGY = new Hash.Strategy<File>() {
-    @Override
-    public int hashCode(File o) {
-      return FileUtil.fileHashCode(o);
-    }
-
-    @Override
-    public boolean equals(File a, File b) {
-      return FileUtil.filesEqual(a, b);
-    }
-  };
-
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap() {
     return new ConcurrentWeakHashMap<>(0.75f);
@@ -164,18 +149,6 @@ public final class CollectionFactory {
     }
   }
 
-  public static @NotNull <V> Map<File, V> createFileMap() {
-    return new Object2ObjectOpenCustomHashMap<>(FILE_HASH_STRATEGY);
-  }
-
-  public static @NotNull Set<File> createFileSet() {
-    return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
-  }
-
-  public static @NotNull Set<File> createFileLinkedSet() {
-    return new ObjectLinkedOpenCustomHashSet<>(FILE_HASH_STRATEGY);
-  }
-
   public static @NotNull Set<String> createFilePathLinkedSet() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       return new ObjectLinkedOpenHashSet<>();
@@ -198,40 +171,6 @@ public final class CollectionFactory {
   }
 
   /**
-   * Create linked map with canonicalized key hash strategy.
-   */
-  public static @NotNull <V> Map<String, V> createCanonicalFilePathLinkedMap() {
-    return new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<String>() {
-      @Override
-      public int hashCode(String value) {
-        return FileUtil.pathHashCode(value);
-      }
-
-      @Override
-      public boolean equals(String val1, String val2) {
-        return FileUtil.pathsEqual(val1, val2);
-      }
-    });
-  }
-
-  /**
-   * Create map with canonicalized key hash strategy.
-   */
-  public static @NotNull <V> Map<File, V> createCanonicalFileMap() {
-    return new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<File>() {
-      @Override
-      public int hashCode(File value) {
-        return FileUtil.fileHashCode(value);
-      }
-
-      @Override
-      public boolean equals(File val1, File val2) {
-        return FileUtil.filesEqual(val1, val2);
-      }
-    });
-  }
-
-  /**
    * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link LinkedHashMap} and with predictable iteration order.
    * Null keys and values are permitted.
    * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link LinkedHashMap}.
@@ -239,7 +178,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintLinkedMap() {
-    //noinspection SSBasedInspection
     return new Object2ObjectLinkedOpenHashMap<>();
   }
 
@@ -250,7 +188,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap() {
-    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>();
   }
 
@@ -261,7 +198,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected) {
-    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected);
   }
 
@@ -272,7 +208,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(@NotNull Map<? extends K, ? extends V> map) {
-    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(map);
   }
 
@@ -283,7 +218,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected, float loadFactor) {
-    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected, loadFactor);
   }
 
@@ -295,7 +229,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet() {
-    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>();
   }
   /**
@@ -306,7 +239,6 @@ public final class CollectionFactory {
    */
   @Contract(value = "_-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(int expected) {
-    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(expected);
   }
   /**
@@ -317,12 +249,29 @@ public final class CollectionFactory {
    */
   @Contract(value = "_-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
-    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<>();
+  }
+
+  public static void trimMap(@NotNull Map<?, ?> map) {
+    if (map instanceof Object2ObjectOpenHashMap<?, ?>) {
+      ((Object2ObjectOpenHashMap<?, ?>)map).trim();
+    }
+    else if (map instanceof Object2ObjectOpenCustomHashMap) {
+      ((Object2ObjectOpenCustomHashMap<?, ?>)map).trim();
+    }
+  }
+
+  public static void trimSet(@NotNull Set<?> set) {
+    if (set instanceof ObjectOpenHashSet<?>) {
+      ((ObjectOpenHashSet<?>)set).trim();
+    }
+    else if (set instanceof ObjectOpenCustomHashSet) {
+      ((ObjectOpenCustomHashSet<?>)set).trim();
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -397,5 +397,24 @@ public class StringUtilRt {
     }
 
     return true;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
+    return stringHashCodeInsensitive(chars, 0, chars.length());
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + toLowerCase(chars.charAt(off));
+    }
+    return h;
   }
 }

@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.library.OrderedClassLibraryBuilder;
 import com.thoughtworks.qdox.model.JavaModule;
 import com.thoughtworks.qdox.model.JavaModuleDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.Iterators;
@@ -29,8 +28,8 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  * Date: 26-Sep-19
  */
-public class ModulePathSplitter {
-  private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(new THashMap<>(FileUtil.FILE_HASHING_STRATEGY));
+public final class ModulePathSplitter {
+  private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(FileCollectionFactory.createCanonicalFileMap());
   private static final Attributes.Name AUTOMATIC_MODULE_NAME = new Attributes.Name("Automatic-Module-Name");
   private static final Method myModuleFinderCreateMethod;
   private static final Method myFindAll;
@@ -81,7 +80,7 @@ public class ModulePathSplitter {
   public ModulePathSplitter() {
     this(DEFAULT_MODULE_NAME_SEARCH);
   }
-  
+
   public ModulePathSplitter(@NotNull Function<File, String> moduleNameSearch) {
     myModuleNameSearch = moduleNameSearch;
   }

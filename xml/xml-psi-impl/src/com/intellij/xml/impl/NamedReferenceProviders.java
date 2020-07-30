@@ -64,7 +64,6 @@ final class NamedReferenceProviders {
   }
 
   private static final class ByHostClass {
-
     private final Map<String, List<XmlNamedReferenceProviderBean>> myCaseSensitiveMap;
     private final Map<String, List<XmlNamedReferenceProviderBean>> myCaseInsensitiveMap;
 
@@ -80,8 +79,7 @@ final class NamedReferenceProviders {
         }
       }
 
-      ContainerUtil.trimMap(caseSensitiveMap);
-      ContainerUtil.trimMap(caseInsensitiveMap);
+      CollectionFactory.trimMap(caseInsensitiveMap);
 
       myCaseSensitiveMap = caseSensitiveMap;
       myCaseInsensitiveMap = caseInsensitiveMap;

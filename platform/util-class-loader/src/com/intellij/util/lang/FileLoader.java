@@ -96,8 +96,10 @@ final class FileLoader extends Loader {
 
         while (true) {
           int nameEnd = nextIndex == -1 ? name.length() : nextIndex; // prevIndex, nameEnd is package or class name
-          int nameHash = stringHashCodeInsensitive(name, prevIndex, nameEnd);
-          if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) return null;
+          int nameHash = StringUtilRt.stringHashCodeInsensitive(name, prevIndex, nameEnd);
+          if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) {
+            return null;
+          }
           if (nextIndex == -1 || nextIndex == name.length() - 1) {
             break;
           }
@@ -167,7 +169,7 @@ final class FileLoader extends Loader {
       if (list != null) {
         childrenNameHashes = new int[list.length];
         for (int i = 0; i < list.length; ++i) {
-          childrenNameHashes[i] = stringHashCodeInsensitive(list[i], 0, list[i].length());
+          childrenNameHashes[i] = StringUtilRt.stringHashCodeInsensitive(list[i], 0, list[i].length());
         }
       }
       else {
@@ -379,14 +381,6 @@ final class FileLoader extends Loader {
   @Override
   public String toString() {
     return "FileLoader [" + myRootDir + "]";
-  }
-
-  private static int stringHashCodeInsensitive(@NotNull String s, int from, int to) {
-    int h = 0;
-    for (int off = from; off < to; off++) {
-      h = 31 * h + StringUtilRt.toLowerCase(s.charAt(off));
-    }
-    return h;
   }
 
   private static final class UnsyncDataOutputStream extends DataOutputStream {

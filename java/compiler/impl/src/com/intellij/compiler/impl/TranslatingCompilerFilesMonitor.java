@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +37,7 @@ import java.util.Set;
  * 1. corresponding source file has been scheduled for recompilation (see above)
  * 2. corresponding source file has been deleted
  */
-public class TranslatingCompilerFilesMonitor implements AsyncFileListener {
-
+public final class TranslatingCompilerFilesMonitor implements AsyncFileListener {
   public static TranslatingCompilerFilesMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
@@ -97,8 +96,8 @@ public class TranslatingCompilerFilesMonitor implements AsyncFileListener {
 
   @Override
   public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    Set<File> filesChanged = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-    Set<File> filesDeleted = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> filesChanged = FileCollectionFactory.createCanonicalFileSet();
+    Set<File> filesDeleted = FileCollectionFactory.createCanonicalFileSet();
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
         collectPaths(event.getFile(), filesDeleted);
