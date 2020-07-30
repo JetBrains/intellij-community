@@ -379,27 +379,27 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       if (before.isEmpty()) {
         val marker = currentMarker ?: defaultMarker
         val changeListBlocks = blocks.filter { it.marker == marker }
-        // only include if all changed blocks from this change list are included
+        // default value for new blocks: include only if all changed blocks from this changelist are included
         after.excludedFromCommit = changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
       }
-       else {
+      else {
         after.excludedFromCommit = before.all { it.excludedFromCommit }
       }
 
       val affectedMarkers = before.map { it.marker }.distinct()
-
-      val _currentMarker = currentMarker
-      if (affectedMarkers.isEmpty() && _currentMarker != null) {
-        after.marker = _currentMarker
+      if (affectedMarkers.isEmpty()) {
+        // put new blocks into original changelist when initializing base revision
+        // put new blocks into default changelist otherwise
+        after.marker = currentMarker ?: defaultMarker
       }
       else if (affectedMarkers.size == 1) {
+        // put block into same changelist on consensus
         after.marker = affectedMarkers.single()
       }
       else {
-        if (!affectedMarkers.isEmpty()) {
-          lstManager.notifyInactiveRangesDamaged(virtualFile)
-        }
+        // conflict - put block into default changelist, notify user
         after.marker = defaultMarker
+        lstManager.notifyInactiveRangesDamaged(virtualFile)
       }
     }
 
