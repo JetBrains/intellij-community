@@ -33,7 +33,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
@@ -182,7 +181,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       else {
         try {
-          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), true, (Path)null, pendingPluginInstall.getPluginDescriptor());
+          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), true, null, pendingPluginInstall.getPluginDescriptor());
           installsRequiringRestart = true;
         }
         catch (IOException e) {
