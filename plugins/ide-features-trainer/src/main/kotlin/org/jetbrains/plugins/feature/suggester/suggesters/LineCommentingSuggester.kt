@@ -10,6 +10,7 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.lang.ref.WeakReference
 import kotlin.math.abs
 
@@ -26,6 +27,8 @@ class LineCommentingSuggester : FeatureSuggester {
 
     private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
     private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
+
+    override lateinit var langSupport: LanguageSupport
 
     private val commentsHistory = ChangesHistory<CommentData>(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
     private var firstSlashAddedAction: EditorTextInsertedAction? = null

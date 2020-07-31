@@ -13,9 +13,4 @@ abstract class IntroduceVariableSuggesterTest : FeatureSuggesterTest() {
     abstract fun `testIntroduce full expression from return statement and get suggestion`()
 
     abstract fun `testIntroduce expression from method body using copy and backspace and get suggestion`()
-
-    /**
-     * This case must throw suggestion but not working now
-     */
-    abstract fun `testIntroduce part of string declaration expression and don't get suggestion`()
 }

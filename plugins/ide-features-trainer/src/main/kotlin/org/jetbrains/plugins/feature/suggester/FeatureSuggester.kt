@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 interface FeatureSuggester {
 
@@ -25,6 +26,8 @@ interface FeatureSuggester {
             }
         }
     }
+
+    var langSupport: LanguageSupport
 
     val needToClearLookup: Boolean
         get() = false

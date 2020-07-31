@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.psi.*
-import org.jetbrains.kotlin.psi.*
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
@@ -14,6 +14,7 @@ import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class IntroduceVariableSuggester : FeatureSuggester {
     companion object {
@@ -27,10 +28,12 @@ class IntroduceVariableSuggester : FeatureSuggester {
         var declaration: PsiElement? = null
         var variableEditingFinished: Boolean = false
 
-        fun getDeclarationInitializationText(): String? {
-            return declaration?.children?.firstOrNull()?.text
+        fun getDeclarationText(): String? {
+            return declaration?.text
         }
     }
+
+    override lateinit var langSupport: LanguageSupport
 
     private var extractedExprData: ExtractedExpressionData? = null
 
@@ -49,7 +52,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
                     val curElement =
                         psiFile.findElementAt(offset + countOfStartDelimiters) ?: return NoSuggestion
                     val changedStatement = curElement.getTopmostStatementWithText(deletedText)
-                    if (curElement.isPartOfExpression() && changedStatement != null) {
+                    if (langSupport.isPartOfExpression(curElement) && changedStatement != null) {
                         extractedExprData = ExtractedExpressionData(deletedText, changedStatement)
                     }
                 }
@@ -98,19 +101,21 @@ class IntroduceVariableSuggester : FeatureSuggester {
     }
 
     private fun ChildReplacedAction.isVariableDeclarationAdded(): Boolean {
-        return oldChild is PsiExpressionStatement && newChild is PsiDeclarationStatement
-                || oldChild is KtExpression && newChild is KtProperty
+        return oldChild != null && newChild != null
+                && langSupport.isExpressionStatement(oldChild)
+                && langSupport.isVariableDeclaration(newChild)
     }
 
     private fun ChildAddedAction.isVariableDeclarationAdded(): Boolean {
-        return parent is PsiCodeBlock && newChild is PsiDeclarationStatement
-                || parent is KtBlockExpression && newChild is KtProperty
+        return parent != null && newChild != null
+                && langSupport.isCodeBlock(parent)
+                && langSupport.isVariableDeclaration(newChild)
     }
 
     private fun isVariableEditingFinished(): Boolean {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
-            val declarationText = getDeclarationInitializationText() ?: return false
+            val declarationText = getDeclarationText() ?: return false
             return declarationText.trim().endsWith(exprText)
         }
     }
@@ -118,44 +123,21 @@ class IntroduceVariableSuggester : FeatureSuggester {
     private fun ChildReplacedAction.isVariableInserted(): Boolean {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
-            return variableEditingFinished
+            return variableEditingFinished && declaration != null
                     && newChild != null && oldChild != null
-                    && newChild.text == declaration?.getVariableName()
+                    && newChild.text == langSupport.getVariableName(declaration!!)
                     && changedStatement === newChild.getTopmostStatementWithText("")
         }
     }
 
     private fun PsiElement.getTopmostStatementWithText(text: String): PsiElement? {
-        val statement = getParentByPredicate { isSupportedStatement(it) && it.text.contains(text) && it.text != text }
+        val statement =
+            getParentByPredicate { langSupport.isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text }
         return if (statement is KtCallExpression) {
             return statement.getTopmostParentOfType<KtDotQualifiedExpression>() ?: statement
         } else {
             statement
         }
-    }
-
-    private fun PsiElement.getVariableName(): String? {
-        if (this is PsiDeclarationStatement) {
-            val localVariable = declaredElements.lastOrNull() as? PsiLocalVariable ?: return null
-            return localVariable.name
-        } else if (this is KtProperty) {
-            return name
-        }
-        return null
-    }
-
-    private fun PsiElement.isPartOfExpression(): Boolean {
-        return getParentOfType<PsiExpression>() != null || getParentOfType<KtExpression>() != null
-    }
-
-    private fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
-        return parents.find(predicate)
-    }
-
-    private fun isSupportedStatement(element: PsiElement): Boolean {
-        return element is PsiStatement || element is KtProperty || element is KtIfExpression
-                || element is KtCallExpression || element is KtQualifiedExpression
-                || element is KtReturnExpression
     }
 
     override val suggestingActionDisplayName: String = "Introduce variable"

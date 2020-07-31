@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.plugins.feature.suggester.*
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
@@ -45,6 +46,10 @@ internal fun PsiElement.isOneLineComment(): Boolean {
 
 internal inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {
     return PsiTreeUtil.getParentOfType(this, T::class.java)
+}
+
+internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
+    return parents.find(predicate)
 }
 
 internal fun PsiElement.isDeclaration(): Boolean {

@@ -113,7 +113,7 @@ class IntroduceVariableSuggesterJavaTest : IntroduceVariableSuggesterTest() {
     /**
      * This case must throw suggestion but not working now
      */
-    override fun `testIntroduce part of string declaration expression and don't get suggestion`() {
+    fun `testIntroduce part of string declaration expression and don't get suggestion`() {
         cutBetweenLogicalPositions(lineStartIndex = 48, columnStartIndex = 25, lineEndIndex = 48, columnEndIndex = 49)
         insertNewLineAt(48, 12)
         type("String string = ")

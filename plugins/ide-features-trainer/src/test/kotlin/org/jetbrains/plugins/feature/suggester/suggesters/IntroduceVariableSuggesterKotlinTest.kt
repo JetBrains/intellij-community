@@ -107,7 +107,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
     /**
      * This case must throw suggestion but not working now
      */
-    override fun `testIntroduce part of string declaration expression and don't get suggestion`() {
+    fun `testIntroduce part of string declaration expression and don't get suggestion`() {
         cutBetweenLogicalPositions(lineStartIndex = 40, columnStartIndex = 22, lineEndIndex = 40, columnEndIndex = 46)
         insertNewLineAt(40, 12)
         type("val string = ")

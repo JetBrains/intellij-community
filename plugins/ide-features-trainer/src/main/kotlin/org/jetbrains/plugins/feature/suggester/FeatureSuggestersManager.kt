@@ -4,9 +4,9 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
-import org.jetbrains.plugins.feature.suggester.actions.isAfterAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 
@@ -17,13 +17,18 @@ class FeatureSuggestersManager(val project: Project) {
         NotificationSuggestionPresenter()
 
     fun actionPerformed(action: Action) {
-        actionsHistory.add(action)
-        processSuggesters()
+        val language = action.language ?: return
+        val langSupport = LanguageSupport.getForLanguage(language)
+        if(langSupport != null) {
+            actionsHistory.add(action)
+            processSuggesters(langSupport)
+        }
     }
 
-    private fun processSuggesters() {
+    private fun processSuggesters(langSupport: LanguageSupport) {
         for (suggester in FeatureSuggester.suggesters) {
             if (!suggester.isEnabled()) continue
+            suggester.langSupport = langSupport
             processSuggester(suggester)
         }
     }

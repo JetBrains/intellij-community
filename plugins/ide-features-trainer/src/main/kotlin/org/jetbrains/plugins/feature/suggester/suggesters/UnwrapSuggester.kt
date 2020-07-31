@@ -1,20 +1,21 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
-import com.intellij.psi.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class UnwrapSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Unwrap action?"
         const val SUGGESTING_ACTION_ID = "Unwrap"
     }
+
+    override lateinit var langSupport: LanguageSupport
 
     private var unwrappingStatements: List<PsiElement>? = null
     private val firstSelectionRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
@@ -32,14 +33,14 @@ class UnwrapSuggester : FeatureSuggester {
                             psiFile.findElementAt(selection.startOffset + countStartDelimiters) ?: return NoSuggestion
                         val parent = curElement.parent ?: return NoSuggestion
                         if (parent.isSurroundingStatement()) {
-                            val codeBlock = parent.getCodeBlock() ?: return NoSuggestion
-                            unwrappingStatements = codeBlock.getStatements()
+                            val codeBlock = langSupport.getCodeBlock(parent) ?: return NoSuggestion
+                            unwrappingStatements = langSupport.getStatements(codeBlock)
                         }
                     } else if (unwrappingStatements != null) {
                         val curElement = psiFile.findElementAt(caretOffset - 1) ?: return NoSuggestion
                         if (curElement.text != "}") return NoSuggestion
-                        val codeBlock = curElement.getContainingCodeBlock() ?: return NoSuggestion
-                        val statements = codeBlock.getStatements()
+                        val codeBlock = langSupport.getContainingCodeBlock(curElement) ?: return NoSuggestion
+                        val statements = langSupport.getStatements(codeBlock)
                         if (intersectsByText(unwrappingStatements!!, statements)) {
                             unwrappingStatements = null
                             return createSuggestion(
@@ -74,35 +75,10 @@ class UnwrapSuggester : FeatureSuggester {
         }
     }
 
-    /**
-     * @receiver need to be a code block @see [getContainingCodeBlock] [getCodeBlock]
-     */
-    private fun PsiElement.getStatements(): List<PsiElement> {
-        return if (this is PsiCodeBlock) {
-            statements.toList()
-        } else {
-            val statements = children.toList()
-            if (statements.any { it !is KtExpression }) {
-                emptyList()
-            } else {
-                statements
-            }
-        }
-    }
-
-    private fun PsiElement.getCodeBlock(): PsiElement? {
-        return findDescendantOfType<PsiCodeBlock>()
-            ?: findDescendantOfType<KtBlockExpression>()
-    }
-
-    private fun PsiElement.getContainingCodeBlock(): PsiElement? {
-        return getParentOfType<PsiCodeBlock>()
-            ?: getParentOfType<KtBlockExpression>()
-    }
-
     private fun PsiElement.isSurroundingStatement(): Boolean {
-        return this is PsiIfStatement || this is PsiForStatement || this is PsiWhileStatement
-                || this is KtIfExpression || this is KtForExpression || this is KtWhileExpression
+        return langSupport.isIfStatement(this)
+                || langSupport.isForStatement(this)
+                || langSupport.isWhileStatement(this)
     }
 
     override val suggestingActionDisplayName: String = "Unwrap"

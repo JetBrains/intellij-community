@@ -16,6 +16,7 @@
 
     <extensionPoints>
         <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester"/>
+        <extensionPoint name="languageSupport" interface="org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.intellij">
@@ -26,6 +27,10 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
+
+        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.JavaLanguageSupport"/>
+        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.KotlinLanguageSupport"/>
+        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.PythonLanguageSupport"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

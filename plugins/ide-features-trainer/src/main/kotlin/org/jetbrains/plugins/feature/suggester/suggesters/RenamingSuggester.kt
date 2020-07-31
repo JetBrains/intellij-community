@@ -11,6 +11,7 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 
 class RenamingSuggester : FeatureSuggester {
     companion object {
@@ -39,6 +40,8 @@ class RenamingSuggester : FeatureSuggester {
             return takeLastWhile { it != '.' }
         }
     }
+
+    override lateinit var langSupport: LanguageSupport
 
     private var renamedIdentifiersData = RenamedIdentifiersData("", emptyList())
 

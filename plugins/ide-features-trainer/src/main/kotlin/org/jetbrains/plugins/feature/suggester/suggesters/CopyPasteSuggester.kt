@@ -8,6 +8,7 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCopyAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorCopyAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.awt.datatransfer.Transferable
 
 class CopyPasteSuggester : FeatureSuggester {
@@ -18,6 +19,8 @@ class CopyPasteSuggester : FeatureSuggester {
         const val MAX_OCCURRENCE_INDEX = 2
         const val MAX_COPY_INTERVAL_TIME_MILLIS = 20000L
     }
+
+    override lateinit var langSupport: LanguageSupport
 
     private val copyPasteManager = CopyPasteManager.getInstance()
 

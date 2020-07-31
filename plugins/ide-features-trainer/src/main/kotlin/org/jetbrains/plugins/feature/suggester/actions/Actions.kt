@@ -1,15 +1,21 @@
 package org.jetbrains.plugins.feature.suggester.actions
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.feature.suggester.suggesters.Selection
 import java.lang.ref.WeakReference
 
-sealed class Action(open val timeMillis: Long)
+sealed class Action(open val timeMillis: Long) {
+    abstract val language: Language?
+}
 
 //--------------------------------------PSI ACTIONS----------------------------------------------------------------------------------------
-sealed class PsiAction(open val parent: PsiElement?, override val timeMillis: Long) : Action(timeMillis)
+sealed class PsiAction(open val parent: PsiElement?, override val timeMillis: Long) : Action(timeMillis) {
+    override val language: Language?
+        get() = parent?.language
+}
 
 //-------------------------------------AFTER PSI ACTIONS-----------------------------------------------------------------------------------
 data class ChildrenChangedAction(override val parent: PsiElement?, override val timeMillis: Long) :
@@ -85,7 +91,10 @@ sealed class EditorAction(
     open val psiFileRef: WeakReference<PsiFile>,
     open val documentRef: WeakReference<Document>,
     override val timeMillis: Long
-) : Action(timeMillis)
+) : Action(timeMillis) {
+    override val language: Language?
+        get() = psiFileRef.get()?.language
+}
 
 //-------------------------------------AFTER EDITOR ACTIONS--------------------------------------------------------------------------------
 data class EditorBackspaceAction(
@@ -180,5 +189,3 @@ data class BeforeEditorTextRemovedAction(
     override val documentRef: WeakReference<Document>,
     override val timeMillis: Long
 ) : EditorAction(psiFileRef, documentRef, timeMillis)
-
-data class Selection(val startOffset: Int, val endOffset: Int, val text: String)

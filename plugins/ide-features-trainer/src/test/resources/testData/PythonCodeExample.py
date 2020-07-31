@@ -31,3 +31,8 @@ class Clazz:
 
 classVar = Clazz()
 classVar.function(1, 2)
+
+def string_function(sss, trrrr):
+    string = '322' + "1" + '4444'
+    print('eee' + 'rrr' + "33" + '22')
+    return string + '32222' + '1111' + "1"
