@@ -5,7 +5,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.diagnostic.logging.LogsFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
-import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.project.Project;
@@ -24,8 +24,8 @@ import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase> extends RunConfigurationFragmentedEditor<T> {
   protected final Project myProject;
 
-  public JavaSettingsEditorBase(T runConfiguration, RunConfigurationExtensionsManager extensionsManager) {
-    super(runConfiguration, extensionsManager);
+  public JavaSettingsEditorBase(T runConfiguration) {
+    super(runConfiguration, JavaRunConfigurationExtensionManager.getInstance());
     myProject = runConfiguration.getProject();
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
@@ -16,7 +15,7 @@ import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<ApplicationConfiguration> {
 
   public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
-    super(configuration, JavaRunConfigurationExtensionManager.getInstance());
+    super(configuration);
   }
 
   @Override

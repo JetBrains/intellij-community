@@ -15,6 +15,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,8 +90,8 @@ public final class CommonJavaFragments {
   }
 
   public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
-    ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
-    ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
+    @Nullable ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
+    ModuleClasspathCombo comboBox = option == null ? new ModuleClasspathCombo() : new ModuleClasspathCombo(option);
     String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
     comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
@@ -99,16 +100,22 @@ public final class CommonJavaFragments {
       new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
                                    (s, c) -> {
                                      comboBox.reset(s);
-                                     option.myOptionValue = getter.test(s);
+                                     if (option != null) {
+                                       option.myOptionValue = getter.test(s);
+                                     }
                                    },
                                    (s, c) -> {
                                      if (comboBox.isVisible()) {
                                        comboBox.applyTo(s);
-                                       setter.accept(s, option.myOptionValue);
+                                       if (option != null) {
+                                         setter.accept(s, option.myOptionValue);
+                                       }
                                      }
                                      else {
                                        s.setModule(s.getDefaultModule());
-                                       setter.accept(s, false);
+                                       if (option != null) {
+                                         setter.accept(s, false);
+                                       }
                                      }
                                    },
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
