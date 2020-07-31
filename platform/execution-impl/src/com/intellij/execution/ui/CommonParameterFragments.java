@@ -38,32 +38,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
 
   public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
     myHasModule = hasModule;
-    RawCommandLineEditor programArguments = new RawCommandLineEditor();
-    CommandLinePanel.setMinimumWidth(programArguments, 200);
-    String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
-    programArguments.getEditorField().getEmptyText().setText(message);
-    programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
-    FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
-    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
-      new SettingsEditorFragment<>("commandLineParameters", ExecutionBundle.message("run.configuration.program.parameters.name"), null, programArguments,
-                                   100,
-                                   (settings, component) -> component.setText(settings.getProgramParameters()),
-                                   (settings, component) -> settings.setProgramParameters(component.getText()),
-                                   settings -> true);
-    parameters.setRemovable(false);
-    parameters.setEditorGetter(editor -> editor.getEditorField());
-    parameters.setHint(ExecutionBundle.message("run.configuration.program.parameters.hint"));
-    myFragments.add(parameters);
-
     TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton();
     workingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
                                                     project,
                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     MacrosDialog.addMacroSupport((ExtendableTextField)workingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, hasModule);
-    LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(workingDirectoryField,
-                                                                                     ExecutionBundle.message(
+    LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(workingDirectoryField, ExecutionBundle.message(
                                                                                        "run.configuration.working.directory.label"));
     field.setLabelLocation(BorderLayout.WEST);
     myWorkingDirectory = new SettingsEditorFragment<>("workingDirectory", null, null, field,
@@ -74,6 +55,27 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                       settings -> isNotEmpty(settings.getWorkingDirectory()));
     myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
+  }
+
+  @NotNull
+  public SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
+    RawCommandLineEditor programArguments = new RawCommandLineEditor();
+    CommandLinePanel.setMinimumWidth(programArguments, 200);
+    String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
+    programArguments.getEditorField().getEmptyText().setText(message);
+    programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
+    FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
+    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, myHasModule);
+    SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
+      new SettingsEditorFragment<>("commandLineParameters", ExecutionBundle.message("run.configuration.program.parameters.name"), null, programArguments,
+                                   100,
+                                   (settings, component) -> component.setText(settings.getProgramParameters()),
+                                   (settings, component) -> settings.setProgramParameters(component.getText()),
+                                   settings -> true);
+    parameters.setRemovable(false);
+    parameters.setEditorGetter(editor -> editor.getEditorField());
+    parameters.setHint(ExecutionBundle.message("run.configuration.program.parameters.hint"));
+    return parameters;
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {
