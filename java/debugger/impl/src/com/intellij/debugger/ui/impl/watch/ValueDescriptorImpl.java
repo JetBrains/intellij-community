@@ -297,15 +297,23 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
       .exceptionally(throwable -> {
         throwable = DebuggerUtilsAsync.unwrap(throwable);
-        String message;
-        if (throwable instanceof CancellationException) {
-          message = JavaDebuggerBundle.message("error.context.has.changed");
+        if (throwable instanceof EvaluateException) {
+          setValueLabelFailed((EvaluateException)throwable);
         }
         else {
-          message = JavaDebuggerBundle.message("internal.debugger.error");
-          LOG.error(new Throwable(throwable));
+          String message;
+          if (throwable instanceof CancellationException) {
+            message = JavaDebuggerBundle.message("error.context.has.changed");
+          }
+          else if (throwable instanceof VMDisconnectedException) {
+            message = JavaDebuggerBundle.message("error.vm.disconnected");
+          }
+          else {
+            message = JavaDebuggerBundle.message("internal.debugger.error");
+            LOG.error(new Throwable(throwable));
+          }
+          setValueLabelFailed(new EvaluateException(message));
         }
-        setValueLabelFailed(new EvaluateException(message));
         labelListener.labelChanged();
         return null;
       });
@@ -370,7 +378,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       else {
         ex = DebuggerUtilsAsync.unwrap(ex);
-        if (!(ex instanceof CancellationException)) {
+        if (ex instanceof EvaluateException) {
+          LOG.warn(new Throwable(ex));
+        }
+        else if (!(ex instanceof CancellationException) && !(ex instanceof VMDisconnectedException)) {
           LOG.error(new Throwable(ex));
         }
       }
