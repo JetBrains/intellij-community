@@ -313,6 +313,7 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply {
       item = defaultRoot.name
       isSwingPopup = false
+      @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
 
       addItemListener { e ->
@@ -346,6 +347,7 @@ class GitMergeDialog(private val project: Project,
         }
       }
 
+      @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
         popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))

@@ -377,7 +377,8 @@ internal class GitRebaseDialog(private val project: Project,
         emptyText.text = GitBundle.message("rebase.dialog.onto.field")
       }
     }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createUpstreamField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
@@ -388,13 +389,15 @@ internal class GitRebaseDialog(private val project: Project,
         emptyText.text = GitBundle.message("rebase.dialog.upstream.field.placeholder")
       }
     }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createRootField() = ComboBox(CollectionComboBoxModel(roots)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create("(invalid)") { it.name }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
     item = defaultRoot ?: roots[0]
 
     val listener = ActionListener {
@@ -412,9 +415,10 @@ internal class GitRebaseDialog(private val project: Project,
         emptyText.text = GitBundle.message("rebase.dialog.branch.field")
       }
     }
-    ui = FlatComboBoxUI(
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
-      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
   }
 
   private fun createPanel() = JPanel().apply {
