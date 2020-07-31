@@ -64,7 +64,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     vmParameters.setEditorGetter(editor -> editor.getEditorField());
     fragments.add(vmParameters);
     fragments.add(moduleClasspath);
-    customizeFragments(fragments, classpathCombo);
+    customizeFragments(fragments, classpathCombo, commonParameterFragments);
 
     fragments.add(new LogsFragment<>());
     return fragments;
@@ -92,5 +92,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
                                         configuration -> configuration.getShortenCommandLine() != null);
   }
 
-  protected abstract void customizeFragments(List<SettingsEditorFragment<T, ?>> fragments, ModuleClasspathCombo classpathCombo);
+  protected abstract void customizeFragments(List<SettingsEditorFragment<T, ?>> fragments,
+                                             ModuleClasspathCombo classpathCombo,
+                                             CommonParameterFragments<T> commonParameterFragments);
 }

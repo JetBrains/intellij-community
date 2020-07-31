@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Computable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   @Override
   protected void customizeFragments(List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments,
-                                    ModuleClasspathCombo classpathCombo) {
-    Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
-    CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
-    fragments.add(commonParameterFragments.createRedirectFragment(hasModule));
-
+                                    ModuleClasspathCombo classpathCombo,
+                                    CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
+    fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
     fragments.add(mainClassFragment);
     DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(classpathCombo, mainClassFragment.component());
