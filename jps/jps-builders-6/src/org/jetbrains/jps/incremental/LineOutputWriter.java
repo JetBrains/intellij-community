@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.CharBuffer;
 
 /**
  * @author Eugene Zhuravlev
@@ -141,7 +142,7 @@ public abstract class LineOutputWriter extends Writer {
     }
 
     CharSequenceIterator(final char[] chars, final int offset, final int length) {
-      this(new CharArrayCharSequence(chars, offset, offset+length));
+      this(CharBuffer.wrap(chars, offset, length));
     }
 
     CharSequenceIterator(CharSequence sequence) {

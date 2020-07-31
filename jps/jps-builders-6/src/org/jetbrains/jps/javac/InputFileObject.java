@@ -4,7 +4,8 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -26,7 +27,7 @@ public final class InputFileObject extends JpsFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return new FileInputStream(myFile);
+    return new BufferedInputStream(new FileInputStream(myFile));
   }
 
   @Override
