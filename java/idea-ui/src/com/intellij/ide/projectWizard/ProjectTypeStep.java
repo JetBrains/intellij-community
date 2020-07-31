@@ -398,7 +398,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     myHeaderPanel.setVisible(myHeaderPanel.getComponentCount() > 0);
     // align header labels
-    List<JLabel> labels = UIUtil.findComponentsOfType(myHeaderPanel, JLabel.class);
+    List<JLabel> labels = ContainerUtil.filter(UIUtil.findComponentsOfType(myHeaderPanel, JLabel.class), label ->
+      label.isVisible() && label.getLabelFor() != null
+    );
     int width = 0;
     for (JLabel label : labels) {
       int width1 = label.getPreferredSize().width;
