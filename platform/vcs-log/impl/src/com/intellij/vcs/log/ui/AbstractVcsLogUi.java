@@ -245,15 +245,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   public void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
-    addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        if (condition.value(dataPack)) {
-          runnable.run();
-          removeLogListener(this);
-        }
-      }
-    });
+    VcsLogUtil.invokeOnChange(this, runnable, condition);
   }
 
   @Override

@@ -26,6 +26,7 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NonNls;
@@ -120,8 +121,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         public void run() {
           MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
-            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
-                              pack -> pack.getFilters().isEmpty());
+            VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
+                                      pack -> pack.getFilters().isEmpty());
           }
         }
       });
