@@ -103,9 +103,9 @@ data class Context(
 
   val reposInProject: Map<SpaceProjectInfo, Set<SpaceRepoInfo>>
 ) {
-  val empty: Boolean
+  val isAssociatedWithSpaceRepository: Boolean
     get() {
-      return this == EMPTY
+      return repoByUrl.values.filterNotNull().any()
     }
 }
 

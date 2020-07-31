@@ -2,12 +2,8 @@ package com.intellij.space.actions
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.ConnectionStatus
-import com.intellij.space.vcs.SpaceProjectContext
-import com.intellij.space.vcs.clone.SpaceCloneAction
 import circlet.workspaces.Workspace
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,10 +11,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.space.components.SpaceUserAvatarProvider
+import com.intellij.space.components.space
 import com.intellij.space.settings.*
-import com.intellij.space.settings.buildConnectingPanel
-import com.intellij.space.settings.buildLoginPanel
 import com.intellij.space.ui.*
+import com.intellij.space.vcs.SpaceProjectContext
+import com.intellij.space.vcs.clone.SpaceCloneAction
 import com.intellij.ui.AppIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
@@ -146,7 +144,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
                                         showSeparatorAbove = true)
     val projectContext = SpaceProjectContext.getInstance(project)
     val context = projectContext.context.value
-    if (!context.empty) {
+    if (context.isAssociatedWithSpaceRepository) {
       val descriptions = context.reposInProject.keys
       if (descriptions.size > 1) {
         menuItems += AccountMenuItem.Group("Code Reviews", descriptions.map {

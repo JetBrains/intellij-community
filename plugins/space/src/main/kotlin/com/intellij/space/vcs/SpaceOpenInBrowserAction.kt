@@ -1,9 +1,7 @@
 package com.intellij.space.vcs
 
-import com.intellij.space.actions.SpaceActionUtils
 import circlet.client.api.Navigator
 import circlet.client.api.ProjectLocation
-import com.intellij.space.components.space
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -18,6 +16,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.actions.SpaceActionUtils
+import com.intellij.space.components.space
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
@@ -64,14 +64,13 @@ abstract class SpaceOpenInBrowserAction(groupName: String) :
     val project = e.project
     if (project != null) {
       val projectContext = SpaceProjectContext.getInstance(project)
-      val projectDescriptions = !projectContext.context.value.empty
-      if (projectDescriptions) {
-        e.presentation.isEnabled = true
+      if (projectContext.context.value.isAssociatedWithSpaceRepository) {
+        e.presentation.isEnabledAndVisible = true
 
         return
       }
     }
-    e.presentation.isEnabled = false
+    e.presentation.isEnabledAndVisible = false
   }
 
   override fun buildAction(it: Pair<SpaceProjectInfo, String>): AnAction =

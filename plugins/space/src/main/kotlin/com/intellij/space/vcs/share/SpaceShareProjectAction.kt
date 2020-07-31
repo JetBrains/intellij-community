@@ -1,16 +1,9 @@
 package com.intellij.space.vcs.share
 
-import com.intellij.space.actions.SpaceActionUtils
 import circlet.client.api.RepoDetails
 import circlet.client.api.identifier
 import circlet.client.api.impl.vcsPasswords
 import circlet.client.td
-import com.intellij.space.components.space
-import com.intellij.space.settings.SpaceSettings
-import com.intellij.space.settings.CloneType
-import com.intellij.space.vcs.SpaceHttpPasswordState
-import com.intellij.space.vcs.SpaceProjectContext
-import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,6 +22,13 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.actions.SpaceActionUtils
+import com.intellij.space.components.space
+import com.intellij.space.settings.CloneType
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.vcs.SpaceHttpPasswordState
+import com.intellij.space.vcs.SpaceProjectContext
+import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
@@ -60,8 +60,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
 
     val context = SpaceProjectContext.getInstance(project)
-    val descriptions = context.context.value.empty
-    if (descriptions) {
+    if (context.context.value.isAssociatedWithSpaceRepository) {
       e.presentation.isEnabledAndVisible = false
       return
     }
