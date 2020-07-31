@@ -3,7 +3,6 @@ package com.siyeh.ig.fixes.style;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.CStyleArrayDeclarationInspection;
 

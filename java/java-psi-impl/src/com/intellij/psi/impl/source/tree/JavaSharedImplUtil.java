@@ -17,11 +17,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
@@ -133,12 +135,11 @@ public final class JavaSharedImplUtil {
     ASTNode lastBracket = null;
     int arrayCount = 0;
     ASTNode element = name;
-    Map<Integer, List<AnnotationElement>> annotationElementsToMove = new HashMap<>();
+    MultiMap<Integer, AnnotationElement> annotationElementsToMove = new MultiMap<>();
     while (element != null) {
       element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
       if (element instanceof AnnotationElement) {
-        List<AnnotationElement> dimensionAnnotationElements = annotationElementsToMove.computeIfAbsent(arrayCount, k -> new SmartList<>());
-        dimensionAnnotationElements.add((AnnotationElement)element);
+        annotationElementsToMove.putValue(arrayCount, (AnnotationElement)element);
         continue;
       }
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
@@ -165,7 +166,7 @@ public final class JavaSharedImplUtil {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
 
-        annotationElementsToMove.getOrDefault(i, Collections.emptyList()).forEach(newType1::rawAddChildren);
+        annotationElementsToMove.get(i).forEach(newType1::rawAddChildren);
 
         newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
         newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
