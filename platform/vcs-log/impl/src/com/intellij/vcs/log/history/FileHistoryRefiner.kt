@@ -84,35 +84,35 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 
   private fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
-    val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
-    val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
+    val currentPath = getPath(currentNode, previousNode, paths.last(), down)
+    val currentCommitId = permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))
 
-    val previousPath = paths.last()
-    var currentPath: MaybeDeletedFilePath = previousPath
-
-    if (previousNode != Dfs.NextNode.NODE_NOT_FOUND) {
-      val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
-      val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
-
-      currentPath = if (down) {
-        val pathGetter = { parentIndex: Int ->
-          historyData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
-        }
-        val path = findPathWithoutConflict(previousNodeId, pathGetter)
-        path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
-      }
-      else {
-        val pathGetter = { parentIndex: Int ->
-          historyData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
-        }
-        val path = findPathWithoutConflict(currentNodeId, pathGetter)
-        // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-        path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(currentNodeId, previousNodeId, visibilityBuffer))
-      }
-    }
-
-    pathsForCommits[currentCommit] = currentPath
+    pathsForCommits[currentCommitId] = currentPath
     paths.push(currentPath)
+  }
+
+  private fun getPath(currentNode: Int, previousNode: Int, previousPath: MaybeDeletedFilePath, down: Boolean): MaybeDeletedFilePath {
+    if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return previousPath
+
+    val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
+    val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
+
+    if (down) {
+      val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
+      val pathGetter = { parentIndex: Int ->
+        historyData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+      }
+      val path = findPathWithoutConflict(previousNodeId, pathGetter)
+      return path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
+    }
+    else {
+      val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
+      val pathGetter = { parentIndex: Int ->
+        historyData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+      }
+      val path = findPathWithoutConflict(currentNodeId, pathGetter)
+      return path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(currentNodeId, previousNodeId, visibilityBuffer))
+    }
   }
 
   private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> MaybeDeletedFilePath): MaybeDeletedFilePath? {
