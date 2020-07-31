@@ -70,8 +70,12 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     final Runnable action = () -> {
       myOutputDir = outputDir;
       try {
-        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
-        exportResultsSmart(inspectionsResults, outputDir);
+        try {
+          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+        }
+        finally {
+          exportResultsSmart(inspectionsResults, outputDir);
+        }
       }
       finally {
         myOutputDir = null;
