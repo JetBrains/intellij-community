@@ -102,5 +102,7 @@ class RenamingSuggester : FeatureSuggester {
         return ReferencesSearch.search(this).map(PsiReference::getElement)
     }
 
+    override val id: String = "Rename all occurrences"
+
     override val suggestingActionDisplayName: String = "Rename all occurrences"
 }

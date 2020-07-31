@@ -92,5 +92,7 @@ class UnwrapSuggester : FeatureSuggester {
                 || langSupport.isWhileStatement(this)
     }
 
+    override val id: String = "Unwrap"
+
     override val suggestingActionDisplayName: String = "Unwrap"
 }

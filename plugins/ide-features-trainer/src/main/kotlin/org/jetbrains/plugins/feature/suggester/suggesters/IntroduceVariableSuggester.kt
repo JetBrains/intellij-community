@@ -152,5 +152,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
         }
     }
 
+    override val id: String = "Introduce variable"
+
     override val suggestingActionDisplayName: String = "Introduce variable"
 }

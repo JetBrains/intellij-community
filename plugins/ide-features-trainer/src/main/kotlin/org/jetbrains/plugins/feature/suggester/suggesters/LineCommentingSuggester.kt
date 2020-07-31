@@ -127,5 +127,7 @@ class LineCommentingSuggester : FeatureSuggester {
         )
     }
 
+    override val id: String = "Comment with line comment"
+
     override val suggestingActionDisplayName: String = "Comment with line comment"
 }

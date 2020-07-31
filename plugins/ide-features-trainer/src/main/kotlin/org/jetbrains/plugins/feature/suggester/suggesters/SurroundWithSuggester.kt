@@ -143,5 +143,7 @@ class SurroundWithSuggester : FeatureSuggester {
                 || langSupport.isWhileStatement(this)
     }
 
+    override val id: String = "Surround with"
+
     override val suggestingActionDisplayName: String = "Surround with"
 }

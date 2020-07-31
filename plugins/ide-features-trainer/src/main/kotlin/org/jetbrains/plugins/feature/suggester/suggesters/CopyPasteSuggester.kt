@@ -59,5 +59,7 @@ class CopyPasteSuggester : FeatureSuggester {
         )
     }
 
+    override val id: String = "Paste from history"
+
     override val suggestingActionDisplayName: String = "Paste from history"
 }
