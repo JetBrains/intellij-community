@@ -284,8 +284,7 @@ public final class GlobalSearchScopesCore {
     }
 
     private boolean containsScope(DirectoryScope other) {
-      if (myWithSubdirectories) return contains(other.myDirectory);
-      return myDirectory.equals(other.myDirectory) && !other.myWithSubdirectories;
+      return myWithSubdirectories ? contains(other.myDirectory) : equals(other);
     }
 
     @NotNull
