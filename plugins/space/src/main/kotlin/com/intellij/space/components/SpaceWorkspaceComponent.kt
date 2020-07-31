@@ -3,11 +3,14 @@ package com.intellij.space.components
 import circlet.arenas.initCircletArenas
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
+import circlet.code.api.CodeReviewArena
+import circlet.code.api.CodeReviewParticipantsArena
 import circlet.common.oauth.IdeaOAuthConfig
 import circlet.permission.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
+import circlet.platform.client.ClientArenaRegistry
 import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
@@ -105,6 +108,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     registerArenaTombstones(ExtendableSerializationRegistry.global)
 
     ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
+
+    // code review
+    ClientArenaRegistry.register(CodeReviewArena)
+    ClientArenaRegistry.register(CodeReviewParticipantsArena)
+    circlet.code.api.impl.ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
   }
 
 
