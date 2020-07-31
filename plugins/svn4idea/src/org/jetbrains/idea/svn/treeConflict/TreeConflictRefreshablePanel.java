@@ -44,6 +44,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
 public class TreeConflictRefreshablePanel implements Disposable {
@@ -159,7 +160,10 @@ public class TreeConflictRefreshablePanel implements Disposable {
          !isLeft ||
          !myCommittedRevision.getRevision().isValid() ||
          myCommittedRevision.getRevision().getNumber() != version.getPegRevision())) {
-      HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
+
+      FilePath remotePath =
+        getFilePathOnNonLocal(version.getRepositoryRoot().appendPath(version.getPath(), false).toDecodedString(), version.isDirectory());
+      HistoryConflictSide side = new HistoryConflictSide(myVcs, remotePath, Revision.of(version.getPegRevision()), untilThisOther);
       if (untilThisOther != null && !isLeft) {
         side.setListToReportLoaded(myRightRevisionsList);
       }
