@@ -91,6 +91,7 @@ public class _FirstInSuiteTest extends TestCase {
       Charset.forName(encoding).aliases().contains("default"));
   }
 
+  // agents where this test is failing should be disabled and configured properly
   public void testSymlinkAbility() {
     assertTrue(
       String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
