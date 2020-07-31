@@ -12,17 +12,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
-  private static final String PACKAGE_NAME = "codeanalysis.experimental.annotations";
+public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
+  private static final String PACKAGE_NAME = "jspecify.annotations";
   private static final String NULLABLE = PACKAGE_NAME + "." + "Nullable";
-  private static final String NOT_NULL = PACKAGE_NAME + "." + "NotNull";
-  private static final String NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullnessUnknown";
-  private static final String DEFAULT_NULLABLE = PACKAGE_NAME + "." + "DefaultNullable";
-  private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "DefaultNotNull";
-  private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "DefaultNullnessUnknown";
+  private static final String NOT_NULL = PACKAGE_NAME + "." + "NonNull";
+  private static final String NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullnessUnspecified";
+  private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "DefaultNonNull";
+  private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "DefaultNullnessUnspecified";
 
   private static boolean isAvailable() {
-    return Registry.is("java.codeanalysis.annotations.available");
+    return Registry.is("java.jspecify.annotations.available");
   }
 
   @Nullable
@@ -37,9 +36,6 @@ public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     Nullability nullability;
     switch (name) {
-      case DEFAULT_NULLABLE:
-        nullability = Nullability.NULLABLE;
-        break;
       case DEFAULT_NOT_NULL:
         nullability = Nullability.NOT_NULL;
         break;

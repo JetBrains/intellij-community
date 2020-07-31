@@ -1,4 +1,4 @@
-import codeanalysis.experimental.annotations.*;
+import jspecify.annotations.*;
 
 class X {
   int f;
@@ -7,5 +7,5 @@ class X {
     m(/*ca-nullable-to-not-null*/x);
   }
 
-  native void m(@NotNull X x);
+  native void m(@NonNull X x);
 }

@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
-public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTestCase {
-  private static final String PACKAGE_NAME = "codeanalysis.experimental.annotations";
+public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String PACKAGE_NAME = "jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
   public String myFileName;
@@ -47,15 +47,15 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
 
   @Before
   public void before() {
-    Registry.get("java.codeanalysis.annotations.available").setValue(true, getTestRootDisposable());
+    Registry.get("java.jspecify.annotations.available").setValue(true, getTestRootDisposable());
     mockAnnotations();
   }
 
   private void mockAnnotations() {
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
-    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NotNull"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
-    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE", "DefaultNotNull"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE", "DefaultNonNull"));
   }
 
   @Test
