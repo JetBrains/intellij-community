@@ -452,7 +452,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     if (element instanceof PsiDirectory || element instanceof PsiFile) {
       String name = ((PsiFileSystemItem)element).getName();
-      boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
+      boolean caseSensitive = getVirtualFile().isCaseSensitive();
       VirtualFile existing = ContainerUtil.find(getVirtualFile().getChildren(),
                                                 item -> Comparing.strEqual(item.getName(), name, caseSensitive));
       if (existing != null) {

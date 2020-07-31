@@ -12,10 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
-import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -279,7 +276,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name, @NotNull NewVirtualFileSystem delegate) {
     final VirtualFile fake = new FakeVirtualFile(this, name);
-    final FileAttributes attributes = delegate.getAttributes(fake);
+    final FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(delegate, fake);
     if (attributes == null) return null;
     final String realName = delegate.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();

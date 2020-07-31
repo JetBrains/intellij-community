@@ -52,7 +52,7 @@ final class Win32FsCache {
     int parentId = ((VirtualFileWithId)file).getId();
     Map<String, FileAttributes> nestedMap = map.get(parentId);
     if (nestedMap == null) {
-      nestedMap = CollectionFactory.createFilePathMap(fileInfo.length);
+      nestedMap = CollectionFactory.createFilePathMap(fileInfo.length, file.isCaseSensitive());
       map.put(parentId, nestedMap);
     }
     for (int i = 0, length = fileInfo.length; i < length; i++) {

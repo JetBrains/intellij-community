@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -132,7 +131,7 @@ public final class VfsTestUtil {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath);
     Assert.assertNotNull("file " + absolutePath + " not found", vFile);
     String realVfsPath = vFile.getPath();
-    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
+    if (!vFile.isCaseSensitive() && !vfsPath.equals(realVfsPath) &&
         vfsPath.equalsIgnoreCase(realVfsPath)) {
       Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
                   "     path " + vfsPath + "\n" +
@@ -144,7 +143,7 @@ public final class VfsTestUtil {
   public static void assertFilePathEndsWithCaseSensitivePath(@NotNull VirtualFile file, @NotNull String suffixPath) {
     String vfsSuffixPath = FileUtil.toSystemIndependentName(suffixPath);
     String vfsPath = file.getPath();
-    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.endsWith(vfsSuffixPath) &&
+    if (!file.isCaseSensitive() && !vfsPath.endsWith(vfsSuffixPath) &&
         StringUtil.endsWithIgnoreCase(vfsPath, vfsSuffixPath)) {
       String realSuffixPath = vfsPath.substring(vfsPath.length() - vfsSuffixPath.length());
       Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +

@@ -10,7 +10,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -126,7 +125,7 @@ public final class TipDialog extends DialogWrapper {
     public void actionPerformed(ActionEvent e) {
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true)
-        .withFileFilter(file -> Comparing.equal(file.getExtension(), "html", SystemInfo.isFileSystemCaseSensitive));
+        .withFileFilter(file -> Comparing.equal(file.getExtension(), "html", file.isCaseSensitive()));
       String value = propertiesComponent.getValue(LAST_OPENED_TIP_PATH);
       VirtualFile lastOpenedTip = value != null ? LocalFileSystem.getInstance().findFileByPath(value) : null;
       VirtualFile[] pathToSelect = lastOpenedTip != null ? new VirtualFile[]{lastOpenedTip} : VirtualFile.EMPTY_ARRAY;

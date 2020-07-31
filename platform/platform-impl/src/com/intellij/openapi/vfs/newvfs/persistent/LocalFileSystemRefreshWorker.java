@@ -70,19 +70,17 @@ final class LocalFileSystemRefreshWorker {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
 
-    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance(), fs.isCaseSensitive());
+    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance());
     context.submitRefreshRequest(() -> processFile(root, context));
     context.waitForRefreshToFinish();
   }
 
-  private @NotNull RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs,
-                                                       @NotNull PersistentFS persistentFS,
-                                                       boolean isFsCaseSensitive) {
+  private @NotNull RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS) {
     int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
     if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
-      return new ConcurrentRefreshContext(fs, persistentFS, isFsCaseSensitive, parallelism);
+      return new ConcurrentRefreshContext(fs, persistentFS, parallelism);
     }
-    return new SequentialRefreshContext(fs, persistentFS, isFsCaseSensitive);
+    return new SequentialRefreshContext(fs, persistentFS);
   }
 
   private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
@@ -115,13 +113,11 @@ final class LocalFileSystemRefreshWorker {
   private abstract static class RefreshContext {
     final NewVirtualFileSystem fs;
     final PersistentFS persistence;
-    final boolean isFsCaseSensitive;
     final BlockingQueue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
 
-    RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence, boolean isFsCaseSensitive) {
+    RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) {
       this.fs = fs;
       this.persistence = persistence;
-      this.isFsCaseSensitive = isFsCaseSensitive;
     }
 
     abstract void submitRefreshRequest(@NotNull Runnable action);
@@ -263,8 +259,8 @@ final class LocalFileSystemRefreshWorker {
   private static final class SequentialRefreshContext extends RefreshContext {
     private final Deque<Runnable> myRefreshRequests = new ArrayDeque<>(100);
 
-    SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, boolean isFsCaseSensitive) {
-      super(fs, persistentFS, isFsCaseSensitive);
+    SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS) {
+      super(fs, persistentFS);
     }
 
     @Override
@@ -288,9 +284,8 @@ final class LocalFileSystemRefreshWorker {
 
     ConcurrentRefreshContext(@NotNull NewVirtualFileSystem fs,
                              @NotNull PersistentFS persistentFS,
-                             boolean isFsCaseSensitive,
                              int parallelism) {
-      super(fs, persistentFS, isFsCaseSensitive);
+      super(fs, persistentFS);
       service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
     }
 
@@ -334,8 +329,8 @@ final class LocalFileSystemRefreshWorker {
                           @NotNull Collection<? extends VirtualFile> existingPersistentChildren) {
       myFileOrDir = fileOrDir;
       myRefreshContext = refreshContext;
-      myPersistentChildren = CollectionFactory.createFilePathMap(existingPersistentChildren.size(), refreshContext.isFsCaseSensitive);
-      myChildrenWeAreInterested = childrenToRefresh == null ? null : CollectionFactory.createFilePathSet(childrenToRefresh, refreshContext.isFsCaseSensitive);
+      myPersistentChildren = CollectionFactory.createFilePathMap(existingPersistentChildren.size(), fileOrDir.isCaseSensitive());
+      myChildrenWeAreInterested = childrenToRefresh == null ? null : CollectionFactory.createFilePathSet(childrenToRefresh, fileOrDir.isCaseSensitive());
 
       for (VirtualFile child : existingPersistentChildren) {
         String name = child.getName();
@@ -514,7 +509,7 @@ final class LocalFileSystemRefreshWorker {
 
   @NotNull
   private static Path fixCaseIfNeeded(@NotNull Path path, @NotNull VirtualFile file) throws IOException {
-    if (SystemInfo.isFileSystemCaseSensitive) return path;
+    if (file.isCaseSensitive()) return path;
     // Mac: toRealPath() will return the current file's name w.r.t. case
     // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return the current file's name w.r.t. case
     return file.is(VFileProperty.SYMLINK) ? path.toRealPath(LinkOption.NOFOLLOW_LINKS) : path.toRealPath();

@@ -466,7 +466,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
-    boolean sameName = !isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
+    boolean sameName = !file.isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
 
     if (!file.exists()) {
       throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
@@ -595,7 +595,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (isCaseSensitive()) {
+    if (file.isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 

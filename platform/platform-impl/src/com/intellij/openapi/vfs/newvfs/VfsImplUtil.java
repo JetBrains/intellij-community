@@ -289,7 +289,8 @@ public final class VfsImplUtil {
     return state;
   }
 
-  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem fs) {
+  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
+                                                                @NotNull VirtualFile file) {
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
       LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " + attributes + " for path '" + file.getPath() + "'");

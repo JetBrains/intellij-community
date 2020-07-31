@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BooleanFunction;
@@ -64,7 +63,7 @@ public final class GradleUtil {
   @NotNull
   public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(file -> SystemInfo.isFileSystemCaseSensitive
+      .withFileFilter(file -> file.isCaseSensitive()
                               ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
                               : endsWithIgnoreCase(file.getName(), "." + EXTENSION) || endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
   }

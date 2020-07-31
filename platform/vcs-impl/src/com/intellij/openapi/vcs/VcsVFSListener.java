@@ -60,6 +60,10 @@ public abstract class VcsVFSListener implements Disposable {
     public String toString() {
       return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
     }
+
+    public boolean isCaseSensitive() {
+      return myFile.isCaseSensitive();
+    }
   }
 
   protected static class AllDeletedFiles {

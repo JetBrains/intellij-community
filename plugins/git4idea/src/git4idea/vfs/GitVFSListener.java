@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -178,7 +177,7 @@ public final class GitVFSListener extends VcsVFSListener {
     for (MovedFileInfo movedInfo : movedFiles) {
       String oldPath = movedInfo.myOldPath;
       String newPath = movedInfo.myNewPath;
-      if (!SystemInfo.isFileSystemCaseSensitive && GitUtil.isCaseOnlyChange(oldPath, newPath)) {
+      if (!movedInfo.isCaseSensitive() && GitUtil.isCaseOnlyChange(oldPath, newPath)) {
         toForceMove.add(movedInfo);
       }
       else {
