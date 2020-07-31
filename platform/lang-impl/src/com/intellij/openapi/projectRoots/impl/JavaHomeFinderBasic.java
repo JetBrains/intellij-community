@@ -41,6 +41,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findInPATH);
     myFinders.add(() -> findInSpecifiedPaths(paths));
     myFinders.add(this::findJavaInstalledBySdkMan);
+    myFinders.add(this::findJavaInstalledByAsdfJava);
 
     if (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false)) {
       myFinders.add(() -> scanAll(getJavaHome(), false));
@@ -286,6 +287,45 @@ public class JavaHomeFinderBasic {
 
     return result;
   }
+
+
+  /**
+   * Finds Java home directories installed by asdf-java: https://github.com/halcyon/asdf-java
+   */
+  private @NotNull Set<String> findJavaInstalledByAsdfJava() {
+    File installsDir = findAsdfInstallsDir();
+    if (installsDir == null) return Collections.emptySet();
+    File javasDir = new File(installsDir, "java");
+    return javasDir.isDirectory() ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
+  }
+
+  @Nullable
+  private static File findAsdfInstallsDir() {
+    // try to use environment variable for custom data directory
+    // https://asdf-vm.com/#/core-configuration?id=environment-variables
+    String dataDir = EnvironmentUtil.getValue("ASDF_DATA_DIR");
+    if (dataDir != null) {
+      File primaryDir = new File(dataDir);
+      if (primaryDir.isDirectory()) {
+        File installsDir = primaryDir.toPath().resolve("installs").toFile();
+        if (installsDir.isDirectory()) return installsDir;
+      }
+    }
+
+    // finally, try the usual location in Unix or MacOS
+    if (!SystemInfo.isWindows) {
+      String homePath = System.getProperty("user.home");
+      if (homePath != null) {
+        File homeDir = new File(homePath);
+        File installsDir = homeDir.toPath().resolve(".asdf").resolve("installs").toFile();
+        if (installsDir.isDirectory()) return installsDir;
+      }
+    }
+
+    // no chances
+    return null;
+  }
+
 
   private boolean safeExists(@NotNull Path path) {
     try {
