@@ -383,7 +383,8 @@ class GitRebaseDialog(private val project: Project,
         })
       }
     }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createUpstreamField() = ComboBox<GitReference>(MutableCollectionComboBoxModel()).apply {
@@ -401,13 +402,15 @@ class GitRebaseDialog(private val project: Project,
         })
       }
     }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createRootField() = ComboBox(CollectionComboBoxModel(roots)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create("(invalid)") { it.name }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
     item = defaultRoot ?: roots[0]
 
     val listener = ActionListener {
@@ -431,9 +434,10 @@ class GitRebaseDialog(private val project: Project,
         })
       }
     }
-    ui = FlatComboBoxUI(
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
-      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
 
     addItemListener { e ->
       if (e.stateChange == ItemEvent.SELECTED) {
@@ -539,7 +543,7 @@ class GitRebaseDialog(private val project: Project,
     }
 
     if (isDirty && isAlreadyAdded(upstreamField, topPanel)) {
-      upstreamField.ui = getUpstreamFieldUi(!showBranchField)
+      upstreamField.setUI(getUpstreamFieldUi(!showBranchField))
       if (!showBranchField) {
         (topPanel.layout as MigLayout).setComponentConstraints(upstreamField, getUpstreamFieldConstraints())
       }
@@ -555,7 +559,7 @@ class GitRebaseDialog(private val project: Project,
       if (!isAlreadyAdded(upstreamField, bottomPanel)) {
         bottomPanel.add(upstreamField, 0)
       }
-      upstreamField.ui = getUpstreamFieldUi(!showBranch)
+      upstreamField.setUI(getUpstreamFieldUi(!showBranch))
     }
     if (showBranch) {
       if (!isAlreadyAdded(branchField, bottomPanel)) {
