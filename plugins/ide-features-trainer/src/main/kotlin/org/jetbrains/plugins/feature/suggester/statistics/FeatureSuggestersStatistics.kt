@@ -4,6 +4,7 @@ package org.jetbrains.plugins.feature.suggester.statistics
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.vcs.log.statistics.CustomStringsValidationRule
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 
@@ -43,5 +44,6 @@ class FeatureSuggestersStatisticsCollector {
 
 class FeatureSuggesterIdRuleValidator : CustomStringsValidationRule(
     "feature_suggester_id",
-    FeatureSuggester.suggesters.map(FeatureSuggester::suggestingActionDisplayName).toSet()
+    FeatureSuggester.suggesters.filter { getPluginInfo(it::class.java).isDevelopedByJetBrains() }
+        .map(FeatureSuggester::id).toSet()
 )
