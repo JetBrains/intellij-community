@@ -246,14 +246,15 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         appendVmParameters(vmParameters)
       }
 
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters)
-
       appendEncoding(javaParameters, vmParameters)
 
       val argFileParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      rememberFileContentAfterUpload(argFile.file, argFileParameter)
+      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
+        rememberFileContentAfterUpload(argFile.file, argFileParameter)
+      }
+      
     }
     catch (e: IOException) {
       throwUnableToCreateTempFile(e)
@@ -618,10 +619,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       registerPromise(promisedValue)
     }
 
-    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters,
+                                   vmParameters: ParametersList,
+                                   rememberContent: () -> Unit) {
       myAllPromises.collectResults().onSuccess {
         try {
           writeArgFileNow(javaParameters, vmParameters)
+          rememberContent.invoke()
         }
         catch (e: IOException) {
           //todo[remoteServers]: interrupt preparing environment
@@ -657,6 +661,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     private fun registerPromise(value: TargetValue<String>) {
       myAllPromises.add(value.targetValue)
     }
+
   }
 
   internal class ClasspathJar @Throws(IOException::class) constructor(private val setup: JdkCommandLineSetup,
