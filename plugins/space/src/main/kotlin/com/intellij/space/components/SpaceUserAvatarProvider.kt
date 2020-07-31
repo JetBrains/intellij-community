@@ -27,14 +27,14 @@ class SpaceUserAvatarProvider {
     val name = ws.me.value.englishFullName()
 
     val avatarTID = ws.me.value.smallAvatar ?: return@mapInit SpaceAvatarUtils.generateAvatars(id, name)
-    val imageLoader = SpaceImageLoader(ws.lifetime, ws.client)
+    val imageLoader = SpaceImageLoader.getInstance()
 
     // await connected state before trying to load image.
     ws.client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
 
     try {
       log.info { "loading user avatar: $avatarTID" }
-      val loadedImage = imageLoader.loadImageAsync(avatarTID).await()
+      val loadedImage = imageLoader.loadImageAsync(avatarTID)?.await()
       if (loadedImage == null) {
         SpaceAvatarUtils.generateAvatars(id, name)
       }
