@@ -70,7 +70,6 @@ public class TextFilter extends FilterAction {
     return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
-      private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
@@ -92,8 +91,6 @@ public class TextFilter extends FilterAction {
                 )
                 .addGroup(
                   layout.createSequentialGroup()
-                        .addComponent(myWordsCheckBox)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(myHierarchyCheckBox)
                 )
         );
@@ -107,7 +104,6 @@ public class TextFilter extends FilterAction {
                 )
                 .addGroup(
                   layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myWordsCheckBox)
                         .addComponent(myHierarchyCheckBox)
                 )
         );
@@ -116,7 +112,6 @@ public class TextFilter extends FilterAction {
       @Override
       protected void loadValues() {
         myTextField.setText((myConstraint.isInvertRegExp() ? "!" : "") + myConstraint.getRegExp());
-        myWordsCheckBox.setSelected(myConstraint.isWholeWordsOnly());
         myHierarchyCheckBox.setSelected(myConstraint.isWithinHierarchy());
         myHierarchyCheckBox.setVisible(myShowHierarchy);
       }
@@ -132,7 +127,7 @@ public class TextFilter extends FilterAction {
           myConstraint.setRegExp(text);
           myConstraint.setInvertRegExp(false);
         }
-        myConstraint.setWholeWordsOnly(myWordsCheckBox.isSelected());
+        myConstraint.setWholeWordsOnly(false);
         myConstraint.setWithinHierarchy(myHierarchyCheckBox.isSelected());
       }
 
