@@ -53,6 +53,10 @@ done
 
 BNUM="${BUILD_NUMBER/P/0}"  # for AB presubmit: satisfy Integer.parseInt in BuildNumber.parseBuildNumber
 BNUM="${BNUM:-SNAPSHOT}"
+if [[ "${STUDIO_SDK}" == "true" ]]; then
+  BNUM="__BUILD_NUMBER__"
+fi
+
 OUT="${OUT_DIR:-out/studio}"
 DIST="${DIST_DIR:-"${OUT}/dist"}"
 
