@@ -69,7 +69,16 @@ public final class Disposer {
    *                                                       already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
-    ourTree.register(parent, child);
+    RuntimeException e = ourTree.register(parent, child);
+    if (e != null) throw e;
+  }
+
+  /**
+   * Registers child disposable under parent unless the parent has already been disposed
+   * @return whether the registration succeeded
+   */
+  public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
+    return ourTree.register(parent, child) == null;
   }
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {

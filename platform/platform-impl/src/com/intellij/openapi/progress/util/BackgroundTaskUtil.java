@@ -19,8 +19,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -257,34 +259,11 @@ public final class BackgroundTaskUtil {
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
-    if (parent instanceof ComponentManager) {
-      if (((ComponentManager)parent).isDisposed()) {
-        return false;
-      }
-
-      try {
-        Disposer.register(parent, disposable);
-        return true;
-      }
-      catch (AlreadyDisposedException | IncorrectOperationException e) {
-        return false;
-      }
+    if (parent instanceof ComponentManager && ((ComponentManager)parent).isDisposed()) {
+      return false;
     }
 
-    return ReadAction.compute(() -> {
-      if (Disposer.isDisposed(parent)) {
-        return false;
-      }
-
-      try {
-        Disposer.register(parent, disposable);
-        return true;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
-      }
-    });
+    return Disposer.tryRegister(parent, disposable);
   }
 
   /**
