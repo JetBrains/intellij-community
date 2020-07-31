@@ -36,7 +36,6 @@
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SyncDslViewManager"/>
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.execution.SpaceTaskRunner"/>
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.ui.SpaceToolWindowService"/>
-    <projectService serviceImplementation="com.intellij.space.vcs.SpaceProjectContext"/>
     <runLineMarkerContributor
       language="kotlin"
       id="spaceScriptRunLineMarkerProvider"

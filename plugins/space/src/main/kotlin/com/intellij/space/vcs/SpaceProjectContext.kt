@@ -7,6 +7,8 @@ import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.space.components.space
 import git4idea.GitUtil
@@ -17,6 +19,7 @@ import libraries.coroutines.extra.LifetimeSource
 import runtime.async.backoff
 import runtime.reactive.*
 
+@Service
 class SpaceProjectContext(project: Project) : Disposable {
   private val lifetime: LifetimeSource = LifetimeSource()
 
@@ -92,9 +95,7 @@ class SpaceProjectContext(project: Project) : Disposable {
   }
 
   companion object {
-    fun getInstance(project: Project): SpaceProjectContext {
-      return project.getService(SpaceProjectContext::class.java)
-    }
+    fun getInstance(project: Project): SpaceProjectContext = project.service()
   }
 }
 
