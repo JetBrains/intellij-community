@@ -258,11 +258,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val entitiesToSave = storage.entitiesBySource { it in affectedSources }
+    val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
+      it.internalFile
+    }
     val obsoleteSources = affectedSources - entitiesToSave.keys
     for (source in obsoleteSources) {
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
-        processObsoleteSource(fileUrl, false)
+        processObsoleteSource(fileUrl, source in internalSourceConvertedToImported)
         if (source is JpsFileEntitySource.FileInDirectory) {
           fileIdToFileName.remove(source.fileNameId)
         }
