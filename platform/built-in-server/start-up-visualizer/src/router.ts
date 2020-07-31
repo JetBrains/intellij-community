@@ -20,7 +20,12 @@ const routes: Array<RouteConfig> = [
       {
         path: "/aggregatedStats",
         name: "Aggregated Stats",
-        component: () => import("@/aggregatedStats/AggregatedStatsPage.vue"),
+        component: () => import("@/aggregatedStats/IntelliJAggregatedStatsPage.vue"),
+      },
+      {
+        path: "/fleetStats",
+        name: "Aggregated Fleet Stats",
+        component: () => import("@/aggregatedStats/FleetAggregatedStatsPage.vue"),
       },
       {
         path: "/report/timeline",

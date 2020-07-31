@@ -178,7 +178,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       this.virtualFile = virtualFile;
     }
   }
-  static void processQueue() {
+
+  @ApiStatus.Internal
+  public static void processQueue() {
     RMTreeReference ref;
     while ((ref = (RMTreeReference)rmTreeQueue.poll()) != null) {
       ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);

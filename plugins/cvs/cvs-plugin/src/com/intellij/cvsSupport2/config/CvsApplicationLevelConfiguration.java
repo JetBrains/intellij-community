@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@State(name = "CvsApplicationLevelConfiguration", storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED))
+@State(name = "CvsApplicationLevelConfiguration", storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED),
+  reportStatistic = false)
 public class CvsApplicationLevelConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CvsApplicationLevelConfiguration.class);
 

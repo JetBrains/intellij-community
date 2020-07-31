@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,15 +58,15 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, icon);
   }
 
-  private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
+  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
     private final Consumer<? super AnActionEvent> myActionPerformed;
 
-    private SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
+    SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@NlsActions.ActionText String text,
-                                  Consumer<? super AnActionEvent> actionPerformed) {
+    SimpleDumbAwareAction(@NlsActions.ActionText String text,
+                          Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }

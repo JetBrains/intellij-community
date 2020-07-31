@@ -31,6 +31,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private JCheckBox mySaveSignatures;
   private JCheckBox mySupportGevent;
   private JBCheckBox mySupportQt;
+  private JCheckBox myDropIntoDebuggerOnFailedTests;
   private JBLabel warningIcon;
   private ComboBox<String> myPyQtBackend;
   private ActionLink myActionLink;
@@ -81,6 +82,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     return myAttachToSubprocess.isSelected() != settings.isAttachToSubprocess() ||
            mySaveSignatures.isSelected() != settings.isSaveCallSignatures() ||
            mySupportGevent.isSelected() != settings.isSupportGeventDebugging() ||
+           myDropIntoDebuggerOnFailedTests.isSelected() != settings.isDropIntoDebuggerOnFailedTest() ||
            mySupportQt.isSelected() != settings.isSupportQtDebugging() ||
            (myPyQtBackend.getSelectedItem() != null && !myPyQtBackend.getSelectedItem().equals(settings.getPyQtBackend())) ||
            !myAttachProcessFilter.getText().equals(settings.getAttachProcessFilter());
@@ -92,6 +94,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     settings.setAttachToSubprocess(myAttachToSubprocess.isSelected());
     settings.setSaveCallSignatures(mySaveSignatures.isSelected());
     settings.setSupportGeventDebugging(mySupportGevent.isSelected());
+    settings.setDropIntoDebuggerOnFailedTest(myDropIntoDebuggerOnFailedTests.isSelected());
     settings.setSupportQtDebugging(mySupportQt.isSelected());
     settings.setPyQtBackend(myPyQtBackendsList.get(myPyQtBackend.getSelectedIndex()));
     settings.setAttachProcessFilter(myAttachProcessFilter.getText());
@@ -103,6 +106,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     myAttachToSubprocess.setSelected(settings.isAttachToSubprocess());
     mySaveSignatures.setSelected(settings.isSaveCallSignatures());
     mySupportGevent.setSelected(settings.isSupportGeventDebugging());
+    myDropIntoDebuggerOnFailedTests.setSelected(settings.isDropIntoDebuggerOnFailedTest());
     mySupportQt.setSelected(settings.isSupportQtDebugging());
     myPyQtBackend.setSelectedItem(settings.getPyQtBackend());
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());

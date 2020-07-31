@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.util.StopWatch;
+import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -71,7 +72,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
       myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(project));
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new IgnoredToExcludedSynchronizer(project, this));
+      IgnoredToExcludedSynchronizer ignoredToExcludedSynchronizer = project.getService(IgnoredToExcludedSynchronizer.class);
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(ignoredToExcludedSynchronizer);
     }
     else {
       myStagingAreaHolder = null;
@@ -89,7 +91,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
-    return notNull(repository, () -> createInstance(root, project, project, listenToRepoChanges));
+    return notNull(repository, () -> createInstance(root, project, GitDisposable.getInstance(project), listenToRepoChanges));
   }
 
   /**

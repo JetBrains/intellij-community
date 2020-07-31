@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.chains.SimpleDiffRequestChain.DiffRequestProducerWrapper;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.openapi.ListSelection;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,10 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
 
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);
+  }
+
+  public void removeListener(@NotNull Listener listener) {
+    myDispatcher.removeListener(listener);
   }
 
   @NotNull

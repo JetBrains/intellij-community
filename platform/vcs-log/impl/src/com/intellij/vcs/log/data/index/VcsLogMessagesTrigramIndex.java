@@ -39,18 +39,17 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
     return getCommitsWithAllKeys(trigramProcessor.map.keySet());
   }
 
-  public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsCommitMetadata> {
+  public static final class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsCommitMetadata> {
     @NotNull
     @Override
     public Map<Integer, Void> map(@NotNull VcsCommitMetadata inputData) {
       MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
       TrigramBuilder.processTrigrams(inputData.getFullMessage(), trigramProcessor);
-
       return trigramProcessor.map;
     }
   }
 
-  private static class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
+  private static final class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
     Int2ObjectMap<Void> map;
 
     @Override
@@ -60,7 +59,7 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
     }
 
     @Override
-    public boolean execute(int value) {
+    public boolean test(int value) {
       map.put(value, null);
       return true;
     }

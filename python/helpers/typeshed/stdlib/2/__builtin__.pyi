@@ -12,14 +12,20 @@ from typing import (
 from abc import ABCMeta
 from ast import mod, AST
 from io import (
-    _OpenBinaryMode, _OpenTextMode, _OpenBinaryModeUpdating, _OpenBinaryModeWriting, _OpenBinaryModeReading,
     TextIOWrapper, FileIO, BufferedRandom, BufferedReader, BufferedWriter
 )
 from types import TracebackType, CodeType
+from _typeshed import AnyPath, OpenBinaryMode, OpenTextMode, OpenBinaryModeUpdating, OpenBinaryModeWriting, OpenBinaryModeReading, SupportsWrite
+from typing_extensions import Literal
 import sys
 
 
-from typing_extensions import Literal
+
+class _SupportsIndex(Protocol):
+    def __index__(self) -> int: ...
+
+class _SupportsLessThan(Protocol):
+    def __lt__(self, other: Any) -> bool: ...
 
 _T = TypeVar('_T')
 _T_co = TypeVar('_T_co', covariant=True)
@@ -32,9 +38,7 @@ _T3 = TypeVar('_T3')
 _T4 = TypeVar('_T4')
 _T5 = TypeVar('_T5')
 _TT = TypeVar('_TT', bound='type')
-
-class _SupportsIndex(Protocol):
-    def __index__(self) -> int: ...
+_LT = TypeVar('_LT', bound=_SupportsLessThan)
 
 class object:
     __doc__: Optional[str]
@@ -45,7 +49,7 @@ class object:
     @property
     def __class__(self: _T) -> Type[_T]: ...
     @__class__.setter
-    def __class__(self, __type: Type[object]) -> None: ...
+    def __class__(self, __type: Type[object]) -> None: ...  # noqa: F811
     def __init__(self) -> None: ...
     def __new__(cls) -> Any: ...
     def __setattr__(self, name: str, value: Any) -> None: ...
@@ -807,7 +811,12 @@ class property(object):
 
 long = int
 
-NotImplemented: Any
+class _NotImplementedType(Any):  # type: ignore
+    # A little weird, but typing the __call__ as NotImplemented makes the error message
+    # for NotImplemented() much better
+    __call__: NotImplemented  # type: ignore
+
+NotImplemented: _NotImplementedType
 
 def abs(__x: SupportsAbs[_T]) -> _T: ...
 def all(__iterable: Iterable[object]) -> bool: ...
@@ -948,10 +957,8 @@ def open(name: Union[unicode, int], mode: unicode = ..., buffering: int = ...) -
 
 def ord(__c: Union[Text, bytes]) -> int: ...
 
-class _Writer(Protocol):
-    def write(self, __s: Any) -> Any: ...
 # This is only available after from __future__ import print_function.
-def print(*values: object, sep: Optional[Text] = ..., end: Optional[Text] = ..., file: Optional[_Writer] = ...) -> None: ...
+def print(*values: object, sep: Optional[Text] = ..., end: Optional[Text] = ..., file: Optional[SupportsWrite[Any]] = ...) -> None: ...
 
 _E = TypeVar("_E", contravariant=True)
 _M = TypeVar("_M", contravariant=True)
@@ -970,7 +977,7 @@ def pow(__base: _SupportsPow2[_E, _T_co], __exp: _E) -> _T_co: ...
 @overload
 def pow(__base: _SupportsPow3[_E, _M, _T_co], __exp: _E, __mod: _M) -> _T_co: ...
 def quit(code: object = ...) -> NoReturn: ...
-def range(__x: int, __y: int = ..., __step: int = ...) -> List[int]: ...
+def range(__x: int, __y: int = ..., __step: int = ...) -> List[int]: ...  # noqa: F811
 def raw_input(__prompt: Any = ...) -> str: ...
 @overload
 def reduce(__function: Callable[[_T, _S], _T], __iterable: Iterable[_S], __initializer: _T) -> _T: ...

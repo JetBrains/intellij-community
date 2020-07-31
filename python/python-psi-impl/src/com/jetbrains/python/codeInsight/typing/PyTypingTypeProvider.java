@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -122,6 +121,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("dict", "Dict")
     .put("set", "Set")
     .put("frozenset", "FrozenSet")
+    .build();
+
+  public static final ImmutableMap<String, String> TYPING_BUILTINS_GENERIC_ALIASES = ImmutableMap.<String, String>builder()
+    .putAll(TYPING_COLLECTION_CLASSES.entrySet())
+    .put("type", "Type")
+    .put("tuple", "Tuple")
     .build();
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
@@ -813,7 +818,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subsExpr = (PySubscriptionExpression)resolved;
       final PyExpression operand = subsExpr.getOperand();
       final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains(TYPE)) {
+      if (operandNames.contains(TYPE) || operandNames.contains(PyNames.TYPE)) {
         final PyExpression indexExpr = subsExpr.getIndexExpression();
         if (indexExpr != null) {
           if (resolveToQualifiedNames(indexExpr, context.getTypeContext()).contains(ANY)) {
@@ -1363,7 +1368,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   public static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<String> names = Sets.newLinkedHashSet();
+    final Set<String> names = new LinkedHashSet<String>();
     for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);
       if (name != null) {

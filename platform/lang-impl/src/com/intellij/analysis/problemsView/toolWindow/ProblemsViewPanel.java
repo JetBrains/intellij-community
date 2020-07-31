@@ -32,23 +32,19 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.Comparator;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.OpenSourceUtil.navigate;
-import static java.util.Collections.emptyList;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
@@ -60,12 +56,26 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   private final JPanel myPanel;
   private final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
-  private final JTree myTree;
+  private final Tree myTree;
   private final TreeExpander myTreeExpander;
   private final SingleAlarm mySelectionAlarm = new SingleAlarm(() -> {
     OpenFileDescriptor descriptor = getSelectedDescriptor();
     updateAutoscroll(descriptor);
     updatePreview(descriptor);
+  }, 50, stateForComponent(this), this);
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
+    ToolWindow window = ProblemsView.getToolWindow(getProject());
+    if (window == null) return;
+    ContentManager manager = window.getContentManagerIfCreated();
+    if (manager == null) return;
+    Content content = manager.getContent(this);
+    if (content == null) return;
+
+    Root root = myTreeModel.getRoot();
+    int count = root == null ? 0 : root.getProblemsCount();
+    content.setDisplayName(getContentDisplayName(count));
+    Icon icon = getToolWindowIcon(count);
+    if (icon != null) window.setIcon(icon);
   }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
@@ -146,7 +156,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     myState = state;
 
     myTreeModel.setComparator(createComparator());
-    myTreeModel.setFilter(new SeverityFilter(state));
     myTree = new Tree(new AsyncTreeModel(myTreeModel, this));
     myTree.setRootVisible(false);
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
@@ -194,20 +203,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   abstract @NotNull String getDisplayName();
 
   final void updateToolWindowContent() {
-    invokeLaterIfProjectAlive(getProject(), () -> {
-      ToolWindow window = ProblemsView.getToolWindow(getProject());
-      if (window == null) return;
-      ContentManager manager = window.getContentManagerIfCreated();
-      if (manager == null) return;
-      Content content = manager.getContent(this);
-      if (content == null) return;
-
-      Root root = myTreeModel.getRoot();
-      int count = root == null ? 0 : root.getProblemsCount();
-      content.setDisplayName(getContentDisplayName(count));
-      Icon icon = getToolWindowIcon(count);
-      if (icon != null) window.setIcon(icon);
-    });
+    myUpdateAlarm.cancelAndRequest();
   }
 
   @Nullable Icon getToolWindowIcon(int count) {
@@ -242,7 +238,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return myTreeModel;
   }
 
-  final @NotNull JTree getTree() {
+  final @NotNull Tree getTree() {
     return myTree;
   }
 
@@ -336,10 +332,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
       isNullableOrSelected(getSortFoldersFirst()),
       isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));
-  }
-
-  @NotNull Collection<Pair<String, Integer>> getSeverityFilters() {
-    return emptyList();
   }
 
   @Nullable Option getAutoscrollToSource() {

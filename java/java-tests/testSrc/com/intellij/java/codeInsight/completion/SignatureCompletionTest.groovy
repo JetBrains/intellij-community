@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.testFramework.NeedsIndicesState
 import groovy.transform.CompileStatic
 
 /**
@@ -51,6 +52,7 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNonDefaultConstructor() { doFirstItemTest() }
 
+  @NeedsIndicesState.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   void testAnonymousNonDefaultConstructor() {
     configureByTestName()
     myFixture.type('\n')

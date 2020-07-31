@@ -142,6 +142,14 @@ public final class MarkdownSettingsConfigurable implements SearchableConfigurabl
   }
 
   /**
+   * Gets expected by Markdown plugin path to PlantUML JAR
+   */
+  @NotNull
+  public static File getExpectedJarPath() {
+    return new File(getDirectoryToDownload(), PLANTUML_JAR);
+  }
+
+  /**
    * Returns {@link File} presentation of downloaded PlantUML jar
    */
   @Nullable
@@ -151,7 +159,7 @@ public final class MarkdownSettingsConfigurable implements SearchableConfigurabl
       return Optional.ofNullable(PLANTUML_JAR_TEST.get()).map(VfsUtilCore::virtualToIoFile).orElse(null);
     }
     else {
-      return new File(getDirectoryToDownload(), PLANTUML_JAR);
+      return getExpectedJarPath();
     }
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.module;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -165,14 +164,6 @@ public class ModulePointerTest extends HeavyPlatformTestCase {
     final ModifiableModuleModel model = getModuleManager().getModifiableModel();
     final Module module = model.newModule(myProject.getBasePath() + "/" + name + ".iml", EmptyModuleType.getInstance().getId());
     commitModel(model);
-    disposeOnTearDown(new Disposable() {
-      @Override
-      public void dispose() {
-        if (!module.isDisposed()) {
-          getModuleManager().disposeModule(module);
-        }
-      }
-    });
     return module;
   }
 

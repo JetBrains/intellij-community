@@ -280,6 +280,13 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
 
+  fun checkBox(@Nls text: String,
+               property: GraphProperty<Boolean>,
+               comment: String? = null): CellBuilder<JBCheckBox> {
+    val component = JBCheckBox(text, property.get())
+    return component(comment = comment).withGraphProperty(property).applyToComponent { component.bind(property) }
+  }
+
   open fun radioButton(@Nls text: String, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
@@ -546,6 +553,20 @@ abstract class Cell : BaseBuilder {
     constraints(*constraints)
     if (comment != null) comment(comment)
     if (growPolicy != null) growPolicy(growPolicy)
+  }
+}
+
+private fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      isSelected = property.get()
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(isSelected)
+    }
   }
 }
 

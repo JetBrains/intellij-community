@@ -11,9 +11,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class PropertiesHighlighter extends SyntaxHighlighterBase {
@@ -55,8 +55,8 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   );
 
   static {
-    keys1 = new THashMap<>();
-    keys2 = new THashMap<>();
+    keys1 = new HashMap<>();
+    keys2 = new HashMap<>();
 
     keys1.put(PropertiesTokenTypes.VALUE_CHARACTERS, PROPERTY_VALUE);
     keys1.put(PropertiesTokenTypes.END_OF_LINE_COMMENT, PROPERTY_COMMENT);

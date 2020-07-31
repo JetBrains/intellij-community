@@ -79,11 +79,11 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       }
       if (connection == null) {
         int transport = DebuggerSettings.getInstance().getTransport();
-        connection = DebuggerManagerImpl.createDebugParameters(parameters,
-                                                               true,
-                                                               transport,
-                                                               transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "",
-                                                               false);
+        connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
+          .asyncAgent(true)
+          .project(environment.getProject())
+          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+          .create(parameters);
         isPollConnection = true;
       }
 

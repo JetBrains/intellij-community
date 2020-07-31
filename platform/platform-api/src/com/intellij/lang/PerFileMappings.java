@@ -17,26 +17,16 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public interface PerFileMappings<T> {
 
-  @NotNull
-  Map<VirtualFile, T> getMappings();
-
-  void setMappings(@NotNull Map<VirtualFile, T> mappings);
-
-  void setMapping(@Nullable VirtualFile file, T value);
+  void setMapping(@Nullable VirtualFile file, @Nullable T value);
 
   @Nullable
   T getMapping(@Nullable VirtualFile file);
 
-  @Nullable
-  T getDefaultMapping(@Nullable VirtualFile file);
 }

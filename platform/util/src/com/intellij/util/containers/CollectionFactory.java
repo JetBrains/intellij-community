@@ -201,7 +201,7 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new ObjectOpenHashSet<>(paths);
+      return new HashSet<>(paths);
     }
     else {
       return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);

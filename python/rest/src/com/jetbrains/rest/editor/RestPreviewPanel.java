@@ -6,11 +6,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * Every reStructuredText editor preview panel must implement this interface.
+ */
 public interface RestPreviewPanel extends Disposable {
 
   void setHtml(@NotNull String html);
 
   void render();
 
-  JComponent getComponent();
+  /**
+   * Returns the component that actually displays the rendered HTML and shown in the interface.
+   */
+  @NotNull JComponent getComponent();
 }

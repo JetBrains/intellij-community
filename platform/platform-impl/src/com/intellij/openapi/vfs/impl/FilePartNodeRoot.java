@@ -2,8 +2,12 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.NodeToUpdate;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -16,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +158,7 @@ class FilePartNodeRoot extends FilePartNode {
         if (fsRoot == null) {
           String rootPath = ContainerUtil.getLastItem(names);
           fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
-          if (fsRoot != null && !fsRoot.getName().equals(rootPath)) {
+          if (fsRoot != null && !FileUtil.namesEqual(fsRoot.getName(), rootPath)) {
             // ignore really weird root names, like "/" under windows
             fsRoot = null;
           }
@@ -249,7 +254,7 @@ class FilePartNodeRoot extends FilePartNode {
 
   void checkConsistency() {
     if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
-      doCheckConsistency("");
+      doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }
 

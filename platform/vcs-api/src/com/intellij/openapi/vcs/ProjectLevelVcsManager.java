@@ -241,4 +241,9 @@ public abstract class ProjectLevelVcsManager {
    * Executes task on pooled thread, delayed until core vcs services are initialized.
    */
   public abstract void runAfterInitialization(@NotNull Runnable runnable);
+
+  /**
+   * Checks whether VCS console is enabled and VCS tool window exists.
+   */
+  public abstract boolean isConsoleVisible();
 }

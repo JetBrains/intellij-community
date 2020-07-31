@@ -42,23 +42,23 @@ import java.util.Set;
 class VariableExtractor {
   private static final Logger LOG = Logger.getInstance(VariableExtractor.class);
 
-  private final Project myProject;
-  private final Editor myEditor;
-  private final IntroduceVariableSettings mySettings;
-  private final PsiExpression myExpression;
+  private final @NotNull Project myProject;
+  private final @Nullable Editor myEditor;
+  private final @NotNull IntroduceVariableSettings mySettings;
+  private final @NotNull PsiExpression myExpression;
   private @NotNull PsiElement myAnchor;
   private final PsiElement myContainer;
-  private final PsiExpression[] myOccurrences;
+  private final PsiExpression @NotNull [] myOccurrences;
   private final boolean myReplaceSelf;
-  private final FieldConflictsResolver myFieldConflictsResolver;
-  private final LogicalPosition myPosition;
+  private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
+  private final @Nullable LogicalPosition myPosition;
 
-  private VariableExtractor(final Project project,
-                            final PsiExpression expression,
-                            final Editor editor,
-                            final PsiElement anchorStatement,
-                            final PsiExpression[] occurrences,
-                            final IntroduceVariableSettings settings) {
+  private VariableExtractor(final @NotNull Project project,
+                            final @NotNull PsiExpression expression,
+                            final @Nullable Editor editor,
+                            final @NotNull PsiElement anchorStatement,
+                            final PsiExpression @NotNull [] occurrences,
+                            final @NotNull IntroduceVariableSettings settings) {
     myProject = project;
     myExpression = expression;
     myEditor = editor;
@@ -100,6 +100,7 @@ class VariableExtractor {
         ExpressionUtils.isReferenceTo(((PsiExpressionStatement)myAnchor).getExpression(), var)) {
       commentTracker.deleteAndRestoreComments(myAnchor);
       if (myEditor != null) {
+        assert myPosition != null;
         myEditor.getCaretModel().moveToLogicalPosition(myPosition);
         myEditor.getCaretModel().moveToOffset(var.getTextRange().getEndOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -140,7 +141,7 @@ class VariableExtractor {
     }
   }
 
-  private void highlight(PsiVariable var) {
+  private void highlight(@NotNull PsiVariable var) {
     if (myEditor != null) {
       PsiElement[] occurrences =
         PsiTreeUtil.collectElements(myContainer, e -> e instanceof PsiReference && ((PsiReference)e).isReferenceTo(var));
@@ -175,7 +176,7 @@ class VariableExtractor {
     }
   }
 
-  private PsiVariable addVariable(PsiElement declaration, PsiExpression initializer) {
+  private @NotNull PsiVariable addVariable(PsiElement declaration, @NotNull PsiExpression initializer) {
     declaration = addDeclaration(declaration, initializer, myAnchor);
     declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
     return (PsiVariable)(declaration instanceof PsiDeclarationStatement
@@ -240,8 +241,8 @@ class VariableExtractor {
     return parent.addBefore(declaration, anchor);
   }
 
-  @NotNull
-  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final PsiExpression expression) {
+  private static @NotNull PsiType stripNullabilityAnnotationsFromTargetType(@NotNull SmartTypePointer selectedType,
+                                                                            @NotNull PsiExpression expression) {
     PsiType type = selectedType.getType();
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
@@ -250,7 +251,7 @@ class VariableExtractor {
     PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
       .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
     Project project = expression.getProject();
-    NullabilityAnnotationInfo nullabilityAnnotationInfo = 
+    NullabilityAnnotationInfo nullabilityAnnotationInfo =
       NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
     NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
     if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
@@ -263,9 +264,9 @@ class VariableExtractor {
   }
 
   @NotNull
-  private static PsiElement correctAnchor(PsiExpression expr,
+  private static PsiElement correctAnchor(@NotNull PsiExpression expr,
                                           @NotNull PsiElement anchor,
-                                          PsiExpression[] occurrences) {
+                                          PsiExpression @NotNull [] occurrences) {
     if (!expr.isPhysical()) {
       expr = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
       if (expr == null) return anchor;
@@ -356,12 +357,12 @@ class VariableExtractor {
   }
 
   @Nullable
-  public static PsiVariable introduce(final Project project,
-                                      final PsiExpression expr,
-                                      final Editor editor,
-                                      final PsiElement anchorStatement,
-                                      final PsiExpression[] occurrences,
-                                      final IntroduceVariableSettings settings) {
+  public static PsiVariable introduce(final @NotNull Project project,
+                                      final @NotNull PsiExpression expr,
+                                      final @Nullable Editor editor,
+                                      final @NotNull PsiElement anchorStatement,
+                                      final PsiExpression @NotNull [] occurrences,
+                                      final @NotNull IntroduceVariableSettings settings) {
     Computable<SmartPsiElementPointer<PsiVariable>> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
     SmartPsiElementPointer<PsiVariable> pointer = ApplicationManager.getApplication().runWriteAction(computation);

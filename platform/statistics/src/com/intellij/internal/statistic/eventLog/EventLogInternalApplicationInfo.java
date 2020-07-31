@@ -8,8 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
   private static final DataCollectorDebugLogger LOG =
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
@@ -39,6 +41,12 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     return ApplicationInfo.getInstance().getBuild().getProductCode();
   }
 
+  @Override
+  public @NotNull String getProductVersion() {
+    final ApplicationInfo info = ApplicationInfo.getInstance();
+    return info.getMajorVersion() + "." + info.getMinorVersion();
+  }
+
   @NotNull
   @Override
   public String getUserAgent() {
@@ -59,6 +67,11 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public boolean isTest() {
     return myIsTest;
+  }
+
+  @Override
+  public boolean isEAP() {
+    return ApplicationManager.getApplication().isEAP();
   }
 
   @NotNull

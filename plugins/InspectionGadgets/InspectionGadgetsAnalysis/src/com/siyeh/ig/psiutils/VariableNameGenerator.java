@@ -44,6 +44,10 @@ public final class VariableNameGenerator {
     if (type != null) {
       SuggestedNameInfo info = myManager.suggestVariableName(myKind, null, null, type, true);
       candidates.addAll(Arrays.asList(info.names));
+      if (type.equals(PsiType.INT)) {
+        candidates.add("j");
+        candidates.add("k");
+      }
     }
     return this;
   }

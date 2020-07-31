@@ -15,6 +15,10 @@ public class SegmentedProgressIndicatorManager {
   private final double mySegmentSize;
   private final int myTasksCount;
 
+  public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator) {
+    this(progressIndicator, 1, 1);
+  }
+
   public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator, int tasksCount, double segmentSize) {
     myProgressIndicator = progressIndicator;
     myProgressWasIndeterminate = progressIndicator.isIndeterminate();

@@ -190,19 +190,25 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     /**
-     * If project file in IDEA format (.idea directory or .ipr file) exists, just open it.
+     * If project file in IDEA format (.idea directory or .ipr file) exists, open it and run configurators if no modules.
+     *
      * If doesn't exists, create a new project using default project template and run configurators (something that creates module).
      * (at the moment of creation project file in IDEA format will be removed if any).
+     *
+     * This method must be not used in tests.
+     *
+     * See OpenProjectTest.
      */
     @ApiStatus.Internal
     @JvmStatic
     fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
-      val validProjectPath = ProjectUtil.isValidProjectPath(projectDir)
-      // doesn't make sense to use default project as template in tests
-      return OpenProjectTask(runConfigurators = !validProjectPath,
-                             isNewProject = !validProjectPath,
+      // doesn't make sense to refresh or to use default project as template in tests
+      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+      return OpenProjectTask(runConfigurators = true,
+                             isNewProject = !ProjectUtil.isValidProjectPath(projectDir),
                              projectToClose = projectToClose,
-                             useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode)
+                             isRefreshVfsNeeded = !isUnitTestMode,
+                             useDefaultProjectAsTemplate = !isUnitTestMode)
     }
   }
 

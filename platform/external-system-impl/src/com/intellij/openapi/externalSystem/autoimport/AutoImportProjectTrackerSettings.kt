@@ -20,10 +20,10 @@ class AutoImportProjectTrackerSettings : ExternalSystemProjectTrackerSettings, P
   override fun getState() = State(autoReloadType)
 
   override fun loadState(state: State) {
-    autoReloadType = state.autoReloadType
+    autoReloadType = state.autoReloadType ?: AutoReloadType.SELECTIVE
   }
 
-  data class State(var autoReloadType: AutoReloadType = AutoReloadType.SELECTIVE)
+  data class State(var autoReloadType: AutoReloadType? = null)
 
   companion object {
     @JvmStatic

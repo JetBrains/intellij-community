@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -26,4 +27,8 @@ abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
   }
 
   override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = DIFF_PREVIEW_VERTICAL_SPLIT
+}
+
+class DiffPreviewLocationActionGroup : DefaultActionGroup() {
+  override fun hideIfNoVisibleChildren() = true
 }

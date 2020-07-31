@@ -784,4 +784,35 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "record R(String s ,int i) {\n" +
                  "}");
   }
+
+  public void testSpacesAroundRelationalOperators() {
+    getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = true;
+    doMethodTest(
+      "if (x >= 1 && y < 100) {\n" +
+      "         if (x<=5 && y>50) {\n" +
+      "            System.out.println(\"1..5\");\n" +
+      "         }\n" +
+      "      }",
+
+      "if (x >= 1 && y < 100) {\n" +
+      "    if (x <= 5 && y > 50) {\n" +
+      "        System.out.println(\"1..5\");\n" +
+      "    }\n" +
+      "}"
+    );
+    getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = false;
+    doMethodTest(
+      "if (x   >=   1 && y    <  100) {\n" +
+      "         if (x  <=  5 && y   >   50) {\n" +
+      "            System.out.println(\"1..5\");\n" +
+      "         }\n" +
+      "      }",
+
+      "if (x>=1 && y<100) {\n" +
+      "    if (x<=5 && y>50) {\n" +
+      "        System.out.println(\"1..5\");\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

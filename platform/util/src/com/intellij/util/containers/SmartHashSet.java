@@ -22,10 +22,7 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Hash set (based on THashSet) which is fast when contains one or zero elements (avoids to calculate hash codes and call equals whenever possible).
@@ -46,7 +43,7 @@ public class SmartHashSet<T> extends THashSet<T> {
     super(initialCapacity);
   }
 
-  public SmartHashSet(int initialCapacity, TObjectHashingStrategy<T> strategy) {
+  public SmartHashSet(int initialCapacity, @NotNull TObjectHashingStrategy<T> strategy) {
     super(initialCapacity, strategy);
   }
 
@@ -54,16 +51,23 @@ public class SmartHashSet<T> extends THashSet<T> {
     super(initialCapacity, loadFactor);
   }
 
-  public SmartHashSet(int initialCapacity, float loadFactor, TObjectHashingStrategy<T> strategy) {
+  public SmartHashSet(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<T> strategy) {
     super(initialCapacity, loadFactor, strategy);
   }
 
-  public SmartHashSet(Collection<? extends T> collection) {
-    super(collection);
+  public SmartHashSet(@NotNull Collection<? extends @NotNull T> collection) {
+    this(collection, ContainerUtil.canonicalStrategy());
   }
 
-  public SmartHashSet(Collection<? extends T> collection, TObjectHashingStrategy<T> strategy) {
-    super(collection, strategy);
+  public SmartHashSet(@NotNull Collection<? extends @NotNull T> collection, @NotNull TObjectHashingStrategy<T> strategy) {
+    super(collection.size() == 1 ? Collections.emptyList() : collection, strategy);
+    if (collection.size() == 1) {
+      T element = collection.iterator().next();
+      if (element == null) {
+        throw new IllegalArgumentException("Null elements are not permitted but got: "+collection);
+      }
+      theElement = element;
+    }
   }
 
   @Override
@@ -99,7 +103,7 @@ public class SmartHashSet<T> extends THashSet<T> {
   public boolean equals(@Nullable Object other) {
     T theElement = this.theElement;
     if (theElement != null) {
-      return other instanceof Set && ((Set)other).size() == 1 && eq(theElement, (T)((Set)other).iterator().next());
+      return other instanceof Set && ((Set<?>)other).size() == 1 && eq(theElement, ((Set<T>)other).iterator().next());
     }
 
     return super.equals(other);
@@ -122,7 +126,6 @@ public class SmartHashSet<T> extends THashSet<T> {
 
   @Override
   public int size() {
-    T theElement = this.theElement;
     if (theElement != null) {
       return 1;
     }
@@ -131,7 +134,6 @@ public class SmartHashSet<T> extends THashSet<T> {
 
   @Override
   public boolean isEmpty() {
-    T theElement = this.theElement;
     return theElement == null && super.isEmpty();
   }
 
@@ -208,5 +210,4 @@ public class SmartHashSet<T> extends THashSet<T> {
     }
     return super.toArray(a);
   }
-
 }

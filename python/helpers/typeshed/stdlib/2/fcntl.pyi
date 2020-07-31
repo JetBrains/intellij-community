@@ -1,6 +1,5 @@
-from typing import Any, Union, IO
-import io
-from _types import FileDescriptorLike
+from typing import Any, Union
+from _typeshed import FileDescriptorLike
 
 FASYNC: int
 FD_CLOEXEC: int

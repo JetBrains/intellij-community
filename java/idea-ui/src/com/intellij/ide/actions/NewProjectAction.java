@@ -26,6 +26,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
   public void update(@NotNull AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
+      e.getPresentation().setSelectedIcon(AllIcons.Welcome.CreateNewProjectSelected);
     }
     updateActionText(this, e);
   }

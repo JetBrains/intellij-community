@@ -85,8 +85,8 @@ MyTup6(5, '', 5)
 
 
 # fail
-MyTup7(<warning descr="Expected type 'List[str]', got 'str' instead">names="A"</warning>, <warning descr="Expected type 'List[int]', got 'int' instead">ages=5</warning>)
-MyTup7(<warning descr="Expected type 'List[str]', got 'str' instead">"A"</warning>, <warning descr="Expected type 'List[int]', got 'int' instead">5</warning>)
+MyTup7(<warning descr="Expected type 'list[str]', got 'str' instead">names="A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">ages=5</warning>)
+MyTup7(<warning descr="Expected type 'list[str]', got 'str' instead">"A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">5</warning>)
 
 
 # ok

@@ -545,7 +545,6 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-core/intellij.cidr.core.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-core/intellij.cidr.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/backend-api/intellij.cidr.debugger.backend.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/backend-api/intellij.cidr.debugger.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/commandInterpreterLang/intellij.cidr.debugger.commandInterpreterLang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/commandInterpreterLang/intellij.cidr.debugger.commandInterpreterLang.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-execution/intellij.cidr.execution.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-execution/intellij.cidr.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" />
@@ -776,6 +775,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" filepath="$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" filepath="$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" filepath="$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" filepath="$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/uploader/intellij.platform.statistics.uploader.iml" filepath="$PROJECT_DIR$/platform/statistics/uploader/intellij.platform.statistics.uploader.iml" />
@@ -828,7 +828,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/intellij.sh.iml" filepath="$PROJECT_DIR$/plugins/sh/intellij.sh.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/space/intellij.space.plugin.iml" filepath="$PROJECT_DIR$/plugins/space/intellij.space.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/completion-ranker/intellij.statsCollector.completionRanker.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/completion-ranker/intellij.statsCollector.completionRanker.iml" />
@@ -849,6 +848,7 @@
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" filepath="$PROJECT_DIR$/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" filepath="$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" filepath="$PROJECT_DIR$/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" filepath="$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />

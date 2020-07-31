@@ -35,9 +35,6 @@
                        helpTopic="configurable.group.build.help.topic"
                        displayNameKey="configurable.group.build.settings.display.name"
                        descriptionKey="configurable.group.build.settings.description"/>
-    <groupConfigurable id="build.tools" parentId="build" weight="1000"
-                       displayNameKey="configurable.group.build.tools.settings.display.name"
-                       descriptionKey="configurable.group.build.tools.settings.description"/>
     <groupConfigurable id="profiler" parentId="build"
                        displayNameKey="configurable.group.profiler.settings.display.name"
                        descriptionKey="configurable.group.profiler.settings.description"/>
@@ -436,7 +433,14 @@
     <!-- IdeFocusManager doesn't return project level in headless or unit-test mode, instead, global implementation is used -->
     <projectService serviceInterface="com.intellij.openapi.wm.IdeFocusManager" serviceImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerImpl" preload="notHeadless"/>
 
+    <registryKey key="use.tabbed.welcome.screen" defaultValue="false" description="Use welcome screen with tabs"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
+    <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
+    <welcomeTabFactory id="CustomizeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.CustomizeTabFactory"
+                       order="after ProjectsWelcomeTab"/>
+    <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
+                       order="after CustomizeWelcomeTab"/>
+
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json"/>
 
@@ -998,6 +1002,7 @@
     <fileTypeOverrider implementation="com.intellij.openapi.fileTypes.impl.FileTypeHintService"/>
 
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.editor.impl.ReaderModeFloatingToolbarProvider"/>
+    <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

@@ -16,7 +16,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -25,21 +24,17 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 /**
  * @author peter
  */
-class SmartCastProvider extends CompletionProvider<CompletionParameters> {
-  static final ElementPattern<PsiElement> TYPECAST_TYPE_CANDIDATE = psiElement().afterLeaf("(");
-  
+class SmartCastProvider {
+
   static boolean shouldSuggestCast(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = getParenthesisOwner(position);
@@ -53,11 +48,6 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
   private static PsiElement getParenthesisOwner(PsiElement position) {
     PsiElement lParen = PsiTreeUtil.prevVisibleLeaf(position);
     return lParen == null || !lParen.textMatches("(") ? null : lParen.getParent();
-  }
-
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
-    addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 
   static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<? super LookupElement> result, boolean quick) {

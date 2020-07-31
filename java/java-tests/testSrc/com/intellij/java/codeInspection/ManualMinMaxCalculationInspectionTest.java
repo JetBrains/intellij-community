@@ -4,8 +4,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ManualMinMaxCalculationInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,9 +20,4 @@ public class ManualMinMaxCalculationInspectionTest extends LightQuickFixParamete
     return "/inspection/manualMinMaxCalculation";
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_13;
-  }
 }

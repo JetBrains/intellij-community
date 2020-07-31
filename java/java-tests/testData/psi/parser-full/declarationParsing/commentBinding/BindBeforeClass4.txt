@@ -23,6 +23,8 @@ PsiJavaFile:BindBeforeClass4.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')

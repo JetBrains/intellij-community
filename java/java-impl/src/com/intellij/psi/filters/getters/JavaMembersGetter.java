@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +134,8 @@ public class JavaMembersGetter extends MembersGetter {
       return null;
     }
 
-    return new VariableLookupItem(field, false);
+    return new VariableLookupItem(field, false)
+      .qualifyIfNeeded(ObjectUtils.tryCast(myParameters.getPosition().getParent(), PsiJavaCodeReferenceElement.class));
   }
 
   @Override

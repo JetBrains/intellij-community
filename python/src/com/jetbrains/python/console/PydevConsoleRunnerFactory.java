@@ -54,6 +54,38 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       myRerunAction = rerunAction;
       mySetupFragment = setupFragment;
     }
+
+    public @NotNull Project getProject() {
+      return myProject;
+    }
+
+    public @Nullable Sdk getSdk() {
+      return mySdk;
+    }
+
+    public @Nullable String getWorkingDir() {
+      return myWorkingDir;
+    }
+
+    public @NotNull Map<String, String> getEnvs() {
+      return myEnvs;
+    }
+
+    public @NotNull PyConsoleType getConsoleType() {
+      return myConsoleType;
+    }
+
+    public PyConsoleOptions.@NotNull PyConsoleSettings getSettingsProvider() {
+      return mySettingsProvider;
+    }
+
+    public @NotNull Consumer<String> getRerunAction() {
+      return myRerunAction;
+    }
+
+    public String[] getSetupFragment() {
+      return mySetupFragment;
+    }
   }
 
   protected ConsoleParameters createConsoleParameters(@NotNull Project project,

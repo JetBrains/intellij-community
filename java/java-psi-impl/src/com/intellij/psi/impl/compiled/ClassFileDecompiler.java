@@ -13,9 +13,8 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
   private static final Logger LOG = Logger.getInstance(ClassFileDecompiler.class);
 
   @Override
-  @NotNull
-  public CharSequence decompile(@NotNull VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
+  public @NotNull CharSequence decompile(@NotNull VirtualFile file) {
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
     if (decompiler instanceof ClassFileDecompilers.Full) {
       PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
       return ((ClassFileDecompilers.Full)decompiler).createFileViewProvider(file, manager, true).getContents();

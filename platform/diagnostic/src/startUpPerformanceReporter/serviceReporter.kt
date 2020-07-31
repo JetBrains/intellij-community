@@ -3,6 +3,7 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap

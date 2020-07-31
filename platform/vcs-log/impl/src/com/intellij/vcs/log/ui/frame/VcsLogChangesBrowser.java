@@ -44,7 +44,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
-public class VcsLogChangesBrowser extends FilterableChangesBrowser {
+public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -213,7 +213,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
           if (detail.getParents().size() > 1) {
             for (int i = 0; i < detail.getParents().size(); i++) {
-              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
               myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
             }
           }
@@ -352,7 +352,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     if (!(userObject instanceof Change)) return null;
     Change change = (Change)userObject;
 
-    Map<Key, Object> context = new HashMap<>();
+    Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
       putRootTagIntoChangeContext(change, context);
     }
@@ -362,7 +362,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Nullable
   public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
                                                                           @NotNull Change change,
-                                                                          @NotNull Map<Key, Object> context,
+                                                                          @NotNull Map<Key<?>, Object> context,
                                                                           boolean forDiffPreview) {
     if (change instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)change;
@@ -381,7 +381,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -396,7 +396,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
   }
 
-  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
+  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision centerRevision = change.getAfterRevision();
     ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
     ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();

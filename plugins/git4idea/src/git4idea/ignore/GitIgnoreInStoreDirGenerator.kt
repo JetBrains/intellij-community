@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -49,9 +50,11 @@ class GitIgnoreInStoreDirGeneratorActivity : StartupActivity.Background {
  * Generate .idea/.gitignore file silently after project create/open
  */
 @Service
-class GitIgnoreInStoreDirGenerator(private val project: Project) {
+class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
 
   private val needGenerate = AtomicBoolean(true)
+
+  override fun dispose() = Unit
 
   fun run() {
     val listenerRegistered = runReadAction { registerVfsListenerIfNeeded() }
@@ -76,7 +79,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) {
     if (needRegister) {
       LOG.debug(
         "Project file or project config directory doesn't exist. Register VFS listener and try generate $GITIGNORE after files become available.")
-      AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), project)
+      AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), this)
     }
     return needRegister
   }

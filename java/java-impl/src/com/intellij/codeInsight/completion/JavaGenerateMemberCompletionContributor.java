@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -45,8 +46,11 @@ public class JavaGenerateMemberCompletionContributor {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
       return;
     }
-
     PsiElement position = parameters.getPosition();
+    if (DumbService.getInstance(position.getProject()).isDumb()) {
+      return;
+    }
+
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
       andNot(JavaKeywordCompletion.AFTER_DOT).accepts(position)) {
       PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);

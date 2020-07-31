@@ -61,7 +61,7 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
 
     private val generateImageMethod by lazy {
       try {
-        sourceStringReader?.getDeclaredMethod("generateImage", Class.forName("java.io.File"))
+        sourceStringReader?.getDeclaredMethod("generateImage", Class.forName("java.io.OutputStream"))
       }
       catch (e: Exception) {
         LOG.warn(
@@ -72,9 +72,11 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
     }
   }
 
-  private fun storeDiagram(source: String, fileName: File) {
+  private fun storeDiagram(source: String, file: File) {
     try {
-      generateImageMethod?.invoke(sourceStringReader?.getConstructor(String::class.java)?.newInstance(source), fileName)
+      file.outputStream().buffered().use {
+        generateImageMethod?.invoke(sourceStringReader?.getConstructor(String::class.java)?.newInstance(source), it)
+      }
     }
     catch (e: Exception) {
       LOG.warn("Cannot save diagram PlantUML diagram. ", e)

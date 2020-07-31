@@ -595,6 +595,11 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
+      <option name="REGEXP_MATCHED_GROUPS">
+        <value>
+          <option name="BACKGROUND" value="d8d8d8"/>
+        </value>
+      </option>
       <option name="LIVE_TEMPLATE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -2162,6 +2167,11 @@
         <value>
           <option name="BACKGROUND" value="155221" deuteranopia="404861" protanopia="404861"/>
           <option name="ERROR_STRIPE_COLOR" value="00530d" deuteranopia="4b6f99" protanopia="4b6f99"/>
+        </value>
+      </option>
+      <option name="REGEXP_MATCHED_GROUPS">
+        <value>
+          <option name="BACKGROUND" value="6b6b6b"/>
         </value>
       </option>
       <option name="SPY-JS.FUNCTION_SCOPE">

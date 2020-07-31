@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -61,16 +62,29 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     Set<PluginsAdvertiser.Plugin> plugins = extensionsData.getPlugins();
 
     panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName));
-    final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
+
+    IdeaPluginDescriptor disabledPlugin = null;
+    Set<PluginsAdvertiser.Plugin> pluginsToInstall = new HashSet<>();
+    for (PluginsAdvertiser.Plugin plugin : plugins) {
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
+      if (installedPlugin != null) {
+        if (!installedPlugin.isEnabled() && disabledPlugin == null) disabledPlugin = installedPlugin;
+      }
+      else if (!plugin.myBundled) {
+        pluginsToInstall.add(plugin);
+      }
+    }
+
     if (disabledPlugin != null) {
+      IdeaPluginDescriptor finalDisabledPlugin = disabledPlugin;
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin.getName()), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         EditorNotifications.getInstance(project).updateAllNotifications();
         FeatureUsageData data = new FeatureUsageData()
           .addData("source", "editor")
-          .addData("plugins", Collections.singletonList(disabledPlugin.getPluginId().getIdString()));
+          .addData("plugins", Collections.singletonList(finalDisabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin));
+        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin));
       });
     }
     else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null) {
@@ -93,10 +107,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
     }
-    else if (hasNonBundledPlugin(plugins)) {
+    else if (!pluginsToInstall.isEmpty()) {
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
         Set<PluginId> pluginIds = new HashSet<>();
-        for (PluginsAdvertiser.Plugin plugin : plugins) {
+        for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
           pluginIds.add(PluginId.getId(plugin.myPluginId));
         }
         FeatureUsageData data = new FeatureUsageData()
@@ -119,12 +133,5 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       EditorNotifications.getInstance(project).updateAllNotifications();
     });
     return panel;
-  }
-
-  private static boolean hasNonBundledPlugin(@NotNull Set<? extends PluginsAdvertiser.Plugin> plugins) {
-    for (PluginsAdvertiser.Plugin plugin : plugins) {
-      if (!plugin.myBundled) return true;
-    }
-    return false;
   }
 }

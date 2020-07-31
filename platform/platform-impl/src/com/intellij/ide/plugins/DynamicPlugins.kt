@@ -390,6 +390,10 @@ object DynamicPlugins {
     return result
   }
 
+  @JvmStatic
+  fun getPluginUnloadingTask(pluginDescriptor: IdeaPluginDescriptorImpl, options: UnloadPluginOptions): Runnable =
+    Runnable { unloadPlugin(pluginDescriptor, options) }
+
   data class UnloadPluginOptions(
     var disable: Boolean = false,
     var isUpdate: Boolean = false,

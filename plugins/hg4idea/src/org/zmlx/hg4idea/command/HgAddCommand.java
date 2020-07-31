@@ -21,6 +21,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -58,7 +59,7 @@ public class HgAddCommand {
       }.queue();
     }
     else {
-      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> executeInCurrentThread(files));
+      BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> executeInCurrentThread(files));
     }
   }
 

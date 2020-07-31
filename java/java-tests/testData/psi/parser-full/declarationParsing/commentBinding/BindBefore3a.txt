@@ -13,6 +13,8 @@ PsiJavaFile:BindBefore3a.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiComment(END_OF_LINE_COMMENT)('// comment')
     PsiWhiteSpace('\n  ')

@@ -549,6 +549,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("/ide/incomingChangesOn.svg");
     /** 12x12 */ public static final @NotNull Icon Link = load("/ide/link.svg");
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("/ide/localScope.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("/ide/localScopeAction.svg");
 
     public final static class Macro {
       /** 16x16 */ public static final @NotNull Icon Recording_1 = load("/ide/macro/recording_1.svg");
@@ -930,6 +931,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Apache = load("/providers/apache.svg");
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("/providers/apacheDerby.svg");
     /** 16x16 */ public static final @NotNull Icon Azure = load("/providers/azure.svg");
+    /** 16x16 */ public static final @NotNull Icon BigQuery = load("/providers/bigQuery.svg");
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("/providers/cassandra.svg");
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("/providers/clickHouse.svg");
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("/providers/cockroachDB.svg");
@@ -1086,6 +1088,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg");
     /** 16x16 */ public static final @NotNull Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final @NotNull Icon Folders = load("/vcs/folders.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("/vcs/fromVCSDialog.svg");
     /** 16x16 */ public static final @NotNull Icon History = load("/vcs/history.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInline = load("/vcs/historyInline.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInlineHovered = load("/vcs/historyInlineHovered.svg");
@@ -1119,12 +1122,18 @@ public class AllIcons {
 
   public final static class Welcome {
     /** 32x32 */ public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
-    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
-    /** 16x16 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectSelected = load("/welcome/createNewProjectSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSSelected = load("/welcome/fromVCSSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon Open = load("/welcome/open.svg");
+    /** 24x24 */ public static final @NotNull Icon OpenSelected = load("/welcome/openSelected.svg");
 
     public final static class Project {
       /** 10x10 */ public static final @NotNull Icon Remove_hover = load("/welcome/project/remove-hover.svg");
       /** 10x10 */ public static final @NotNull Icon Remove = load("/welcome/project/remove.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled_hover = load("/welcome/project/removeDisabled-hover.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("/welcome/project/removeDisabled.svg");
 
     }
     /** 32x32 */ public static final @NotNull Icon Register = load("/welcome/register.png");

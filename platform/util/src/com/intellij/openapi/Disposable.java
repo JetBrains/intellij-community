@@ -10,6 +10,8 @@ package com.intellij.openapi;
  * If you're 100% sure that you should control your object's disposal manually,
  * do not call the {@link #dispose()} method either. Use {@link com.intellij.openapi.util.Disposer#dispose(Disposable)} instead, since
  * there might be any object registered in the chain.
+ * <p/>
+ * See <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html">Disposer and Disposable</a> in SDK Docs.
  */
 public interface Disposable {
   /**

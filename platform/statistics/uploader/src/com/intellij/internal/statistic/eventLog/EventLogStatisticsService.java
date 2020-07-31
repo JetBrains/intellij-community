@@ -1,20 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.intellij.internal.statistic.service.request.StatsHttpRequests;
+import com.intellij.internal.statistic.service.request.StatsHttpResponse;
 import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.entity.GzipCompressingEntity;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -29,6 +25,7 @@ import java.util.List;
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 
+@ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
@@ -87,27 +84,35 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
 
+    if (!settings.isSettingsReachable()) {
+      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: settings server is unreachable");
+    }
+
+    if (!settings.isSendEnabled()) {
+      cleanupEventLogFiles(logs, logger);
+      return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
+    }
+
     final String serviceUrl = settings.getServiceUrl();
     if (serviceUrl == null) {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (!isSendLogsEnabled(device, settings.getPermittedTraffic())) {
-      cleanupEventLogFiles(logs, logger);
-      return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
-    }
-
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
-    final LogEventFilter filter = settings.getEventFilter();
+    EventLogBuildType defaultBuildType = getDefaultBuildType(info);
+    LogEventFilter baseFilter = settings.getBaseEventFilter();
     try {
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
-        final File file = logs.get(i).getFile();
-        final String deviceId = device.getDeviceId();
-        final LogEventRecordRequest recordRequest =
+        EventLogFile logFile = logs.get(i);
+        File file = logFile.getFile();
+        EventLogBuildType type = logFile.getType(defaultBuildType);
+        LogEventFilter filter = settings.getEventFilter(baseFilter, type);
+        String deviceId = device.getDeviceId();
+        LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
         final String error = validate(recordRequest, file);
         if (isNotEmpty(error) || recordRequest == null) {
@@ -120,23 +125,18 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          HttpResponse response = execute(info.getUserAgent(), serviceUrl, recordRequest);
-          int code = response.getStatusLine().getStatusCode();
-          String content = getResponseMessage(response);
-          if (code == HttpStatus.SC_OK) {
-            decorator.onSucceed(recordRequest, content, file.getAbsolutePath());
-            toRemove.add(file);
-          }
-          else {
-            decorator.onFailed(recordRequest, content);
-            if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
+          StatsHttpRequests.post(serviceUrl, info.getUserAgent()).
+            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
+            succeed((r, code) -> {
               toRemove.add(file);
-            }
-          }
-
-          if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + content);
-          }
+              decorator.onSucceed(recordRequest, loadAndLogResponse(logger, r, file), file.getAbsolutePath());
+            }).
+            fail((r, code) -> {
+              if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
+                toRemove.add(file);
+              }
+              decorator.onFailed(recordRequest, loadAndLogResponse(logger, r, file));
+            }).send();
         }
         catch (Exception e) {
           if (logger.isTraceEnabled()) {
@@ -157,26 +157,21 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  private static HttpResponse execute(@NotNull String userAgent, String serviceUrl, LogEventRecordRequest recordRequest) throws IOException {
-    HttpPost post = new HttpPost(serviceUrl);
-    post.setEntity(new GzipCompressingEntity(new StringEntity(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON)));
-    return StatisticsEventLogUtil.create(userAgent).execute(post);
+  private static EventLogBuildType getDefaultBuildType(EventLogApplicationInfo info) {
+    return info.isEAP() ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
   }
 
   @NotNull
-  private static String getResponseMessage(HttpResponse response) throws IOException {
-    HttpEntity entity = response.getEntity();
-    if (entity != null) {
-      return EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
-    }
-    return Integer.toString(response.getStatusLine().getStatusCode());
-  }
+  private static String loadAndLogResponse(@NotNull DataCollectorDebugLogger logger,
+                                           @NotNull StatsHttpResponse response,
+                                           @NotNull File file) throws IOException {
+    String message = response.readAsString();
+    String content = message != null ? message : Integer.toString(response.getStatusCode());
 
-  private static boolean isSendLogsEnabled(@NotNull DeviceConfiguration userData, int percent) {
-    if (percent == 0) {
-      return false;
+    if (logger.isTraceEnabled()) {
+      logger.trace(file.getName() + " -> " + content);
     }
-    return userData.getBucket() < percent * 2.56;
+    return content;
   }
 
   @Nullable

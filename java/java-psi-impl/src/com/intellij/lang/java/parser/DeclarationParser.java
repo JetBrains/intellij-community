@@ -103,6 +103,13 @@ public class DeclarationParser {
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW)) {
+      if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+          PsiKeyword.PERMITS.equals(builder.getTokenText())) {
+        builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
+      }
+      refParser.parseReferenceList(builder, JavaTokenType.PERMITS_KEYWORD, JavaElementType.PERMITS_LIST, JavaTokenType.COMMA);
+    }
 
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
@@ -254,7 +261,7 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null;
     }
-    else if (!isRecordToken(builder, tokenType)) {
+    else if (!isRecordToken(builder, tokenType) && !isSealedToken(builder, tokenType) && !isNonSealedToken(builder, tokenType)) {
       if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
         if (context == Context.FILE) return null;
       }
@@ -414,6 +421,28 @@ public class DeclarationParser {
            getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14_PREVIEW);
   }
 
+  private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW) &&
+           tokenType == JavaTokenType.IDENTIFIER &&
+           PsiKeyword.SEALED.equals(builder.getTokenText());
+  }
+
+  private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
+    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW) ||
+        tokenType != JavaTokenType.IDENTIFIER ||
+        !"non".equals(builder.getTokenText()) ||
+        builder.lookAhead(1) != JavaTokenType.MINUS ||
+        builder.lookAhead(2) != JavaTokenType.IDENTIFIER) {
+      return false;
+    }
+    PsiBuilder.Marker maybeNonSealed = builder.mark();
+    builder.advanceLexer();
+    builder.advanceLexer();
+    boolean isNonSealed = PsiKeyword.SEALED.equals(builder.getTokenText());
+    maybeNonSealed.rollbackTo();
+    return isNonSealed;
+  }
+
   @NotNull
   public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
     return parseModifierList(builder, ElementType.MODIFIER_BIT_SET);
@@ -425,9 +454,21 @@ public class DeclarationParser {
     boolean isEmpty = true;
 
     while (true) {
-      final IElementType tokenType = builder.getTokenType();
+      IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (modifiers.contains(tokenType)) {
+      if (isSealedToken(builder, tokenType)) {
+        builder.remapCurrentToken(JavaTokenType.SEALED_KEYWORD);
+        tokenType = JavaTokenType.SEALED_KEYWORD;
+      }
+      if (isNonSealedToken(builder, tokenType)) {
+        PsiBuilder.Marker nonSealed = builder.mark();
+        builder.advanceLexer();
+        builder.advanceLexer();
+        builder.advanceLexer();
+        nonSealed.collapse(JavaTokenType.NON_SEALED_KEYWORD);
+        isEmpty = false;
+      }
+      else if (modifiers.contains(tokenType)) {
         builder.advanceLexer();
         isEmpty = false;
       }

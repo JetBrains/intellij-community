@@ -31,6 +31,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.awt.event.ItemEvent
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -63,7 +64,7 @@ class GitPullDialog(private val project: Project,
   private val isNoVerifySupported = NO_VERIFY_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))
 
   init {
-    title = GitBundle.message("pull.dialog.title")
+    updateTitle()
     setOKButtonText(GitBundle.message("pull.button"))
     updateRemotesField()
     init()
@@ -163,7 +164,9 @@ class GitPullDialog(private val project: Project,
   }
 
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("pull.options.modify"),
-                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() })
+                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() }).apply {
+    isFocusable = true
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
@@ -177,7 +180,7 @@ class GitPullDialog(private val project: Project,
     OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<PullOption>(GitBundle.message("pull.options.modify"), getOptions()) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<PullOption>(GitBundle.message("pull.options.modify.popup.title"), getOptions()) {
     override fun isSelectable(value: PullOption?) = isOptionEnabled(value!!)
 
     override fun onChosen(selectedValue: PullOption, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
@@ -236,6 +239,16 @@ class GitPullDialog(private val project: Project,
 
   private fun isOptionEnabled(option: PullOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
+  private fun updateTitle() {
+    val currentBranchName = getRepository().currentBranchName
+    title = if (currentBranchName.isNullOrEmpty()) {
+      GitBundle.message("pull.dialog.title")
+    }
+    else {
+      GitBundle.message("pull.dialog.with.branch.title", currentBranchName)
+    }
+  }
+
   private fun createPanel() = JPanel().apply {
     layout = MigLayout(LC().insets("0").hideMode(3), AC().grow())
     add(commandPanel, CC().growX())
@@ -293,24 +306,30 @@ class GitPullDialog(private val project: Project,
   private fun createRepositoryField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
-    ui = FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0))
+    setUI(FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0)))
 
     item = repositories.find { repo -> repo.root == defaultRoot }
 
     addActionListener {
+      updateTitle()
       updateRemotesField()
     }
   }
 
   private fun createRemoteField() = ComboBox<GitRemote>(MutableCollectionComboBoxModel()).apply {
+    isSwingPopup = false
     renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
     val bw = DarculaUIUtil.BW.get()
-    ui = FlatComboBoxUI(outerInsets = Insets(bw, 0, bw, 0))
+    setUI(FlatComboBoxUI(
+      outerInsets = Insets(bw, 0, bw, 0),
+      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes")))
 
     item = getCurrentOrDefaultRemote(getRepository())
 
-    addActionListener {
-      updateBranchesField()
+    addItemListener { e ->
+      if (e.stateChange == ItemEvent.SELECTED) {
+        updateBranchesField()
+      }
     }
   }
 
@@ -319,9 +338,9 @@ class GitPullDialog(private val project: Project,
     isEditable = true
 
     val bw = DarculaUIUtil.BW.get()
-    ui = FlatComboBoxUI(
+    setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(bw, 0, bw, bw),
-      GitBundle.message("pull.branch.nothing.to.pull"))
+      GitBundle.message("pull.branch.nothing.to.pull")))
   }
 }

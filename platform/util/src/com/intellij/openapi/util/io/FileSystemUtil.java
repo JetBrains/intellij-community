@@ -33,6 +33,7 @@ import java.util.Set;
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+  private static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
@@ -313,6 +314,9 @@ public final class FileSystemUtil {
           }
           mode = getModeFlags(buffer) & LibC.S_MASK;
         }
+        if (DO_NOT_RESOLVE_SYMLINKS) {
+          isSymlink = false;
+        }
 
         boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
         boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
@@ -333,7 +337,7 @@ public final class FileSystemUtil {
     @Override
     public String resolveSymLink(@NotNull final String path) throws IOException {
       try {
-        return new File(path).getCanonicalPath();
+        return DO_NOT_RESOLVE_SYMLINKS ? path : new File(path).getCanonicalPath();
       }
       catch (IOException e) {
         String message = e.getMessage();

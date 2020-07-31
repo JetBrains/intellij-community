@@ -143,7 +143,7 @@ public class AsyncStacksUtils {
 
     // add points
     if (DebuggerUtilsImpl.isRemote(process)) {
-      Properties properties = CaptureSettingsProvider.getPointsProperties();
+      Properties properties = CaptureSettingsProvider.getPointsProperties(process.getProject());
       if (!properties.isEmpty()) {
         process.addDebugProcessListener(new DebugProcessAdapterImpl() {
           @Override

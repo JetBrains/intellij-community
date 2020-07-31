@@ -52,6 +52,7 @@
 
     <!-- separator -->
     <group id="separatorGroup">
+      <separator/>
       <separator key="titleCaseKey"/>
 
       <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>

@@ -44,6 +44,8 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockProgressIndicator;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.impl.ReferencesKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -134,6 +136,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.testFramework.RunAll.runAll;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.assertSize;
 import static org.junit.Assert.*;
 
 /**
@@ -595,6 +599,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public @NotNull PsiSymbolReference findSingleReferenceAtCaret() {
+    PsiFile file = getFile();
+    assertNotNull(file);
+    return assertOneElement(ReferencesKt.referencesAt(file, getCaretOffset()));
+  }
+
+  @Override
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
@@ -661,7 +672,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     else if (list.size() > 1) {
       fail("Too many intentions found for \"" + hint + "\": [" + StringUtil.join(list, INTENTION_NAME_FUN, ", ") + "]");
     }
-    return UsefulTestCase.assertOneElement(list);
+    return assertOneElement(list);
   }
 
   @Override

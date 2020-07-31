@@ -25,10 +25,10 @@ internal class FileProblems(val file: VirtualFile) {
     return newNode
   }
 
-  fun getProblemNodes(): Collection<ProblemNode> {
+  fun getProblemNodes(filter: ProblemFilter?): Collection<ProblemNode> {
     if (problems.isEmpty()) return emptyList()
     val parent = fileNode ?: return emptyList()
-    return problems.map { getProblemNode(parent, it) }
+    return get(filter).map { getProblemNode(parent, it) }
   }
 
   fun findProblemNode(problem: Problem): ProblemNode? {
@@ -44,15 +44,14 @@ internal class FileProblems(val file: VirtualFile) {
     return true
   }
 
-  fun update(collection: Collection<Problem>) {
-    problems.filter { !collection.contains(it) }.forEach { remove(it) }
-    problems += collection
-  }
-
   fun clear() {
     problems.clear()
     nodes.clear()
   }
 
   fun count() = problems.size
+
+  fun count(filter: ProblemFilter?) = if (filter == null) problems.size else problems.count(filter)
+
+  private fun get(filter: ProblemFilter?) = if (filter == null) problems else problems.filter(filter)
 }

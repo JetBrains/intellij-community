@@ -23,9 +23,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
@@ -44,9 +42,8 @@ public class CustomDictionariesPanel extends JPanel {
     myManager = manager;
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
-    myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
-                                                                    defaultDictionaries,
-                                                                    new ArrayList<>(settings.getDisabledDictionariesPaths()));
+    myCustomDictionariesTableView =
+      new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()), defaultDictionaries);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
 
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
@@ -112,16 +109,7 @@ public class CustomDictionariesPanel extends JPanel {
     if (oldPaths.size() != newPaths.size()) {
       return true;
     }
-
-    final Set<String> oldDisabled = mySettings.getDisabledDictionariesPaths();
-    final List<String> newDisabled = myCustomDictionariesTableView.getDisabled();
-    if (oldDisabled.size() != newDisabled.size()) {
-      return true;
-    }
     if (!newPaths.containsAll(oldPaths) || !oldPaths.containsAll(newPaths)) {
-      return true;
-    }
-    if (!newDisabled.containsAll(oldDisabled) || !oldDisabled.containsAll(newDisabled)) {
       return true;
     }
     return false;
@@ -130,14 +118,12 @@ public class CustomDictionariesPanel extends JPanel {
   public void reset() {
     myCustomDictionariesTableView.getListTableModel()
       .setItems(new ArrayList<>(concat(defaultDictionaries, mySettings.getCustomDictionariesPaths())));
-    myCustomDictionariesTableView.setDisabled(new ArrayList<>(mySettings.getDisabledDictionariesPaths()));
     removedDictionaries.clear();
   }
 
   public void apply() {
     mySettings.setCustomDictionariesPaths(new ArrayList<>(ContainerUtil.filter(myCustomDictionariesTableView.getItems(),
                                                                                dict -> !defaultDictionaries.contains(dict))));
-    mySettings.setDisabledDictionariesPaths(new HashSet<>(myCustomDictionariesTableView.getDisabled()));
   }
 
   public List<String> getValues() {
@@ -146,33 +132,17 @@ public class CustomDictionariesPanel extends JPanel {
 
   private static class CustomDictionariesTableView extends TableView<String> {
 
-    @NotNull private final List<String> myDefaultDictionaries;
-    @NotNull private List<String> myDisabled;
     final TableCellRenderer myTypeRenderer;
 
     private CustomDictionariesTableView(@NotNull List<String> dictionaries,
-                                        @NotNull List<String> defaultDictionaries,
-                                        @NotNull List<String> disabled) {
-      myDefaultDictionaries = defaultDictionaries;
-      myDisabled = disabled;
-      myTypeRenderer = createTypeRenderer(myDefaultDictionaries);
-      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), concat(defaultDictionaries, dictionaries), 1));
+                                        @NotNull List<String> defaultDictionaries) {
+      myTypeRenderer = createTypeRenderer(defaultDictionaries);
+      setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), concat(defaultDictionaries, dictionaries), 0));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
-      getColumnModel().getColumn(0).setResizable(false);
       setShowGrid(false);
       setShowVerticalLines(false);
       setGridColor(getForeground());
       setTableHeader(null);
-      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(0));
-    }
-
-    @NotNull
-    private List<String> getDisabled() {
-      return myDisabled;
-    }
-
-    public void setDisabled(@NotNull List<String> disabled) {
-      myDisabled = disabled;
     }
 
     private static TableCellRenderer createTypeRenderer(List<String> defaultDictionaries) {
@@ -210,32 +180,6 @@ public class CustomDictionariesPanel extends JPanel {
 
     private ColumnInfo[] createDictionaryColumnInfos() {
       return new ColumnInfo[]{
-        new ColumnInfo<String, Boolean>(" ") {
-          @Override
-          public Class<?> getColumnClass() {
-            return Boolean.class;
-          }
-
-          @Override
-          public void setValue(String s, Boolean value) {
-            if (value) {
-              myDisabled.remove(s);
-            }
-            else {
-              myDisabled.add(s);
-            }
-          }
-
-          @Override
-          public boolean isCellEditable(String s) {
-            return !myDefaultDictionaries.contains(s);
-          }
-
-          @Override
-          public Boolean valueOf(final String o) {
-            return !myDisabled.contains(o);
-          }
-        },
         new ColumnInfo<String, String>(SpellCheckerBundle.message("custom.dictionary.title")) {
           @Override
           public String valueOf(final String info) {

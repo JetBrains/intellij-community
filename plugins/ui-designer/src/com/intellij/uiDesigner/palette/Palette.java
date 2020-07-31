@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -51,7 +52,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 @State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
-public final class Palette implements PersistentStateComponent<Element> {
+public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);
 
   private final Map<Class<?>, IntrospectedProperty<?>[]> myClass2Properties;
@@ -110,8 +111,12 @@ public final class Palette implements PersistentStateComponent<Element> {
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
 
-      ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

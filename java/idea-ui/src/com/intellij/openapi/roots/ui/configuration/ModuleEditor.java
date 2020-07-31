@@ -124,7 +124,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModel(new UIRootConfigurationAccessor(myProject));
+        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(new UIRootConfigurationAccessor(myProject));
       }
     }
     return myModifiableRootModel;

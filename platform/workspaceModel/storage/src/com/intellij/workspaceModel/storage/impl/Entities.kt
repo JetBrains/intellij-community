@@ -152,8 +152,8 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   override fun toString(): String {
     val fields = this.javaClass.declaredFields.toList().onEach { it.isAccessible = true }
-      .joinToString(separator = ", ") { f -> "${f.name}= ${f.get(this)}" }
-    return "${this::class.simpleName}($fields)"
+      .joinToString(separator = ", ") { f -> "${f.name}=${f.get(this)}" }
+    return "${this::class.simpleName}($fields, id=${this.id})"
   }
 
   /**

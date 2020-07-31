@@ -21,7 +21,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       ProcessingContext context = createContext();
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       while (classifier != null) {
-        final THashSet<LookupElement> itemSet = ContainerUtil.newIdentityTroveSet(thisSorterItems);
+        Set<LookupElement> itemSet = new ReferenceOpenHashSet<>(thisSorterItems);
         List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, lookupElement -> itemSet.contains(lookupElement));
         List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(unsortedItems, context);
         if (!hideSingleValued || !haveSameWeights(pairs)) {
@@ -119,6 +119,10 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   void associateSorter(LookupElement element, CompletionSorterImpl sorter) {
     element.putUserData(mySorterKey, sorter);
+  }
+
+  public void clearClassifierCache() {
+    myClassifiers.clear();
   }
 
   private static boolean haveSameWeights(List<? extends Pair<LookupElement, Object>> pairs) {
@@ -256,7 +260,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   protected void removeItem(LookupElement element, ProcessingContext context) {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
-    classifier.removeElement(element, context);
+    if (classifier != null)
+      classifier.removeElement(element, context);
   }
 
   private List<LookupElement> sortByPresentation(Iterable<? extends LookupElement> source) {
@@ -339,7 +344,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items) :
-                                    fillModelByRelevance(lookup, ContainerUtil.newIdentityTroveSet(items), sortedByRelevance, relevantSelection);
+                                    fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance, relevantSelection);
 
     int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);

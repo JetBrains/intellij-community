@@ -29,7 +29,7 @@
             instance="circlet.settings.CircletSettingsPanel"/>
 
         <toolWindow id="Space Automation"
-                    icon="CircletIcons.mainToolWindowIcon"
+                    icon="SpaceIcons.MainToolwindow"
                     anchor="right"
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
@@ -59,7 +59,7 @@
             <separator/>
             <action id="circlet.actions.CircletMainToolBarAction"
                     class="circlet.actions.CircletMainToolBarAction"
-                    icon="CircletIcons.mainIcon"
+                    icon="SpaceIcons.MainToolwindow"
                     text="Space Toolbar Menu">
             </action>
             <add-to-group group-id="NavBarToolBar" anchor="last"/>
@@ -82,7 +82,7 @@
         <group id="circlet.vcs.OpenIssues" class="circlet.vcs.OpenIssues" text="Open Issues..."/>
         <!--        <group id="circlet.vcs.OpenProjects" class="circlet.vcs.OpenProjects" text="Open Projects..."/>-->
 
-        <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
+        <group text="Space" id="CircletGroup" popup="true" icon="SpaceIcons.Main">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <reference id="circlet.vcs.clone.CircletCloneAction"/>
             <separator/>

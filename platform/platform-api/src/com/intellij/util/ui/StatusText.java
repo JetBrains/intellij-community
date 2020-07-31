@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -10,13 +10,13 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StatusText {
@@ -29,22 +29,38 @@ public abstract class StatusText {
 
   private static final int Y_GAP = 2;
 
-  @Nullable private Component myOwner;
+  private @Nullable Component myOwner;
   private Component myMouseTarget;
-  @NotNull private final MouseMotionListener myMouseMotionListener;
-  @NotNull private final ClickListener myClickListener;
+  private final @NotNull MouseMotionListener myMouseMotionListener;
+  private final @NotNull ClickListener myClickListener;
 
   private boolean myIsDefaultText;
 
   private String myText = "";
-  @NotNull protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
-  @NotNull private final SimpleColoredComponent mySecondaryComponent = new SimpleColoredComponent();
-  private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<ActionListener> mySecondaryListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
+  protected static final class Column {
+    List<Fragment> fragments = new ArrayList<>();
+    private final Dimension preferredSize = new Dimension();
+  }
+
+  protected static final class Fragment {
+    private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+
+    private final Rectangle boundsInColumn = new Rectangle();
+    private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+    public Fragment() {
+      myComponent.setOpaque(false);
+      myComponent.setFont(UIUtil.getLabelFont());
+    }
+  }
+
+  private final Column myPrimaryColumn = new Column();
+  private final Column mySecondaryColumn = new Column();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
-  private boolean myVerticalFlow = true;
-  private boolean myFontSet = false;
+  private Font myFont = null;
 
   protected StatusText(JComponent owner) {
     this();
@@ -86,23 +102,18 @@ public abstract class StatusText {
       }
     };
 
-    myComponent.setOpaque(false);
-    myComponent.setFont(UIUtil.getLabelFont());
     setText(getDefaultEmptyText(), DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
-
-    mySecondaryComponent.setOpaque(false);
-    mySecondaryComponent.setFont(UIUtil.getLabelFont());
   }
 
   protected boolean isFontSet() {
-    return myFontSet;
+    return myFont != null;
   }
 
   public void setFont(@NotNull Font font) {
-    myComponent.setFont(font);
-    mySecondaryComponent.setFont(font);
-    myFontSet = true;
+    myPrimaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
+    mySecondaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
+    myFont = font;
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -126,10 +137,9 @@ public abstract class StatusText {
 
   protected abstract boolean isStatusVisible();
 
-  @Nullable
-  private static ActionListener findListener(@NotNull SimpleColoredComponent component,
-                                             @NotNull List<? extends ActionListener> listeners,
-                                             int xCoord) {
+  private static @Nullable ActionListener findListener(@NotNull SimpleColoredComponent component,
+                                                       @NotNull List<? extends ActionListener> listeners,
+                                                       int xCoord) {
     int index = component.findFragmentAt(xCoord);
     if (index >= 0 && index < listeners.size()) {
       return listeners.get(index);
@@ -137,21 +147,28 @@ public abstract class StatusText {
     return null;
   }
 
-  @Nullable
-  private ActionListener findActionListenerAt(Point point) {
+  private @Nullable ActionListener findActionListenerAt(Point point) {
     if (!myHasActiveClickListeners || !isStatusVisible()) return null;
 
     point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
     Rectangle commonBounds = getTextComponentBound();
     if (commonBounds.contains(point)) {
-      Rectangle bounds;
-      if (myComponent.getPreferredSize().height >= point.y - commonBounds.y) {
-        bounds = adjustComponentBounds(myComponent, commonBounds);
-        return findListener(myComponent, myClickListeners, point.x - bounds.x);
-      }
-      bounds = adjustComponentBounds(mySecondaryComponent, commonBounds);
-      return findListener(mySecondaryComponent, mySecondaryListeners, point.x - bounds.x);
+      ActionListener listener = getListener(myPrimaryColumn, point, commonBounds);
+      if (listener != null) return listener;
+      listener = getListener(mySecondaryColumn, point, commonBounds);
+      if (listener != null) return listener;
+    }
+    return null;
+  }
+
+  private @Nullable ActionListener getListener(Column column, Point point, Rectangle commonBounds) {
+    Point primaryLocation = getColumnLocation(column == myPrimaryColumn, commonBounds);
+    for (Fragment fragment : column.fragments) {
+      Rectangle fragmentBounds = getFragmentBounds(column, primaryLocation, commonBounds, fragment);
+      if (!fragmentBounds.contains(new Point(point.x, point.y))) continue;
+      ActionListener listener = findListener(fragment.myComponent, fragment.myClickListeners, point.x - fragmentBounds.x);
+      if (listener != null) return listener;
     }
     return null;
   }
@@ -174,8 +191,7 @@ public abstract class StatusText {
     return this;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
@@ -189,10 +205,9 @@ public abstract class StatusText {
 
   public StatusText clear() {
     myText = "";
-    myComponent.clear();
-    myClickListeners.clear();
-    mySecondaryComponent.clear();
-    mySecondaryListeners.clear();
+    myPrimaryColumn.fragments.clear();
+    mySecondaryColumn.fragments.clear();
+
     myHasActiveClickListeners = false;
     repaintOwner();
     return this;
@@ -217,28 +232,72 @@ public abstract class StatusText {
     }
 
     myText += text;
-    myComponent.append(text, attrs);
-    myClickListeners.add(listener);
-    if (listener != null) {
-      myHasActiveClickListeners = true;
-    }
+    return appendText(true, Math.max(0, myPrimaryColumn.fragments.size() - 1), text, attrs, listener);
+  }
+
+  public StatusText appendText(boolean isPrimaryColumn, int row, @NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
+    Fragment fragment = getOrCreateFragment(isPrimaryColumn, row);
+    fragment.myComponent.append(text, attrs);
+    fragment.myClickListeners.add(listener);
+    myHasActiveClickListeners |= listener != null;
+    updateBounds();
     repaintOwner();
     return this;
   }
 
-  public void setIsVerticalFlow(boolean isVerticalFlow) {
-    myVerticalFlow = isVerticalFlow;
+  private void updateBounds() {
+    updateBounds(myPrimaryColumn);
+    updateBounds(mySecondaryColumn);
   }
 
-  @NotNull
-  public StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
-    mySecondaryComponent.append(text, attrs);
-    mySecondaryListeners.add(listener);
-    if (listener != null) {
-      myHasActiveClickListeners = true;
+  private static void updateBounds(Column column) {
+    Dimension size = new Dimension();
+    for (int i = 0; i < column.fragments.size(); i++) {
+      Fragment fragment = column.fragments.get(i);
+      Dimension d = fragment.myComponent.getPreferredSize();
+      fragment.boundsInColumn.setBounds(0, size.height, d.width, d.height);
+      size.height += d.height;
+      if (i > 0) size.height += JBUIScale.scale(Y_GAP);
+      size.width = Math.max(size.width, d.width);
     }
-    repaintOwner();
-    return this;
+    for (int i = 0; i < column.fragments.size(); i++) {
+      Fragment fragment = column.fragments.get(i);
+      fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width)/2;
+    }
+    column.preferredSize.setSize(size);
+  }
+
+  private Fragment getOrCreateFragment(boolean isPrimaryColumn, int row) {
+    Column column = isPrimaryColumn ? myPrimaryColumn : mySecondaryColumn;
+    if (column.fragments.size() < row) {
+      throw new IllegalStateException("Cannot add text to row " + row +
+                                      " as in " + (isPrimaryColumn ? "left" : "right") +
+                                      " column there are " + column.fragments.size() + " rows only");
+    }
+    Fragment fragment;
+    if (column.fragments.size() == row) {
+      fragment = new Fragment();
+      if (myFont != null) {
+        fragment.myComponent.setFont(myFont);
+      }
+      column.fragments.add(fragment);
+    }
+    else {
+      fragment = column.fragments.get(row);
+    }
+    return fragment;
+  }
+
+  public @NotNull StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+    return appendText(true, 1, text, attrs, listener);
+  }
+
+  public @NotNull StatusText appendLine(@NotNull @NlsContexts.StatusText String text) {
+    return appendLine(text, DEFAULT_ATTRIBUTES, null);
+  }
+
+  public StatusText appendLine(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+    return appendText(true, myPrimaryColumn.fragments.size(), text, attrs, listener);
   }
 
   public void paint(Component owner, Graphics g) {
@@ -270,74 +329,72 @@ public abstract class StatusText {
     viewport.repaint(textBoundsInViewport);
   }
 
-  private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {
-    if (!hasSecondaryText()) {
-      paintComponentInBounds(myComponent, g, bounds);
+  private Point getColumnLocation(boolean isPrimary, Rectangle bounds) {
+    if (isPrimary && mySecondaryColumn.fragments.isEmpty()) {
+      return new Point(bounds.x + (bounds.width - myPrimaryColumn.preferredSize.width) / 2, bounds.y);
     }
-    else {
-      Rectangle primaryBounds = adjustComponentBounds(myComponent, bounds);
-      Rectangle secondaryBounds = adjustComponentBounds(mySecondaryComponent, bounds);
-      if (myVerticalFlow) {
-        secondaryBounds.y += primaryBounds.height + JBUIScale.scale(Y_GAP);
-      }
-
-      paintComponentInBounds(myComponent, g, primaryBounds);
-      paintComponentInBounds(mySecondaryComponent, g, secondaryBounds);
-    }
+    if (isPrimary) return new Point(bounds.x, bounds.y);
+    return new Point(bounds.x + bounds.width - mySecondaryColumn.preferredSize.width, bounds.y);
   }
 
-  @NotNull
-  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+  private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {
+    paintColumnInBounds(myPrimaryColumn, g, getColumnLocation(true, bounds), bounds);
+    paintColumnInBounds(mySecondaryColumn, g, getColumnLocation(false, bounds), bounds);
+  }
+
+  protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
 
-    if (myVerticalFlow) {
+    if (mySecondaryColumn.fragments.isEmpty()) {
       return new Rectangle(bounds.x + (bounds.width - size.width) / 2, bounds.y, size.width, size.height);
     }
     else {
-      return component == myComponent
+      return component == getComponent()
              ? new Rectangle(bounds.x, bounds.y, size.width, size.height)
              : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, size.height);
     }
   }
 
-  private boolean hasSecondaryText() {
-    return mySecondaryComponent.getCharSequence(false).length() > 0;
+  private void paintColumnInBounds(Column column, Graphics g, Point location, Rectangle bounds) {
+    for (Fragment fragment : column.fragments) {
+      Rectangle r = getFragmentBounds(column, location, bounds, fragment);
+      paintComponentInBounds(fragment.myComponent, g, r);
+    }
+  }
+
+  private @NotNull Rectangle getFragmentBounds(Column column, Point columnLocation, Rectangle bounds, Fragment fragment) {
+    Rectangle r = new Rectangle();
+    r.setBounds(fragment.boundsInColumn);
+    r.x += columnLocation.x;
+    r.y += columnLocation.y;
+    if (column.fragments.size() == 1) {
+      r = adjustComponentBounds(fragment.myComponent, bounds);
+    }
+    return r;
   }
 
   private static void paintComponentInBounds(@NotNull SimpleColoredComponent component, @NotNull Graphics g, @NotNull Rectangle bounds) {
     Graphics2D g2 = (Graphics2D)g.create(bounds.x, bounds.y, bounds.width, bounds.height);
-    component.setBounds(0, 0, bounds.width, bounds.height);
-    component.paint(g2);
-    g2.dispose();
+    try {
+      component.setBounds(0, 0, bounds.width, bounds.height);
+      component.paint(g2);
+    }
+    finally {
+      g2.dispose();
+    }
   }
 
-  @NotNull
-  public SimpleColoredComponent getComponent() {
-    return myComponent;
+  public @NotNull SimpleColoredComponent getComponent() {
+    return getOrCreateFragment(true, 0).myComponent;
   }
 
-  @NotNull
-  public SimpleColoredComponent getSecondaryComponent() {
-    return mySecondaryComponent;
+  public @NotNull SimpleColoredComponent getSecondaryComponent() {
+    return getOrCreateFragment(true, 1).myComponent;
   }
 
   public Dimension getPreferredSize() {
-    Dimension componentSize = myComponent.getPreferredSize();
-    if (!hasSecondaryText()) return componentSize;
-    Dimension secondaryComponentSize = mySecondaryComponent.getPreferredSize();
-
-    if (myVerticalFlow) {
-      return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
-                           componentSize.height + secondaryComponentSize.height + JBUIScale.scale(Y_GAP));
-    }
-    else {
-      return new Dimension(componentSize.width + secondaryComponentSize.width,
-                           Math.max(componentSize.height, secondaryComponentSize.height));
-    }
-  }
-
-  public boolean isVerticalFlow() {
-    return myVerticalFlow;
+    return new Dimension(myPrimaryColumn.preferredSize.width + mySecondaryColumn.preferredSize.width,
+                         Math.max(myPrimaryColumn.preferredSize.height, mySecondaryColumn.preferredSize.height));
   }
 
   public static String getDefaultEmptyText() {

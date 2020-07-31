@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -12,44 +11,24 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import java.util.concurrent.CompletableFuture
 
-class GHPRDetailsModelImpl(loadingModel: GHSimpleLoadingModel<GHPullRequest>,
+class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullRequest>,
                            securityService: GHPRSecurityService,
                            private val repositoryDataService: GHPRRepositoryDataService,
                            private val detailsDataProvider: GHPRDetailsDataProvider) : GHPRDetailsModel {
 
-  private val detailsChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-  private var details: GHPullRequest by observableField(loadingModel.result ?: error("Details are not loaded yet"),
-                                                        detailsChangeEventDispatcher)
-
-  init {
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingStarted() {
-        details = loadingModel.result ?: return
-      }
-
-      override fun onLoadingCompleted() {
-        details = loadingModel.result ?: return
-      }
-    })
-  }
-
   override val number: String
-    get() = details.number.toString()
+    get() = valueModel.value.number.toString()
   override val title: String
-    get() = details.title
+    get() = valueModel.value.title
   override val baseBranch: String
-    get() = details.baseRefName
+    get() = valueModel.value.baseRefName
   override val headBranch: String
     get() {
-      with(details) {
+      with(valueModel.value) {
         if (headRepository == null) return headRefName
         if (headRepository.isFork || baseRefName == headRefName) {
           return headRepository.owner.login + ":" + headRefName
@@ -60,18 +39,18 @@ class GHPRDetailsModelImpl(loadingModel: GHSimpleLoadingModel<GHPullRequest>,
       }
     }
   override val state: GHPullRequestState
-    get() = details.state
+    get() = valueModel.value.state
   override val assignees: List<GHUser>
-    get() = details.assignees
+    get() = valueModel.value.assignees
   override val reviewers: List<GHPullRequestRequestedReviewer>
-    get() = details.reviewRequests.mapNotNull { it.requestedReviewer }
+    get() = valueModel.value.reviewRequests.mapNotNull { it.requestedReviewer }
   override val labels: List<GHLabel>
-    get() = details.labels
+    get() = valueModel.value.labels
 
   override val isMetadataEditingAllowed = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
 
   override fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
-    val author = details.author as? GHUser
+    val author = valueModel.value.author as? GHUser
     return repositoryDataService.potentialReviewers.thenApply { reviewers ->
       reviewers.mapNotNull { if (it == author) null else it }
     }
@@ -91,5 +70,5 @@ class GHPRDetailsModelImpl(loadingModel: GHSimpleLoadingModel<GHPullRequest>,
     detailsDataProvider.adjustLabels(indicator, delta)
 
   override fun addAndInvokeDetailsChangedListener(listener: () -> Unit) =
-    SimpleEventListener.addAndInvokeListener(detailsChangeEventDispatcher, listener)
+    valueModel.addAndInvokeValueChangedListener(listener)
 }

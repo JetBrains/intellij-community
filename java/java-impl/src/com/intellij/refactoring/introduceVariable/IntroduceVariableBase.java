@@ -17,6 +17,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -64,10 +65,12 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -712,6 +715,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           JavaReplaceChoice finalChoice = settings.getReplaceChoice();
           PsiExpression[] selectedOccurrences = finalChoice.filter(occurrenceManager);
           final PsiElement chosenAnchor = getAnchor(selectedOccurrences);
+          if (chosenAnchor == null) {
+            String text = file.getText();
+            String textWithOccurrences = StreamEx.of(selectedOccurrences)
+              .map(e -> getPhysicalElement(e).getTextRange())
+              .flatMapToEntry(range -> EntryStream.of(range.getStartOffset(), "[", range.getEndOffset(), "]").toMap())
+              .sortedBy(Map.Entry::getKey)
+              .prepend(0, "")
+              .append(text.length(), "")
+              .map(Function.identity())
+              .pairMap((prev, next) -> text.substring(prev.getKey(), next.getKey()) + next.getValue())
+              .joining();
+            LOG.error("Unable to find anchor for a new variable; selectedOccurrences.length = "+selectedOccurrences.length,
+                      new Attachment("source.java", textWithOccurrences));
+            return;
+          }
 
           final RefactoringEventData beforeData = new RefactoringEventData();
           beforeData.addElement(expr);
@@ -750,7 +768,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean inFinalContext = occurrenceManager.isInFinalContext();
     PsiExpression expr = occurrenceManager.getMainOccurence();
     PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);
-    final InputValidator validator = new InputValidator(IntroduceVariableBase.this, project, occurrenceManager);
+    final InputValidator validator = new InputValidator(this, project, occurrenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, selectedOccurrences);
     typeSelectorManager.setAllOccurrences(true);
 

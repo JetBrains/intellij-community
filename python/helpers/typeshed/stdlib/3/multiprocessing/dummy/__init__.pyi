@@ -25,10 +25,12 @@ class DummyProcess(threading.Thread):
 
 Process = DummyProcess
 
-class Namespace(object):
-    def __init__(self, **kwds) -> None: ...
+class Namespace:
+    def __init__(self, **kwds: Any) -> None: ...
+    def __getattr__(self, __name: str) -> Any: ...
+    def __setattr__(self, __name: str, __value: Any) -> None: ...
 
-class Value(object):
+class Value:
     _typecode: Any
     _value: Any
     value: Any

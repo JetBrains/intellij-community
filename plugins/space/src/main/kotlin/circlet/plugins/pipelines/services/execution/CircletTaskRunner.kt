@@ -83,17 +83,28 @@ class CircletTaskRunner(val project: Project) {
         val batchSize = 1
 
         val logMessageSink = object : LogMessagesSink {
-            override fun invoke(
-              graphExecutionId: GraphExecId,
-              stepExecutionId: StepExecId,
-              serviceExecutionId: Long?,
-              batchIndex: Int,
-              data: List<LogLine>
-            ) {
-                data.forEach {
-                    processHandler.message(it.line, TraceLevel.INFO)
-                }
+            override fun handleLogsEnded(graphExecutionId: GraphExecId, stepExecutionId: StepExecId, serviceExecutionId: Long?) {
+                TODO("Not yet implemented")
             }
+
+            override fun handleNewLogs(graphExecutionId: GraphExecId,
+                                       stepExecutionId: StepExecId,
+                                       serviceExecutionId: Long?,
+                                       startingIndex: Int,
+                                       lines: List<LogLine>) {
+                TODO("Not yet implemented")
+            }
+            //override fun invoke(
+            //  graphExecutionId: GraphExecId,
+            //  stepExecutionId: StepExecId,
+            //  serviceExecutionId: Long?,
+            //  batchIndex: Int,
+            //  data: List<LogLine>
+            //) {
+            //    data.forEach {
+            //        processHandler.message(it.line, TraceLevel.INFO)
+            //    }
+            //}
         }
 
         val reporting = LocalReportingImpl(lifetime, processes, LocalReporting.Settings(batchSize), logMessageSink)
@@ -193,7 +204,7 @@ class CircletTaskRunner(val project: Project) {
             try {
                 storage("run-graph") {
                     val graph = automationStarterCommon.createGraph(this, task)
-                    automationStarterCommon.startGraph(this, graph)
+                    automationStarterCommon.startGraphs(this, setOf(graph))
                 }
             } catch (th: Throwable) {
                 logger.error(th)

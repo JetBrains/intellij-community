@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object ClassToIntConverter {
@@ -17,4 +18,5 @@ internal object ClassToIntConverter {
 
 internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInt(this)
 internal inline fun <reified E> Int.findEntityClass(): Class<E> = ClassToIntConverter.getClassOrDie(this) as Class<E>
+internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getClassOrDie(this) as Class<WorkspaceEntity>
 

@@ -6,7 +6,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.uast.UElementPattern
+import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -23,7 +23,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
-internal class UastReferenceByUsageAdapter(private val usagePattern: UElementPattern<*, *>,
+internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPattern<out UElement>,
                                            private val provider: UastReferenceProvider) : UastReferenceProvider(UExpression::class.java) {
 
   override fun acceptsTarget(target: PsiElement): Boolean {

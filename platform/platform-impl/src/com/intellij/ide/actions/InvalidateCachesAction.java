@@ -56,11 +56,11 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
 
     String warnings = IdeBundle.message("dialog.message.warning");
     if (descriptions.size() == 1) {
-      warnings += descriptions.get(0) + IdeBundle.message("dialog.message.will.be.also.cleared");
+      warnings += " "+ IdeBundle.message("dialog.message.will.be.also.cleared", descriptions.get(0));
     }
     else if (!descriptions.isEmpty()) {
-      warnings += IdeBundle.message("dialog.message.the.following.items")
-                  + StringUtil.join(descriptions, s -> "  " + s, "\n");
+      warnings += " "+IdeBundle.message("dialog.message.the.following.items")
+                  + "\n"+StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
 
     String message = IdeBundle.message("dialog.message.caches.will.be.invalidated", descriptions.isEmpty() ? "" : warnings + "\n\n");

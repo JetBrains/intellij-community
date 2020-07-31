@@ -47,8 +47,8 @@ object SerializationRoundTripChecker {
   private fun assertStorageEquals(expected: WorkspaceEntityStorageImpl, actual: WorkspaceEntityStorageImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
-    for ((clazz, expectedEntityFamily) in expected.entitiesByType.entities.withIndex()) {
-      val actualEntityFamily = actual.entitiesByType.entities[clazz]
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {
+      val actualEntityFamily = actual.entitiesByType.entityFamilies[clazz]
 
       if (expectedEntityFamily == null || actualEntityFamily == null) {
         assertNull(expectedEntityFamily)

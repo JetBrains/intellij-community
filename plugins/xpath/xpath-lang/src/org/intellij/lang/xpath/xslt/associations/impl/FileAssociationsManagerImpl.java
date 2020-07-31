@@ -61,8 +61,8 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
     for (Element child : children) {
       final String url = child.getAttributeValue("url");
       if (url != null) {
-        final VirtualFilePointer pointer = filePointerManager.create(url, myProject, null);
-        final VirtualFilePointerContainer container = filePointerManager.createContainer(myProject);
+        final VirtualFilePointer pointer = filePointerManager.create(url, this, null);
+        final VirtualFilePointerContainer container = filePointerManager.createContainer(this);
         container.readExternal(child, "association", false);
         myAssociations.put(pointer, container);
       }
@@ -119,9 +119,9 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
     final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
     VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
     for (VirtualFilePointer pointer : virtualFilePointers) {
-      final VirtualFilePointerContainer container = filePointerManager.createContainer(other.myProject);
+      final VirtualFilePointerContainer container = filePointerManager.createContainer(other);
       container.addAll(other.myAssociations.get(pointer));
-      hashMap.put(filePointerManager.duplicate(pointer, other.myProject, null), container);
+      hashMap.put(filePointerManager.duplicate(pointer, other, null), container);
     }
     return hashMap;
   }
@@ -187,7 +187,7 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
       if (pointer.getUrl().equals(virtualFile.getUrl())) {
         VirtualFilePointerContainer container = myAssociations.get(pointer);
         if (container == null) {
-          container = filePointerManager.createContainer(myProject);
+          container = filePointerManager.createContainer(this);
           myAssociations.put(pointer, container);
         }
         if (container.findByUrl(assoc.getUrl()) == null) {
@@ -197,9 +197,9 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
         return;
       }
     }
-    final VirtualFilePointerContainer container = filePointerManager.createContainer(myProject);
+    final VirtualFilePointerContainer container = filePointerManager.createContainer(this);
     container.add(assoc);
-    myAssociations.put(filePointerManager.create(virtualFile, myProject, null), container);
+    myAssociations.put(filePointerManager.create(virtualFile, this, null), container);
     touch();
   }
 

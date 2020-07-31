@@ -30,6 +30,8 @@ public final class EventLogUploaderCliParser {
   }
 
   private static boolean requireValue(String arg) {
-    return !EventLogUploaderOptions.INTERNAL_OPTION.equals(arg) && !EventLogUploaderOptions.TEST_OPTION.equals(arg);
+    return !EventLogUploaderOptions.INTERNAL_OPTION.equals(arg) &&
+           !EventLogUploaderOptions.TEST_OPTION.equals(arg) &&
+           !EventLogUploaderOptions.EAP_OPTION.equals(arg);
   }
 }

@@ -525,8 +525,6 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider"
                                        order="first"/>
 
-    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
-
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
@@ -1224,12 +1222,8 @@
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
     <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
-    <completion.contributor language="JAVA" id="javaReflection" order="last, before javaLegacy"
+    <completion.contributor language="JAVA" id="javaReflection" order="before javaLegacy, before javaClassReference"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor"/>
-    <completion.contributor language="JAVA" id="javaSmart" order="last, before default"
-                            implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor"/>
-    <completion.contributor language="JAVA" id="smartNull" order="last, before javaSmart"
-                            implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor"/>
     <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"
                             implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor"/>
     <completion.contributor language="JVM" id="javaClassName" order="last, before default"
@@ -1257,6 +1251,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
     <completion.plainTextSymbol language="JAVA" implementationClass="com.intellij.codeInsight.completion.JvmPlainTextSymbolCompletionContributor"/>
+    <completion.ignoringDumbnessAllowed language="JAVA"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider" id="excludeFromCompletion" order="last"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
@@ -1960,6 +1955,14 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.UnrollLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.CollapseIntoLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.MoveIntoIfBranchesAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>

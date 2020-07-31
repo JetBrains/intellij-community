@@ -167,6 +167,12 @@ public class PluginManagerConfigurable
     return myTabHeaderComponent;
   }
 
+  @NotNull
+  public JComponent getTopComponent() {
+    myPluginModel.setTopController(TopComponentController.EMPTY);
+    return myTabHeaderComponent;
+  }
+
   @Nullable
   @Override
   public JComponent createComponent() {

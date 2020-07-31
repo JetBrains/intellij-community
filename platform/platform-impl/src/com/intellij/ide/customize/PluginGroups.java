@@ -202,7 +202,6 @@ public class PluginGroups {
       "AngularJS",
 
       "org.coffeescript",
-      "com.intellij.flex",
       "com.jetbrains.restClient",
 
       "com.intellij.swagger"

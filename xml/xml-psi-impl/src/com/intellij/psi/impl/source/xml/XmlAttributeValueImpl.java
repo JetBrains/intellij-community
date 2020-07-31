@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class XmlAttributeValueImpl extends XmlElementImpl
   implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData, HintedReferenceHost {
@@ -73,6 +76,12 @@ public class XmlAttributeValueImpl extends XmlElementImpl
     final int start = range.getStartOffset() + getText().indexOf(value);
     final int end = start + value.length();
     return new TextRange(start, end);
+  }
+
+  @Override
+  public @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    PsiReference[] references = getReferences();
+    return references.length == 0 ? Collections.emptyList() : Arrays.asList(references);
   }
 
   @Override

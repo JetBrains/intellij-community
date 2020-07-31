@@ -91,8 +91,6 @@ private fun openProjectPerformTaskCloseProject(projectDir: Path, task: (Project)
     }
   }
   finally {
-    runInEdtAndWait {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-    }
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 }

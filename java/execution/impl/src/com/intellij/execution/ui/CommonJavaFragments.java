@@ -22,14 +22,6 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class CommonJavaFragments {
 
-  public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
-    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
-    env.setLabelLocation(BorderLayout.WEST);
-    return SettingsEditorFragment.create("environmentVariables",
-                                         ExecutionBundle.message("environment.variables.fragment.name"),
-                                         ExecutionBundle.message("group.java.options"), env);
-  }
-
   public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");
     String run = ExecutionBundle.message("application.configuration.title.run");

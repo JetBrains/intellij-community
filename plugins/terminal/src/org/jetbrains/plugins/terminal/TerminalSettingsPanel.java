@@ -118,7 +118,7 @@ public class TerminalSettingsPanel {
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     );
-    setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myOptionsProvider.defaultShellPath());
+    setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myProjectOptionsProvider.defaultShellPath());
   }
 
   private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<String> defaultValueSupplier) {
@@ -136,8 +136,7 @@ public class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Objects
-      .equals(TerminalOptionsProvider.getInstance().getEffectiveShellPath(myShellPathField.getText()), myOptionsProvider.getShellPath())
+    return !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
@@ -154,7 +153,7 @@ public class TerminalSettingsPanel {
 
   public void apply() {
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
-    myOptionsProvider.setShellPath(myShellPathField.getText());
+    myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
     myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
@@ -176,7 +175,7 @@ public class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myShellPathField.setText(myOptionsProvider.getShellPath());
+    myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
     myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());

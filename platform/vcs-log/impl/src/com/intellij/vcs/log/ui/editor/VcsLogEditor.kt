@@ -54,7 +54,7 @@ class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
-class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
+class VcsLogEditor(val file: VcsLogFile) : FileEditorBase() {
   private val container: JComponent = JPanel(BorderLayout())
 
   private var vcsLogFile: VcsLogFile? = file
@@ -77,7 +77,9 @@ class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
   override fun getComponent(): JComponent = container
   override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile?.logUis?.firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
-  override fun getFile(): VirtualFile? = vcsLogFile
+  override fun getFile(): VirtualFile {
+    return file
+  }
 }
 
 class VcsLogEditorProvider : FileEditorProvider, DumbAware {

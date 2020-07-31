@@ -1,7 +1,7 @@
 git+https://github.com/python/mypy.git@master
 typed-ast>=1.0.4
 black==19.3b0
-flake8==3.8.1
+flake8==3.8.2
 flake8-bugbear==20.1.4
 flake8-pyi==20.5.0
 isort==4.3.21

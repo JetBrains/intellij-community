@@ -136,5 +136,10 @@ public abstract class PlatformIdTableBuilding {
       }
       return Collections.emptyMap();
     }
+
+    @Override
+    public int getVersion() {
+      return 2;
+    }
   }
 }

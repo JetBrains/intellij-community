@@ -135,7 +135,14 @@ export class LineChartManager implements StatChartManager {
   }
 
   private configureLineSeries(metric: MetricDescriptor, series: am4charts.LineSeries) {
-    series.name = metric.name
+    const metricPathEndDotIndex = metric.name.indexOf(".")
+    if (metricPathEndDotIndex == -1) {
+      series.name = metric.name
+    }
+    else {
+      series.name = metric.name.substring(metricPathEndDotIndex + 1)
+    }
+
     this.configurator.configureSeries(series)
     // duration
     series.dataFields.valueY = metric.key

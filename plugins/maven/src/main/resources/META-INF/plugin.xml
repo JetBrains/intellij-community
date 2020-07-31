@@ -111,6 +111,7 @@
 
     <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.idea.maven.utils.MavenTreeStructureProvider" order="last"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.idea.maven.utils.MavenProblemFileHighlighter"/>
 
@@ -262,6 +263,8 @@
     <registryKey key="maven.server.debug.default" defaultValue="false"
                  description="Debug maven server for default project"/>
 
+    <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
+                 description="Deleted maven modules will not be marked as ignored"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -584,7 +587,6 @@
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ExecuteGoal"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="ExternalSystem.ToggleAutoReload"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>

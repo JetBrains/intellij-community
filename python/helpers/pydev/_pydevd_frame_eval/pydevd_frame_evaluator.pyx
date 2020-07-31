@@ -300,6 +300,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
         if main_debugger is None or \
                 not hasattr(main_debugger, "break_on_caught_exceptions") or \
                 not hasattr(main_debugger, "has_plugin_exception_breaks") or \
+                not hasattr(main_debugger, "stop_on_failed_tests") or \
                 not hasattr(main_debugger, "signature_factory"):
             # Debugger isn't fully initialized here yet
             return _PyEval_EvalFrameDefault(frame_obj, exc)
@@ -337,7 +338,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                         else:
                             frame.f_trace = <object> main_debugger.trace_dispatch
 
-                if can_skip and func_code_info.breakpoint_found:
+                if (can_skip and func_code_info.breakpoint_found) or main_debugger.stop_on_failed_tests:
                     # if DEBUG:
                     #     print('get_bytecode_while_frame_eval new_code', func_code_info.new_code)
 

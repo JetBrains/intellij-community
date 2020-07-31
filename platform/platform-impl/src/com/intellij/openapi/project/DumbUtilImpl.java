@@ -19,15 +19,19 @@ public class DumbUtilImpl implements DumbUtil {
   @Override
   @Contract(pure = true)
   public @NotNull <T> List<T> filterByDumbAwarenessHonoringIgnoring(@NotNull Collection<? extends T> collection) {
-    DumbService service = DumbService.getInstance(myProject);
-    if (!service.isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
-      return service.filterByDumbAwareness(collection);
+    if (!mayUseIndices()) {
+      return DumbService.getInstance(myProject).filterByDumbAwareness(collection);
     }
 
     if (collection instanceof List) {
-      return (List<T>)collection;
+      return (List<T>) collection;
     }
 
     return new ArrayList<>(collection);
+  }
+
+  @Override
+  public boolean mayUseIndices() {
+    return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null;
   }
 }

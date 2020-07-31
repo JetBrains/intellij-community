@@ -145,7 +145,7 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   private void updateEditor() {
     PsiFile originalPsi = myPreviewFile.resolveOriginalPsi();
-    if (originalPsi != null) {
+    if (originalPsi != null && !myEditor.isDisposed()) {
       CodeStyleSettings settings = CodeStyle.getSettings(originalPsi);
       final Language language = myPreviewFile.getLanguage();
       myEditor.getSettings().setRightMargin(settings.getRightMargin(language));

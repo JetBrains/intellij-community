@@ -13,6 +13,12 @@ import java.util.concurrent.ConcurrentMap;
  * Creates various concurrent collections (e.g maps, sets) which can be customized with {@link TObjectHashingStrategy}
  */
 public final class ConcurrentCollectionFactory {
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentIdentityMap() {
+    //noinspection unchecked
+    return new ConcurrentHashMap<>((TObjectHashingStrategy<K>)TObjectHashingStrategy.IDENTITY);
+  }
+
   @Contract(pure = true)
   public static @NotNull <T, V> ConcurrentMap<T, V> createMap(@NotNull TObjectHashingStrategy<T> hashStrategy) {
     return new ConcurrentHashMap<>(hashStrategy);

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "CodeFoldingSettings", storages = {
   @Storage("editor.xml"),
   @Storage(value = "editor.codeinsight.xml", deprecated = true),
-}, reportStatistic = true)
+})
 final class CodeFoldingSettingsImpl extends CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings> {
   @Override
   public CodeFoldingSettings getState() {

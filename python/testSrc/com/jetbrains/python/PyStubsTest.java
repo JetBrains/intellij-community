@@ -343,7 +343,6 @@ public class PyStubsTest extends PyTestCase {
 
   private PyFile getTestFile(final String fileName) {
     VirtualFile sourceFile = myFixture.copyFileToProject(fileName);
-    assert sourceFile != null;
     PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return (PyFile)psiFile;
   }
@@ -973,6 +972,18 @@ public class PyStubsTest extends PyTestCase {
     assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
+  // PY-33189
+  public void testAttrsKwOnlyOnField() {
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Foo");
+
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
     assertNotParsed(file);
   }

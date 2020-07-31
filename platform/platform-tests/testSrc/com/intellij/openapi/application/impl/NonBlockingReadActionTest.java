@@ -458,4 +458,22 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       });
     });
   }
+
+  public void test_honor_all_disposables() throws Exception {
+    for (int i = 0; i < 2; i++) {
+      Disposable[] parents = {Disposer.newDisposable("1"), Disposer.newDisposable("2")};
+      Disposer.dispose(parents[i]);
+      NonBlockingReadAction<String> nbra = ReadAction
+        .nonBlocking(() -> {
+          fail();
+          return "a";
+        });
+      for (Disposable parent : parents) {
+        nbra = nbra.expireWith(parent);
+      }
+      CancellablePromise<String> promise = nbra.submit(AppExecutorUtil.getAppExecutorService());
+      assertTrue(promise.isCancelled());
+      assertNull(promise.get());
+    }
+  }
 }

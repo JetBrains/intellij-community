@@ -130,11 +130,6 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
-    <localInspection language="JAVA" displayName="Java 5 nullability annotation on array"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
-                     enabledByDefault="false"
-                     level="WARNING" isInternal="true"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.OldJetBrainsAnnotationInspection"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"

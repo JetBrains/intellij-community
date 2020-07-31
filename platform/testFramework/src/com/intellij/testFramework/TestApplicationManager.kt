@@ -41,7 +41,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
@@ -50,6 +50,7 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
+import com.intellij.testFramework.ProjectRule.Companion.checkThatNoOpenProjects
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -183,14 +184,12 @@ private inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -
 
 inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as TI?
 
-
 private var testCounter = 0
 
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
-fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? = null) {
+fun tearDownProjectAndApp(project: Project) {
   val isLightProject = ProjectManagerImpl.isLight(project)
-
   val l = mutableListOf<Throwable>()
   val app = ApplicationManager.getApplication()
 
@@ -243,10 +242,13 @@ fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? 
   l.catchAndStoreExceptions { waitForProjectLeakingThreads(project) }
   l.catchAndStoreExceptions { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
 
-  l.catchAndStoreExceptions { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, !isLightProject) }
+  l.catchAndStoreExceptions {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+    checkThatNoOpenProjects()
+  }
   l.catchAndStoreExceptions { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
-  l.catchAndStoreExceptions { (appManager ?: TestApplicationManager.getInstanceIfCreated())?.setDataProvider(null) }
+  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions { UiInterceptors.clear() }
   l.catchAndStoreExceptions { CompletionProgressIndicator.cleanupForNextTest() }
   l.catchAndStoreExceptions {

@@ -9,7 +9,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import kotlin.system.exitProcess
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = try {
   if (args.isEmpty()) System.err.println("If you haven't intended to start full icons sync" +
                                          " then please specify required icons repo's commit hashes" +
                                          " joined by comma, semicolon or space in arguments")
@@ -27,13 +27,11 @@ fun main(args: Array<String>) {
     "intellij.platform.images.build" to listOf("org.jetbrains.intellij.build.images.CommunityIconClassesTest",
                                                "org.jetbrains.intellij.build.images.CommunityImageResourcesSanityTest")
   )
-  try {
-    runTests(tests = tests.values.flatten(), modules = tests.keys)
-  }
-  finally {
-    // in case of non-daemon threads spawned from tests
-    exitProcess(0)
-  }
+  runTests(tests = tests.values.flatten(), modules = tests.keys)
+}
+finally {
+  // in case of non-daemon threads spawned from tests
+  exitProcess(0)
 }
 
 private fun echo(msg: String) = println("\n** $msg")

@@ -26,11 +26,11 @@ class EventLogFile(val file: File) {
     }
   }
 
-  fun getType(): EventLogBuildType {
+  fun getType(defaultType: EventLogBuildType = EventLogBuildType.UNKNOWN): EventLogBuildType {
     return when (parseType()) {
       EventLogBuildType.EAP.text -> EventLogBuildType.EAP
       EventLogBuildType.RELEASE.text -> EventLogBuildType.RELEASE
-      else -> EventLogBuildType.UNKNOWN
+      else -> defaultType
     }
   }
 

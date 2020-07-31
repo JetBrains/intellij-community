@@ -111,7 +111,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     }
   }
 
-  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+  protected final void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
@@ -142,9 +142,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {
-    final ArrayList<LocalInspectionTool> result = new ArrayList<>();
+    List<LocalInspectionTool> result = new ArrayList<>();
     for (InspectionToolProvider toolProvider : provider) {
-      for (Class aClass : toolProvider.getInspectionClasses()) {
+      for (Class<?> aClass : toolProvider.getInspectionClasses()) {
         try {
           final Object tool = aClass.newInstance();
           assertTrue(tool instanceof LocalInspectionTool);

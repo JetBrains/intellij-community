@@ -28,6 +28,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,10 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     result.runRemainingContributors(parameters, tracker);
     final boolean empty = tracker.containsOnlyPackages || suggestAllAnnotations(parameters);
 
+    if (parameters.getCompletionType() == CompletionType.SMART && !tracker.hasStartMatches) {
+      addNullKeyword(parameters, result);
+    }
+
     if (JavaCompletionContributor.isClassNamePossible(parameters) && !JavaCompletionContributor.mayStartClassName(result)) {
       result.restartCompletionOnAnyPrefixChange();
     }
@@ -69,6 +74,21 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
+      }
+    }
+  }
+
+  private static void addNullKeyword(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(parameters.getPosition()) &&
+        !psiElement().afterLeaf(".").accepts(parameters.getPosition()) &&
+        result.getPrefixMatcher().getPrefix().startsWith("n")) {
+      ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
+      for (ExpectedTypeInfo info : infos) {
+        if (!(info.getType() instanceof PsiPrimitiveType)) {
+          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
+          result.addElement(JavaSmartCompletionContributor.decorate(item, ContainerUtil.newHashSet(infos)));
+          return;
+        }
       }
     }
   }
@@ -193,6 +213,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
   public static class ResultTracker implements Consumer<CompletionResult> {
     private final CompletionResultSet myResult;
     public final JavaCompletionSession session;
+    boolean hasStartMatches = false;
     public boolean containsOnlyPackages = true;
     public BetterPrefixMatcher betterMatcher;
 
@@ -205,6 +226,10 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     @Override
     public void consume(CompletionResult plainResult) {
       myResult.passResult(plainResult);
+
+      if (!hasStartMatches && plainResult.getPrefixMatcher().isStartMatch(plainResult.getLookupElement())) {
+        hasStartMatches = true;
+      }
 
       LookupElement element = plainResult.getLookupElement();
       if (containsOnlyPackages && !(CompletionUtil.getTargetElement(element) instanceof PsiPackage)) {

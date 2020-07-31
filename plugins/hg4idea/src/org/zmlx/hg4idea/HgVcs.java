@@ -23,7 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
@@ -326,10 +327,13 @@ public class HgVcs extends AbstractVcs {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new HgIntegrationEnabler(this).enable(roots);
-    });
+    new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        new HgIntegrationEnabler(HgVcs.this).enable(roots);
+      }
+    }.queue();
   }
 
   @Override

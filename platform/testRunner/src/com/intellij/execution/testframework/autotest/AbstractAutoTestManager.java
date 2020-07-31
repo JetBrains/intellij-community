@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -51,8 +51,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     myWatcher = createWatcher(project);
   }
 
-  @Nullable
-  private static ExecutionEnvironment getCurrentEnvironment(@NotNull Content content) {
+  private static @Nullable ExecutionEnvironment getCurrentEnvironment(@NotNull Content content) {
     JComponent component = content.getComponent();
     if (component == null) {
       return null;
@@ -101,8 +100,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     return configurations;
   }
 
-  @NotNull
-  protected abstract AutoTestWatcher createWatcher(Project project);
+  protected abstract @NotNull AutoTestWatcher createWatcher(@NotNull Project project);
 
   public void setAutoTestEnabled(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment, boolean enabled) {
     Content content = descriptor.getAttachedContent();
@@ -173,10 +171,10 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     }
   }
 
-  private void scheduleRestartOnTermination(@NotNull final RunContentDescriptor descriptor,
-                                            @NotNull final ProcessHandler processHandler,
+  private void scheduleRestartOnTermination(final @NotNull RunContentDescriptor descriptor,
+                                            final @NotNull ProcessHandler processHandler,
                                             final int modificationStamp,
-                                            @NotNull final AutoTestWatcher watcher) {
+                                            final @NotNull AutoTestWatcher watcher) {
     ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler);
     if (restarterListener != null) {
       clearRestarterListener(processHandler);
@@ -210,9 +208,8 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, myDelayMillis, AUTO_TEST_MANAGER_DELAY_DEFAULT);
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     State state = new State();
     for (RunProfile profile : myEnabledRunProfiles) {
       saveConfigurationState(state, profile);

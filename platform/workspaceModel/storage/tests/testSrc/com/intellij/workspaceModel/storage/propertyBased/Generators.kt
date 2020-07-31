@@ -17,7 +17,7 @@ internal val newEmptyWorkspace
 
 internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuilderImpl) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
-    val filtered = storage.entitiesByType.entities.asSequence().filterNotNull().flatMap { it.entities.filterNotNull().asSequence() }
+    val filtered = storage.entitiesByType.entityFamilies.asSequence().filterNotNull().flatMap { it.entities.filterNotNull().asSequence() }
     if (filtered.none()) return null
     val nonNullIds = filtered.toList()
     val id = t.generate(Generator.integers(0, nonNullIds.lastIndex))
@@ -32,7 +32,7 @@ internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuil
 internal class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStorageBuilderImpl,
                                          private val family: Int) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
-    val entityFamily = storage.entitiesByType.entities.getOrNull(family) ?: return null
+    val entityFamily = storage.entitiesByType.entityFamilies.getOrNull(family) ?: return null
     val existingEntities = entityFamily.entities.filterNotNull()
     if (existingEntities.isEmpty()) return null
     val randomId = t.generate(Generator.integers(0, existingEntities.lastIndex))

@@ -716,14 +716,14 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @NotNull
     @Override
-    protected Node<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+    protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
                                                  int start,
                                                  int end,
                                                  boolean greedyToLeft,
                                                  boolean greedyToRight,
                                                  boolean stickingToRight,
                                                  int layer) {
-      return new Node<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void onRemoved() {
           for (Getter<FoldRegionImpl> getter : intervals) {
@@ -766,7 +766,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       if (oldLength > 0 /* document change can cause regions to become equal*/) {
         for (Object o : affected) {
           //noinspection unchecked
-          Node<FoldRegionImpl> node = (Node<FoldRegionImpl>)o;
+          RMNode<FoldRegionImpl> node = (RMNode<FoldRegionImpl>)o;
           FoldRegionImpl region = getRegion(node);
           // region with the largest metric value is kept when several regions become identical after document change
           // we want the largest collapsed region to survive

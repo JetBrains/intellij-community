@@ -9,10 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 
 public class ClassFileViewProviderFactory implements FileViewProviderFactory {
-  @NotNull
   @Override
-  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, boolean eventSystemEnabled) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
+  public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile file,
+                                                          Language language,
+                                                          @NotNull PsiManager manager,
+                                                          boolean eventSystemEnabled) {
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
     if (decompiler instanceof Full) {
       return ((Full)decompiler).createFileViewProvider(file, manager, eventSystemEnabled);
     }

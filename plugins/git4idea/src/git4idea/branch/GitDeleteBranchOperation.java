@@ -22,7 +22,6 @@ import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
@@ -194,7 +193,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       // restore tracking
       GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
       if (trackedBranch != null) {
-        GitCommandResult setTrackResult = setUpTracking(repository, myBranchName, trackedBranch.getNameForLocalOperations());
+        GitCommandResult setTrackResult = myGit.setUpstream(repository, trackedBranch.getNameForLocalOperations(), myBranchName);
         if (!setTrackResult.success()) {
           LOG.warn("Couldn't set " + myBranchName + " to track " + trackedBranch + " in " + repository.getRoot().getName() + ": " +
                    setTrackResult.getErrorOutputAsJoinedString());
@@ -204,18 +203,6 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       refresh(repository);
     }
     return result;
-  }
-
-  @NotNull
-  private GitCommandResult setUpTracking(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String trackedBranch) {
-    GitLineHandler handler = new GitLineHandler(myProject, repository.getRoot(), GitCommand.BRANCH);
-    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
-      handler.addParameters("--set-upstream-to", trackedBranch, branchName);
-    }
-    else {
-      handler.addParameters("--set-upstream", branchName, trackedBranch);
-    }
-    return myGit.runCommand(handler);
   }
 
   @NotNull

@@ -16,6 +16,7 @@
 
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.Disposable;
@@ -40,7 +41,7 @@ public class TargetActionStub extends AnAction implements Disposable {
     super("ant target action stub");
     myActionId = actionId;
     myProject = project;
-    Disposer.register(project, this);
+    Disposer.register(AntDisposable.getInstance(project), this);
   }
 
   @Override
@@ -64,7 +65,7 @@ public class TargetActionStub extends AnAction implements Disposable {
         }
       };
       config.addAntConfigurationListener(listener);
-      Disposer.register(myProject, new ListenerRemover(config, listener));
+      Disposer.register(AntDisposable.getInstance(myProject), new ListenerRemover(config, listener));
     }
     finally {
       invokeAction(e);

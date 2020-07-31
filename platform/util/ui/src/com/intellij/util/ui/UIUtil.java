@@ -2729,6 +2729,10 @@ public final class UIUtil {
     forEachComponentInHierarchy(component, c -> c.setBackground(bg));
   }
 
+  public static void setForegroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    forEachComponentInHierarchy(component, c -> c.setForeground(bg));
+  }
+
   private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {

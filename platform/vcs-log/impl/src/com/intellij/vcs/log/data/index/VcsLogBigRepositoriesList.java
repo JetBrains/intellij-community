@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -14,7 +14,8 @@ import java.util.EventListener;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-@State(name = "Vcs.Log.Big.Repositories", storages = {@Storage(value = "vcs.log.big.repos.xml", roamingType = RoamingType.DISABLED)})
+@State(name = "Vcs.Log.Big.Repositories", storages = {@Storage(value = "vcs.log.big.repos.xml", roamingType = RoamingType.DISABLED)},
+  reportStatistic = false)
 public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLogBigRepositoriesList.State> {
   @NotNull private final Object myLock = new Object();
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);

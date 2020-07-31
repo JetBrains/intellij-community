@@ -207,7 +207,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
       final boolean forceHighlightParents = forceHighlightParents();
 
-      if (!isDumbMode()) {
+      if (!isDumbMode() && getEditor() != null) {
         highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(),
                        myPriorityRange, insideResult,
                        outsideResult);

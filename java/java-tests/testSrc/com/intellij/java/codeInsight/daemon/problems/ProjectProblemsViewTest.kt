@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.daemon.problems.pass.BrokenUsage
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
 import com.intellij.codeInsight.hints.presentation.*
@@ -10,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewManager
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -36,22 +36,24 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     val clickEvent = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
     val point = Point(0, 0)
     for (inlay in reportedChanges.values) {
+      val startOffset = editor.caretModel.offset
       val renderer = inlay.renderer as BlockInlayRenderer
       val presentation = renderer.getConstrainedPresentations()[0]
       val rootPresentation = presentation.root
       val sequencePresentation = rootPresentation.content as SequencePresentation
       val settingsOnClickPresentation = sequencePresentation.presentations[1] as OnClickPresentation
-      val usagesOnHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      usagesOnHoverPresentation.mouseMoved(clickEvent, point)
-      val usagesDelegatePresentation = usagesOnHoverPresentation.presentation as DynamicDelegatePresentation
-      val usagesOnClickPresentation = usagesDelegatePresentation.delegate as OnClickPresentation
-      usagesOnClickPresentation.mouseClicked(clickEvent, point)
+      val problemOnHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
+      problemOnHoverPresentation.mouseMoved(clickEvent, point)
+      val problemsDelegatePresentation = problemOnHoverPresentation.presentation as DynamicDelegatePresentation
+      val problemsOnClickPresentation = problemsDelegatePresentation.delegate as OnClickPresentation
+      problemsOnClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!
       val openedFile = FileDocumentManager.getInstance().getFile(editor.document)!!
-      if (openedFile != targetFile) {
+      val curOffset = editor.caretModel.offset
+      if (openedFile != targetFile || curOffset != startOffset) {
         // one problem is reported in inlay, we navigated to this problem
-        val usagePsiFile = PsiManager.getInstance(project).findFile(openedFile)!!
-        val psiElement = usagePsiFile.findElementAt(editor.caretModel.offset)!!
+        val psiFileWithProblem = PsiManager.getInstance(project).findFile(openedFile)!!
+        val psiElement = psiFileWithProblem.findElementAt(curOffset)!!
         problems.add(psiElement)
         // restore file for the next iteration
         editorManager.openFile(targetFile, true)
@@ -59,7 +61,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
       else {
         // multiple problems, usage tool window was opened
         val usageView = usageViewManager.selectedUsageView!!
-        usageView.usages.mapTo(problems) { (it as UsageInfo2UsageAdapter).usageInfo.element!! }
+        usageView.usages.mapTo(problems) { (it as BrokenUsage).reportedElement!! }
       }
     }
     return problems

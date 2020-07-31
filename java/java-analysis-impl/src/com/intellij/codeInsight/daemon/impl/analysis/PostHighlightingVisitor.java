@@ -57,14 +57,14 @@ class PostHighlightingVisitor {
 
   private boolean myHasRedundantImports;
   private int myCurrentEntryIndex;
-  private boolean myHasMissortedImports;
+  private boolean myHasMisSortedImports;
   private final UnusedSymbolLocalInspectionBase myUnusedSymbolInspection;
   private final HighlightDisplayKey myDeadCodeKey;
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
   private void optimizeImportsOnTheFlyLater(@NotNull final ProgressIndicator progress) {
-    if ((myHasRedundantImports || myHasMissortedImports) && !progress.isCanceled()) {
+    if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
       Disposable invokeFixLater = () -> {
         // later because should invoke when highlighting is finished
@@ -332,7 +332,7 @@ class PostHighlightingVisitor {
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(field), myDeadCodeKey);
         return highlightInfo;
       }
-      return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType, identifier);
+      return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, myDeadCodeKey, myDeadCodeInfoType, identifier);
     }
     return null;
   }
@@ -351,7 +351,7 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName, "fields"),
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName),
                                 myDeadCodeKey);
       return true;
     });
@@ -389,7 +389,7 @@ class PostHighlightingVisitor {
           !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainOrPremainMethod(method)) {
         if (UnusedSymbolUtil.isInjected(project, method)) return null;
-        HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+        HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, method);
         if (highlightInfo != null) {
           QuickFixFactory.getInstance().registerFixesForUnusedParameter(parameter, highlightInfo);
           return highlightInfo;
@@ -397,14 +397,14 @@ class PostHighlightingVisitor {
       }
     }
     else if (declarationScope instanceof PsiForeachStatement && !PsiUtil.isIgnoredName(parameter.getName())) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter), myDeadCodeKey);
         return highlightInfo;
       }
     }
     else if (parameter instanceof PsiPatternVariable) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createDeleteFix(parameter));
         return highlightInfo;
@@ -415,11 +415,17 @@ class PostHighlightingVisitor {
   }
 
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
-                                             @NotNull PsiIdentifier identifier) {
+                                             @NotNull PsiIdentifier identifier,
+                                             @Nullable PsiMethod declarationMethod) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
       String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
-      return UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      if (declarationMethod != null && declarationMethod.isConstructor()) {
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAssignFieldFromParameterFix());
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateFieldFromParameterFix());
+      }
+      return info;
     }
     return null;
   }
@@ -444,7 +450,7 @@ class PostHighlightingVisitor {
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
-      IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
+      IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
       return true;
     });
@@ -480,14 +486,13 @@ class PostHighlightingVisitor {
     else {
       pattern = "class.is.not.used";
     }
-    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", myDeadCodeKey, myDeadCodeInfoType, identifier);
+    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, myDeadCodeKey, myDeadCodeInfoType, identifier);
   }
 
 
   private static HighlightInfo formatUnusedSymbolHighlightInfo(@NotNull final Project project,
                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern,
                                                                @NotNull final PsiNameIdentifierOwner aClass,
-                                                               @NotNull final String element,
                                                                HighlightDisplayKey highlightDisplayKey,
                                                                @NotNull HighlightInfoType highlightInfoType,
                                                                @NotNull PsiElement identifier) {
@@ -498,7 +503,7 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element),
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName),
                                 highlightDisplayKey);
       return true;
     });
@@ -536,7 +541,7 @@ class PostHighlightingVisitor {
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
     if (entryIndex < myCurrentEntryIndex) {
-      myHasMissortedImports = true;
+      myHasMisSortedImports = true;
     }
     myCurrentEntryIndex = entryIndex;
 

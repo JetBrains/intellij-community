@@ -28,7 +28,7 @@ public class Jsr305Support implements AnnotationPackageSupport {
                                                                        PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                                        boolean superPackage) {
     if (superPackage) return null;
-    PsiClass declaration = resolveAnnotationType(annotation);
+    PsiClass declaration = annotation.resolveAnnotationType();
     PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
     if (modList == null) return null;
 
@@ -89,14 +89,6 @@ public class Jsr305Support implements AnnotationPackageSupport {
       return Nullability.NOT_NULL;
     }
     return Nullability.UNKNOWN;
-  }
-
-  @Nullable
-  private static PsiClass resolveAnnotationType(@NotNull PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
-    PsiElement declaration = element == null ? null : element.resolve();
-    if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
-    return (PsiClass)declaration;
   }
 
   @NotNull

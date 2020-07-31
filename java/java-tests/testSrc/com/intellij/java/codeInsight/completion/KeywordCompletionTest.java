@@ -4,9 +4,12 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.testFramework.NeedsIndicesState;
 import org.jetbrains.annotations.NotNull;
 
 public class KeywordCompletionTest extends LightCompletionTestCase {
@@ -93,9 +96,34 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testDefaultInAnno() { doTest(); }
   public void testNullInMethodCall() { doTest(); }
   public void testNullInMethodCall2() { doTest(); }
-  public void testNewInMethodRefs() { doTest(1, "new", "null", "true", "false"); }
+
+  @NeedsIndicesState.StandardLibraryIndices
+  public void testNewInMethodRefs() {
+    doTest(1, "new", "null", "true", "false");
+    assertEquals("new", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    selectItem(myItems[0]);
+    checkResultByTestName();
+  }
+
+  @NeedsIndicesState.StandardLibraryIndices
+  public void testNewInMethodRefsArray() {
+    doTest(1, "new", "null", "true", "false");
+    assertEquals("Object", assertInstanceOf(myItems[0].getPsiElement(), PsiMethod.class).getName());
+    selectItem(myItems[0]);
+    checkResultByTestName();
+  }
+
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
-  public void testNewInNegation() { doTest(1, "new", "null", "true", "false"); }
+
+  public void testNewInNegation() {
+    if (getIndexingMode() == IndexingMode.DUMB_EMPTY_INDEX) {
+      // Object's methods are not found in empty indices, so the only element is inserted
+      doTest();
+    } else {
+      doTest(1, "new", "null", "true", "false");
+    }
+  }
+
   public void testSpaceAfterInstanceof() { doTest(); }
   public void testInstanceofAfterUnresolved() { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
@@ -111,7 +139,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
   public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
@@ -165,6 +195,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testFinalAfterAnnotationAttributes() { doTest(); }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testTryInExpression() {
     configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());

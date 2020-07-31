@@ -79,7 +79,15 @@ object Launcher {
     println("-- END")
 */
 
-    val processBuilder = ProcessBuilder(cmd).inheritIO()
+    val processBuilder = ProcessBuilder(cmd)
+    if (options.redirectOutputIntoParentProcess) {
+      processBuilder.inheritIO()
+    } else {
+      paths.logFolder.mkdirs()
+      processBuilder.redirectOutput(paths.logFolder.resolve("out.log"))
+      processBuilder.redirectError(paths.logFolder.resolve("err.log"))
+    }
+
     processBuilder.environment().putAll(options.environment)
     options.beforeProcessStart.invoke(processBuilder)
 

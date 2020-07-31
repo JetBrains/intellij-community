@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -127,13 +128,13 @@ public class PythonPathEditor extends SdkPathEditor {
   protected void onReloadButtonClicked() { }
 
   private static class PathListModel {
-    private Set<VirtualFile> myAdded = Sets.newHashSet();
-    private Set<VirtualFile> myExcluded = Sets.newHashSet();
-    private final Set<VirtualFile> myFoundFiles = Sets.newHashSet();
+    private Set<VirtualFile> myAdded = new HashSet<VirtualFile>();
+    private Set<VirtualFile> myExcluded = new HashSet<VirtualFile>();
+    private final Set<VirtualFile> myFoundFiles = new HashSet<VirtualFile>();
     private final List<VirtualFile> myFilteredOut = new ArrayList<>();
     private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
-    private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
+    private final Set<VirtualFile> myUserAddedToRemove = new HashSet<VirtualFile>();
 
     PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;

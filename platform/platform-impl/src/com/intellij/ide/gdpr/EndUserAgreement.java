@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,11 +60,11 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDataRoot() {
-    return Locations.getDataRoot().resolve("PrivacyPolicy");
+    return PathManager.getCommonDataPath().resolve(RELATIVE_RESOURCE_PATH);
   }
 
   private static String getBundledResourcePath(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "/PrivacyPolicy.html" : "/"+docName+".html";
+    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "/PrivacyPolicy.html" : "/" + docName + ".html";
   }
 
   public static void setAccepted(@NotNull Document doc) {

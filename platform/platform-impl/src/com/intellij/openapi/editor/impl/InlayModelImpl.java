@@ -517,9 +517,9 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @NotNull
     @Override
-    protected Node<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl key, int start, int end,
+    protected RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl key, int start, int end,
                                                   boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-      return new Node<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);

@@ -5,6 +5,8 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +24,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
@@ -73,6 +74,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        // myIdToDirCache could retain alien file systems
+        clearIdCache();
+        // remove alien file system references from myRoots
+        for (Iterator<Map.Entry<String, VirtualFileSystemEntry>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
+          Map.Entry<String, VirtualFileSystemEntry> entry = iterator.next();
+          VirtualFileSystemEntry root = entry.getValue();
+          if (VirtualFileManager.getInstance().getFileSystem(root.getFileSystem().getProtocol()) == null) {
+            // the file system must have been unregistered
+            iterator.remove();
+          }
+        }
+      }
+    });
     Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
     FSRecords.connect();
     activity.end();
@@ -168,7 +185,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
       for (String newName : toAddNames) {
-        Pair<FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
+        Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
         if (childData != null) {
           ChildInfo newChild = justCreated.computeIfAbsent(newName, name->makeChildRecord(id, name, childData, fs, null));
           toAddChildren.add(newChild);
@@ -282,22 +299,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
     }
 
-    int nameId = FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
-
-    if (attributes.isSymLink()) {
-      FSRecords.storeSymlinkTarget(id, symlinkTarget);
-      if (fs instanceof Win32LocalFileSystem) {
-        fs = LocalFileSystem.getInstance();
-      }
-      if (fs instanceof LocalFileSystemImpl) {
-        VirtualFile parent = getInstance().findFileById(parentId);
-        assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
-        String linkPath = parent.getPath() + '/' + name;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
-      }
-    }
-
-    return nameId;
+    return FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
   }
 
   @Override
@@ -378,7 +380,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         result.set(child);
         return children;
       }
-      Pair<FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
       if (childData == null) {
         return children;
       }
@@ -1097,7 +1099,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     for (VFileCreateEvent createEvent : createEvents) {
       createEvent.resetCache();
       String name = createEvent.getChildName();
-      Pair<FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
+      Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData != null) {
         ChildInfo child = makeChildRecord(parentId, name, childData, delegate, createEvent.getChildren());
         childrenAdded.add(child);
@@ -1130,7 +1132,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
           for (ChildInfo childInfo : scannedChildren) {
             CharSequence childName = childInfo.getName();
-            Pair<FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymLinkTarget());
+            Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
             if (childData != null) {
               ChildInfo newChild = makeChildRecord(directoryId, childName, childData, delegate, childInfo.getChildren());
               added.add(newChild);
@@ -1366,7 +1368,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                   boolean isEmptyDirectory) {
     NewVirtualFileSystem delegate = getDelegate(parent);
     int parentId = getFileId(parent);
-    Pair<FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
+    Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
     if (childData != null) {
       ChildInfo childInfo = makeChildRecord(parentId, name, childData, delegate, null);
       FSRecords.update(parentId, children -> {
@@ -1394,7 +1396,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @NotNull
   private static ChildInfo makeChildRecord(int parentId,
                                            @NotNull CharSequence name,
-                                           @NotNull Pair<FileAttributes, String> childData,
+                                           @NotNull Pair<@NotNull FileAttributes, String> childData,
                                            @NotNull NewVirtualFileSystem fs,
                                            ChildInfo @Nullable [] children) {
     int childId = FSRecords.createRecord();
@@ -1405,11 +1407,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // return File attributes, symlink target
   @Nullable // null when file not found
-  private static Pair<FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
-                                                           @NotNull VirtualFile parent,
-                                                           @NotNull String name,
-                                                           @Nullable FileAttributes attributes,
-                                                           @Nullable String symlinkTarget) {
+  private static Pair<@NotNull FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
+                                                                    @NotNull VirtualFile parent,
+                                                                    @NotNull String name,
+                                                                    @Nullable FileAttributes attributes,
+                                                                    @Nullable String symlinkTarget) {
     if (attributes == null) {
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
       attributes = fs.getAttributes(virtualFile);

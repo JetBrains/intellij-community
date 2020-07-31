@@ -27,7 +27,7 @@ import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
-  override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
+  override fun getIcon(): Icon = AllIcons.Vcs.FromVCSDialog
 
   override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 

@@ -1,10 +1,6 @@
 import sys
 from typing import Any, Union, Tuple, Optional, overload, Dict, NoReturn, Sequence
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 CREATE_NEW_CONSOLE: int
 CREATE_NEW_PROCESS_GROUP: int

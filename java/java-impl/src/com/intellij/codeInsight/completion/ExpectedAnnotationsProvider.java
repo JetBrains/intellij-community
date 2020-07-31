@@ -23,7 +23,6 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.StandardPatterns.or;
@@ -31,17 +30,12 @@ import static com.intellij.patterns.StandardPatterns.or;
 /**
  * @author peter
  */
-class ExpectedAnnotationsProvider extends CompletionProvider<CompletionParameters> {
+class ExpectedAnnotationsProvider {
   static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_VALUE = or(
     PsiJavaPatterns.psiElement().withParent(PsiNameValuePair.class),
     PsiJavaPatterns.psiElement().withSuperParent(2, PsiNameValuePair.class));
 
-  @Override
-  public void addCompletions(@NotNull final CompletionParameters parameters,
-                             @NotNull final ProcessingContext context,
-                             @NotNull final CompletionResultSet result) {
-    final PsiElement element = parameters.getPosition();
-
+  static void addCompletions(@NotNull PsiElement element, @NotNull CompletionResultSet result) {
     for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null && psiClass.isAnnotationType()) {

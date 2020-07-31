@@ -1,21 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.ide.FileIconProvider
-import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.testFramework.LightVirtualFileBase
-import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import javax.swing.Icon
-import kotlin.properties.Delegates.observable
 
 /**
  * [fileManagerId] is a [org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl.id] which is required to differentiate files
@@ -28,37 +22,16 @@ import kotlin.properties.Delegates.observable
  * As a result all previously opened files will be seen by history manager as non-existent.
  * Including this arbitrary [fileManagerId] helps distinguish files between launches.
  */
-internal class GHPRVirtualFile(private val fileManagerId: String,
+abstract class GHPRVirtualFile(protected val fileManagerId: String,
                                val project: Project,
                                val repository: GHRepositoryCoordinates,
                                val pullRequest: GHPRIdentifier)
   : LightVirtualFileBase("", null, 0), VirtualFileWithoutContent, VirtualFilePathWrapper {
 
-  var details: GHPullRequestShort? by observable(pullRequest as? GHPullRequestShort) { _, _, _ ->
-    modificationStamp = modificationStamp++
-  }
-
-  init {
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
-    isWritable = false
-  }
-
-  override fun getName() = "#${pullRequest.number}"
-  override fun getPresentableName(): String? = details?.title ?: name
-
-  override fun getPath(): String = GHPRVirtualFileSystem.getPath(fileManagerId, project, repository, pullRequest)
-  override fun getPresentablePath() = details?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
-
-  private fun getIcon(): Icon? = when (details?.state) {
-    GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
-    GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-    GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
-    null -> null
-  }
-
   override fun enforcePresentableName() = true
 
   override fun getFileSystem(): VirtualFileSystem = GHPRVirtualFileSystem.getInstance()
+  override fun getFileType(): FileType = FileTypes.UNKNOWN
 
   override fun getLength() = 0L
   override fun contentsToByteArray() = throw UnsupportedOperationException()
@@ -83,10 +56,5 @@ internal class GHPRVirtualFile(private val fileManagerId: String,
     result = 31 * result + repository.hashCode()
     result = 31 * result + pullRequest.hashCode()
     return result
-  }
-
-
-  class IconProvider : FileIconProvider {
-    override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? GHPRVirtualFile)?.getIcon()
   }
 }

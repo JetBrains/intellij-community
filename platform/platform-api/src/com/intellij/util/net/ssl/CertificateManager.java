@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Mikhail Golubev
  */
-@State(name = "CertificateManager", storages = @Storage("certificates.xml"))
+@State(name = "CertificateManager", storages = @Storage("certificates.xml"), reportStatistic = false)
 public final class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
   @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getConfigPath(), "ssl", "cacerts");

@@ -489,6 +489,27 @@ public class VariableAccessUtils {
     return !TypeConversionUtil.boxingConversionApplicable(variableType, initializationType);
   }
 
+  /**
+   * @param statement statement to scan
+   * @return list of variables declared inside given element that could conflict with other declarations on statement level.
+   * I.e. all local and pattern declarations declared inside, except declarations from the local/anonymous classes.
+   */
+  public static List<PsiVariable> findDeclaredVariables(@NotNull PsiStatement statement) {
+    List<PsiVariable> variables = new ArrayList<>();
+    statement.accept(new JavaRecursiveElementWalkingVisitor() {
+
+      @Override
+      public void visitClass(final PsiClass aClass) {}
+
+      @Override
+      public void visitVariable(PsiVariable variable) {
+        variables.add(variable);
+        super.visitVariable(variable);
+      }
+    });
+    return variables;
+  }
+
   private static boolean isFinalChain(PsiReferenceExpression reference) {
     while (true) {
       PsiElement element = reference.resolve();

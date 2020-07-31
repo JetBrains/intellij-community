@@ -72,7 +72,6 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
-  private static TestCase ourTestCase;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static SdkLeakTracker myOldSdks;
 
@@ -263,7 +261,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Application app = ApplicationManager.getApplication();
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
-      assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
       IdeaLogger.ourErrorsOccurred = null;
       app.assertIsDispatchThread();
 
@@ -377,7 +374,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (project != null) {
-          doTearDown(project, null);
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
       },
       () -> {
@@ -413,15 +410,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
     );
-  }
-
-  public static void doTearDown(@NotNull Project project, @Nullable TestApplicationManager testAppManager) {
-    try {
-      TestApplicationManagerKt.tearDownProjectAndApp(project, testAppManager);
-    }
-    finally {
-      ourTestCase = null;
-    }
   }
 
   static void checkAssertions() throws Exception {

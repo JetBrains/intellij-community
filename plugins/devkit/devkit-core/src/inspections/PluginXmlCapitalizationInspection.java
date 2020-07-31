@@ -114,7 +114,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
                                                   DomElement domElement,
                                                   Nls.Capitalization capitalization,
-                                                  String resourceKey, boolean required) {
+                                                  @Nullable String resourceKey, boolean required) {
+    if (resourceKey == null) return;
+    
     final PropertiesFile bundleFile = DescriptorI18nUtil.findBundlePropertiesFile(domElement);
     if (bundleFile == null) return;
 

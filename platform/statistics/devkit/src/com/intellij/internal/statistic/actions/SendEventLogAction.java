@@ -5,7 +5,9 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
+import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
@@ -80,15 +83,15 @@ public class SendEventLogAction extends AnAction {
     }
 
     @Override
-    public int getPermittedTraffic() {
-      return 100;
-    }
-
-    @NotNull
-    @Override
-    public LogEventFilter getEventFilter() {
-      final StatisticsWhitelistConditions whitelist = getWhitelistedGroups();
-      return new LogEventWhitelistFilter(whitelist != null ? whitelist : StatisticsWhitelistConditions.empty());
+    public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+      LogEventFilter filter = super.getEventFilter(base, type);
+      if (filter instanceof LogEventCompositeFilter) {
+        LogEventFilter[] withoutSnapshot = Arrays.stream(((LogEventCompositeFilter)filter).getFilters())
+          .filter(f -> f != LogEventSnapshotBuildFilter.INSTANCE)
+          .toArray(LogEventFilter[]::new);
+        return new LogEventCompositeFilter(withoutSnapshot);
+      }
+      return filter;
     }
   }
 

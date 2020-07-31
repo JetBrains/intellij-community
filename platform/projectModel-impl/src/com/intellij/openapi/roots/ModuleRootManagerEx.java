@@ -15,16 +15,13 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   public abstract ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor);
 
   /**
-   * This method was introduced only for new workspace model and should not be used anywhere else except of
-   * {@link com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl#doGetModifiableRootModel}
-   * In workspace model, we should de distinguish {@link ModifiableRootModel} created from IdeModifiableModelsProviderImpl
-   * or from elsewhere. The main problem in the new model that if we will not do this we will get a lot of records
-   * with the different `entitySources`. From our perspective, it will be removed when we will switch externalSystem
-   * to work with the store directly.
+   * This method was introduced only for new workspace model and should not be used in other places. Instance of {@link ModifiableRootModel}
+   * returned by this method cannot be disposed (unless its module is removed) and must be committed together with its {@link com.intellij.openapi.module.ModifiableModuleModel}
+   * via {@link com.intellij.openapi.roots.impl.ModifiableModelCommitterService#multiCommit}.
    */
   @ApiStatus.Internal
   @NotNull
-  public ModifiableRootModel getModifiableModelForExternalSystem(@NotNull RootConfigurationAccessor accessor) {
+  public ModifiableRootModel getModifiableModelForMultiCommit(@NotNull RootConfigurationAccessor accessor) {
     return getModifiableModel(accessor);
   }
 

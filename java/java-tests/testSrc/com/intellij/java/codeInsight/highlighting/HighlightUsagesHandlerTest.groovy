@@ -101,7 +101,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testBreakInSwitchExpr() {
-    IdeaTestUtil.withLevel module, LanguageLevel.JDK_13_PREVIEW, {
+    IdeaTestUtil.withLevel module, LanguageLevel.JDK_14, {
       configureFile()
       ctrlShiftF7()
       assertRangeText 'switch', 'yield', 'yield'

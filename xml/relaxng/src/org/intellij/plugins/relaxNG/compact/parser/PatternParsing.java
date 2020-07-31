@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-public class PatternParsing extends DeclarationParsing {
-
-  protected static final Map<IElementType, IElementType> TOKEN_MAP =
-    ContainerUtil.newIdentityTroveMap();
+public final class PatternParsing extends DeclarationParsing {
+  private static final Map<IElementType, IElementType> TOKEN_MAP = new IdentityHashMap<>();
 
   static {
     TOKEN_MAP.put(COMMA, RncElementTypes.SEQUENCE);

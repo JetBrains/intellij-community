@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
+import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.jps.incremental.storage.ProjectStamps
@@ -26,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final String COMMIT_HISTORY_FILE = "commit_history.json"
   private static final int COMMITS_LIMIT = 200
 
   private final CompilationContext context
@@ -40,6 +40,12 @@ class CompilationOutputsUploader {
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
   private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+
+  @Lazy
+  private String commitsHistoryPath = {
+    Git git = new Git(context.paths.projectHome.trim())
+    return new CommitsHistory(git.currentBranch(false)).path
+  }()
 
   @Lazy
   private String commitHash = {
@@ -165,8 +171,8 @@ class CompilationOutputsUploader {
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
     Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(COMMIT_HISTORY_FILE, false)) {
-      def content = uploader.getAsString(COMMIT_HISTORY_FILE)
+    if (uploader.isExist(commitsHistoryPath, false)) {
+      def content = uploader.getAsString(commitsHistoryPath)
       if (!content.isEmpty()) {
         Type type = new TypeToken<Map<String, List<String>>>() {}.getType()
         commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
@@ -188,9 +194,11 @@ class CompilationOutputsUploader {
 
     // Upload and publish file with commits history
     def jsonAsString = new Gson().toJson(commitHistory)
-    File commitHistoryFile = new File(tmpDir, COMMIT_HISTORY_FILE)
+    File commitHistoryFile = new File(tmpDir, commitsHistoryPath)
+    commitHistoryFile.parentFile.mkdirs()
     commitHistoryFile.write(jsonAsString)
-    uploader.upload(COMMIT_HISTORY_FILE, commitHistoryFile)
+
+    uploader.upload(commitsHistoryPath, commitHistoryFile)
   }
 
   private static move(File src, File dst) {

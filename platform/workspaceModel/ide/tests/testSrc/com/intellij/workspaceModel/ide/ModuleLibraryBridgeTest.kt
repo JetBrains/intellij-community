@@ -13,11 +13,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -118,6 +119,7 @@ class ModuleLibraryBridgeTest {
     assertModuleLibraryDependency(moduleRootManager, antLibraryName)
   }
 
+  @Ignore("Unsupported yet")
   @Test
   fun `test module library rename swapping in one transaction`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"

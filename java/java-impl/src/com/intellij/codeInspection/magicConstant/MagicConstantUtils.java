@@ -124,10 +124,8 @@ public class MagicConstantUtils {
         if (values != null) return values;
       }
 
-      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      PsiElement resolved = ref == null ? null : ref.resolve();
-      if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
-      PsiClass aClass = (PsiClass)resolved;
+      PsiClass aClass = annotation.resolveAnnotationType();
+      if (aClass == null) continue;
 
       if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;

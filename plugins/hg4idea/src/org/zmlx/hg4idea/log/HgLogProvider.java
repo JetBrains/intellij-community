@@ -181,7 +181,7 @@ public final class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
       @Override
       public void update(Project project, @Nullable VirtualFile root) {

@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.google.common.graph.Graph
-import com.google.common.graph.GraphBuilder
-import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
@@ -17,17 +15,18 @@ import git4idea.repo.GitRepository
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHCommitHash
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
 class GHPRChangesProviderImpl(private val repository: GitRepository,
                               private val mergeBaseRef: String,
-                              commitsWithPatches: List<GHCommitWithPatches>)
+                              commitsGraph: Graph<GHCommit>,
+                              private val lastCommit: GHCommit,
+                              patchesByCommits: Map<GHCommit, Pair<List<FilePatch>, List<FilePatch>>>)
   : GHPRChangesProvider {
 
   override val changes = mutableListOf<Change>()
-  override val changesByCommits = LinkedHashMap<GHCommit, List<Change>>()
+  override val changesByCommits = mutableMapOf<GHCommit, List<Change>>()
 
   private val diffDataByChange = THashMap<Change, GHPRChangeDiffData>(object : TObjectHashingStrategy<Change> {
     override fun equals(o1: Change?, o2: Change?) = o1 == o2 &&
@@ -40,53 +39,27 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   override fun findChangeDiffData(change: Change) = diffDataByChange[change]
 
   init {
-    val commitsBySha = mutableMapOf<String, GHCommitWithPatches>()
-    val parentCommits = mutableSetOf<GHCommitHash>()
-
-    for (commitWithPatches in commitsWithPatches) {
-      val commit = commitWithPatches.commit
-      commitsBySha[commit.oid] = commitWithPatches
-      parentCommits.addAll(commit.parents)
+    val commitsBySha = LinkedHashMap<String, GHCommitWithPatches>()
+    Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit).forEach {
+      val (commitPatches, cumulativePatches) = patchesByCommits.getValue(it)
+      commitsBySha[it.oid] = GHCommitWithPatches(it, commitPatches, cumulativePatches)
     }
 
     // One or more merge commit for changes that are included into PR (master merges are ignored)
-    val linearHistory = commitsWithPatches.all { commit ->
+    val linearHistory = commitsBySha.values.all { commit ->
       commit.parents.count { commitsBySha.contains(it) } <= 1
     }
 
-    // Last commit is a commit which is not a parent of any other commit
-    // We start searching from the last hoping for some semblance of order
-    val lastCommit = commitsWithPatches.findLast { !parentCommits.contains(it.commit) } ?: error("Could not determine last commit")
-
-    fun ImmutableGraph.Builder<GHCommitWithPatches>.addCommits(commit: GHCommitWithPatches) {
-      addNode(commit)
-      for (parent in commit.parents) {
-        val parentCommit = commitsBySha[parent]
-        if (parentCommit != null) {
-          putEdge(commit, parentCommit)
-          addCommits(parentCommit)
-        }
-      }
-    }
-
-    val commitsGraph = GraphBuilder
-      .directed()
-      .allowsSelfLoops(false)
-      .immutable<GHCommitWithPatches>()
-      .apply {
-        addCommits(lastCommit)
-      }.build()
-
     if (linearHistory) {
-      initForLinearHistory(commitsGraph, lastCommit)
+      initForLinearHistory(commitsBySha)
     }
     else {
-      initForHistoryWithMerges(commitsBySha, commitsGraph, lastCommit)
+      initForHistoryWithMerges(commitsBySha)
     }
   }
 
-  private fun initForLinearHistory(commitsGraph: ImmutableGraph<GHCommitWithPatches>, lastCommit: GHCommitWithPatches) {
-    val commitsWithPatches = Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit).map { it }
+  private fun initForLinearHistory(commitsBySha: Map<String, GHCommitWithPatches>) {
+    val commitsWithPatches = commitsBySha.values
     val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRMutableLinearFileHistory>()
 
     var previousCommitSha = mergeBaseRef
@@ -131,8 +104,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       it.value.lastKnownFilePath
     }
 
-    for (patch in lastCommit.cumulativePatches) {
-      val change = createChangeFromPatch(mergeBaseRef, lastCommit.sha, patch)
+    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
+      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
       changes.add(change)
 
       if (patch is TextFilePatch) {
@@ -143,27 +116,25 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           continue
         }
 
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.sha, filePath, patch, fileHistory)
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, filePath, patch, fileHistory)
       }
     }
   }
 
-  private fun initForHistoryWithMerges(commitsBySha: Map<String, GHCommitWithPatches>,
-                                       commitsGraph: Graph<GHCommitWithPatches>,
-                                       lastCommit: GHCommitWithPatches) {
-    for (commitWithPatches in Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit)) {
+  private fun initForHistoryWithMerges(commitsBySha: Map<String, GHCommitWithPatches>) {
+    for (commitWithPatches in commitsBySha.values) {
       val previousCommitSha = commitWithPatches.parents.find { commitsBySha.contains(it) } ?: mergeBaseRef
       val commitSha = commitWithPatches.sha
       val commitChanges = commitWithPatches.commitPatches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
       changesByCommits[commitWithPatches.commit] = commitChanges
     }
 
-    for (patch in lastCommit.cumulativePatches) {
-      val change = createChangeFromPatch(mergeBaseRef, lastCommit.sha, patch)
+    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
+      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.sha, patch.filePath, patch, LookupOnlyFileHistory(commitsBySha))
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, patch.filePath, patch, LookupOnlyFileHistory(commitsBySha))
       }
     }
   }

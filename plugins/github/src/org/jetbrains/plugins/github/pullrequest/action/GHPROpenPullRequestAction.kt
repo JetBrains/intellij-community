@@ -12,17 +12,17 @@ class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("p
   override fun update(e: AnActionEvent) {
     val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_CONTROLLER)
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    e.presentation.isEnabled = controller != null && (selection != null || actionDataContext != null)
+    e.presentation.isEnabled = controller != null && (selection != null || dataProvider != null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val controller = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_CONTROLLER)
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-    val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val pullRequest = selection ?: actionDataContext!!.pullRequest
+    val pullRequest = selection ?: dataProvider!!.id
 
     controller.viewPullRequest(pullRequest)
     controller.openPullRequestTimeline(pullRequest, false)

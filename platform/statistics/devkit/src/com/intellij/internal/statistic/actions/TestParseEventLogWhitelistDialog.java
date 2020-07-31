@@ -4,6 +4,8 @@ package com.intellij.internal.statistic.actions;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter;
 import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;

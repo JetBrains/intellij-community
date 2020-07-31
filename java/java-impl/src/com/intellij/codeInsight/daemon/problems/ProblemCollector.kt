@@ -13,7 +13,7 @@ internal class ProblemCollector {
 
     @JvmName("collect")
     @JvmStatic
-    internal fun collect(prevMember: ScopedMember?, curMember: PsiMember): Set<PsiElement>? {
+    internal fun collect(prevMember: ScopedMember?, curMember: PsiMember): Set<Problem>? {
       val containingFile = curMember.containingFile
 
       // member properties were changed
@@ -21,7 +21,7 @@ internal class ProblemCollector {
         return processMemberChange(prevMember, curMember, containingFile)
       }
 
-      val problems = mutableSetOf<PsiElement>()
+      val problems = mutableSetOf<Problem>()
 
       // member was renamed
       if (prevMember != null) {
@@ -35,21 +35,21 @@ internal class ProblemCollector {
       return problems
     }
 
-    private fun processMemberChange(prevMember: ScopedMember, curMember: PsiMember, containingFile: PsiFile): Set<PsiElement>? {
+    private fun processMemberChange(prevMember: ScopedMember, curMember: PsiMember, containingFile: PsiFile): Set<Problem>? {
       val unionScope = getUnionScope(prevMember, curMember) ?: return null
       val memberName = prevMember.name
       val isMethodSearch = curMember is PsiMethod
       return processUsages(memberName, isMethodSearch, containingFile, unionScope)
     }
 
-    private fun processUsages(containingFile: PsiFile, psiMember: PsiMember): Set<PsiElement>? {
+    private fun processUsages(containingFile: PsiFile, psiMember: PsiMember): Set<Problem>? {
       val memberName = psiMember.name ?: return null
       val scope = psiMember.useScope as? GlobalSearchScope ?: return null
       val isMethodSearch = psiMember is PsiMethod
       return processUsages(memberName, isMethodSearch, containingFile, scope)
     }
 
-    private fun processUsages(containingFile: PsiFile, member: ScopedMember): Set<PsiElement>? {
+    private fun processUsages(containingFile: PsiFile, member: ScopedMember): Set<Problem>? {
       val scope = member.scope as? GlobalSearchScope ?: return null
       val memberName = member.name
       val isMethodSearch = member.member is Member.Method
@@ -59,10 +59,11 @@ internal class ProblemCollector {
     private fun processUsages(memberName: String,
                               isMethodSearch: Boolean,
                               containingFile: PsiFile,
-                              scope: GlobalSearchScope): Set<PsiElement>? {
+                              scope: GlobalSearchScope): Set<Problem>? {
       val usageExtractor: (PsiFile, Int) -> PsiElement? = { file, index -> extractUsage(file, index, isMethodSearch) }
-      val collector = MemberUsageCollector(memberName, containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(containingFile.project).processAllFilesWithWord(memberName, scope, collector, true)
+      val project = containingFile.project
+      val collector = MemberUsageCollector(memberName, project, usageExtractor)
+      PsiSearchHelper.getInstance(project).processAllFilesWithWord(memberName, scope, collector, true)
       val usages = collector.collectedUsages ?: return null
       return usages.flatMapTo(mutableSetOf()) { ProblemSearcher.getProblems(it, containingFile) }
     }

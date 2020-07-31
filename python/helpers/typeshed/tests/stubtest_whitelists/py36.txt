@@ -29,7 +29,6 @@ importlib.resources
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
 json.loads
-logging.handlers.MemoryHandler.__init__
 mmap.ACCESS_DEFAULT
 multiprocessing.shared_memory
 nntplib._NNTPBase.starttls
@@ -40,8 +39,6 @@ secrets.SystemRandom.getstate
 smtplib.SMTP.sendmail
 sre_compile.dis
 ssl.SSLSocket.__init__
-tkinter.Menu.tk_bindForTraversal
-tkinter.Misc.tk_menuBar
 typing.AbstractSet.isdisjoint
 typing.AsyncGenerator.ag_await
 typing.AsyncGenerator.ag_code

@@ -105,6 +105,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   @NotNull
   protected String getIconTooltip() {
+    return getTooltip();
+  }
+
+  @NotNull
+  public static String getTooltip() {
     return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }

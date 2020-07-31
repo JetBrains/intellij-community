@@ -73,7 +73,9 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): List<Data>? {
-    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
+    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+                      ?: dataContext.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)?.detailsData?.loadedDetails
+                      ?: return null
     return listOf(Data.URL(project, pullRequest.url))
   }
 

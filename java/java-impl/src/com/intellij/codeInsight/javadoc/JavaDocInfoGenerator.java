@@ -12,6 +12,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -1837,15 +1838,13 @@ public class JavaDocInfoGenerator {
     }
     LOG.assertTrue(refText != null, "refText appears to be null.");
     PsiElement target = null;
-    boolean resolveNotPossible = false;
     try {
       target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
     }
     catch (IndexNotReadyException e) {
       LOG.debug(e);
-      resolveNotPossible = true;
     }
-    if (resolveNotPossible) {
+    if (target == null && DumbService.isDumb(context.getProject())) {
       buffer.append(label);
     }
     else if (target == null) {
@@ -1916,20 +1915,23 @@ public class JavaDocInfoGenerator {
     }
 
     if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result;
+      PsiClass psiClass = null;
+      PsiSubstitutor psiSubst = null;
       try {
-        result = ((PsiClassType)type).resolveGenerics();
+        PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+        psiClass = result.getElement();
+        psiSubst = result.getSubstitutor();
       }
       catch (IndexNotReadyException e) {
         LOG.debug(e);
-        String text = ((PsiClassType)type).getClassName();
-        buffer.append(StringUtil.escapeXmlEntities(text));
-        return text.length();
       }
-      PsiClass psiClass = result.getElement();
-      PsiSubstitutor psiSubst = result.getSubstitutor();
 
       if (psiClass == null) {
+        if (DumbService.isDumb(context.getProject())) {
+          String text = ((PsiClassType)type).getClassName();
+          buffer.append(StringUtil.escapeXmlEntities(text));
+          return text.length();
+        }
         String canonicalText = type.getCanonicalText();
         String text = "<font color=red>" + StringUtil.escapeXmlEntities(canonicalText) + "</font>";
         buffer.append(text);

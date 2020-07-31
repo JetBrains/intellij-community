@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.ClassConversion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -19,7 +20,8 @@ internal fun getEntityManipulation(workspace: WorkspaceEntityStorageBuilderImpl)
   return Generator.anyOf(
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
-    EntityManipulation.modifyManipulations(workspace)
+    EntityManipulation.modifyManipulations(workspace),
+    ChangeEntitySource.create(workspace)
   )
 }
 
@@ -40,7 +42,10 @@ internal interface EntityManipulation {
       SampleEntityManipulation,
       ParentEntityManipulation,
       ChildEntityManipulation,
-      ChildWithOptionalParentManipulation
+      ChildWithOptionalParentManipulation //,
+
+      // Do not enable at the moment. A lot of issues about entities with persistentId
+      //NamedEntityManipulation
     )
   }
 }
@@ -48,12 +53,13 @@ internal interface EntityManipulation {
 // Common for all entities
 private class RemoveSomeEntity(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to remove random entity")
-    val id = env.generateValue(EntityIdGenerator.create(storage), "Generate random EntityId: %s") ?: return
+    val id = env.generateValue(EntityIdGenerator.create(storage), null) ?: run {
+      env.logMessage("Tried to remove random entity, but failed to select entity")
+      return
+    }
     storage.removeEntity(storage.entityDataByIdOrDie(id).createEntity(storage))
     Assert.assertNull(storage.entityDataById(id))
-    env.logMessage("Entity removed")
-    env.logMessage("-------------------------")
+    env.logMessage("Entity removed. Id: $id")
   }
 
   companion object {
@@ -61,19 +67,42 @@ private class RemoveSomeEntity(private val storage: WorkspaceEntityStorageBuilde
   }
 }
 
+private class ChangeEntitySource(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val id = env.generateValue(EntityIdGenerator.create(storage), null) ?: run {
+      env.logMessage("Tried to change entity source, but entity to change isn't found")
+      return
+    }
+    val newSource = env.generateValue(sources, null)
+    val entity = storage.entityDataByIdOrDie(id).createEntity(storage)
+    val oldEntitySource = entity.entitySource
+    storage.changeSource(entity, newSource)
+
+    env.logMessage("Entity source changed. Entity: $entity, Old source: $oldEntitySource, New source: $newSource")
+  }
+
+  companion object {
+    fun create(workspace: WorkspaceEntityStorageBuilderImpl): Generator<ChangeEntitySource> {
+      return Generator.constant(ChangeEntitySource(workspace))
+    }
+  }
+}
+
 internal abstract class AddEntity(protected val storage: WorkspaceEntityStorageBuilderImpl,
                                   private val entityDescription: String) : ImperativeCommand {
-  abstract fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity?
+  abstract fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String>
 
   final override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to add $entityDescription entity")
     val property = env.generateValue(randomNames, null)
     val source = env.generateValue(sources, null)
-    val createdEntity = makeEntity(source, property, env) as? WorkspaceEntityBase
+    val (createdEntity, description) = makeEntity(source, property, env)
     if (createdEntity != null) {
+      createdEntity as WorkspaceEntityBase
       Assert.assertNotNull(storage.entityDataById(createdEntity.id))
-      env.logMessage("New entity added: $createdEntity. Source: ${createdEntity.entitySource}")
-      env.logMessage("--------------------------------")
+      env.logMessage("New entity added: $createdEntity. Source: ${createdEntity.entitySource}. $description")
+    }
+    else {
+      env.logMessage("Tried to add $entityDescription but failed because: $description")
     }
   }
 }
@@ -85,8 +114,6 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
   final override fun performCommand(env: ImperativeCommand.Environment) {
     val modifiableClass = ClassConversion.entityDataToModifiableEntity(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
 
-    env.logMessage("Trying to modify ${entityClass.simpleName} entity")
-
     val entityId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, entityClass.java.toClassId()), null)
     if (entityId == null) return
 
@@ -94,23 +121,56 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 
     val modifications = env.generateValue(Generator.sampledFrom(modifyEntity(env)), null)
 
-    storage.modifyEntity(modifiableClass, entity, modifications)
+    try {
+      storage.modifyEntity(modifiableClass, entity, modifications)
+      env.logMessage("$entity modified")
+    }
+    catch (e: PersistentIdAlreadyExistsException) {
+      env.logMessage("Cannot modify ${entityClass.simpleName} entity. Persistent id ${e.id} already exists")
+    }
 
     env.logMessage("----------------------------------")
+  }
+}
+
+private object NamedEntityManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "NamedEntity") {
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        return try {
+          storage.addNamedEntity(someProperty, source) to "Set property for NamedEntity: $someProperty"
+        }
+        catch (e: PersistentIdAlreadyExistsException) {
+          val persistentId = e.id as NameId
+          assert(storage.entities(NamedEntity::class.java).any { it.persistentId() == persistentId }) {
+            "$persistentId reported as existing, but it's not found"
+          }
+          null to "NamedEntity with this property isn't added because this persistent id already exists"
+        }
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<NamedEntity, ModifiableNamedEntity>(NamedEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableNamedEntity.() -> Unit> {
+        return listOf(modifyStringProperty(ModifiableNamedEntity::name, env))
+      }
+    }
   }
 }
 
 private object ChildWithOptionalParentManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "ChildWithOptionalDependency") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val classId = ParentEntity::class.java.toClassId()
         val parentId = env.generateValue(Generator.anyOf(
           Generator.constant(null),
           EntityIdOfFamilyGenerator.create(storage, classId)
-        ), "Select parent for child: %s")
+        ), null)
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as ParentEntity }
-        return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source)
+        return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source) to "Select parent for child: $parentId"
       }
     }
   }
@@ -131,9 +191,9 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
 private object ChildEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Child") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-        val parent = selectParent(storage, env) ?: return null
-        return storage.addChildEntity(parent, someProperty, null, source)
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        val parent = selectParent(storage, env) ?: return null to "Cannot select parent"
+        return storage.addChildEntity(parent, someProperty, null, source) to "Selected parent: $parent"
       }
     }
   }
@@ -151,7 +211,7 @@ private object ChildEntityManipulation : EntityManipulation {
 
   private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): ParentEntity? {
     val classId = ParentEntity::class.java.toClassId()
-    val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s") ?: return null
+    val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), null) ?: return null
     return storage.entityDataByIdOrDie(parentId).createEntity(storage) as ParentEntity
   }
 }
@@ -159,8 +219,8 @@ private object ChildEntityManipulation : EntityManipulation {
 private object ParentEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Parent") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-        return storage.addParentEntity(someProperty, source)
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        return storage.addParentEntity(someProperty, source) to "parentProperty: $someProperty"
       }
     }
   }
@@ -181,8 +241,8 @@ private object ParentEntityManipulation : EntityManipulation {
 private object SampleEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Sample") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-        return storage.addSampleEntity(someProperty, source)
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        return storage.addSampleEntity(someProperty, source) to "property: $someProperty"
       }
     }
   }
@@ -208,7 +268,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNot
   return {
     val value = env.generateValue(takeFrom, null)
     if (value != null) {
-      env.logMessage("Change ${property.name} to %s")
+      env.logMessage("Change `${property.name}` to $value")
       property.set(this, value)
     }
   }
@@ -221,7 +281,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNul
 ): A.() -> Unit {
   return {
     val value = env.generateValue(takeFrom, null)
-    env.logMessage("Change ${property.name} to %s")
+    env.logMessage("Change `${property.name}` to $value")
     property.set(this, value)
   }
 }

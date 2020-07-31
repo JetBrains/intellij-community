@@ -9,7 +9,7 @@ enum class PullOption(@NonNls val option: String,
   REBASE("--rebase", "pull.option.rebase"),
   FF_ONLY("--ff-only", "pull.option.ff.only"),
   NO_FF("--no-ff", "pull.option.no.ff"),
-  SQUASH_COMMIT("--squash-commit", "pull.option.squash.commit"),
+  SQUASH_COMMIT("--squash", "pull.option.squash.commit"),
   NO_COMMIT("--no-commit", "pull.option.no.commit"),
   NO_VERIFY("--no-verify", "merge.option.no.verify");
 

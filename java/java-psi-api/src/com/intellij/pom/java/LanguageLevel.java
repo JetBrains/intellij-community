@@ -33,10 +33,12 @@ public enum LanguageLevel {
   JDK_11(JavaPsiBundle.message("jdk.11.language.level.description"), 11),
   JDK_12(JavaPsiBundle.message("jdk.12.language.level.description"), 12),
   JDK_13(JavaPsiBundle.message("jdk.13.language.level.description"), 13),
-  JDK_13_PREVIEW(JavaPsiBundle.message("jdk.13.preview.language.level.description"), 13),
   JDK_14(JavaPsiBundle.message("jdk.14.language.level.description"), 14),
   JDK_14_PREVIEW(JavaPsiBundle.message("jdk.14.preview.language.level.description"), 14),
-  JDK_X(JavaPsiBundle.message("jdk.X.language.level.description"), 15);
+  JDK_15(JavaPsiBundle.message("jdk.15.language.level.description"), 15),
+  JDK_15_PREVIEW(JavaPsiBundle.message("jdk.15.preview.language.level.description"), 15),
+  
+  JDK_X(JavaPsiBundle.message("jdk.X.language.level.description"), 16);
 
   public static final LanguageLevel HIGHEST = JDK_14;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
@@ -53,6 +55,19 @@ public enum LanguageLevel {
 
   public boolean isPreview() {
     return myPreview;
+  }
+
+  /**
+   * @return corresponding preview level, or {@code null} if level has no paired preview level
+   */
+  public @Nullable LanguageLevel getPreviewLevel() {
+    if (myPreview) return this;
+    try {
+      return valueOf(name() + "_PREVIEW");
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   @NotNull

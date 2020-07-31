@@ -32,7 +32,7 @@ public final class ReferenceProviders {
     for (PsiSymbolReferenceProviderBean bean : EP_NAME.getExtensionList()) {
       Language hostLanguage = bean.getHostLanguage();
       boolean matches = hostLanguage instanceof MetaLanguage ? ((MetaLanguage)hostLanguage).matchesLanguage(language)
-                                                             : language.isKindOf(hostLanguage);
+                                                             : hostLanguage == Language.ANY || language.isKindOf(hostLanguage);
       if (matches) {
         result.add(bean);
       }

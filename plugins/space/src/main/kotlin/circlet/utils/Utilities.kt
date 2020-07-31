@@ -1,14 +1,20 @@
 package circlet.utils
 
-import com.intellij.notification.*
-import com.intellij.openapi.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.util.*
-import com.intellij.xml.util.*
-import libraries.coroutines.extra.*
-import platform.common.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.xml.util.XmlStringUtil
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.Lifetimed
+import platform.common.ProductName
 
 val application: Application
     get() = ApplicationManager.getApplication()
@@ -34,23 +40,17 @@ inline fun <reified T : Any> Project.getService(): T = service<T>().checkService
 inline fun <reified T : Any> T?.checkService(container: Any): T =
     this ?: throw Error("Service ${T::class.java} not found in container $container")
 
-fun Notification.notify(lifetime: Lifetime, project: Project?) {
-    lifetime.add { expire() }
-
-    notify(project)
-}
-
 inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.() -> T?): T? =
     application.runReadAction(Computable {
         if (isDisposed) null else compute()
     })
 
-fun notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
+fun notify(text: String, handler: (() -> Unit)? = null) {
     Notification(
         ProductName,
         ProductName,
         XmlStringUtil.wrapInHtml(text),
         NotificationType.INFORMATION,
         handler?.let { NotificationListener { _, _ -> it() } }
-    ).notify(lifetime, null)
+    ).notify( null)
 }

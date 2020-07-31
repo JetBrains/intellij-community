@@ -1,17 +1,18 @@
 package circlet.plugins.pipelines.services.run
 
-import com.intellij.execution.configurations.*
-import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.util.*
-import icons.*
-import platform.common.*
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.SimpleConfigurationType
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NotNullLazyValue
+import icons.SpaceIcons
+import platform.common.ProductName
 
 class CircletRunConfigurationType : SimpleConfigurationType(
     "CircletRunConfiguration",
     "$ProductName Task",
     "Run $ProductName Task",
-    NotNullLazyValue.createValue { CircletIcons.mainIcon }) {
+    NotNullLazyValue.createValue { SpaceIcons.Main }) {
 
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
         return CircletRunConfiguration(project, this)

@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-/**
- * @author yole
- */
-public class UniqueNameBuilder<T> {
+public final class UniqueNameBuilder<T> {
   private static final String VFS_SEPARATOR = "/";
-  private final Map<T, String> myPaths = new THashMap<>();
+  private final Map<T, String> myPaths = new HashMap<>();
   private final String mySeparator;
   private final int myMaxLength;
   private final String myRoot;
@@ -46,16 +29,16 @@ public class UniqueNameBuilder<T> {
     return myPaths.size();
   }
 
-  private static class Node {
+  private static final class Node {
     final String myText;
-    final THashMap<String, Node> myChildren;
+    final HashMap<String, Node> myChildren;
     final Node myParentNode;
     int myNestedChildrenCount;
 
     Node(String text, Node parentNode) {
       myText = text;
       myParentNode = parentNode;
-      myChildren = new THashMap<>(1);
+      myChildren = new HashMap<>();
     }
 
     Node findOrAddChild(String word) {
@@ -111,7 +94,7 @@ public class UniqueNameBuilder<T> {
           firstNodeBeforeNodeWithBranches = current;
         }
       }
-      
+
       if (current.myChildren.size() != 1 && firstNodeWithBranches == null) {
         firstNodeWithBranches = current;
       }
@@ -146,7 +129,7 @@ public class UniqueNameBuilder<T> {
     return mySeparator;
   }
 
-  private static class PathComponentsIterator implements Iterator<String> {
+  private static final class PathComponentsIterator implements Iterator<String> {
     private final String myPath;
     private int myLastPos;
     private int mySeparatorPos;
@@ -166,12 +149,13 @@ public class UniqueNameBuilder<T> {
     public String next() {
       if (myLastPos == 0) throw new NoSuchElementException();
       String pathComponent;
-      
+
       if (mySeparatorPos != -1) {
         pathComponent = myPath.substring(mySeparatorPos, myLastPos);
         myLastPos = mySeparatorPos;
         mySeparatorPos = myPath.lastIndexOf(VFS_SEPARATOR, myLastPos - 1);
-      } else {
+      }
+      else {
         pathComponent = myPath.substring(0, myLastPos);
         if (!pathComponent.startsWith(VFS_SEPARATOR)) pathComponent = VFS_SEPARATOR + pathComponent;
         myLastPos = 0;

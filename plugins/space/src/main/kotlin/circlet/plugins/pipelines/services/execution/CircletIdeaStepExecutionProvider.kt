@@ -9,6 +9,7 @@ import circlet.pipelines.engine.api.utils.AutomationTracer
 import circlet.pipelines.engine.toFlowGraph
 import circlet.pipelines.messages.TextMessageSeverity
 import circlet.pipelines.provider.FailureChecker
+import circlet.pipelines.provider.FinishConditionsChecker
 import circlet.pipelines.provider.StepExecutionCustomMessages
 import circlet.pipelines.provider.api.ServiceCredentials
 import circlet.pipelines.provider.api.StartContainerContext
@@ -40,8 +41,26 @@ class CircletIdeaStepExecutionProvider(
     tracer,
     failureChecker,
     listeners,
-    statusHub, object: StepExecutionCustomMessages {
-    override fun addCustomMessages(tx: AutomationStorageTransaction,
+    statusHub,
+    object : FinishConditionsChecker {
+        override fun markExecutionFinishedCondition(tx: AutomationStorageTransaction,
+                                                    stepExecutionId: Long,
+                                                    exitCode: Int,
+                                                    reason: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun markMessagesReceivedCondition(tx: AutomationStorageTransaction, stepExecutionId: Long) {
+            TODO("Not yet implemented")
+        }
+
+        override fun markSnapshotCreatedCondition(tx: AutomationStorageTransaction, stepExecutionId: Long) {
+            TODO("Not yet implemented")
+        }
+
+    },
+    object: StepExecutionCustomMessages {
+        override fun addCustomMessages(tx: AutomationStorageTransaction,
                                    stepExec: StepExecId,
                                    messages: List<Pair<String, TextMessageSeverity>>) {
         TODO("Not yet implemented")

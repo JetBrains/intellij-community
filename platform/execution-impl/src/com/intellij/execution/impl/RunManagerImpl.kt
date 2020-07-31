@@ -1071,7 +1071,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (selectedConfiguration?.uniqueID == uniqueId) {
       iconCache.checkValidity(uniqueId)
     }
-    var icon = iconCache.get(uniqueId, settings, project)
+    var icon = iconCache.get(uniqueId, settings, project, this)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { it === settings })
       when {

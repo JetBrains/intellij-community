@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.NeedsIndicesState;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartType14CompletionTest extends LightFixtureCompletionTestCase {
@@ -39,6 +40,7 @@ public class SmartType14CompletionTest extends LightFixtureCompletionTestCase {
     return JAVA_1_4;
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testLogger14() {
     doTest();
   }

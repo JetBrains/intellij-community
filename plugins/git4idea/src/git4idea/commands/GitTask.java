@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import git4idea.GitDisposable;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -337,7 +338,7 @@ public class GitTask {
     GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
       myHandler = handler;
       myTask = task;
-      Disposer.register(project, this);
+      Disposer.register(GitDisposable.getInstance(project), this);
     }
 
     public void run(ProgressIndicator indicator) {

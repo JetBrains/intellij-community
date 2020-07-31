@@ -201,7 +201,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
         try {
           VirtualFile file = fileAnnotation.getFile();
           FilePath filePath = VcsUtil.getFilePath(file);

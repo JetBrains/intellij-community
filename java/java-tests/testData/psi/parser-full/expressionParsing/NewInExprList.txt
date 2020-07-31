@@ -13,6 +13,8 @@ PsiJavaFile:NewInExprList.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
     PsiClassInitializer
@@ -42,4 +44,3 @@ PsiJavaFile:NewInExprList.java
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')
-    

@@ -16,11 +16,7 @@ CPython C source: https://github.com/python/cpython/blob/master/Modules/socketmo
 #   adapted for Python 2.7 by Michal Pokorny
 import sys
 from typing import Any, BinaryIO, Iterable, List, Optional, Text, TextIO, Tuple, TypeVar, Union, overload
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 
 # ----- Constants -----

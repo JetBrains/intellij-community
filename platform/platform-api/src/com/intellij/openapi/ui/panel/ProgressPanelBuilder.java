@@ -343,9 +343,28 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
     }
 
+    @NotNull
     @Override
     public State getState() {
       return state;
+    }
+
+    @Override
+    public void setState(@NotNull State state) {
+      if (this.state == state || state == State.CANCELLED || mySuspendButton == null) {
+        return;
+      }
+
+      this.state = state;
+
+      if (state == State.PLAYING) {
+        mySuspendButton.setIcons(pauseIcon);
+        setCommentText(IdeBundle.message("comment.text.pause"), true);
+      }
+      else {
+        mySuspendButton.setIcons(resumeIcon);
+        setCommentText(IdeBundle.message("comment.text.paused"), true);
+      }
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
@@ -402,10 +421,13 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
       if (resumeAction != null && pauseAction != null) {
         mySuspendButton = new InplaceButton(pauseIcon, a -> {
+          if (state == State.CANCELLED) {
+            return;
+          }
           if (state == State.PLAYING) {
             mySuspendButton.setIcons(resumeIcon);
             state = State.PAUSED;
-            setCommentText(IdeBundle.message("comment.text.paused"), true);
+            setCommentText(IdeBundle.message("comment.text.resume"), true);
             pauseAction.run();
           }
           else {
@@ -480,7 +502,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(state != State.PAUSED ? null : IdeBundle.message("comment.text.paused"), true);
+        setCommentText(state == State.PAUSED ? IdeBundle.message("comment.text.paused") : null, true);
       }
     }
   }

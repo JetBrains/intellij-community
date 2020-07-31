@@ -7,13 +7,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.util.Key;
@@ -545,13 +543,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private static final class MySimpleColoredComponent extends SimpleColoredComponent {
     private MySimpleColoredComponent() {
       setFocusBorderAroundIcon(true);
-      UISettings.setupEditorAntialiasing(this);  // Android Studio: b/156739439
-    }
-
-    // Android Studio: b/156739439
-    @Override
-    protected void applyAdditionalHints(@NotNull Graphics2D g) {
-      EditorUIUtil.setupAntialiasing(g);
     }
   }
 

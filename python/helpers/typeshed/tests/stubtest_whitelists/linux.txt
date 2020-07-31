@@ -51,3 +51,7 @@ posix.[a-z]+_(param|result)._(asdict|make|replace)
 # Platform differences that cannot be captured by the type system
 fcntl.[A-Z0-9_]+
 os.SCHED_[A-Z_]+
+
+# Loadable SQLite extensions are disabled on GitHub runners
+sqlite3(.dbapi2)?.Connection.enable_load_extension
+sqlite3(.dbapi2)?.Connection.load_extension

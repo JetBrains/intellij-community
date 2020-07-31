@@ -2,23 +2,24 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,30 +28,30 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
-  private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
+  private final NotNullLazyValue<Interner<PsiMember>> myInterner = NotNullLazyValue.createValue(() -> Interner.createWeakInterner());
 
   public ClassInnerStuffCache(@NotNull PsiExtensibleClass aClass) {
     myClass = aClass;
   }
 
   public PsiMethod @NotNull [] getConstructors() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(PsiImplUtil.getConstructors(myClass))));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, PsiImplUtil::getConstructors));
   }
 
   public PsiField @NotNull [] getFields() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcFields())));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcFields()));
   }
 
   public PsiMethod @NotNull [] getMethods() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcMethods())));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcMethods()));
   }
 
   public PsiClass @NotNull [] getInnerClasses() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcInnerClasses()));
   }
 
   public PsiRecordComponent @NotNull [] getRecordComponents() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcRecordComponents())));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcRecordComponents()));
   }
 
   @Nullable
@@ -59,7 +60,7 @@ public class ClassInnerStuffCache {
       return PsiClassImplUtil.findFieldByName(myClass, name, true);
     }
     else {
-      return CachedValuesManager.getCachedValue(myClass, () -> makeResult(getFieldsMap())).get(name);
+      return CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> getFieldsMap()).get(name);
     }
   }
 
@@ -68,7 +69,7 @@ public class ClassInnerStuffCache {
       return PsiClassImplUtil.findMethodsByName(myClass, name, true);
     }
     else {
-      return copy(notNull(CachedValuesManager.getCachedValue(myClass, () -> makeResult(getMethodsMap())).get(name), PsiMethod.EMPTY_ARRAY));
+      return copy(notNull(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> getMethodsMap()).get(name), PsiMethod.EMPTY_ARRAY));
     }
   }
 
@@ -78,18 +79,22 @@ public class ClassInnerStuffCache {
       return PsiClassImplUtil.findInnerByName(myClass, name, true);
     }
     else {
-      return CachedValuesManager.getCachedValue(myClass, () -> makeResult(getInnerClassesMap())).get(name);
+      return CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> getInnerClassesMap()).get(name);
     }
   }
 
   @Nullable
   PsiMethod getValuesMethod() {
-    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
+    return myClass.isEnum() && !isAnonymousClass()
+           ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValuesMethod))
+           : null;
   }
 
   @Nullable
   private PsiMethod getValueOfMethod() {
-    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
+    return myClass.isEnum() && !isAnonymousClass()
+           ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValueOfMethod))
+           : null;
   }
 
   private boolean isAnonymousClass() {
@@ -100,20 +105,30 @@ public class ClassInnerStuffCache {
     return value.length == 0 ? value : value.clone();
   }
 
-  private <T> CachedValueProvider.Result<T> makeResult(T value) {
-    return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT, myTracker);
-  }
-
   private PsiField @NotNull [] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
-    List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class, null);
+    List<PsiField> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiField.class, null));
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
+  }
+
+  @NotNull
+  private <T extends PsiMember> List<T> internMembers(List<T> members) {
+    return ContainerUtil.map(members, this::internMember);
+  }
+
+  private <T extends PsiMember> T internMember(T m) {
+    if (m == null) return null;
+    synchronized (myInterner) {
+      //noinspection unchecked
+      return (T)myInterner.getValue().intern(m);
+    }
   }
 
   private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
-    List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, null);
+    List<PsiMethod> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, null));
     if (myClass.isEnum()) {
+      ext = new ArrayList<>(ext);
       ContainerUtil.addIfNotNull(ext, getValuesMethod());
       ContainerUtil.addIfNotNull(ext, getValueOfMethod());
     }
@@ -122,7 +137,7 @@ public class ClassInnerStuffCache {
 
   private PsiClass @NotNull [] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
-    List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class, null);
+    List<PsiClass> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, null));
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
@@ -142,7 +157,8 @@ public class ClassInnerStuffCache {
     }
     return ConcurrentFactoryMap.createMap(name -> {
       PsiField result = cachedFields.get(name);
-      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiField.class, name));
+      return result != null ? result :
+             internMember(ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiField.class, name)));
     });
   }
 
@@ -154,7 +170,7 @@ public class ClassInnerStuffCache {
         .from(ownMethods).filter(m -> name.equals(m.getName()))
         .append("values".equals(name) ? getValuesMethod() : null)
         .append("valueOf".equals(name) ? getValueOfMethod() : null)
-        .append(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, name))
+        .append(internMembers(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, name)))
         .toArray(PsiMethod.EMPTY_ARRAY);
     });
   }
@@ -173,20 +189,25 @@ public class ClassInnerStuffCache {
     }
     return ConcurrentFactoryMap.createMap(name -> {
       PsiClass result = cachedInners.get(name);
-      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, name));
+      return result != null ? result :
+             internMember(ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, name)));
     });
   }
 
-  private PsiMethod makeValuesMethod() {
-    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + "[] values() { }");
+  private static PsiMethod makeValuesMethod(PsiExtensibleClass enumClass) {
+    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + "[] values() { }");
   }
 
-  private PsiMethod makeValueOfMethod() {
-    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
+  private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
+    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
   }
 
+  /**
+   * @deprecated does nothing
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public void dropCaches() {
-    myTracker.incModificationCount();
   }
 
   private static class EnumSyntheticMethod extends LightMethod implements SyntheticElement {
