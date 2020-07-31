@@ -108,6 +108,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
     if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
     if (type == JavaStubElementTypes.PROVIDES_WITH_LIST) return PsiReferenceList.Role.PROVIDES_WITH_LIST;
+    if (type == JavaStubElementTypes.PERMITS_LIST) return PsiReferenceList.Role.PERMITS_LIST;
     throw new RuntimeException("Unknown element type: " + type);
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
-import gnu.trove.THashSet
 import java.io.File
 import java.lang.Deprecated
 import java.lang.reflect.Constructor
@@ -128,7 +127,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       }
 
       if (unsatisfiableDependencyTypes == null) {
-        unsatisfiableDependencyTypes = THashSet()
+        unsatisfiableDependencyTypes = HashSet()
       }
       unsatisfiableDependencyTypes.add(parameterTypes)
       unsatisfiedDependencyType = expectedType
@@ -149,7 +148,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
     else if (!failedDependency && lastSatisfiableConstructorSize == parameterTypes.size) {
       // satisfied and same size as previous one?
       if (conflicts == null) {
-        conflicts = THashSet()
+        conflicts = HashSet()
       }
       conflicts.add(constructor)
       greediestConstructor?.let {

@@ -164,7 +164,7 @@ final class VfsEventGenerationHelper {
         // store children back
         ChildInfo parentInfo = ContainerUtil.getLastItem(parentInfos);
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
-        ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymLinkTarget());
+        ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymlinkTarget());
         parentInfos.set(parentInfos.size() - 1, newInfo);
         return FileVisitResult.CONTINUE;
       }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.SystemDependent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), reportStatistic = true)
+@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML))
 public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 

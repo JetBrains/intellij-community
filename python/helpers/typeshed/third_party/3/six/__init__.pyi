@@ -1,5 +1,3 @@
-# Stubs for six (Python 3.5)
-
 from __future__ import print_function
 
 from typing import (
@@ -26,7 +24,6 @@ import types
 import typing
 import unittest
 
-# Exports
 from io import StringIO as StringIO, BytesIO as BytesIO
 from builtins import next as next
 from functools import wraps as wraps

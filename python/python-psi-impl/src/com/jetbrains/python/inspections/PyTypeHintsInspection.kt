@@ -17,10 +17,13 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
+import com.jetbrains.python.codeInsight.imports.AddImportHelper
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -75,6 +78,18 @@ class PyTypeHintsInspection : PyInspection() {
       super.visitPySubscriptionExpression(node)
 
       checkParameters(node)
+      checkParameterizedBuiltins(node)
+    }
+
+    private fun checkParameterizedBuiltins(node: PySubscriptionExpression) {
+      if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON39)) return
+
+      val qualifier = node.qualifier
+      if (qualifier is PyReferenceExpression) {
+        if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES) {
+          registerProblem(node, "Builtin '${qualifier.name}' cannot be parameterized directly", ReplaceWithTypingGenericAliasQuickFix())
+        }
+      }
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -834,6 +849,22 @@ class PyTypeHintsInspection : PyInspection() {
 
           index.replace(newIndex)
         }
+      }
+    }
+
+    private class ReplaceWithTypingGenericAliasQuickFix : LocalQuickFix {
+      override fun getFamilyName(): String = "Replace with typing alias"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val subscription = descriptor.psiElement as? PySubscriptionExpression ?: return
+        val refExpr = subscription.operand as? PyReferenceExpression ?: return
+        val alias = PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES[refExpr.name] ?: return
+
+        val languageLevel = LanguageLevel.forElement(subscription)
+        val priority = if (languageLevel.isAtLeast(LanguageLevel.PYTHON35)) ImportPriority.THIRD_PARTY else ImportPriority.BUILTIN
+        AddImportHelper.addOrUpdateFromImportStatement(subscription.containingFile, "typing", alias, null, priority, subscription)
+        val newRefExpr = PyElementGenerator.getInstance(project).createExpressionFromText(languageLevel, alias)
+        refExpr.replace(newRefExpr)
       }
     }
   }

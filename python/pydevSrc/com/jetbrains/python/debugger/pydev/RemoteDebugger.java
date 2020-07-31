@@ -534,6 +534,12 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
+  @Override
+  public void setUnitTestDebuggingMode() {
+    SetUnitTestDebuggingMode command = new SetUnitTestDebuggingMode(this);
+    execute(command);
+  }
+
   // for DebuggerReader only
   public void processResponse(@NotNull final String line) {
     try {

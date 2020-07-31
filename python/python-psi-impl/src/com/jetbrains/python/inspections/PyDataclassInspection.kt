@@ -122,7 +122,7 @@ class PyDataclassInspection : PyInspection() {
               val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
               else stub.getCustomStub(PyDataclassFieldStub::class.java)
 
-              (fieldStub == null || fieldStub.initValue()) &&
+              (fieldStub == null || fieldStub.initValue() && !fieldStub.kwOnly()) &&
               !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
               !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
             },

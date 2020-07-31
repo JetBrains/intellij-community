@@ -102,6 +102,30 @@ public interface PsiClass
   PsiClassType @NotNull [] getImplementsListTypes();
 
   /**
+   * Returns the list of classes that this class or interface permits.
+   *
+   * @return the permits list.
+   */
+  @Nullable
+  default PsiReferenceList getPermitsList() {
+    return null;
+  }
+
+  /**
+   * Returns the list of class types that this class or interface explicitly permits.
+   *
+   * @return the list of explicitly permitted classes.
+   */
+  @Nullable
+  default PsiClassType @NotNull [] getPermitsListTypes() {
+    PsiReferenceList permitsList = getPermitsList();
+    if (permitsList != null) {
+      return permitsList.getReferencedTypes();
+    }
+    return PsiClassType.EMPTY_ARRAY;
+  }
+
+  /**
    * Returns the base class of this class.
    *
    * @return the base class. May return null when jdk is not configured, so no java.lang.Object is found,

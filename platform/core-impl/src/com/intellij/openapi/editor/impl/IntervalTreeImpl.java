@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -164,8 +165,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    protected Getter<E> createGetter(@NotNull E interval) {
-      return new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue);
+    private Getter<E> createGetter(@NotNull E interval) {
+      return myIntervalTree.keepIntervalsOnWeakReferences() ? new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue) : new StaticGetter<>(interval);
     }
 
     private static class WeakReferencedGetter<T> extends WeakReference<T> implements Getter<T> {
@@ -391,6 +392,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       pushDeltaFromRoot(node.getParent());
       pushDelta(node);
     }
+  }
+
+  protected boolean keepIntervalsOnWeakReferences() {
+    return true;
   }
 
   @NotNull

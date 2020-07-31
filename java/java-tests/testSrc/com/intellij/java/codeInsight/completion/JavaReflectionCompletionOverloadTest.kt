@@ -17,10 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.NeedsIndicesState
 
 /**
  * @author Pavel.Dolgov
  */
+@NeedsIndicesState.StandardLibraryIndices
 class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
@@ -66,7 +68,7 @@ class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
     configureByFile(getTestName(false) + ".java")
 
     val lookupItems = lookup.items
-    val texts = com.intellij.java.codeInsight.completion.lookupFirstItemsTexts(lookupItems, expected.size)
+    val texts = lookupFirstItemsTexts(lookupItems, expected.size)
     assertOrderedEquals(texts, *expected)
     if (index >= 0) selectItem(lookupItems[index])
     myFixture.checkResultByFile(getTestName(false) + "_after.java")

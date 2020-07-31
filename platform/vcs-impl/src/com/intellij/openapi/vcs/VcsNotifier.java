@@ -49,7 +49,7 @@ public class VcsNotifier {
     @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     boolean showDetailsAction
   ) {
-    if (showDetailsAction) {
+    if (showDetailsAction && ProjectLevelVcsManager.getInstance(myProject).isConsoleVisible()) {
       return notifyError(title, message, createShowDetailsAction());
     }
     else {

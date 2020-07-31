@@ -14,6 +14,8 @@ PsiJavaFile:IDEADEV_41403.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n')
@@ -34,6 +36,8 @@ PsiJavaFile:IDEADEV_41403.java
       PsiWhiteSpace(' ')
       PsiIdentifier:Foo('Foo')
       PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
         <empty list>
       PsiReferenceList
         <empty list>

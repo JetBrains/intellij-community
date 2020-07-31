@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.testFramework.NeedsIndicesState
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -34,12 +35,15 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testStatementsAfterStatement() = variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
 
+  @NeedsIndicesState.FullIndices
   fun testRequiresBare() =
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
              "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
+  @NeedsIndicesState.FullIndices
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+  @NeedsIndicesState.StandardLibraryIndices
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
 
   fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
@@ -47,9 +51,11 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
   fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other.<caret> }")
   fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+  @NeedsIndicesState.FullIndices
   fun testExportsToList() =
     variants("module M { exports pkg.other to <caret> }",
              "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named")
+  @NeedsIndicesState.FullIndices
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
   fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
@@ -69,6 +75,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testProvidesWithUnambiguous() =
     complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }", "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
 
+  @NeedsIndicesState.FullIndices
   fun testImports() {
     addFile("module-info.java", "module M { requires M2; }")
     addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import java.util.*
 
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
@@ -50,8 +51,13 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
 
     addExternalFilesActionsStatistics(project, set, conf, confDefault)
     addProjectConfigurationFilesActionsStatistics(project, set)
+    addIgnoredToExcludeSynchronizerActionsStatistics(project, set)
 
     return set
+  }
+
+  private fun addIgnoredToExcludeSynchronizerActionsStatistics(project: Project, set: HashSet<MetricEvent>) {
+    addBooleanPropertyIfDiffers(project, set, ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, false, "asked.add.external.files")
   }
 
   private fun addProjectConfigurationFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>) {

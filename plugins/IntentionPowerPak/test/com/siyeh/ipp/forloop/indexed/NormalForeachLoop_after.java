@@ -2,8 +2,8 @@ package com.siyeh.ipp.forloop.indexed;
 
 class NormalForEachLoop {
     void foo(int[] is) {
-        for (int i1 = 0, isLength = is.length; i1 < isLength; i1++) {
-            int i = is[i1];
+        for (int j = 0, isLength = is.length; j < isLength; j++) {
+            int i = is[j];
             System.out.println(i);
         }
     }

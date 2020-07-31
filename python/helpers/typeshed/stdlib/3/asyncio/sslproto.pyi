@@ -3,17 +3,13 @@ import sys
 import ssl
 
 from typing import ClassVar, Optional, List, Tuple, Callable, Dict, Any, Deque
+from typing_extensions import Literal
 
 from . import transports
 from . import constants
 from . import events
 from . import protocols
 from . import futures
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 def _create_transport_context(server_side: bool, server_hostname: Optional[str]) -> ssl.SSLContext: ...
 

@@ -4,6 +4,8 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -38,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -118,7 +121,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   };
 
   public FileDocumentManagerImpl() {
-    InvocationHandler handler = (proxy, method, args) -> {
+    InvocationHandler handler = (__, method, args) -> {
+      if (method.getDeclaringClass() != FileDocumentManagerListener.class) {
+        // only FileDocumentManagerListener methods should be called on this proxy
+        throw new UnsupportedOperationException(method.toString());
+      }
       multiCast(method, args);
       return null;
     };
@@ -126,7 +133,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
 
-    BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
+    // remove VirtualFiles sitting in the DocumentImpl.rmTreeQueue reference queue which could retain plugin-registered FS in their VirtualDirectoryImpl.myFs
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DocumentImpl.processQueue();
+      }
+    });
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -547,6 +560,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
+  public void reloadBinaryFiles() {
+    for (VirtualFile file : myDocumentCache.keySet()) {
+      if (file.getFileType().isBinary()) {
+        RefreshQueue.getInstance().processSingleEvent(
+          new VFileContentChangeEvent("binary-reload", file, file.getModificationStamp(), -1, false));
+      }
+    }
+  }
+
+  @Override
   public Document @NotNull [] getUnsavedDocuments() {
     if (myUnsavedDocuments.isEmpty()) {
       return Document.EMPTY_ARRAY;
@@ -856,19 +879,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
-  private void clearCachedDocumentsForBinaryFiles() {
-    myDocumentCache.keySet().forEach(key -> {
-      if (key.getFileType().isBinary()) {
-        key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-        removeDocumentFromCache(key);
-      }
-    });
-  }
-
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
 
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
+  @SuppressWarnings("StaticNonFinalField")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

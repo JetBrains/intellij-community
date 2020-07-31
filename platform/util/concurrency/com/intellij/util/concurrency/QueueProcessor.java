@@ -12,6 +12,7 @@ import com.intellij.util.Consumer;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -223,7 +224,12 @@ public final class QueueProcessor<T> {
       }
     }
     else {
-      application.executeOnPooledThread(runnable);
+      if (application != null) {
+        application.executeOnPooledThread(runnable);
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
   }
 

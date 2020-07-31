@@ -66,22 +66,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
     doTest();
   }

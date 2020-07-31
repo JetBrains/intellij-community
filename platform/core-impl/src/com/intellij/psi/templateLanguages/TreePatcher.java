@@ -16,7 +16,6 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -30,13 +29,14 @@ public interface TreePatcher {
    * Inserts toInsert into tree
    *
    * @apiNote Inserting must not change the position (offset) of the new node in the tree (otherwise we will receive broken tree)
+   * @param anchorBefore element before which the new element will be inserted
    */
   void insert(@NotNull CompositeElement parent, @Nullable TreeElement anchorBefore, @NotNull OuterLanguageElement toInsert);
 
   /**
    * Splits the leaf into two leaves with the same type as the original leaf
    *
-   * @return first part of the split
+   * @return second part of the split
    */
   @NotNull
   default LeafElement split(@NotNull LeafElement leaf, int offset, @NotNull CharTable table) {
@@ -46,22 +46,6 @@ public interface TreePatcher {
     leaf.rawInsertAfterMe(leftPart);
     leftPart.rawInsertAfterMe(rightPart);
     leaf.rawRemove();
-    return leftPart;
-  }
-
-  /**
-   * Removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
-   * e.g. if we process whitespace leaf " \n " and range "1, 2" the result will be new leaf with content "  "
-   */
-  @NotNull
-  default LeafElement removeRange(@NotNull LeafElement leaf,
-                                  @NotNull TextRange rangeToRemove,
-                                  @NotNull CharTable table) {
-    CharSequence chars = leaf.getChars();
-    String res = rangeToRemove.replace(chars.toString(), "");
-    LeafElement newLeaf = ASTFactory.leaf(leaf.getElementType(), table.intern(res));
-    leaf.rawInsertBeforeMe(newLeaf);
-    leaf.rawRemove();
-    return newLeaf;
+    return rightPart;
   }
 }

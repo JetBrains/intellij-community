@@ -472,6 +472,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassAndPackageConflict(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPublicClassInRightFile(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkWellFormedRecord(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkWellFormedSealedInheritor(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel));
   }
 
@@ -512,9 +513,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     IElementType type = token.getTokenType();
     if (!myHolder.hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       myHolder.add(checkFeature(token, HighlightingFeature.TEXT_BLOCKS));
-    }
-    else if (!myHolder.hasErrorResults() && type == JavaTokenType.RECORD_KEYWORD) {
-      myHolder.add(checkFeature(token, HighlightingFeature.RECORDS));
     }
 
     if (!myHolder.hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {

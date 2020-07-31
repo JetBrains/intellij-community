@@ -161,11 +161,15 @@ public class PsiScopesUtil {
       // Composite expression
       PsiElement target = null;
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement) {
+      if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement || qualifier instanceof PsiTypeElement) {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
           assert type == null || type.isValid() : type.getClass() + "; " + qualifier;
+          processTypeDeclarations(type, ref, processor);
+        }
+        else if (qualifier instanceof PsiTypeElement) {
+          type = ((PsiTypeElement)qualifier).getType();
           processTypeDeclarations(type, ref, processor);
         }
 

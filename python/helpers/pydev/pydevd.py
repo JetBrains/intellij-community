@@ -461,6 +461,9 @@ class PyDB(object):
 
         self.collect_return_info = collect_return_info
 
+        # If True, pydevd will stop on assertion errors in tests.
+        self.stop_on_failed_tests = False
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -576,6 +579,12 @@ class PyDB(object):
 
     def is_top_level_trace_in_project_scope(self, trace):
         return pydevd_utils.is_top_level_trace_in_project_scope(trace)
+
+    def is_test_item_or_set_up_caller(self, frame):
+        return pydevd_utils.is_test_item_or_set_up_caller(frame)
+
+    def set_unit_tests_debugging_mode(self):
+        self.stop_on_failed_tests = True
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():

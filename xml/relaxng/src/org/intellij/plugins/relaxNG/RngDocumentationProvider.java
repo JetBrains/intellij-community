@@ -27,6 +27,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.model.descriptors.CompositeDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngXmlAttributeDescriptor;
@@ -36,7 +37,7 @@ import org.kohsuke.rngom.digested.DElementPattern;
 
 import java.util.Collection;
 
-public class RngDocumentationProvider implements DocumentationProvider {
+final class RngDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
 
   @NonNls
@@ -79,15 +80,14 @@ public class RngDocumentationProvider implements DocumentationProvider {
       final XmlAttribute attribute = (XmlAttribute)c;
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
       if (descriptor instanceof RngXmlAttributeDescriptor) {
-        final RngXmlAttributeDescriptor d = (RngXmlAttributeDescriptor)descriptor;
         final StringBuilder sb = new StringBuilder();
-        final Collection<PsiElement> declaration = ContainerUtil.newIdentityTroveSet(d.getDeclarations());
+        final Collection<PsiElement> declaration = new ReferenceOpenHashSet<>(descriptor.getDeclarations());
         for (PsiElement psiElement : declaration) {
           if (psiElement instanceof XmlTag) {
             if (sb.length() > 0) {
               sb.append("<hr>");
             }
-            sb.append(getDocumentationFromTag((XmlTag)psiElement, d.getName(), "Attribute"));
+            sb.append(getDocumentationFromTag((XmlTag)psiElement, descriptor.getName(), "Attribute"));
           }
         }
         return makeDocumentation(sb);

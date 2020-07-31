@@ -3,14 +3,10 @@ import sys
 from typing import (
     Any, TypeVar, Set, List, TextIO, Union, Tuple, Generic, Generator, Iterable, Awaitable, overload, Iterator, Optional,
 )
+from typing_extensions import Literal
 from types import FrameType
 from .events import AbstractEventLoop
 from .futures import Future
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _T = TypeVar('_T')
 _T1 = TypeVar('_T1')

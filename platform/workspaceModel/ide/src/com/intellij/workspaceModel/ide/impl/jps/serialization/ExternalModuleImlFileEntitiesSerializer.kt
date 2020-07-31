@@ -63,11 +63,11 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
         }
       }
       saveOption("externalSystem", externalSystemOptions.externalSystem)
-      saveOption("externalSystemModuleVersion", externalSystemOptions.externalSystemModuleVersion)
       saveOption("externalSystemModuleGroup", externalSystemOptions.externalSystemModuleGroup)
       saveOption("externalSystemModuleType", externalSystemOptions.externalSystemModuleType)
-      saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
+      saveOption("externalSystemModuleVersion", externalSystemOptions.externalSystemModuleVersion)
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
+      saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
       writer.saveComponent(fileUrl.url, "ExternalSystem", componentTag)
     }

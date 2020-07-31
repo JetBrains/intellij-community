@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityStateBuilder
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
@@ -33,11 +33,12 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       try {
         requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
       }
-      catch (e: GithubStatusCodeException) {
-        if (e.statusCode == 404) null
-        else throw e
+      catch (e: Exception) {
+        // assume there are no restrictions
+        if (e !is ProcessCanceledException) LOG.info("Error occurred while loading branch protection rules for $baseBranch", e)
+        null
       }
-    }.logError(LOG, "Error occurred while loading branch protection rules for $baseBranch")
+    }
   }
 
   override fun loadMergeabilityState(progressIndicator: ProgressIndicator,

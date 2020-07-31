@@ -59,7 +59,10 @@ public abstract class ProgressPanel extends ComponentPanel {
    *
    * @return the state
    */
+  @NotNull
   public abstract State getState();
+
+  public abstract void setState(@NotNull State state);
 
   /**
    * @return the label text

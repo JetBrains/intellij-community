@@ -5,14 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import kotlin.properties.Delegates
+import org.jetbrains.plugins.github.util.GithubUtil
 
 class SingleValueModel<T>(initialValue: T) {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  var value by Delegates.observable<T>(initialValue) { _, _, _ ->
-    changeEventDispatcher.multicaster.eventOccurred()
-  }
+  var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
 
   @CalledInAwt
   fun addAndInvokeValueChangedListener(listener: () -> Unit) =
@@ -25,4 +23,12 @@ class SingleValueModel<T>(initialValue: T) {
   @CalledInAwt
   fun addValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addListener(changeEventDispatcher, listener)
+
+  fun <R> map(mapper: (T) -> R): SingleValueModel<R> {
+    val mappedModel = SingleValueModel(value.let(mapper))
+    addValueChangedListener {
+      mappedModel.value = value.let(mapper)
+    }
+    return mappedModel
+  }
 }

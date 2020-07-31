@@ -61,12 +61,12 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   @Override
-  protected void performRefactoring(Project project,
-                                    PsiClass targetClass,
-                                    PsiMethod method,
-                                    PsiParameter myParameter,
+  protected void performRefactoring(@NotNull Project project,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull PsiMethod method,
+                                    @NotNull PsiParameter myParameter,
                                     PsiType type,
-                                    String fieldName,
+                                    @NotNull String fieldName,
                                     boolean methodStatic,
                                     boolean isFinal) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);

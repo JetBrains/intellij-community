@@ -8,7 +8,7 @@ public class HardcodedFileSeparators {
   }
 
   public static void foo() {
-    final String backSlash = " <warning descr="Hardcoded file separator '\\'">\\</warning> ";
+    final String backSlash = " <warning descr="Hardcoded file separator '\'">\</warning><warning descr="Hardcoded file separator '\'">\</warning><warning descr="Hardcoded file separator '\'">\</warning><warning descr="Hardcoded file separator '\'">\</warning> ";
     final String slash = "<warning descr="Hardcoded file separator '/'">/</warning>";
     final String date = "dd/MM/yy";
     final String date2 = "sdd<warning descr="Hardcoded file separator '/'">/</warning>MM<warning descr="Hardcoded file separator '/'">/</warning>yy";
@@ -21,13 +21,13 @@ public class HardcodedFileSeparators {
                                     "escape" +
                                     "<warning descr="Hardcoded file separator '/'">/</warning>" +
                                     "sequences";
-    final String withEscapeSeq = "<warning descr="Hardcoded file separator '//'">//</warning>" +
+    final String withEscapeSeq = "<warning descr="Hardcoded file separator '/'">/</warning><warning descr="Hardcoded file separator '/'">/</warning>" +
                                   "with" +
                                   "\n" +
                                   "escape" +
-                                  "<warning descr="Hardcoded file separator '\\'">\\</warning>n" +
+                                  "<warning descr="Hardcoded file separator '\'">\</warning><warning descr="Hardcoded file separator '\'">\</warning>n" +
                                   "sequences" +
-                                  "<warning descr="Hardcoded file separator '//\\'">//\\</warning>";
+                                  "//\\";
   }
 
   void images() {
@@ -43,7 +43,7 @@ public class HardcodedFileSeparators {
   void textBlocks() {
     String withoutEscapeSeq =
       """
-          <warning descr="Hardcoded file separator '/\\'">/\\</warning>
+          C:<warning descr="Hardcoded file separator '\'">\</warning><warning descr="Hardcoded file separator '\'">\</warning>new_dir
 
       """;
 

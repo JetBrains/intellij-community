@@ -1,9 +1,6 @@
 import sys
 from enum import IntEnum
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 class HTTPStatus(IntEnum):
     @property

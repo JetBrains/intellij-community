@@ -15,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XMap
 @State(name = "ActionsLocalSummary", storages = [
   Storage("actionSummary.xml", roamingType = RoamingType.DISABLED),
   Storage("actions_summary.xml", deprecated = true)
-])
+], reportStatistic = false)
 class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState()) {
   fun getActionsStats(): Map<String, ActionSummary> = state.data.toMap()
 }

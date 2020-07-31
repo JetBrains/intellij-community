@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.NeedsIndicesState;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
@@ -40,6 +41,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testExpectedReturnType() {
     doTest();
   }
@@ -48,26 +50,32 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testExpectedReturnType1() {
     doTest();
   }
-  
+
+  @NeedsIndicesState.StandardLibraryIndices
   public void testSemicolonInExpressionBodyInLocalVariable() {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testSemicolonInCodeBlocBodyInLocalVariable() {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testSemicolonInExpressionBodyInExpressionList() {
     doTest();
   }
 
+  @NeedsIndicesState.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testIgnoreDefaultMethods() {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInLambdaPosition() {
     doTest();
   }
@@ -76,34 +84,42 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInLambdaPositionNameSubstitution() {
     doTest();
   }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInLambdaPositionSameNames() {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInCollectionForEach() { doTest();}
 
   public void testConstructorRef() {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInnerArrayConstructorRef() { doTest(true); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testAbstractArrayConstructorRef() { doTest(true); }
 
   public void testNoConstraintsWildcard() {
     doTest();
   }
 
+  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testDiamondCollapsedInsideAnonymous() {
     doTest();
   }
 
+  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testDiamondCollapsedInFieldInitializerInsideAnonymous() {
     doTest();
   }
 
+  @NeedsIndicesState.FullIndices
   public void testInheritorConstructorRef() {
     myFixture.addClass("package intf; public interface Intf<T> {}");
     myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
@@ -123,14 +139,17 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testFilteredStaticMethods() {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testFilterWrongParamsMethods() {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNoQualifier() {
     doTest();
   }
@@ -138,38 +157,44 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testFilterAmbiguity() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
-    assertTrue(myItems.length == 0);
+    assertEquals(0, myItems.length);
   }
 
   public void testNotAvailableInLambdaPositionAfterQualifier() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
-    assertTrue(myItems.length == 0);
+    assertEquals(0, myItems.length);
   }
 
   public void testInferFromRawType() {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
-    assertTrue(myItems.length == 0);
+    assertEquals(0, myItems.length);
   }
 
   public void testDiamondsInsideMethodCall() {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testSimpleMethodReference() {
     doTest(true);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testStaticMethodReference() { doTest(); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testStaticMethodReferenceInContextWithTypeArgs() {
     doTest();
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testOuterMethodReference() { doTest(true); }
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testMethodReferenceOnAncestor() { doTest(true); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testObjectsNonNull() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() {
@@ -177,13 +202,15 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     assertEmpty(myItems);
   }
 
-public void testConvertToObjectStream() {
+  @NeedsIndicesState.StandardLibraryIndices
+  public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 2);
-  myFixture.type('\n');
+    myFixture.type('\n');
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testConvertToDoubleStream() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 2);
@@ -191,12 +218,14 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNoUnrelatedMethodSuggestion() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
     assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInferFromReturnTypeWhenCompleteInsideArgList() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
@@ -210,6 +239,7 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @NeedsIndicesState.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testInsideNewExpressionWithDiamondAndOverloadConstructors() {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
@@ -217,11 +247,14 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testCollectorsToList() {
     doTest(false);
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testCollectionsEmptyMap() { doTest(true); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testExpectedSuperOfLowerBound() { 
     doTest(false);
   }
@@ -246,55 +279,68 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testOnlyCompatibleTypes() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testInferredObjects() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "M", "HM");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testSuggestMapInheritors() { doTest(); }
 
   public void testUnboundTypeArgs() { doTest(); }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testCallBeforeLambda() { doTest(false); }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testMapGetOrDefault() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "TimeUnit.DAYS");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testFreeGenericsAfterClassLiteral() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNewHashMapTypeArguments() { doTest(false); }
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNewMapTypeArguments() { doTest(false); }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testPreferLambdaOverGenericGetter() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "isNull", "nonNull", "getSomeGenericValue");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNoInaccessibleConstructorRef() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "() -> ");
   }
 
+  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testPreselectTreeMapWhenSortedMapExpected() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testConsiderClassProximityForClassLiterals() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String.class");
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   public void testNestedCollectorsCounting() { doTest(false); }
 
   public void testFilterInaccessibleConstructors() { doAntiTest(); }

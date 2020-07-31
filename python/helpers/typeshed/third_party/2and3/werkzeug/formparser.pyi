@@ -1,5 +1,5 @@
 from typing import Any, Optional, Text, Tuple, Callable, Iterable, TypeVar, NoReturn, Protocol, IO, Generator, Dict, Mapping, Union
-from wsgiref.types import WSGIEnvironment
+from _typeshed.wsgi import WSGIEnvironment
 
 from .datastructures import Headers
 

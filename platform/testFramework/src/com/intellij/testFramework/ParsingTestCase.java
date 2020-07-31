@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.ide.plugins.PluginUtil;
+import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -104,6 +106,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
     app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(editorFactory::createDocument, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    app.registerService(PluginUtil.class, new PluginUtilImpl());
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());

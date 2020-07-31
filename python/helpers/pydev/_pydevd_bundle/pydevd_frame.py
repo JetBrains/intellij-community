@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, find_last_func_call_order
-from _pydevd_bundle.pydevd_utils import get_clsname_for_code
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code, should_stop_on_failed_test, is_exception_in_test_unit_can_be_ignored
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 
 try:
@@ -186,7 +186,6 @@ class PyDBFrame:
 
                 exception_breakpoint = get_exception_breakpoint(
                     exception, main_debugger.break_on_caught_exceptions)
-                is_real = is_real_file(frame.f_code.co_filename)
 
                 if exception_breakpoint is not None:
                     if exception_breakpoint.condition is not None:
@@ -235,12 +234,16 @@ class PyDBFrame:
                     info.pydev_message = "python-%s" % info.pydev_message
 
                 else:
-                    # No regular exception breakpoint, let's see if some plugin handles it.
+                    # No regular exception breakpoint, let's see if some plugin handles it or if it is a test assertion error.
                     try:
                         if main_debugger.plugin is not None:
                             result = main_debugger.plugin.exception_break(main_debugger, self, frame, self._args, arg)
                             if result:
                                 should_stop, frame = result
+                        if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \
+                                and not is_exception_in_test_unit_can_be_ignored(exception):
+                            should_stop, frame = should_stop_on_failed_test(trace), frame
+                            info.pydev_message = "python-AssertionError"
                     except:
                         should_stop = False
 
@@ -265,7 +268,8 @@ class PyDBFrame:
                 while trace_obj.tb_next is not None:
                     trace_obj = trace_obj.tb_next
 
-            if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
+            if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception \
+                    and not main_debugger.stop_on_failed_tests:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
                     filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
 
@@ -336,7 +340,28 @@ class PyDBFrame:
                 f = None
 
                 thread_id = get_current_thread_id(thread)
+
+                if main_debugger.stop_on_failed_tests:
+                    # Our goal is to find the deepest frame in stack that still belongs to the project and stop there.
+                    f = trace_obj.tb_frame
+                    while f:
+                        abs_path, _, _ = get_abs_path_real_path_and_base_from_frame(f)
+                        if main_debugger.in_project_scope(abs_path):
+                            frame = f
+                            break
+                        f = f.f_back
+                    f = None
+
+                    trace_obj = initial_trace_obj
+                    while trace_obj:
+                        if trace_obj.tb_frame is frame:
+                            break
+                        trace_obj = trace_obj.tb_next
+
+                    add_exception_to_frame(frame, (arg[0], arg[1], trace_obj))
+
                 pydevd_vars.add_additional_frame_by_id(thread_id, frame_id_to_frame)
+
                 try:
                     main_debugger.send_caught_exception_stack(thread, arg, id(frame))
                     self.set_suspend(thread, CMD_STEP_CAUGHT_EXCEPTION)
@@ -480,7 +505,8 @@ class PyDBFrame:
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
-            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks
+            has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks \
+                or main_debugger.stop_on_failed_tests
 
             if is_exception_event:
                 if has_exception_breakpoints:

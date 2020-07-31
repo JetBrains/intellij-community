@@ -67,7 +67,7 @@ class GitMergeDialog(private val project: Project,
   private val isNoVerifySupported = NO_VERIFY_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))
 
   init {
-    title = GitBundle.message("merge.branch.title")
+    updateTitle()
     setOKButtonText(GitBundle.message("merge.action.name"))
     updateBranches()
     loadSettings()
@@ -143,17 +143,25 @@ class GitMergeDialog(private val project: Project,
     val model = branchField.model as MutableCollectionComboBoxModel
 
     model.update(branches)
-    model.selectedItem = if (branches.isNotEmpty()) branches[0] else ""
+
+    val repository = getRepository()
+    val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+                         ?: branches.find { branch -> branch == repository.currentBranchName }
+                         ?: ""
+
+    model.selectedItem = matchingBranch
   }
 
   private fun updateBranches() {
-    val repository = getRepository(getSelectedRoot())
+    val repository = getRepository()
     val branches = getRepositoryBranches(repository)
 
     updateBranchesField(branches)
   }
 
-  private fun getRepository(root: VirtualFile): GitRepository {
+  private fun getRepository(): GitRepository {
+    val root = getSelectedRoot()
+
     var repository = repositoryBranches.keys.find { it.root == root }
     if (repository != null) {
       return repository
@@ -180,6 +188,16 @@ class GitMergeDialog(private val project: Project,
     repositoryBranches[repository] = branches
 
     return branches
+  }
+
+  private fun updateTitle() {
+    val currentBranchName = getRepository().currentBranchName
+    title = if (currentBranchName.isNullOrEmpty()) {
+      GitBundle.message("merge.branch.title")
+    }
+    else {
+      GitBundle.message("merge.branch.into.current.title", currentBranchName)
+    }
   }
 
   private fun createPanel() = JPanel().apply {
@@ -239,6 +257,7 @@ class GitMergeDialog(private val project: Project,
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
             && e.item != null) {
+          updateTitle()
           updateBranches()
         }
       }
@@ -282,7 +301,9 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify"),
-                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() })
+                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() }).apply {
+    isFocusable = true
+}
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
@@ -295,7 +316,7 @@ class GitMergeDialog(private val project: Project,
     OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify"), getOptions()) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify.popup.title"), getOptions()) {
 
     override fun isSelectable(value: MergeOption?) = isOptionEnabled(value!!)
 

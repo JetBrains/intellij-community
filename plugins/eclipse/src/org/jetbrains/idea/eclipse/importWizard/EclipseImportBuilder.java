@@ -96,7 +96,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   }
 
   @Override
-  public boolean setRootDirectory(final String path) {
+  public boolean setRootDirectory(@NotNull String path) {
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

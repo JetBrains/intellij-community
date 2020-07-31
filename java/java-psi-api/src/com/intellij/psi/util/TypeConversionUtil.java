@@ -842,8 +842,14 @@ public class TypeConversionUtil {
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
-    if (leftResult.getElement() == null || rightResult.getElement() == null) {
-      if (leftResult.getElement() != rightResult.getElement()) return false;
+    PsiClass leftResultElement = leftResult.getElement();
+    PsiClass rightResultElement = rightResult.getElement();
+    if (leftResultElement == null || rightResultElement == null) {
+      if (leftResultElement == null && rightResultElement != null &&
+              left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
+        return true;
+      }
+      if (leftResultElement != rightResultElement) return false;
       // let's suppose 2 unknown classes, which could be the same to be the same
       String lText = left.getPresentableText();
       String rText = right.getPresentableText();

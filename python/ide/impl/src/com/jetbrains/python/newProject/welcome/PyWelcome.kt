@@ -51,8 +51,8 @@ import javax.swing.JPanel
 internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   override fun isEdtRequired() = false
 
-  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isNewProject: Boolean) {
-    if (isNewProject) {
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
+    if (isProjectCreatedWithWizard) {
       return
     }
 

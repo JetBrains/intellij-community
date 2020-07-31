@@ -44,6 +44,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   val threads: XDebuggerThreadsList get() = myThreadsList
   val frames: XDebuggerFramesList get() = myFramesList
 
+  private var myAlreadyPaused = false
+
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
   val mainPanel = JPanel(BorderLayout())
@@ -203,12 +205,14 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     }
     val suspendContext = session.suspendContext
     if (suspendContext == null) {
+      UIUtil.invokeLaterIfNeeded { myAlreadyPaused = false }
       requestClear()
       return
     }
 
     UIUtil.invokeLaterIfNeeded {
-      if (event == SessionEvent.PAUSED) {
+      if (!myAlreadyPaused && event == SessionEvent.PAUSED) {
+        myAlreadyPaused = true
         // clear immediately
         cancelClear()
         clear()

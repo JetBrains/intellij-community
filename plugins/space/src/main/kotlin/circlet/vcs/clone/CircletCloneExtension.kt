@@ -1,20 +1,22 @@
 package circlet.vcs.clone
 
-import circlet.components.*
-import circlet.ui.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.vcs.ui.cloneDialog.*
-import icons.*
-import platform.common.*
-import javax.swing.*
+import circlet.components.circletWorkspace
+import circlet.ui.cleanupUrl
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
+import icons.SpaceIcons
+import platform.common.ProductName
+import javax.swing.Icon
 
 class CircletCloneExtension : VcsCloneDialogExtension {
     override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
         return CircletCloneComponent(project)
     }
 
-    override fun getIcon(): Icon = CircletIcons.mainIcon
+    override fun getIcon(): Icon = SpaceIcons.Main
 
     override fun getName(): String = ProductName
 

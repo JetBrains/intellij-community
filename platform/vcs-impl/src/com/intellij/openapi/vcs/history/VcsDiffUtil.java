@@ -36,13 +36,12 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_T
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class VcsDiffUtil {
-
   @CalledInAwt
   public static void showDiffFor(@NotNull Project project,
-                                 @NotNull final Collection<? extends Change> changes,
-                                 @NotNull final String revNumTitle1,
-                                 @NotNull final String revNumTitle2,
-                                 @NotNull final FilePath filePath) {
+                                 @NotNull Collection<? extends Change> changes,
+                                 @NotNull String revNumTitle1,
+                                 @NotNull String revNumTitle2,
+                                 @NotNull FilePath filePath) {
     if (filePath.isDirectory()) {
       showChangesDialog(project, getDialogTitle(filePath, revNumTitle1, revNumTitle2), new ArrayList<>(changes));
     }
@@ -51,13 +50,13 @@ public final class VcsDiffUtil {
         DiffManager.getInstance().showDiff(project, new MessageDiffRequest("No Changes Found"));
       }
       else {
-        final HashMap<Key, Object> revTitlesMap = new HashMap<>(2);
+        Map<Key<?>, Object> revTitlesMap = new HashMap<>(2);
         revTitlesMap.put(VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
         revTitlesMap.put(VCS_DIFF_RIGHT_CONTENT_TITLE, revNumTitle2);
         ShowDiffContext showDiffContext = new ShowDiffContext() {
           @NotNull
           @Override
-          public Map<Key, Object> getChangeContext(@NotNull Change change) {
+          public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
             return revTitlesMap;
           }
         };
@@ -78,7 +77,7 @@ public final class VcsDiffUtil {
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
   }
 
-  public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+  public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();

@@ -104,6 +104,16 @@ Includes the following features:</p>
       <category>Markdown</category>
     </intentionAction>
     <notificationWhitelist groupIds="Markdown headers group;Markdown"/>
+
+    <registryKey key="markdown.clear.cache.interval"
+                 defaultValue="600000"
+                 description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
+    <registryKey key="markdown.plantuml.download.link"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.jar"
+                 description="Link which Markdown plugin will use to download PlantUML JAR"/>
+    <registryKey key="markdown.open.link.in.external.browser"
+                 defaultValue="true"
+                 description="Open Markdown link in an external browser (otherwise open in the IDE viewer)"/>
   </extensions>
 
   <applicationListeners>

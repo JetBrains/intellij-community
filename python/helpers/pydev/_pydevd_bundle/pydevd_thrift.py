@@ -16,7 +16,7 @@ from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresenta
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, DEFAULT_DF_FORMAT
+    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 
@@ -510,7 +510,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except IndexError:
+                except (IndexError, KeyError):
                     kind = "O"
             format = array_default_format(kind)
         else:
@@ -549,10 +549,11 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
 
+    def formatted_row_elements(row):
+        return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
+
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols,
-                                                   lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
-                                                              for c in range(cols)), format)
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
     return array_chunk
 
 

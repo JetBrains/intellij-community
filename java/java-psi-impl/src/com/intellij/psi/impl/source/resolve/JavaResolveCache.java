@@ -62,7 +62,7 @@ public class JavaResolveCache {
       return f.fun(expr);
     }
 
-    return CachedValuesManager.getProjectPsiDependentCache(expr, f::fun);
+    return CachedValuesManager.getProjectPsiDependentCache(expr, param -> f.fun(param));
   }
 
   @Nullable

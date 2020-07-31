@@ -11,6 +11,7 @@ import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpHead
 import org.apache.http.entity.ContentType
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
@@ -19,22 +20,21 @@ import org.apache.http.util.EntityUtils
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
+import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 import java.lang.reflect.Type
-import java.nio.charset.StandardCharsets
-import java.util.stream.Collectors
 
 @CompileStatic
 class CompilationOutputsDownloader implements AutoCloseable {
   private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
-  private static final int COMMITS_SEARCH_TIMEOUT = 10_000
 
   private final GetClient getClient = new GetClient(context.messages)
+  private final Git git = new Git(context.paths.projectHome.trim())
 
   private final CompilationContext context
   private final String remoteCacheUrl
@@ -52,7 +52,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
   boolean availableForHeadCommit = { availableCommitDepth == 0 }()
 
   @Lazy
-  private List<String> lastCommits = { gitLog() }()
+  private List<String> lastCommits = { git.log(COMMITS_COUNT) }()
 
   @Lazy
   private int availableCommitDepth = {
@@ -61,17 +61,33 @@ class CompilationOutputsDownloader implements AutoCloseable {
     }
   }()
 
+  private String defaultBranch
   @Lazy
   private Set<String> availableCachesKeys = {
-    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
-    return commitsHistory[gitUrl] as Set<String>
+    CommitsHistory commitsHistory = new CommitsHistory(git.currentBranch(true), defaultBranch)
+
+    def masterCommitsHistory = getClient.doGet("$remoteCacheUrl/${commitsHistory.defaultBranchPath}", COMMITS_HISTORY_TYPE)
+    Set<String> branchCommits = Collections.emptySet()
+    if (!commitsHistory.isDefaultBranch) {
+      context.messages.info("Using ${commitsHistory.path} to get additional cache keys.")
+
+      String branchCommitHistoryUrl = "$remoteCacheUrl/${commitsHistory.path}"
+      if (getClient.exists(branchCommitHistoryUrl)) {
+        def branchCommitsHistory = getClient.doGet(branchCommitHistoryUrl, COMMITS_HISTORY_TYPE)
+        branchCommits = branchCommitsHistory[gitUrl] as Set<String>
+      }
+    }
+
+    return (masterCommitsHistory[gitUrl] as Set<String>) + branchCommits
   }()
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl,
+                               boolean availableForHeadCommit, String defaultBranch) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit
+    this.defaultBranch = defaultBranch
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -168,18 +184,6 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
     return outputArchive
   }
-
-  private List<String> gitLog() {
-    def log = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
-    def output = new BufferedReader(new InputStreamReader(log.inputStream, StandardCharsets.UTF_8)).withCloseable {
-      it.lines().map { it.trim() }.collect(Collectors.toList())
-    }
-    log.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
-    if (log.exitValue() != 0) {
-      throw new IllegalStateException("git log failed:\n$log.errorStream.text\n$output")
-    }
-    return output
-  }
 }
 
 @CompileStatic
@@ -195,6 +199,14 @@ class GetClient {
 
   GetClient(BuildMessages buildMessages) {
     this.buildMessages = buildMessages
+  }
+
+  boolean exists(String url) {
+    HttpHead request = new HttpHead(url)
+
+    httpClient.execute(request).withCloseable { response ->
+      response.statusLine.statusCode == 200
+    }
   }
 
   def doGet(String url, Type responseType) {

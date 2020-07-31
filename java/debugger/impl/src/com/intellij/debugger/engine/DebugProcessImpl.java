@@ -2006,6 +2006,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         @Override
         protected void action() {
           closeProcess(false);
+          getManagerThread().processRemaining();
           doReattach();
         }
 

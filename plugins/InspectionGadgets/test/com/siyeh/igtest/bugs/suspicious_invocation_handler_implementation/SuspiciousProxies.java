@@ -128,4 +128,26 @@ class Test {
         return null;
       });
   }
+  
+  Object handlerUnused(Object proxy, Method m, Object[] args) {
+    System.out.println("hello");
+    return null;
+  }
+  
+  Object handlerUsed(Object proxy, Method <warning descr="Method is never used in 'invoke': it's unlikely that 'hashCode', 'equals' and 'toString' are implemented correctly">m</warning>, Object[] args) {
+    System.out.println("hello");
+    return null;
+  }
+  
+  static String handlerUsedStatic(Object proxy, Method m, Object[] args) {
+    System.out.println("hello: "+m.getName());
+    return <warning descr="Incompatible type might be returned when proxying method 'equals()': required: exactly Boolean; got: exactly String">m.getName()</warning>;
+  }
+  
+  void use() {
+    Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                           new Class[]{Runnable.class}, this::handlerUsed);
+    Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                           new Class[]{Runnable.class}, Test::handlerUsedStatic);
+  }
 }

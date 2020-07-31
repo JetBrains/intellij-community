@@ -128,7 +128,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @NotNull
-  private RootIndex getRootIndex() {
+  RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);

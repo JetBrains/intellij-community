@@ -4,6 +4,7 @@ package com.intellij.codeInsight.problems;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -40,7 +42,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myWolfTheProblemSolver = prepareWolf(myProject);
+    myWolfTheProblemSolver = prepareWolf(myProject, getTestRootDisposable());
   }
 
   @Override
@@ -130,12 +132,15 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
   }
 
-  public static MockWolfTheProblemSolver prepareWolf(final Project project) {
+  @NotNull
+  public static MockWolfTheProblemSolver prepareWolf(@NotNull Project project, @NotNull Disposable parentDisposable) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
     WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
+    Disposer.register(parentDisposable, theRealSolver);
     return wolfTheProblemSolver;
+
   }
 
   private VirtualFile configureRoot() throws Exception {

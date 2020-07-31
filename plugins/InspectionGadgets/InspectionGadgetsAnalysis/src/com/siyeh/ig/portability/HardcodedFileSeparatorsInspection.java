@@ -25,13 +25,12 @@ import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +38,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';
+  private static final Set<Character> FORBIDDEN_ESCAPE_SEQUENCES_IN_PATH = new THashSet<>(Arrays.asList('b', 'n', 't', 'r', 'f'));
   private static class Holder {
   /**
    * The regular expression pattern that matches strings which are likely to
@@ -219,44 +219,38 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     }
 
     /**
-     * Highlights the groups of backward and forward slashes in a string literal except backward slashes inside escape sequences.<br><br>
-     * <b>Examples:</b><br>
-     * <code> String str1 = "<b>/</b>without<b>/</b>escape<b>/</b>sequences";</code><br>
-     * <code> String str2 = "<b>//</b> with \n escape <b>\\</b>n sequences <b>//\\</b>";</code>
+     * Highlights the backward or forward slashes in a string literal except backward slashes inside particular escape sequences.
      */
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
       String text = expression.getText();
-      int allSlashes = 0, backslashes = 0;
-      int slashInd = 0, prevSlashInd;
-      while (slashInd != -1) {
-        prevSlashInd = slashInd;
-        int nextSlashInd;
-        char symbol = '\0';
-        for (nextSlashInd = slashInd; nextSlashInd < text.length(); nextSlashInd++) {
-          symbol = text.charAt(nextSlashInd);
-          if (SLASH == symbol || BACKSLASH == symbol) {
-            slashInd = nextSlashInd;
-            break;
+      boolean existsSlash = false, existsBackslash = false;
+      int slashSequenceLength = 0;
+      List<Integer> slashIndexes = new ArrayList<>();
+      for (int slashInd = 0; slashInd < text.length(); slashInd++) {
+        if (existsSlash && existsBackslash) return;
+        char symbol = text.charAt(slashInd);
+        if (SLASH == symbol) {
+          slashSequenceLength++;
+          existsSlash = true;
+        }
+        else if (BACKSLASH == symbol) {
+          slashSequenceLength++;
+          if (slashInd < text.length() - 1) {
+            char nextSymbol = text.charAt(slashInd + 1);
+            if (isEscapeSequence(nextSymbol, slashSequenceLength)) {
+              if (FORBIDDEN_ESCAPE_SEQUENCES_IN_PATH.contains(nextSymbol)) return;
+              continue;
+            }
           }
-        }
-        slashInd = nextSlashInd == text.length() ? -1 : slashInd + 1;
-
-        if (prevSlashInd == 0 || slashInd - prevSlashInd == 1) {
-          allSlashes++;
-          backslashes = BACKSLASH == symbol ? backslashes + 1 : 0;
-          continue;
-        }
-        if (backslashes == 1 && allSlashes == 1) continue;
-
-        if (backslashes == 1) {
-          registerErrorAtOffset(expression, prevSlashInd - allSlashes, allSlashes - 1);
+          existsBackslash = true;
         }
         else {
-          registerErrorAtOffset(expression, prevSlashInd - allSlashes, isEscapeSequence(backslashes) ? allSlashes - 1 : allSlashes);
+          slashSequenceLength = 0;
+          continue;
         }
-        allSlashes = 1;
-        backslashes = BACKSLASH == symbol ? 1 : 0;
+        slashIndexes.add(slashInd);
       }
+      slashIndexes.forEach(slashInd -> registerErrorAtOffset(expression, slashInd, 1));
     }
 
     /**
@@ -360,8 +354,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       return Holder.timeZoneIds.contains(string);
     }
 
-    private boolean isEscapeSequence(int backslashCounter) {
-      return backslashCounter % 2 != 0;
+    private boolean isEscapeSequence(char symbol, int slashSequenceLength) {
+      return symbol != SLASH && symbol != BACKSLASH && slashSequenceLength % 2 != 0;
     }
   }
 }

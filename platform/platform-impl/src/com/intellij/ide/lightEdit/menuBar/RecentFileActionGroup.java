@@ -40,11 +40,13 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
       return AnAction.EMPTY_ARRAY;
     }
     List<VirtualFile> recentFiles = getRecentFiles(project);
-    List<AnAction> actions = ContainerUtil.map(recentFiles, file -> new OpenFileAction(file));
+    final List<AnAction> actions = new ArrayList<>();
+    actions.addAll(ContainerUtil.map(recentFiles, file -> new OpenFileAction(file)));
     List<AnAction> recentProjectsActions = RecentProjectListActionProvider.getInstance().getActions(false);
-    actions.add(Separator.create());
     if (!recentProjectsActions.isEmpty()) {
-      actions.add(Separator.create());
+      if (!actions.isEmpty()) {
+        actions.add(Separator.create());
+      }
       actions.addAll(recentProjectsActions);
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);

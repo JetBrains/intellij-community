@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 /*
@@ -225,7 +225,7 @@ import java.util.stream.Stream;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
+final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
   implements ConcurrentMap<K,V>, TObjectHashingStrategy<K> {
 
     /*

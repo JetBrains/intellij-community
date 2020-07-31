@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
@@ -45,7 +45,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testEmpty() {
@@ -644,8 +644,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROW" +
-           "S_LIST:]\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "      CLASS:PsiClassStub[record name=turn fqn=null]\n" +
            "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +

@@ -1,0 +1,11 @@
+[*]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+ij_any_else_on_new_line = true
+ij_any_block_comment_at_first_column = false
+ij_any_line_comment_at_first_column = false
+ij_javascript_force_semicolon_style = true
+ij_javascript_use_semicolon_after_statement = false

@@ -13,6 +13,7 @@ import java.util.List;
 // stores result of various FSRecords.list*() methods and the current FSRecords.localModCount for optimistic locking support
 class ListResult {
   private final int modStamp;
+  // sorted by getId()
   final List<? extends ChildInfo> children;
 
   ListResult(@NotNull List<? extends ChildInfo> children) {

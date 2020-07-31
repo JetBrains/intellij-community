@@ -30,10 +30,11 @@ class PortableCompilationCache {
    * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
    */
   private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
+  private String defaultBranch = System.getProperty('intellij.jps.cache.defaultBranch', 'master')
   @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
+    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit, defaultBranch)
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
   private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)

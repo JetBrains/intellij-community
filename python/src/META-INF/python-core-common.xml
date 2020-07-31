@@ -344,6 +344,7 @@
 
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
     <scratch.rootType implementation="com.jetbrains.python.console.PyConsoleRootType" />
+    <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
 
     <!-- Run Anything -->
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingProvider"/>

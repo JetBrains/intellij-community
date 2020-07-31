@@ -8,7 +8,6 @@ import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -61,9 +60,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     }
 
     override fun after() {
-      runInEdtAndWait {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-      }
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
   private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)

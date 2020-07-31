@@ -16,9 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction {
+  @NotNull
   private final PsiSwitchLabeledRuleStatement myRuleStatement;
 
-  public WrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement ruleStatement) {
+  public WrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement ruleStatement) {
     myRuleStatement = ruleStatement;
   }
 

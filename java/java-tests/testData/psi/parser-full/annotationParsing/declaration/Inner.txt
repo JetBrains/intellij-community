@@ -13,6 +13,8 @@ PsiJavaFile:Inner.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
@@ -24,6 +26,8 @@ PsiJavaFile:Inner.java
       PsiWhiteSpace(' ')
       PsiIdentifier:Inner('Inner')
       PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
         <empty list>
       PsiReferenceList
         <empty list>

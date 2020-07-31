@@ -47,9 +47,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @see com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention
- */
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField", "unused"})

@@ -102,6 +102,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         }
       }
 
+      // VfsUtil.markDirtyAndRefresh wants write-safe context
+      // but no API to start runProcessWithProgressSynchronously in a write-safe context for now
       if (!(ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)) {
         result = null
       }

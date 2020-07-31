@@ -168,7 +168,7 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
   }
 
   if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
-    val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isNewProject)
+    val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isProjectCreatedWithWizard)
     options.preparedToOpen?.invoke(module)
     return PrepareProjectResult(project, module)
   }

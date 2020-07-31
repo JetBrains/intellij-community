@@ -5,7 +5,7 @@ public class Beda {
         int ffid;
 
         {
-            ffid<caret>
+            Beda.this.ffid<caret>
         }
     }
 }

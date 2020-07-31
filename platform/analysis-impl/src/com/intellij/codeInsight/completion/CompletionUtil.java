@@ -111,7 +111,7 @@ public final class CompletionUtil {
   @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
-    final String text = document.getText();
+    final CharSequence text = document.getImmutableCharSequence();
     return findInText(offset, 0, idPart, idStart, text);
   }
 

@@ -2,17 +2,19 @@
 
 package circlet.ui
 
-import com.intellij.openapi.util.*
-import com.intellij.ui.*
-import com.intellij.ui.scale.*
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.JBColor
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.*
-import icons.*
-import runtime.ui.*
+import icons.SpaceIcons
+import runtime.ui.Avatars
 import java.awt.*
-import java.awt.geom.*
-import java.awt.image.*
-import javax.swing.*
-import kotlin.math.*
+import java.awt.geom.Area
+import java.awt.geom.Ellipse2D
+import java.awt.geom.RoundRectangle2D
+import java.awt.image.BufferedImage
+import javax.swing.Icon
+import kotlin.math.min
 
 object CircletAvatarUtils {
     private fun createImageByMask(image: BufferedImage, area: Area): BufferedImage {
@@ -115,9 +117,9 @@ sealed class CircletAvatars {
     abstract val online: Icon
 
     object MainIcon : CircletAvatars() {
-        override val circle: Icon = CircletIcons.mainIcon
-        override val offline: Icon = CircletIcons.mainIcon
-        override val online: Icon = CircletIcons.mainIcon
+        override val circle: Icon = SpaceIcons.Main
+        override val offline: Icon = SpaceIcons.Main
+        override val online: Icon = SpaceIcons.Main
     }
 
     class Image(private val image: BufferedImage) : CircletAvatars() {

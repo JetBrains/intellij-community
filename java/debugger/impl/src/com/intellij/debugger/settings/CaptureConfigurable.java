@@ -326,7 +326,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     private void scanPoints() {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations((capture, e, annotation) -> {
+        processCaptureAnnotations(null, (capture, e, annotation) -> {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
@@ -544,9 +544,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
   }
 
-  static void processCaptureAnnotations(CapturePointConsumer consumer) {
+  static void processCaptureAnnotations(@Nullable Project project, CapturePointConsumer consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    if (project == null) { // fallback
+      project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    }
     DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
     scanPointsInt(project, debuggerProjectSettings, true, consumer);
     scanPointsInt(project, debuggerProjectSettings, false, consumer);

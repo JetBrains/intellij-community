@@ -2,9 +2,9 @@ class Main {
   int test(int i) {
     return switch(i) {
       default -> {
-          int result = i;
+          int j = i;
           i++;
-          yield <caret>result;
+          yield <caret>j;
       } 
     };
   }

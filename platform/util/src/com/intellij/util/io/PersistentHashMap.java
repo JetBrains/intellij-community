@@ -158,6 +158,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                             int version,
                             @Nullable StorageLockContext lockContext,
                             @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
+    // it's important to initialize it as early as possible
+    myIsReadOnly = isReadOnly();
+    if (myIsReadOnly) options = options.setReadOnly();
+
     myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
                                                                         keyDescriptor,
                                                                         initialSize,
@@ -166,8 +170,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
-    myIsReadOnly = isReadOnly();
-    if (myIsReadOnly) options = options.setReadOnly();
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;

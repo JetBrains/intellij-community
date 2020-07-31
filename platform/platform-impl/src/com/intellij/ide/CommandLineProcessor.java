@@ -21,8 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +46,10 @@ public final class CommandLineProcessor {
 
   private CommandLineProcessor() { }
 
-  private static @NotNull CommandLineProcessorResult doOpenFileOrProject(Path file, boolean shouldWait) {
-    OpenProjectTask openProjectOptions = new OpenProjectTask();
+  // public for testing
+  @ApiStatus.Internal
+  public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
+    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = ProjectUtil.openOrImport(file, openProjectOptions);

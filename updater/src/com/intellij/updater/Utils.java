@@ -239,14 +239,14 @@ public class Utils {
 
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
-    if (entry == null) throw new IOException("Entry " + entryPath + " not found");
+    if (entry == null) throw new FileNotFoundException("Entry " + entryPath + " not found");
     Runner.logger().info("entryPath: " + entryPath);
     return entry;
   }
 
   public static InputStream findEntryInputStreamForEntry(ZipFile zipFile, ZipEntry entry) throws IOException {
     if (entry.isDirectory()) return null;
-    // There is a bug in some JVM implementations where for a directory "X/" in a zipfile, if we do
+    // There is a bug in some JVM implementations where for a directory "X/" in a .zip file, if we do
     // "zip.getEntry("X/").isDirectory()" returns true, but if we do "zip.getEntry("X").isDirectory()" is false.
     // getEntry for "name" falls back to finding "X/", so here we make sure this didn't happen.
     if (zipFile.getEntry(entry.getName() + "/") != null) return null;
@@ -337,6 +337,7 @@ public class Utils {
     @Override
     @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
     public synchronized void writeTo(OutputStream out) throws IOException {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       Utils.writeBytes(buf, count, out);
     }
   }

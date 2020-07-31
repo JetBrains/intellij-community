@@ -13,20 +13,25 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
 
   private final String myTemplateUrl;
   private final String myProductCode;
+  private final String myProductVersion;
   private final String myUserAgent;
+
   private final boolean myIsInternal;
   private final boolean myIsTest;
+  private final boolean myIsEAP;
 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
-                                         @Nullable String userAgent,
-                                         boolean isInternal, boolean isTest,
+                                         @NotNull String productVersion, @Nullable String userAgent,
+                                         boolean isInternal, boolean isTest, boolean isEAP,
                                          @NotNull DataCollectorDebugLogger logger,
                                          @NotNull DataCollectorSystemEventLogger eventLogger) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
+    myProductVersion = productVersion;
     myUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myIsInternal = isInternal;
     myIsTest = isTest;
+    myIsEAP = isEAP;
     myLogger = logger;
     myEventLogger = eventLogger;
   }
@@ -43,6 +48,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myProductCode;
   }
 
+  @Override
+  public @NotNull String getProductVersion() {
+    return myProductVersion;
+  }
+
   @NotNull
   @Override
   public String getUserAgent() {
@@ -57,6 +67,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public boolean isTest() {
     return myIsTest;
+  }
+
+  @Override
+  public boolean isEAP() {
+    return myIsEAP;
   }
 
   @NotNull

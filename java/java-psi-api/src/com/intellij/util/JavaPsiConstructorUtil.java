@@ -88,11 +88,16 @@ public class JavaPsiConstructorUtil {
       return null;
     }
 
+    return findConstructorInSuperWithParameterTypes(constructor, PsiType.EMPTY_ARRAY);
+  }
+
+  @Nullable
+  public static PsiMethod findConstructorInSuperWithParameterTypes(@NotNull PsiMethod constructor, PsiType @NotNull [] parameterTypes) {
     PsiClass containingClass = constructor.getContainingClass();
     if (containingClass != null) {
       PsiClass superClass = containingClass.getSuperClass();
       if (superClass != null && superClass.getName() != null) {
-        MethodSignature defConstructor = MethodSignatureUtil.createMethodSignature(superClass.getName(), PsiType.EMPTY_ARRAY,
+        MethodSignature defConstructor = MethodSignatureUtil.createMethodSignature(superClass.getName(), parameterTypes,
                                                                                    PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, true);
         return MethodSignatureUtil.findMethodBySignature(superClass, defConstructor, false);
       }

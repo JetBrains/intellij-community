@@ -151,7 +151,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
 
 class Java13UJumpExpressionTest : JavaUJumpExpressionBase() {
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_13
+    return JAVA_14
   }
 
   fun `test break in switch`() = doTest<UYieldExpression, JavaUSwitchExpression>("""

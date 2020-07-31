@@ -4,6 +4,7 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter

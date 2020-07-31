@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportBuilder
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 
 internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   val builder: MavenProjectBuilder
@@ -16,11 +17,11 @@ internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     return MavenUtil.isPomFile(file)
   }
 
-  override fun linkAndRefreshProject(projectDirectory: String, project: Project) {
+  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
     val builder = builder
     try {
       builder.isUpdate = false
-      builder.fileToImport = projectDirectory
+      builder.setFileToImport(projectDirectory)
       if (builder.validate(null, project)) {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
       }

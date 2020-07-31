@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -27,6 +30,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer;
 import org.jetbrains.jps.plugin.JpsPluginManager;
+import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.service.impl.JpsServiceManagerImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -126,6 +131,10 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
     myExternalBuildPlugins.remove(pluginDescriptor);
     myModificationStamp.incrementAndGet();
+    JpsServiceManager jpsServiceManager = JpsServiceManager.getInstance();
+    if (jpsServiceManager instanceof JpsServiceManagerImpl) {
+      ((JpsServiceManagerImpl)jpsServiceManager).cleanupExtensionCache();
+    }
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {

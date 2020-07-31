@@ -16,7 +16,6 @@ import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,6 @@ import java.util.function.Function;
  *
  * @author tav
  */
-@ApiStatus.Experimental
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 

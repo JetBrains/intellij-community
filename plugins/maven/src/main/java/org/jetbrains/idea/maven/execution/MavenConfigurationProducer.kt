@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfiguration>() {
 
   override fun getConfigurationFactory(): ConfigurationFactory {
-    return MavenRunConfigurationType.getInstance().configurationFactories[0];
+    return MavenRunConfigurationType.getInstance().configurationFactories[0]
   }
 
   override fun setupConfigurationFromContext(configuration: MavenRunConfiguration,
@@ -39,6 +39,8 @@ class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfigur
     if (context.module == null) return false
     val goals = location.goals
     val profiles = MavenProjectsManager.getInstance(location.getProject()).explicitProfiles
+    configuration.name = context.module.name + goals.joinToString(separator = ",", prefix = "[", postfix = "]")
+
     configuration.runnerParameters = MavenRunnerParameters(true, file.parent.path, file.name, goals, profiles.enabledProfiles,
                                                            profiles.disabledProfiles)
     return true

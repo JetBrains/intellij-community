@@ -55,7 +55,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   void cleanup() {
-    for (Disposable disposable : myCleanupDisposables) {
+    for (Disposable disposable : new ArrayList<>(myCleanupDisposables)) {
       Disposer.dispose(disposable);
     }
     myCleanupDisposables.clear();

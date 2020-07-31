@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater {
+public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater, Disposable {
 
   public static final DataKey<HgMqUnAppliedPatchesPanel> MQ_PATCHES = DataKey.create("Mq.Patches");
   private static final String POPUP_ACTION_GROUP = "Mq.Patches.ContextMenu";
@@ -89,7 +90,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPatchTable);
     add(scrollPane, BorderLayout.CENTER);
-    myProject.getMessageBus().connect(myProject).subscribe(HgVcs.STATUS_TOPIC, this);
+    myProject.getMessageBus().connect(this).subscribe(HgVcs.STATUS_TOPIC, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private JComponent createToolbar() {

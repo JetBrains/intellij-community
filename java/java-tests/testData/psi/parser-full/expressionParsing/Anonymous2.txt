@@ -16,6 +16,8 @@ PsiJavaFile:Anonymous2.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n    ')
@@ -74,6 +76,8 @@ PsiJavaFile:Anonymous2.java
             PsiWhiteSpace(' ')
             PsiIdentifier:s('s')
             PsiTypeParameterList
+              <empty list>
+            PsiReferenceList
               <empty list>
             PsiReferenceList
               <empty list>

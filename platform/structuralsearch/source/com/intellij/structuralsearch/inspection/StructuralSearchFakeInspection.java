@@ -156,7 +156,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     }
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     final StructuralSearchProfileActionProvider.InspectionDataDialog dialog =
-      new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, myMainConfiguration);
+      new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, myMainConfiguration, false);
     if (!dialog.showAndGet()) {
       return;
     }

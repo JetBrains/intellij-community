@@ -33,6 +33,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
@@ -319,7 +320,7 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+        BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
           for (HgRepository repository : myRepositories) {
             HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }

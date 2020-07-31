@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.persistence;
 
 import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.ide.ConsentOptionsProvider;
-import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "UsagesStatistic",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+  reportStatistic = false
 )
 @Service
 public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element> {
@@ -21,7 +21,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
 
   private boolean isAllowedForEAP = true;
   private boolean isShowNotification = true;
-  private @NotNull SendPeriod myPeriod = SendPeriod.DAILY;
 
   private static final String LAST_TIME_ATTR = "time";
   private static final String IS_ALLOWED_ATTR = "allowed";
@@ -83,15 +82,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
       element.setAttribute(IS_ALLOWED_EAP_ATTR, "false");
     }
     return element;
-  }
-
-  @NotNull
-  public SendPeriod getPeriod() {
-    return myPeriod;
-  }
-
-  public void setPeriod(@NotNull SendPeriod period) {
-    myPeriod = period;
   }
 
   public void setAllowed(boolean allowed) {

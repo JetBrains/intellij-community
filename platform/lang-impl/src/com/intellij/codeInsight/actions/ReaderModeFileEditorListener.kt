@@ -19,20 +19,27 @@ class ReaderModeFileEditorListener : FileEditorManagerListener {
   companion object {
     private var EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
 
-    fun applyReaderMode(project: Project, selectedEditor: FileEditor?) {
-      if (selectedEditor !is PsiAwareTextEditorImpl) return
-
-      val file = selectedEditor.file
-      if (!matchMode(project, file)) return
-      EP_READER_MODE_PROVIDER.extensions().forEach { it.applyModeChanged(project, selectedEditor.editor, instance(project).enabled) }
+    fun applyReaderMode(project: Project, selectedEditor: FileEditor?, alreadyOpenedFilesOnly: Boolean = false) {
+      if (selectedEditor is PsiAwareTextEditorImpl) {
+        val file = selectedEditor.file
+        if (matchMode(project, file)) {
+          EP_READER_MODE_PROVIDER.extensions().forEach {
+            it.applyModeChanged(project, selectedEditor.editor, instance(project).enabled, alreadyOpenedFilesOnly)
+          }
+        }
+      }
     }
 
     fun matchMode(project: Project?, file: VirtualFile?): Boolean {
-      return if (project == null || file == null) { false }
-      else when (instance(project).mode) {
-        ReaderMode.LIBRARIES ->
-          FileIndexFacade.getInstance(project).isInLibraryClasses(file) || FileIndexFacade.getInstance(project).isInLibrarySource(file)
-        ReaderMode.READ_ONLY -> !file.isWritable
+      if (project == null || file == null) return false
+
+      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file) || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+      val isWritable = file.isWritable
+
+      return when (instance(project).mode) {
+        ReaderMode.LIBRARIES_AND_READ_ONLY -> inLibraries || !isWritable
+        ReaderMode.LIBRARIES -> inLibraries
+        ReaderMode.READ_ONLY -> !isWritable
       }
     }
   }

@@ -53,11 +53,12 @@ public class ShParserUtil extends GeneratedParserUtilBase {
   }
 
   static boolean parseUntilSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
+    int startOffset = b.getCurrentOffset();
     PsiBuilder.Marker mark = b.mark();
     while (true) {
       if (!parser.parse(b, level) || ShTokenTypes.whitespaceTokens.contains(b.rawLookup(0)) || b.eof()) {
         mark.drop();
-        return true;
+        return b.getCurrentOffset() > startOffset;
       }
     }
   }

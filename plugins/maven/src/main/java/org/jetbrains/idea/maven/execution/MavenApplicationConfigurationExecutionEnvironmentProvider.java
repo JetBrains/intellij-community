@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -187,8 +187,11 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
           try {
             JavaParameters parameters = new JavaParameters();
             parameters.setJdk(JavaParametersUtil.createProjectJdk(getProject(), myApplicationConfiguration.getAlternativeJrePath()));
-            RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(
-              parameters, false, DebuggerSettings.getInstance().getTransport(), "", false);
+            RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
+              .asyncAgent(true)
+              .project(environment.getProject())
+              .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+              .create(parameters);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();
 

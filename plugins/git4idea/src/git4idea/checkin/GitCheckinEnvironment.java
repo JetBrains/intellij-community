@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -430,6 +431,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
       byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
+
+      byte[] bom = file.getBOM();
+      if (bom != null && !ArrayUtil.startsWith(fileContent, bom)) {
+        fileContent = ArrayUtil.mergeArrays(bom, fileContent);
+      }
 
       GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }

@@ -102,12 +102,13 @@ public class ClassLoadingUtils {
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
     ArrayReference reference = DebuggerUtilsEx.mirrorOfArray(arrayClass, bytes.length, context);
+    VirtualMachine virtualMachine = reference.virtualMachine();
     List<Value> mirrors = new ArrayList<>(bytes.length);
     for (byte b : bytes) {
-      mirrors.add(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(b));
+      mirrors.add(virtualMachine.mirrorOf(b));
     }
 
-    if (DebuggerUtils.isAndroidVM(arrayClass.virtualMachine())) {
+    if (DebuggerUtils.isAndroidVM(virtualMachine)) {
       // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
       setChuckByChunk(reference, mirrors);
     }

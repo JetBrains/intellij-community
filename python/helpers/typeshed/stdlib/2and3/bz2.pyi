@@ -1,14 +1,10 @@
 import io
 import sys
-from os.path import _PathType
 from typing import IO, Any, Optional, TextIO, Union, overload, TypeVar
+from _typeshed import AnyPath
+from typing_extensions import Literal
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
-_PathOrFile = Union[_PathType, IO[bytes]]
+_PathOrFile = Union[AnyPath, IO[bytes]]
 _T = TypeVar("_T")
 
 def compress(data: bytes, compresslevel: int = ...) -> bytes: ...
@@ -28,7 +24,7 @@ if sys.version_info >= (3, 3):
     ) -> BZ2File: ...
     @overload
     def open(
-        filename: _PathType,
+        filename: AnyPath,
         mode: _OpenTextMode,
         compresslevel: int = ...,
         encoding: Optional[str] = ...,

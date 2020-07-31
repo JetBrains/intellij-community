@@ -82,15 +82,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     };
 
-    myPluginModel.setTopController(new Configurable.TopComponentController() {
-      @Override
-      public void setLeftComponent(@Nullable Component component) {
-      }
-
-      @Override
-      public void showProgress(boolean start) {
-      }
-    });
+    myPluginModel.setTopController(Configurable.TopComponentController.EMPTY);
     myPluginModel.setPluginUpdatesService(new PluginUpdatesService() {
       @Override
       public void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {

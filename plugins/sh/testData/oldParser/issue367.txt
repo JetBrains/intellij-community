@@ -64,7 +64,8 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 PsiElement(word)('[')
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION

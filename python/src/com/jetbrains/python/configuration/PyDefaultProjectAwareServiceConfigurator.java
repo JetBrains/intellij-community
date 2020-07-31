@@ -28,7 +28,7 @@ import java.util.List;
  */
 final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProjectConfigurator {
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isNewProject) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isProjectCreatedWithWizard) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
@@ -36,7 +36,7 @@ final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProject
 
     for (final Module module : ModuleManager.getInstance(project).getModules()) {
       if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
-        updateServices(module, isNewProject);
+        updateServices(module, isProjectCreatedWithWizard);
         break;
       }
     }

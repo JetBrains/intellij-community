@@ -72,6 +72,8 @@ PsiJavaFile:TypeAnnotations.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n\n  ')
@@ -212,6 +214,8 @@ PsiJavaFile:TypeAnnotations.java
         <empty list>
       PsiReferenceList
         <empty list>
+      PsiReferenceList
+        <empty list>
       PsiWhiteSpace(' ')
       PsiJavaToken:LBRACE('{')
       PsiWhiteSpace(' ')
@@ -296,6 +300,8 @@ PsiJavaFile:TypeAnnotations.java
                 PsiReferenceParameterList
                   <empty list>
             PsiJavaToken:GT('>')
+      PsiReferenceList
+        <empty list>
       PsiWhiteSpace(' ')
       PsiJavaToken:LBRACE('{')
       PsiWhiteSpace(' ')
@@ -1058,6 +1064,8 @@ PsiJavaFile:TypeAnnotations.java
         <empty list>
       PsiReferenceList
         <empty list>
+      PsiReferenceList
+        <empty list>
       PsiWhiteSpace(' ')
       PsiJavaToken:LBRACE('{')
       PsiWhiteSpace('\n    ')
@@ -1667,6 +1675,8 @@ PsiJavaFile:TypeAnnotations.java
         <empty list>
       PsiReferenceList
         <empty list>
+      PsiReferenceList
+        <empty list>
       PsiWhiteSpace(' ')
       PsiJavaToken:LBRACE('{')
       PsiWhiteSpace(' ')
@@ -1694,6 +1704,8 @@ PsiJavaFile:TypeAnnotations.java
           PsiReferenceList
             <empty list>
         PsiJavaToken:GT('>')
+      PsiReferenceList
+        <empty list>
       PsiReferenceList
         <empty list>
       PsiReferenceList

@@ -21,6 +21,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.testFramework.NeedsIndicesState;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/word/";
   }
 
+  @NeedsIndicesState.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testKeyWordCompletion() {
     configureByFile("1.txt");
     checkResultByFile("1_after.txt");
@@ -107,6 +109,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
 
   public void testTextInComment() { doTest(); }
 
+  @NeedsIndicesState.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testDollarsInPrefix() {
     configureByFile(getTestName(false) + ".txt");
     checkResultByFile(getTestName(false) + "_after.txt");

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import java.lang.reflect.Field;
@@ -71,8 +70,11 @@ public class GradleConnectorService implements Disposable {
   @Override
   public void dispose() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    connectorsMap.values().forEach(GradleProjectConnection::disconnect);
+    disconnectGradleConnections();
+    stopIdleDaemonsOfOldVersions();
+  }
 
+  private void stopIdleDaemonsOfOldVersions() {
     if (DISABLE_STOP_OLD_IDLE_DAEMONS) return;
     try {
       if (ProjectUtil.getOpenProjects().length == 0) {
@@ -90,6 +92,11 @@ public class GradleConnectorService implements Disposable {
     catch (Exception e) {
       LOG.warn("Failed to stop Gradle daemons during project close", e);
     }
+  }
+
+  private void disconnectGradleConnections() {
+    connectorsMap.values().forEach(GradleProjectConnection::disconnect);
+    connectorsMap.clear();
   }
 
   private ProjectConnection getConnection(
@@ -333,7 +340,7 @@ public class GradleConnectorService implements Disposable {
    */
   private static class DistributionWrapper implements Distribution {
     private final Distribution myDistribution;
-    private final File myRtJarFile = new File(PathUtil.getCanonicalPath(PathManager.getJarPathForClass(MarkerRt.class)));
+    private final File myRtJarFile = new File(FileUtil.toCanonicalPath(PathManager.getJarPathForClass(MarkerRt.class)));
 
     DistributionWrapper(Distribution distribution) {
       myDistribution = distribution;

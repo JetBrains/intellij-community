@@ -60,7 +60,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Logger LOG = Logger.getInstance(PythonSdkUpdater.class);
 
   private static final Object ourLock = new Object();
-  private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
+  private static final Set<String> ourScheduledToRefresh = new HashSet<String>();
   private static final BlockingSet<String> ourUnderRefresh = new BlockingSet<>();
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup(
@@ -501,7 +501,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    */
   @NotNull
   private static Set<Sdk> getPythonSdks(@NotNull Project project) {
-    final Set<Sdk> pythonSdks = Sets.newLinkedHashSet();
+    final Set<Sdk> pythonSdks = new LinkedHashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {

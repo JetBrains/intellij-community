@@ -8,7 +8,7 @@ import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.TokenizedText;
+import com.intellij.lexer.TokenList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -40,7 +40,7 @@ public class JavaParserUtil {
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
 
   @NotNull
-  public static TokenizedText obtainTokens(@NotNull PsiFile file) {
+  public static TokenList obtainTokens(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         TokenSequence.performLexing(file.getViewProvider().getContents(), JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(file))),

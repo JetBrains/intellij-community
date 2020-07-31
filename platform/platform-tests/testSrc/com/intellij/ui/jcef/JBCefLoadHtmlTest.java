@@ -93,29 +93,27 @@ public class JBCefLoadHtmlTest {
 
     writeJS(jsQuery.inject("'hello'"));
 
-    runGUI(browser);
+    SwingUtilities.invokeLater(() -> {
+      JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      frame.setSize(640, 480);
+      frame.setLocationRelativeTo(null);
+      frame.add(browser.getComponent());
+      frame.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowOpened(WindowEvent e) {
+          browser.loadHTML(HTML, "file://" + JS_FILE_PATH);
+        }
+      });
+      frame.setVisible(true);
+    });
 
     try {
-      LATCH.await(5000, TimeUnit.MILLISECONDS);
+      LATCH.await(5, TimeUnit.SECONDS);
     }
     catch (InterruptedException e) {
       e.printStackTrace();
     }
     TestCase.assertTrue(testPassed);
-  }
-
-  private static void runGUI(@NotNull JBCefBrowser browser) {
-    JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
-    frame.setSize(640, 480);
-    frame.setLocationRelativeTo(null);
-    frame.add(browser.getComponent());
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        browser.loadHTML(HTML, "file://" + JS_FILE_PATH);
-      }
-    });
-    frame.setVisible(true);
   }
 
   private static void writeJS(@NotNull String javascript) {

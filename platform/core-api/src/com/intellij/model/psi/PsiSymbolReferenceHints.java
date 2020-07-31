@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiSymbolReferenceHints {
 
   /**
-   * Provider may return only references of this type if the type is not {@code null}.
+   * Provider may return only references of type which is assignable to this type.
    *
    * @return type of expected reference
    */

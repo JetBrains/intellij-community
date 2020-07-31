@@ -25,13 +25,13 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
-import icons.CircletIcons
+import icons.SpaceIcons
 import runtime.routing.Location
 import com.intellij.openapi.util.Ref as Ref1
 
 abstract class CircletOpenInBrowserActionGroup<T>(groupName: String) :
-    ActionGroup(groupName, "Open link in browser", CircletIcons.mainIcon),
-    DumbAware {
+  ActionGroup(groupName, "Open link in browser", SpaceIcons.Main),
+  DumbAware {
 
     abstract fun getData(dataContext: DataContext): List<T>?
 

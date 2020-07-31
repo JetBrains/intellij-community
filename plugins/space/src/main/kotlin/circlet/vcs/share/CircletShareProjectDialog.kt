@@ -21,7 +21,6 @@ import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.usingSource
 import runtime.RpcException
 import runtime.Ui
-import runtime.json.jsonObjectText
 import runtime.message
 import java.util.concurrent.CancellationException
 import javax.swing.*
@@ -105,10 +104,10 @@ class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true)
                 val repoService: RepositoryService = client.repoService
                 val prKey = projectComboBoxModel.selected!!.key
                 try {
-                    val repository = repoService.createRepository(prKey,
+                    val repository = repoService.createNewRepository(prKey,
                                                                   repoNameField.text,
                                                                   repoDescription.text.orEmpty(),
-                                                                  jsonObjectText { "initialize" put false }) // always create empty repo
+                                                                  initialize = false) // always create empty repo
                     val details = repoService.repositoryDetails(prKey, repository.name)
 
                     val url = Navigator.p.project(prKey).repo(repository.name).absoluteHref(client.server)

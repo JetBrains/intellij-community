@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -42,10 +42,10 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
   }
 
   override fun waitForImportCompletion(project: Project) {
-    invokeAndWaitIfNeeded {
-      val projectsManager = MavenProjectsManager.getInstance(project)
-      projectsManager.waitForResolvingCompletion()
-      projectsManager.performScheduledImportInTests()
+    val projectManager = MavenProjectsManager.getInstance(project)
+    ApplicationManager.getApplication().invokeAndWait {
+      projectManager.waitForResolvingCompletion()
+      projectManager.performScheduledImportInTests()
     }
   }
 }

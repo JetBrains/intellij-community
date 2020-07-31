@@ -60,6 +60,6 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_14);
   }
 }

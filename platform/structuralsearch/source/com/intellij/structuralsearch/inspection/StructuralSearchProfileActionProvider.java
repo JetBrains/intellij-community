@@ -148,7 +148,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
                                      @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
+      final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration, true);
       if (!dialog.showAndGet()) return false;
     }
     configuration.setUuid(null);
@@ -181,16 +181,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
 
     private final SSBasedInspection myInspection;
     @NotNull private final Configuration myConfiguration;
+    private final boolean myNewInspection;
     private final JTextField myNameTextField;
     private final JTextField myProblemDescriptorTextField;
     private final EditorTextField myDescriptionTextArea;
     private final JTextField mySuppressIdTextField;
 
-    InspectionDataDialog(Project project, SSBasedInspection inspection, Configuration configuration) {
+    InspectionDataDialog(Project project, SSBasedInspection inspection, Configuration configuration, boolean newInspection) {
       super(null);
       myInspection = inspection;
 
       myConfiguration = configuration;
+      myNewInspection = newInspection;
       assert myConfiguration.getOrder() == 0;
       myNameTextField = new JTextField(configuration.getName());
       myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
@@ -212,43 +214,48 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
 
     @Override
     protected @NotNull List<ValidationInfo> doValidateAll() {
-      final List<ValidationInfo> result = new SmartList<>();
+      final List<ValidationInfo> warnings = new SmartList<>();
       final List<Configuration> configurations = myInspection.getConfigurations();
       final String name = getName();
       if (StringUtil.isEmpty(name)) {
-        result.add(new ValidationInfo(SSRBundle.message("name.must.not.be.empty.warning"), myNameTextField));
+        warnings.add(new ValidationInfo(SSRBundle.message("name.must.not.be.empty.warning"), myNameTextField));
       }
       else {
         for (Configuration configuration : configurations) {
-          if (configuration.getOrder() == 0 && !configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
-            result.add(new ValidationInfo(SSRBundle.message("inspection.with.name.exists.warning", name), myNameTextField));
-            break;
+          if (configuration.getOrder() == 0) {
+            if (myNewInspection) {
+              if (configuration.getName().equals(name)) {
+                warnings.add(new ValidationInfo(SSRBundle.message("inspection.with.name.exists.warning", name), myNameTextField));
+                break;
+              }
+            } else if (!configuration.getUuid().equals(myConfiguration.getUuid()) && configuration.getName().equals(name)) {
+              warnings.add(new ValidationInfo(SSRBundle.message("inspection.with.name.exists.warning", name), myNameTextField));
+              break;
+            }
           }
         }
       }
       final String suppressId = getSuppressId();
       if (!StringUtil.isEmpty(suppressId)) {
         if (!mySuppressIdPattern.matcher(suppressId).matches()) {
-          result.add(new ValidationInfo(SSRBundle.message("suppress.id.must.match.regex.warning"), mySuppressIdTextField));
+          warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.must.match.regex.warning"), mySuppressIdTextField));
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
           if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
-            result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
-                                          mySuppressIdTextField));
+            warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
           }
           else {
             for (Configuration configuration : configurations) {
               if (suppressId.equals(configuration.getSuppressId()) && !myConfiguration.getUuid().equals(configuration.getUuid())) {
-                result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
-                                              mySuppressIdTextField));
+                warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
                 break;
               }
             }
           }
         }
       }
-      return result;
+      return warnings;
     }
 
     @Override
@@ -274,17 +281,20 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     public String getName() {
-      return convertEmptyToNull(myNameTextField.getText());
+      return myNameTextField.getText().trim();
     }
 
+    @Nullable
     public String getDescription() {
       return convertEmptyToNull(myDescriptionTextArea.getText());
     }
 
+    @Nullable
     public String getSuppressId() {
       return convertEmptyToNull(mySuppressIdTextField.getText());
     }
 
+    @Nullable
     public String getProblemDescriptor() {
       return convertEmptyToNull(myProblemDescriptorTextField.getText());
     }

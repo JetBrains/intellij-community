@@ -411,7 +411,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       }
 
       val data = TrackerData(tracker)
-      trackers.put(document, data)
+      val replacedData = trackers.put(document, data)
+      LOG.assertTrue(replacedData == null)
 
       registerTrackerInCLM(data)
       refreshTracker(tracker)
@@ -979,7 +980,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
             val tracker = ChangelistsLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
 
             val data = TrackerData(tracker)
-            trackers.put(document, data)
+            val replacedData = trackers.put(document, data)
+            LOG.assertTrue(replacedData == oldData)
 
             if (oldTracker != null) {
               eventDispatcher.multicaster.onTrackerRemoved(tracker)

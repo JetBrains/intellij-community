@@ -22,6 +22,9 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="github.use.oauth" description="Use OAuth to log in to github.com" defaultValue="false"/>
+    <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
+
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
 
@@ -48,9 +51,11 @@
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
 
     <virtualFileSystem key="ghpr" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileSystem"/>
-    <fileIconProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile$IconProvider" order="first"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileIconProvider" order="first"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
 
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
@@ -144,6 +149,7 @@
     <group id="Github.PullRequest.Details.Popup">
       <action id="Github.PullRequest.Timeline.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
+      <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"
@@ -160,5 +166,13 @@
 
     <action id="Github.Break.Api.Requests" internal="true"
             class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
+
+    <group id="Github.Accounts.AddAccount">
+      <action id="Github.Accounts.AddGHAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
+      <action id="Github.Accounts.AddGHAccountWithToken"
+              class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountWithTokenAction"/>
+      <separator/>
+      <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
+    </group>
   </actions>
 </idea-plugin>

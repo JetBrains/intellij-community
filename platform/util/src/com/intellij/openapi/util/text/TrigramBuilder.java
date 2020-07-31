@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
   private TrigramBuilder() {
@@ -55,12 +53,14 @@ public final class TrigramBuilder {
     return consumer.consumeTrigramsCount(set.size()) && set.forEach(consumer);
   }
 
-  public static abstract class TrigramProcessor implements TIntProcedure {
-    public boolean consumeTrigramsCount(int count) { return true; }
+  public static abstract class TrigramProcessor implements IntPredicate {
+    public boolean consumeTrigramsCount(int count) {
+      return true;
+    }
   }
 }
 
-class AddonlyIntSet {
+final class AddonlyIntSet {
   //private static final int MAGIC = 0x9E3779B9;
   private int size;
   private int[] data;
@@ -138,11 +138,18 @@ class AddonlyIntSet {
     return false;
   }
 
-  public boolean forEach(TIntProcedure consumer) {
-    if (hasZeroKey && !consumer.execute(0)) return false;
-    for(int o:data) {
-      if (o == 0) continue;
-      if(!consumer.execute(o)) return false;
+  public boolean forEach(@NotNull IntPredicate consumer) {
+    if (hasZeroKey && !consumer.test(0)) {
+      return false;
+    }
+
+    for (int o : data) {
+      if (o == 0) {
+        continue;
+      }
+      if (!consumer.test(o)) {
+        return false;
+      }
     }
     return true;
   }

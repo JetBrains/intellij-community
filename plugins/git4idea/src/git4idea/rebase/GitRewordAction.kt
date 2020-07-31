@@ -22,9 +22,9 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
     val commit = details.first()
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
-      commit.fullMessage,
-      GitBundle.getString("rebase.log.reword.dialog.title"),
-      GitBundle.message(
+      originMessage = commit.fullMessage,
+      title = GitBundle.getString("rebase.log.reword.dialog.title"),
+      dialogLabel = GitBundle.message(
         "rebase.log.reword.dialog.description.label",
         commit.id.toShortString(),
         getShortPresentation(commit.author)

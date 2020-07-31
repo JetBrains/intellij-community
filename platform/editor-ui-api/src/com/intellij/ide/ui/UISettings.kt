@@ -29,7 +29,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
+@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))])
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 
@@ -49,17 +49,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       notRoamableOptions.state.editorAAType = value
     }
 
-  var allowMergeButtons: Boolean
-    get() = state.allowMergeButtons
-    set(value) {
-      state.allowMergeButtons = value
-    }
+  val allowMergeButtons: Boolean
+    get() = Registry.`is`("ide.allow.merge.buttons")
 
-  var animateWindows: Boolean
-    get() = state.animateWindows
-    set(value) {
-      state.animateWindows = value
-    }
+  val animateWindows: Boolean
+    get() = Registry.`is`("ide.animate.toolwindows")
 
   @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
@@ -86,11 +80,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.hideToolStripes = value
     }
 
-  var hideNavigationOnFocusLoss: Boolean
-    get() = state.hideNavigationOnFocusLoss
-    set(value) {
-      state.hideNavigationOnFocusLoss = value
-    }
+  val hideNavigationOnFocusLoss: Boolean
+    get() = Registry.`is`("ide.hide.navigation.on.focus.loss")
 
   var reuseNotModifiedTabs: Boolean
     get() = state.reuseNotModifiedTabs
@@ -140,11 +131,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
-  var cycleScrolling: Boolean
-    get() = state.cycleScrolling
-    set(value) {
-      state.cycleScrolling = value
-    }
+  val cycleScrolling: Boolean
+    get() = Registry.`is`("ide.cycle.scrolling")
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
@@ -197,11 +185,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainMenu = value
     }
 
-  var showIconInQuickNavigation: Boolean
-    get() = state.showIconInQuickNavigation
-    set(value) {
-      state.showIconInQuickNavigation = value
-    }
+  val showIconInQuickNavigation: Boolean
+    get() = Registry.`is`("ide.show.icons.in.quick.navigation")
 
   var showTreeIndentGuides: Boolean
     get() = state.showTreeIndentGuides
@@ -229,11 +214,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainToolbar = value
     }
 
-  var showIconsInMenus: Boolean
-    get() = state.showIconsInMenus
-    set(value) {
-      state.showIconsInMenus = value
-    }
+  val showIconsInMenus: Boolean
+    get() = Registry.`is`("ide.show.icons.in.menus")
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
@@ -493,14 +475,19 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)  // Android Studio: b/156739439
+    @JvmStatic
+    val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
+      get() {
+        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
+                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+          RenderingHints.VALUE_FRACTIONALMETRICS_ON
+        else
+          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+      }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      if (FORCE_USE_FRACTIONAL_METRICS) {
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      }
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, PREFERRED_FRACTIONAL_METRICS_VALUE)
     }
 
     /**

@@ -631,8 +631,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     @Override
-    public IElementType getTokenType(){
-      return mySegments.unpackTokenFromData(mySegments.getSegmentData(mySegmentIndex));
+    public IElementType getTokenType() {
+      try {
+        return mySegments.unpackTokenFromData(mySegments.getSegmentData(mySegmentIndex));
+      }
+      catch (IllegalStateException e) {
+        throw new InvalidStateException(LexerEditorHighlighter.this, "wrong state", e);
+      }
     }
 
     @Override

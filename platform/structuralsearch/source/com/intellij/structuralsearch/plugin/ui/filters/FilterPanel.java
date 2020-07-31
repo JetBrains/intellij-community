@@ -162,6 +162,7 @@ public class FilterPanel implements FilterTable {
     if (index >= 0) myTableModel.removeRow(index);
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
     filter.clearFilter();
+    filter.reset();
     myConstraintChangedCallback.run();
   }
 
@@ -229,16 +230,20 @@ public class FilterPanel implements FilterTable {
     showFilters();
   }
 
+  public boolean hasVisibleFilter() {
+    return myTableModel.getRowCount() > 0;
+  }
+
   private void showFilters() {
     if (myConstraint == null || myShown) {
       return;
     }
-    if (!isValid() || myCompiledPattern.getVariableNodes(myConstraint.getName()).isEmpty()) {
+    if (!isValid()) {
       myConstraint = null;
       return;
     }
     final String varName = myConstraint.getName();
-    final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
+    final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName); // replacement variable has no nodes
     final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
     final boolean target = myConstraint instanceof MatchVariableConstraint &&
                            ((MatchVariableConstraint)myConstraint).isPartOfSearchResults();

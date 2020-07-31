@@ -13,10 +13,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -39,6 +36,42 @@ public class Runner {
   }
 
   public static void main(String[] args) {
+    initLogger();
+    try {
+      _main(args);
+    }
+    catch (Throwable t) {
+      logger().error("internal error", t);
+      System.exit(2);
+    }
+  }
+
+  public static void initLogger() {
+    String logDirectory = Utils.findDirectory(1_000_000L);
+    logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
+
+    FileAppender update = new FileAppender();
+    update.setFile(logPath);
+    update.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update.setThreshold(Level.ALL);
+    update.setAppend(true);
+    update.activateOptions();
+
+    FileAppender updateError = new FileAppender();
+    updateError.setFile(new File(logDirectory, ERROR_LOG_FILE_NAME).getAbsolutePath());
+    updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    updateError.setThreshold(Level.ERROR);
+    updateError.setAppend(false);
+    updateError.activateOptions();
+
+    logger = Logger.getLogger("com.intellij.updater");
+    logger.addAppender(updateError);
+    logger.addAppender(update);
+    logger.setLevel(Level.ALL);
+    logger.info("--- Updater started ---");
+  }
+
+  private static void _main(String[] args) {
     boolean includeJar = !Arrays.asList(args).contains("--no_jar");
     String jarFile = includeJar ? getArgument(args, "jar") : null;
     jarFile = includeJar && jarFile == null ? resolveJarFile() : jarFile;
@@ -51,7 +84,6 @@ public class Runner {
       String patchFile = args[5];
 
       checkCaseSensitivity(newFolder);
-      initLogger();
 
       boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
@@ -110,17 +142,17 @@ public class Runner {
       // Android Studio: Analytics
       for (UpdaterService service : UpdaterService.loader) { service.logProcessStart(); }
       String destPath = args[1];
-      checkCaseSensitivity(destPath);
 
-      Path destDirectory = null;
+      Path destDirectory = Paths.get(destPath);
       try {
-        destDirectory = Paths.get(destPath).toRealPath();
+        destDirectory = destDirectory.toRealPath();
       }
       catch (InvalidPathException | IOException e) {
         logger().error(e);
       }
 
-      initLogger();
+      checkCaseSensitivity(destDirectory.toString());
+
       logger().info("args: " + Arrays.toString(args));
       logger().info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
@@ -140,7 +172,7 @@ public class Runner {
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
-      if (destDirectory == null || !Files.isDirectory(destDirectory)) {
+      if (!Files.isDirectory(destDirectory, LinkOption.NOFOLLOW_LINKS)) {
         ui.showError("Invalid target directory: " + destPath);
         success = false;
       }
@@ -191,33 +223,6 @@ public class Runner {
       }
     }
     return map;
-  }
-
-  public static void initLogger() {
-    if (logger == null) {
-      String logDirectory = Utils.findDirectory(1_000_000L);
-      logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
-
-      FileAppender update = new FileAppender();
-      update.setFile(logPath);
-      update.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-      update.setThreshold(Level.ALL);
-      update.setAppend(true);
-      update.activateOptions();
-
-      FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(logDirectory, ERROR_LOG_FILE_NAME).getAbsolutePath());
-      updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-      updateError.setThreshold(Level.ERROR);
-      updateError.setAppend(false);
-      updateError.activateOptions();
-
-      logger = Logger.getLogger("com.intellij.updater");
-      logger.addAppender(updateError);
-      logger.addAppender(update);
-      logger.setLevel(Level.ALL);
-      logger.info("--- Updater started ---");
-    }
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {

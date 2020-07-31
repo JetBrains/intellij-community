@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.function.Predicate;
 
 public class DuplicateConditionInspection extends BaseInspection {
 
@@ -84,10 +84,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) return;
 
-      PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression) {
-        parent = parent.getParent();
-      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiIfStatement) return;
       if (parent instanceof PsiBinaryExpression) {
         final PsiBinaryExpression parentExpression = (PsiBinaryExpression)parent;
@@ -95,7 +92,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
 
       final Set<PsiExpression> conditions = new LinkedHashSet<>();
-      collectConditionsForExpression(expression, conditions, testTokenType -> testTokenType.equals(tokenType));
+      collectConditionsForExpression(expression, conditions, tokenType);
       if (conditions.size() < 2) return;
 
       findDuplicatesAccordingToSideEffects(conditions);
@@ -104,7 +101,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     private void collectConditionsForIfStatement(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
       if (depth > LIMIT_DEPTH || !myAnalyzedStatements.add(statement)) return;
       final PsiExpression condition = statement.getCondition();
-      collectConditionsForExpression(condition, conditions, testTokenType -> JavaTokenType.OROR.equals(testTokenType));
+      collectConditionsForExpression(condition, conditions, JavaTokenType.OROR);
       final PsiStatement branch = ControlFlowUtils.stripBraces(statement.getElseBranch());
       if (branch instanceof PsiIfStatement) {
         collectConditionsForIfStatement((PsiIfStatement)branch, conditions, depth + 1);
@@ -119,23 +116,21 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
     }
 
-    private void collectConditionsForExpression(PsiExpression condition,
-                                                Set<? super PsiExpression> conditions,
-                                                Predicate<IElementType> operatorTokenEquality) {
+    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
       if (condition == null) return;
       if (condition instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)condition;
         final PsiExpression contents = parenthesizedExpression.getExpression();
-        collectConditionsForExpression(contents, conditions, operatorTokenEquality);
+        collectConditionsForExpression(contents, conditions, wantedTokenType);
         return;
       }
       if (condition instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
-        if (operatorTokenEquality.test(tokenType)) {
+        if (wantedTokenType.equals(tokenType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
           for (PsiExpression operand : operands) {
-            collectConditionsForExpression(operand, conditions, operatorTokenEquality);
+            collectConditionsForExpression(operand, conditions, wantedTokenType);
           }
           return;
         }

@@ -27,7 +27,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -35,8 +34,6 @@ import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.AbstractSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.ObjectSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.fxom.*;
-import com.oracle.javafx.scenebuilder.kit.library.BuiltinLibrary;
-import com.oracle.javafx.scenebuilder.kit.library.Library;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
 import gnu.trove.THashMap;
@@ -68,7 +65,7 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   protected EditorController myEditorController;
   private URLClassLoader myClassLoader;
-  private volatile Collection<CustomComponent> myCustomComponents;
+  private volatile Collection<JavaFXPlatformHelper.CustomComponent> myCustomComponents;
   private volatile boolean mySkipChanges;
   private Object myListener;
   private Object mySelectionListener;
@@ -132,11 +129,11 @@ public class SceneBuilderImpl implements SceneBuilder {
       }
     }
 
-    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+    final List<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
       .runReadActionInSmartMode(this::collectCustomComponents);
 
     try {
-      final CustomLibrary customLibrary = new CustomLibrary(myClassLoader, customComponents);
+      final JavaFXPlatformHelper.CustomLibrary customLibrary = new JavaFXPlatformHelper.CustomLibrary(myClassLoader, customComponents);
       myEditorController.setLibrary(customLibrary);
       myCustomComponents = customComponents;
     }
@@ -145,7 +142,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
   }
 
-  private Collection<CustomComponent> collectCustomComponents() {
+  private List<JavaFXPlatformHelper.CustomComponent> collectCustomComponents() {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
@@ -181,13 +178,13 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @NotNull
-  private Collection<CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
+  private List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     final Map<String, BuiltinComponent> builtinComponents =
       loadBuiltinComponents(className -> psiFacade.findClass(className, scope) != null);
 
-    final List<CustomComponent> customComponents = new ArrayList<>();
+    final List<JavaFXPlatformHelper.CustomComponent> customComponents = new ArrayList<>();
     for (PsiClass psiClass : psiClasses) {
       final String qualifiedName = psiClass.getQualifiedName();
       final String name = psiClass.getName();
@@ -202,7 +199,7 @@ public class SceneBuilderImpl implements SceneBuilder {
         }
         final String moduleName = getComponentModuleName(psiClass);
         final Map<String, String> attributes = parentComponent != null ? parentComponent.getAttributes() : Collections.emptyMap();
-        customComponents.add(new CustomComponent(name, qualifiedName, moduleName, attributes));
+        customComponents.add(new JavaFXPlatformHelper.CustomComponent(name, qualifiedName, moduleName, attributes));
       }
     }
     return customComponents;
@@ -237,7 +234,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   public boolean reload() {
     if (myCustomComponents == null) return false;
 
-    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+    final Collection<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
       .runReadActionInSmartMode(this::collectCustomComponents);
     if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
 
@@ -410,7 +407,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   @NotNull
   private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
     final Map<String, BuiltinComponent> components = new THashMap<>();
-    for (LibraryItem item : BuiltinLibrary.getLibrary().getItems()) {
+    for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();
       final List<String> imports = new ArrayList<>();
       final Map<String, String> attributes = new THashMap<>();
@@ -507,80 +504,6 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     public Map<String, String> getAttributes() {
       return myAttributes;
-    }
-  }
-
-  public static class CustomComponent {
-    private final String myName;
-    private final String myQualifiedName;
-    private final String myModule;
-    private final Map<String, String> myAttributes;
-
-    public CustomComponent(@NotNull String name,
-                    @NotNull String qualifiedName,
-                    @Nullable String module,
-                    @NotNull Map<String, String> attributes) {
-      myName = name;
-      myQualifiedName = qualifiedName;
-      myModule = module;
-      myAttributes = attributes;
-    }
-
-    public String getDisplayName() {
-      return !StringUtil.isEmpty(myModule) ? myName + " (" + myModule + ")" : myName;
-    }
-
-    public String getFxmlText() {
-      final StringBuilder builder =
-        new StringBuilder(String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?><?import %s?><%s", myQualifiedName, myName));
-      myAttributes.forEach((name, value) -> builder.append(String.format(" %s=\"%s\"", name, value.replace("\"", "&quot;"))));
-      builder.append("/>");
-      return builder.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CustomComponent)) return false;
-
-      CustomComponent c = (CustomComponent)o;
-      return myQualifiedName.equals(c.myQualifiedName) && Objects.equals(myModule, c.myModule);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myQualifiedName, myModule);
-    }
-
-    @Override
-    public String toString() {
-      return myModule != null ? myQualifiedName + "(" + myModule + ")" : myQualifiedName;
-    }
-  }
-
-  public static class CustomLibrary extends Library {
-    private static final String CUSTOM_SECTION = "Custom";
-
-    public CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
-      classLoaderProperty.set(classLoader);
-
-      getItems().setAll(BuiltinLibrary.getLibrary().getItems());
-      final List<LibraryItem> items = ContainerUtil.map(
-        customComponents, component -> new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
-      getItems().addAll(items);
-    }
-
-    @Override
-    public Comparator<String> getSectionComparator() {
-      return CustomLibrary::compareSections;
-    }
-
-    private static int compareSections(String s1, String s2) {
-      final boolean isCustom1 = CUSTOM_SECTION.equals(s1);
-      final boolean isCustom2 = CUSTOM_SECTION.equals(s2);
-      if (isCustom1) return isCustom2 ? 0 : 1;
-      if (isCustom2) return -1;
-      return BuiltinLibrary.getLibrary().getSectionComparator().compare(s1, s2);
     }
   }
 }

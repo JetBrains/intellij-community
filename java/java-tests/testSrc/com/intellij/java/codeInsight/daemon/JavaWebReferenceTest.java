@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.paths.UrlReference;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -13,13 +13,13 @@ import java.util.List;
 public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testReferenceInComment() {
-    List<WebReference> references = getReferences("// http://foo\n" +
+    List<UrlReference> references = getReferences("// http://foo\n" +
                                                   "class Hi {}");
     assertEquals(1, references.size());
   }
 
   public void testReferenceInLiteral() {
-    List<WebReference> references = getReferences("class Hi { String url=\"http://foo\"; }");
+    List<UrlReference> references = getReferences("class Hi { String url=\"http://foo\"; }");
     assertEquals(1, references.size());
   }
 
@@ -29,8 +29,8 @@ public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private List<WebReference> getReferences(String s) {
+  private List<UrlReference> getReferences(String s) {
     PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, s);
-    return PlatformTestUtil.collectWebReferences(file);
+    return PlatformTestUtil.collectUrlReferences(file);
   }
 }

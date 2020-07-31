@@ -1,4 +1,5 @@
-from typing import List, Tuple, Optional, Callable, Any, Protocol, Union, Dict, Text
+from typing import List, Tuple, Optional, Callable, Any, Union, Dict, Text
+from _typeshed import SupportsRead
 
 import pyexpat.errors as errors
 import pyexpat.model as model
@@ -15,9 +16,6 @@ class ExpatError(Exception):
 
 error = ExpatError
 
-class _Reader(Protocol):
-    def read(self, length: int) -> bytes: ...
-
 XML_PARAM_ENTITY_PARSING_NEVER: int
 XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: int
 XML_PARAM_ENTITY_PARSING_ALWAYS: int
@@ -26,7 +24,7 @@ _Model = Tuple[int, int, Optional[str], tuple]
 
 class XMLParserType(object):
     def Parse(self, __data: Union[Text, bytes], __isfinal: bool = ...) -> int: ...
-    def ParseFile(self, __file: _Reader) -> int: ...
+    def ParseFile(self, __file: SupportsRead[bytes]) -> int: ...
     def SetBase(self, __base: Text) -> None: ...
     def GetBase(self) -> Optional[str]: ...
     def GetInputContext(self) -> Optional[bytes]: ...

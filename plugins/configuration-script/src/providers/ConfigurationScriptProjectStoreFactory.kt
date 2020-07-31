@@ -21,10 +21,10 @@ private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
-  internal val isConfigurationFileListenerAdded = AtomicBoolean()
+  val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
-  internal fun configurationFileChanged() {
+  fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
       StoreReloadManager.getInstance().storageFilesChanged(mapOf(project to storages.values.toList()))
     }
@@ -120,6 +120,6 @@ private class ReadOnlyStorage(val configurationSchemaKey: String, val componentC
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<String>) {
   }
 }

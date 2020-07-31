@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
+
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
   private static class Holder {
     private static final NotificationGroup NOTIFICATION_GROUP =
@@ -74,6 +76,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         }
       }
       catch (final IOException exception) {
+        Logger.getInstance(getClass()).warn(exception);
+
         final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 IdeBundle.message("notification.content.can.t.create.zip.file.with.logs.0",

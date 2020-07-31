@@ -524,7 +524,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module, boolean addContentRoots,
                                                      boolean addSourceRoots) {
-    Collection<String> pythonPathList = Sets.newLinkedHashSet();
+    Collection<String> pythonPathList = new LinkedHashSet<String>();
     if (module != null) {
       Set<Module> dependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(module, dependencies);

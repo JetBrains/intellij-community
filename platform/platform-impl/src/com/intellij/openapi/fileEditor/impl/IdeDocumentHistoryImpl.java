@@ -65,7 +65,7 @@ import java.util.function.Predicate;
 @State(name = "IdeDocumentHistory", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+}, reportStatistic = false)
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
 

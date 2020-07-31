@@ -75,7 +75,9 @@ public final class PatternCompiler {
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
       final CompiledPattern pattern = context.getPattern();
-      checkForUnknownVariables(pattern, elements);
+      if (checkForErrors) {
+        checkForUnknownVariables(pattern, elements);
+      }
       pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);

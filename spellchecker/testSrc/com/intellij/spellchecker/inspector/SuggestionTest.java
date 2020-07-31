@@ -15,6 +15,8 @@
  */
 package com.intellij.spellchecker.inspector;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -39,39 +41,40 @@ public class SuggestionTest extends BasePlatformTestCase {
 
   public void testMaxSuggestions() {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
-    int oldCorrectionsLimit = settings.getCorrectionsLimit();
+    int oldCorrectionsLimit = Registry.intValue("spellchecker.corrections.limit");
     assertTrue(manager.getSuggestions(TYPPPO).size() <= oldCorrectionsLimit);
   }
 
   public void testMaxSuggestions1() {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
-    int oldCorrectionsLimit = settings.getCorrectionsLimit();
-    settings.setCorrectionsLimit(1);
+    final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
+    final int oldCorrectionsLimit = registryValue.asInteger();
+
+    registryValue.setValue((1));
     assertEquals(1, manager.getSuggestions(TYPPPO).size());
 
-    settings.setCorrectionsLimit(oldCorrectionsLimit);
+    registryValue.setValue((oldCorrectionsLimit));
   }
 
   public void testMaxSuggestions0() {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
-    int oldCorrectionsLimit = settings.getCorrectionsLimit();
-    settings.setCorrectionsLimit(0); // some incorrect value appeared
+    final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
+    final int oldCorrectionsLimit = registryValue.asInteger();
+    
+    registryValue.setValue(0); // some incorrect value appeared
     assertEquals(0, manager.getSuggestions(TYPPPO).size());
 
-    settings.setCorrectionsLimit(oldCorrectionsLimit);
+    registryValue.setValue(oldCorrectionsLimit);
   }
 
   public void testMaxSuggestions1000() {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
-    int oldCorrectionsLimit = settings.getCorrectionsLimit();
-    settings.setCorrectionsLimit(1000);
+    final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
+    final int oldCorrectionsLimit = registryValue.asInteger();
+    registryValue.setValue(1000);
     // because of quality threshold
     assertTrue(manager.getSuggestions("SomeVeryLongWordToReduceSuggestionsCount").size() < 1000);
 
-    settings.setCorrectionsLimit(oldCorrectionsLimit);
+    registryValue.setValue(oldCorrectionsLimit);
   }
 }

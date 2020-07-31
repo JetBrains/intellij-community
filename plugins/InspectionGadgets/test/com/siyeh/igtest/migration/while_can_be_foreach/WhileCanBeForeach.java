@@ -145,6 +145,30 @@ public class WhileCanBeForeach {
       }
     }
   }
+
+  void insideInnerWhilePositive() {
+    Iterator<Integer> iterator = Arrays.asList(1, 2, 3, 4, 5, 6).iterator();
+    <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+      int i = 0;
+      while (i != 3) {
+        i++;
+        System.out.println("Number " + i);
+      }
+      Integer next = iterator.next();
+      System.out.println(next);
+    }
+  }
+
+  void insideInnerWhileNegative() {
+    Iterator<Integer> iterator = Arrays.asList(1, 2, 3, 4, 5, 6).iterator();
+    while (iterator.hasNext()) {
+      int i = 0;
+      while (i != 3) {
+        Integer next = iterator.next();
+        System.out.println(next);
+      }
+    }
+  }
 }
 class Base implements Iterable<String> {
   @Override

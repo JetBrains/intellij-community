@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
@@ -39,9 +39,9 @@ class MacDmgBuilder {
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties, String macZipPath,
-                              String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
+                              String jreArchivePath, String suffix, boolean notarize) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isJreModular, suffix, notarize)
+    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, suffix, notarize)
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -95,20 +95,17 @@ class MacDmgBuilder {
     }
   }
 
-  private def getJavaExePath(String archivePath, boolean isModular) {
-    def topLevelDir = buildContext.bundledJreManager.jbrRootDir(new File(archivePath)) ?: 'jdk'
-    return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
-  }
-
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
-    def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String suffix, boolean notarize) {
     String javaExePath = null
     if (jreArchivePath != null) {
-      javaExePath = getJavaExePath(jreArchivePath, isJreModular)
+      String rootDir = buildContext.bundledJreManager.jbrRootDir(new File(jreArchivePath)) ?: 'jdk'
+      javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
+
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
 
+    def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
     def installationArchives = [pair(macZipPath, zipRoot)]
     if (jreArchivePath != null) {
       installationArchives += pair(jreArchivePath, "")

@@ -33,7 +33,7 @@ public interface InlayParameterHintsProvider {
    * Provides hint info, for alt-enter action (can be {@link HintInfo.MethodInfo} or {@link HintInfo.OptionInfo}).
    * <p>
    * MethodInfo: provides fully qualified method name (e.g. "java.util.Map.put") and list of its parameter names.
-   * Used to match method with blacklist, and to add method into blacklist
+   * Used to match method with blacklist, and to add method into exclude list
    * <p>
    * OptionInfo: provides option to disable/enable by alt-enter
    */
@@ -54,8 +54,8 @@ public interface InlayParameterHintsProvider {
   Set<String> getDefaultBlackList();
 
   /**
-   * Returns language which blacklist will be appended to the resulting one.
-   * E.g. to prevent possible Groovy and Kotlin extensions from showing hints for blacklisted Java methods.
+   * Returns language which exclude list will be appended to the resulting one.
+   * E.g. to prevent possible Groovy and Kotlin extensions from showing hints for excluded Java methods.
    */
   @Nullable
   default Language getBlackListDependencyLanguage() {
@@ -78,7 +78,7 @@ public interface InlayParameterHintsProvider {
   }
 
   /**
-   * Text explaining black list patterns.
+   * Text explaining exclude list patterns.
    */
   default String getBlacklistExplanationHTML() {
     return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");

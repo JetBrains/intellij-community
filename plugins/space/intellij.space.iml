@@ -11,9 +11,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="space-idea-sdk" type="repository">
-        <properties maven-id="com.jetbrains:space-idea-sdk:1.0.49205-pre" />
+        <properties maven-id="com.jetbrains:space-idea-sdk:1.0.49863" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/space-idea-sdk/1.0.49205-pre/space-idea-sdk-1.0.49205-pre.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/space-idea-sdk/1.0.49863/space-idea-sdk-1.0.49863.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

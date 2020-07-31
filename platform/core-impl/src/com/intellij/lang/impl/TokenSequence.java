@@ -16,7 +16,7 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.TokenizedText;
+import com.intellij.lexer.TokenList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public class TokenSequence implements TokenizedText {
+public class TokenSequence implements TokenList {
   private static final Logger LOG = Logger.getInstance(TokenSequence.class);
 
   private final CharSequence myText;
@@ -57,7 +57,7 @@ public class TokenSequence implements TokenizedText {
   @NotNull
   public static TokenSequence performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
     if (lexer instanceof WrappingLexer) {
-      TokenizedText existing = ((WrappingLexer)lexer).getTokens();
+      TokenList existing = ((WrappingLexer)lexer).getTokens();
       if (existing instanceof TokenSequence && Comparing.equal(text, ((TokenSequence)existing).myText)) {
         // prevent clients like PsiBuilder from modifying shared token types
         return new TokenSequence(((TokenSequence)existing).lexStarts,
@@ -90,7 +90,7 @@ public class TokenSequence implements TokenizedText {
   }
 
   @Override
-  public @NotNull CharSequence getText() {
+  public @NotNull CharSequence getTokenizedText() {
     return myText;
   }
 

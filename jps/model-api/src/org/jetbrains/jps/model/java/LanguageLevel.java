@@ -18,9 +18,10 @@ public enum LanguageLevel {
   JDK_10(10),
   JDK_11(11),
   JDK_12(12),
-  JDK_13(13), JDK_13_PREVIEW(13),
+  JDK_13(13),
   JDK_14(14), JDK_14_PREVIEW(14),
-  JDK_X(15);
+  JDK_15(15), JDK_15_PREVIEW(15),
+  JDK_X(16);
 
   public static final LanguageLevel HIGHEST = JDK_14;
 

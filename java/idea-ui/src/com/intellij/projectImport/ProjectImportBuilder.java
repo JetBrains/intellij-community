@@ -49,7 +49,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
 
   public abstract @Nullable List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider, ModifiableArtifactModel artifactModel);
 
-  public void setFileToImport(String path) {
+  public void setFileToImport(@NotNull String path) {
     myFileToImport = path;
   }
 

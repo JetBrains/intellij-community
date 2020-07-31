@@ -278,7 +278,7 @@ public class HgVFSListener extends VcsVFSListener {
     Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots = HgUtil.groupFilePathsByHgRoots(myProject, filePaths);
     return groupFilePathsByHgRoots.entrySet().stream()
       .map(entry -> getIgnoreRepoHolder(entry.getKey()).removeIgnoredFiles(entry.getValue()))
-      .flatMap(List::stream).collect(Collectors.toList());
+      .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   /**

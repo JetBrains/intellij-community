@@ -177,5 +177,9 @@
     <extensionPoint name="vcsBulkMovesOnlyChangesFilter"
                     interface="com.intellij.openapi.vcs.changes.ui.browser.BulkMovesOnlyChangesFilter"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.consoleFolding"
+                    interface="com.intellij.vcs.console.VcsConsoleFolding"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

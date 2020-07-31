@@ -66,7 +66,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
   }
 
   @Override
-  public void beforeModalityStateChanged(boolean entering) {
+  public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
     SwingUtilities.invokeLater(() -> maybeReady());
   }
 

@@ -28,13 +28,13 @@ internal class GHPRVirtualFileSystem : DeprecatedVirtualFileSystem() {
       getPath(path)
     }
     catch (e: Exception) {
-      LOG.info("Cannot deserlialize file path", e)
+      LOG.debug("Cannot deserlialize file path", e)
       return null
     }
 
     val project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(parsedPath.projectHash) ?: return null
-    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(parsedPath.repository) ?: return null
-    return dataContext.filesManager.findFile(parsedPath.id)
+    val filesManager = GHPRDataContextRepository.getInstance(project).findContext(parsedPath.repository)?.filesManager ?: return null
+    return if (parsedPath.isDiff) filesManager.findDiffFile(parsedPath.id) else filesManager.findTimelineFile(parsedPath.id)
   }
 
   override fun refreshAndFindFileByPath(path: String) = findFileByPath(path)
@@ -57,8 +57,12 @@ internal class GHPRVirtualFileSystem : DeprecatedVirtualFileSystem() {
                                            JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.ANY))
 
-    fun getPath(fileManagerId: String, project: Project, repository: GHRepositoryCoordinates, id: GHPRIdentifier): String =
-      JACKSON.writeValueAsString(Path(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id)))
+    fun getPath(fileManagerId: String,
+                project: Project,
+                repository: GHRepositoryCoordinates,
+                id: GHPRIdentifier,
+                isDiff: Boolean = false): String =
+      JACKSON.writeValueAsString(Path(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id), isDiff))
 
     private fun getPath(path: String) = JACKSON.readValue(path, Path::class.java)
 
@@ -68,5 +72,6 @@ internal class GHPRVirtualFileSystem : DeprecatedVirtualFileSystem() {
   private data class Path(val fileManagerId: String,
                           val projectHash: String,
                           val repository: GHRepositoryCoordinates,
-                          val id: SimpleGHPRIdentifier)
+                          val id: SimpleGHPRIdentifier,
+                          val isDiff: Boolean)
 }

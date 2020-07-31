@@ -1,6 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 const duration = /(-?\d*\.?\d+(?:e[-+]?\d+)?)\s*([a-zμ]*)/ig
 
+export interface TimeRangeModel {
+  l: string
+  k: string
+}
+
+export const timeRanges: Array<TimeRangeModel> = [{l: "All", k: "1y"}, {l: "Last 3 months", k: "3M"}, {l: "Last month", k: "1M"}]
+
 const units: Array<UnitDescriptor> = [
   {
     subtractFunction: "subtractDays",
@@ -74,6 +81,17 @@ export function toClickhouseSql(duration: DurationParseResult): string {
     result = expression
   }
   return result
+}
+
+export function parseTimeRange(s: string | null): DurationParseResult {
+  let timeRange = s
+  if (timeRange == null || timeRange == "all") {
+    timeRange = "1y"
+  }
+  else if (timeRange === "lastMonth") {
+    timeRange = "1M"
+  }
+  return parseDuration(timeRange)
 }
 
 export function parseDuration(s: string): DurationParseResult {

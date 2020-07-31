@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,11 +55,24 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
   }
 
-  public static boolean isSmallComboButton(Component c) {
-    ComboBoxAction a = getComboAction(c);
-    return a != null && a.isSmallVariant();
+  public static boolean isSmallVariant(Component c) {
+    if (!(c instanceof AbstractButton)) return false;
+
+    AbstractButton b = (AbstractButton)c;
+    boolean smallVariant = b.getClientProperty("ActionToolbar.smallVariant") == Boolean.TRUE;
+    ComboBoxAction a = (ComboBoxAction)b.getClientProperty("styleCombo");
+
+    return smallVariant || a != null && a.isSmallVariant();
   }
 
+  public static boolean isComboAction(Component c) {
+    return c instanceof AbstractButton && ((JComponent)c).getClientProperty("styleCombo") != null;
+  }
+
+  /**
+   * @deprecated Use isComboAction instead
+   */
+  @Deprecated
   public static ComboBoxAction getComboAction(Component c) {
     return c instanceof AbstractButton ? (ComboBoxAction)((JComponent)c).getClientProperty("styleCombo") : null;
   }
@@ -88,7 +102,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return true;
     }
     Rectangle r = new Rectangle(c.getSize());
-    JBInsets.removeFrom(r, JBUI.insets(1));
+    JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
@@ -110,9 +124,9 @@ public class DarculaButtonUI extends BasicButtonUI {
         g2.translate(r.x, r.y);
 
         float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
-        float bw = isSmallComboButton(c) ? 0 : BW.getFloat();
+        float bw = isSmallVariant(c) ? 0 : BW.getFloat();
 
-        if (!c.hasFocus() && !isSmallComboButton(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
+        if (!c.hasFocus() && !isSmallVariant(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
                                                   new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
 
@@ -137,11 +151,9 @@ public class DarculaButtonUI extends BasicButtonUI {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
-           isSmallComboButton(c) ? JBColor.namedColor("ComboBoxButton.background",
-                                                      JBColor.namedColor("Button.darcula.smallComboButtonBackground",
-                                                                         UIUtil.getPanelBackground())) :
-           isDefaultButton(c) ?
-           UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+           isDefaultButton(c) ? UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+           isSmallVariant(c) ? JBColor.namedColor("ComboBoxButton.background",
+                                                  JBColor.namedColor("Button.darcula.smallComboButtonBackground", UIUtil.getPanelBackground())) :
            UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
   }
 
@@ -243,10 +255,10 @@ public class DarculaButtonUI extends BasicButtonUI {
                            Math.max(prefSize.height, helpDiam + i.top + i.bottom));
     }
     else {
-      int width = getComboAction(c) != null ?
-                  prefSize.width :
+      int width = isComboAction(c) ? prefSize.width :
                   Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right);
-      int height = Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom);
+      int height = Math.max(prefSize.height,
+                            (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : getMinimumHeight()) + i.top + i.bottom);
 
       return new Dimension(width, height);
     }

@@ -2,13 +2,10 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entities.ChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -180,5 +177,86 @@ class DiffBuilderTest {
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
     assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parent)
+  }
+
+  @Test
+  fun `dependency to removed parent`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.addChildWithOptionalParentEntity(parent)
+    source.removeEntity(parent)
+
+    source.applyDiff(target)
+  }
+
+  @Test
+  fun `modify child and parent`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+    source.addChildEntity(parent)
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.parentProperty = "anotherValue"
+    }
+    source.addChildEntity(parent)
+
+    source.applyDiff(target)
+  }
+
+  @Test
+  fun `remove parent in both difs with dependency`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.addChildWithOptionalParentEntity(parent)
+    target.removeEntity(parent)
+    source.removeEntity(parent)
+
+    source.applyDiff(target)
+  }
+
+  @Test
+  fun `remove parent in both diffs`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+    val optionalChild = source.addChildWithOptionalParentEntity(null)
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, optionalChild) {
+      this.optionalParent = parent
+    }
+
+    source.removeEntity(parent)
+
+    source.applyDiff(target)
+  }
+
+  @Test(expected = AddDiffException::class)
+  fun `adding duplicated persistent ids`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+
+    target.addNamedEntity("Name")
+    source.addNamedEntity("Name")
+
+    source.applyDiff(target)
+  }
+
+  @Test(expected = AddDiffException::class)
+  fun `modifying duplicated persistent ids`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val namedEntity = source.addNamedEntity("Hello")
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+
+    source.addNamedEntity("Name")
+    target.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+      this.name = "Name"
+    }
+
+    source.applyDiff(target)
   }
 }

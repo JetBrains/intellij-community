@@ -54,11 +54,8 @@ class RefreshSessionImpl extends RefreshSession {
   }
 
   private Throwable rememberStartTrace() {
-    if (ApplicationManager.getApplication().isUnitTestMode() &&
-        (myIsAsync || !ApplicationManager.getApplication().isDispatchThread())) {
-      return new Throwable();
-    }
-    return null;
+    boolean trace = ApplicationManager.getApplication().isUnitTestMode() && (myIsAsync || !ApplicationManager.getApplication().isDispatchThread());
+    return trace ? new Throwable() : null;
   }
 
   RefreshSessionImpl(@NotNull List<? extends VFileEvent> events) {

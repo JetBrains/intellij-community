@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -19,7 +19,8 @@ import java.util.Map;
 
 @State(
   name = "LastSelectedPropertiesFileStore",
-  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED),
+  reportStatistic = false
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();

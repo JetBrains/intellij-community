@@ -122,7 +122,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return JBIterable.of(createCancelButton());
   }
 
-  private ProgressButton createCancelButton() {
+  protected final ProgressButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
       new IconButton(myInfo.getCancelTooltipText(),
                      myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,

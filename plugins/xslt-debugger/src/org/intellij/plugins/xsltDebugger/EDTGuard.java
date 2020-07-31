@@ -23,7 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.intellij.plugins.xsltDebugger.rt.engine.Watchable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +46,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This is just the second best solution though as it would be better to avoid any interaction with the debuggee on the
  * EDT, but, at least right now, it seems to be more reliable against bad surprises.
  */
-class EDTGuard implements InvocationHandler {
+final class EDTGuard implements InvocationHandler {
   // maximum time to wait for a result on the EDT
   private static final long MAX_TIMEOUT = 10 * 1000;
 
-  private final Map<Object, Object> myInstanceCache = ContainerUtil.newIdentityTroveMap();
+  private final Map<Object, Object> myInstanceCache = new Reference2ObjectOpenHashMap<>();
 
   private final Object myTarget;
 

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,6 +47,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
   private static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
+    if (DumbService.getInstance(location.getProject()).isDumb()) return Result.ACCEPT;
 
     CompletionParameters parameters = location.getCompletionParameters();
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);

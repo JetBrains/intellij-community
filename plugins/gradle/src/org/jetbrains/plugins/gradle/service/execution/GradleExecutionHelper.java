@@ -100,6 +100,12 @@ public class GradleExecutionHelper {
     File projectPathFile = new File(projectPath);
     if (projectPathFile.isFile() && projectPath.endsWith(GradleConstants.EXTENSION) && projectPathFile.getParent() != null) {
       projectDir = projectPathFile.getParent();
+      if (settings != null) {
+        List<String> arguments = settings.getArguments();
+        if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
+          settings.withArguments("-b", projectPath);
+        }
+      }
     }
     else {
       projectDir = projectPath;
@@ -645,7 +651,7 @@ public class GradleExecutionHelper {
           LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
           return null;
         }
-        return PathUtil.getCanonicalPath(path);
+        return FileUtil.toCanonicalPath(path);
       }
       return null;
     });

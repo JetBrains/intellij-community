@@ -13,6 +13,7 @@ import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.util.VcsLogUtil
 
 class ResumeIndexingAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
@@ -32,13 +33,14 @@ class ResumeIndexingAction : DumbAwareAction() {
     val bigRepositories = rootsForIndexing.filter { it.isBig() }
     e.presentation.isEnabledAndVisible = (bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty())
 
+    val vcsDisplayName = VcsLogUtil.getVcsDisplayName(project, rootsForIndexing.map { data.getLogProvider(it) })
     if (scheduledForIndexing.isNotEmpty()) {
-      e.presentation.text = VcsLogBundle.message("action.title.pause.indexing")
+      e.presentation.text = VcsLogBundle.message("action.title.pause.indexing", vcsDisplayName)
       e.presentation.description = VcsLogBundle.message("action.description.is.scheduled", getText(scheduledForIndexing))
       e.presentation.icon = AllIcons.Process.ProgressPauseSmall
     }
     else {
-      e.presentation.text = VcsLogBundle.message("action.title.resume.indexing")
+      e.presentation.text = VcsLogBundle.message("action.title.resume.indexing", vcsDisplayName)
       e.presentation.description = VcsLogBundle.message("action.description.was.paused", getText(bigRepositories))
       e.presentation.icon = AllIcons.Process.ProgressResumeSmall
     }

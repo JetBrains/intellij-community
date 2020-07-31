@@ -10,12 +10,9 @@ import com.intellij.internal.statistic.eventLog.*
 import com.intellij.util.io.readText
 import junit.framework.TestCase
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest() {
-  private val recorderId = "FUS"
-  private val productCode = "IC"
   private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
 
   fun testSend() {
@@ -24,9 +21,10 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     TestCase.assertEquals(1, requests.size)
     val logEventRecordRequest = requests.first()
-    TestCase.assertEquals(recorderId, logEventRecordRequest.recorder)
-    TestCase.assertEquals(productCode, logEventRecordRequest.product)
+    TestCase.assertEquals(RECORDER_ID, logEventRecordRequest.recorder)
+    TestCase.assertEquals(PRODUCT_CODE, logEventRecordRequest.product)
     TestCase.assertEquals(1, logEventRecordRequest.records.size)
+
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
     val expected = gson.fromJson(logText, LogEvent::class.java)
@@ -44,8 +42,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
   fun testSendIfSettingsUnreachable() {
     val logFile = newLogFile("testLogFile.log", "log1.txt")
-    val service = newSendService(listOf(logFile), settingsResponseFile = "non-existent.php")
+    val service = newSendService(container, listOf(logFile), settingsResponseFile = "non-existent.php")
     doTestFailed(EventLogConfigBuilder(container, tmpLocalRoot), service, ResultCode.ERROR_IN_CONFIG)
+    TestCase.assertTrue(logFile.exists())
+  }
+
+  fun testNoSendUrlSpecified() {
+    val config = EventLogConfigBuilder(container, tmpLocalRoot).withSendUrlPath(null)
+    val logFile = newLogFile("testLogFile.log", "log1.txt")
+    doTestFailed(config, listOf(logFile), ResultCode.ERROR_IN_CONFIG)
     TestCase.assertTrue(logFile.exists())
   }
 
@@ -79,8 +84,15 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     doTestFailed(config, emptyList(), ResultCode.NOTHING_TO_SEND)
   }
 
+  fun testFailedSendWithEmptyBucketFilter() {
+    val config = EventLogConfigBuilder(container, tmpLocalRoot).withToBucket(0)
+    val logFile = newLogFile("testLogFile.log", "log1.txt")
+    doTestFailed(config, listOf(logFile), ResultCode.SENT_WITH_ERRORS)
+    TestCase.assertFalse(logFile.exists())
+  }
+
   fun testFailedSendWithNoPermitted() {
-    val config = EventLogConfigBuilder(container, tmpLocalRoot).withPermittedTraffic(0)
+    val config = EventLogConfigBuilder(container, tmpLocalRoot).withProductVersion("2020.2")
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     doTestFailed(config, listOf(logFile), ResultCode.NOT_PERMITTED_SERVER)
     TestCase.assertFalse(logFile.exists())
@@ -94,7 +106,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
   fun testNotSendIfSendDisabled() {
     val logFile = newLogFile("testLogFile.log", "log1.txt")
-    val service = newSendService(listOf(logFile), sendEnabled = false)
+    val service = newSendService(container, listOf(logFile), sendEnabled = false)
     doTestFailed(EventLogConfigBuilder(container, tmpLocalRoot), service, ResultCode.NOTHING_TO_SEND)
     TestCase.assertFalse(logFile.exists())
   }
@@ -109,7 +121,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
   }
 
   private fun doTestFailed(config: EventLogConfigBuilder, logFile: List<File>, expected: ResultCode) {
-    doTestFailed(config, newSendService(logFile), expected)
+    doTestFailed(config, newSendService(container, logFile), expected)
   }
 
   private fun doTestFailed(config: EventLogConfigBuilder, service: EventLogStatisticsService, expected: ResultCode) {
@@ -122,7 +134,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
   private fun doTest(logFiles: List<File>): List<LogEventRecordRequest> {
     EventLogConfigBuilder(container, tmpLocalRoot).create()
-    val service = newSendService(logFiles)
+    val service = newSendService(container, logFiles)
     val resultHolder = ResultHolder()
 
     val result = service.send(resultHolder)
@@ -137,39 +149,6 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
       TestCase.assertEquals(jsonObject["method"].asString, "POST")
       gson.fromJson(jsonObject["body"].asString, LogEventRecordRequest::class.java)
     }
-  }
-
-  private fun newSendService(logFiles: List<File>,
-                             settingsResponseFile: String = SETTINGS_FILE,
-                             sendEnabled: Boolean = true): EventLogStatisticsService {
-    val applicationInfo = TestApplicationInfo(recorderId, productCode, container.getBaseUrl(settingsResponseFile).toString())
-    return EventLogStatisticsService(
-      DeviceConfiguration(EventLogConfiguration.deviceId, EventLogConfiguration.bucket),
-      TestEventLogRecorderConfig(recorderId, logFiles, sendEnabled),
-      EventLogSendListener { _, _, _ -> Unit },
-      EventLogUploadSettingsService(recorderId, applicationInfo)
-    )
-  }
-
-  private class TestApplicationInfo(recorderId: String,
-                                    val product: String,
-                                    val settingsUrl: String) : EventLogInternalApplicationInfo(recorderId, true) {
-    override fun getProductCode(): String = product
-    override fun getTemplateUrl(): String = settingsUrl
-  }
-
-  private class TestEventLogRecorderConfig(recorderId: String,
-                                           logFiles: List<File>,
-                                           val sendEnabled: Boolean = true) : EventLogInternalRecorderConfig(recorderId) {
-    private val evenLogFilesProvider = object : EventLogFilesProvider {
-      override fun getLogFilesDir(): Path? = null
-
-      override fun getLogFiles(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
-    }
-
-    override fun isSendEnabled(): Boolean = sendEnabled
-
-    override fun getLogFilesProvider(): EventLogFilesProvider = evenLogFilesProvider
   }
 
   private class ResultHolder : EventLogResultDecorator {

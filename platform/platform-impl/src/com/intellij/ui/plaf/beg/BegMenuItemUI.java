@@ -513,7 +513,9 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
-    msm.clearSelectedPath();
+    if(!action.getTemplatePresentation().isMultipleChoice()) {
+      msm.clearSelectedPath();
+    }
     item.fireActionPerformed(
       new ActionEvent(
         menuItem,

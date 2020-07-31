@@ -140,6 +140,11 @@ except:
     # Jython 2.1 doesn't accept that construct
     SUPPORT_GEVENT = False
 
+try:
+    DROP_INTO_DEBUGGER_ON_FAILED_TESTS = os.environ.get('DROP_INTO_DEBUGGER_ON_FAILED_TESTS', 'False') == 'True'
+except:
+    DROP_INTO_DEBUGGER_ON_FAILED_TESTS = False
+
 # At the moment gevent supports Python >= 2.6 and Python >= 3.3
 USE_LIB_COPY = SUPPORT_GEVENT and \
                ((not IS_PY3K and sys.version_info[1] >= 6) or

@@ -14,12 +14,12 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
 import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntBiMap
 import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntMultiMap
+import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.objenesis.instantiator.ObjectInstantiator
 import org.objenesis.strategy.StdInstantiatorStrategy
-import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
@@ -116,7 +116,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ImmutableEntitiesBarrel::class.java, object : Serializer<ImmutableEntitiesBarrel>(false, true) {
       override fun write(kryo: Kryo, output: Output, `object`: ImmutableEntitiesBarrel) {
         val res = HashMap<TypeInfo, EntityFamily<*>>()
-        `object`.entities.forEachIndexed { i, v ->
+        `object`.entityFamilies.forEachIndexed { i, v ->
           if (v == null) return@forEachIndexed
           val clazz = i.findEntityClass<WorkspaceEntity>()
           val typeInfo = TypeInfo(clazz.name, typesResolver.getPluginId(clazz))
@@ -131,7 +131,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         for ((typeInfo, family) in families) {
           val classId = typesResolver.resolveClass(typeInfo.name, typeInfo.pluginId).toClassId()
           mutableBarrel.fillEmptyFamilies(classId)
-          mutableBarrel.entities[classId] = family
+          mutableBarrel.entityFamilies[classId] = family
         }
         return mutableBarrel.toImmutable()
       }
@@ -258,7 +258,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Collect all classes existing in entity data
       val simpleClasses = HashSet<TypeInfo>()
       val objectClasses = HashSet<TypeInfo>()
-      storage.entitiesByType.entities.filterNotNull().forEach { family ->
+      storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
         family.entities.filterNotNull().forEach { recursiveClassFinder(kryo, it, simpleClasses, objectClasses) }
       }
 
@@ -339,7 +339,13 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
       storage.assertConsistencyInStrictMode()
-      return WorkspaceEntityStorageBuilderImpl.from(storage)
+      val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+
+      builder.entitiesByType.entityFamilies.forEach { family ->
+        family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
+      }
+
+      return builder
     }
   }
 

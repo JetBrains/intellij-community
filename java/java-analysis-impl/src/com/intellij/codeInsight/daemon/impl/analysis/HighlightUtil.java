@@ -92,13 +92,15 @@ public class HighlightUtil {
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
-    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
+    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED));
     ourClassIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
     ourClassIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
     ourClassIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
     ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
     ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+    ourClassIncompatibleModifiers.put(PsiModifier.SEALED, ContainerUtil.newTroveSet(PsiModifier.FINAL, PsiModifier.NON_SEALED));
+    ourClassIncompatibleModifiers.put(PsiModifier.NON_SEALED, ContainerUtil.newTroveSet(PsiModifier.FINAL, PsiModifier.SEALED));
 
     ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Collections.emptySet());
     ourInterfaceIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
@@ -107,6 +109,8 @@ public class HighlightUtil {
     ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.SEALED, ContainerUtil.newTroveSet(PsiModifier.NON_SEALED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.NON_SEALED, ContainerUtil.newTroveSet(PsiModifier.SEALED));
 
     ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(
       PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
@@ -983,6 +987,11 @@ public class HighlightUtil {
         if (aClass.getContainingClass() instanceof PsiAnonymousClass) {
           isAllowed &= !privateOrProtected;
         }
+      }
+      if (PsiModifier.NON_SEALED.equals(modifier) && !aClass.hasModifierProperty(PsiModifier.SEALED)) {
+        isAllowed = Arrays.stream(aClass.getSuperTypes())
+          .map(PsiClassType::resolve)
+          .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED));
       }
     }
     else if (modifierOwner instanceof PsiMethod) {
@@ -3131,7 +3140,7 @@ public class HighlightUtil {
         if (refGrandParent instanceof PsiTypeParameter) {
           highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, (PsiClass)refGrandParent, resolveResult, ref);
         }
-        else {
+        else if (referenceList.equals(((PsiClass)refGrandParent).getImplementsList()) || referenceList.equals(((PsiClass)refGrandParent).getExtendsList())) {
           highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
           if (highlightInfo == null) {
             highlightInfo = HighlightClassUtil.checkCannotInheritFromFinal(aClass, ref);
@@ -3224,10 +3233,16 @@ public class HighlightUtil {
   @NotNull
   private static LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull HighlightingFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
-    if (standardLevel != null && feature.level.isPreview()) {
+    if (feature.level.isPreview()) {
       JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
-      if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
-        return standardLevel;
+      if (sdkVersion != null) {
+        if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
+          return standardLevel;
+        }
+        LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
+        if (previewLevel != null && previewLevel.isAtLeast(feature.level)) {
+          return previewLevel;
+        }
       }
     }
     return feature.level;

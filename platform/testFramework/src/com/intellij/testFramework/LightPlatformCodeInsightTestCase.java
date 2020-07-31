@@ -54,10 +54,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
+public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase implements TestIndexingModeSupporter {
   private Editor myEditor;
   private PsiFile myFile;
   private VirtualFile myVFile;
+  private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
 
   @Override
   protected void runTest() throws Throwable {
@@ -176,6 +177,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
       EditorTestUtil.setCaretsAndSelection(getEditor(), caretsState);
       setupEditorForInjectedLanguage();
+      myIndexingMode.ensureIndexingStatus(getProject());
       return document;
     });
   }
@@ -192,6 +194,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       ((EditorImpl)editor).setCaretActive();
 
       EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+      myIndexingMode.ensureIndexingStatus(getProject());
       return editor;
     });
   }
@@ -203,6 +206,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
+    myIndexingMode.ensureIndexingStatus(getProject());
     return editor;
   }
 
@@ -215,7 +219,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     myEditor = createSaveAndOpenFile(relativePath, fileText);
     myVFile = FileDocumentManager.getInstance().getFile(getEditor().getDocument());
     myFile = getPsiManager().findFile(myVFile);
-
+    myIndexingMode.ensureIndexingStatus(getProject());
     return getEditor().getDocument();
   }
 
@@ -223,6 +227,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
     Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    myIndexingMode.ensureIndexingStatus(getProject());
     return editor;
   }
 
@@ -259,7 +264,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         FileEditorManager.getInstance(getProject()).closeFile(myVFile);
         myVFile.delete(getProject());
       });
+      myIndexingMode.ensureIndexingStatus(getProject());
     }
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myIndexingMode.setUpTest(getProject(), getTestRootDisposable());
   }
 
   @Override
@@ -657,7 +669,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @see FileBasedTestCaseHelperEx
    * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
-  @Parameterized.Parameter()
+  @Parameterized.Parameter
   public String myFileSuffix;
 
   /**
@@ -748,6 +760,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     invokeTestRunnable(() -> {
       try {
         setUp();
+        myIndexingMode.ensureIndexingStatus(getProject());
       }
       catch (Throwable e) {
         throwables[0] = e;
@@ -803,5 +816,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   protected void setVFile(VirtualFile virtualFile) {
     myVFile = virtualFile;
+  }
+
+  @Override
+  public void setIndexingMode(@NotNull IndexingMode mode) {
+    myIndexingMode = mode;
+  }
+
+  @Override
+  public @NotNull IndexingMode getIndexingMode() {
+    return myIndexingMode;
   }
 }

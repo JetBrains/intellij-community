@@ -129,6 +129,11 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
             hasFocus: Boolean
         ) {
             val stack = value ?: return
+            if (selected) {
+                background = UIUtil.getListSelectionBackground(hasFocus)
+                foreground = UIUtil.getListSelectionForeground(hasFocus)
+                mySelectionForeground = foreground
+            }
             when (stack.kind) {
                 StackInfo.StackKind.ExecutionStack -> {
                     append(stack.toString())
@@ -137,8 +142,6 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
                 StackInfo.StackKind.Error,
                 StackInfo.StackKind.Loading -> append(stack.toString())
             }
-            if (selected)
-                background = UIUtil.getListSelectionBackground(hasFocus)
         }
     }
 }

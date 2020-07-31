@@ -120,6 +120,23 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyItem(0, 19, "whatever");
   }
 
+  public void testToggleNestedMember() {
+    configure("/**\n" +
+              " * class\n" +
+              " */\n" +
+              "class C {\n" +
+              "  /**\n" +
+              "   * method\n" +
+              "   */\n" +
+              "  void m() {\n" +
+              "    <caret>\n" +
+              "  }\n" +
+              "}", false);
+    verifyFoldingState("[]");
+    toggleItem();
+    verifyFoldingState("[FoldRegion +(27:51), placeholder='']");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);

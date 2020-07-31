@@ -51,6 +51,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   static final TextAttributesKey QUANTIFIER = createTextAttributesKey("REGEXP.QUANTIFIER", DefaultLanguageHighlighterColors.NUMBER);
   static final TextAttributesKey OPTIONS = createTextAttributesKey("REGEXP.OPTIONS", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
   static final TextAttributesKey NAME = createTextAttributesKey("REGEXP.NAME", DefaultLanguageHighlighterColors.IDENTIFIER);
+  public static final TextAttributesKey MATCHED_GROUPS = createTextAttributesKey("REGEXP_MATCHED_GROUPS");
 
   private final Project myProject;
   private final ParserDefinition myParserDefinition;

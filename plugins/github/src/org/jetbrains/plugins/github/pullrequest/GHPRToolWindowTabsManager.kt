@@ -63,13 +63,12 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   }
 
   private fun updateTabs(afterUpdate: (() -> Unit)? = null) {
-    val current = contentManager?.currentTabs ?: emptySet()
-    val new = getRemoteUrls()
+    val currentUrls = getRemoteUrls()
 
-    ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(new.isNotEmpty()) {
+    ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(currentUrls.isNotEmpty()) {
       val contentManager = contentManager
       if (contentManager != null) {
-        val delta = CollectionDelta(current, new)
+        val delta = CollectionDelta(contentManager.currentTabs, currentUrls)
         for (item in delta.removedItems) {
           contentManager.removeTab(item)
         }
