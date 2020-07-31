@@ -239,6 +239,8 @@ class CommunityLibraryLicenses {
                        url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "Gant", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
+    new LibraryLicense(name: "gauge-java", libraryName: "com.thoughtworks.gauge:gauge-java:0.7.3", license: "Apache 2.0",
+                       licenseUrl: "https://raw.githubusercontent.com/getgauge/gauge-java/master/LICENSE.txt"),
     new LibraryLicense(name: "Gherkin", libraryName: "gherkin", license: "MIT",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
     new LibraryLicense(name: "Gherkin keywords", attachedTo: "intellij.gherkin", version: "2.12.2", license: "MIT",
