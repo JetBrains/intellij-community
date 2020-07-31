@@ -63,8 +63,8 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }
-    ourLazyExternalIds = lazyIds;
     ourInitializedStubs = true;
+    ourLazyExternalIds = lazyIds;
     return result;
   }
 
