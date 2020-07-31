@@ -154,7 +154,7 @@ public final class JBMacMessages extends MacMessages {
                                  @Nullable Window window,
                                  @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String[]{yesText, noText}, null, yesText, noText);
+                                                 new String[]{yesText, noText}, doNotAskDialogOption, yesText, noText);
     boolean result = sheetMessage.getResult().equals(yesText);
     if (doNotAskDialogOption != null && (result || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
       doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result ? Messages.YES : Messages.NO);
