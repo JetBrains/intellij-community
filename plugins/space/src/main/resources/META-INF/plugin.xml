@@ -18,8 +18,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.space.settings.SpaceSettings"/>
-    <applicationService serviceImplementation="com.intellij.space.components.SpaceUserAvatarProvider"/>
-
 
     <applicationConfigurable
       groupId="tools"

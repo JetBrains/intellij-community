@@ -2,10 +2,11 @@ package com.intellij.space.components
 
 import circlet.client.api.englishFullName
 import circlet.platform.client.ConnectionStatus
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.space.ui.SpaceAvatarUtils
 import com.intellij.space.ui.SpaceAvatars
 import com.intellij.space.ui.SpaceImageLoader
-import com.intellij.space.utils.application
 import kotlinx.coroutines.CancellationException
 import libraries.coroutines.extra.LifetimeSource
 import libraries.klogging.logger
@@ -14,6 +15,7 @@ import runtime.reactive.awaitFirst
 import runtime.reactive.filter
 import runtime.reactive.mapInit
 
+@Service
 class SpaceUserAvatarProvider {
   private val log = logger<SpaceUserAvatarProvider>()
 
@@ -52,7 +54,7 @@ class SpaceUserAvatarProvider {
   }
 
   companion object {
-    fun getInstance(): SpaceUserAvatarProvider = application.getService(SpaceUserAvatarProvider::class.java)
+    fun getInstance(): SpaceUserAvatarProvider = service()
   }
 }
 
