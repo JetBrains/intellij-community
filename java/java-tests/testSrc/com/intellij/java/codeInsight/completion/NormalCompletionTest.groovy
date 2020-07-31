@@ -32,7 +32,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9
+    return JAVA_15
   }
 
   void testSimple() throws Exception {
@@ -954,7 +954,7 @@ public class ListUtils {
   @NeedsIndex.ForStandardLibrary
   void testFinalInForLoop2() throws Throwable {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'finalize', 'final'
+    myFixture.assertPreferredCompletionItems 1, 'finalize', 'final'
   }
 
   void testOnlyClassesInExtends() throws Throwable {
@@ -2161,4 +2161,12 @@ class Abc {
     selectItem(myItems[1])
     checkResult()
   }
+
+  void testTopLevelPublicClass() { doTest() }
+  void testTopLevelPublicClassIdentifierExists() { doTest() }
+  void testTopLevelPublicClassBraceExists() { doTest() }
+
+  void testTopLevelPublicRecord() { doTest() }
+  void testTopLevelPublicRecordParenthesisExists() { doTest() }
+  void testTopLevelPublicRecordBraceExists() { doTest() }
 }
