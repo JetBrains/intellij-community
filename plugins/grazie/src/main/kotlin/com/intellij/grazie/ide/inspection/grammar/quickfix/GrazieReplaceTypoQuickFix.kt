@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
@@ -30,6 +31,10 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionAction
     override fun getFamilyName(): String = family
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = typo.location.element != null
+
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+      return this
+    }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       val myEditor = editor ?: LazyEditor(file)
