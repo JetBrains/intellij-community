@@ -153,17 +153,12 @@ public class PyUnionType implements PyType {
    */
   @Nullable
   public PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type == null) return excludeNull();
+
     final List<PyType> members = new ArrayList<>();
     for (PyType m : getMembers()) {
-      if (type == null) {
-        if (m != null) {
-          members.add(m);
-        }
-      }
-      else {
-        if (!PyTypeChecker.match(type, m, context)) {
-          members.add(m);
-        }
+      if (!PyTypeChecker.match(type, m, context)) {
+        members.add(m);
       }
     }
     return union(members);
@@ -172,11 +167,11 @@ public class PyUnionType implements PyType {
   /**
    * Returns {@code this} if the current type {@code isWeak()}, excludes {@code null} otherwise.
    *
-   * @see PyTypeUtil#toNonWeakType(PyType, TypeEvalContext)
+   * @see PyTypeUtil#toNonWeakType(PyType)
    */
   @Nullable
-  public PyType excludeNull(@NotNull TypeEvalContext context) {
-    return isWeak() ? exclude(null, context) : this;
+  public PyType excludeNull() {
+    return !isWeak() ? this : union(ContainerUtil.skipNulls(getMembers()));
   }
 
   @Override

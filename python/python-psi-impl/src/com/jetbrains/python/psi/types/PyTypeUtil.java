@@ -165,7 +165,7 @@ public final class PyTypeUtil {
   }
 
   @Nullable
-  public static PyType toNonWeakType(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull(context) : type;
+  public static PyType toNonWeakType(@Nullable PyType type) {
+    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
   }
 }

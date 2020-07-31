@@ -112,9 +112,9 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
-        .mapNotNull { PyTypeUtil.toNonWeakType(it, typeEvalContext) }
+        .mapNotNull(PyTypeUtil::toNonWeakType)
         .toList()
-        .let { PyUnionType.union(it) }
+        .let(PyUnionType::union)
         .let {
           it != null &&
           PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) &&
