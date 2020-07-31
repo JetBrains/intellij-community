@@ -308,6 +308,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
       if (!skipKeyEvent(e)) {
+        if (!JBTerminalPanel.this.isFocusOwner()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Prevented attempt to process " + KeyStroke.getKeyStrokeForEvent(e) + " by not focused " +
+                      getDebugTerminalPanelName() + ", unregistering");
+          }
+          unregister();
+          return false;
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
@@ -326,8 +334,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     void register() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Register terminal event dispatcher for " +
-                  JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this));
+        LOG.debug("Register terminal event dispatcher for " + getDebugTerminalPanelName());
       }
       if (myRegistered) {
         LOG.info("Already registered terminal event dispatcher");
@@ -346,13 +353,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     void unregister() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Unregister terminal event dispatcher for " +
-                  JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this));
+        LOG.debug("Unregister terminal event dispatcher for " + getDebugTerminalPanelName());
       }
       if (myRegistered) {
         IdeEventQueue.getInstance().removeDispatcher(this);
       }
       myRegistered = false;
+    }
+
+    private @NotNull String getDebugTerminalPanelName() {
+      return JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this);
     }
   }
 }
