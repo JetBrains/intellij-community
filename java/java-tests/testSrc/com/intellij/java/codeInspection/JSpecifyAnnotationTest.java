@@ -9,15 +9,26 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +46,18 @@ import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk18();
+    }
+
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
+    }
+  }; 
+  
   private static final String PACKAGE_NAME = "jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
@@ -43,6 +66,13 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
     return Files.walk(PATH).filter(Files::isRegularFile).map(PATH::relativize).map(Path::toString).collect(Collectors.toList());
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
+    // so it won't be updated after Registry.setValue()
+    return PROJECT_DESCRIPTOR;
   }
 
   @Before
