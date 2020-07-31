@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.*
-import com.intellij.util.io.exists
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
-import com.intellij.util.io.readBytes
+import com.intellij.util.ImageLoader
+import com.intellij.util.SVGLoader
+import com.intellij.util.SVGLoaderCacheIO
+import com.intellij.util.SVGLoaderPrebuilt
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
@@ -14,7 +13,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
-import java.util.stream.Collectors
 import kotlin.system.exitProcess
 
 /**
@@ -58,26 +56,30 @@ class ImageSvgPreCompiler {
   private fun preCompileIconsImpl(requests: List<Request>) {
     requests.stream().parallel().forEach { req ->
       val rootDir = req.from
-      if (!rootDir.isDirectory()) return@forEach
-
-      val allIcons = Files.walk(rootDir).parallel().filter { file ->
-        file.fileName.toString().endsWith(".svg") && file.isFile()
-      }.collect(Collectors.toSet())
-
-      allIcons.parallelStream().forEach { fromFile ->
-        val relativePath = rootDir.relativize(fromFile)
-        val toFile = req.to.resolve(relativePath)
-
-        val scales = when {
-          productIconPrefixes.any { relativePath.toFile().path.startsWith(it) } -> {
-            println("INFO Generating Product Icon scales for $relativePath")
-            productIconScales
-          }
-          else -> scales
-        }
-        //TODO: use output directory
-        preCompile(fromFile, toFile, scales)
+      if (!Files.isDirectory(rootDir)) {
+        return@forEach
       }
+
+      Files.walk(rootDir).parallel()
+        .filter { file ->
+          file.fileName.toString().endsWith(".svg") && Files.isRegularFile(file)
+        }
+        .unordered()
+        .distinct()
+        .forEach { fromFile ->
+          val relativePath = rootDir.relativize(fromFile)
+          val toFile = req.to.resolve(relativePath)
+
+          val scales = when {
+            productIconPrefixes.any { relativePath.toFile().path.startsWith(it) } -> {
+              println("INFO Generating Product Icon scales for $relativePath")
+              productIconScales
+            }
+            else -> scales
+          }
+          //TODO: use output directory
+          preCompile(fromFile, toFile, scales)
+        }
     }
   }
 
@@ -87,25 +89,23 @@ class ImageSvgPreCompiler {
   }
 
   private fun preCompile(svgFile: Path, targetFileBase: Path, scales: DoubleArray) {
-    if (!svgFile.fileName.toString().endsWith(".svg")) {
-      return
-    }
-
     totalFiles.incrementAndGet()
 
-    val data = svgFile.readBytes()
-
-    if (data.toString(Charsets.UTF_8).contains("data:image")) {
-      println("WARN: Image $svgFile uses data urls and WILL BE SKIPPED")
+    val data = Files.readAllBytes(svgFile)
+    if (contains(data, dataPattern)) {
+      println("WARN: image $svgFile uses data urls and will be skipped")
       return
     }
 
+    val dir = targetFileBase.parent
+    val fileName = targetFileBase.fileName.toString()
+    Files.createDirectories(dir)
     for (scale in scales) {
       val dim = ImageLoader.Dimension2DDouble(0.0, 0.0)
       val image = SVGLoader.loadWithoutCache(svgFile.toUri().toURL(), data.inputStream(), scale, dim)
 
-      val targetFile = Paths.get(targetFileBase.toString() + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
-      SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
+      val targetFile = dir.resolve(fileName + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
+      SVGLoaderCacheIO.writeImageFile(targetFile, image, dim, false)
 
       val length = Files.size(targetFile)
       require(length > 0) { "File ${targetFile} is empty!" }
@@ -158,4 +158,19 @@ class ImageSvgPreCompiler {
       compiler.printStats()
     }
   }
+}
+
+private val dataPattern = "data:image".toByteArray()
+
+private fun contains(data: ByteArray, what: ByteArray): Boolean {
+  outer@
+  for (i in 0 until data.size - what.size + 1) {
+    for (j in what.indices) {
+      if (data[i + j] != what[j]) {
+        continue@outer
+      }
+    }
+    return true
+  }
+  return false
 }

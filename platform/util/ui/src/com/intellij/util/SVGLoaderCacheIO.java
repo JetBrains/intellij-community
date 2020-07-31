@@ -50,8 +50,8 @@ public final class SVGLoaderCacheIO {
 
   public static void writeImageFile(@NotNull Path file,
                                     @NotNull BufferedImage image,
-                                    @NotNull ImageLoader.Dimension2DDouble size) throws IOException {
-
+                                    @NotNull ImageLoader.Dimension2DDouble size,
+                                    boolean safeWrite) throws IOException {
     int actualWidth = image.getWidth();
     int actualHeight = image.getHeight();
 
@@ -69,35 +69,43 @@ public final class SVGLoaderCacheIO {
 
     buff.flip();
 
-    Files.createDirectories(file.getParent());
+    if (safeWrite) {
+      // we may have a race condition:
+      // thread A - is writing the cache
+      // thread B - attempts to read the cache, fails, and attempts to remove the same cache file
+      //
+      // we write the cache file as atomic as possible with write&move strategy (worst, we'll write the same file twice)
+      Path tmpFile = file.getParent().resolve(file.getFileName().toString() + ".tmp" + System.currentTimeMillis());
+      try {
+        try (SeekableByteChannel channel = Files.newByteChannel(tmpFile, OPEN_OPTION_SET)) {
+          channel.write(buff);
+        }
 
-    // we may have a race condition:
-    // thread A - is writing the cache
-    // thread B - attempts to read the cache, fails, and attempts to remove the same cache file
-    //
-    // we write the cache file as atomic as possible with write&move strategy (worst, we'll write the same file twice)
-    Path tmpFile = file.resolve(file + ".tmp" + System.currentTimeMillis());
-    try {
-      try (SeekableByteChannel channel = Files.newByteChannel(tmpFile, OPEN_OPTION_SET)) {
+        try {
+          Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE);
+        }
+        catch (AtomicMoveNotSupportedException e) {
+          Files.move(tmpFile, file);
+        }
+      }
+      catch (FileAlreadyExistsException e) {
+        // parallel thread managed to create the same file, skip it
+      }
+      catch (Exception e) {
+        deleteQuietly(file);
+        throw e;
+      }
+      finally {
+        deleteQuietly(tmpFile);
+      }
+    }
+    else {
+      try (SeekableByteChannel channel = Files.newByteChannel(file, OPEN_OPTION_SET)) {
         channel.write(buff);
       }
-
-      try {
-        Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE);
+      catch (FileAlreadyExistsException e) {
+        // parallel thread managed to create the same file, skip it
       }
-      catch (AtomicMoveNotSupportedException e) {
-        Files.move(tmpFile, file);
-      }
-    }
-    catch (FileAlreadyExistsException e) {
-      // parallel thread managed to create the same file, skip it
-    }
-    catch (Exception e) {
-      deleteQuietly(file);
-      throw e;
-    }
-    finally {
-      deleteQuietly(tmpFile);
     }
   }
 

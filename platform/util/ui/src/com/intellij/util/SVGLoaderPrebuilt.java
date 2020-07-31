@@ -2,7 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ public final class SVGLoaderPrebuilt {
           !url.getProtocol().equalsIgnoreCase("jar") && !url.getProtocol().equalsIgnoreCase("file")) {
         return null;
       }
-
       return new URL(url, url.toString() + getPreBuiltImageURLSuffix(scale));
     }
     catch (MalformedURLException e) {
@@ -52,7 +51,7 @@ public final class SVGLoaderPrebuilt {
     }
 
     try (InputStream is = lookupUrl.openStream()) {
-      BufferedImage result = SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);
+      BufferedImage result = SVGLoaderCacheIO.readImageFile(FileUtilRt.loadBytes(is), docSize);
       IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
       return result;
     }

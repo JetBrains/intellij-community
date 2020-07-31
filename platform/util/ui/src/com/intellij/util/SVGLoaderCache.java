@@ -106,7 +106,8 @@ public abstract class SVGLoaderCache {
 
       Path file = cacheFile(theme, imageBytes, scale);
       try {
-        SVGLoaderCacheIO.writeImageFile(file, image, size);
+        Files.createDirectories(file.getParent());
+        SVGLoaderCacheIO.writeImageFile(file, image, size, true);
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoaderCache.class).warn("Failed to write SVG cache to: " + file + ". " + e.getMessage(), e);
