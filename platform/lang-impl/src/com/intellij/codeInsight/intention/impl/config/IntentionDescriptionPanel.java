@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
@@ -100,7 +101,8 @@ public class IntentionDescriptionPanel {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     myPoweredByPanel.removeAll();
     IdeaPluginDescriptorImpl pluginDescriptor  = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(pluginId);
-    boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled();
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled() && !appInfo.isEssentialPlugin(pluginId);
     if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(__ -> {
