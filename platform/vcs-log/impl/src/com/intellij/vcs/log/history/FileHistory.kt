@@ -529,6 +529,10 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
     result = 31 * result + deleted.hashCode()
     return result
   }
+
+  override fun toString(): String {
+    return "MaybeDeletedFilePath(filePath=$filePath, deleted=$deleted)"
+  }
 }
 
 internal fun forEach(map: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
