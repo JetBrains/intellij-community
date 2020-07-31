@@ -110,7 +110,7 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
         final PsiFile file = element.getContainingFile();
-        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+        final Document document = file.getViewProvider().getDocument();
         assert document != null;
         Collections.reverse(ranges);
         ranges.forEach(r -> document.deleteString(r.getStartOffset(), r.getStartOffset() + 2));
