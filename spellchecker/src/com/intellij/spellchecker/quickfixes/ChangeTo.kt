@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.quickfixes
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
@@ -31,7 +32,10 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
   override fun getTitle(): ChoiceTitleIntentionAction = ChangeToTitleAction
 
 
-  private inner class ChangeToVariantAction(
+  private class ChangeToVariantAction(
+    // while changeTo holds a pointer to PsiElement, we don't change it directly, it's only used to get the offset
+    @FileModifier.SafeFieldForPreview
+    val changeTo: ChangeTo,
     override val index: Int
   ) : ChoiceVariantIntentionAction(), HighPriorityAction {
 
@@ -44,7 +48,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     override fun getFamilyName(): String = fixName
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-      val suggestions = getSuggestions(project)
+      val suggestions = changeTo.getSuggestions(project)
       if (suggestions.size <= index) return false
       suggestion = suggestions[index]
       return true
@@ -53,11 +57,11 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       val myEditor = editor ?: LazyEditor(file)
 
-      val myElement = pointer.element ?: return
-      val myRange = range.shiftRight(myElement.startOffset)
+      val myElement = changeTo.pointer.element ?: return
+      val myRange = changeTo.range.shiftRight(myElement.startOffset)
 
       val myText = myEditor.document.getText(myRange)
-      if (myText != typo) return
+      if (myText != changeTo.typo) return
 
       myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
     }
@@ -69,6 +73,6 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
   override fun getVariants(): List<ChoiceVariantIntentionAction> {
     val limit = Registry.intValue("spellchecker.corrections.limit")
 
-    return (0 until limit).map { ChangeToVariantAction(it) }
+    return (0 until limit).map { ChangeToVariantAction(this, it) }
   }
 }
