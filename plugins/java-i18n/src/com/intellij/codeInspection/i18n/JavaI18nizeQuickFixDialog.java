@@ -179,6 +179,9 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   }
 
   public PropertyCreationHandler getPropertyCreationHandler() {
+    if (useExistingProperty()) {
+      return JavaI18nUtil.EMPTY_CREATION_HANDLER;
+    }
     PropertyCreationHandler handler = myResourceBundleManager.getPropertyCreationHandler();
     return handler != null ? handler : JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER;
   }
