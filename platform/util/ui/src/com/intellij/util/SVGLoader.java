@@ -93,12 +93,11 @@ public final class SVGLoader {
       }
 
       if (theme == DEFAULT_THEME) {
-        image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
+        image = url == null ? null : SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
         if (image != null) {
           return image;
         }
       }
-
 
       if (theme != null) {
         svgBytes = FileUtilRt.loadBytes(stream);
