@@ -20,6 +20,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ContextFilter extends FilterAction {
 
   public ContextFilter() {

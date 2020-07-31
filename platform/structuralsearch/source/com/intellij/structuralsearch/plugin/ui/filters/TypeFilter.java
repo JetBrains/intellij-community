@@ -22,6 +22,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class TypeFilter extends FilterAction {
 
   boolean myShowRegex;

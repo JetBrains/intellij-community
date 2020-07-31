@@ -18,6 +18,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class TextFilter extends FilterAction {
 
   boolean myShowHierarchy;
