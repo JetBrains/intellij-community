@@ -386,9 +386,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
                 this.indexes.virtualFileIndex.index(pid, property, vfus)
               }
             replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
+            this.indexes.updateExternalMappingForEntityId(oldPid, pid, replaceWith.indexes)
 
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
           }
+
+          if (localNode == matchedEntityData) this.indexes.updateExternalMappingForEntityId(oldPid, originStorageIndexes = replaceWith.indexes)
           // Remove added entity
           localMatchedEntities.remove(localNode.identificator(this), localNode)
         }
@@ -406,6 +409,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             }
           replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
           replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
+          this.indexes.updateExternalMappingForEntityId(oldPid, newPid, replaceWith.indexes)
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
 
           createAddEvent(newEntity)

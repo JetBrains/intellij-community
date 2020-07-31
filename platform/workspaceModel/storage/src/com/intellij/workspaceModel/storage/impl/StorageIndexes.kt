@@ -171,6 +171,21 @@ internal class MutableStorageIndexes(
     }
   }
 
+  fun updateExternalMappingForEntityId(oldId: EntityId, newId: EntityId = oldId, originStorageIndexes: StorageIndexes) {
+    originStorageIndexes.externalMappings.forEach { (id, mapping) ->
+      val data = mapping.index[oldId] ?: return@forEach
+      val externalMapping = externalMappings[id]
+      if (externalMapping == null) {
+        val newMapping = MutableExternalEntityMappingImpl<Any>()
+        newMapping.index[newId] = data
+        externalMappings[id] = newMapping
+      } else {
+        externalMapping as MutableExternalEntityMappingImpl<Any>
+        externalMapping.index[newId] = data
+      }
+    }
+  }
+
   fun toImmutable(): StorageIndexes {
     val copiedLinks = this.softLinks.toImmutable()
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
