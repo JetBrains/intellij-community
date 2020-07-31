@@ -151,6 +151,7 @@ public final class PerformanceWatcher implements Disposable {
       if (appInfoFile.isFile()) {
         File[] crashFiles = new File(SystemProperties.getUserHome())
           .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
+        assert crashFiles != null;
         for (File file : crashFiles) {
           if (file.lastModified() > appInfoFile.lastModified()) {
             if (file.length() > 5 * FileUtilRt.MEGABYTE) {
@@ -244,6 +245,7 @@ public final class PerformanceWatcher implements Disposable {
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
     while (diffMs >= 0) {
+      //noinspection NonAtomicOperationOnVolatileField
       myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diffMs);
       diffMs -= getSamplingInterval();
     }
@@ -267,9 +269,9 @@ public final class PerformanceWatcher implements Disposable {
       }
     }
 
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       long latencyMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current);
+      //noinspection NonAtomicOperationOnVolatileField
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latencyMs);
       if (ApplicationManager.getApplication().isDisposed()) return;
       getPublisher().uiResponded(latencyMs);
@@ -486,7 +488,6 @@ public final class PerformanceWatcher implements Disposable {
     private final Future<?> myFuture;
     private final long myFreezeStart;
     private String myFreezeFolder;
-    private boolean myFreezeDuringStartup;
     private volatile SamplingTask myDumpTask;
 
     FreezeCheckerTask(long start, int delay) {
@@ -511,7 +512,7 @@ public final class PerformanceWatcher implements Disposable {
 
     private void edtFrozen() {
       myFreezeFolder = THREAD_DUMPS_PREFIX +
-                       (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") +
+                       "freeze-" +
                        formatTime(System.currentTimeMillis()) + "-" + buildName();
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         //TODO always true for some reason
