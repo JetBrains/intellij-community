@@ -137,6 +137,7 @@ iml_module(
         "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
         "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
         "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks",
+        "//tools/idea/platform/statistics/config:intellij.platform.statistics.config",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-ant",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json",
         "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-nio/2.5.11:jar",

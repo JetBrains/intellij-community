@@ -1754,8 +1754,8 @@ java_library(
 java_library(
     name = "jb-jdi",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.1:jar"],
 )
 
 # managed by go/iml_to_build

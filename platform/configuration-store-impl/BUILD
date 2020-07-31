@@ -63,7 +63,6 @@ iml_module(
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:fastutil-min",
         "//tools/idea/platform/diff-api:intellij.platform.diff[module]",
-        "//tools/idea/.idea/libraries:Trove4j",
     ],
 )
 

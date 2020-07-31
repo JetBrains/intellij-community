@@ -107,6 +107,7 @@ iml_module(
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:org.codehaus.groovy_groovy-json[test]",
         "//tools/idea/.idea/libraries:commons-cli[test]",
+        "//tools/idea/plugins/gradle/tooling-loader-rt:intellij.gradle.toolingLoaderRt[module, test]",
     ],
 )
 
