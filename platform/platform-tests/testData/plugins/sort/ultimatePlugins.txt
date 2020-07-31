@@ -182,9 +182,9 @@
 Plugin &quot;Concurrency Visualiser&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
 Plugin &quot;Python Docker&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
 Plugin &quot;Jupyter Notebook&quot; requires &quot;com.intellij.modules.pycharm&quot; plugin to be installed.
-Plugin &quot;Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
+Plugin &quot;Python BDD support for engines, based on Gherkin (cucumber, behave)&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
 Plugin &quot;Python pytest-bdd support&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
-Plugin &quot;Python pytest-bdd support&quot; requires &quot;Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)&quot; plugin to be enabled.
+Plugin &quot;Python pytest-bdd support&quot; requires &quot;Python BDD support for engines, based on Gherkin (cucumber, behave)&quot; plugin to be enabled.
 Plugin &quot;Python SSH Interpreter&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
 Plugin &quot;Python WSL Support&quot; requires &quot;com.intellij.modules.pycharm.professional&quot; plugin to be installed.
 Plugin &quot;Python WSL Support&quot; requires &quot;Python SSH Interpreter&quot; plugin to be enabled.
