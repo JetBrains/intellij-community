@@ -486,7 +486,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (currentSegmentNumber < 0) return;
     final int start = getSegments().getSegmentStart(currentSegmentNumber);
     final int end = getSegments().getSegmentEnd(currentSegmentNumber);
-    if (end >= 0) {
+    if (end >= 0 && getEditor() != null) {
       getEditor().getCaretModel().moveToOffset(end);
       getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       getEditor().getSelectionModel().removeSelection();
@@ -906,7 +906,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private void finishTemplate(boolean broken) {
     if (isDisposed()) return;
     Editor editor = getEditor();
-    LookupManager.getInstance(myProject).hideActiveLookup();
+    LookupManager instance = LookupManager.getInstance(myProject);
+    if (instance != null) {
+      instance.hideActiveLookup();
+    }
+
     setFinalEditorState(broken);
 
     try {
@@ -915,7 +919,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     finally {
       try {
         cleanupTemplateState();
-        TemplateManagerUtilBase.clearTemplateState(editor);
+        if (editor != null) {
+          TemplateManagerUtilBase.clearTemplateState(editor);
+        }
         fireTemplateFinished(broken);
       }
       finally {
@@ -926,7 +932,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   private void setFinalEditorState(boolean brokenOff) {
     if (isDisposed()) return;
-    getEditor().getSelectionModel().removeSelection();
+    if (getEditor() != null) {
+      getEditor().getSelectionModel().removeSelection();
+    }
     if (brokenOff && skipSettingFinalEditorState()) return;
 
     int endSegmentNumber = getFinalSegmentNumber();

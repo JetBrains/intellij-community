@@ -17,6 +17,9 @@
     <extensionPoint name="outerLanguageRangePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TemplateDataElementType$OuterLanguageRangePatcher"/>
     </extensionPoint>
+
+    <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor" dynamic="true"/>
+    <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"

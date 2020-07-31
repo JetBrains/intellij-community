@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -34,6 +34,10 @@ public class PythonUiService {
   public void showBalloonWarning(Project project, @PopupContent String message) {}
 
   public void showBalloonError(Project project, @PopupContent String message) {}
+
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    return null;
+  }
 
   public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile) {
     return null;
