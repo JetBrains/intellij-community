@@ -39,7 +39,7 @@ public interface FileBasedIndexInfrastructureExtension {
     /**
      * Processes up to date file for given content-dependent index while "scanning files to index" in progress.
      */
-    void processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
+    boolean processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
 
     /**
      * Tries to index file given content-dependent index "scanning files to index" in progress before its content will be loaded.
