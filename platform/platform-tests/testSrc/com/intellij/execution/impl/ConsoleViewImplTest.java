@@ -239,6 +239,15 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     return console;
   }
 
+  public void testDoNotRemoveEverythingWhenOneCharIsPrintedAfterLargeText() {
+    withCycleConsoleNoFolding(1, console -> {
+      console.print(StringUtil.repeat("a", 5000), ConsoleViewContentType.NORMAL_OUTPUT);
+      console.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+      console.waitAllRequests();
+      assertEquals(StringUtil.repeat("a", 1023) + "\n", console.getText());
+    });
+  }
+
   public void testPerformance() {
     withCycleConsoleNoFolding(100, console ->
       PlatformTestUtil.startPerformanceTest("console print", 15000, () -> {
