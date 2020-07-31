@@ -18,7 +18,9 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.stats.storage.factors.LookupStorage
+import com.intellij.completion.util.idString
+import com.intellij.completion.util.RelevanceUtil
+import com.intellij.completion.storage.LookupStorage
 
 class LookupStateManager {
     private val elementToId = mutableMapOf<String, Int>()

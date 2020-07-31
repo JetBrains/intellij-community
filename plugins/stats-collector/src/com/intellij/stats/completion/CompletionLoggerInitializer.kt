@@ -2,15 +2,16 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.CompletionStatsPolicy
+import com.intellij.completion.tracker.LookupTracker
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.CompletionStatsPolicy
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
-import com.intellij.stats.experiment.ExperimentInfo
-import com.intellij.stats.experiment.ExperimentStatus
-import com.intellij.stats.storage.factors.MutableLookupStorage
+import com.intellij.completion.experiment.ExperimentInfo
+import com.intellij.completion.experiment.ExperimentStatus
+import com.intellij.completion.storage.MutableLookupStorage
 import kotlin.random.Random
 
 internal class CompletionLoggerInitializer(private val actionListener: LookupActionsListener) : LookupTracker() {

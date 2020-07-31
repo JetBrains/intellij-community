@@ -2,9 +2,9 @@
 
 package com.intellij.mocks
 
+import com.intellij.completion.experiment.ExperimentInfo
+import com.intellij.completion.experiment.ExperimentStatus
 import com.intellij.lang.Language
-import com.intellij.stats.experiment.ExperimentInfo
-import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.sender.StatisticSender
 import com.intellij.stats.storage.UniqueFilesProvider

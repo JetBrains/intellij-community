@@ -8,7 +8,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.stats.completion.events.*
-import com.intellij.stats.storage.factors.LookupStorage
+import com.intellij.completion.storage.LookupStorage
+import com.intellij.completion.util.CompletionUtil
+import com.intellij.completion.util.prefix
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,

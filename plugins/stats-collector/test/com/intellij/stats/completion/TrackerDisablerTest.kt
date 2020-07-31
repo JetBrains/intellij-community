@@ -2,8 +2,8 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.completion.CompletionStatsPolicy
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.stats.CompletionStatsPolicy
 import junit.framework.TestCase
 
 class TrackerDisablerTest : CompletionLoggingTestBase() {

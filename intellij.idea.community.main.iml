@@ -140,5 +140,7 @@
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mlCompletionModels" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mlCompletion" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mlCompletion.tests" scope="TEST" />
   </component>
 </module>

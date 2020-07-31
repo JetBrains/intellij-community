@@ -5,13 +5,13 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.ml.*
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.completion.CompletionStatsPolicy
+import com.intellij.completion.experiment.ExperimentStatus
 import com.intellij.completion.sorting.RankingSupport
+import com.intellij.completion.storage.MutableLookupStorage
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mocks.TestExperimentStatus
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.CompletionStatsPolicy
-import com.intellij.stats.experiment.ExperimentStatus
-import com.intellij.stats.storage.factors.MutableLookupStorage
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 

@@ -2,6 +2,7 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.completion.tracker.CompletionFactorsInitializer
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -61,10 +62,12 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
     myFixture.configureByText(JavaFileType.INSTANCE, testText)
 
     CompletionTrackerInitializer.isEnabledInTests = true
+    CompletionFactorsInitializer.isEnabledInTests = true
   }
 
   override fun tearDown() {
     CompletionTrackerInitializer.isEnabledInTests = false
+    CompletionFactorsInitializer.isEnabledInTests = false
 
     super.tearDown()
   }

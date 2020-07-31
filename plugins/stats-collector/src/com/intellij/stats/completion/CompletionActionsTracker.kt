@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.experiment.ExperimentInfo
-import com.intellij.stats.storage.factors.LookupStorage
+import com.intellij.completion.experiment.ExperimentInfo
+import com.intellij.completion.storage.LookupStorage
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val lookupStorage: LookupStorage,

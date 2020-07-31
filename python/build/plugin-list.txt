@@ -2,6 +2,7 @@ intellij.configurationScript
 intellij.copyright
 intellij.editorconfig
 intellij.markdown
+intellij.mlCompletion
 intellij.platform.langInjection
 intellij.properties
 intellij.reStructuredText

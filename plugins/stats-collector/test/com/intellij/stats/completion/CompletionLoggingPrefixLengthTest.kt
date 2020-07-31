@@ -15,6 +15,7 @@
  */
 package com.intellij.stats.completion
 
+import com.intellij.completion.util.prefix
 import org.assertj.core.api.Assertions.assertThat
 
 class CompletionLoggingPrefixLengthTest: CompletionLoggingTestBase() {
