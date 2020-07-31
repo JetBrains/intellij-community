@@ -177,6 +177,16 @@ internal class ModifiableModuleModelBridge(
     myNewNameToModule.inverse().remove(module)
 
     myModulesToDispose[module.name] = module
+    val moduleEntity = diff.findModuleEntity(module) ?: error("Could not find module entity to remove by $module")
+    moduleEntity.dependencies
+      .asSequence()
+      .filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+      .filter { (it.library.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId == module.moduleEntityId }
+      .mapNotNull { it.library.resolve(diff) }
+      .forEach {
+        diff.removeEntity(it)
+      }
+    diff.removeEntity(moduleEntity)
   }
 
   override fun findModuleByName(name: String): Module? {
@@ -224,18 +234,6 @@ internal class ModifiableModuleModelBridge(
 
   fun collectChanges(): WorkspaceEntityStorageBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val storage = entityStorageOnDiff.current
-
-    for (moduleToDispose in myModulesToDispose.values) {
-      val moduleEntity = storage.findModuleEntity(moduleToDispose)
-                         ?: error("Could not find module to remove by $moduleToDispose")
-      val libraries = ModuleRootComponentBridge.getInstance(moduleToDispose).moduleLibraryTable.libraryEntities().toList()
-      libraries.forEach {
-        diff.removeEntity(it)
-      }
-      diff.removeEntity(moduleEntity)
-    }
 
     for (module in myUncommittedModulesToDispose) {
       Disposer.dispose(module)
