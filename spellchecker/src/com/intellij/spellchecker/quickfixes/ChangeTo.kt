@@ -32,10 +32,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
   override fun getTitle(): ChoiceTitleIntentionAction = ChangeToTitleAction
 
 
-  private class ChangeToVariantAction(
-    // while changeTo holds a pointer to PsiElement, we don't change it directly, it's only used to get the offset
-    @FileModifier.SafeFieldForPreview
-    val changeTo: ChangeTo,
+  private inner class ChangeToVariantAction(
     override val index: Int
   ) : ChoiceVariantIntentionAction(), HighPriorityAction {
 
@@ -48,7 +45,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     override fun getFamilyName(): String = fixName
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-      val suggestions = changeTo.getSuggestions(project)
+      val suggestions = getSuggestions(project)
       if (suggestions.size <= index) return false
       suggestion = suggestions[index]
       return true
@@ -57,13 +54,17 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       val myEditor = editor ?: LazyEditor(file)
 
-      val myElement = changeTo.pointer.element ?: return
-      val myRange = changeTo.range.shiftRight(myElement.startOffset)
+      val myElement = pointer.element ?: return
+      val myRange = range.shiftRight(myElement.startOffset)
 
       val myText = myEditor.document.getText(myRange)
-      if (myText != changeTo.typo) return
+      if (myText != typo) return
 
       myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
+    }
+
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+      return this
     }
 
     override fun startInWriteAction(): Boolean = true
@@ -73,6 +74,6 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
   override fun getVariants(): List<ChoiceVariantIntentionAction> {
     val limit = Registry.intValue("spellchecker.corrections.limit")
 
-    return (0 until limit).map { ChangeToVariantAction(this, it) }
+    return (0 until limit).map { ChangeToVariantAction(it) }
   }
 }
