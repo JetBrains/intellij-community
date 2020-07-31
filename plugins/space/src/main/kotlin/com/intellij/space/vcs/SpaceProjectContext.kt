@@ -1,18 +1,16 @@
 package com.intellij.space.vcs
 
-import circlet.client.api.PR_Project
-import circlet.client.api.ProjectKey
-import circlet.client.api.Projects
-import circlet.client.api.RepositoryService
+import circlet.client.api.*
 import circlet.client.pr
 import circlet.client.repoService
-import com.intellij.space.components.space
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.space.components.space
 import git4idea.GitUtil
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import libraries.coroutines.extra.LifetimeSource
@@ -22,7 +20,7 @@ import runtime.reactive.*
 class SpaceProjectContext(project: Project) : Disposable {
   private val lifetime: LifetimeSource = LifetimeSource()
 
-  private val remoteUrls: MutableProperty<Set<String>> = Property.createMutable(findRemoteUrls(project))
+  private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(findRemoteUrls(project))
 
   val context: Property<Context> = lifetime.mapInit(space.workspace, remoteUrls, EMPTY) { ws, urls ->
     ws ?: return@mapInit EMPTY
@@ -40,16 +38,24 @@ class SpaceProjectContext(project: Project) : Disposable {
   }
 
   fun getRepoDescriptionByUrl(remoteUrl: String): SpaceRepoInfo? {
-    return context.value.repoByUrl[remoteUrl]
+    val coordinates = context.value.repoByUrl.keys.find {
+      it.url == remoteUrl
+    }
+
+    return context.value.repoByUrl[coordinates]
+  }
+  private fun findRemoteUrls(project: Project): Set<GitRemoteUrlCoordinates> {
+    return GitUtil.getRepositoryManager(project).repositories.flatMap { gitRepo ->
+      gitRepo.remotes.flatMap { remote ->
+        remote.urls.map { url ->
+          GitRemoteUrlCoordinates(url, remote, gitRepo)
+        }
+      }
+    }.toSet()
   }
 
-  private fun findRemoteUrls(project: Project): Set<String> = GitUtil.getRepositoryManager(project).repositories
-    .flatMap { it.remotes }
-    .flatMap { it.urls }
-    .toSet<String>()
-
-  private suspend fun reloadProjectKeys(ws: Workspace, urls: Set<String>): Context {
-    val reposByUrl: Map<String, SpaceRepoInfo?> = urls.map { url ->
+  private suspend fun reloadProjectKeys(ws: Workspace, urls: Set<GitRemoteUrlCoordinates>): Context {
+    val reposByUrl: Map<GitRemoteUrlCoordinates, SpaceRepoInfo?> = urls.map { url ->
       backoff {
         url to loadProjectKeysForUrl(ws, url)
       }
@@ -67,14 +73,18 @@ class SpaceProjectContext(project: Project) : Disposable {
     return Context(reposByUrl, reposInProject)
   }
 
-  private suspend fun loadProjectKeysForUrl(ws: Workspace, url: String): SpaceRepoInfo? {
+  private suspend fun loadProjectKeysForUrl(ws: Workspace, coordinates: GitRemoteUrlCoordinates): SpaceRepoInfo? {
     val repoService: RepositoryService = ws.client.repoService
-    val (repoName, projectKeys) = repoService.findByRepositoryUrl(url) ?: return null
+    val (repoName, projectKeys) = repoService.findByRepositoryUrl(coordinates.url) ?: return null
     val projectService: Projects = ws.client.pr
-    val projectDescriptions = projectKeys.map { SpaceProjectInfo(it, projectService.getProjectByKey(it).resolve()) }.toSet()
-    return SpaceRepoInfo(url,
+    val projectInfos = projectKeys
+      .map { SpaceProjectInfo(it, projectService.getProject(it.identifier).resolve()) }
+      .toSet()
+    return SpaceRepoInfo(coordinates.url,
+                         coordinates.remote,
+                         coordinates.repository,
                          repoName,
-                         projectDescriptions)
+                         projectInfos)
   }
 
   override fun dispose() {
@@ -89,7 +99,7 @@ class SpaceProjectContext(project: Project) : Disposable {
 }
 
 data class Context(
-  val repoByUrl: Map<String, SpaceRepoInfo?>,
+  val repoByUrl: Map<GitRemoteUrlCoordinates, SpaceRepoInfo?>,
 
   val reposInProject: Map<SpaceProjectInfo, Set<SpaceRepoInfo>>
 ) {
@@ -103,6 +113,8 @@ private val EMPTY: Context = Context(emptyMap(), emptyMap())
 
 data class SpaceRepoInfo(
   val url: String,
+  val remote: GitRemote,
+  val repository: GitRepository,
   val name: String,
   val projectInfos: Set<SpaceProjectInfo>
 )
@@ -111,3 +123,7 @@ data class SpaceProjectInfo(
   val key: ProjectKey,
   val project: PR_Project
 )
+
+data class GitRemoteUrlCoordinates(val url: String,
+                                   val remote: GitRemote,
+                                   val repository: GitRepository)
