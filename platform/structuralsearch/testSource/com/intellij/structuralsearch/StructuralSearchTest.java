@@ -2407,10 +2407,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String source = "class LambdaParameter {" +
                     "\n" +
                     "    void x() {" +
+                    "        String s;" +
                     "        java.util.function.Consumer<String> c = a -> System.out.println(a);" +
+                    "        java.util.function.Consumer<String> c2 = a -> System.out.println(a);" +
                     "    }" +
                     "}";
-    assertEquals("should find lambda parameter", 1, findMatchesCount(source, "String '_a;"));
+    assertEquals("should find lambda parameter", 3, findMatchesCount(source, "String '_a;"));
+    assertEquals("should find lambda parameter 2", 1, findMatchesCount(source, "'_T:String '_a;"));
+    assertEquals("should find lambda parameter 3", 3, findMatchesCount(source, "'_T?:String '_a;"));
+    assertEquals("should find lambda parameter 4", 2, findMatchesCount(source, "'_T{,0}:String '_a;"));
   }
 
   public void testFindLambdas() {

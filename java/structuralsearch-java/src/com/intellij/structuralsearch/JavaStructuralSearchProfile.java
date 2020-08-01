@@ -1000,7 +1000,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final PsiType type = ((PsiTypeElement)greatGrandParent).getType();
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
       }
-      if (greatGrandParent instanceof PsiMethod) {
+      if (greatGrandParent instanceof PsiMethod || greatGrandParent instanceof PsiVariable) {
         return true;
       }
     }

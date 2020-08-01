@@ -278,7 +278,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  boolean validate(@NotNull MatchContext context, int matchedOccurs) {
+  public boolean validate(@NotNull MatchContext context, int matchedOccurs) {
     if (minOccurs > matchedOccurs) return false;
     if (maxOccurs < matchedOccurs) return false;
     return true;
