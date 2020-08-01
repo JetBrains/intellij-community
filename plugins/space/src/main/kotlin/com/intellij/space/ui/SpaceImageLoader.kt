@@ -2,7 +2,6 @@ package com.intellij.space.ui
 
 import circlet.platform.api.TID
 import circlet.platform.api.oauth.TokenSource
-import circlet.platform.client.KCircletClient
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -15,11 +14,9 @@ import io.ktor.client.request.header
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
-import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.async
 import runtime.async.backoff
-import runtime.reactive.Property
-import runtime.reactive.map
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
@@ -33,15 +30,16 @@ class SpaceImageLoader {
     .expireAfterAccess(5, TimeUnit.MINUTES)
     .build<TID, Deferred<BufferedImage?>>()
 
-  private val lifetime = Lifetime.Eternal
+  private val lifetime = LifetimeSource()
 
-  private val client: Property<KCircletClient?> = lifetime.map(space.workspace) {
-    imageCache.cleanUp()
-    it?.client
+  init {
+    space.workspace.forEach(lifetime) {
+      imageCache.cleanUp()
+    }
   }
 
   suspend fun loadImageAsync(imageTID: TID): Deferred<BufferedImage?>? {
-    val kCircletClient = client.value ?: return null
+    val kCircletClient = space.workspace.value?.client ?: return null
 
     val server: String = kCircletClient.server.removeSuffix("/")
     val imagesEndpoint = "${server}/d"

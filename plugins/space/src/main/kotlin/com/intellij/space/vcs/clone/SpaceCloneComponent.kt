@@ -2,7 +2,6 @@ package com.intellij.space.vcs.clone
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.BatchResult
 import circlet.platform.client.KCircletClient
 import com.intellij.dvcs.DvcsRememberedInputs
@@ -23,7 +22,6 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.space
 import com.intellij.space.messages.SpaceBundle
@@ -44,17 +42,16 @@ import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
-import libraries.coroutines.extra.*
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.delay
+import libraries.coroutines.extra.launch
 import runtime.Ui
-import runtime.reactive.MutableProperty
 import runtime.reactive.SequentialLifetimes
-import runtime.reactive.mutableProperty
-import runtime.reactive.view
 import java.awt.event.AdjustmentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Paths
-import java.util.concurrent.CancellationException
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -63,31 +60,14 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   // state
   private val uiLifetime = LifetimeSource()
 
-  private var loginState: MutableProperty<SpaceLoginState> = mutableProperty(initialState())
-
-  private fun initialState(): SpaceLoginState {
-    val workspace = space.workspace.value ?: return SpaceLoginState.Disconnected("")
-    return SpaceLoginState.Connected(workspace.client.server, workspace)
-  }
-
   private val wrapper: Wrapper = Wrapper()
   private lateinit var cloneView: CloneView
 
   init {
     Disposer.register(this, Disposable { uiLifetime.terminate() })
 
-    space.workspace.forEach(uiLifetime) { workspace ->
-      if (workspace == null) {
-        val settings = SpaceSettings.getInstance()
-        loginState.value = SpaceLoginState.Disconnected(settings.serverSettings.server)
-      }
-      else {
-        loginState.value = SpaceLoginState.Connected(workspace.client.server, workspace)
-      }
-    }
-
-    loginState.view(uiLifetime) { lt, st ->
-      val view = createView(lt, st)
+    space.loginState.forEach(uiLifetime) { st ->
+      val view = createView(uiLifetime, st)
       view.border = JBUI.Borders.empty(8, 12)
       wrapper.setContent(view)
       wrapper.repaint()
@@ -104,42 +84,12 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
         cloneView.getView()
       }
 
-      is SpaceLoginState.Connecting -> {
-        buildConnectingPanel(st) {
-          st.lt.terminate()
-          loginState.value = SpaceLoginState.Disconnected(st.server)
-        }
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st) {
+        st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> {
-        buildLoginPanel(st) { serverName ->
-          login(serverName)
-        }
-      }
-    }
-  }
-
-  private fun login(serverName: String) {
-    launch(uiLifetime, Ui) {
-      uiLifetime.usingSource { connectLt ->
-        try {
-          loginState.value = SpaceLoginState.Connecting(serverName, connectLt)
-          when (val response = space.signIn(connectLt, serverName)) {
-            is OAuthTokenResponse.Error -> {
-              loginState.value = SpaceLoginState.Disconnected(serverName, response.description)
-            }
-          }
-        }
-        catch (th: CancellationException) {
-          throw th
-        }
-        catch (th: Throwable) {
-          com.intellij.space.settings.log.warn(th)
-          loginState.value = SpaceLoginState.Disconnected(serverName, th.localizedMessage ?: SpaceBundle.message(
-            "login.disconnected.unexpected.error.text", th.javaClass.simpleName))
-        }
-        val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, getView())
-        AppIcon.getInstance().requestFocus(frame as IdeFrame?)
+      is SpaceLoginState.Disconnected -> buildLoginPanel(st) { serverName ->
+        space.signInManually(serverName, lifetime, getView())
       }
     }
   }
@@ -149,7 +99,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   }
 
   override fun onComponentSelected() {
-    val isConnected = loginState.value is SpaceLoginState.Connected
+    val isConnected = space.loginState.value is SpaceLoginState.Connected
     dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))
     dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
   }

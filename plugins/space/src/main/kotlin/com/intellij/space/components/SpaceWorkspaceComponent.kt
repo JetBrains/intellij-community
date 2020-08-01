@@ -1,8 +1,6 @@
 package com.intellij.space.components
 
 import circlet.arenas.initCircletArenas
-import com.intellij.space.auth.SpaceAuthNotifier
-import com.intellij.space.auth.startRedirectHandling
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.common.oauth.IdeaOAuthConfig
@@ -13,22 +11,29 @@ import circlet.platform.api.serialization.ExtendableSerializationRegistry
 import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
-import com.intellij.space.runtime.ApplicationDispatcher
-import com.intellij.space.settings.SpaceServerSettings
-import com.intellij.space.settings.SpaceSettings
-import com.intellij.space.utils.IdeaPasswordSafePersistence
-import com.intellij.space.utils.LifetimedDisposable
-import com.intellij.space.utils.LifetimedDisposableImpl
 import circlet.workspaces.Workspace
 import circlet.workspaces.WorkspaceManager
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.space.auth.SpaceAuthNotifier
+import com.intellij.space.auth.startRedirectHandling
+import com.intellij.space.runtime.ApplicationDispatcher
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.settings.SpaceServerSettings
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.settings.log
+import com.intellij.space.utils.IdeaPasswordSafePersistence
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
+import com.intellij.ui.AppIcon
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.asCoroutineDispatcher
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.usingSource
 import libraries.coroutines.extra.withContext
 import libraries.klogging.KLogger
 import libraries.klogging.assert
@@ -38,11 +43,13 @@ import runtime.mutableUiDispatch
 import runtime.persistence.InMemoryPersistence
 import runtime.persistence.PersistenceConfiguration
 import runtime.persistence.PersistenceKey
-import runtime.reactive.SequentialLifetimes
-import runtime.reactive.flatMapInit
-import runtime.reactive.mutableProperty
+import runtime.reactive.*
+import java.awt.Component
 import java.net.URI
 import java.net.URL
+import java.util.concurrent.CancellationException
+import javax.swing.JFrame
+import javax.swing.SwingUtilities
 
 internal val space: SpaceWorkspaceComponent
   get() = service()
@@ -57,11 +64,13 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
   private val manager = mutableProperty<WorkspaceManager?>(null)
 
-  val workspace = flatMapInit<WorkspaceManager?, Workspace?>(manager, null) {
-    (it?.workspace ?: mutableProperty<Workspace?>(null))
+  val workspace: Property<Workspace?> = map(manager) { wm ->
+    wm?.workspace?.value
   }
 
   private val settings = SpaceSettings.getInstance()
+
+  val loginState: MutableProperty<SpaceLoginState> = mutableProperty(getInitialState())
 
   init {
     initApp()
@@ -71,6 +80,15 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     launch(wsLifetime, Ui) {
       if (!autoSignIn(wsLifetime)) {
         SpaceAuthNotifier.notifyDisconnected()
+      }
+    }
+
+    workspace.forEach(lifetime) { ws ->
+      loginState.value = if (ws == null) {
+        SpaceLoginState.Disconnected(settings.serverSettings.server)
+      }
+      else {
+        SpaceLoginState.Connected(ws.client.server, ws)
       }
     }
   }
@@ -125,6 +143,33 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     return response
   }
 
+  fun signInManually(serverName: String, uiLifetime: Lifetime, component: Component) {
+    launch(uiLifetime, Ui) {
+      uiLifetime.usingSource { connectLt ->
+        try {
+          loginState.value = SpaceLoginState.Connecting(serverName) {
+            connectLt.terminate()
+            loginState.value = SpaceLoginState.Disconnected(serverName)
+          }
+          when (val response = space.signIn(connectLt, serverName)) {
+            is OAuthTokenResponse.Error -> {
+              loginState.value = SpaceLoginState.Disconnected(serverName, response.description)
+            }
+          }
+        }
+        catch (th: CancellationException) {
+          throw th
+        }
+        catch (th: Throwable) {
+          log.error(th)
+          loginState.value = SpaceLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+        }
+        val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, component)
+        AppIcon.getInstance().requestFocus(frame as IdeFrame?)
+      }
+    }
+  }
+
   fun signOut() {
     val oldManager = manager.value
     oldManager?.signOut(true)
@@ -153,6 +198,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     )
     val workspaceConfig = WorkspaceConfiguration(server, IdeaOAuthConfig.clientId, IdeaOAuthConfig.clientSecret)
     return WorkspaceManager(lifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, persistenceConfig, workspaceConfig)
+  }
+
+  private fun getInitialState(): SpaceLoginState {
+    val workspace = workspace.value ?: return SpaceLoginState.Disconnected("")
+    return SpaceLoginState.Connected(workspace.client.server, workspace)
   }
 
   companion object {

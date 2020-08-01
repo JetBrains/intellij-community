@@ -2,7 +2,6 @@ package com.intellij.space.actions
 
 import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
-import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.client.ConnectionStatus
 import circlet.workspaces.Workspace
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -10,32 +9,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.space
 import com.intellij.space.settings.*
 import com.intellij.space.ui.*
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.clone.SpaceCloneAction
-import com.intellij.ui.AppIcon
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.launch
-import libraries.coroutines.extra.usingSource
-import runtime.Ui
-import runtime.reactive.MutableProperty
-import runtime.reactive.mutableProperty
 import runtime.reactive.view
 import java.awt.Component
 import java.awt.Point
-import java.util.concurrent.CancellationException
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.SwingUtilities
 
 class SpaceMainToolBarAction : DumbAwareAction() {
   private val settings = SpaceSettings.getInstance()
@@ -46,9 +36,12 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     if (!isOnNavBar) return
     val avatars = SpaceUserAvatarProvider.getInstance().avatars.value
     val isConnected = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
-    e.presentation.icon = if (isConnected) avatars.online
-    else avatars.offline
-
+    val isConnecting = space.loginState.value is SpaceLoginState.Connecting
+    e.presentation.icon = when {
+      isConnected -> avatars.online
+      isConnecting -> AnimatedIcon.Default.INSTANCE
+      else -> avatars.offline
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -59,17 +52,13 @@ class SpaceMainToolBarAction : DumbAwareAction() {
         .showUnderneathOf(component)
     }
     else {
-      val disconnected = SpaceLoginState.Disconnected(settings.serverSettings.server)
-
-      val loginState: MutableProperty<SpaceLoginState> = mutableProperty(disconnected)
-
       val wrapper = Wrapper()
       val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, wrapper)
         .setRequestFocus(true)
         .setFocusable(true)
         .createPopup()
-      loginState.view(space.lifetime) { _: Lifetime, st: SpaceLoginState ->
-        val view = createView(st, loginState, component)
+      space.loginState.view(space.lifetime) { _: Lifetime, st: SpaceLoginState ->
+        val view = createView(st, component)
         if (view == null) {
           popup.cancel()
           return@view
@@ -85,47 +74,16 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     }
   }
 
-  private fun createView(st: SpaceLoginState, loginState: MutableProperty<SpaceLoginState>, component: Component): JComponent? {
+  private fun createView(st: SpaceLoginState, component: Component): JComponent? {
     return when (st) {
-      is SpaceLoginState.Connected -> {
-        null
+      is SpaceLoginState.Connected -> null
+
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st) {
+        st.cancel()
       }
 
-      is SpaceLoginState.Connecting -> {
-        buildConnectingPanel(st) {
-          st.lt.terminate()
-          loginState.value = SpaceLoginState.Disconnected(st.server)
-        }
-      }
-
-      is SpaceLoginState.Disconnected -> {
-        buildLoginPanel(st, true) { serverName ->
-          login(serverName, loginState, component)
-        }
-      }
-    }
-  }
-
-  private fun login(serverName: String, loginState: MutableProperty<SpaceLoginState>, component: Component) {
-    launch(space.lifetime, Ui) {
-      space.lifetime.usingSource { connectLt ->
-        try {
-          loginState.value = SpaceLoginState.Connecting(serverName, connectLt)
-          when (val response = space.signIn(connectLt, serverName)) {
-            is OAuthTokenResponse.Error -> {
-              loginState.value = SpaceLoginState.Disconnected(serverName, response.description)
-            }
-          }
-        }
-        catch (th: CancellationException) {
-          throw th
-        }
-        catch (th: Throwable) {
-          com.intellij.space.settings.log.warn(th)
-          loginState.value = SpaceLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
-        }
-        val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, component)
-        AppIcon.getInstance().requestFocus(frame as IdeFrame?)
+      is SpaceLoginState.Disconnected -> buildLoginPanel(st, true) { serverName ->
+        space.signInManually(serverName, space.lifetime, component)
       }
     }
   }
