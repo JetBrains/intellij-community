@@ -44,15 +44,15 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files,
-                                              List<VcsException> exceptions,
+  public void rollbackModifiedWithoutCheckout(List<? extends VirtualFile> files,
+                                              List<? super VcsException> exceptions,
                                               RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Explicit file checkout is not supported by Git.");
   }
 
   @Override
-  public void rollbackMissingFileDeletion(@NotNull List<FilePath> files,
-                                          List<VcsException> exceptions,
+  public void rollbackMissingFileDeletion(List<? extends FilePath> files,
+                                          List<? super VcsException> exceptions,
                                           RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Missing file delete is not reported by Git.");
   }
@@ -63,8 +63,8 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackChanges(@NotNull List<Change> changes,
-                              @NotNull List<VcsException> exceptions,
+  public void rollbackChanges(List<? extends Change> changes,
+                              List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
     HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<>();
     HashMap<VirtualFile, List<FilePath>> toUnversion = new HashMap<>();

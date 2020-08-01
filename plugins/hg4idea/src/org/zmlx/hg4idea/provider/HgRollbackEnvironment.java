@@ -56,7 +56,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackChanges(List<Change> changes, List<VcsException> vcsExceptions,
+  public void rollbackChanges(List<? extends Change> changes, List<VcsException> vcsExceptions,
                               @NotNull RollbackProgressListener listener) {
     if (changes == null || changes.isEmpty()) {
       return;
@@ -98,19 +98,19 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackMissingFileDeletion(List<FilePath> files,
-                                          List<VcsException> exceptions, RollbackProgressListener listener) {
+  public void rollbackMissingFileDeletion(List<? extends FilePath> files,
+                                          List<? super VcsException> exceptions, RollbackProgressListener listener) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
       revert(files);
     }
   }
 
   @Override
-  public void rollbackModifiedWithoutCheckout(List<VirtualFile> files,
-                                              List<VcsException> exceptions, RollbackProgressListener listener) {
+  public void rollbackModifiedWithoutCheckout(List<? extends VirtualFile> files,
+                                              List<? super VcsException> exceptions, RollbackProgressListener listener) {
   }
 
-  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> files) {
+  public List<VcsException> rollbackMissingFileDeletion(List<? extends FilePath> files) {
     if (files == null || files.isEmpty()) {
       return null;
     }
@@ -122,7 +122,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   public void rollbackIfUnchanged(VirtualFile file) {
   }
 
-  private void revert(@NotNull List<FilePath> filePaths) {
+  private void revert(@NotNull List<? extends FilePath> filePaths) {
     for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(project, filePaths).entrySet()) {
       final VirtualFile repo = entry.getKey();
       final Collection<FilePath> files = entry.getValue();

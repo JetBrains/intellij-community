@@ -46,8 +46,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   @Override
-  public void rollbackChanges(@NotNull List<Change> changes,
-                              @NotNull List<VcsException> exceptions,
+  public void rollbackChanges(List<? extends Change> changes,
+                              List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
     listener.indeterminate();
 
@@ -59,8 +59,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
-  private void rollbackGroupForWc(@NotNull List<Change> changes,
-                                  @NotNull List<VcsException> exceptions,
+  private void rollbackGroupForWc(@NotNull List<? extends Change> changes,
+                                  @NotNull List<? super VcsException> exceptions,
                                   @NotNull RollbackProgressListener listener) {
     final UnversionedAndNotTouchedFilesGroupCollector collector = new UnversionedAndNotTouchedFilesGroupCollector();
     final ChangesChecker checker = new ChangesChecker(mySvnVcs, collector);
@@ -83,8 +83,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   @Override
-  public void rollbackMissingFileDeletion(@NotNull List<FilePath> filePaths,
-                                          @NotNull List<VcsException> exceptions,
+  public void rollbackMissingFileDeletion(List<? extends FilePath> filePaths,
+                                          List<? super VcsException> exceptions,
                                           @NotNull RollbackProgressListener listener) {
     for (FilePath filePath : filePaths) {
       listener.accept(filePath);
