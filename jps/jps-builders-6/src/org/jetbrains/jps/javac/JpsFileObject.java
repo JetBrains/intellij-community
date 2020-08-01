@@ -64,31 +64,28 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   @NotNull
   protected static CharSequence loadCharContent(@NotNull File file, @Nullable String encoding) throws IOException {
     // FileUtil.loadText clones char array if length mismatch
-    Closeable toClose = null;
+    FileInputStream stream = new FileInputStream(file);
     try {
-      FileInputStream fileStream = new FileInputStream(file);
-      toClose = fileStream;
-      final int size = (int)fileStream.getChannel().size();
-      InputStream stream = size > 0? new BufferedInputStream(fileStream, Math.min(size, 512 * 1024 /* 512 kb*/)) : new BufferedInputStream(fileStream);
-      toClose = stream;
       final Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-      toClose = reader;
-      // channel allows to avoid extra call to get file size because fd is reused, see Files.readAllBytes
-      char[] chars = new char[size];
-      int count = 0;
-      while (count < chars.length) {
-        int n = reader.read(chars, count, chars.length - count);
-        if (n <= 0) {
-          break;
+      try {
+        // channel allows to avoid extra call to get file size because fd is reused, see Files.readAllBytes
+        char[] chars = new char[(int)stream.getChannel().size()];
+        int count = 0;
+        while (count < chars.length) {
+          int n = reader.read(chars, count, chars.length - count);
+          if (n <= 0) {
+            break;
+          }
+          count += n;
         }
-        count += n;
+        return CharBuffer.wrap(chars, 0, count);
       }
-      return CharBuffer.wrap(chars, 0, count);
+      finally {
+        reader.close();
+      }
     }
     finally {
-      if (toClose != null) {
-        toClose.close();
-      }
+      stream.close();
     }
   }
 
