@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.*
+import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
@@ -142,9 +143,11 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
       }
 
       if (multiResolve && uCallExpression is UMultiResolvable) {
-        uCallExpression.multiResolve().any { method.accepts(it.element, context) }}
-      else
+        uCallExpression.multiResolve().any { method.accepts(it.element, context) }
+      }
+      else {
         uCallExpression.resolve().let { method.accepts(it, context) }
+      }
     }
   }
 
@@ -154,12 +157,22 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
     } ?: false
   }
 
+  fun constructor(classPattern: ElementPattern<PsiClass>, parameterCount: Int): UCallExpressionPattern = filterWithContext { it, context ->
+    val psiMethod = it.resolve() ?: return@filterWithContext false
+
+    psiMethod.isConstructor
+    && psiMethod.parameterList.parametersCount == parameterCount
+    && classPattern.accepts(psiMethod.containingClass, context)
+  }
+
   fun constructor(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern = filterWithContext { it, context ->
     val psiMethod = it.resolve() ?: return@filterWithContext false
     psiMethod.isConstructor && classPattern.accepts(psiMethod.containingClass, context)
   }
 
-  fun constructor(className: String): UCallExpressionPattern = constructor(PsiJavaPatterns.psiClass().withQualifiedName(className))
+  fun constructor(className: String): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className))
+
+  fun constructor(className: String, parameterCount: Int): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className), parameterCount)
 }
 
 private val IS_UAST_ANNOTATION_PARAMETER: Key<Boolean> = Key.create("UAST_ANNOTATION_PARAMETER")
