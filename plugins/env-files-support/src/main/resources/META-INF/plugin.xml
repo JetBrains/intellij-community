@@ -67,7 +67,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
-        <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
         <fileType name=".env file" extensions="env" fileNames=".env" patterns=".env.*" fieldName="INSTANCE" language="DotEnv"

@@ -11,8 +11,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
-import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
-import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
@@ -27,33 +25,33 @@ public class EnvironmentVariablesApi {
         Map<String, String> secondaryKeyValues = new HashMap<>();
         Map<VirtualFile, FileAcceptResult> resultsCache = new HashMap<>();
 
-        fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, s -> {
-            for(VirtualFile virtualFile : fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project))) {
+        GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+
+        fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, key -> {
+            for (VirtualFile virtualFile : fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, key, scope)) {
 
                 FileAcceptResult fileAcceptResult;
 
-                if(resultsCache.containsKey(virtualFile)) {
+                if (resultsCache.containsKey(virtualFile)) {
                     fileAcceptResult = resultsCache.get(virtualFile);
                 } else {
                     fileAcceptResult = getFileAcceptResult(virtualFile);
                     resultsCache.put(virtualFile, fileAcceptResult);
                 }
 
-                if(!fileAcceptResult.isAccepted()) {
+                if (!fileAcceptResult.isAccepted()) {
                     continue;
                 }
 
-                EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(s);
-
-                if(fileAcceptResult.isPrimary()) {
-                    if(keyValues.containsKey(keyValue.getKey())) return true;
-
-                    keyValues.put(keyValue.getKey(), keyValue.getValue());
-                } else {
-                    if(!secondaryKeyValues.containsKey(keyValue.getKey())) {
-                        secondaryKeyValues.put(keyValue.getKey(), keyValue.getValue());
+                fileBasedIndex.processValues(DotEnvKeyValuesIndex.KEY, key, virtualFile, ((file, val) -> {
+                    if (fileAcceptResult.isPrimary()) {
+                        keyValues.putIfAbsent(key, val);
+                    } else {
+                        secondaryKeyValues.putIfAbsent(key, val);
                     }
-                }
+
+                    return true;
+                }), scope);
             }
 
             return true;
@@ -72,15 +70,15 @@ public class EnvironmentVariablesApi {
         List<PsiElement> targets = new ArrayList<>();
         List<PsiElement> secondaryTargets = new ArrayList<>();
 
-        FileBasedIndex.getInstance().getFilesWithKey(DotEnvKeysIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
+        FileBasedIndex.getInstance().getFilesWithKey(DotEnvKeyValuesIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
             PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
-            if(psiFileTarget == null) {
+            if (psiFileTarget == null) {
                 return true;
             }
 
-            for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
-                if(!fileAcceptResult.isAccepted()) {
+                if (!fileAcceptResult.isAccepted()) {
                     continue;
                 }
 
@@ -120,9 +118,9 @@ public class EnvironmentVariablesApi {
     }
 
     private static FileAcceptResult getFileAcceptResult(VirtualFile virtualFile) {
-        for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+        for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
             FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
-            if(!fileAcceptResult.isAccepted()) {
+            if (!fileAcceptResult.isAccepted()) {
                 continue;
             }
 

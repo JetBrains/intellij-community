@@ -8,11 +8,13 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Copy of LaravelLightCodeInsightFixtureTestCase from laravel plugin
@@ -38,9 +40,9 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatform
                 return true;
             }, GlobalSearchScope.allScope(getProject()));
 
-            if(notCondition && virtualFiles.size() > 0) {
+            if (notCondition && virtualFiles.size() > 0) {
                 fail(String.format("Fail that ID '%s' not contains '%s'", id.toString(), key));
-            } else if(!notCondition && virtualFiles.size() == 0) {
+            } else if (!notCondition && virtualFiles.size() == 0) {
                 fail(String.format("Fail that ID '%s' contains '%s'", id.toString(), key));
             }
         }
@@ -49,9 +51,26 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatform
     protected void assertUsagesContains(@NotNull String... keys) {
         for (String key : keys) {
             PsiElement[] usages = EnvironmentVariablesApi.getKeyUsages(this.myFixture.getProject(), key);
-            if(usages.length == 0) {
+            if (usages.length == 0) {
                 fail(String.format("Fail that usages contains '%s'", key));
             }
+        }
+    }
+
+    protected void assertContainsKeyAndValue(@NotNull String key, @NotNull String value) {
+        assertIndexContains(DotEnvKeyValuesIndex.KEY, key);
+
+        final AtomicBoolean found = new AtomicBoolean(false);
+
+        FileBasedIndexImpl.getInstance().processValues(DotEnvKeyValuesIndex.KEY, key, null, (virtualFile, s) -> {
+            if (s.equals(value)) {
+                found.set(true);
+            }
+            return false;
+        }, GlobalSearchScope.allScope(myFixture.getProject()));
+
+        if (!found.get()) {
+            fail(String.format("Fail that index contains pair '%s' => '%s'", key, value));
         }
     }
 }
