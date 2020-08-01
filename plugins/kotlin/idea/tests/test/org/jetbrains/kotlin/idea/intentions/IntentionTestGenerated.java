@@ -14884,6 +14884,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/complexRightExpression.kt");
         }
 
+        @TestMetadata("doubleQualifiedExpressionIsntAllowed.kt")
+        public void testDoubleQualifiedExpressionIsntAllowed() throws Exception {
+            runTest("testData/intentions/replaceWithOrdinaryAssignment/doubleQualifiedExpressionIsntAllowed.kt");
+        }
+
         @TestMetadata("minusAssignOperatorFun.kt")
         public void testMinusAssignOperatorFun() throws Exception {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/minusAssignOperatorFun.kt");
@@ -14907,6 +14912,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("plusAssignOperatorFun.kt")
         public void testPlusAssignOperatorFun() throws Exception {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/plusAssignOperatorFun.kt");
+        }
+
+        @TestMetadata("qualifiedExpression.kt")
+        public void testQualifiedExpression() throws Exception {
+            runTest("testData/intentions/replaceWithOrdinaryAssignment/qualifiedExpression.kt");
         }
 
         @TestMetadata("simple.kt")
