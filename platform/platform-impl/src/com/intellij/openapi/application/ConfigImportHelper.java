@@ -192,9 +192,11 @@ public final class ConfigImportHelper {
       if (isConfigImported()) {
         properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
       }
-      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
 
-      restart();
+      if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
+        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
+        restart();
+      }
     }
   }
 
