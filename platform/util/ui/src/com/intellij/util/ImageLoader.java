@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -13,7 +13,6 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -30,8 +29,10 @@ import java.awt.image.ImageFilter;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ImageLoader implements Serializable {
   public static final int ALLOW_FLOAT_SCALING = 0x01;
@@ -133,7 +134,7 @@ public final class ImageLoader implements Serializable {
   }
 
   public static final class ImageDescriptorList {
-    private static final Set<String> IO_MISS_CACHE = ContainerUtil.newConcurrentSet();
+    private static final Set<String> IO_MISS_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final List<ImageDescriptor> list;
     private final String name;
@@ -159,13 +160,13 @@ public final class ImageLoader implements Serializable {
       return load(converters, true, null);
     }
 
-    @Nullable
-    public Image load(@NotNull ImageConverterChain converters, boolean useCache, @Nullable Class<?> resourceClass) {
+    public @Nullable Image load(@NotNull ImageConverterChain converters, boolean useCache, @Nullable Class<?> resourceClass) {
       String cacheKey = name + "." + type.name();
       if (IO_MISS_CACHE.contains(cacheKey)) {
         return null;
       }
-      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+
+      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
       boolean ioExceptionThrown = false;
       Image result = null;
@@ -327,26 +328,31 @@ public final class ImageLoader implements Serializable {
    * Loads an image of available resolution (1x, 2x, ...) and scales to address the provided scale context.
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
-  @Nullable
-  public static Image loadFromUrl(@NotNull String path, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, ImageFilter @Nullable [] filters, ScaleContext scaleContext) {
+  public static @Nullable Image loadFromUrl(@NotNull String path,
+                                            @Nullable Class<?> aClass,
+                                            @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags,
+                                            ImageFilter @Nullable [] filters,
+                                            ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
-    return ImageDescriptorList.create(path, flags, scaleContext).load(
-      ImageConverterChain.create()
-        .withFilter(filters)
-        .with(new ImageConverter() {
-          @Override
-          public Image convert(Image source, ImageDescriptor desc) {
-            if (source != null && desc.type != ImageType.SVG) {
-              double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(DerivedScaleType.PIX_SCALE));
-              if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
-              source = scaleImage(source, scale);
+    ImageConverterChain converters = ImageConverterChain.create()
+      .withFilter(filters)
+      .with(new ImageConverter() {
+        @Override
+        public Image convert(Image source, ImageDescriptor desc) {
+          if (source != null && desc.type != ImageType.SVG) {
+            double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(DerivedScaleType.PIX_SCALE));
+            if (desc.scale > 1) {
+              // compensate the image original scale
+              scale /= desc.scale;
             }
-            return source;
+            source = scaleImage(source, scale);
           }
-        })
-        .withHiDPI(scaleContext),
-      BitUtil.isSet(flags, USE_CACHE), aClass);
+          return source;
+        }
+      })
+      .withHiDPI(scaleContext);
+    return ImageDescriptorList.create(path, flags, scaleContext).load(converters, BitUtil.isSet(flags, USE_CACHE), aClass);
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {

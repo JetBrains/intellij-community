@@ -3079,9 +3079,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String toHexString(byte @NotNull [] bytes) {
-    @SuppressWarnings("SpellCheckingInspection") String digits = "0123456789abcdef";
+    @SuppressWarnings("SpellCheckingInspection")
+    String digits = "0123456789abcdef";
     StringBuilder sb = new StringBuilder(2 * bytes.length);
-    for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    for (byte b : bytes) {
+      sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    }
     return sb.toString();
   }
 

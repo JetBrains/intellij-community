@@ -309,7 +309,10 @@ public final class IconLoader {
     if (cachedIcon == null) {
       cachedIcon = ourIconsCache.computeIfAbsent(key, k -> {
         CachedImageIcon.MyUrlResolver resolver = new CachedImageIcon.MyUrlResolver(path, clazz, (ClassLoader)k.getSecond(), handleNotFound);
-        CachedImageIcon icon = new CachedImageIcon(resolver, originalPath, true);
+        if (!CachedImageIcon.MyUrlResolver.DEFER_URL_RESOLVE) {
+          resolver.resolve();
+        }
+        CachedImageIcon icon = new CachedImageIcon(originalPath, resolver, null, true, null);
         if (!deferUrlResolve && icon.getURL() == null) {
           return null;
         }
@@ -609,15 +612,11 @@ public final class IconLoader {
     private final MyScaledIconsCache mySelectedIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
-      this(url, true);
+      this(null, new MyUrlResolver(url, null), null, true, null);
     }
 
     CachedImageIcon(@Nullable URL url, boolean useCacheOnLoad) {
-      this(new MyUrlResolver(url, null), null, useCacheOnLoad);
-    }
-
-    private CachedImageIcon(@NotNull IconLoader.CachedImageIcon.IconUrlResolver urlResolver, @Nullable String originalPath, boolean useCacheOnLoad) {
-      this(originalPath, urlResolver, null, useCacheOnLoad, null);
+      this(null, new MyUrlResolver(url, null), null, useCacheOnLoad, null);
     }
 
     private CachedImageIcon(@Nullable String originalPath,
@@ -642,7 +641,9 @@ public final class IconLoader {
     @NotNull
     protected ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
-        if (isLoaderDisabled()) return EMPTY_ICON;
+        if (isLoaderDisabled()) {
+          return EMPTY_ICON;
+        }
         synchronized (myLock) {
           if (!isValid()) {
             myTransformModCount = ourTransformModCount.get();
@@ -768,16 +769,16 @@ public final class IconLoader {
     }
 
     @Nullable
-    private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
-      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
-      Image image = loadFromUrlImpl(ctx, dark);
+    private Image loadFromUrl(@NotNull ScaleContext scaleContext, boolean dark) {
+      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+      Image image = loadFromUrlImpl(scaleContext, dark);
       if (start != -1) {
         IconLoadMeasurer.addFindIconLoad(StartUpMeasurer.getCurrentTime() - start);
       }
       return image;
     }
 
-    private Image loadFromUrlImpl(@NotNull ScaleContext ctx, boolean dark) {
+    private @Nullable Image loadFromUrlImpl(@NotNull ScaleContext scaleContext, boolean dark) {
       int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (myUseCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;
@@ -789,14 +790,14 @@ public final class IconLoader {
       String path = myResolver.getOverriddenPath();
       Class<?> aClass = myResolver.getOwnerClass();
       if (aClass != null && path != null) {
-        return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), ctx);
+        return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), scaleContext);
       }
 
       URL url = getURL();
       if (url == null) {
         return null;
       }
-      return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
+      return ImageLoader.loadFromUrl(url.toString(), null, flags, getFilters(), scaleContext);
     }
 
     void detachClassLoader(ClassLoader loader) {
@@ -818,22 +819,22 @@ public final class IconLoader {
       /**
        * Retrieves the orig icon scaled by the provided scale.
        */
-      ImageIcon getOrScaleIcon(final float scale) {
-        ScaleContext ctx = getScaleContext();
+      ImageIcon getOrScaleIcon(float scale) {
+        ScaleContext scaleContext = getScaleContext();
         if (scale != 1) {
-          ctx = ctx.copy();
-          ctx.setScale(OBJ_SCALE.of(scale));
+          scaleContext = scaleContext.copy();
+          scaleContext.setScale(OBJ_SCALE.of(scale));
         }
 
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(scaleContext)));
         if (icon != null && !SVGLoader.isSelectionContext()) {
           return icon;
         }
-        Image image = loadFromUrl(ctx, isDark());
+        Image image = loadFromUrl(scaleContext, isDark());
         icon = checkIcon(image, CachedImageIcon.this);
 
         if (icon != null && 4L * icon.getIconWidth() * icon.getIconHeight() < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(key(ctx), new SoftReference<>(icon));
+          scaledIconsCache.put(key(scaleContext), new SoftReference<>(icon));
         }
         return icon;
       }
@@ -875,7 +876,7 @@ public final class IconLoader {
 
       boolean isResolved();
 
-      IconUrlResolver resolve();
+      void resolve();
 
       @Nullable
       URL getURL();
@@ -889,10 +890,10 @@ public final class IconLoader {
      * Used to defer URL resolve.
      */
     private static final class MyUrlResolver implements IconUrlResolver {
-      @Nullable private final Class<?> myOwnerClass;
-      @Nullable private final ClassLoader myClassLoader;
-      @Nullable private final String myOverriddenPath;
-      @NotNull private final HandleNotFound myHandleNotFound;
+      @Nullable private final Class<?> ownerClass;
+      @Nullable private final ClassLoader classLoader;
+      @Nullable private final String overriddenPath;
+      @NotNull private final HandleNotFound handleNotFound;
       // Every myUrl write is performed before isResolved write (see resolve())
       // and every myUrl read is performed after isResolved read (see getUrl()), thus
       // no necessary to declare myUrl as volatile: happens-before is established via isResolved.
@@ -902,43 +903,39 @@ public final class IconLoader {
       private static final boolean DEFER_URL_RESOLVE = Boolean.parseBoolean(System.getProperty("ide.icons.deferUrlResolve", "true"));
 
       MyUrlResolver(@Nullable URL url, @Nullable ClassLoader classLoader) {
-        myOwnerClass = null;
-        myOverriddenPath = null;
-        myClassLoader = classLoader;
+        ownerClass = null;
+        overriddenPath = null;
+        this.classLoader = classLoader;
         myUrl = url;
-        myHandleNotFound = HandleNotFound.IGNORE;
+        handleNotFound = HandleNotFound.IGNORE;
         isResolved = true;
       }
 
       MyUrlResolver(@Nullable URL url, @NotNull String path, @Nullable ClassLoader classLoader) {
-        myOwnerClass = null;
-        myOverriddenPath = path;
-        myClassLoader = classLoader;
+        ownerClass = null;
+        overriddenPath = path;
+        this.classLoader = classLoader;
         myUrl = url;
-        myHandleNotFound = HandleNotFound.IGNORE;
+        handleNotFound = HandleNotFound.IGNORE;
         isResolved = true;
       }
 
       MyUrlResolver(@NotNull String path, @Nullable Class<?> clazz, @Nullable ClassLoader classLoader, @NotNull HandleNotFound handleNotFound) {
-        myOverriddenPath = path;
-        myOwnerClass = clazz;
-        myClassLoader = classLoader;
-        myHandleNotFound = handleNotFound;
-
-        if (!DEFER_URL_RESOLVE) {
-          resolve();
-        }
+        overriddenPath = path;
+        ownerClass = clazz;
+        this.classLoader = classLoader;
+        this.handleNotFound = handleNotFound;
       }
 
       @Override
       public @Nullable Class<?> getOwnerClass() {
-        return myOwnerClass;
+        return ownerClass;
       }
 
       @Override
       @Nullable
       public String getOverriddenPath() {
-        return myOverriddenPath;
+        return overriddenPath;
       }
 
       @Override
@@ -950,59 +947,70 @@ public final class IconLoader {
        * Resolves the URL if it's not yet resolved.
        */
       @Override
-      public MyUrlResolver resolve() {
+      public void resolve() {
         if (isResolved) {
-          return this;
+          return;
         }
 
         try {
-          URL url = null;
-          String path = myOverriddenPath;
-          if (path != null) {
-            if (myClassLoader != null) {
-              // paths in ClassLoader getResource must not start with "/"
-              path = path.charAt(0) == '/' ? path.substring(1) : path;
-              url = findURL(path, myClassLoader::getResource);
-            }
-            if (url == null && myOwnerClass != null) {
-              // some plugins use findIcon("icon.png",IconContainer.class)
-              url = findURL(path, myOwnerClass::getResource);
-            }
-          }
-          if (url == null) {
-            myHandleNotFound.handle("Can't find icon in '" + path + "' near " + myClassLoader);
-          }
-          myUrl = url;
+          myUrl = doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
         }
         finally {
           isResolved = true;
         }
-        return this;
+      }
+
+      private static @Nullable URL doResolve(@Nullable String overriddenPath,
+                                             @Nullable ClassLoader classLoader,
+                                             @Nullable Class<?> ownerClass,
+                                             @NotNull HandleNotFound handleNotFound) {
+        String path = overriddenPath;
+        URL url = null;
+        if (path != null) {
+          if (classLoader != null) {
+            // paths in ClassLoader getResource must not start with "/"
+            path = path.charAt(0) == '/' ? path.substring(1) : path;
+            url = findURL(path, classLoader::getResource);
+          }
+          if (url == null && ownerClass != null) {
+            // some plugins use findIcon("icon.png",IconContainer.class)
+            url = findURL(path, ownerClass::getResource);
+          }
+        }
+        if (url == null) {
+          handleNotFound.handle("Can't find icon in '" + path + "' near " + classLoader);
+        }
+        return url;
       }
 
       @Override
-      @Nullable
-      public URL getURL() {
+      public @Nullable URL getURL() {
         if (!isResolved()) {
-          return resolve().myUrl;
+          resolve();
         }
         return myUrl;
       }
 
       @Override
       public IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-        Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, myClassLoader);
-        ClassLoader classLoader = patchedPath.second != null ? patchedPath.second : myClassLoader;
+        Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
+        ClassLoader classLoader = patchedPath.second == null ? this.classLoader : patchedPath.second;
         String path = patchedPath.first;
         if (classLoader != null && path != null && path.startsWith("/")) {
-          return new MyUrlResolver(path.substring(1), null, classLoader, myHandleNotFound).resolve();
+          IconUrlResolver resolver = new MyUrlResolver(path.substring(1), null, classLoader, handleNotFound);
+          resolver.resolve();
+          return resolver;
         }
 
-        //This use case for temp themes only. Here we want immediately replace existing icon to a local one
+        // This use case for temp themes only. Here we want immediately replace existing icon to a local one
         if (path != null && path.startsWith("file:/")) {
           try {
-            return new MyUrlResolver(new URL(path), path.substring(1), classLoader).resolve();
-          } catch (MalformedURLException ignore) {}
+            IconUrlResolver resolver = new MyUrlResolver(new URL(path), path.substring(1), classLoader);
+            resolver.resolve();
+            return resolver;
+          }
+          catch (MalformedURLException ignore) {
+          }
         }
 
         return this;
@@ -1032,7 +1040,7 @@ public final class IconLoader {
 
       @Override
       public IconUrlResolver detachClassLoader(ClassLoader loader) {
-        if (myClassLoader == loader) {
+        if (classLoader == loader) {
           return new DummyUrlResolver();
         }
         return this;
@@ -1057,8 +1065,7 @@ public final class IconLoader {
       }
 
       @Override
-      public IconUrlResolver resolve() throws RuntimeException {
-        return this;
+      public void resolve() throws RuntimeException {
       }
 
       @Nullable
