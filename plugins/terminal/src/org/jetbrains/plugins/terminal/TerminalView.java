@@ -139,10 +139,6 @@ public final class TerminalView {
         contentManager.setSelectedContent(content);
       }
     }
-
-    if (contentManager.getContentCount() == 0) {
-      createNewSession(myTerminalRunner, null);
-    }
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
@@ -166,12 +162,19 @@ public final class TerminalView {
   private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
                                             @Nullable TerminalTabState tabState,
                                             boolean requestFocus) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    // ensure #initToolWindow is called
-    Objects.requireNonNull(toolWindow).activate(null);
-    LOG.assertTrue(toolWindow == myToolWindow);
-    Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
+    ToolWindow toolWindow = getOrInitToolWindow();
+    Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus);
     return Objects.requireNonNull(getWidgetByContent(content));
+  }
+
+  private @NotNull ToolWindow getOrInitToolWindow() {
+    ToolWindow toolWindow = myToolWindow;
+    if (toolWindow == null) {
+      toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+      Objects.requireNonNull(toolWindow).getContentManager(); // to call #initToolWindow
+      LOG.assertTrue(toolWindow == myToolWindow);
+    }
+    return toolWindow;
   }
 
   @NotNull
@@ -189,7 +192,16 @@ public final class TerminalView {
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject);
-    contentManager.setSelectedContent(content, requestFocus);
+    Runnable selectRunnable = () -> {
+      contentManager.setSelectedContent(content, requestFocus);
+    };
+    if (requestFocus && !toolWindow.isActive()) {
+      LOG.info("Activating " + toolWindow.getId() + " tool window");
+      toolWindow.activate(selectRunnable, true, true);
+    }
+    else {
+      selectRunnable.run();
+    }
     return content;
   }
 
