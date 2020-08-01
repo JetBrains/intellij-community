@@ -312,16 +312,11 @@ public final class ThreadTracker {
   }
 
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
-    awaitThreadTerminationWithParentParentGroup("JDI main", timeout, unit);
-  }
-  private static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup,
-                                                                  int timeout,
-                                                                  @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
         ThreadGroup group = thread.getThreadGroup();
-        return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
+        return group != null && group.getParent() != null && "JDI main".equals(group.getParent().getName());
       });
 
       if (jdiThread == null) {
