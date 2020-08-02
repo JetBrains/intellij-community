@@ -129,7 +129,7 @@ public final class UITheme {
       theme.patcher = new IconPathPatcher() {
         @Nullable
         @Override
-        public String patchPath(@NotNull String path, ClassLoader classLoader) {
+        public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
           if (classLoader instanceof PluginClassLoader) {
             String pluginId = ((PluginClassLoader)classLoader).getPluginId().getIdString();
             Object icons = theme.icons.get(pluginId);

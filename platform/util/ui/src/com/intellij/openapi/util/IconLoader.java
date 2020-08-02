@@ -295,8 +295,8 @@ public final class IconLoader {
                                              @NotNull HandleNotFound handleNotFound,
                                              boolean deferUrlResolve) {
     Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(originalPath, classLoader);
-    String path = patchedPath.first;
-    if (patchedPath.second != null) {
+    String path = patchedPath == null ? originalPath : patchedPath.first;
+    if (patchedPath != null && patchedPath.second != null) {
       classLoader = patchedPath.second;
     }
 
@@ -994,6 +994,10 @@ public final class IconLoader {
       @Override
       public IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
         Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
+        if (patchedPath == null) {
+          return this;
+        }
+
         ClassLoader classLoader = patchedPath.second == null ? this.classLoader : patchedPath.second;
         String path = patchedPath.first;
         if (classLoader != null && path != null && path.startsWith("/")) {
@@ -1256,26 +1260,25 @@ public final class IconLoader {
       return dark == myDark ? this : new IconTransform(dark, myPatchers, myFilter);
     }
 
-    public @NotNull Pair<String, ClassLoader> patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+    public @Nullable Pair<String, ClassLoader> patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
       for (IconPathPatcher patcher : myPatchers) {
         String newPath = patcher.patchPath(path, classLoader);
         if (newPath == null) {
-          newPath = patcher.patchPath(path, null);
+          continue;
         }
-        if (newPath != null) {
-          LOG.debug("replace '" + path + "' with '" + newPath + "'");
-          ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
-          if (contextClassLoader == null) {
-            //noinspection deprecation
-            Class<?> contextClass = patcher.getContextClass(path);
-            if (contextClass != null) {
-              contextClassLoader = contextClass.getClassLoader();
-            }
+
+        LOG.debug("replace '" + path + "' with '" + newPath + "'");
+        ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
+        if (contextClassLoader == null) {
+          //noinspection deprecation
+          Class<?> contextClass = patcher.getContextClass(path);
+          if (contextClass != null) {
+            contextClassLoader = contextClass.getClassLoader();
           }
-          return new Pair<>(newPath, contextClassLoader);
         }
+        return new Pair<>(newPath, contextClassLoader);
       }
-      return new Pair<>(path, null);
+      return null;
     }
 
     public @NotNull IconTransform copy() {
