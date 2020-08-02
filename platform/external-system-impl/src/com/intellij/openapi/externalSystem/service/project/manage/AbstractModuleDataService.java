@@ -42,6 +42,7 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -192,7 +193,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
   private static boolean isModulePointsSameRoot(ModuleData moduleData, Module ideModule) {
     for (VirtualFile root: ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (FileUtil.pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }

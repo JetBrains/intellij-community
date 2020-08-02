@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
+import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
@@ -125,7 +126,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
 
 class EditCustomPropertiesAction : EditCustomSettingsAction() {
   private companion object {
-    val file = lazy {
+    val file: Lazy<Path?> = lazy {
       val dir = PathManager.getCustomOptionsDirectory()
       return@lazy if (dir != null) Paths.get(dir, PathManager.PROPERTIES_FILE_NAME) else null
     }
@@ -135,13 +136,13 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomPropertiesAction.file.value?.systemIndependentPath)
+    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomPropertiesAction.file.value == null) false else PathUtil.pathEqualsTo(file, EditCustomPropertiesAction.file.value!!.systemIndependentPath)
   }
 }
 
 class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   private companion object {
-    val file = lazy { VMOptions.getWriteFile() }
+    val file: Lazy<Path?> = lazy { VMOptions.getWriteFile() }
   }
 
   override fun file(): Path? = file.value
@@ -150,6 +151,6 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   fun isEnabled(): Boolean = file() != null
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
-    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, EditCustomVmOptionsAction.file.value?.systemIndependentPath)
+    override fun isWritable(file: VirtualFile): Boolean = if (EditCustomVmOptionsAction.file.value == null) false else PathUtil.pathEqualsTo(file, EditCustomVmOptionsAction.file.value!!.systemIndependentPath)
   }
 }

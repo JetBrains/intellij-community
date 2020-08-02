@@ -108,6 +108,28 @@ public final class PathUtil {
     return StringUtil.isEmpty(extension) ? name : name + '.' + extension;
   }
 
+  /**
+   * @return true if the {@code file} path is equal to the {@code path},
+   * according to the file's parent directories case sensitivity.
+   */
+  public static boolean pathEqualsTo(@NotNull VirtualFile file, @NotNull @SystemIndependent String path) {
+    path = FileUtil.toCanonicalPath(path);
+    int li = path.length();
+    while (file != null && li != -1) {
+      int i = path.lastIndexOf('/', li-1);
+      CharSequence fileName = file.getNameSequence();
+      if (StringUtil.endsWithChar(fileName, '/')) {
+        fileName = fileName.subSequence(0, fileName.length()-1);
+      }
+      if (!StringUtil.equal(fileName, path.substring(i + 1, li), file.isCaseSensitive())) {
+        return false;
+      }
+      file = file.getParent();
+      li = i;
+    }
+    return li == -1 && file == null;
+  }
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link com.intellij.openapi.vfs.VfsUtil#getLocalFile(VirtualFile)} instead */
   @Deprecated

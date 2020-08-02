@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -277,7 +276,7 @@ public final class ManifestFileUtil {
                                              final @NotNull CompositePackagingElement<?> element) {
     context.editLayout(context.getArtifact(), () -> {
       final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
-      if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
+      if (file == null || !PathUtil.pathEqualsTo(file, path)) {
         PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
       }
     });

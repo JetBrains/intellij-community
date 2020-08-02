@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -47,7 +47,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
 
   public boolean isFor(MavenProject project, String goal) {
     if (myProjectPath == null || myGoal == null) return false;
-    return FileUtil.pathsEqual(project.getPath(), myProjectPath) && goal.equals(myGoal);
+    return PathUtil.pathEqualsTo(project.getFile(), myProjectPath) && goal.equals(myGoal);
   }
 
   @Override

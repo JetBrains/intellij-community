@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import gnu.trove.THashSet
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -22,7 +23,7 @@ class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    return mavenProjectsManager.projects.any { FileUtil.pathsEqual(it.directory, externalProjectPath) }
+    return mavenProjectsManager.projects.any { PathUtil.pathEqualsTo(it.directoryFile, externalProjectPath) }
   }
 
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
