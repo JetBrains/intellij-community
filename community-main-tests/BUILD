@@ -37,7 +37,6 @@ iml_module(
         "//tools/idea/plugins/sh:intellij.sh",
         "//tools/idea/plugins/gradle-maven:intellij.gradle.java.maven",
         "//tools/idea/plugins/filePrediction:intellij.filePrediction",
-        "//tools/idea/plugins/webp:intellij.webp",
         "//tools/idea/.idea/libraries:jgoodies-common",
         "//tools/idea/.idea/libraries:commons-net",
     ],
