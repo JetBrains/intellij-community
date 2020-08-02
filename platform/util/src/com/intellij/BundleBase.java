@@ -3,12 +3,14 @@ package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -20,8 +22,9 @@ import java.util.ResourceBundle;
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  private static final String L10N_MARKER = "🔅";
+  static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
+  public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys;
@@ -105,8 +108,24 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
+    if (SHOW_DEFAULT_MESSAGES && resourceFound) {
+      try {
+        Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
+        if (parent != null) {
+          Object parentBundle = parent.get(bundle);
+          if (parentBundle instanceof ResourceBundle) {
+            String suffix = " (" + ((ResourceBundle)parentBundle).getString(key) + ")";
+            return appendLocalizationSuffix(result, suffix);
+          }
+        }
+      }
+      catch (IllegalAccessException e) {
+        LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
+      }
+    }
+
     if (SHOW_LOCALIZED_MESSAGES && resourceFound) {
-      return appendLocalizationMarker(result);
+      return appendLocalizationSuffix(result, L10N_MARKER);
     }
     return result;
   }
@@ -114,11 +133,11 @@ public abstract class BundleBase {
   private static final String[] SUFFIXES = {"</body></html>", "</html>"};
 
   @NotNull
-  protected static String appendLocalizationMarker(@NotNull String result) {
+  protected static String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
     for (String suffix : SUFFIXES) {
       if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }
-    return result + L10N_MARKER;
+    return result + suffixToAppend;
   }
 
   @NotNull
