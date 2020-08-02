@@ -310,12 +310,10 @@ static bool GetClosestExistingDirectory(const wchar_t *path)
 			result = true;
 			break;
 		}
-		if (res != 0 && errno == ENOENT) {
-			wchar_t *p = wcsrchr(path, L'\\');
-			if (p != NULL) {
-				*p = 0;
-				continue;
-			}
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			continue;
 		}
 		break;
 	}
