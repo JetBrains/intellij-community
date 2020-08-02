@@ -146,27 +146,14 @@ public final class SVGLoader {
   /**
    * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
    */
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
     try {
-      double s = ctx.getScale(DerivedScaleType.PIX_SCALE);
-      return MyTranscoder.createImage(1, createTranscodeInput(url, stream), (float)(width * s), (float)(height * s)).getImage();
+      double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+      return MyTranscoder.createImage(1, createTranscodeInput(url, stream), (float)(width * scale), (float)(height * scale)).getImage();
     }
-    catch (TranscoderException ex) {
-      throw new IOException(ex);
+    catch (TranscoderException e) {
+      throw new IOException(e);
     }
-  }
-
-  /**
-   * Loads a HiDPI-aware image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
-   */
-  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url,
-                                                      @NotNull InputStream stream,
-                                                      ScaleContext ctx,
-                                                      double width,
-                                                      double height) throws IOException {
-    BufferedImage image = (BufferedImage)load(url, stream, ctx, width, height);
-    @SuppressWarnings("unchecked") T t = (T)ImageUtil.ensureHiDPI(image, ctx);
-    return t;
   }
 
   /**

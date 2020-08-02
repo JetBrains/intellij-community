@@ -30,8 +30,7 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
-  @NotNull
-  Icon getIcon(@NotNull String path, @NotNull Class aClass);
+  @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
   @NotNull
   default Icon createEmptyIcon(@NotNull Icon icon) {
@@ -104,7 +103,7 @@ final class DummyIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
+  public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     return DummyIcon.INSTANCE;
   }
 

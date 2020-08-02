@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -9,7 +9,6 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import org.imgscalr.Scalr;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,21 +213,13 @@ public final class ImageUtil {
    */
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx) {
-    if (image == null) return null;
+    if (image == null) {
+      return null;
+    }
     if (StartupUiUtil.isJreHiDPI(ctx)) {
       return RetinaImage.createFrom(image, ctx.getScale(ScaleType.SYS_SCALE), null);
     }
     return image;
-  }
-
-  /**
-   * @deprecated Use {@link #ensureHiDPI(Image, ScaleContext)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract("null, _ -> null; !null, _ -> !null")
-  public static Image ensureHiDPI(@Nullable Image image, @NotNull JBUI.ScaleContext ctx) {
-    return ensureHiDPI(image, (ScaleContext)ctx);
   }
 
   /**

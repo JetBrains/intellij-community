@@ -6,10 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,8 +25,8 @@ public final class IconsLoadTime extends DumbAwareAction {
   private static final int FIXED_SCOPE = 100; // log stats for a first fixed number of icons
 
   // load time per icon
-  private static final List<Integer> statsSVG = new ArrayList<>();
-  private static final List<Integer> statsPNG = new ArrayList<>();
+  private static final IntList statsSVG = new IntArrayList();
+  private static final IntList statsPNG = new IntArrayList();
 
   static {
     if (Boolean.getBoolean("idea.measure.icon.load.time")) {
@@ -96,7 +97,7 @@ public final class IconsLoadTime extends DumbAwareAction {
   }
 
   private static void measure(@NotNull ImageType type, int duration) {
-    List<Integer> stats = getStats(type);
+    IntList stats = getStats(type);
     if (stats.size() > STATS_LIMIT) {
       ImageDescriptor.setLoadTimeConsumer(null);
     }
@@ -112,8 +113,7 @@ public final class IconsLoadTime extends DumbAwareAction {
     }
   }
 
-  @NotNull
-  private static List<Integer> getStats(@NotNull ImageType type) {
+  private static @NotNull IntList getStats(@NotNull ImageType type) {
     return type == ImageType.SVG ? statsSVG : statsPNG;
   }
 }

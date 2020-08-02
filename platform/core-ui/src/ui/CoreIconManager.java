@@ -31,7 +31,7 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
+  public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     Icon icon = IconLoader.getIcon(path, aClass);
     return IconWithToolTip.create(icon, new IconDescriptionLoader(path));
   }

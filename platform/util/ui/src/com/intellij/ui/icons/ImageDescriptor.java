@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.CollectionFactory;
@@ -30,10 +29,10 @@ public final class ImageDescriptor {
   private static final ConcurrentMap<String, Image> ourLargeImageCache = ContainerUtil.createConcurrentWeakValueMap();
   private static final ConcurrentMap<Image, ImageLoader.Dimension2DDouble> ourLargeImageDimensionMap = CollectionFactory.createConcurrentWeakMap();
 
-  final @NotNull String path;
+  private final @NotNull String path;
   public final double scale; // initial scale factor
   public final @NotNull ImageType type;
-  final boolean original; // path is not altered
+  private final boolean original; // path is not altered
 
   // The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
   // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
@@ -44,7 +43,7 @@ public final class ImageDescriptor {
   }
 
   @Nullable
-  static volatile LoadTimeConsumer loadTimeConsumer;
+  private static volatile LoadTimeConsumer loadTimeConsumer;
 
   public ImageDescriptor(@NotNull String path, double scale, @NotNull ImageType type) {
     this(path, scale, type, false);
@@ -60,7 +59,7 @@ public final class ImageDescriptor {
 
   @NotNull
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.ImageLoader");
+    return Logger.getInstance(ImageLoader.class);
   }
 
   public static void clearCache() {
@@ -82,14 +81,8 @@ public final class ImageDescriptor {
     return path;
   }
 
-  @Nullable
-  public Image load(boolean useCache) throws IOException {
-    return load(useCache, null);
-  }
-
-  @Nullable
-  public Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
-    if (StringUtilRt.isEmpty(path)) {
+  public @Nullable Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
+    if (path.isEmpty()) {
       getLogger().warn("empty image path", new Throwable());
       return null;
     }
