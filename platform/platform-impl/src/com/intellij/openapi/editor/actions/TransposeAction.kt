@@ -9,13 +9,12 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.util.DocumentUtil
 
 class TransposeAction : EditorAction(TransposeHandler()) {
-  private class TransposeHandler : EditorWriteActionHandler(true) {
+  private class TransposeHandler : EditorWriteActionHandler.ForEachCaret() {
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
       return !caret.hasSelection() && caret.offset > 0
     }
 
-    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-      val caret = caret ?: editor.caretModel.currentCaret
+    override fun executeWriteAction(editor: Editor, caret: Caret, dataContext: DataContext?) {
       val line = caret.logicalPosition.line
       val document = editor.document
       if (caret.offset < document.getLineEndOffset(line)) {
