@@ -18,9 +18,9 @@ final class PluginError {
   }
 
   PluginError(@Nullable IdeaPluginDescriptorImpl plugin,
-                     @NotNull String message,
-                     @Nullable String incompatibleReason,
-                     boolean notifyUser) {
+              @Nls @NotNull String message,
+              @Nls @Nullable String incompatibleReason,
+              boolean notifyUser) {
     this.plugin = plugin;
     this.message = message;
     this.incompatibleReason = incompatibleReason;

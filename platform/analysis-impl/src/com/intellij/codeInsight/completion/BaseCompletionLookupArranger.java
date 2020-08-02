@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
@@ -40,7 +41,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     Comparator.comparing(DEFAULT_PRESENTATION::get, PRESENTATION_COMPARATOR);
   static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Object> FORCE_MIDDLE_MATCH = Key.create("FORCE_MIDDLE_MATCH");
-  public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
+  @NlsContexts.PopupAdvertisement public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
 
   private final List<LookupElement> myFrozenItems = new ArrayList<>();
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");

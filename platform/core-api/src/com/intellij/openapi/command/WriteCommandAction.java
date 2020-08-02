@@ -15,6 +15,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 
+import static com.intellij.openapi.util.NlsContexts.*;
+
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
@@ -24,7 +26,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public interface Builder {
     @Contract(pure = true)
     @NotNull
-    Builder withName(@Nullable @NlsContexts.Command String name);
+    Builder withName(@Nullable @Command String name);
 
     @Contract(pure = true)
     @NotNull
@@ -63,7 +65,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     @NotNull
     @Override
-    public Builder withName(String name) {
+    public Builder withName(@Command String name) {
       myCommandName = name;
       return this;
     }

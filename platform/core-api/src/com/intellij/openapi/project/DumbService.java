@@ -104,7 +104,7 @@ public abstract class DumbService {
     return result.get();
   }
 
-  public @Nullable <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable String notification) {
+  public @Nullable <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @Nullable @PopupContent String notification) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       try {
         return task.compute();

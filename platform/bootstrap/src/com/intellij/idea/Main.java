@@ -7,6 +7,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -238,7 +239,7 @@ public final class Main {
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
-  public static void showMessage(String title, String message, boolean error) {
+  public static void showMessage(@Nls String title, @Nls String message, boolean error) {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
 
