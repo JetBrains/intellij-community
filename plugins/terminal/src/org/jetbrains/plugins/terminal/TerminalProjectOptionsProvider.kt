@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.xmlb.annotations.Property
 import java.io.File
 import kotlin.reflect.KMutableProperty0
@@ -72,11 +73,37 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return dir?.canonicalPath
   }
 
-  var shellPath: String by ValueWithDefault(state::shellPath) { defaultShellPath() }
+  var shellPath: String
+    get() {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
+        state.shellPath
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath
+      }
+      return shellPath ?: findDefaultShellPath(workingDirectoryLazy::value)
+    }
+    set(value) {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val valueToStore = Strings.nullize(value, findDefaultShellPath(workingDirectoryLazy::value))
+      if (isProjectLevelShellPath((workingDirectoryLazy::value))) {
+        state.shellPath = valueToStore
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath = valueToStore
+      }
+    }
 
-  fun defaultShellPath(): String {
+  private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
+    return SystemInfo.isWindows && findWslDistribution(workingDirectory()) != null
+  }
+
+  fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
+
+  private fun findDefaultShellPath(workingDirectory: () -> String?): String {
     if (SystemInfo.isWindows) {
-      val wslDistribution = findWslDistribution(startingDirectory)
+      val wslDistribution = findWslDistribution(workingDirectory())
       if (wslDistribution != null) {
         return "wsl.exe --distribution $wslDistribution"
       }
@@ -118,8 +145,6 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         provider.state.shellPath = oldState.myShellPath
         provider.state.envDataOptions.set(oldState.envDataOptions.get())
       }
-      @Suppress("DEPRECATION")
-      provider.state.shellPath = provider.state.shellPath ?: TerminalOptionsProvider.instance.getShellPathAndClear()
       return provider
     }
   }
