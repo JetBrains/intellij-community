@@ -29,11 +29,7 @@ public class LineStartWithSelectionAction extends TextComponentEditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return !ModifierKeyDoubleClickHandler.getInstance().isRunningAction() ||
@@ -41,7 +37,7 @@ public class LineStartWithSelectionAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineStart(editor, true);
     }
   }

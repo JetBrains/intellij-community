@@ -8,20 +8,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MoveDownWithSelectionAndScrollAction extends EditorAction {
   public MoveDownWithSelectionAndScrollAction() {
     super(new Handler());
   }
 
-  private static final class Handler extends EditorActionHandler {
-    private Handler() {
-      super(true);
-    }
-
+  private static final class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (caret == editor.getCaretModel().getPrimaryCaret()) {
         EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, 1, true);
       }

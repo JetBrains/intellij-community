@@ -35,19 +35,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SelectWordHandler extends EditorActionHandler {
+public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(SelectWordHandler.class);
 
   private final EditorActionHandler myOriginalHandler;
 
   public SelectWordHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }

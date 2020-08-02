@@ -21,20 +21,15 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class LineStartAction extends TextComponentEditorAction {
   public LineStartAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineStart(editor, false);
     }
   }
