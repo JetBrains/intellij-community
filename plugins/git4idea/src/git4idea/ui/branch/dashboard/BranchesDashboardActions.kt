@@ -401,7 +401,7 @@ internal object BranchesDashboardActions {
     override fun update(e: AnActionEvent) {
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
-      val enabled = project != null && uiController != null
+      val enabled = project != null && uiController != null && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
       e.presentation.isEnabled = enabled
     }
 
