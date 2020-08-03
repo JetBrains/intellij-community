@@ -211,6 +211,8 @@ public class AllIcons {
   }
 
   public final static class CodeWithMe {
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOff = load("/codeWithMe/cwmAccessOff.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOn = load("/codeWithMe/cwmAccessOn.svg");
     /** 16x16 */ public static final @NotNull Icon CwmFollow = load("/codeWithMe/cwmFollow.svg");
     /** 16x16 */ public static final @NotNull Icon CwmFollowMe = load("/codeWithMe/cwmFollowMe.svg");
     /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("/codeWithMe/cwmForceFollowMe.svg");
