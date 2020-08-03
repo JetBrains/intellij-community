@@ -41,7 +41,7 @@ class ReloadProjectTest : LoadProjectBase() {
     get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
 
   @Test
-  internal fun `reload module with module library`() {
+  fun `reload module with module library`() {
     loadProjectAndCheckResults("removeModuleWithModuleLibrary/before") { project ->
       val base = Paths.get(project.basePath!!)
       FileUtil.copyDir(testDataRoot.resolve("removeModuleWithModuleLibrary/after").toFile(), base.toFile())
