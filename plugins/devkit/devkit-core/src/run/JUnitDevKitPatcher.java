@@ -123,8 +123,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
       res = ReadAction.compute(() -> {
         //noinspection RedundantCast
         return DumbService.getInstance(project).computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, RuntimeException>)() -> {
-          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, module != null ? GlobalSearchScope
-            .moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project));
+          GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                   : GlobalSearchScope.allScope(project);
+          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
           if (aClass != null) {
             if (jdk9) {
               PsiClass builder = aClass.findInnerClassByName(UrlClassLoader.Builder.class.getSimpleName(), false);
