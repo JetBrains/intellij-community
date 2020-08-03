@@ -333,24 +333,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return ReferencesSearch.search(var).anyMatch(isPossiblyNullableWrite);
   }
 
-  abstract static class AbstractStringBuilderFix extends InspectionGadgetsFix {
+  private static class StringBuilderReplacer {
     static final Pattern PRINT_OR_PRINTLN = Pattern.compile("print|println");
 
-    final String myName;
+    Set<PsiExpression> myNullables = Collections.emptySet();
     final String myTargetType;
     final boolean myNullSafe;
-    Set<PsiExpression> myNullables = Collections.emptySet();
 
-    AbstractStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      myName = variable.getName();
-      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
-                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
-      myNullSafe = nullSafe;
+    private StringBuilderReplacer(String type, boolean safe) {
+      myTargetType = type;
+      myNullSafe = safe;
     }
 
     @NotNull
     String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
-      if(ExpressionUtils.isNullLiteral(initializer)) {
+      if (ExpressionUtils.isNullLiteral(initializer)) {
         return ct.text(initializer);
       }
       String text = initializer == null || ExpressionUtils.isLiteral(initializer, "") ? "" : ct.text(initializer);
@@ -630,9 +627,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class IntroduceStringBuilderFix extends AbstractStringBuilderFix {
+  static class IntroduceStringBuilderFix extends InspectionGadgetsFix {
+    final String myName;
+    final String myTargetType;
+    final boolean myNullSafe;
+
     IntroduceStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      super(variable, nullSafe);
+      myName = variable.getName();
+      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
+                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
+      myNullSafe = nullSafe;
     }
 
     @Override
@@ -660,8 +664,10 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiVariable builderVariable = (PsiVariable)declaration.getDeclaredElements()[0];
       PsiExpression builderInitializer = Objects.requireNonNull(builderVariable.getInitializer());
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, builderVariable, loop, ct);
-      String toString = variable.getName() + " = " + newName + ".toString();";
+      StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
+      replacer.replaceAll(variable, builderVariable, loop, ct);
+      String convertToString = myNullSafe ? CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + newName + ")" : newName + ".toString()";
+      String toString = variable.getName() + " = " + convertToString + ";";
 
       PsiExpression initializer = variable.getInitializer();
       switch (status) {
@@ -669,8 +675,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           // Put original variable declaration after the loop and use its original initializer in StringBuilder constructor
           PsiTypeElement typeElement = variable.getTypeElement();
           if (typeElement != null && initializer != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
-            ct.replace(initializer, newName + ".toString()");
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
+            ct.replace(initializer, convertToString);
             toString = variable.getText();
             ct.delete(variable);
           }
@@ -678,21 +684,22 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         case AT_WANTED_PLACE_ONLY:
           // Move original initializer to the StringBuilder constructor
           if (initializer != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
             initializer.delete();
           }
           break;
         case AT_WANTED_PLACE:
           // Copy original initializer to the StringBuilder constructor if possible
           if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
           }
           break;
         case UNKNOWN:
           PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(declaration);
           PsiExpression prevAssignment = ExpressionUtils.getAssignmentTo(prevStatement, variable);
           if (prevAssignment != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct)));
+            javaCodeStyleManager
+              .shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(prevAssignment, ct)));
             ct.delete(prevStatement);
           }
           break;
@@ -717,9 +724,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class ReplaceWithStringBuilderFix extends AbstractStringBuilderFix {
+  static class ReplaceWithStringBuilderFix extends InspectionGadgetsFix {
+    final String myName;
+    final String myTargetType;
+    final boolean myNullSafe;
+
     ReplaceWithStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      super(variable, nullSafe);
+      myName = variable.getName();
+      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
+                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
+      myNullSafe = nullSafe;
     }
 
     @Override
@@ -732,12 +746,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null) return;
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, variable, null, ct);
+      StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
+      replacer.replaceAll(variable, variable, null, ct);
       ct.replace(typeElement, myTargetType);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         JavaCodeStyleManager.getInstance(project)
-          .shortenClassReferences(ct.replace(initializer, generateNewStringBuilder(initializer, ct)));
+          .shortenClassReferences(ct.replace(initializer, replacer.generateNewStringBuilder(initializer, ct)));
       }
       PsiStatement commentPlace = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
       ct.insertCommentsBefore(commentPlace == null ? variable : commentPlace);
