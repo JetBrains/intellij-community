@@ -396,6 +396,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
     final LanguageLevel specified = LanguageLevel.fromPythonVersion(file.getUserData(KEY));
     if (file.isDirectory()) {
+      // no need to check parent since UpdateRootTask pushes language level into all directories under roots
       return specified;
     }
     else {
@@ -403,6 +404,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     }
   }
 
+  @TestOnly
   public void flushLanguageLevelCache() {
     myModuleSdks.clear();
   }
