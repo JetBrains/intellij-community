@@ -77,7 +77,7 @@ iml_module(
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.0.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.1.1:jar",
         "//tools/idea/.idea/libraries:fastutil-min",
     ],
 )
