@@ -151,21 +151,22 @@ public final class PerformanceWatcher implements Disposable {
       if (appInfoFile.isFile()) {
         File[] crashFiles = new File(SystemProperties.getUserHome())
           .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
-        assert crashFiles != null;
-        for (File file : crashFiles) {
-          if (file.lastModified() > appInfoFile.lastModified()) {
-            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-              LOG.info("Crash file " + file + " is too big to report");
+        if (crashFiles != null) {
+          for (File file : crashFiles) {
+            if (file.lastModified() > appInfoFile.lastModified()) {
+              if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+                LOG.info("Crash file " + file + " is too big to report");
+                break;
+              }
+              String content = FileUtil.loadFile(file);
+              Attachment attachment = new Attachment("crash.txt", content);
+              attachment.setIncluded(true);
+              String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+              IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+              IdeaFreezeReporter.report(event);
               break;
             }
-            String content = FileUtil.loadFile(file);
-            Attachment attachment = new Attachment("crash.txt", content);
-            attachment.setIncluded(true);
-            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
-            IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
-            IdeaFreezeReporter.report(event);
-            break;
           }
         }
       }
