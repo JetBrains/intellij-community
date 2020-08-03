@@ -57,18 +57,14 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
         pathsForCommits[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentPath
       }
 
-      for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
-        if (!visited.get(nextNode)) {
-          stack.push(Pair(nextNode, getPath(nextNode, currentNode, currentPath, down)))
-          continue@outer
-        }
+      for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, down)) {
+        stack.push(Pair(nextNode, nextPath))
+        continue@outer
       }
 
-      for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
-        if (!visited.get(nextNode)) {
-          stack.push(Pair(nextNode, getPath(nextNode, currentNode, currentPath, !down)))
-          continue@outer
-        }
+      for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, !down)) {
+        stack.push(Pair(nextNode, nextPath))
+        continue@outer
       }
 
       stack.pop()
@@ -106,6 +102,23 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
     if (parents.subList(1, parents.size).find { pathGetter(it) != path } != null) return null
     return path
+  }
+
+  private fun getNextNodes(graph: LiteLinearGraph,
+                           visited: BitSetFlags,
+                           currentNode: Int,
+                           currentPath: MaybeDeletedFilePath,
+                           down: Boolean): List<Pair<Int, MaybeDeletedFilePath>> {
+    val nextNodes = graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)
+    val nodesWithPaths = nextNodes.filterNot(visited::get).map { node -> Pair(node, getPath(node, currentNode, currentPath, down)) }
+
+    return nodesWithPaths.sortedWith(compareBy { (_, path) ->
+      when {
+        path == currentPath -> -1
+        path.deleted -> 1
+        else -> 0
+      }
+    })
   }
 }
 
