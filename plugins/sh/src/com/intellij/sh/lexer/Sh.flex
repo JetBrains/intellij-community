@@ -122,8 +122,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
-ParameterExpansionExpr   = [^}/$`\"]* | {EscapedChar}*
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
+ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
