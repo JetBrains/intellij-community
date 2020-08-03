@@ -89,7 +89,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           .addData("source", "editor")
           .addData("plugins", Collections.singletonList(finalDisabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin));
+        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin.getPluginId()));
       });
     }
     else if (!jbPluginsToInstall.isEmpty()) {

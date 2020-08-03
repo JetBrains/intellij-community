@@ -1376,14 +1376,6 @@ public class PluginManagerConfigurable
     }
   }
 
-  public static void showPluginConfigurableAndEnable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.getPluginModel().changeEnableDisable(descriptors, true);
-      configurable.select(descriptors);
-    });
-  }
-
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));

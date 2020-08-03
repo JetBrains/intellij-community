@@ -92,6 +92,9 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
+                        serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdValueStoreService" serviceImplementation="com.intellij.codeWithMe.ClientIdValueStoreServiceImpl" preload="true" />
 
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>

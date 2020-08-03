@@ -154,11 +154,12 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
           }
           notificationActions.add(NotificationAction.createSimpleExpiring(
             title, () -> {
+              List<PluginId> disabledPluginIds = ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId());
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
-                .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
+                .addData("plugins", ContainerUtil.map(disabledPluginIds, (id) -> id.getIdString()));
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-              PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
+              PluginsAdvertiser.enablePlugins(project, disabledPluginIds);
             }));
         }
         else {
