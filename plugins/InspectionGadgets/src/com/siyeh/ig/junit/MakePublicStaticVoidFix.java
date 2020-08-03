@@ -47,13 +47,16 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   }
 
   MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @PsiModifier.ModifierConstant String newVisibility) {
+    final int formatOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_MODIFIERS
+                              | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE;
+    final String methodBefore = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, formatOptions, PsiFormatUtilBase.SHOW_TYPE);
+
     String presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
-    myName = "Change signature of '" +
-             PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_MODIFIERS |
-                                        PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE, PsiFormatUtilBase.SHOW_TYPE) +
-             "' to '" + (presentableVisibility.isEmpty() ? "" : presentableVisibility + " ") + (makeStatic ? "static " : "") +
-             "void " + method.getName() + "()'";
+    final String methodAfter = (presentableVisibility.isEmpty() ? presentableVisibility : presentableVisibility + " ") +
+                               (makeStatic ? "static " : "") +
+                               "void " + method.getName() + "()";
+
+    myName = InspectionGadgetsBundle.message("make.public.static.void.fix.name", methodBefore, methodAfter);
     myMakeStatic = makeStatic;
     myNewVisibility = newVisibility;
   }

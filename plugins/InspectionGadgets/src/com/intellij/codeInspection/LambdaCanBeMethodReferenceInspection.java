@@ -86,7 +86,8 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
           element,
           getDisplayName(),
           type != ProblemHighlightType.INFORMATION,
-          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
+          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : InspectionGadgetsBundle.message(
+            "replace.with.method.ref.fix.suffix.may.change.semantics"))));
       }
     };
   }

@@ -48,7 +48,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return "#ref can be JUnit 5 test";
+    return InspectionGadgetsBundle.message("junit5.converter.problem");
   }
 
   @Override

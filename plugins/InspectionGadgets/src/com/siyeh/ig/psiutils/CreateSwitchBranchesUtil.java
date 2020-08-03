@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -31,9 +32,9 @@ public class CreateSwitchBranchesUtil {
    */
   public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
-      return "Create missing switch branch '" + names.iterator().next() + "'";
+      return InspectionGadgetsBundle.message("create.missing.switch.branch", names.iterator().next());
     }
-    return "Create missing branches: " + formatMissingBranches(names);
+    return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
   }
 
   /**

@@ -462,13 +462,13 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class RedundantAsListForIterationHandler implements RedundantCollectionOperationHandler {
     @Override
     public String getProblemName() {
-      return "Unnecessary 'Arrays.asList' call";
+      return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.problem");
     }
 
     @NotNull
     @Override
     public String getFixName() {
-      return "Unwrap";
+      return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.fix.name");
     }
 
     @Override

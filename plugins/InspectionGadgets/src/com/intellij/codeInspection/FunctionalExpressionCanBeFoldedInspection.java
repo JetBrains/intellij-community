@@ -23,7 +23,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         doCheckCall(expression, () -> expression.resolve(), qualifierExpression, referenceNameElement,
-                    "Method reference can be replaced with qualifier");
+                    InspectionGadgetsBundle.message("replace.method.ref.with.qualifier.problem.method"));
       }
 
       @Override
@@ -35,7 +35,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
           PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)asMethodReference).getMethodExpression();
           PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
           doCheckCall(lambdaExpression, () -> ((PsiMethodCallExpression)asMethodReference).resolveMethod(), qualifierExpression, asMethodReference,
-                      "Lambda can be replaced with call qualifier");
+                    InspectionGadgetsBundle.message("replace.method.ref.with.qualifier.problem.lambda"));
         }
       }
 

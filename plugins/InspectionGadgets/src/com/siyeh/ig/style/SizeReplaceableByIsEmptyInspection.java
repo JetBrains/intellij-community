@@ -69,7 +69,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
       if (name != null) {
-        result.add(new IgnoreClassFix(name, ignoredTypes, "Ignore '." + methodName + "()' calls on type '" + name + "'"));
+        result.add(new IgnoreClassFix(name, ignoredTypes,
+                                      InspectionGadgetsBundle.message("size.replaceable.by.isempty.fix.ignore.calls", methodName, name)));
       }
     }
     result.add(new SizeReplaceableByIsEmptyFix());

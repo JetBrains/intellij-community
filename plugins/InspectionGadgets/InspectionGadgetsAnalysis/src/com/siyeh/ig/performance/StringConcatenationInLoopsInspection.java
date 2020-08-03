@@ -713,7 +713,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @Override
     public String getName() {
       return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, StringUtil.getShortName(myTargetType))
-             + (myNullSafe ? " (null-safe)" : "");
+             + (myNullSafe ? " " + InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.suffix.nullSafe") : "");
     }
 
     @Nls
@@ -763,7 +763,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @Override
     public String getName() {
       return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, StringUtil.getShortName(myTargetType))
-             + (myNullSafe ? " (null-safe)" : "");
+             + (myNullSafe ? " " + InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.suffix.nullSafe") : "");
     }
 
     @Nls
