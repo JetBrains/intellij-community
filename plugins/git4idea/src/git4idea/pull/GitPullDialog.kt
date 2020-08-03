@@ -413,6 +413,7 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
+    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),
