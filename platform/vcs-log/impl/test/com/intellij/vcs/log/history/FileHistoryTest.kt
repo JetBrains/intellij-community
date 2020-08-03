@@ -18,6 +18,7 @@ import gnu.trove.TIntObjectHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
+import org.junit.Ignore
 import org.junit.Test
 
 class FileHistoryTest {
@@ -158,7 +159,7 @@ class FileHistoryTest {
    * Rename happens in one branch, while the other branch only consists of couple of trivial merge commits.
    */
   @Test
-  fun historyWithUndetectedRename() {
+  fun historyWithUndetectedTrivialRename() {
     val after = LocalFilePath("after.txt", false)
     val before = LocalFilePath("before.txt", false)
     val fileNamesData = FileNamesDataBuilder(after)
@@ -385,6 +386,46 @@ class FileHistoryTest {
       0(2.dot)
       2(5.dot)
       5()
+    }
+  }
+
+  /**
+   * File is renamed and modified in one branch, modified in another branch. At merge commit rename is not detected by git,
+   * and since there are changes in both branches, merge commit is not considered trivial and is not simplified.
+   * This means that when computing file history, it is important to walk commits parents in a specific order to correctly track file through a rename.
+   */
+  @Test
+  @Ignore
+  fun historyWithUndetectedNonTrivialRename() {
+    val after = LocalFilePath("after.txt", false)
+    val before = LocalFilePath("before.txt", false)
+    val fileNamesData = FileNamesDataBuilder(after)
+      .addChange(before, 7, listOf(ADDED), listOf(7))
+      .addDetectedRename(6, 4, before, after)
+      .addChange(after, 3, listOf(MODIFIED), listOf(4))
+      .addChange(before, 2, listOf(MODIFIED), listOf(5))
+      .addChange(before, 1, listOf(REMOVED, MODIFIED), listOf(2, 3))
+      .addChange(after, 1, listOf(ADDED, MODIFIED), listOf(2, 3))
+      // rename is not detected at merge commit 1
+      .addChange(after, 0, listOf(MODIFIED), listOf(1))
+      .build()
+
+    graph {
+      0(1)
+      1(2, 3)
+      2(5)
+      3(4)
+      4(6)
+      5(6)
+      6(7)
+      7()
+    }.assert(0, after, fileNamesData) {
+      0(1)
+      1(2, 3)
+      2(7.dot)
+      3(4)
+      4(7.dot)
+      7()
     }
   }
 }
