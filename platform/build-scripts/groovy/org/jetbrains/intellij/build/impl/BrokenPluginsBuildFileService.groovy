@@ -81,7 +81,7 @@ final class BrokenPluginsBuildFileService {
 
 
   private storeBrokenPlugin(Map<String, Set<String>> brokenPlugin) {
-    final File file = new File("../../community/platform/platform-resources/src/$BROKEN_PLUGINS_FILE_NAME")
+    final File file = new File("${myBuildContext.paths.communityHome}/platform/platform-resources/src/$BROKEN_PLUGINS_FILE_NAME")
     myBuildContext.messages.info("Saving broken plugin into file ${file.name}")
     final String text = brokenPlugin.collect { id, versions ->
       "$id ${versions.collect { escapeIfSpaces(it) }.join(" ")}"
