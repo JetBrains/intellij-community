@@ -236,7 +236,7 @@ public class PyPIPackageUtil {
   @Nullable
   public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
-    // Package is on PyPI not a, say, some system package on Ubuntu
+    // Package is on PyPI, not, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
       version = getLatestPackageVersionFromPyPI(project, packageName);
     }
