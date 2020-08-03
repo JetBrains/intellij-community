@@ -27,8 +27,4 @@ public abstract class PyModuleService {
   public boolean isFileIgnored(@NotNull VirtualFile file) {
     return false;
   }
-
-  public boolean isPythonModule(@NotNull Module module) {
-    return true;
-  }
 }

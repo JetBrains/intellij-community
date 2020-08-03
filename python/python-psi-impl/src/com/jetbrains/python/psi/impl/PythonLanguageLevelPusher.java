@@ -80,7 +80,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    guessLanguageLevelWithCaching(project);
+    guessLanguageLevelWithCaching(project, distinctSdks);
   }
 
   @Override
@@ -221,7 +221,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    guessLanguageLevelWithCaching(project);
+    guessLanguageLevelWithCaching(project, distinctSdks);
 
     if (needToReparseOpenFiles) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -235,17 +235,14 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
   @NotNull
   private static Map<Module, Sdk> getPythonModuleSdks(@NotNull Project project) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    if (moduleManager == null) return Collections.emptyMap();
+
     final Map<Module, Sdk> result = new LinkedHashMap<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (isPythonModule(module)) {
-        result.put(module, PythonSdkUtil.findPythonSdk(module));
-      }
+    for (Module module : moduleManager.getModules()) {
+      result.put(module, PythonSdkUtil.findPythonSdk(module));
     }
     return result;
-  }
-
-  private static boolean isPythonModule(@NotNull final Module module) {
-    return PyModuleService.getInstance().isPythonModule(module);
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
@@ -275,10 +272,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   }
 
   @NotNull
-  private static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+  private static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project, @NotNull Collection<@Nullable Sdk> pythonModuleSdks) {
     LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(KEY));
     if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(project);
+      languageLevel = guessLanguageLevel(pythonModuleSdks);
       project.putUserData(KEY, languageLevel.toPythonVersion());
     }
 
@@ -290,22 +287,18 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   }
 
   @NotNull
-  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    if (moduleManager != null) {
-      LanguageLevel maxLevel = null;
-      for (Module projectModule : moduleManager.getModules()) {
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(projectModule);
-        if (sdk != null) {
-          final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-          if (maxLevel == null || maxLevel.isOlderThan(level)) {
-            maxLevel = level;
-          }
+  private static LanguageLevel guessLanguageLevel(@NotNull Collection<@Nullable Sdk> pythonModuleSdks) {
+    LanguageLevel maxLevel = null;
+    for (Sdk sdk : pythonModuleSdks) {
+      if (sdk != null) {
+        final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+        if (maxLevel == null || maxLevel.isOlderThan(level)) {
+          maxLevel = level;
         }
       }
-      if (maxLevel != null) {
-        return maxLevel;
-      }
+    }
+    if (maxLevel != null) {
+      return maxLevel;
     }
     return LanguageLevel.getDefault();
   }
@@ -331,7 +324,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     final Sdk sdk = virtualFile instanceof LightVirtualFile ? null : getFileSdk(project, virtualFile);
     if (sdk != null) return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
 
-    return guessLanguageLevelWithCaching(project);
+    return guessLanguageLevelWithCaching(project, getPythonModuleSdks(project).values());
   }
 
   private final class UpdateRootTask implements Runnable {
