@@ -125,7 +125,7 @@ public final class PyStringLiteralUtil {
    */
   @NotNull
   public static TextRange getContentRange(@NotNull String text) {
-    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
+    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected");
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
