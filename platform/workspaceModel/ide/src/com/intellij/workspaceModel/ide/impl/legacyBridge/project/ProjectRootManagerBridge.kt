@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_L
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -219,7 +220,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   }
 
   private inner class JdkChangeListener : ProjectJdkTable.Listener, RootSetChangedListener {
-    private val sdkDependencies = BidirectionalMultiMap<ModuleEntity, ModuleDependencyItem>()
+    private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleEntity>()
     private val watchedSdks = HashSet<RootProvider>()
 
     override fun jdkAdded(jdk: Sdk) {
@@ -233,7 +234,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
 
     override fun jdkNameChanged(jdk: Sdk, previousName: String) {
       val sdkDependency = ModuleDependencyItem.SdkDependency(previousName, jdk.sdkType.name)
-      val affectedModules = sdkDependencies.getKeys(sdkDependency)
+      val affectedModules = sdkDependencies.get(sdkDependency)
       if (affectedModules.isNotEmpty()) {
         WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
           for (module in affectedModules) {
@@ -269,11 +270,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
         sdk.rootProvider.addRootSetChangedListener(this)
       }
-      sdkDependencies.put(moduleEntity, sdkDependency)
+      sdkDependencies.putValue(sdkDependency, moduleEntity)
     }
 
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
-      sdkDependencies.remove(moduleEntity, sdkDependency)
+      sdkDependencies.remove(sdkDependency, moduleEntity)
       val sdk = findSdk(sdkDependency)
       if (sdk != null && !hasDependencies(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(this)
@@ -281,7 +282,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     fun hasProjectSdkDependency(): Boolean {
-      return sdkDependencies.getKeys(ModuleDependencyItem.InheritedSdkDependency).isNotEmpty()
+      return sdkDependencies.get(ModuleDependencyItem.InheritedSdkDependency).isNotEmpty()
     }
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
@@ -291,7 +292,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     private fun hasDependencies(jdk: Sdk): Boolean {
-      return sdkDependencies.getKeys(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
+      return sdkDependencies.get(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
              || jdk.name == projectSdkName && jdk.sdkType.name == projectSdkTypeName && hasProjectSdkDependency()
     }
 
