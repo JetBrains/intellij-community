@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.SimpleTextAttributes;
@@ -265,7 +266,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
 
   @Nullable
-  private String askForProfileName(String title, String initialName) {
+  private String askForProfileName(@NlsContexts.DialogTitle String title, String initialName) {
     return Messages.showInputDialog(CopyrightBundle.message("dialog.message.new.copyright.profile.name"), title, Messages.getQuestionIcon(), initialName, new InputValidator() {
       @Override
       public boolean checkInput(String s) {
