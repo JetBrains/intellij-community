@@ -223,6 +223,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       return when {
         GIT_BRANCHES.`is`(dataId) -> tree.getSelectedBranches()
         GIT_BRANCH_FILTERS.`is`(dataId) -> tree.getSelectedBranchFilters()
+        GIT_REMOTES.`is`(dataId) -> tree.getSelectedRemotes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null

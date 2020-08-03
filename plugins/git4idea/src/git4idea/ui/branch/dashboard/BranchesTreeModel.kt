@@ -10,6 +10,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 internal val GIT_BRANCHES = DataKey.create<Set<BranchInfo>>("GitBranchKey")
 internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterKey")
+internal val GIT_REMOTES = DataKey.create<Set<String>>("GitRemoteKey")
 
 internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,

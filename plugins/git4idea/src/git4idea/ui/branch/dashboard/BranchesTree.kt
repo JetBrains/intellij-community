@@ -138,6 +138,16 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
   }
+
+  fun getSelectedRemotes(): Set<String> {
+    val paths = selectionPaths ?: return emptySet()
+    return paths.asSequence()
+      .map(TreePath::getLastPathComponent)
+      .mapNotNull { it as? BranchTreeNode }
+      .filter { it.getNodeDescriptor().type == NodeType.GROUP_NODE && it.getNodeDescriptor().parent?.type == NodeType.REMOTE_ROOT }
+      .mapNotNull { it.getNodeDescriptor().displayName }
+      .toSet()
+  }
 }
 
 internal class FilteringBranchesTree(project: Project,
@@ -238,6 +248,8 @@ internal class FilteringBranchesTree(project: Project,
       .mapNotNull { with(it.getNodeDescriptor()) { if (type == NodeType.HEAD_NODE) VcsLogUtil.HEAD else branchInfo?.branchName } }
       .toList()
   }
+
+  fun getSelectedRemotes() = component.getSelectedRemotes()
 
   private fun restorePreviouslyExpandedPaths() {
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
