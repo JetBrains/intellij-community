@@ -25,6 +25,7 @@ public interface ContentIteratorEx extends ContentIterator {
    */
   @NotNull Status processFileEx(@NotNull VirtualFile fileOrDir);
 
+  @SuppressWarnings("FunctionalInterfaceMethodChanged")  // incorrect implementation from commit 223801f7
   @Override
   default boolean processFile(@NotNull VirtualFile fileOrDir) {
     throw new IllegalStateException("Call com.intellij.openapi.roots.ContentIteratorEx#processFileEx instead");
