@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -127,6 +124,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
+    myPropertiesFile.setEditable(false);
+    ComboboxSpeedSearch.installSpeedSearch(myPropertiesFile, p -> (String)p);
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
