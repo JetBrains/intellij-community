@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -347,7 +348,7 @@ public class ProjectSettingsPanel {
   }
 
   private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
-    protected MyColumnInfo(final String name) {
+    protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 

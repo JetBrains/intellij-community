@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.DocumentUtil;
@@ -125,22 +126,23 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   @Override
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
-    myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(), "Detect copyright regexp is incorrect: "));
-    myCopyrightProfile.setAllowReplaceRegexp(validateRegexpAndGet(myAllowReplaceTextField.getText().trim(), "Replace copyright regexp is incorrect: "));
+    myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(),
+                                                       CopyrightBundle.message("detect.copyright.regexp.is.incorrect.configuration.error")));
+    myCopyrightProfile.setAllowReplaceRegexp(validateRegexpAndGet(myAllowReplaceTextField.getText().trim(), CopyrightBundle.message("replace.copyright.regexp.is.incorrect.configuration.error")));
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;
   }
 
   @NotNull
-  private static String validateRegexpAndGet(final String regexp, final String message) throws ConfigurationException {
+  private static String validateRegexpAndGet(final String regexp, final @NlsContexts.DialogMessage String message) throws ConfigurationException {
     try {
       if (!StringUtil.isEmptyOrSpaces(regexp)) {
         Pattern.compile(regexp);
       }
     }
     catch (PatternSyntaxException e) {
-      throw new ConfigurationException(message + e.getMessage());
+      throw new ConfigurationException(message + " " + e.getMessage());
     }
     return regexp;
   }

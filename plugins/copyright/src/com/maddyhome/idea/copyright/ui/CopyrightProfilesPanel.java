@@ -113,7 +113,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     return "copyright.profiles";
   }
 
-  protected void reloadAvailableProfiles() {
+  private void reloadAvailableProfiles() {
     if (myUpdate != null) {
       myUpdate.run();
     }
@@ -158,15 +158,14 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   }
 
   private void doAddProfile() {
-    String name = askForProfileName("Create Copyright Profile", "");
+    String name = askForProfileName(CopyrightBundle.message("create.copyright.profile"), "");
     if (name != null) {
       addProfileNode(new CopyrightProfile(name));
     }
   }
 
   @Override
-  @Nullable
-  protected ArrayList<AnAction> createActions(boolean fromPopup) {
+  protected @NotNull ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.add"),
                                    CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.add"),
@@ -191,7 +190,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        String profileName = askForProfileName("Copy Copyright Profile", "");
+        String profileName = askForProfileName(CopyrightBundle.message("copy.copyright.profile"), "");
         if (profileName == null) {
           return;
         }
@@ -252,7 +251,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
       }
 
       private void importProfile(CopyrightProfile copyrightProfile) {
-        final String profileName = askForProfileName("Import copyright profile", copyrightProfile.getName());
+        final String profileName = askForProfileName(CopyrightBundle.message("import.copyright.profile"), copyrightProfile.getName());
         if (profileName == null) return;
         copyrightProfile.setName(profileName);
         addProfileNode(copyrightProfile);
