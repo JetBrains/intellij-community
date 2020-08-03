@@ -61,7 +61,8 @@
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"
-                     displayName="Injected references" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
+                     key="inspection.injected.references.display.name" bundle="messages.IntelliLangBundle"/>
   </extensions>
 
 </idea-plugin>
