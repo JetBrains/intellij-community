@@ -135,23 +135,25 @@ public class FileUtil extends FileUtilRt {
     return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
-  public static boolean startsWith(@NotNull String path, @NotNull String start) {
-    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
+  public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
+    return startsWith(path, prefix, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
-    return startsWith(path, start, caseSensitive, false);
+  public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
+    return startsWith(path, prefix, isCaseSensitive, false);
   }
 
-  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive, boolean strict) {
-    return !ThreeState.NO.equals(startsWith(path, start, strict, caseSensitive, false));
+  public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive, boolean strict) {
+    return !ThreeState.NO.equals(startsWith(path, prefix, strict, isCaseSensitive, false));
   }
 
-  private static ThreeState startsWith(String path, String prefix, boolean strict, boolean caseSensitive, boolean checkImmediateParent) {
-    int pathLength = path.length(), prefixLength = prefix.length();
+  @NotNull
+  private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean isCaseSensitive, boolean checkImmediateParent) {
+    int pathLength = path.length();
+    int prefixLength = prefix.length();
     if (prefixLength == 0) return pathLength == 0 ? ThreeState.YES : ThreeState.UNSURE;
     if (prefixLength > pathLength) return ThreeState.NO;
-    if (!path.regionMatches(!caseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
+    if (!path.regionMatches(!isCaseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
     if (pathLength == prefixLength) {
       return strict ? ThreeState.NO : ThreeState.YES;
     }
@@ -581,7 +583,7 @@ public class FileUtil extends FileUtilRt {
    * <br>
    * If the path may contain symlinks, use {@link FileUtil#toCanonicalPath(String, boolean)} instead.
    */
-  @Contract("null -> null")
+  @Contract("null -> null; !null->!null")
   public static String toCanonicalPath(@Nullable String path) {
     return toCanonicalPath(path, File.separatorChar, true);
   }

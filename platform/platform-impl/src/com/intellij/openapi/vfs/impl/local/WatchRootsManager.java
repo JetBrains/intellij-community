@@ -88,7 +88,7 @@ final class WatchRootsManager {
     }
   }
 
-  void updateSymlink(int fileId, String linkPath, @Nullable String linkTarget) {
+  void updateSymlink(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
