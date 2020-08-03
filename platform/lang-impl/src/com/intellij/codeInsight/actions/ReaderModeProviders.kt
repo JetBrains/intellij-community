@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.codeInsight.hints.InlayHintsPassFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -19,8 +18,7 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsForceShownSettings
 import com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity
 
 class BreadcrumbsReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean,
-                                alreadyOpenedFilesOnly: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val showBreadcrumbs = (readerMode && ReaderModeSettings.instance(project).showBreadcrumbs)
                           || EditorSettingsExternalizable.getInstance().isBreadcrumbsShown
     BreadcrumbsForceShownSettings.setForcedShown(showBreadcrumbs, editor)
@@ -29,8 +27,8 @@ class BreadcrumbsReaderModeProvider : ReaderModeProvider {
 }
 
 class HighlightingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, alreadyOpenedFilesOnly: Boolean) {
-    if (!alreadyOpenedFilesOnly) return
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+    if (!fileIsOpenAlready) return
 
     val highlighting =
       if (readerMode && ReaderModeSettings.instance(project).hideWarnings) FileHighlightingSetting.SKIP_INSPECTION
@@ -53,7 +51,7 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
 }
 
 class LigaturesReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, alreadyOpenedFilesOnly: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
     val preferences = scheme.fontPreferences
     scheme.fontPreferences =
@@ -67,7 +65,7 @@ class LigaturesReaderModeProvider : ReaderModeProvider {
 
 
 class FontReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, alreadyOpenedFilesOnly: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     if (readerMode) {
       if (ReaderModeSettings.instance(project).increaseLineSpacing) {
         setLineSpacing(editor, 1.4f)
@@ -86,13 +84,7 @@ class FontReaderModeProvider : ReaderModeProvider {
 }
 
 class DocsRenderingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, alreadyOpenedFilesOnly: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) ReaderModeSettings.instance(project).showRenderedDocs else null)
-  }
-}
-
-class InlaysReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, alreadyOpenedFilesOnly: Boolean) {
-    InlayHintsPassFactory.setHintsEnabled(editor, readerMode && ReaderModeSettings.instance(project).showInlaysHints)
   }
 }

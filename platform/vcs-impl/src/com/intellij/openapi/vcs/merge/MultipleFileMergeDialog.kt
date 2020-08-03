@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
@@ -313,7 +314,7 @@ open class MultipleFileMergeDialog(
   @CalledInAwt
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
-      throw IOException("File is read-only: " + file.presentableName)
+      throw IOException(UIBundle.message("file.is.read.only.message.text", file.presentableUrl))
     }
 
     val isCurrent = resolution == MergeSession.Resolution.AcceptedYours

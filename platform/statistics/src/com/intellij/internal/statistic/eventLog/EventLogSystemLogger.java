@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistUpdateError;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUpdateError;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,25 +15,25 @@ import java.util.List;
 public final class EventLogSystemLogger {
   private static final String GROUP = "event.log";
 
-  public static void logWhitelistLoad(@NotNull String recorderId, @Nullable String version) {
+  public static void logMetadataLoad(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
-    logEvent(recorderId, "whitelist.loaded", data);
+    logEvent(recorderId, "metadata.loaded", data);
   }
 
-  public static void logWhitelistUpdated(@NotNull String recorderId, @Nullable String version) {
+  public static void logMetadataUpdated(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
-    logEvent(recorderId, "whitelist.updated", data);
+    logEvent(recorderId, "metadata.updated", data);
   }
 
-  public static void logWhitelistErrorOnLoad(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
-    logWhitelistError(recorderId, "whitelist.load.failed", error);
+  public static void logMetadataErrorOnLoad(@NotNull String recorderId, @NotNull EventLogMetadataUpdateError error) {
+    logMetadataError(recorderId, "metadata.load.failed", error);
   }
 
-  public static void logWhitelistErrorOnUpdate(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
-    logWhitelistError(recorderId, "whitelist.update.failed", error);
+  public static void logMetadataErrorOnUpdate(@NotNull String recorderId, @NotNull EventLogMetadataUpdateError error) {
+    logMetadataError(recorderId, "metadata.update.failed", error);
   }
 
-  private static void logWhitelistError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogWhitelistUpdateError error) {
+  private static void logMetadataError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogMetadataUpdateError error) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("stage", error.getUpdateStage().name()).
       addData("error", error.getErrorType());

@@ -154,8 +154,8 @@ public class GlobalCompilingVisitor {
     while (matcher.find()) {
       word = content.substring(start, matcher.start());
       if (!word.isEmpty()) {
-        buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
         hasLiteralContent = true;
+        buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
         processTokenizedName(word, false, kind);
       }
@@ -184,7 +184,7 @@ public class GlobalCompilingVisitor {
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
+      buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
       processTokenizedName(word, false, kind);
     }

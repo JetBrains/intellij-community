@@ -10,10 +10,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
+/**
+ * @deprecated use CompletionContributor
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public class CompletionVariant {
   protected static final TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
 

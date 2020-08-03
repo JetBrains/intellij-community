@@ -7,13 +7,22 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
+    String text = e.getPresentation().getText();
+    String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    if (e.getProject() == null || text == null) {
+      BrowserUtil.browse(whatsNewUrl);
+    } else {
+      String url = whatsNewUrl + getEmbeddedSuffix();
+      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, url, null, "<a href=\"" + url + "\">What's new page.</a>");
+    }
   }
 
   @Override
@@ -26,5 +35,10 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       e.getPresentation().setDescription(
         IdeBundle.messagePointer("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
+  }
+
+  @NotNull
+  public static String getEmbeddedSuffix() {
+    return "?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : "");
   }
 }

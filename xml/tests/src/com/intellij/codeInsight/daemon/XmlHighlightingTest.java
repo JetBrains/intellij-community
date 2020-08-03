@@ -20,6 +20,7 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,10 +33,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -2053,7 +2054,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + getTestName(false) + ".xml");
     doDoTest(true, false);
 
-    List<UrlReference> list = PlatformTestUtil.collectUrlReferences(myFile);
+    List<? extends PsiSymbolReference> list = Registry.is("ide.symbol.url.references")
+                                              ? PlatformTestUtil.collectUrlReferences(myFile)
+                                              : PlatformTestUtil.collectWebReferences(myFile);
     assertEquals(2, list.size());
 
     Collections.sort(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));

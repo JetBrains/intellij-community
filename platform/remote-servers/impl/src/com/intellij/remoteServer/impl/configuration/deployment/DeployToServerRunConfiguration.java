@@ -192,6 +192,8 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
         LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
       }
     }
+
+    DeployToServerRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
   }
 
   @Nullable
@@ -224,6 +226,8 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     }
     XmlSerializer.serializeInto(state, element, SERIALIZATION_FILTERS);
     super.writeExternal(element);
+
+    DeployToServerRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
   }
 
   @Override

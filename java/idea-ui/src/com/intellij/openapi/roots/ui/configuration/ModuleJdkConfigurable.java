@@ -115,7 +115,9 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         clearCaches();
       }
     });
-    myJdkPanel.add(new JLabel(JavaUiBundle.message("module.libraries.target.jdk.module.radio")),
+    JLabel myCbModuleJdkLabel = new JLabel(JavaUiBundle.message("module.libraries.target.jdk.module.radio"));
+    myCbModuleJdkLabel.setLabelFor(myCbModuleJdk);
+    myJdkPanel.add(myCbModuleJdkLabel,
                    new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                           JBUI.insetsRight(6), 0, 0));
     myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,

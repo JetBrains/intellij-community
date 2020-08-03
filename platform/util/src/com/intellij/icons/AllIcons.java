@@ -123,6 +123,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("/actions/preserveCase.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("/actions/preserveCaseHover.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("/actions/preserveCaseSelected.svg");
+    /** 16x16 */ public static final @NotNull Icon PrettyPrint = load("/actions/prettyPrint.svg");
     /** 16x16 */ public static final @NotNull Icon Preview = load("/actions/preview.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetails = load("/actions/previewDetails.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetailsVertically = load("/actions/previewDetailsVertically.svg");
@@ -454,6 +455,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("/general/projectStructure.svg");
     /** 16x16 */ public static final @NotNull Icon ProjectTab = load("/general/projectTab.svg");
     /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("/general/questionDialog.svg");
+    /** 16x16 */ public static final @NotNull Icon ReaderMode = load("/general/readerMode.svg");
     /** 16x16 */ public static final @NotNull Icon Remove = load("/general/remove.svg");
     /** 16x16 */ public static final @NotNull Icon Reset = load("/general/reset.svg");
     /** 16x16 */ public static final @NotNull Icon RunWithCoverage = load("/general/runWithCoverage.svg");
@@ -1064,7 +1066,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowMessages = load("/toolwindows/toolWindowMessages.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowModuleDependencies = load("/toolwindows/toolWindowModuleDependencies.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowPalette = load("/toolwindows/toolWindowPalette.svg");
-    /** 13x13 */ public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("/toolwindows/toolWindowProblems.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("/toolwindows/toolWindowProblemsEmpty.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("/toolwindows/toolWindowProfiler.svg");
@@ -1076,6 +1077,12 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("/toolwindows/toolWindowUIDesigner.svg");
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("/toolwindows/warningEvents.svg");
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("/toolwindows/webToolWindow.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
 
   }
 

@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets
 
 @CompileStatic
 class SourcesStateProcessor {
-  static final Type SOURCES_STATE_TYPE = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
+  private static final Type SOURCES_STATE_TYPE = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
 
   private static final String SOURCES_STATE_FILE_NAME = 'target_sources_state.json'
   private static final String IDENTIFIER = '$BUILD_DIR$'
@@ -31,12 +31,12 @@ class SourcesStateProcessor {
     this.context = context
   }
 
-  List<CompilationOutput> getAllCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState) {
-    return getProductionCompilationOutputs(currentSourcesState) + getTestsCompilationOutputs(currentSourcesState)
+  List<CompilationOutput> getAllCompilationOutputs(Map<String, Map<String, BuildTargetState>> sourceStateFile) {
+    return getProductionCompilationOutputs(sourceStateFile) + getTestsCompilationOutputs(sourceStateFile)
   }
 
-  Map<String, Map<String, BuildTargetState>> parseSourcesStateFile(){
-    return gson.fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), SOURCES_STATE_TYPE)
+  Map<String, Map<String, BuildTargetState>> parseSourcesStateFile(String json = FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8)) {
+    return gson.fromJson(json, SOURCES_STATE_TYPE)
   }
 
   File getSourceStateFile() {

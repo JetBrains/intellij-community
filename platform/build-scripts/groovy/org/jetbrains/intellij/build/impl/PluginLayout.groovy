@@ -15,10 +15,11 @@ class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
   private boolean doNotCreateSeparateJarForLocalizableResources
+  BiFunction<File, String, String> versionEvaluator = { pluginXmlFile, ideVersion -> ideVersion } as BiFunction<File, String, String>
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   Collection<String> pathsToScramble = []
-  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true} as BiFunction<BuildContext, File>
+  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true } as BiFunction<BuildContext, File, Boolean>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -165,6 +166,18 @@ class PluginLayout extends BaseLayout {
     // Android Studio
     void withTestModule (String moduleName, String jarName = "${moduleName}.jar") {
       layout.testModuleJars.put (jarName, moduleName)
+    }
+
+    /**
+     * By default, version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
+     * In {@linkplain BiFunction}:
+     * <ol>
+     *   <li> the first {@linkplain File} argument is the plugin.xml file.
+     *   <li> the second {@linkplain String} argument is the default version (build number of the IDE).
+     * </ol>
+     */
+    void withCustomVersion(BiFunction<File, String, String> versionEvaluator) {
+      layout.versionEvaluator = versionEvaluator
     }
 
     /**

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
@@ -211,7 +212,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
         new CommentTracker().deleteAndRestoreComments(Objects.requireNonNull(expression.getQualifier()));
       }
-      if (editor != null) {
+      if (editor != null && !(editor instanceof ImaginaryEditor)) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (collectChangedPlaces(project, editor, expressionsToDequalify)) {
             WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));

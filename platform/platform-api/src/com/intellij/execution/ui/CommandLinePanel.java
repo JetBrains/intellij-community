@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.*;
 import java.util.List;
 
 public class CommandLinePanel extends JPanel {
@@ -57,6 +58,12 @@ public class CommandLinePanel extends JPanel {
       rowWidth += minWidth;
     }
     add(row);
+  }
+
+  public int getLeftInset() {
+    return Arrays.stream(getComponents()).map(component -> FragmentedSettingsBuilder
+      .getLeftInset((JComponent)component)).max(Comparator.comparingInt(o -> o))
+      .orElse(0);
   }
 
   public static void setMinimumWidth(Component component, int width) {

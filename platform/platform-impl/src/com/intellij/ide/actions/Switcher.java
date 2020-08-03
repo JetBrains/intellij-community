@@ -761,45 +761,41 @@ public final class Switcher extends AnAction implements DumbAware {
         }
       }
 
-      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
       if (!pinned) {
-        for (VirtualFile file : selectedFiles) {
-          if (addedFiles.add(file)) {
-            filesData.add(new FileInfo(file, null, project));
-          }
-        }
-
         for (FileInfo editor : editors) {
-          if (addedFiles.add(editor.first)) {
-            filesData.add(editor);
-            if (filesData.size() >= SWITCHER_ELEMENTS_LIMIT) break;
-          }
+          addedFiles.add(editor.first);
+          filesData.add(editor);
+          if (filesData.size() >= SWITCHER_ELEMENTS_LIMIT) break;
         }
       }
 
-      if (filesData.size() <= selectedFiles.size() || pinned) {
-        int maxFiles = Math.max(editors.size(), filesForInit.size());
-        int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
-        for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
-              && selectedFiles.contains(filesForInit.get(i)) ) {
-            continue;
-          }
+      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
+      if (filesData.size() <= 1 || pinned) {
+        if (!filesForInit.isEmpty()) {
+          int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
+          int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
+          int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
+          for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
+            if (pinned
+                && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
+                && selectedFiles.contains(filesForInit.get(i))) {
+              continue;
+            }
 
-          FileInfo info = new FileInfo(filesForInit.get(i), null, project);
-          boolean add = true;
-          if (pinned) {
-            for (FileInfo fileInfo : filesData) {
-              if (fileInfo.first.equals(info.first)) {
-                add = false;
-                break;
+            FileInfo info = new FileInfo(filesForInit.get(i), null, project);
+            boolean add = true;
+            if (pinned) {
+              for (FileInfo fileInfo : filesData) {
+                if (fileInfo.first.equals(info.first)) {
+                  add = false;
+                  break;
+                }
               }
             }
-          }
-          if (add) {
-            if (addedFiles.add(info.first)) {
-              filesData.add(info);
+            if (add) {
+              if (addedFiles.add(info.first)) {
+                filesData.add(info);
+              }
             }
           }
         }
@@ -822,7 +818,7 @@ public final class Switcher extends AnAction implements DumbAware {
       if (forward) {
         for (int i = 0; i < model.getSize(); i++) {
           FileInfo fileInfo = model.getElementAt(i);
-          if (!fileInfo.first.equals(currentFile)) {
+          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
             return i;
           }
         }
@@ -830,13 +826,17 @@ public final class Switcher extends AnAction implements DumbAware {
       else {
         for (int i = model.getSize() - 1; i >= 0; i--) {
           FileInfo fileInfo = model.getElementAt(i);
-          if (!fileInfo.first.equals(currentFile)) {
+          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
             return i;
           }
         }
       }
 
       return -1;
+    }
+
+    private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
+      return fileInfo.first.equals(currentFile) && (fileInfo.second == null || fileInfo.second.equals(currentWindow));
     }
 
     @NotNull

@@ -115,7 +115,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
       long time = -System.currentTimeMillis();
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false);
+      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false);
       time += System.currentTimeMillis();
       if (time > 1000) LOG.warn(time + "ms to fill popup menu " + myPlace);
       if (getComponentCount() == 0) {

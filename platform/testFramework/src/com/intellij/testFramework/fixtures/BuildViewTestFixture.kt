@@ -109,6 +109,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
       eventView!!.addFilter { true }
       val treeStringPresentation = runInEdtAndGet {
         val tree = eventView.tree
+        TreeUtil.expandAll(tree)
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         PlatformTestUtil.waitWhileBusy(tree)
         return@runInEdtAndGet PlatformTestUtil.print(tree, false)

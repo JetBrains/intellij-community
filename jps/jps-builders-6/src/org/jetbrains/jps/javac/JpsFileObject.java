@@ -5,7 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
@@ -30,7 +31,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
 
   protected static Kind findKind(String name) {
     for (Kind kind : ourAvailableKinds) {
-      if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
+      if (kind != Kind.OTHER && name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length())) {
         return kind;
       }
     }

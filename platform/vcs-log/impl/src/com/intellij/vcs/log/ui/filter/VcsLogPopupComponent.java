@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -154,6 +155,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = createPopupMenu();
     popup.addListener(myPopupState);
+    AutoPopupSupportingListener.installOn(popup);
     popup.showUnderneathOf(this);
   }
 

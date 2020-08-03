@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class SerializedStubTree {
-  private static final MessageDigest HASHER = DigestUtil.sha256();
 
   // serialized tree
   final byte[] myTreeBytes;
@@ -213,7 +213,12 @@ public final class SerializedStubTree {
   private byte[] myTreeHash;
   public synchronized byte @NotNull [] getTreeHash() {
     if (myTreeHash == null) {
-      myTreeHash = DigestUtil.calculateContentHash(HASHER, myTreeBytes, 0, myTreeByteLength);
+      // Probably we don't need to hash the length and "\0000".
+      MessageDigest digest = DigestUtil.sha256();
+      digest.update(String.valueOf(myTreeByteLength).getBytes(StandardCharsets.UTF_8));
+      digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
+      digest.update(myTreeBytes, 0, myTreeByteLength);
+      myTreeHash = digest.digest();
     }
     return myTreeHash;
   }

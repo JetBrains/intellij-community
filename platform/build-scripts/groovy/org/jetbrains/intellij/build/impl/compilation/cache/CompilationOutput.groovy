@@ -5,15 +5,13 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 class CompilationOutput {
-  final String name
-  final String type
   final String hash
   final String path
+  final String sourcePath
 
   CompilationOutput(String name, String type, String hash, String path) {
-    this.name = name
-    this.type = type
     this.hash = hash
     this.path = path
+    this.sourcePath = "$type/$name/$hash"
   }
 }

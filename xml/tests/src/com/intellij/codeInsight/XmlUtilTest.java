@@ -10,9 +10,10 @@ public class XmlUtilTest extends TestCase {
     assertEquals('&', XmlUtil.getCharFromEntityRef("&amp;"));
     try {
       XmlUtil.getCharFromEntityRef("&unknown;");
-      fail("Exception should be thrown");
     }
     catch (AssertionError ignore) {
+      return;
     }
+    fail("Exception should be thrown");
   }
 }

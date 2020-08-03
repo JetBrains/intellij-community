@@ -2,12 +2,12 @@
 package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 
-public class EventLogServerWhitelistLoader implements EventLogWhitelistLoader {
+public class EventLogServerWhitelistLoader implements EventLogMetadataLoader {
   @NotNull
   private final EventLogUploadSettingsService mySettingsService;
 
@@ -23,7 +23,7 @@ public class EventLogServerWhitelistLoader implements EventLogWhitelistLoader {
 
   @Override
   @NotNull
-  public String loadWhiteListFromServer() throws EventLogWhitelistLoadException {
+  public String loadMetadataFromServer() throws EventLogMetadataLoadException {
     String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
     return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), userAgent);
   }

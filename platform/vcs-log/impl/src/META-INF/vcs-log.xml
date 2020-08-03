@@ -37,11 +37,11 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
     <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="2"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>

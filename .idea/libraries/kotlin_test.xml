@@ -14,6 +14,6 @@
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.4.0/kotlin-test-1.4.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-common/1.4.0/kotlin-test-common-1.4.0-sources.jar!/" />
-   </SOURCES>
+    </SOURCES>
   </library>
 </component>

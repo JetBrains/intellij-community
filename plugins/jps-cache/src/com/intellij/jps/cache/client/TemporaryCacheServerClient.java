@@ -43,11 +43,10 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();
-  private static final String REPOSITORY_NAME = "jps/intellij";
   private final String stringThree;
 
   private TemporaryCacheServerClient() {
-    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktZmlsZXMtY2FjaGUubGFicy5qYi5nZy9jYWNoZS8=");
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
     stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
   }
 
@@ -62,7 +61,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @Nullable
   @Override
   public File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir) {
-    String downloadUrl = stringThree + REPOSITORY_NAME + "/metadata/" + metadataId;
+    String downloadUrl = stringThree + "/metadata/" + metadataId;
     DownloadableFileService service = DownloadableFileService.getInstance();
     String fileName = "metadata.json";
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
@@ -93,7 +92,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @Override
   public File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,
                                 @NotNull File targetDir) {
-    String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
+    String downloadUrl = stringThree + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
@@ -125,7 +124,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     targetDir.mkdirs();
 
     Map<String, AffectedModule> urlToModuleNameMap = affectedModules.stream().collect(Collectors.toMap(
-                            module -> stringThree + REPOSITORY_NAME + "/" + module.getType() + "/" + module.getName() + "/" + module.getHash(),
+                            module -> stringThree + "/" + module.getType() + "/" + module.getName() + "/" + module.getHash(),
                             module -> module));
 
     DownloadableFileService service = DownloadableFileService.getInstance();
@@ -157,7 +156,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
 
   private Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull Map<String, String> headers) {
     try {
-      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/commit_history.json")
+      return HttpRequests.request(stringThree + "/commit_history.json")
         .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
         .connect(it -> {
           URLConnection connection = it.getConnection();
@@ -187,9 +186,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   }
 
   private static @NotNull Map<String, String> getRequestHeaders() {
-    Optional<JpsServerAuthExtension> optional = JpsServerAuthExtension.EP_NAME.extensions().findFirst();
-    if (!optional.isPresent()) return Collections.emptyMap();
-    Map<String, String> authHeader = optional.get().getAuthHeader();
+    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
+    if (authExtension == null) return Collections.emptyMap();
+    Map<String, String> authHeader = authExtension.getAuthHeader();
     if (authHeader == null) return Collections.emptyMap();
     return authHeader;
   }

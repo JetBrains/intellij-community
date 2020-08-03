@@ -218,12 +218,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull final ProgressIndicator indicator,
                                                    @NotNull final UsageViewPresentation presentation,
-                                                   final int usageCount,
                                                    @Nullable final UsageViewEx usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
-      int shownUsageCount = usageView instanceof  UsageViewImpl ? ((UsageViewImpl)usageView).getRoot().getRecursiveUsageCount() : usageCount;
-      String message = UsageViewBundle.message("find.excessive.usage.count.prompt", shownUsageCount, StringUtil.pluralize(presentation.getUsagesWord()));
+      String message = UsageViewBundle.message("find.excessive.usage.count.prompt");
       UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
       if (ret == UsageLimitUtil.Result.ABORT) {
         if (usageView != null) {

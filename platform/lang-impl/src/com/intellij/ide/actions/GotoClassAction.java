@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -33,12 +34,16 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
     if (project == null) return;
 
     boolean dumb = DumbService.isDumb(project);
-    if (!dumb || new ClassSearchEverywhereContributor(e).isDumbAware()) {
+    if (!dumb || isModelDumbAware(e)) {
       showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true, true);
     }
     else {
       invokeGoToFile(project, e);
     }
+  }
+
+  private static boolean isModelDumbAware(AnActionEvent e) {
+    return new GotoClassModel2(e.getRequiredData(CommonDataKeys.PROJECT)).isDumbAware();
   }
 
   static void invokeGoToFile(@NotNull Project project, @NotNull AnActionEvent e) {

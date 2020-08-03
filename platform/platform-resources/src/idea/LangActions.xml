@@ -107,7 +107,7 @@
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+      <add-to-group group-id="Copy.Paste.Special" anchor="first"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
@@ -117,7 +117,7 @@
 
     <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
       <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+      <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
     <group id="FindUsagesMenuGroup" popup="true">

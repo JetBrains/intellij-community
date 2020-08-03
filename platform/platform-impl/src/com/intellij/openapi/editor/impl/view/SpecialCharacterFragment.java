@@ -21,7 +21,7 @@ class SpecialCharacterFragment implements LineFragment {
         0x7F,
                 0x81,   0x82,   0x83,   0x84,   0x85,   0x86,   0x87,   0x88,   0x89,   0x8A,   0x8B,   0x8C,   0x8D,   0x8E,   0x8F,
         0x90,   0x91,   0x92,   0x93,   0x94,   0x95,   0x96,   0x97,   0x98,   0x99,   0x9A,   0x9B,   0x9C,   0x9D,   0x9E,   0x9F,
-        0xA0,
+        0xA0,                                                                                                   0xAD,
       0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F,
                                                                       0x2028, 0x2029, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x202F,
                                                                                                                               0X205F,
@@ -34,7 +34,7 @@ class SpecialCharacterFragment implements LineFragment {
        "DEL",
                "HOP",  "BPH",  "NBH",  "IND",  "NEL",  "SSA",  "ESA",  "HTS",  "HTJ",  "VTS",  "PLD",  "PLU",   "RI",  "SS2",  "SS3",
        "DCS",  "PU1",  "PU2",  "STS",  "CCH",   "MW",  "SPA",  "EPA",  "SOS", "SGCI",  "SCI",  "CSI",   "ST",  "OSC",   "PM",  "APC",
-      "NBSP",
+      "NBSP",                                                                                                  "SHY",
       "NQSP", "MQSP", "ENSP", "EMSP","3/MSP","4/MSP","6/MSP",  "FSP",  "PSP", "THSP",  "HSP", "ZWSP", "ZWNJ",  "ZWJ",  "LRM",  "RLM",
                                                                       "LSEP", "PSEP",  "LRE",  "RLE",  "PDF",  "LRO",  "RLO","NNBSP",
                                                                                                                               "MMSP",
@@ -48,13 +48,28 @@ class SpecialCharacterFragment implements LineFragment {
   private static final int BRACKETS_SIZE = 2;
   private static final int BRACKETS_THICKNESS = 1;
 
-  static boolean isSpecialCharacter(char c) {
-    return SPECIAL_CHAR_CODES.containsKey(c);
-  }
-
-  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c) {
+  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c,  char @Nullable [] text, int pos) {
     String code = SPECIAL_CHAR_CODES.get(c);
-    return code == null ? null : new SpecialCharacterFragment(view, code);
+    if (code == null) return null;
+    if (text != null) {
+      // special cases when we shouldn't render special characters explicitly, as they can impact the rendering of surrounding characters
+      if (c == 0xA0 || c >= 0x2000 && c <= 0x200A || c == 0x202F || c == 0x205F) { // 'special' space characters (having non-zero width)
+        if (pos < text.length - 1 && Character.getType(text[pos + 1]) == Character.NON_SPACING_MARK) {
+          // space characters (NBSP in particular) can be used to display combining marks in isolation
+          return null;
+        }
+      }
+      else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
+        // we don't display ZWNJ/ZWJ surrounded by non-ASCII characters, to avoid breaking complex scripts and emoji display
+        if (pos > 0 && text[pos - 1] >= 128) {
+          return null;
+        }
+        if (pos < text.length - 1 && text[pos + 1] >= 128) {
+          return null;
+        }
+      }
+    }
+    return new SpecialCharacterFragment(view, code);
   }
 
   private final EditorView myView;

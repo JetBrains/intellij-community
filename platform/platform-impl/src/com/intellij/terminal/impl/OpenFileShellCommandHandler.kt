@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.TerminalExecutorAction
 import com.intellij.terminal.TerminalShellCommandHandler
 import java.io.File
 
@@ -14,7 +15,7 @@ class OpenFileShellCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
     handleCommand(command, localSession, workingDirectory) { file -> checkRegisteredFileType(file) }
 
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executorAction: TerminalExecutorAction) =
     handleCommand(command, localSession, workingDirectory) { file -> openFileEditor(project, file) }
 
   private fun checkRegisteredFileType(file: VirtualFile?) =
@@ -27,14 +28,16 @@ class OpenFileShellCommandHandler : TerminalShellCommandHandler {
     val prefix = "open "
     if (!command.startsWith(prefix)) return false
 
-    val path = command.substring(prefix.length)
+    var path = command.substring(prefix.length)
     if (!localSession) return false
 
+    path = path.trim()
+
     val file = LocalFileSystem.getInstance().findFileByIoFile(File(path))
-    if (file != null && file.exists()) return block.invoke(file)
+    if (file != null && !file.isDirectory && file.exists()) return block.invoke(file)
 
     if (workingDirectory != null) return LocalFileSystem.getInstance().findFileByIoFile(
-      File(workingDirectory, path))?.takeIf { it.exists() }.let { block.invoke(it) }
+      File(workingDirectory, path))?.takeIf { it.exists() && !it.isDirectory }.let { block.invoke(it) }
 
     return false
   }

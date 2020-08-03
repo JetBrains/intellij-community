@@ -49,8 +49,8 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
     <statistics.counterUsagesCollector groupId="grazie.count" version="1"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>

@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.application.subscribe
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
@@ -26,6 +28,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
+import org.jetbrains.plugins.github.authentication.isOAuthEnabled
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -43,40 +46,45 @@ class GHCloneDialogExtension : BaseCloneDialogExtension() {
   override fun getAccounts(): Collection<GithubAccount> = getGHAccounts()
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    object : BaseCloneDialogExtensionComponent(
-      project,
-      GithubAuthenticationManager.getInstance(),
-      GithubApiRequestExecutorManager.getInstance(),
-      GithubAccountInformationProvider.getInstance(),
-      CachingGithubUserAvatarLoader.getInstance(),
-      GithubImageResizer.getInstance()
-    ) {
+    GHCloneDialogExtensionComponent(project)
+}
 
-      init {
-        ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-        ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
+private class GHCloneDialogExtensionComponent(project: Project) : BaseCloneDialogExtensionComponent(
+  project,
+  GithubAuthenticationManager.getInstance(),
+  GithubApiRequestExecutorManager.getInstance(),
+  GithubAccountInformationProvider.getInstance(),
+  CachingGithubUserAvatarLoader.getInstance(),
+  GithubImageResizer.getInstance()
+) {
 
-        setup()
-      }
+  init {
+    ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
+    ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
 
-      override fun getAccounts(): Collection<GithubAccount> = getGHAccounts()
+    setup()
+  }
 
-      override fun accountRemoved(removedAccount: GithubAccount) {
-        if (removedAccount.isGHAccount) super.accountRemoved(removedAccount)
-      }
+  override fun getAccounts(): Collection<GithubAccount> = getGHAccounts()
 
-      override fun tokenChanged(account: GithubAccount) {
-        if (account.isGHAccount) super.tokenChanged(account)
-      }
+  override fun accountRemoved(removedAccount: GithubAccount) {
+    if (removedAccount.isGHAccount) super.accountRemoved(removedAccount)
+  }
 
-      override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-        GHCloneDialogLoginPanel(account).apply {
-          val chooseLoginUiHandler = { setChooseLoginUi() }
-          loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
-        }
+  override fun tokenChanged(account: GithubAccount) {
+    if (account.isGHAccount) super.tokenChanged(account)
+  }
 
-      override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
-        listOf(createLoginAction(account), createLoginWithTokenAction(account))
+  override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
+    GHCloneDialogLoginPanel(account).apply {
+      Disposer.register(this@GHCloneDialogExtensionComponent, this)
+
+      val chooseLoginUiHandler = { setChooseLoginUi() }
+      loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
+    }
+
+  override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
+    listOf(createLoginAction(account), createLoginWithTokenAction(account))
 
       private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
         val isExistingAccount = account != null
@@ -84,28 +92,30 @@ class GHCloneDialogExtension : BaseCloneDialogExtension() {
           if (isExistingAccount) message("login.action") else message("login.via.github.action"),
           {
             switchToLogin(account)
-            getLoginPanel()?.setPasswordUi()
+            getLoginPanel()?.setPrimaryLoginUi()
           },
           showSeparatorAbove = !isExistingAccount
         )
       }
 
-      private fun createLoginWithTokenAction(account: GithubAccount?): AccountMenuItem.Action {
-        val isExistingAccount = account != null
-        return AccountMenuItem.Action(
-          if (isExistingAccount) message("login.with.token.action") else message("accounts.add.with.token"),
-          {
-            switchToLogin(account)
-            getLoginPanel()?.setTokenUi()
-          }
-        )
+  private fun createLoginWithTokenAction(account: GithubAccount?): AccountMenuItem.Action {
+    val isExistingAccount = account != null
+    return AccountMenuItem.Action(
+      if (isExistingAccount) message("login.with.token.action") else message("accounts.add.with.token"),
+      {
+        switchToLogin(account)
+        getLoginPanel()?.setTokenUi()
       }
+    )
+  }
 
-      private fun getLoginPanel(): GHCloneDialogLoginPanel? = content as? GHCloneDialogLoginPanel
-    }
+  private fun getLoginPanel(): GHCloneDialogLoginPanel? = content as? GHCloneDialogLoginPanel
 }
 
-private class GHCloneDialogLoginPanel(account: GithubAccount?) : JBPanel<GHCloneDialogLoginPanel>(VerticalLayout(0)) {
+private class GHCloneDialogLoginPanel(account: GithubAccount?) :
+  JBPanel<GHCloneDialogLoginPanel>(VerticalLayout(0)),
+  Disposable {
+
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.github"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
@@ -117,7 +127,7 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) : JBPanel<GHClone
     JPanel(HorizontalLayout(0)).apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setPasswordUi() } }
+      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setPrimaryLoginUi() } }
       val useTokenLink = LinkLabel.create(message("link.label.use.token")) { setTokenUi() }
 
       add(loginViaGHButton)
@@ -135,6 +145,8 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) : JBPanel<GHClone
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
+  fun setPrimaryLoginUi() = if (isOAuthEnabled()) setOAuthUi() else setPasswordUi()
+
   fun setTokenUi() {
     setContent(loginPanel)
     loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
@@ -145,10 +157,17 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) : JBPanel<GHClone
     loginPanel.setPasswordUi() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
+  fun setOAuthUi() {
+    setContent(loginPanel)
+    loginPanel.setOAuthUi()
+  }
+
   private fun setContent(content: JComponent) {
     contentPanel.setContent(content)
 
     revalidate()
     repaint()
   }
+
+  override fun dispose() = loginPanel.cancelLogin()
 }

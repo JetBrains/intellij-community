@@ -355,6 +355,9 @@ public final class IconLoader {
       return ((ImageIcon)icon).getImage();
     }
     else {
+      if (icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
+        return null;
+      }
       BufferedImage image;
       if (GraphicsEnvironment.isHeadless()) { // for testing purpose
         image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, ROUND);
@@ -477,7 +480,7 @@ public final class IconLoader {
       double scale;
       ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
       if (ctxSupport != null) {
-        scale = ctxSupport.getScale(SYS_SCALE);
+        scale = StartupUiUtil.isJreHiDPI() ? ctxSupport.getScale(SYS_SCALE) : 1f;
       }
       else {
         scale = StartupUiUtil.isJreHiDPI() ? JBUIScale.sysScale(ancestor) : 1f;

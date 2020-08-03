@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.paths.UrlReference;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -13,13 +14,13 @@ import java.util.List;
 public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testReferenceInComment() {
-    List<UrlReference> references = getReferences("// http://foo\n" +
-                                                  "class Hi {}");
+    List<? extends PsiSymbolReference> references = getReferences("// http://foo\n" +
+                                                                  "class Hi {}");
     assertEquals(1, references.size());
   }
 
   public void testReferenceInLiteral() {
-    List<UrlReference> references = getReferences("class Hi { String url=\"http://foo\"; }");
+    List<? extends PsiSymbolReference> references = getReferences("class Hi { String url=\"http://foo\"; }");
     assertEquals(1, references.size());
   }
 
@@ -29,8 +30,13 @@ public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private List<UrlReference> getReferences(String s) {
+  private List<? extends PsiSymbolReference> getReferences(String s) {
     PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, s);
-    return PlatformTestUtil.collectUrlReferences(file);
+    if (Registry.is("ide.symbol.url.references")) {
+      return PlatformTestUtil.collectUrlReferences(file);
+    }
+    else {
+      return PlatformTestUtil.collectWebReferences(file);
+    }
   }
 }

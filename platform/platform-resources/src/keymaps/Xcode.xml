@@ -1,6 +1,6 @@
 <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
   <action id="ActivateHierarchyToolWindow"/>
-  <action id="ActivateTODOToolWindow"/>
+  <action id="ActivateProblemsViewToolWindow"/>
   <action id="ActivateFavoritesToolWindow" />
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="meta 1"/>

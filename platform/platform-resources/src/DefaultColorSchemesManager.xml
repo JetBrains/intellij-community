@@ -593,6 +593,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ccccff" deuteranopia="BACEFF" protanopia="BACEFF"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="8e8eb2" deuteranopia="8290b2" protanopia="8290b2"/>
         </value>
       </option>
       <option name="REGEXP_MATCHED_GROUPS">
@@ -622,6 +623,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffcdff" deuteranopia="D4CFB4" protanopia="D4CFB4"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="b28fb2" deuteranopia="94907d" protanopia="94907d"/>
         </value>
       </option>
 

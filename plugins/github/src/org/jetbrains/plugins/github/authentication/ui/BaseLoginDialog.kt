@@ -35,9 +35,16 @@ internal abstract class BaseLoginDialog(
 
   val login: String get() = _login
   val token: String get() = _token
-
   val server: GithubServerPath get() = loginPanel.getServer()
+
+  fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
+  fun setToken(token: String?) = loginPanel.setToken(token)
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
+
+  fun setError(exception: Throwable) {
+    loginPanel.setError(exception)
+    startTrackingValidation()
+  }
 
   override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocusableComponent()
 

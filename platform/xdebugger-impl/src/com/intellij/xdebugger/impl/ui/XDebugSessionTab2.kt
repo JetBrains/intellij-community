@@ -7,6 +7,7 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.icons.AllIcons
 import com.intellij.icons.AllIcons.Actions.StartDebugger
+import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -242,7 +243,7 @@ class XDebugSessionTab2(
       val headerVisible = toolWindow.isHeaderVisible
       val topRightToolbar = DefaultActionGroup().apply {
         if (headerVisible) return@apply
-        addAll(toolWindow.decorator.headerToolbar.actions)
+        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
       }
       myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 

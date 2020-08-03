@@ -7,6 +7,6 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.4.0/kotlin-gradle-plugin-model-1.4.0-sources.jar!/" />
-   </SOURCES>
+    </SOURCES>
   </library>
 </component>

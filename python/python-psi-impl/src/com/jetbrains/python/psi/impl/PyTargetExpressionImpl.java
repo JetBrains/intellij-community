@@ -173,7 +173,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         final PyExpression lhs = assignment.getLeftHandSideExpression();
         final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
         if (value != null && targetTuple != null) {
-          final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
+          final PyType assignedType = PyTypeUtil.toNonWeakType(context.getType(value), context);
           if (assignedType != null) {
             final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, assignedType, context);
             if (t != null) {

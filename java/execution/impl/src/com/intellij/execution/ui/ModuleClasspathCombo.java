@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
@@ -42,6 +44,7 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
   public ModuleClasspathCombo(Item... optionItems) {
     myOptionItems = optionItems;
     setRenderer(new ListRenderer());
+    ComboboxSpeedSearch.installSpeedSearch(this, item -> item.myModule == null ? "" : item.myModule.getName());
   }
 
   @Override
@@ -55,6 +58,7 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
   public CollectionComboBoxModel<Item> buildModel(Project project) {
     List<@NotNull Item> items = ContainerUtil
       .mapNotNull(ModuleManager.getInstance(project).getModules(), module -> isModuleAccepted(module) ? new Item(module) : null);
+    items.sort(Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
     model.add(new Item((String)null));
@@ -63,7 +67,7 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
     return model;
   }
 
-  public boolean isModuleAccepted(final Module module) {
+  private static boolean isModuleAccepted(final Module module) {
     return ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module));
   }
 

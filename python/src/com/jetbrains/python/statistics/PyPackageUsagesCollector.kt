@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -51,7 +51,7 @@ private fun getPackages(project: Project): Set<MetricEvent> {
 private fun getPyPiPackagesCache() = PyPIPackageCache.getInstance().packageNames.map(String::toLowerCase).toSet()
 
 
-class PyPackageUsagesWhiteListRule : CustomWhiteListRule() {
+class PyPackageUsagesValidationRule : CustomValidationRule() {
   private var packagesRef: WeakReference<Set<String>>? = null
   @Synchronized
   private fun getPackages(): Set<String> {

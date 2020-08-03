@@ -781,8 +781,10 @@
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
-      <reference ref="PasteMultiple"/>
-      <reference ref="EditorPasteSimple"/>
+      <group id="Copy.Paste.Special" popup="true">
+        <reference ref="EditorPasteSimple"/>
+        <reference ref="PasteMultiple"/>
+      </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
       <group id="EditorPopupMenu1"/>
@@ -1230,11 +1232,6 @@
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
-
-    <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
-      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Show"/>
-    </group>
-
     <group id="EditorTabActionGroup"/>
   </actions>
 </idea-plugin>

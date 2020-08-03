@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalColor;
@@ -79,14 +80,20 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public @NotNull TerminalActionPresentation getCopyActionPresentation() {
-    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Copy.text")),
-                                          getKeyStrokesByActionId(IdeActions.ACTION_COPY));
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.CopySelectedText");
+    if (strokes.isEmpty()) {
+      strokes = getKeyStrokesByActionId(IdeActions.ACTION_COPY);
+    }
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Copy.text")), strokes);
   }
 
   @Override
   public @NotNull TerminalActionPresentation getPasteActionPresentation() {
-    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Paste.text")),
-                                          getKeyStrokesByActionId(IdeActions.ACTION_PASTE));
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.Paste");
+    if (strokes.isEmpty()) {
+      strokes = getKeyStrokesByActionId(IdeActions.ACTION_PASTE);
+    }
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Paste.text")), strokes);
   }
 
   @Override

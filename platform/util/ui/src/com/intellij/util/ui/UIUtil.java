@@ -232,6 +232,11 @@ public final class UIUtil {
     }
   }
 
+  public static void setMonospaced(@NotNull Component component) {
+    Font font = component.getFont();
+    component.setFont(new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
+  }
+
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
     return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
@@ -2715,12 +2720,16 @@ public final class UIUtil {
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
+    setOpaqueRecursively(component, false);
+  }
+
+  public static void setOpaqueRecursively(@NotNull Component component, boolean opaque) {
     if (!(component instanceof JComponent)) {
       return;
     }
     forEachComponentInHierarchy(component, c -> {
       if (c instanceof JComponent) {
-        ((JComponent)c).setOpaque(false);
+        ((JComponent)c).setOpaque(opaque);
       }
     });
   }

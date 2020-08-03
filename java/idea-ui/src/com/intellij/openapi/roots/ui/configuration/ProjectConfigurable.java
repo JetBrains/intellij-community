@@ -124,6 +124,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       namePanel.add(label, BorderLayout.NORTH);
 
       myProjectName = new JTextField();
+      label.setLabelFor(myProjectName);
       myProjectName.setColumns(40);
 
       final JPanel nameFieldPanel = new JPanel();
@@ -169,6 +170,10 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
       }
     });
+    String accessibleName = StringUtil.removeHtmlTags(JavaUiBundle.message("project.language.level.name"));
+    String accessibleDescription = StringUtil.removeHtmlTags(JavaUiBundle.message("project.language.level.description"));
+    myLanguageLevelCombo.getAccessibleContext().setAccessibleName(accessibleName);
+    myLanguageLevelCombo.getAccessibleContext().setAccessibleDescription(accessibleDescription);
   }
 
   @Override
@@ -315,10 +320,16 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       }
     };
     final JTextField textField = new ExtendableTextField();
+    String accessibleName = StringUtil.removeHtmlTags(JavaUiBundle.message("project.compiler.output.name"));
+    String accessibleDescription = StringUtil.removeHtmlTags(JavaUiBundle.message("project.compiler.output.description"));
+    textField.getAccessibleContext().setAccessibleName(accessibleName);
+    textField.getAccessibleContext().setAccessibleDescription(accessibleDescription);
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
-    BrowseFilesListener listener = new BrowseFilesListener(textField, "", JavaUiBundle.message("project.compiler.output"), outputPathsChooserDescriptor);
+    BrowseFilesListener listener = new BrowseFilesListener(textField, accessibleName,
+                                                           JavaUiBundle.message("project.compiler.output.description"),
+                                                           outputPathsChooserDescriptor);
     myProjectCompilerOutput = new FieldPanel(textField, null, null, listener, EmptyRunnable.getInstance());
     FileChooserFactory.getInstance().installFileCompletion(myProjectCompilerOutput.getTextField(), outputPathsChooserDescriptor, true, null);
   }

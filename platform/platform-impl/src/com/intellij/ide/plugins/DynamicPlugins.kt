@@ -81,7 +81,7 @@ interface DynamicPluginListener {
   fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
 
   /**
-   * @param isUpdate true if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
+   * @param isUpdate `true` if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
    */
   @JvmDefault
   fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
@@ -91,7 +91,7 @@ interface DynamicPluginListener {
 
   /**
    * Checks if the plugin can be dynamically unloaded at this moment.
-   * Method should throw {@link CannotUnloadPluginException} if it isn't possible by some reason
+   * Method should throw [CannotUnloadPluginException] if it isn't possible for some reason.
    */
   @Throws(CannotUnloadPluginException::class)
   @JvmDefault
@@ -211,6 +211,13 @@ object DynamicPlugins {
           continue
         }
 
+        val pluginEP = findPluginExtensionPoint(descriptor, epName)
+        if (pluginEP != null) {
+          if (!pluginEP.isDynamic) {
+            return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
+          }
+          continue
+        }
         if (baseDescriptor != null) {
           val baseEP = findPluginExtensionPoint(baseDescriptor, epName)
           if (baseEP != null) {
@@ -223,12 +230,12 @@ object DynamicPlugins {
         val contextEP = context.asSequence().mapNotNull { contextPlugin -> findPluginExtensionPoint(contextPlugin, epName) }.firstOrNull()
         if (contextEP != null) {
           if (!contextEP.isDynamic) {
-            return "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+            return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
           }
           continue
         }
 
-        return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
+        return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of unresolved extension $epName"
       }
     }
 

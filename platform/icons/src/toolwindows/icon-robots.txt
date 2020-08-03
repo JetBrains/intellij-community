@@ -1,0 +1,1 @@
+deprecated: toolWindowPreview.png; to be removed in IDEA 2021.1

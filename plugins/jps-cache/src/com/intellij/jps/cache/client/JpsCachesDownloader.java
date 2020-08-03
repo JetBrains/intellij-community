@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +28,8 @@ import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 class JpsCachesDownloader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
   private static final byte MAX_RETRY_COUNT = 3;
+  private static final String CDN_CACHE_HEADER = "X-Cache";
+  private int hitsCount = 0;
   private final List<DownloadableFileDescription> myFilesDescriptions;
   private final SegmentedProgressIndicatorManager myProgressIndicatorManager;
 
@@ -104,8 +107,8 @@ class JpsCachesDownloader {
         }
       }
       long duration = System.currentTimeMillis() - start;
-      LOG.debug(
-        "Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) + "(" + duration + "ms)");
+      LOG.info("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) +
+               "(" + duration + "ms). Percentage of CDN cache hits: " + (hitsCount * 100/myFilesDescriptions.size()) + "%");
 
       List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<>();
       localFiles.addAll(moveToDir(downloadedFiles, targetDir));
@@ -122,7 +125,7 @@ class JpsCachesDownloader {
   }
 
   @NotNull
-  private static File downloadFile(@NotNull final DownloadableFileDescription description, @NotNull final File existingFile,
+  private File downloadFile(@NotNull final DownloadableFileDescription description, @NotNull final File existingFile,
                                    @NotNull Map<String, String> headers, @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
@@ -133,11 +136,14 @@ class JpsCachesDownloader {
       .connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
-        int size = request.getConnection().getContentLength();
+        URLConnection connection = request.getConnection();
+        int size = connection.getContentLength();
         if (existingFile.exists() && size == existingFile.length()) {
           return existingFile;
         }
 
+        String header = connection.getHeaderField(CDN_CACHE_HEADER);
+        if (header != null && header.startsWith("Hit")) hitsCount++;
         indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
         return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
       }

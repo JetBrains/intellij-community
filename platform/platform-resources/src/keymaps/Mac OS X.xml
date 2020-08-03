@@ -218,7 +218,7 @@
   <action id="ActivateDebugToolWindow">
     <keyboard-shortcut first-keystroke="meta 5"/>
   </action>
-  <action id="ActivateTODOToolWindow">
+  <action id="ActivateProblemsViewToolWindow">
     <keyboard-shortcut first-keystroke="meta 6"/>
   </action>
   <action id="ActivateStructureToolWindow">

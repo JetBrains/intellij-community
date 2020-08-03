@@ -13,18 +13,19 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class ReaderModeFileEditorListener : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    if (!instance(source.project).enabled) return
     applyReaderMode(source.project, source.getSelectedEditor(file))
   }
 
   companion object {
     private var EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
 
-    fun applyReaderMode(project: Project, selectedEditor: FileEditor?, alreadyOpenedFilesOnly: Boolean = false) {
+    fun applyReaderMode(project: Project, selectedEditor: FileEditor?, fileIsOpenAlready: Boolean = false) {
       if (selectedEditor is PsiAwareTextEditorImpl) {
         val file = selectedEditor.file
         if (matchMode(project, file)) {
           EP_READER_MODE_PROVIDER.extensions().forEach {
-            it.applyModeChanged(project, selectedEditor.editor, instance(project).enabled, alreadyOpenedFilesOnly)
+            it.applyModeChanged(project, selectedEditor.editor, instance(project).enabled, fileIsOpenAlready)
           }
         }
       }

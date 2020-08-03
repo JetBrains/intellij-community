@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -41,6 +42,13 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
 
   private val titleChangeListener = PropertyChangeListener{
     updateProject()
+  }
+
+  override fun getCustomTitle(): String? {
+    if (LightEdit.owns(project)) {
+      return frame.title
+    }
+    return null
   }
 
   fun setActive(value: Boolean) {

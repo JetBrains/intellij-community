@@ -650,7 +650,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
         Dimension packedSize = getSize();
         Dimension minSize = getMinimumSize();
-        setSize(Math.max(packedSize.width, minSize.width), Math.max(packedSize.height, minSize.height));
+        Dimension initial = dialogWrapper.getInitialSize();
+        setSize(max(packedSize, minSize, initial));
 
         setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
 
@@ -669,7 +670,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
 
         if (myInitialSize == null) {
-          myInitialSize = getSize();
+          Dimension initialSize = dialogWrapper.getInitialSize();
+          myInitialSize = initialSize != null ? initialSize : getSize();
         }
       }
 
@@ -706,6 +708,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       setBackground(UIUtil.getPanelBackground());
       super.show();
+    }
+
+    private static Dimension max(Dimension size, Dimension... others) {
+      int maxW = size.width;
+      int maxH = size.height;
+      for (Dimension sz : others) {
+        if (sz != null) {
+          maxW = Math.max(maxW, sz.width);
+          maxH = Math.max(maxH, sz.height);
+        }
+      }
+      return new Dimension(maxW, maxH);
     }
 
     @Nullable

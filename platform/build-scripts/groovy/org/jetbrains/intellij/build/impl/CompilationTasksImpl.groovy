@@ -18,6 +18,8 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+
 @CompileStatic
 class CompilationTasksImpl extends CompilationTasks {
   private final CompilationContext context
@@ -28,51 +30,53 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
-    if (context.options.useCompiledClassesFromProjectOutput) {
+    def jpsCache = new PortableCompilationCache(context)
+    if (jpsCache.canBeUsed) {
+      jpsCache.warmUp()
+    }
+    else if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       resolveProjectDependencies()
-      return
     }
-    if (context.options.pathToCompiledClassesArchive != null) {
+    else if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
       resolveProjectDependencies()
-      return
     }
-    if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+    else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchivesMetadata}' will be used")
       resolveProjectDependencies()
-      return
     }
+    else {
+      CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
 
-    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
-
-    context.messages.progress("Compiling project")
-    JpsCompilationRunner runner = new JpsCompilationRunner(context)
-    try {
-      if (moduleNames == null) {
-        if (includingTestsInModules == null) {
-          runner.buildAll()
+      context.messages.progress("Compiling project")
+      JpsCompilationRunner runner = new JpsCompilationRunner(context)
+      try {
+        if (moduleNames == null) {
+          if (includingTestsInModules == null) {
+            runner.buildAll()
+          }
+          else {
+            runner.buildProduction()
+          }
         }
         else {
-          runner.buildProduction()
+          List<String> invalidModules = moduleNames.findAll { context.findModule(it) == null }
+          if (!invalidModules.empty) {
+            context.messages.warning("The following modules won't be compiled: $invalidModules")
+          }
+          runner.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
         }
-      }
-      else {
-        List<String> invalidModules = moduleNames.findAll { context.findModule(it) == null }
-        if (!invalidModules.empty) {
-          context.messages.warning("The following modules won't be compiled: $invalidModules")
-        }
-        runner.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
-      }
 
-      if (includingTestsInModules != null) {
-        for (String moduleName : includingTestsInModules) {
-          runner.buildModuleTests(context.findModule(moduleName))
+        if (includingTestsInModules != null) {
+          for (String moduleName : includingTestsInModules) {
+            runner.buildModuleTests(context.findModule(moduleName))
+          }
         }
       }
-    }
-    catch (Throwable e) {
-      context.messages.error("Compilation failed with exception: $e", e)
+      catch (Throwable e) {
+        context.messages.error("Compilation failed with exception: $e", e)
+      }
     }
   }
 

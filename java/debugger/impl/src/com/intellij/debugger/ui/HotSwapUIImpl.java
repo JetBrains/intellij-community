@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -123,45 +123,42 @@ public class HotSwapUIImpl extends HotSwapUI {
       return;
     }
 
-    final boolean shouldPerformScan = generatedPaths == null;
+    final List<DebuggerSession> toScan = new ArrayList<>(sessions); // by default scan all sessions
+    final List<DebuggerSession> toUseGenerated = new ArrayList<>();
 
-    final HotSwapProgressImpl findClassesProgress;
-    if (shouldPerformScan) {
-      findClassesProgress = createHotSwapProgress(callbackWrapper, sessions);
+    if (generatedPaths != null) {
+      toScan.clear();
+      for (DebuggerSession session : sessions) {
+        if (session.isModifiedClassesScanRequired()) {
+          toScan.add(session);
+        }
+        else {
+          toUseGenerated.add(session);
+        }
+        session.setModifiedClassesScanRequired(false);
+      }
     }
-    else {
-      boolean createProgress = sessions.stream().anyMatch(DebuggerSession::isModifiedClassesScanRequired);
-      findClassesProgress = createProgress ? createHotSwapProgress(callbackWrapper, sessions) : null;
-    }
+
+    final HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(callbackWrapper, sessions) : null;
+    final HotSwapProgressImpl outputPathsProgress =
+      !toUseGenerated.isEmpty() && outputPaths != null ? createHotSwapProgress(callbackWrapper, sessions) : null;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
-      if (shouldPerformScan) {
-        modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress);
+      Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<>();
+      if (!toUseGenerated.isEmpty()) {
+        modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
+        if (outputPathsProgress != null) {
+          scanForModifiedClassesWithProgress(toUseGenerated, outputPaths, outputPathsProgress)
+            .forEach(
+              (session, map) -> modifiedClasses.merge(session, map, (map1, map2) -> {
+                map1.putAll(map2);
+                return map1;
+              })
+            );
+        }
       }
-      else {
-        final List<DebuggerSession> toScan = new ArrayList<>();
-        final List<DebuggerSession> toUseGenerated = new ArrayList<>();
-        for (DebuggerSession session : sessions) {
-          (session.isModifiedClassesScanRequired() ? toScan : toUseGenerated).add(session);
-          session.setModifiedClassesScanRequired(false);
-        }
-        modifiedClasses = new HashMap<>();
-        if (!toUseGenerated.isEmpty()) {
-          modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
-          if (outputPaths != null) {
-            scanForModifiedClassesWithProgress(toUseGenerated, outputPaths, createHotSwapProgress(callbackWrapper, sessions))
-              .forEach(
-                (session, map) -> modifiedClasses.merge(session, map, (map1, map2) -> {
-                  map1.putAll(map2);
-                  return map1;
-                })
-              );
-          }
-        }
-        if (!toScan.isEmpty()) {
-          modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, Objects.requireNonNull(findClassesProgress)));
-        }
+      if (findClassesProgress != null) {
+        modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress));
       }
 
       final Application application = ApplicationManager.getApplication();

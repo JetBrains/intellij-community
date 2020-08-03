@@ -192,9 +192,7 @@ class SuggestedRefactoringChangeListener(
     override fun beforeDocumentChange(event: DocumentEvent) {
       val document = event.document
       val psiFile = psiDocumentManager.getCachedPsiFile(document) ?: return
-      if (!psiFile.isPhysical || psiFile is PsiCodeFragment) {
-        return
-      }
+      if (shouldIgnoreFile(psiFile)) return
 
       val firstChangeInsideCommand = isFirstChangeInsideCommand
       isFirstChangeInsideCommand = false
@@ -212,6 +210,8 @@ class SuggestedRefactoringChangeListener(
         processBeforeFirstChangeWithPsiAndDocumentInSync(psiFile, document, event.oldRange, refactoringSupport)
       }
     }
+
+    private fun shouldIgnoreFile(file: PsiFile) = !file.isPhysical || file is PsiBinaryFile || file is PsiCodeFragment
 
     private fun shouldAbortSignatureEditing(event: DocumentEvent): Boolean {
       val state = editingState ?: return false
@@ -234,7 +234,7 @@ class SuggestedRefactoringChangeListener(
 
       val document = event.document
       val psiFile = psiDocumentManager.getCachedPsiFile(document) ?: return
-      if (!psiFile.isPhysical || psiFile is PsiCodeFragment) return
+      if (shouldIgnoreFile(psiFile)) return
 
       newIdentifierWatcher.documentChanged(event, psiFile.language)
 
@@ -328,7 +328,7 @@ class SuggestedRefactoringChangeListener(
 
       isFirstChangeInsideCommand = false
 
-      if (!(psiFile as PsiFileImpl).isContentsLoaded) return // no AST loaded
+      if (psiFile !is PsiFileImpl || !psiFile.isContentsLoaded) return // no AST loaded
 
       val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return
       event as PsiTreeChangeEventImpl

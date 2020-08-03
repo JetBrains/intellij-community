@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions;
 import org.jetbrains.annotations.NotNull;
@@ -26,17 +26,17 @@ public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage
   }
 
   @NotNull
-  protected Map<String, WhiteListGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull FUStatisticsWhiteListGroupsService.WLGroups groups) {
+  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull FUStatisticsWhiteListGroupsService.WLGroups groups) {
     return groups.groups.stream().
       filter(group -> StatisticsWhitelistGroupConditions.create(group).accepts(build)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));
   }
 
   @NotNull
-  protected static WhiteListGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                   @Nullable FUStatisticsWhiteListGroupsService.WLRule globalRules) {
+  protected static EventGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
+                                               @Nullable FUStatisticsWhiteListGroupsService.WLRule globalRules) {
     return globalRules != null
-           ? WhiteListGroupRules.create(group, globalRules.enums, globalRules.regexps)
-           : WhiteListGroupRules.create(group, null, null);
+           ? EventGroupRules.create(group, globalRules.enums, globalRules.regexps)
+           : EventGroupRules.create(group, null, null);
   }
 }

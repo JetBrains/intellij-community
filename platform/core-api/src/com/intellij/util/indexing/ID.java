@@ -122,6 +122,12 @@ public class ID<K, V> extends IndexId<K,V> {
     return myUniqueId;
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public PluginId getPluginId() {
+    return ourIdToPluginId.get(this);
+  }
+
   public static ID<?, ?> findById(int id) {
     return ourRegistry.get(id);
   }

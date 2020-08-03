@@ -166,7 +166,8 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       super(new GridBagLayout());
       myState = state;
 
-      add(new JLabel(JavaUiBundle.message("project.roots.classpath.format.label")),
+      JLabel comboBoxClasspathFormatLabel = new JLabel(JavaUiBundle.message("project.roots.classpath.format.label"));
+      add(comboBoxClasspathFormatLabel,
           new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
 
       Map<String, String> formatIdToDescription = new LinkedHashMap<>();
@@ -177,6 +178,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       comboBoxClasspathFormat = new ComboBox<>(ArrayUtilRt.toStringArray(formatIdToDescription.keySet()));
       comboBoxClasspathFormat.setRenderer(SimpleListCellRenderer.create("", formatIdToDescription::get));
       comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
+      comboBoxClasspathFormatLabel.setLabelFor(comboBoxClasspathFormat);
       add(comboBoxClasspathFormat,
           new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));
     }

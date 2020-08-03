@@ -376,7 +376,8 @@ public final class UpdateHighlightersUtil {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
 
-      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme))) {
+      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme)) ||
+              infoAttributes == TextAttributes.ERASE_MARKER) {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 

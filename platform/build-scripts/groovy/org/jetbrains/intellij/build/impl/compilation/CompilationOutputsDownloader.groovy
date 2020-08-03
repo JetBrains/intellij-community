@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
@@ -26,11 +25,10 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
-import java.lang.reflect.Type
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsDownloader implements AutoCloseable {
-  private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
@@ -42,7 +40,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
   private final NamedThreadPoolExecutor executor
 
-  private final SourcesStateProcessor sourcesStateProcessor
+  private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
 
   private boolean availableForHeadCommitForced = false
   /**
@@ -61,38 +59,20 @@ class CompilationOutputsDownloader implements AutoCloseable {
     }
   }()
 
-  private String defaultBranch
   @Lazy
-  private Set<String> availableCachesKeys = {
-    CommitsHistory commitsHistory = new CommitsHistory(git.currentBranch(true), defaultBranch)
-
-    def masterCommitsHistory = getClient.doGet("$remoteCacheUrl/${commitsHistory.defaultBranchPath}", COMMITS_HISTORY_TYPE)
-    Set<String> branchCommits = Collections.emptySet()
-    if (!commitsHistory.isDefaultBranch) {
-      context.messages.info("Using ${commitsHistory.path} to get additional cache keys.")
-
-      String branchCommitHistoryUrl = "$remoteCacheUrl/${commitsHistory.path}"
-      if (getClient.exists(branchCommitHistoryUrl)) {
-        def branchCommitsHistory = getClient.doGet(branchCommitHistoryUrl, COMMITS_HISTORY_TYPE)
-        branchCommits = branchCommitsHistory[gitUrl] as Set<String>
-      }
-    }
-
-    return (masterCommitsHistory[gitUrl] as Set<String>) + branchCommits
+  private Collection<String> availableCachesKeys = {
+    def json = getClient.doGet("$remoteCacheUrl/$CommitsHistory.JSON_FILE")
+    new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl,
-                               boolean availableForHeadCommit, String defaultBranch) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit
-    this.defaultBranch = defaultBranch
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
-
-    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
   @Override
@@ -133,8 +113,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
   }
 
   private Map<String, Map<String, BuildTargetState>> getSourcesState(String commitHash) {
-    return getClient.
-      doGet("$remoteCacheUrl/metadata/$commitHash", SourcesStateProcessor.SOURCES_STATE_TYPE) as Map<String, Map<String, BuildTargetState>>
+    sourcesStateProcessor.parseSourcesStateFile(getClient.doGet("$remoteCacheUrl/metadata/$commitHash"))
   }
 
   private void saveCache(String commitHash) {
@@ -180,7 +159,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
     FileUtil.createParentDirs(outputArchive)
 
-    getClient.doGet("$remoteCacheUrl/${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}", outputArchive)
+    getClient.doGet("$remoteCacheUrl/${compilationOutput.sourcePath}", outputArchive)
 
     return outputArchive
   }
@@ -188,12 +167,20 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
 @CompileStatic
 class GetClient {
+  private int timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
+
+  private final RequestConfig config = RequestConfig.custom()
+    .setConnectionRequestTimeout(timeout)
+    .setConnectTimeout(timeout)
+    .setSocketTimeout(timeout)
+    .build()
+
   private final CloseableHttpClient httpClient = HttpClientBuilder.create()
     .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
+    .setDefaultRequestConfig(config)
     .setMaxConnTotal(10)
     .setMaxConnPerRoute(10)
     .build()
-  private final Gson gson = new Gson()
 
   private final BuildMessages buildMessages
 
@@ -209,30 +196,29 @@ class GetClient {
     }
   }
 
-  def doGet(String url, Type responseType) {
-    CloseableHttpResponse response = null
-    return getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
-        throwDownloadException(response, downloadException)
+  String doGet(String url) {
+    getWithRetry(url, { HttpGet request ->
+      httpClient.execute(request).withCloseable { response ->
+        def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
+          throwDownloadException(response, downloadException)
+        }
+        responseString
       }
-      return gson.fromJson(responseString, responseType)
-    }, { StreamUtil.closeStream(response) })
+    })
   }
 
   void doGet(String url, File file) {
-    CloseableHttpResponse response = null
     getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
-        throwDownloadException(response, downloadException)
+      httpClient.execute(request).withCloseable { response ->
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+          throwDownloadException(response, downloadException)
+        }
+        file << response.entity.content
       }
-      file << response.entity.content
-      return
-    }, { StreamUtil.closeStream(response) })
+    })
   }
 
   private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
@@ -244,7 +230,7 @@ class GetClient {
     }
   }
 
-  private <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
+  private <T> T getWithRetry(String url, Closure<T> operation) {
     return new Retry(buildMessages).call {
       try {
         operation(new HttpGet(url))
@@ -254,9 +240,6 @@ class GetClient {
       }
       catch (Exception ex) {
         throw new DownloadException(url, ex)
-      }
-      finally {
-        finalizer()
       }
     }
   }
