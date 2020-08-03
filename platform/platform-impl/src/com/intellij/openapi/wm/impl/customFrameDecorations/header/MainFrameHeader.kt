@@ -70,6 +70,10 @@ class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
     mySelectedEditorFilePath.project = project
   }
 
+  fun updateMenuActions(forceRebuild: Boolean) {
+    myIdeMenu.updateMenuActions(forceRebuild)
+  }
+
   override fun updateActive() {
     super.updateActive()
     mySelectedEditorFilePath.setActive(myActive)

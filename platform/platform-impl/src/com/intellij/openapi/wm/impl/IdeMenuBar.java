@@ -342,11 +342,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return component;
   }
 
-  void updateMenuActions() {
+  public void updateMenuActions() {
     updateMenuActions(false);
   }
 
-  void updateMenuActions(boolean forceRebuild) {
+  public void updateMenuActions(boolean forceRebuild) {
     doUpdateMenuActions(forceRebuild, ActionManager.getInstance());
   }
 

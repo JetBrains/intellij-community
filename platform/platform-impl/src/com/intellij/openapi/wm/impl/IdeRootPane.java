@@ -224,8 +224,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateMainMenuActions() {
-    ((IdeMenuBar)menuBar).updateMenuActions();
+    ((IdeMenuBar)menuBar).updateMenuActions(false);
     menuBar.repaint();
+
+    if (myCustomFrameTitlePane != null) {
+      myCustomFrameTitlePane.updateMenuActions(false);
+      myCustomFrameTitlePane.repaint();
+    }
   }
 
   private static @NotNull JComponent createToolbar() {
