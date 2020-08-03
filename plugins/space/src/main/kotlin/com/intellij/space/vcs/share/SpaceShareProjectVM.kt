@@ -9,8 +9,10 @@ import circlet.platform.api.batchAll
 import circlet.platform.api.map
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
+import com.intellij.space.messages.SpaceBundle
 import kotlinx.coroutines.CancellationException
 import libraries.coroutines.extra.LifetimeSource
+import org.jetbrains.annotations.Nls
 import runtime.reactive.MutableProperty
 import runtime.reactive.awaitFirst
 import runtime.reactive.filter
@@ -43,7 +45,7 @@ class SpaceShareProjectVM(val lifetime: LifetimeSource) {
   sealed class ProjectListState {
     object Loading : ProjectListState()
 
-    class Error(val error: String = "Unable to load projects") : ProjectListState()
+    class Error(@Nls val error: String = SpaceBundle.message("share.project.unable.to.load.projects")) : ProjectListState()
 
     class Projects(val projects: List<PR_Project>) : ProjectListState()
   }

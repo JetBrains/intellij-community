@@ -243,7 +243,7 @@ class SpaceVcsOpenInBrowserActionGroup :
           val ref = Ref1<GitRevisionNumber>()
           object : Task.Modal(project, "Getting Last Revision", true) {
             override fun run(indicator: ProgressIndicator) {
-              ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), "HEAD") as GitRevisionNumber?)
+              ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), GitUtil.HEAD) as GitRevisionNumber?)
             }
 
             override fun onThrowable(error: Throwable) {
