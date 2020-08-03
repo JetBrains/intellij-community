@@ -656,11 +656,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>());
       if (targetInfo instanceof NlsInfo.Localized) {
-        AddAnnotationFix fix = new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
-        AddAnnotationFix fixSafe = new AddAnnotationFix(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
+        AddAnnotationFix fix =
+          new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
+        AddAnnotationFix fixSafe = null;
+        if (JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null) {
+          fixSafe = new AddAnnotationFix(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
+        }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
         final ProblemDescriptor problem = myManager.createProblemDescriptor(
-          sourcePsi, description, myOnTheFly, new LocalQuickFix[] {fix, fixSafe}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          sourcePsi, description, myOnTheFly, new LocalQuickFix[]{fix, fixSafe}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
     }
