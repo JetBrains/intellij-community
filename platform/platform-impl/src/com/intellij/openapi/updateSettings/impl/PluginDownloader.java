@@ -265,7 +265,7 @@ public final class PluginDownloader {
     }
     else {
       try {
-        return myMarketplaceRequests.downloadPluginViaBlockmap(myPluginUrl, myOldFile, indicator);
+        return myMarketplaceRequests.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator);
       }
       catch (Exception e) {
         LOG.debug(IdeBundle.message("error.download.plugin.via.blockmap"), e);

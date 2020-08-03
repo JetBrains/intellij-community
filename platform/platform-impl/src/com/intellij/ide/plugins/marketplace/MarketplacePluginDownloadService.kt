@@ -14,21 +14,21 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.exists
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.URLConnection
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.zip.ZipInputStream
 
-internal class MarketplacePluginDownloadService{
+internal class MarketplacePluginDownloadService {
   companion object {
     private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
+    private const val BLOCKMAP_ZIP = "blockmap.zip"
+
     private const val BLOCKMAP_FILENAME = "blockmap.json"
 
-    private const val HASH_FILENAME = "hash.txt"
+    private const val HASH_FILENAME = "hash.json"
 
     private const val FILENAME = "filename="
 
@@ -59,27 +59,30 @@ internal class MarketplacePluginDownloadService{
       if (!prevPluginArchive.exists()) {
         throw IOException(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
       }
-      val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input -> BlockMap(input) }
 
       // working with demo
       val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com", "plugin-blockmap-patches.dev.marketplace.intellij.net")
 
       val pluginFileUrl = getPluginFileUrl(curPluginUrl)
-      val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_FILENAME)
+      val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_ZIP)
       val pluginHashFileUrl = pluginFileUrl.replaceAfterLast("/", HASH_FILENAME)
 
-      val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
-        request.inputStream.reader().buffered().use { input ->
-          objectMapper.readValue(input.readText(), BlockMap::class.java)
+      val newBlockMap = HttpRequests.request(blockMapFileUrl).gzip(false).connect { request ->
+        request.inputStream.use { input ->
+          getBlockMapFromZip(input)
         }
       }
       LOG.debug("Plugin's blockmap file downloaded")
-      val newPluginHash = HttpRequests.request(pluginHashFileUrl).productNameAsUserAgent().connect { request ->
+      val newPluginHash = HttpRequests.request(pluginHashFileUrl).gzip(false).connect { request ->
         request.inputStream.reader().buffered().use { input ->
           objectMapper.readValue(input.readText(), FileHash::class.java)
         }
       }
       LOG.debug("Plugin's hash file downloaded")
+
+      val oldBlockMap = FileInputStream(prevPluginArchive.toFile()).use { input ->
+        BlockMap(input, newBlockMap.algorithm, newBlockMap.minSize, newBlockMap.maxSize, newBlockMap.normalSize)
+      }
 
       val downloadPercent = downloadPercent(oldBlockMap, newBlockMap)
       LOG.debug("Plugin's download percent is = %.2f".format(downloadPercent * 100))
@@ -100,8 +103,26 @@ internal class MarketplacePluginDownloadService{
         return renameFileToZipRoot(file)
       }
       else {
-        val connection = HttpRequests.request(curPluginUrl).productNameAsUserAgent().connect { request -> request.connection }
+        val connection = HttpRequests.request(curPluginUrl).gzip(false).connect { request -> request.connection }
         return guessPluginFile(connection, file, pluginUrl)
+      }
+    }
+
+    @Throws(IOException::class)
+    private fun getBlockMapFromZip(input: InputStream): BlockMap {
+      return input.buffered().use { source ->
+        ZipInputStream(source).use { zip ->
+          var entry = zip.nextEntry
+          while (entry.name != BLOCKMAP_FILENAME && entry.name != null) entry = zip.nextEntry
+          if (entry.name == BLOCKMAP_FILENAME) {
+            // there is must only one entry otherwise we can't properly
+            // read entry because we don't know it size (entry.size returns -1)
+            objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
+          }
+          else {
+            throw IOException("There is no entry $BLOCKMAP_FILENAME in the $BLOCKMAP_ZIP archive")
+          }
+        }
       }
     }
 
@@ -160,7 +181,7 @@ internal class MarketplacePluginDownloadService{
     }
 
     private fun getPluginFileUrl(pluginUrl: String): String {
-      return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
+      return HttpRequests.request(pluginUrl).connect { request ->
         val url = request.connection.url
         "${url.protocol}://${url.host}${url.path}"
       }
