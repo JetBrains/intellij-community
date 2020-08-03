@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +58,15 @@ class UniformIdentifierUtil {
       return uris;
     }
     try {
-      return new String[] { getUriByExtension(fileType.getDefaultExtension()) };
+      String uri = getUriByExtension(fileType.getDefaultExtension());
+      return uri != null ? new String[] {uri} : ArrayUtil.EMPTY_STRING_ARRAY;
     }
     catch (IOException | ExecutionException e) {
       throw new FileAssociationException(e.getMessage());
     }
   }
 
-  @NotNull
+  @Nullable
   private static String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, FileAssociationException {
     File file = FileUtil.createTempFile("content_", "." + extension);
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -98,9 +100,6 @@ class UniformIdentifierUtil {
       throw new FileAssociationException("mdls failed with exit code " + handler.getExitCode()
                                          + ", error message: " + errMessage);
     }
-    if (contentTypeValue.get() == null) {
-      throw new FileAssociationException("Can't find content type for ." + extension);
-    }
     return contentTypeValue.get();
   }
 
@@ -111,7 +110,7 @@ class UniformIdentifierUtil {
       String result = contentType.substring(eqPos + 1).trim();
       result = StringUtil.trimStart(result, "\"");
       result = StringUtil.trimEnd(result, "\"");
-      return result;
+      if (!result.startsWith("dyn.")) return result;
     }
     return null;
   }

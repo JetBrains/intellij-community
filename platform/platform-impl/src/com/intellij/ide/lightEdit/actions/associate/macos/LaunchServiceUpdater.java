@@ -26,6 +26,7 @@ final class LaunchServiceUpdater {
 
   private final String myBundleId;
   private final Set<String> myUriSet = new HashSet<>();
+  private final Set<String> myExtensionSet = new HashSet<>();
 
   LaunchServiceUpdater(String id) {
     myBundleId = id;
@@ -33,14 +34,23 @@ final class LaunchServiceUpdater {
 
   void addFileTypes(@NotNull List<FileType> fileTypes) throws FileAssociationException {
     for (FileType fileType : fileTypes) {
-      Collections.addAll(myUriSet, UniformIdentifierUtil.getURIs(fileType));
+      String[] uri = UniformIdentifierUtil.getURIs(fileType);
+      if (uri.length > 0) {
+        Collections.addAll(myUriSet, UniformIdentifierUtil.getURIs(fileType));
+      }
+      else {
+        myExtensionSet.add(fileType.getDefaultExtension());
+      }
     }
   }
 
   void update() throws FileAssociationException {
     removeExistingEntries();
     for (String uri : myUriSet) {
-      createEntry(uri);
+      createContentTypeEntry(uri);
+    }
+    for (String ext : myExtensionSet) {
+      createExtensionEntry(ext);
     }
   }
 
@@ -116,11 +126,20 @@ final class LaunchServiceUpdater {
     return null;
   }
 
-  private void createEntry(@NotNull String uri) throws FileAssociationException {
+  private void createContentTypeEntry(@NotNull String uri) throws FileAssociationException {
     PListBuddyWrapper buddy = new PListBuddyWrapper();
     buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
                      "Add LSHandlers:0 dict",
                      "Add LSHandlers:0:LSHandlerContentType string " + uri,
+                     "Add LSHandlers:0:LSHandlerRoleAll string " + myBundleId);
+  }
+
+  private void createExtensionEntry(@NotNull String extension) throws FileAssociationException {
+    PListBuddyWrapper buddy = new PListBuddyWrapper();
+    buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
+                     "Add LSHandlers:0 dict",
+                     "Add LSHandlers:0:LSHandlerContentTag string " + extension,
+                     "Add LSHandlers:0:LSHandlerContentTagClass string public.filename-extension",
                      "Add LSHandlers:0:LSHandlerRoleAll string " + myBundleId);
   }
 }
