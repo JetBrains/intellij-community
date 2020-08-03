@@ -1,253 +1,323 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.roots.ModuleRootManagerTestCase.assertRoots
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.UsefulTestCase.*
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.ArrayUtilRt
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
-class OrderEnumeratorTest : ModuleRootManagerTestCase() {
+class OrderEnumeratorTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
+
+  @Rule
+  @JvmField
+  val projectModel = ProjectModelRule()
+
+  private lateinit var module: Module
+  private lateinit var library: Library
+  private lateinit var jdkJar: VirtualFile
+  private lateinit var libraryJar: VirtualFile
+  private lateinit var librarySourcesZip: VirtualFile
+  private lateinit var sdk: Sdk
+
+  @Before
+  fun setUp() {
+    module = projectModel.createModule()
+    libraryJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("foo.jar")
+    librarySourcesZip = projectModel.baseProjectDir.newEmptyVirtualJarFile("foo.zip")
+    library = projectModel.addProjectLevelLibrary("foo") {
+      it.addRoot(libraryJar, OrderRootType.CLASSES)
+      it.addRoot(librarySourcesZip, OrderRootType.SOURCES)
+    }
+    jdkJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("jdk.jar")
+    sdk = projectModel.addSdk(projectModel.createSdk("my-jdk")) {
+      it.addRoot(jdkJar, OrderRootType.CLASSES)
+    }
+    ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  }
+
+  @Test
   fun testLibrary() {
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary())
-    assertClassRoots(OrderEnumerator.orderEntries(myModule), rtJarJdk17, jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk(), jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().productionOnly().runtimeOnly(),
-                                                   jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutLibraries(), rtJarJdk17)
-    assertSourceRoots(OrderEnumerator.orderEntries(myModule), jDomSources)
+    ModuleRootModificationUtil.addDependency(module, library)
+    assertClassRoots(OrderEnumerator.orderEntries(module), jdkJar, libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk(), libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().runtimeOnly(),
+                     libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutLibraries(), jdkJar)
+    assertSourceRoots(OrderEnumerator.orderEntries(module), librarySourcesZip)
   }
 
+  @Test
   fun testModuleSources() {
-    val srcRoot = addSourceRoot(myModule, false)
-    val testRoot = addSourceRoot(myModule, true)
-    val output = setModuleOutput(myModule, false)
-    val testOutput = setModuleOutput(myModule, true)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk(), testOutput, output)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().productionOnly(), output)
-    assertSourceRoots(OrderEnumerator.orderEntries(myModule), srcRoot, testRoot)
-    assertSourceRoots(OrderEnumerator.orderEntries(myModule).productionOnly(), srcRoot)
+    val srcRoot = addSourceRoot(module, false)
+    val testRoot = addSourceRoot(module, true)
+    val output = setModuleOutput(module, false)
+    val testOutput = setModuleOutput(module, true)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk(), testOutput, output)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().productionOnly(), output)
+    assertSourceRoots(OrderEnumerator.orderEntries(module), srcRoot, testRoot)
+    assertSourceRoots(OrderEnumerator.orderEntries(module).productionOnly(), srcRoot)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().classes().withoutSelfModuleOutput(), output)
+      OrderEnumerator.orderEntries(module).withoutSdk().classes().withoutSelfModuleOutput(), output)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput())
+      OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().classes().withoutSelfModuleOutput())
   }
 
+  @Test
   fun testLibraryScope() {
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk(), jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().exportedOnly())
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().compileOnly())
+    ModuleRootModificationUtil.addDependency(module, library, DependencyScope.RUNTIME, false)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk(), libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().exportedOnly())
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().compileOnly())
   }
 
+  @Test
   fun testModuleDependency() {
-    val dep = createModule("dep")
+    val dep = projectModel.createModule("dep")
     val depSrcRoot = addSourceRoot(dep, false)
     val depTestRoot = addSourceRoot(dep, true)
     val depOutput = setModuleOutput(dep, false)
     val depTestOutput = setModuleOutput(dep, true)
-    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, true)
-    val srcRoot = addSourceRoot(myModule, false)
-    val testRoot = addSourceRoot(myModule, true)
-    val output = setModuleOutput(myModule, false)
-    val testOutput = setModuleOutput(myModule, true)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk(), testOutput, output, depTestOutput,
-                                                   depOutput)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().recursively(), testOutput, output,
-                                                   depTestOutput, depOutput, jDomJar)
-    assertSourceRoots(OrderEnumerator.orderEntries(myModule), srcRoot, testRoot, depSrcRoot, depTestRoot)
-    assertSourceRoots(OrderEnumerator.orderEntries(myModule).recursively(), srcRoot, testRoot, depSrcRoot,
-                                                    depTestRoot, jDomSources)
+    ModuleRootModificationUtil.addDependency(dep, library, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(module, dep, DependencyScope.COMPILE, true)
+    val srcRoot = addSourceRoot(module, false)
+    val testRoot = addSourceRoot(module, true)
+    val output = setModuleOutput(module, false)
+    val testOutput = setModuleOutput(module, true)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk(), testOutput, output, depTestOutput,
+                     depOutput)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().recursively(), testOutput, output,
+                     depTestOutput, depOutput, libraryJar)
+    assertSourceRoots(OrderEnumerator.orderEntries(module), srcRoot, testRoot, depSrcRoot, depTestRoot)
+    assertSourceRoots(OrderEnumerator.orderEntries(module).recursively(), srcRoot, testRoot, depSrcRoot,
+                      depTestRoot, librarySourcesZip)
     assertClassRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), jDomJar)
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutModuleSourceEntries().recursively(), libraryJar)
     assertSourceRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), jDomSources)
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutModuleSourceEntries().recursively(), librarySourcesZip)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively().classes(), jDomJar)
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutModuleSourceEntries().recursively().classes(), libraryJar)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively().sources(), jDomSources)
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutModuleSourceEntries().recursively().sources(), librarySourcesZip)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
-      output, depTestOutput, depOutput, jDomJar)
+      OrderEnumerator.orderEntries(module).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+      output, depTestOutput, depOutput, libraryJar)
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
-      depOutput, jDomJar)
+      OrderEnumerator.orderEntries(module).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+      depOutput, libraryJar)
     assertClassRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), jDomJar)
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), libraryJar)
     assertEnumeratorRoots(
       OrderEnumerator.orderEntries(
-        myModule).productionOnly().withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively().classes(),
-      jDomJar)
+        module).productionOnly().withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively().classes(),
+      libraryJar)
     assertClassRoots(
-      OrderEnumerator.orderEntries(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries())
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutDepModules().withoutModuleSourceEntries())
     assertEnumeratorRoots(
-      OrderEnumerator.orderEntries(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes())
-    assertOrderedEquals(OrderEnumerator.orderEntries(myModule).allLibrariesAndSdkClassesRoots, rtJarJdk17, jDomJar)
+      OrderEnumerator.orderEntries(module).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes())
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots, jdkJar, libraryJar)
   }
 
+  @Test
   fun testModuleDependencyScope() {
-    val dep = createModule("dep")
-    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk())
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().recursively(), jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().exportedOnly().recursively(),
-                                                   jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().productionOnly().recursively())
-    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk(), jDomJar)
-    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk().productionOnly(),
-                                                   jDomJar)
+    val dep = projectModel.createModule("dep")
+    ModuleRootModificationUtil.addDependency(dep, library, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(module, dep, DependencyScope.TEST, true)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk())
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().recursively(), libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().exportedOnly().recursively(),
+                     libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().recursively())
+    assertClassRoots(ProjectRootManager.getInstance(projectModel.project).orderEntries().withoutSdk(), libraryJar)
+    assertClassRoots(ProjectRootManager.getInstance(projectModel.project).orderEntries().withoutSdk().productionOnly(),
+                     libraryJar)
   }
 
+  @Test
   fun testNotExportedLibrary() {
-    val dep = createModule("dep")
-    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false)
-    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.COMPILE, false)
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk(), asmJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().recursively(), asmJar, jDomJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().recursively().exportedOnly(), asmJar)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().exportedOnly().recursively())
-    assertClassRoots(orderEntriesForModulesList(myModule).withoutSdk().recursively(), asmJar, jDomJar)
+    val dep = projectModel.createModule("dep")
+    val library2Jar = projectModel.baseProjectDir.newEmptyVirtualJarFile("bar.jar")
+    val library2 = projectModel.addProjectLevelLibrary("bar") {
+      it.addRoot(library2Jar, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(dep, library, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(module, library2, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(module, dep, DependencyScope.COMPILE, false)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk(), library2Jar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().recursively(), library2Jar, libraryJar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().recursively().exportedOnly(), library2Jar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().exportedOnly().recursively())
+    assertClassRoots(orderEntriesForModulesList(module).withoutSdk().recursively(), library2Jar, libraryJar)
   }
 
+  @Test
   fun testJdkIsNotExported() {
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).exportedOnly())
+    assertClassRoots(OrderEnumerator.orderEntries(module).exportedOnly())
   }
 
+  @Test
   fun testCaching() {
-    val jdkRoot = rtJarJdk17
-    val roots = OrderEnumerator.orderEntries(myModule).classes().usingCache().roots
-    assertOrderedEquals(roots, jdkRoot)
-    assertEquals(roots, OrderEnumerator.orderEntries(myModule).classes().usingCache().roots)
-    val rootsWithoutSdk = OrderEnumerator.orderEntries(myModule).withoutSdk().classes().usingCache().roots
+    val roots = OrderEnumerator.orderEntries(module).classes().usingCache().roots
+    assertOrderedEquals(roots, jdkJar)
+    assertEquals(roots, OrderEnumerator.orderEntries(module).classes().usingCache().roots)
+    val rootsWithoutSdk = OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().roots
     assertEmpty(rootsWithoutSdk)
-    assertEquals(roots, OrderEnumerator.orderEntries(myModule).classes().usingCache().roots)
-    assertEquals(rootsWithoutSdk, OrderEnumerator.orderEntries(myModule).withoutSdk().classes().usingCache().roots)
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary())
-    assertRoots(OrderEnumerator.orderEntries(myModule).classes().usingCache().pathsList, jdkRoot, jDomJar)
-    assertRoots(OrderEnumerator.orderEntries(myModule).withoutSdk().classes().usingCache().pathsList, jDomJar)
+    assertEquals(roots, OrderEnumerator.orderEntries(module).classes().usingCache().roots)
+    assertEquals(rootsWithoutSdk, OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().roots)
+    ModuleRootModificationUtil.addDependency(module, library)
+    assertRoots(OrderEnumerator.orderEntries(module).classes().usingCache().pathsList, jdkJar, libraryJar)
+    assertRoots(OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().pathsList, libraryJar)
   }
 
+  @Test
   fun testCachingUrls() {
-    val jdkUrl = rtJarJdk17.url
-    val computedUrls = com.intellij.util.containers.ContainerUtil.map(
-      OrderEnumerator.orderEntries(myModule).classes().usingCache().roots) { obj: VirtualFile -> obj.url }
-    val urls = OrderEnumerator.orderEntries(myModule).classes().usingCache().urls
+    val computedUrls = OrderEnumerator.orderEntries(module).classes().usingCache().roots.map { it.url }
+    val urls = OrderEnumerator.orderEntries(module).classes().usingCache().urls
     assertOrderedEquals(computedUrls, *urls)
-    assertOrderedEquals(urls, jdkUrl)
-    assertSame(urls, OrderEnumerator.orderEntries(myModule).classes().usingCache().urls)
-    val sourceUrls = OrderEnumerator.orderEntries(myModule).sources().usingCache().urls
+    assertOrderedEquals(urls, jdkJar.url)
+    assertSame(urls, OrderEnumerator.orderEntries(module).classes().usingCache().urls)
+    val sourceUrls = OrderEnumerator.orderEntries(module).sources().usingCache().urls
     assertEmpty(sourceUrls)
-    assertSame(urls, OrderEnumerator.orderEntries(myModule).classes().usingCache().urls)
-    assertSame(sourceUrls, OrderEnumerator.orderEntries(myModule).sources().usingCache().urls)
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary())
-    assertOrderedEquals(OrderEnumerator.orderEntries(myModule).classes().usingCache().urls, jdkUrl, jDomJar.url)
-    assertOrderedEquals(OrderEnumerator.orderEntries(myModule).sources().usingCache().urls, jDomSources.url)
+    assertSame(urls, OrderEnumerator.orderEntries(module).classes().usingCache().urls)
+    assertSame(sourceUrls, OrderEnumerator.orderEntries(module).sources().usingCache().urls)
+    ModuleRootModificationUtil.addDependency(module, library)
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).classes().usingCache().urls, jdkJar.url, libraryJar.url)
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).sources().usingCache().urls, librarySourcesZip.url)
   }
 
+  @Test
   fun testProject() {
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary())
-    val srcRoot = addSourceRoot(myModule, false)
-    val testRoot = addSourceRoot(myModule, true)
-    val output = setModuleOutput(myModule, false)
-    val testOutput = setModuleOutput(myModule, true)
-    assertClassRoots(OrderEnumerator.orderEntries(myProject).withoutSdk(), testOutput, output, jDomJar)
-    assertSourceRoots(OrderEnumerator.orderEntries(myProject).withoutSdk(), srcRoot, testRoot, jDomSources)
-    val modules: MutableList<com.intellij.openapi.module.Module> = java.util.ArrayList()
-    OrderEnumerator.orderEntries(myProject).forEachModule { e: com.intellij.openapi.module.Module -> modules.add(e) }
-    assertSameElements(modules, myModule)
+    ModuleRootModificationUtil.addDependency(module, library)
+    val srcRoot = addSourceRoot(module, false)
+    val testRoot = addSourceRoot(module, true)
+    val output = setModuleOutput(module, false)
+    val testOutput = setModuleOutput(module, true)
+    assertClassRoots(OrderEnumerator.orderEntries(projectModel.project).withoutSdk(), testOutput, output, libraryJar)
+    assertSourceRoots(OrderEnumerator.orderEntries(projectModel.project).withoutSdk(), srcRoot, testRoot, librarySourcesZip)
+    val modules = ArrayList<Module>()
+    runReadAction { OrderEnumerator.orderEntries(projectModel.project).forEachModule { modules.add(it) } }
+    assertSameElements(modules, module)
   }
 
+  @Test
   fun testModules() {
-    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary())
-    val srcRoot = addSourceRoot(myModule, false)
-    val testRoot = addSourceRoot(myModule, true)
-    val output = setModuleOutput(myModule, false)
-    val testOutput = setModuleOutput(myModule, true)
-    assertClassRoots(orderEntriesForModulesList(myModule).withoutSdk(),
-                                                   testOutput, output, jDomJar)
-    assertSourceRoots(orderEntriesForModulesList(myModule).withoutSdk(),
-                                                    srcRoot, testRoot, jDomSources)
+    ModuleRootModificationUtil.addDependency(module, library)
+    val srcRoot = addSourceRoot(module, false)
+    val testRoot = addSourceRoot(module, true)
+    val output = setModuleOutput(module, false)
+    val testOutput = setModuleOutput(module, true)
+    assertClassRoots(orderEntriesForModulesList(module).withoutSdk(),
+                     testOutput, output, libraryJar)
+    assertSourceRoots(orderEntriesForModulesList(module).withoutSdk(),
+                      srcRoot, testRoot, librarySourcesZip)
   }
 
-  private fun orderEntriesForModulesList(module: com.intellij.openapi.module.Module): OrderEnumerator {
-    return ProjectRootManager.getInstance(myProject).orderEntries(listOf(module))
+  private fun orderEntriesForModulesList(module: Module): OrderEnumerator {
+    return ProjectRootManager.getInstance(projectModel.project).orderEntries(listOf(module))
   }
 
+  @Test
   fun testDoNotAddJdkRootFromModuleDependency() {
-    val dep = createModule("dep")
-    ModuleRootModificationUtil.addDependency(myModule, dep)
-    ModuleRootModificationUtil.setModuleSdk(dep, getMockJdk17WithRtJarOnly())
-    ModuleRootModificationUtil.setModuleSdk(myModule, mockJdk18WithRtJarOnly)
-    registerTestProjectJdk(getMockJdk17WithRtJarOnly())
-    registerTestProjectJdk(mockJdk18WithRtJarOnly)
-    assertClassRoots(OrderEnumerator.orderEntries(dep), rtJarJdk17)
-    assertClassRoots(OrderEnumerator.orderEntries(myModule).recursively(), rtJarJdk18)
+    val dep = projectModel.createModule("dep")
+    ModuleRootModificationUtil.addDependency(module, dep)
+    val jdk2Jar = projectModel.baseProjectDir.newEmptyVirtualJarFile("jdk2.jar")
+    val sdk2 = projectModel.addSdk(projectModel.createSdk("my-jdk2")) {
+      it.addRoot(jdk2Jar, OrderRootType.CLASSES)
+    }
+    ModuleRootModificationUtil.setModuleSdk(dep, sdk2)
+    assertClassRoots(OrderEnumerator.orderEntries(dep), jdk2Jar)
+    assertClassRoots(OrderEnumerator.orderEntries(module).recursively(), jdkJar)
   }
 
+  @Test
   fun testModuleWithNoTestsNoProductionMustProvideNoOutputRoots() {
     addModuleRoots(false, false)
     assertClassUrls()
   }
 
   private fun assertClassUrls(vararg expectedUrls: String) {
-    val actual = OrderEnumerator.orderEntries(myModule).classes().usingCache().urls
-    assertSameElements(actual, *expectedUrls)
+    assertSameElements(OrderEnumerator.orderEntries(module).classes().usingCache().urls, *expectedUrls)
   }
 
+  @Test
   fun testModuleWithNoTestsMustNotProvideTestOutputRoots() {
     addModuleRoots(true, false)
     assertClassUrls(outputUrl(false))
   }
 
-  private fun outputUrl(isTest: Boolean): String {
-    return CompilerProjectExtension.getInstance(
-      myProject)!!.compilerOutputUrl + "/" + (if (isTest) "test" else "production") + "/" + myModule.name
-  }
-
+  @Test
   fun testModuleWithTestsButNoProductionMustNotProvideProductionOutputRoots() {
     addModuleRoots(false, true)
     assertClassUrls(outputUrl(true))
   }
 
+  @Test
   fun testModuleWithTestsAndProductionMustProvideBothOutputRoots() {
     addModuleRoots(true, true)
     assertClassUrls(outputUrl(false), outputUrl(true))
   }
 
   private fun addModuleRoots(addSources: Boolean, addTests: Boolean) {
-    val tmp = tempDir.createVirtualDir()
-    val contDir = HeavyPlatformTestCase.createChildDirectory(tmp, "content")
-    val outDir = HeavyPlatformTestCase.createChildDirectory(tmp, "out")
-    CompilerProjectExtension.getInstance(myProject)!!.compilerOutputUrl = outDir.url
-    CompilerModuleExtension.getInstance(myModule)!!.inheritCompilerOutputPath(true)
-    ModuleRootModificationUtil.updateModel(myModule) { model: ModifiableRootModel ->
-      val content = model.addContentEntry(contDir)
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    val outDir = projectModel.baseProjectDir.newVirtualDirectory("out")
+    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = outDir.url
+    ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
+      val content = model.addContentEntry(contentRoot)
       if (addSources) {
-        content.addSourceFolder(contDir.url + "/src", false)
+        content.addSourceFolder(contentRoot.url + "/src", false)
       }
       if (addTests) {
-        content.addSourceFolder(contDir.url + "/test", true)
+        content.addSourceFolder(contentRoot.url + "/test", true)
       }
-      val jdk = model.orderEntries.filterIsInstance<JdkOrderEntry>().first()
-      model.removeOrderEntry(jdk)
+      model.removeOrderEntry(model.orderEntries.filterIsInstance<JdkOrderEntry>().first())
     }
   }
 
-  companion object {
-    private fun assertClassRoots(enumerator: OrderEnumerator, vararg files: VirtualFile) {
-      assertEnumeratorRoots(enumerator.classes(), *files)
-    }
+  private fun outputUrl(isTest: Boolean): String {
+    return CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl + "/" + (if (isTest) "test" else "production") + "/" + module.name
+  }
 
-    private fun assertSourceRoots(enumerator: OrderEnumerator, vararg files: VirtualFile) {
-      assertEnumeratorRoots(enumerator.sources(), *files)
-    }
+  private fun addSourceRoot(module: Module, test: Boolean): VirtualFile {
+    val path = if (test) "test" else "src"
+    val type = if (test) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
+    return projectModel.addSourceRoot(module, path, type)
+  }
 
-    private fun assertEnumeratorRoots(rootsEnumerator: OrderRootsEnumerator, vararg files: VirtualFile) {
-      assertOrderedEquals(rootsEnumerator.roots, *files)
-      val expectedUrls = files.map { it.url }
-      assertOrderedEquals(rootsEnumerator.urls, *ArrayUtilRt.toStringArray(expectedUrls))
-    }
+  private fun setModuleOutput(module: Module, test: Boolean): VirtualFile {
+    val output = projectModel.baseProjectDir.newVirtualDirectory("${module.name}/out/${if (test) "tests" else "production"}")
+    PsiTestUtil.setCompilerOutputPath(module, output.url, test)
+    return output
+  }
+
+  private fun assertClassRoots(enumerator: OrderEnumerator, vararg files: VirtualFile) {
+    assertEnumeratorRoots(enumerator.classes(), *files)
+  }
+
+  private fun assertSourceRoots(enumerator: OrderEnumerator, vararg files: VirtualFile) {
+    assertEnumeratorRoots(enumerator.sources(), *files)
+  }
+
+  private fun assertEnumeratorRoots(rootsEnumerator: OrderRootsEnumerator, vararg files: VirtualFile) {
+    assertOrderedEquals(runReadAction { rootsEnumerator.roots }, *files)
+    val expectedUrls = files.map { it.url }
+    assertOrderedEquals(runReadAction { rootsEnumerator.urls }, *files.map { it.url }.toTypedArray())
   }
 }

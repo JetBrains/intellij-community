@@ -17,12 +17,16 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Assume
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
@@ -85,6 +89,17 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
     return moduleModel.newModule(generateImlPath(name), EmptyModuleType.EMPTY_MODULE)
+  }
+
+  fun addSourceRoot(module: Module, relativePath: String, rootType: JpsModuleSourceRootType<*>): VirtualFile {
+    val srcRoot = baseProjectDir.newVirtualDirectory("${module.name}/$relativePath")
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).systemIndependentPath)
+      val contentEntry = model.contentEntries.find { it.url == contentRootUrl } ?: model.addContentEntry(contentRootUrl)
+      require(contentEntry.sourceFolders.none { it.url == srcRoot.url }) { "Source folder $srcRoot already exists" }
+      contentEntry.addSourceFolder(srcRoot, rootType)
+    }
+    return srcRoot
   }
 
   private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
