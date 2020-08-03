@@ -55,7 +55,7 @@ class PluginChunkDataSource(
 
   private fun getRange(range: String): ArrayList<ByteArray> {
     val result = ArrayList<ByteArray>()
-    HttpRequests.requestWithRange(newPluginUrl, range).gzip(false).connect { request ->
+    HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
       val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
       request.inputStream.buffered().use { input ->
         for (length in curRangeChunkLengths) {
