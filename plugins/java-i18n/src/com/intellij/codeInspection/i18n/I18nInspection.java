@@ -70,7 +70,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath")
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("long"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("char"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "toString"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "toString"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "toString"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
   @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>|&\\w+;";
   private static final CallMatcher STRING_LENGTH =
