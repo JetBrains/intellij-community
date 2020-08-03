@@ -203,6 +203,7 @@ public class PyPIPackageUtil {
   private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
+    if (project.isDisposed()) return null;
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
