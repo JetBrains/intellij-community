@@ -68,11 +68,12 @@ class DumbServiceHeavyActivities {
   }
 
   private void suspendIfRequested(ProgressSuspender suspender) {
+    String suspendedReason;
     synchronized (myRequestedSuspensions) {
-      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
-      if (suspendedReason != null) {
-        suspender.suspendProcess(suspendedReason);
-      }
+      suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+    }
+    if (suspendedReason != null) {
+      suspender.suspendProcess(suspendedReason);
     }
   }
 
