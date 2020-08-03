@@ -29,6 +29,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -152,8 +154,11 @@ public final class ActionMenu extends JBMenu {
 
     myStubItem = macSystemMenu ? null : new StubItem();
     addStubItem();
-    addMenuListener(new MenuListenerImpl());
     setBorderPainted(false);
+
+    MenuListenerImpl menuListener = new MenuListenerImpl();
+    addMenuListener(menuListener);
+    getModel().addChangeListener(menuListener);
 
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
@@ -235,8 +240,30 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  private class MenuListenerImpl implements MenuListener {
+  private class MenuListenerImpl implements ChangeListener, MenuListener {
+    boolean isSelected = false;
+
     boolean myIsHidden = false;
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      // Re-implement javax.swing.JMenu.MenuChangeListener to avoid recursive event notifications
+      // if 'menuSelected' fires unrelated 'stateChanged' event, without changing 'model.isSelected()' value.
+      ButtonModel model = (ButtonModel)e.getSource();
+      boolean modelSelected = model.isSelected();
+
+      if (modelSelected != isSelected) {
+        isSelected = modelSelected;
+
+        if (modelSelected) {
+          menuSelected();
+        }
+        else {
+          menuDeselected();
+        }
+      }
+    }
+
     @Override
     public void menuCanceled(MenuEvent e) {
       onMenuHidden();
@@ -244,6 +271,15 @@ public final class ActionMenu extends JBMenu {
 
     @Override
     public void menuDeselected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    @Override
+    public void menuSelected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    private void menuDeselected() {
       if (myDisposable != null) {
         Disposer.dispose(myDisposable);
         myDisposable = null;
@@ -286,8 +322,7 @@ public final class ActionMenu extends JBMenu {
       }
     }
 
-    @Override
-    public void menuSelected(MenuEvent e) {
+    private void menuSelected() {
       UsabilityHelper helper = new UsabilityHelper(ActionMenu.this);
       if (myDisposable == null) {
         myDisposable = Disposer.newDisposable();
