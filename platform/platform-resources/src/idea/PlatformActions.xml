@@ -826,8 +826,6 @@
       <reference ref="PinActiveEditorTab"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
-      <reference ref="NextTab"/>
-      <reference ref="PreviousTab"/>
       <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
