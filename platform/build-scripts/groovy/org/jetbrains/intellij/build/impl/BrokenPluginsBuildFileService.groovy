@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 @CompileStatic
 final class BrokenPluginsBuildFileService {
-  private BrokenPluginsBuildFileService(BuildContext context) {
+  BrokenPluginsBuildFileService(BuildContext context) {
     myBuildContext = context
   }
 
@@ -26,9 +26,6 @@ final class BrokenPluginsBuildFileService {
   private static final String MARKETPLACE_BROKEN_PLUGINS_URL = "/files/brokenPlugins.json"
   private Gson gson = new Gson()
 
-  static BrokenPluginsBuildFileService withContext(BuildContext context) {
-    return BrokenPluginsBuildFileService(context)
-  }
 
   def buildFile() {
     myBuildContext.messages.progress("Start to build $BROKEN_PLUGINS_FILE_NAME")
