@@ -245,6 +245,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (ref.getSort() == TypeReference.CLASS_TYPE_PARAMETER_BOUND) {
       info = myClassInfo.typeParameters.getBoundType(ref);
     }
+    else if (ref.getSort() == TypeReference.CLASS_TYPE_PARAMETER) {
+      info = myClassInfo.typeParameters.getParameterType(ref);
+    }
     else if (ref.getSort() == TypeReference.CLASS_EXTENDS) {
       int index = ref.getSuperTypeIndex();
       if (index == -1) {
@@ -266,6 +269,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   public void visitEnd() {
     if (myAnnoBuilders != null) {
       myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
+      myClassInfo.typeParameters.createTypeParameterAnnotations(myResult);
     }
   }
 
@@ -636,6 +640,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
           info = myParamStubs[parameterIndex].getType(false);
         }
       }
+      else if (ref.getSort() == TypeReference.METHOD_TYPE_PARAMETER) {
+        info = myMethodInfo.typeParameters.getParameterType(ref);
+      }
       else if (ref.getSort() == TypeReference.METHOD_TYPE_PARAMETER_BOUND) {
         info = myMethodInfo.typeParameters.getBoundType(ref);
       }
@@ -657,6 +664,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     public void visitEnd() {
       if (myAnnoBuilders != null) {
         myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
+        myMethodInfo.typeParameters.createTypeParameterAnnotations(myOwner);
       }
     }
 

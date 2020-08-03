@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
@@ -128,6 +129,19 @@ public class TypeAnnotationContainer {
         return result.toArray(PsiAnnotation.EMPTY_ARRAY);
       }
     };
+  }
+
+  /**
+   * Creates PsiAnnotationStub elements for top-level annotations in this container
+   * 
+   * @param parent parent stub
+   */
+  public void createAnnotationStubs(StubElement<?> parent) {
+    for (TypeAnnotationEntry entry : myList) {
+      if (entry.myPath.length == 0) {
+        new PsiAnnotationStubImpl(parent, entry.myText);
+      }
+    }
   }
 
   /**

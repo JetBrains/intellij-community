@@ -4,7 +4,7 @@
 
 package pkg;
 
-public interface TypeAnno <T extends java.lang.@pkg.TA(11) Object> extends java.io.@pkg.TA(12) Serializable, java.lang.@pkg.TA(13) Comparable<@pkg.TA(14) T> {
+public interface TypeAnno <@pkg.TA(value=10) T extends java.lang.@pkg.TA(11) Object> extends java.io.@pkg.TA(12) Serializable, java.lang.@pkg.TA(13) Comparable<@pkg.TA(14) T> {
     java.lang.@pkg.TA(0) String field = "";
 
     java.util.@pkg.TA(-1) List<java.lang.@pkg.TA String> get1TypeParam();
@@ -36,6 +36,8 @@ public interface TypeAnno <T extends java.lang.@pkg.TA(11) Object> extends java.
     <M extends java.lang.@pkg.TA(0) CharSequence & java.io.@pkg.TA(1) Serializable> @pkg.TA(2) M getTypeParameter2();
 
     <M extends java.lang.@pkg.TA(0) Object & java.util.@pkg.TA(1) List<@pkg.TA(2) ? super java.lang.@pkg.TA(3) String @pkg.TA(4) []>, N extends java.lang.@pkg.TA(5) Object, P> @pkg.TA(6) M getTypeParameterComplex();
+
+    <@pkg.TA(value=0) @pkg.TP(value=1) M extends java.lang.@pkg.TA(2) CharSequence, @pkg.TA(value=3) N extends java.lang.@pkg.TA(4) Number, @pkg.TP(value=5) P> @pkg.TA(6) P getTypeParametersAnnotated();
 
     pkg.@pkg.TA(0) Outer.@pkg.TA(1) Middle.@pkg.TA(2) Inner getInner();
 

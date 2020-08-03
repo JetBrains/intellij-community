@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.TypeReference;
@@ -47,26 +48,51 @@ public final class SignatureParsing {
       return null;
     }
 
+    TypeInfo getParameterType(TypeReference ref) {
+      int typeParameterIndex = ref.getTypeParameterIndex();
+      if (typeParameterIndex < myDeclarations.size()) {
+        return myDeclarations.get(typeParameterIndex).myTypeParameter;
+      }
+      return null;
+    }
+
     void createTypeParameterList(StubElement<?> parent) {
       PsiTypeParameterListStub listStub = new PsiTypeParameterListStubImpl(parent);
       for (TypeParameterDeclaration parameter : this.myDeclarations) {
-        PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(listStub, parameter.myTypeParameter);
-        TypeInfo[] info = parameter.myBounds;
-        if (info.length > 0 && info[0].text == null) {
-          info = Arrays.copyOfRange(info, 1, info.length);
+        parameter.createTypeParameter(listStub);
+      }
+    }
+
+    void createTypeParameterAnnotations(StubElement<?> parent) {
+      PsiTypeParameterListStub listStub = parent.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+      if (listStub == null) return;
+      for (StubElement<?> stub : listStub.getChildrenStubs()) {
+        if (!(stub instanceof PsiTypeParameterStub)) continue;
+        TypeParameterDeclaration declaration = ContainerUtil.find(myDeclarations, decl -> decl.myStub == stub);
+        if (declaration != null) {
+          declaration.myTypeParameter.getTypeAnnotations().createAnnotationStubs(stub);
         }
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, info);
       }
     }
   }
 
   private static class TypeParameterDeclaration {
-    private final String myTypeParameter;
+    private final TypeInfo myTypeParameter;
     private final TypeInfo[] myBounds;
+    private PsiTypeParameterStub myStub;
 
     private TypeParameterDeclaration(String parameter, TypeInfo[] bounds) {
-      myTypeParameter = parameter;
+      myTypeParameter = new TypeInfo(parameter);
       myBounds = bounds;
+    }
+
+    private void createTypeParameter(PsiTypeParameterListStub listStub) {
+      myStub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text);
+      TypeInfo[] info = this.myBounds;
+      if (info.length > 0 && info[0].text == null) {
+        info = Arrays.copyOfRange(info, 1, info.length);
+      }
+      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, myStub, info);
     }
   }
 

@@ -4,6 +4,7 @@ PsiJavaFileStub []
     PsiTypeParameterListStub
       PsiTypeParameter[T]
         PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object]
+        PsiAnnotationStub[@TA(value=10)]
     PsiRefListStub[EXTENDS_LIST:java.io.Serializable]
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiFieldStub[field:java.lang.String=""]

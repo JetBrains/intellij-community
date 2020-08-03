@@ -7,6 +7,7 @@ import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -15,7 +16,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -279,6 +282,9 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    for (PsiAnnotationStub annotation : getStub().getAnnotations()) {
+      buffer.append(annotation.getText()).append(" ");
+    }
     buffer.append(getName());
     appendText(getExtendsList(), indentLevel, buffer);
   }
@@ -291,7 +297,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return PsiElement.EMPTY_ARRAY;
+    return ArrayUtil.append(getAnnotations(), getExtendsList(), PsiElement.class);
   }
 
   @Override
@@ -321,15 +327,14 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return PsiClassImplUtil.getClassUseScope(this);
   }
 
-  //todo parse annotataions
   @Override
   public PsiAnnotation @NotNull [] getAnnotations() {
-    return PsiAnnotation.EMPTY_ARRAY;
+    return ContainerUtil.map2Array(getStub().getAnnotations(), PsiAnnotation.class, stub ->stub.getPsi());
   }
 
   @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    return null;
+    return ContainerUtil.find(getAnnotations(), anno -> anno.hasQualifiedName(qualifiedName));
   }
 
   @Override
