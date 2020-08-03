@@ -75,10 +75,16 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
   @NotNull
   protected SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> createShortenClasspath(ModuleClasspathCombo classpathCombo,
-                                                                                                          SettingsEditorFragment<T, JrePathEditor> jrePath) {
+                                                                                                            SettingsEditorFragment<T, JrePathEditor> jrePath,
+                                                                                                            boolean productionOnly) {
     ShortenCommandLineModeCombo combo =
       new ShortenCommandLineModeCombo(myProject, jrePath.component(), () -> classpathCombo.getSelectedModule(),
-                                      listener -> classpathCombo.addActionListener(listener));
+                                      listener -> classpathCombo.addActionListener(listener)) {
+        @Override
+        protected boolean productionOnly() {
+          return productionOnly;
+        }
+      };
     LabeledComponent<ShortenCommandLineModeCombo> component = LabeledComponent.create(combo,
                                                                                       ExecutionBundle.message("application.configuration.shorten.command.line.label"),
                                                                                       BorderLayout.WEST);

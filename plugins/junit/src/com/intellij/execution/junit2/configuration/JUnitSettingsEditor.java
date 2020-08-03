@@ -26,6 +26,6 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     DefaultJreSelector jreSelector = DefaultJreSelector.fromModuleDependencies(classpathCombo, false);
     SettingsEditorFragment<JUnitConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
-    fragments.add(createShortenClasspath(classpathCombo, jrePath));
+    fragments.add(createShortenClasspath(classpathCombo, jrePath, false));
   }
 }
