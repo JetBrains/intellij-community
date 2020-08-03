@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,9 @@ import java.util.Set;
  * Creates map or set with canonicalized path hash strategy.
  */
 public final class FileCollectionFactory {
-  private static final Hash.Strategy<File> FILE_HASH_STRATEGY = new Hash.Strategy<File>() {
+  private interface SerializableHashStrategy<T> extends Hash.Strategy<T>, Serializable {}
+
+  private static final Hash.Strategy<File> FILE_HASH_STRATEGY = new SerializableHashStrategy<File>() {
     @Override
     public int hashCode(@Nullable File o) {
       return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
@@ -31,7 +34,7 @@ public final class FileCollectionFactory {
     }
   };
 
-  private static final Hash.Strategy<String> FILE_PATH_HASH_STRATEGY = new Hash.Strategy<String>() {
+  private static final Hash.Strategy<String> FILE_PATH_HASH_STRATEGY = new SerializableHashStrategy<String>() {
     @Override
     public int hashCode(@Nullable String value) {
       return FileUtilRt.pathHashCode(value);
