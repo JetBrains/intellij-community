@@ -127,17 +127,18 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             String i18NText =
               dialog.getI18NText(data.getKey(), data.getValue(), JavaI18nUtil.composeParametersText(data.getContextData().getArgs()));
 
+            PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             PsiExpression expression;
             try {
-              expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(i18NText, psiElement);
+              expression = elementFactory.createExpressionFromText(i18NText, psiElement);
               if (language == JavaLanguage.INSTANCE) {
                 JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement.replace(expression));
                 continue;
               }
             }
             catch (IncorrectOperationException e) {
-              LOG.error(e);
-              continue;
+              LOG.debug(e);
+              expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.getKey(), data.getValue(), ""), psiElement);
             }
             
             @Nullable Couple<String> callDescriptor = getCallDescriptor(expression);
