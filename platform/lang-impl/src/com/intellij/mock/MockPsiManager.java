@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class MockPsiManager extends PsiManagerEx {
+public class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new HashMap<>();
   private MockFileManager myMockFileManager;
