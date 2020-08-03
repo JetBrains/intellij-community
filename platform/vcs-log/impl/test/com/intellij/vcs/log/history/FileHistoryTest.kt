@@ -18,7 +18,6 @@ import gnu.trove.TIntObjectHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
-import org.junit.Ignore
 import org.junit.Test
 
 class FileHistoryTest {
@@ -395,7 +394,6 @@ class FileHistoryTest {
    * This means that when computing file history, it is important to walk commits parents in a specific order to correctly track file through a rename.
    */
   @Test
-  @Ignore
   fun historyWithUndetectedNonTrivialRename() {
     val after = LocalFilePath("after.txt", false)
     val before = LocalFilePath("before.txt", false)
