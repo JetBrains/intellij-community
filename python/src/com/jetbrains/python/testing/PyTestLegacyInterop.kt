@@ -84,7 +84,7 @@ class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newCo
    *
    * Null means "false" and used here to prevent saving useless "false" value in .xml for new configurations.
    */
-  @ConfigField
+  @ConfigField("runcfg.pytest.config.parameters") // Fake i18n, which will be deleted soon along with outdated code
   var legacyInformationCopiedToNew: Boolean? = null
 
   init {
