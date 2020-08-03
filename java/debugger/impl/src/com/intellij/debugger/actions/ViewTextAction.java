@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -121,7 +122,7 @@ public class ViewTextAction extends XFetchValueActionBase {
         DebuggerUIUtil.setTreeNodeValue(myStringNode,
                                         XExpressionImpl.fromText(
                                           StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText()))),
-                                        errorMessage -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
+                                        (@NlsContexts.DialogMessage String errorMessage) -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
       }
       super.doOKAction();
     }

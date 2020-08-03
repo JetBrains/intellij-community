@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -190,7 +191,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   private abstract static class ProxyBasedAction extends AnAction {
     protected final ProcessHandler myProcessHandler;
 
-    protected ProxyBasedAction(String text, String description, Icon icon, ProcessHandler processHandler) {
+    protected ProxyBasedAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, ProcessHandler processHandler) {
       super(text, description, icon);
       myProcessHandler = processHandler;
     }

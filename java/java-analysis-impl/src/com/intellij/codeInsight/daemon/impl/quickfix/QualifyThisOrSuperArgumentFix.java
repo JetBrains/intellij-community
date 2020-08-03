@@ -59,7 +59,7 @@ public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myExpression.isValid()) return false;
     if (!myPsiClass.isValid()) return false;
-    myText = "Qualify " + getQualifierText() + " expression with '" + myPsiClass.getQualifiedName() + "'";
+    myText = JavaAnalysisBundle.message("intention.name.qualify.expression", getQualifierText(), myPsiClass.getQualifiedName());
     return true;
   }
 

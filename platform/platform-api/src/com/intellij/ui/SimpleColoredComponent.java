@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1154,7 +1155,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  public interface ColoredIterator extends Iterator<String> {
+  public interface ColoredIterator extends Iterator<@NlsSafe String> {
     int getOffset();
 
     int getEndOffset();

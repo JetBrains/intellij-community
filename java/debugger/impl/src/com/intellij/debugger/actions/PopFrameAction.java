@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.UIBundle;
@@ -46,6 +47,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,9 +99,9 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
   }
 
   static boolean evaluateFinallyBlocks(Project project,
-                                String title,
-                                JavaStackFrame stackFrame,
-                                XDebuggerEvaluator.XEvaluationCallback callback) {
+                                       @Nls String title,
+                                       JavaStackFrame stackFrame,
+                                       XDebuggerEvaluator.XEvaluationCallback callback) {
     if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
       List<PsiStatement> statements = getFinallyStatements(project, stackFrame.getDescriptor().getSourcePosition());
       if (!statements.isEmpty()) {
@@ -192,7 +194,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     }
   }
 
-  static void showError(Project project, String message, String title) {
+  static void showError(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title) {
     ApplicationManager.getApplication().invokeLater(
       () -> Messages.showMessageDialog(project, message, title, Messages.getErrorIcon()),
       ModalityState.any());

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -38,7 +39,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
     }
 
     private Module myModule;
-    private String myOptionName;
+    private @NlsSafe String myOptionName;
     public boolean myOptionValue;
   }
 

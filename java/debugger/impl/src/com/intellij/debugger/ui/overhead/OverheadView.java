@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
@@ -212,7 +213,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     private final Function<? super OverheadProducer, Long> myGetter;
 
-    TimingColumnInfo(@NotNull String name, Function<? super OverheadProducer, Long> getter) {
+    TimingColumnInfo(@NotNull @NlsContexts.ColumnName String name, Function<? super OverheadProducer, Long> getter) {
       super(name);
       myGetter = getter;
     }
@@ -242,7 +243,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
           if (value instanceof OverheadProducer) {
             OverheadProducer overheadProducer = (OverheadProducer)value;
             Long val = myGetter.apply(overheadProducer);
-            append(val != null ? String.valueOf(val) : "",
+            append(val != null ? val.toString() : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }

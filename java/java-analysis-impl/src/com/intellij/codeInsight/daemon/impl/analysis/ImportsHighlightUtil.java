@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStaticStatement;
@@ -23,7 +24,7 @@ public final class ImportsHighlightUtil {
         if (resolve != null) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(ObjectUtils.notNull(ref.getReferenceNameElement(), ref))
-            .descriptionAndTooltip("Class " + ref.getCanonicalText() + " not found").create();
+            .descriptionAndTooltip(JavaAnalysisBundle.message("error.class.not.found", ref.getCanonicalText())).create();
         }
       }
     }

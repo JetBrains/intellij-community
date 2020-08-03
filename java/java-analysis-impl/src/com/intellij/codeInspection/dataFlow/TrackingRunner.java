@@ -454,11 +454,11 @@ public final class TrackingRunner extends DataFlowRunner {
   }
 
   static class RangeDfaProblemType extends DfaProblemType {
-    final @NotNull String myTemplate;
+    final @NotNull @Nls String myTemplate;
     final @NotNull LongRangeSet myRangeSet;
     final @Nullable PsiPrimitiveType myType;
 
-    RangeDfaProblemType(@NotNull String template, @NotNull LongRangeSet set, @Nullable PsiPrimitiveType type) {
+    RangeDfaProblemType(@NotNull @Nls String template, @NotNull LongRangeSet set, @Nullable PsiPrimitiveType type) {
       myTemplate = template;
       myRangeSet = set;
       myType = type;
@@ -1250,7 +1250,7 @@ public final class TrackingRunner extends DataFlowRunner {
 
   @NotNull
   private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiMethodCallExpression call,
-                                       @NotNull PsiMethod method, @NotNull String prefix, @NotNull MethodContract contract) {
+                                       @NotNull PsiMethod method, @NotNull @Nls String prefix, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     String conditionsText = StringUtil.join(conditions, c -> c.getPresentationText(method), " and ");
     String returnValueText = contract.getReturnValue().isFail() ? "throws exception" : "returns '" + contract.getReturnValue() + "' value";

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
@@ -224,7 +225,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return getProcess().getProject();
   }
 
-  public String getSessionName() {
+  public @NlsSafe String getSessionName() {
     return mySessionName;
   }
 

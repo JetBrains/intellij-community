@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -564,7 +565,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NotNull String aFileName) {
+  public static @NlsSafe String toSystemDependentName(@NotNull String aFileName) {
     return FileUtilRt.toSystemDependentName(aFileName);
   }
 

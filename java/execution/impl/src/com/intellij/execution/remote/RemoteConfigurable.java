@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -24,6 +25,7 @@ import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -310,7 +312,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     return mainPanel;
   }
 
-  private static JLabel createLabelFor(String labelText, JComponent forComponent) {
+  private static JLabel createLabelFor(@NlsContexts.Label String labelText, JComponent forComponent) {
     JLabel label = new JLabel();
     LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(labelText).setToLabel(label);
     label.setLabelFor(forComponent);

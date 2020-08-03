@@ -106,7 +106,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @see #getNameSequence()
    */
-  public abstract @NotNull String getName();
+  public abstract @NotNull @NlsSafe String getName();
 
   public @NotNull CharSequence getNameSequence() {
     return getName();
@@ -128,7 +128,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    * @see #toNioPath()
    */
-  public abstract @NotNull String getPath();
+  public abstract @NotNull @NlsSafe String getPath();
 
   /**
    * @return a related {@link Path} for a given virtual file where possible otherwise an

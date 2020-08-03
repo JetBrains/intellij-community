@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -145,7 +146,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
+  public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final @NlsContexts.DialogTitle String title) {
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, null);
     return dialog.showAndGet() ? dialog.getChosenElements() : Collections.emptyList();
   }

@@ -22,6 +22,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +33,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class GetJPDADialog extends DialogWrapper {
-  private static final @NonNls String JPDA_URL = "http://java.sun.com/products/jpda";
+  private static final @NlsSafe String JPDA_URL = "http://java.sun.com/products/jpda";
 
   public GetJPDADialog() {
     super(false);

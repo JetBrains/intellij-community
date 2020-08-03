@@ -4,6 +4,7 @@ package com.intellij.compiler.backwardRefs.view;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TestCompilerHierarchyBaseAction extends TestCompilerReferenceServiceAction {
-  public TestCompilerHierarchyBaseAction(String text) {
+  public TestCompilerHierarchyBaseAction(@NlsActions.ActionText String text) {
     super(text);
   }
 

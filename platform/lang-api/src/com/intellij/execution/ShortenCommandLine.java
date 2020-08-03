@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +31,10 @@ public enum ShortenCommandLine {
     }
   };
 
-  private final String myPresentableName;
-  private final String myDescription;
+  private final @NlsContexts.Label String myPresentableName;
+  private final @NlsContexts.Label String myDescription;
 
-  ShortenCommandLine(String presentableName, String description) {
+  ShortenCommandLine(@NlsContexts.Label String presentableName, @NlsContexts.Label String description) {
     myPresentableName = presentableName;
     myDescription = description;
   }
@@ -42,11 +43,11 @@ public enum ShortenCommandLine {
     return true;
   }
 
-  public String getDescription() {
+  public @NlsContexts.Label String getDescription() {
     return myDescription;
   }
 
-  public String getPresentableName() {
+  public @NlsContexts.Label String getPresentableName() {
     return myPresentableName;
   }
 

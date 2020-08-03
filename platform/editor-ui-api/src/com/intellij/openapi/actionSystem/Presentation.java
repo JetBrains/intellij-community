@@ -140,12 +140,13 @@ public final class Presentation implements Cloneable {
 
   private static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
   
-  public String getText() {
+  public @ActionText String getText() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     String text = textWithMnemonic == null ? null : textWithMnemonic.getText();
 
     if (text != null && Boolean.TRUE.equals(getClientProperty(STRIP_MNEMONIC))) {
       Matcher matcher = MNEMONIC.matcher(text);
+      //noinspection HardCodedStringLiteral
       return matcher.replaceAll("");
     }
     return text;
@@ -255,7 +256,7 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic.toString();
   }
 
-  public String getDescription() {
+  public @ActionDescription String getDescription() {
     return myDescriptionSupplier.get();
   }
 

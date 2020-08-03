@@ -43,7 +43,7 @@ public enum LanguageLevel {
   public static final LanguageLevel HIGHEST = JDK_14;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
-  private final String myPresentableText;
+  private final @Nls String myPresentableText;
   private final JavaVersion myVersion;
   private final boolean myPreview;
 

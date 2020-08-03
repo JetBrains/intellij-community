@@ -395,7 +395,7 @@ public final class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
+  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
     LocalQuickFixAndIntentionActionOnPsiElement fix =
       QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
     return annotationError(annotation, message, fix);
