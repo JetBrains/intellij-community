@@ -28,7 +28,5 @@ class SpaceScriptDefinitionsProvider : ScriptDefinitionsProvider {
     return listOf(jarPath)
   }
 
-  override fun useDiscovery(): Boolean {
-    return true
-  }
+  override fun useDiscovery() = false
 }
