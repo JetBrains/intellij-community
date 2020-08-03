@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
@@ -237,7 +238,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
       if (PsiType.CHAR.equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
-        throw new MalformedPatternException("Bad character literal");
+        throw new MalformedPatternException(SSRBundle.message("error.bad.character.literal"));
       }
       if (handler != null) {
         expression.putUserData(CompiledPattern.HANDLER_KEY, handler);
@@ -245,7 +246,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     else {
       if (!PsiType.NULL.equals(expression.getType()) && expression.getValue() == null) {
-        throw new MalformedPatternException("Bad literal");
+        throw new MalformedPatternException(SSRBundle.message("error.bad.literal"));
       }
     }
     super.visitLiteralExpression(expression);

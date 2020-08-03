@@ -88,12 +88,12 @@ public class Matcher {
     else {
       final Set<String> set = ourRecursionGuard.get();
       if (!set.add(constraint)) {
-        throw new MalformedPatternException("Pattern recursively references itself");
+        throw new MalformedPatternException(SSRBundle.message("error.pattern.recursively.references.itself"));
       }
       try {
         final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(constraint);
         if (configuration == null) {
-          throw new MalformedPatternException("Configuration '" + constraint + "' not found");
+          throw new MalformedPatternException(SSRBundle.message("error.configuration.0.not.found", constraint));
         }
         return new Matcher(project, configuration.getMatchOptions());
       } finally {
