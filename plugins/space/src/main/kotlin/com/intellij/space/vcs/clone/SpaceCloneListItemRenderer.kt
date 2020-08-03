@@ -3,6 +3,7 @@ package com.intellij.space.vcs.clone
 import circlet.client.api.PR_RepositoryInfo
 import circlet.client.api.RepoDetails
 import com.intellij.icons.AllIcons
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.VerticalLayout
@@ -70,7 +71,10 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
       repoDetailsComponent.append(details, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     else {
-      repoDetailsComponent.append("Loading...", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      repoDetailsComponent.append(
+        SpaceBundle.message("clone.dialog.projects.list.repository.description.loading"),
+        SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
+      )
     }
 
     val model = list.model
@@ -81,12 +85,18 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
     }
 
     projectNameComponent.clear()
-    projectNameComponent.append(value.project.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+
+    val spaceProject = value.project
+    projectNameComponent.append(spaceProject.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     starLabel.icon = if (value.starred) starIcon else EmptyIcon.ICON_13
 
-    val description: String =
-      if (value.project.description.isNullOrBlank()) "Project key: ${value.project.key.key}"
-      else value.project.description as String
+    val projectDescription = spaceProject.description
+    val description = if (projectDescription.isNullOrBlank()) {
+      SpaceBundle.message("clone.dialog.projects.list.project.description", spaceProject.key.key)
+    }
+    else {
+      projectDescription
+    }
     projectDescriptionComponent.clear()
     projectDescriptionComponent.append(description, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     return JPanel(VerticalLayout(0)).apply {
@@ -98,6 +108,12 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
   }
 
   private fun buildDetailsString(repoDetails: RepoDetails, repo: PR_RepositoryInfo) = with(repoDetails) {
-    "${FileUtil.formatFileSize(size.size, withWhitespace = true)}   $totalBranches branches   $totalCommits commits   ${repo.description}"
+    SpaceBundle.message(
+      "clone.dialog.projects.list.repository.description",
+      FileUtil.formatFileSize(size.size, withWhitespace = true),
+      totalCommits,
+      totalBranches,
+      repo.description
+    )
   }
 }
