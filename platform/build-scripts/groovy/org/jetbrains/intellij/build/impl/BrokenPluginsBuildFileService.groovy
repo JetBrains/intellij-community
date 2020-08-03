@@ -38,7 +38,7 @@ final class BrokenPluginsBuildFileService {
     List<MarketplaceBrokenPlugin> allBrokenPlugins = downloadFileFromMarketplace(url)
     Map<String, Set<String>> currentBrokenPlugins = filterBrokenPluginForCurrentIDE(allBrokenPlugins)
     storeBrokenPlugin(currentBrokenPlugins)
-    myBuildContext.messages.info("Broken plugins was updated.")
+    myBuildContext.messages.info("$BROKEN_PLUGINS_FILE_NAME was updated.")
   }
 
   private List<MarketplaceBrokenPlugin> downloadFileFromMarketplace(String uri) {
