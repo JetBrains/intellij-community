@@ -2,7 +2,6 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -96,7 +95,7 @@ public final class VcsImplUtil {
   private static void generateIgnoreFile(@NotNull Project project,
                                          @NotNull AbstractVcs vcs,
                                          @NotNull VirtualFile ignoreFileRoot, boolean notify) {
-    IgnoredFileGenerator ignoredFileGenerator = ServiceManager.getService(project, IgnoredFileGenerator.class);
+    IgnoredFileGenerator ignoredFileGenerator = project.getService(IgnoredFileGenerator.class);
     if (ignoredFileGenerator == null) {
       LOG.debug("Cannot find ignore file ignoredFileGenerator for " + vcs.getName() + " VCS");
       return;

@@ -19,7 +19,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
-    <notificationWhitelist groupIds="Compile Output Loader;Compile Output Loader Status"/>
+    <notificationAllowlist groupIds="Compile Output Loader;Compile Output Loader Status"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
   </extensions>
 

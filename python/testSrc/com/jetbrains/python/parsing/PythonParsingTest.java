@@ -936,6 +936,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-41305
+  public void testExpressionsInDecorators() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

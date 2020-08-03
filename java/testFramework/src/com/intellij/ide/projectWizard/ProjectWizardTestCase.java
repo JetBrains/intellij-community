@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -181,13 +180,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void createWizard(@Nullable Project project) throws IOException {
-    File directory = FileUtil.createTempDirectory(getName(), "new", false);
-    myFilesToDelete.add(directory);
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
       myWizard = null;
     }
-    myWizard = createWizard(project, directory);
+    myWizard = createWizard(project, createTempDirectoryWithSuffix("new").toFile());
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 

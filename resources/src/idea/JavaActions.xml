@@ -150,8 +150,8 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action internal="true" id="TestParseEventLogWhitelistAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction">
+    <action internal="true" id="TestParseEventsSchemeAction"
+            class="com.intellij.internal.statistic.actions.TestParseEventsSchemeAction">
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"

@@ -42,8 +42,7 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
 
-    TempDirTestFixture tempDirFixture = createTempDirTestFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();

@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.*;
@@ -53,6 +54,9 @@ public class ProjectProblemPassUtils {
 
   private static final Key<Long> PREV_MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
 
+  private static final String RELATED_PROBLEMS_CLICKED_EVENT_ID = "related.problems.clicked";
+
+
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
                                                     @NotNull Document document,
@@ -82,6 +86,8 @@ public class ProjectProblemPassUtils {
   }
 
   private static void showProblems(@NotNull PsiMember member, @NotNull Set<Problem> relatedProblems) {
+    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaLensProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
+
     Project project = member.getProject();
     if (relatedProblems.size() == 1) {
       Problem problem = relatedProblems.iterator().next();
@@ -135,22 +141,25 @@ public class ProjectProblemPassUtils {
   }
 
   static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                    @NotNull PsiMember member,
                                                     @NotNull PsiElement identifier,
                                                     @NotNull Set<Problem> relatedProblems) {
     ShowRelatedProblemsAction relatedProblemsAction = new ShowRelatedProblemsAction(relatedProblems);
-    return createHighlightInfo(editor, identifier, relatedProblemsAction);
+    return createHighlightInfo(editor, member, identifier, relatedProblemsAction);
   }
 
   private static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                            @NotNull PsiMember member,
                                                             @NotNull PsiElement identifier,
                                                             @NotNull IntentionAction action) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
+    String memberName = UsageViewUtil.getLongName(member);
 
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
-      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
+      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", memberName))
       .createUnconditionally();
 
     QuickFixAction.registerQuickFixAction(info, action);
@@ -207,7 +216,7 @@ public class ProjectProblemPassUtils {
           if (!identifier.getTextRange().equalsToRange(oldHighlightInfo.getActualStartOffset(), oldHighlightInfo.getActualEndOffset())) {
             IntentionAction action = getRegisteredAction(oldHighlightInfo);
             if (action != null) {
-              HighlightInfo newHighlightInfo = createHighlightInfo(editor, identifier, action);
+              HighlightInfo newHighlightInfo = createHighlightInfo(editor, member, identifier, action);
               UpdateHighlightersUtil.setHighlightersToEditor(member.getProject(), editor.getDocument(), 0,
                                                              member.getContainingFile().getTextLength(),
                                                              Collections.singletonList(newHighlightInfo), editor.getColorsScheme(), -1);

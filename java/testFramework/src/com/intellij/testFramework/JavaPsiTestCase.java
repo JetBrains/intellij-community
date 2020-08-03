@@ -80,8 +80,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   @NotNull
   protected VirtualFile createTempVfsDirectory() throws IOException {
     File dir = createTempDirectory();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assert vDir != null : dir;
     return vDir;
   }

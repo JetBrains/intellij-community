@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.impl.DomInvocationHandler;
@@ -69,6 +70,9 @@ public final class DomExtenderEP implements PluginAware {
     if (myExtender == null) {
       try {
         myExtender = project.instantiateExtensionWithPicoContainerOnlyIfNeeded(extenderClassName, pluginDescriptor);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         LOG.error(e);

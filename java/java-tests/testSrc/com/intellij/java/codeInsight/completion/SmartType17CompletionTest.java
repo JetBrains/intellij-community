@@ -21,7 +21,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
@@ -45,7 +45,7 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testDiamondCollapsedWithMethodTypeParameter() {
     doTest();
   }
@@ -58,24 +58,24 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testDiamondNotCollapsedNotApplicable() {
     doTest();
   }
 
-  @NeedsIndicesState.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testDiamondNotCollapsedInCaseOfAnonymousClasses() {
     doTest();
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testDiamondNotCollapsedInCaseOfInapplicableInference() {
     doTest();
   }
 
   public void testTryWithResourcesNoSemicolon() { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testTryWithResourcesThrowsException() {
     configureByFile("/" + getTestName(false) + ".java");
     myFixture.type('\n');

@@ -14,6 +14,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -99,7 +100,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", false)) {
+    if (Registry.is("ide.new.run.config", false) ||
+        Experiments.getInstance().isFeatureEnabled("ide.new.run.config")) {
       return new JavaApplicationSettingsEditor(this);
     }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();

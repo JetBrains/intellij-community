@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,6 +156,15 @@ public abstract class PsiDocumentManager {
    * @return true if there are uncommitted documents, false otherwise
    */
   public abstract boolean hasUncommitedDocuments();
+
+  /**
+   * @return if any modified documents with event-system-enabled PSI have not been committed.
+   * @see FileViewProvider#isEventSystemEnabled()
+   */
+  @ApiStatus.Experimental
+  public boolean hasEventSystemEnabledUncommittedDocuments() {
+    return hasUncommitedDocuments();
+  }
 
   /**
    * Commits the documents and runs the specified operation, which does not return a value, in a read action.

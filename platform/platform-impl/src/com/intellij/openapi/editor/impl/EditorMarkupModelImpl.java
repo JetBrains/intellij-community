@@ -391,27 +391,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new DumbAwareAction(delegate.getTemplatePresentation().getText(), null, icon) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
-
-        AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
-                                                                       e.getInputEvent(),
-                                                                       ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                       myEditor.getDataContext());
-
-        if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
-          focusManager.requestFocus(myEditor.getContentComponent(), true).
-            doWhenDone(() -> {
-              delegate.actionPerformed(delegateEvent);
-            });
-        }
-        else {
-          delegate.actionPerformed(delegateEvent);
-        }
-      }
-    };
+    AnAction result = new MarkupModelDelegateAction(delegate, icon);
 
     result.copyShortcutFrom(delegate);
     return result;
@@ -1907,6 +1887,41 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public boolean isDumbAware() {
       return true;
+    }
+  }
+
+  private class MarkupModelDelegateAction extends DumbAwareAction implements ActionWithDelegate<AnAction> {
+    private final AnAction myDelegate;
+
+    private MarkupModelDelegateAction(AnAction delegate, @NotNull Icon icon) {
+      super(delegate.getTemplatePresentation().getText(), null, icon);
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
+
+      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
+                                                                     e.getInputEvent(),
+                                                                     ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                     myEditor.getDataContext());
+
+      if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
+        focusManager.requestFocus(myEditor.getContentComponent(), true).
+          doWhenDone(() -> {
+            myDelegate.actionPerformed(delegateEvent);
+          });
+      }
+      else {
+        myDelegate.actionPerformed(delegateEvent);
+      }
+    }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myDelegate;
     }
   }
 }

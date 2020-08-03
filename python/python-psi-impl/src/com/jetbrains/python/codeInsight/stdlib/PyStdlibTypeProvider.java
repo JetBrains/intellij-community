@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -47,6 +48,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return Ref.create(type);
     }
     type = getEnumType(referenceTarget, context, anchor);
+    if (type != null) {
+      return Ref.create(type);
+    }
+    type = getPathlibPurePathBaseType(referenceTarget);
     if (type != null) {
       return Ref.create(type);
     }
@@ -126,6 +131,31 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getPathlibPurePathBaseType(@NotNull PsiElement referenceTarget) {
+    if (referenceTarget instanceof PyTargetExpression &&
+        "pathlib._PurePathBase".equals(((PyTargetExpression)referenceTarget).getQualifiedName())) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
+
+      if (LanguageLevel.forElement(referenceTarget).isOlderThan(LanguageLevel.PYTHON36)) {
+        final PyClassType objectType = builtinCache.getObjectType();
+        if (objectType != null) {
+          return objectType.toClass();
+        }
+      }
+
+      final PyClassType pathLikeType = builtinCache.getObjectType(PyNames.BUILTIN_PATH_LIKE);
+      final PyClassType strType = builtinCache.getStrType();
+      if (pathLikeType != null) {
+        return strType == null
+               ? pathLikeType.toClass()
+               : new PyCollectionTypeImpl(pathLikeType.getPyClass(), true, Collections.singletonList(strType));
+      }
+    }
+
     return null;
   }
 

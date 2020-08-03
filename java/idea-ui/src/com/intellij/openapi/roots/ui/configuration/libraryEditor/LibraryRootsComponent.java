@@ -140,6 +140,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private void init(AbstractTreeStructure treeStructure) {
+    myPropertiesLabel.setBorder(JBUI.Borders.empty(0, 10));
     myTreeModel = new StructureTreeModel<>(treeStructure, this);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new TreeModelAdapter() {

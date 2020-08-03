@@ -30,7 +30,7 @@
 
     <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
     <postStartupActivity implementation="com.intellij.appengine.converter.MigrateToCloudToolsNotification"/>
-    <notificationWhitelist groupIds="Migrate to Google Cloud SDK"/>
+    <notificationAllowlist groupIds="Migrate to Google Cloud SDK"/>
   </extensions>
 
   <actions>

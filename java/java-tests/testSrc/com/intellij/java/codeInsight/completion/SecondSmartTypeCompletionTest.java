@@ -20,7 +20,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,15 +58,15 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertStringItems("getBar().getGoo", "getBar().getGoo2");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestArraysAsList() throws Throwable { doTest(); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithNewEmptyArray() throws Throwable { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithExistingEmptyArray() throws Throwable {
     configure();
     assertStringItems("foos().toArray(EMPTY_ARRAY)", "foos().toArray(EMPTY_ARRAY2)");
@@ -76,15 +76,15 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testToArrayGenericArrayCreation() throws Throwable { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testToArrayFieldsQualifier() throws Throwable { doTest(); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testToArrayMethodQualifier() throws Throwable { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testToListWithQualifier() throws Throwable { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithExistingEmptyArrayFromAnotherClass() throws Throwable {
     configure();
     assertStringItems("foos().toArray(Bar.EMPTY_ARRAY)", "foos().toArray(Bar.EMPTY_ARRAY2)");
@@ -95,14 +95,14 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   public void testNonInitializedField() throws Throwable { doTest(); }
   public void testIgnoreToString() throws Throwable { doTest(); }
   public void testDontIgnoreToStringInsideIt() throws Throwable { doTest(); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testDontIgnoreToStringInStringBuilders() throws Throwable {
     configure();
     myFixture.assertPreferredCompletionItems(0, "bar.substring", "bar.substring", "bar.toString");
   }
 
   public void testNoObjectMethodsAsFirstPart() throws Throwable { doTest(); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testGetClassLoader() throws Throwable {
     configure();
     selectItem(myItems[0]);
@@ -136,7 +136,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configureByFile(getTestName(false) + ".java");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testNoArraysAsListCommonPrefix() throws Throwable {
     configure();
     checkResultByFile(getTestName(false) + ".java");
@@ -156,7 +156,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   }
 
   public void testDontChainStringMethodsOnString() throws Throwable { doTest(); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testStringMethodsWhenNothingFound() throws Throwable { doTest(); }
 
   public void testDontSuggestTooGenericMethods() throws Throwable {
@@ -177,7 +177,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertStringItems("o.gggg", "false", "true"); 
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyListInMethodCall() throws Throwable {
     configure();
     selectItem(myItems[0]);
@@ -188,14 +188,14 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResultByFile(getTestName(false) + "-out.java");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testSingletonMap() throws Throwable {
     configure();
     selectItem(myItems[0]);
     checkResult();
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testChainDuplicationAfterInstanceof() {
     configure();
     assertStringItems("test.test", "toString");
@@ -218,13 +218,13 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResult();
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testGlobalFactoryMethods() {
     configure();
     assertStringItems("createExpected", "Constants.SUBSTRING", "createSubGeneric", "createSubRaw", "createSubString");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyMapPresentation() {
     configure();
     LookupElementPresentation presentation = new LookupElementPresentation();
@@ -232,7 +232,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertEquals("Collections.<String, S...>emptyMap", presentation.getItemText());
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyMapPresentation2() {
     configure();
     LookupElementPresentation presentation = new LookupElementPresentation();

@@ -98,7 +98,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     if (project == null || project.isDefault()) {
       return getInstance();
     }
-
     return project.getService(ProjectCodeStyleSettingsManager.class);
   }
 

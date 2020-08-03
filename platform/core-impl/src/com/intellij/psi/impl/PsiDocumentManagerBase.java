@@ -705,7 +705,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
            !hasEventSystemEnabledUncommittedDocuments();
   }
 
-  @ApiStatus.Internal
+  @Override
   public boolean hasEventSystemEnabledUncommittedDocuments() {
     return ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
   }

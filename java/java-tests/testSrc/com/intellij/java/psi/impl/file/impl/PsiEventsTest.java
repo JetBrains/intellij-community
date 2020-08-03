@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,10 +46,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = FileUtil.createTempFile(getName(), "");
-    root.delete();
-    root.mkdir();
-    myFilesToDelete.add(root);
+    File root = createTempDirectoryWithSuffix(null).toFile();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
@@ -688,7 +684,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     PsiDirectory psiDir2 = PsiManager.getInstance(myProject).findDirectory(mySrcDir2);
     assertNotNull(psiDir2);
     WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
-    
+
     assertEquals("beforeChildAddition\n" +
                  "childAdded\n", listener.getEventsString());
   }

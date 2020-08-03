@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 /**
@@ -32,11 +32,11 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
     return JAVA_8
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastInstanceofedQualifier() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastInstanceofedQualifierInForeach() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastComplexInstanceofedQualifier() { doTest() }
   void _testCastIncompleteInstanceofedQualifier() { doTest() }
 
@@ -44,68 +44,68 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
 
   void testCastInstanceofedThisQualifier() { doTest() }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testDontCastInstanceofedQualifier() { doTest() }
   void testDontCastPartiallyInstanceofedQualifier() { doAntiTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testQualifierCastingWithUnknownAssignments() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testQualifierCastingBeforeLt() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastQualifierForPrivateFieldReference() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testOrAssignmentDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testAssignmentPreciseTypeDfa() { doTestSecond() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testAssignmentTwicePreciseTypeDfa() { doTestSecond() }
   void testAssignmentParameterDfa() { doTest() }
   void testAssignmentNoPreciseTypeDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testAssignmentPrimitiveLiteral() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testDeclarationPreciseTypeDfa() { doTestSecond() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfAssignmentDfa() { doTestSecond() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testStreamDfa() { doTest() }
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testStreamIncompleteDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testOptionalDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testFieldWithCastingCaret() { doTest() }
   void testCastWhenMethodComesFromDfaSuperType() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testGenericTypeDfa() { doTestSecond() }
   void testNarrowingReturnType() { doTest() }
   void testNarrowingReturnTypeInVoidContext() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testNoUnnecessaryCastDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testNoUnnecessaryCastRawDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInconsistentHierarchyDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testAfterAssertTrueDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfAfterFunction() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfDisjunction() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfDisjunction2() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfDisjunctionDeep() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testInstanceOfDisjunctionCircular() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testAfterGetClass() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testNoCastForCompatibleCapture() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testBooleanFlagDfa() { doTest() }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
@@ -113,13 +113,13 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
     assert LookupElementPresentation.renderElement(myItems[0]).tailText == '() on X'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastTwice() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'b', 'a'
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPublicMethodExtendsProtected() {
     myFixture.addClass '''
 package foo;
@@ -137,13 +137,13 @@ public class FooImpl extends Foo {
     doTest()
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastInstanceofedQualifierInLambda() { doTest() }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastInstanceofedQualifierInLambda2() { doTest() }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testCastInstanceofedQualifierInExpressionLambda() { doTest() }
   
   void testCastQualifierInstanceofedTwice() {
@@ -154,7 +154,7 @@ public class FooImpl extends Foo {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPreferCastExpressionSuperTypes() {
     myFixture.addClass('package nonImported; public interface SzNameInTheEnd {}')
     configureByTestName()

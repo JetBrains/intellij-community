@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public class VariableResolverProcessor extends ConflictFilterProcessor implements ElementClassHint {
   private static final ElementFilter ourFilter = ElementClassFilter.VARIABLE;
 
-  private boolean myStaticScopeFlag;
+  private @NotNull StaticScope myStaticScopeFlag = StaticScope.NON_STATIC;
   private final PsiClass myAccessClass;
   private PsiElement myCurrentFileContext;
 
@@ -73,7 +73,10 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     super.handleEvent(event, associated);
     if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
-      myStaticScopeFlag = true;
+      if (myStaticScopeFlag != StaticScope.STATIC_NO_CONSTANTS) {
+        myStaticScopeFlag = associated instanceof PsiClass && ((PsiClass)associated).getParent() instanceof PsiDeclarationStatement ?
+                            StaticScope.STATIC_NO_CONSTANTS : StaticScope.STATIC;
+      }
     }
     else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {
       myCurrentFileContext = (PsiElement)associated;
@@ -82,10 +85,17 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   @Override
   public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-    final boolean staticProblem = myStaticScopeFlag && 
-                                  !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) &&
-                                  (element instanceof PsiField || !(element instanceof PsiVariable && PsiUtil.isCompileTimeConstant((PsiVariable)element)));
+    final boolean staticProblem = isStaticProblem(element);
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
+  }
+
+  private boolean isStaticProblem(@NotNull PsiElement element) {
+    if (myStaticScopeFlag == StaticScope.NON_STATIC || ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    if (element instanceof PsiField) return true;
+    return !(myStaticScopeFlag == StaticScope.STATIC && element instanceof PsiVariable &&
+             PsiUtil.isCompileTimeConstant((PsiVariable)element));
   }
 
 
@@ -112,5 +122,9 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     }
 
     return super.getHint(hintKey);
+  }
+
+  private enum StaticScope {
+    NON_STATIC, STATIC, STATIC_NO_CONSTANTS
   }
 }

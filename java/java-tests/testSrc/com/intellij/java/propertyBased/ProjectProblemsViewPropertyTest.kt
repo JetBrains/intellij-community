@@ -6,7 +6,10 @@ import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
+import com.intellij.codeInsight.hints.presentation.OnClickPresentation
+import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
@@ -45,7 +48,6 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 import kotlin.math.absoluteValue
-import kotlin.test.assertNotEquals
 
 @SkipSlowTestLocally
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
@@ -207,7 +209,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, myProject, usageExtractor)
+      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
       PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
       val memberUsages = collector.collectedUsages ?: return null
       usages.addAll(memberUsages)
@@ -298,21 +300,18 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val virtualFile = psiFile.virtualFile
     val filesWithProblems = mutableSetOf<VirtualFile>()
     for (inlay in reportedChanges.values) {
-      var selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
-      (selectedEditor as TextEditor).editor.caretModel.moveToOffset(0)
       clickOnInlay(inlay)
-      selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
-      val openedFile = selectedEditor!!.file!!
+      val selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor!!
+      val openedFile = selectedEditor.file!!
       if (openedFile != virtualFile) {
         filesWithProblems.add(openedFile)
         openEditor(virtualFile)
+        continue
       }
-      else if ((selectedEditor as TextEditor).editor.caretModel.offset == 0) {
-        val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-        for (usage in usageView.usages) {
-          val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
-          if (usageFile != virtualFile) filesWithProblems.add(usageFile)
-        }
+      val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
+      for (usage in usageView.usages) {
+        val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
+        filesWithProblems.add(usageFile)
       }
     }
     return filesWithProblems

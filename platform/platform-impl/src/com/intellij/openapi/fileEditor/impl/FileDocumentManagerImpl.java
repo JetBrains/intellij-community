@@ -40,7 +40,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -56,6 +55,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -561,12 +561,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   @Override
   public void reloadBinaryFiles() {
-    for (VirtualFile file : myDocumentCache.keySet()) {
-      if (file.getFileType().isBinary()) {
-        RefreshQueue.getInstance().processSingleEvent(
-          new VFileContentChangeEvent("binary-reload", file, file.getModificationStamp(), -1, false));
-      }
-    }
+    List<VirtualFile> binaries = ContainerUtil.filter(myDocumentCache.keySet(), file -> file.getFileType().isBinary());
+    FileContentUtilCore.reparseFiles(binaries);
   }
 
   @Override
@@ -606,9 +602,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       Document document = getCachedDocument(file);
       if (document != null) {
-        // a file is linked to a document - chances are it is an "unknown text file" now
         if (isBinaryWithoutDecompiler(file)) {
+          // a file is linked to a document - chances are it is an "unknown text file" now
           unbindFileFromDocument(file, document);
+        }
+        else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
+          reloadFromDisk(document);
         }
       }
     }

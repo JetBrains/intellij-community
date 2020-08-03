@@ -37,10 +37,13 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return newProject(file, projectName == null ? options : options.withProjectName(projectName));
   }
 
+  /**
+   * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
+   */
   public abstract @Nullable Project newProject(@NotNull Path file, @NotNull OpenProjectTask options);
 
   /**
-   * @deprecated Use {@link #loadProject(Path)}
+   * @deprecated Use {@link #openProject(Path, OpenProjectTask)}
    */
   @Deprecated
   public final @NotNull Project loadProject(@NotNull String filePath) {

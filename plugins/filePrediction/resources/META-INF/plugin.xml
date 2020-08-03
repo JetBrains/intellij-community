@@ -17,7 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <notificationWhitelist groupIds="NextFilePrediction"/>
+    <notificationAllowlist groupIds="NextFilePrediction"/>
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
     <registryKey key="filePrediction.calculate.candidates.percent" defaultValue="0.2" description="Defines percentage of opened files for which next candidates will be calculated."/>
     <registryKey key="filePrediction.action.use.all.candidates" defaultValue="false" description="If true, 'Show Next File Candidates' action will use all available providers."/>

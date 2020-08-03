@@ -81,7 +81,7 @@ internal class TestSensitiveDataValidator(storage: WhitelistStorage) : Sensitive
 }
 
 class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
-  override fun getCachedWhitelist(): String? {
+  override fun getCachedMetadata(): String? {
     return myContent
   }
 }

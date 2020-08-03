@@ -5,6 +5,8 @@ import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.List;
 
 public class CommandLinePanel extends JPanel {
@@ -17,17 +19,18 @@ public class CommandLinePanel extends JPanel {
     myComponents = components;
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setMinimumSize(new Dimension(500, 100));
-  }
-
-  @Override
-  public void doLayout() {
     buildRows();
-    super.doLayout();
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        buildRows();
+      }
+    });
   }
 
-  public void markForRebuild() {
+  public void rebuildRows() {
     myLastWidth = -1;
-    invalidate();
+    buildRows();
   }
 
   private void buildRows() {

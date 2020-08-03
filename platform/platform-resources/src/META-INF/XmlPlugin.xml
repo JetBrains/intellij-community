@@ -595,6 +595,6 @@
                                  anyReferenceClass="true"
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
-    <notificationWhitelist groupIds="URL does not respond notification"/>
+    <notificationAllowlist groupIds="URL does not respond notification"/>
   </extensions>
 </idea-plugin>

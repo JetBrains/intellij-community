@@ -443,7 +443,9 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
  */
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
-  if (args.isEmpty()) return emptyList()
+  if (args.isEmpty()) {
+    return emptyList()
+  }
 
   val arguments = mutableListOf<String>()
   for (arg in args) {

@@ -55,6 +55,7 @@ class MavenProjectsAware(
       yieldAll(mavenProject.modulePaths)
       yield(join(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH))
       yield(join(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
+      yield(join(rootDirectory, MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH))
       if (hasPomFile(rootDirectory)) {
         yield(join(rootDirectory, MavenConstants.PROFILES_XML))
       }

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -15,7 +14,7 @@ import java.io.File;
 
 public abstract class Eclipse2ModulesTest extends JavaProjectTestCase {
   @NonNls
-  protected static final String DEPEND_MODULE_NAME = "ws-internals";
+  private static final String DEPEND_MODULE_NAME = "ws-internals";
   private String myDependantModulePath = "ws-internals";
 
   protected abstract String getTestPath();
@@ -35,9 +34,8 @@ public abstract class Eclipse2ModulesTest extends JavaProjectTestCase {
     copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
 
-  @NotNull
   @Override
-  protected Module createMainModule() {
+  protected @NotNull Module createMainModule() {
     return createModule(DEPEND_MODULE_NAME);
   }
 

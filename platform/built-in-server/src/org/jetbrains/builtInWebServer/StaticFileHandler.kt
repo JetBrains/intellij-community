@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
@@ -58,7 +58,7 @@ private class StaticFileHandler : WebServerFileHandler() {
 
   private fun processSsi(file: Path, path: String, project: Project, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders) {
     if (ssiProcessor == null) {
-      ssiProcessor = SsiProcessor(false)
+      ssiProcessor = SsiProcessor()
     }
 
     val buffer = channel.alloc().ioBuffer()

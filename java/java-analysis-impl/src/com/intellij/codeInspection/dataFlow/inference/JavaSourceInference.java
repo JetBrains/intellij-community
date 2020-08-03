@@ -105,9 +105,14 @@ public class JavaSourceInference {
     if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     MethodReturnInferenceResult result = data.getMethodReturn();
     if (result == null) return Nullability.UNKNOWN;
-    Nullability nullability = RecursionManager.doPreventingRecursion(
-      method, true, () -> result.getNullability(method, data.methodBody(method)));
-    return nullability == null ? Nullability.UNKNOWN : nullability;
+    try {
+      Nullability nullability = RecursionManager.doPreventingRecursion(
+        method, true, () -> result.getNullability(method, data.methodBody(method)));
+      return nullability == null ? Nullability.UNKNOWN : nullability;
+    }
+    catch (ClassCastException e) {
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
+    }
   }
 
   @NotNull

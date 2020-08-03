@@ -87,10 +87,4 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
   public boolean isInitialized() {
     return true;
   }
-
-  @Override
-  public boolean isDefault() {
-    return false;
-  }
-
 }

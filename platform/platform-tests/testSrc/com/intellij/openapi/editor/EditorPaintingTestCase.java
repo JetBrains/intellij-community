@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -51,7 +51,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     new RunAll()
       .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
       .append(() -> FontLayoutService.setInstance(null))
@@ -264,7 +264,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   private File saveTmpImage(BufferedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
-    addTmpFileToKeep(savedImage);
+    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }

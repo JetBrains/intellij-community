@@ -83,6 +83,7 @@ public class HighlightingAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyCallExpression(PyCallExpression node) {
+    if (node.getParent() instanceof PyDecorator) return; //if it's in decorator, then we've already highlighted it as a decorator
     final PyReferenceExpression callee = as(node.getCallee(), PyReferenceExpression.class);
     if (callee != null) {
       if (!callee.isQualified() && PyBuiltinCache.isInBuiltins(callee)) {

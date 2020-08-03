@@ -37,6 +37,7 @@ import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -61,8 +62,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -83,10 +86,9 @@ public abstract class UsefulTestCase extends TestCase {
   @NotNull
   private final Disposable myTestRootDisposable = new TestDisposable();
 
-  static Path ourPathToKeep;
-  private final List<String> myPathsToKeep = new ArrayList<>();
+  private final List<Path> myPathsToKeep = new ArrayList<>();
 
-  private String myTempDir;
+  private Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -159,9 +161,9 @@ public abstract class UsefulTestCase extends TestCase {
       if (testName == null) {
         testName = FileUtil.sanitizeFileName(getTestName(true));
       }
-      testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.createTempDirectory(TEMP_DIR_MARKER + testName, "", false).getPath();
-      FileUtil.resetCanonicalTempPathCache(myTempDir);
+      myTempDir = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
+      Files.createDirectories(myTempDir);
+      FileUtil.resetCanonicalTempPathCache(myTempDir.toString());
     }
 
     AndroidStudioAnalytics.initialize(new NullAndroidStudioAnalytics());
@@ -198,18 +200,19 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (shouldContainTempFiles()) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          if (hasTmpFilesToKeep()) {
-            File[] files = new File(myTempDir).listFiles();
-            if (files != null) {
-              for (File file : files) {
+          if (myPathsToKeep.isEmpty()) {
+            PathKt.delete(myTempDir);
+          }
+          else {
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(myTempDir)) {
+              for (Path file : directoryStream) {
                 if (!shouldKeepTmpFile(file)) {
                   FileUtil.delete(file);
                 }
               }
             }
-          }
-          else {
-            FileUtil.delete(Paths.get(myTempDir));
+            catch (NoSuchFileException ignore) {
+            }
           }
         }
       },
@@ -222,19 +225,15 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.dispose(getTestRootDisposable());
   }
 
-  protected void addTmpFileToKeep(@NotNull File file) {
-    myPathsToKeep.add(file.getPath());
+  protected void addTmpFileToKeep(@NotNull Path file) {
+    myPathsToKeep.add(file.toAbsolutePath());
   }
 
-  private boolean hasTmpFilesToKeep() {
-    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep.toString(), false) || !myPathsToKeep.isEmpty();
-  }
-
-  private boolean shouldKeepTmpFile(@NotNull File file) {
-    String path = file.getPath();
-    if (FileUtil.pathsEqual(path, ourPathToKeep.toString())) return true;
-    for (String pathToKeep : myPathsToKeep) {
-      if (FileUtil.pathsEqual(path, pathToKeep)) return true;
+  private boolean shouldKeepTmpFile(@NotNull Path file) {
+    for (Path pathToKeep : myPathsToKeep) {
+      if (file.equals(pathToKeep)) {
+        return true;
+      }
     }
     return false;
   }

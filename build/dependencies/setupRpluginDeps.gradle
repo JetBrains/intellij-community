@@ -1,0 +1,23 @@
+import java.util.concurrent.TimeUnit
+
+task setupRkernel {
+  group = 'rplugin'
+}
+
+['osx', 'windows.exe', 'linux'].each { osSuffix ->
+  task("setupRkernel${osSuffix.capitalize() - '.exe'}") {
+    setupRkernel.dependsOn(it)
+    group = setupRkernel.group
+    inputs.property('version', rkernelVersion)
+    def artifact = file("$buildDir/rplugin/rwrapper-x64-$osSuffix")
+    outputs.file(artifact)
+    doLast {
+      download {
+        src "https://jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
+        tempAndMove true
+        dest artifact
+        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+      }
+    }
+  }
+}

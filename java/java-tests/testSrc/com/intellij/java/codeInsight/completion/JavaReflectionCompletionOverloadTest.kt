@@ -17,12 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 
 /**
  * @author Pavel.Dolgov
  */
-@NeedsIndicesState.StandardLibraryIndices
+@NeedsIndex.ForStandardLibrary
 class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"

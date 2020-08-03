@@ -32,6 +32,8 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
     return "/platform/" in file.virtualFile.path  // TODO expand this check
   }
 
+  private val sdkLink = "(<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html#choosing-a-disposable-parent\">Choosing a Disposable Parent</a>)"
+
   private fun checkCallExpression(node: UCallExpression, holder: ProblemsHolder) {
     val psiMethod = node.resolve() ?: return
     psiMethod.parameters.forEachIndexed { index, parameter ->
@@ -41,10 +43,10 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       val argumentSourcePsi = argumentForParameter.sourcePsi ?: return@forEachIndexed
       val argumentType = (argumentForParameter.getExpressionType() as? PsiClassType)?.resolve() ?: return@forEachIndexed
       if (argumentType.qualifiedName == Project::class.java.name) {
-        holder.registerProblem(argumentSourcePsi, "Don't use Project as disposable in plugin code")
+        holder.registerProblem(argumentSourcePsi, "<html>Don't use Project as disposable in plugin code $sdkLink</html>")
       }
       else if (argumentType.qualifiedName == Application::class.java.name) {
-        holder.registerProblem(argumentSourcePsi, "Don't use Application as disposable in plugin code")
+        holder.registerProblem(argumentSourcePsi, "<html>Don't use Application as disposable in plugin code $sdkLink</html>")
       }
     }
   }

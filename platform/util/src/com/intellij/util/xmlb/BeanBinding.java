@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
@@ -275,11 +276,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public static @NotNull List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
-    List<MutableAccessor> accessors = PROPERTY_COLLECTOR.collect(aClass);
-    if (accessors.isEmpty() && !isAssertBindings(aClass)) {
-      LOG.warn("no accessors for " + aClass);
-    }
-    return accessors;
+    return PROPERTY_COLLECTOR.collect(aClass);
   }
 
   private static boolean isAssertBindings(@NotNull Class<?> aClass) {
@@ -302,7 +299,23 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
     @Override
     public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-      return accessorCache.computeIfAbsent(aClass, super::collect);
+      return accessorCache.computeIfAbsent(aClass, aClass1 -> {
+        List<MutableAccessor> result = super.collect(aClass1);
+        if (result.isEmpty() && !isAssertBindings(aClass)) {
+          //noinspection deprecation
+          if (JDOMExternalizable.class.isAssignableFrom(aClass)) {
+            LOG.error("Do not compute bindings for JDOMExternalizable: " + aClass.getName());
+          }
+          else if (aClass.isEnum()) {
+            LOG.error("Do not compute bindings for enum: " + aClass.getName());
+          }
+          else if (aClass == String.class) {
+            LOG.error("Do not compute bindings for String");
+          }
+          LOG.warn("no accessors for " + aClass.getName());
+        }
+        return result;
+      });
     }
 
     @Override

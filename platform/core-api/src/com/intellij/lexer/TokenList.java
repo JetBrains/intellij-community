@@ -2,6 +2,7 @@
 package com.intellij.lexer;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
@@ -36,6 +37,14 @@ public interface TokenList {
    * @return the end offset of the token with the given index
    */
   int getTokenEnd(int index);
+
+  /**
+   * @return the range of the token with the given index
+   */
+  @NotNull
+  default TextRange getTokenRange(int index) {
+    return new TextRange(getTokenStart(index), getTokenEnd(index));
+  }
 
   /**
    * @return the type of the token with the given index, or null if the index is negative or exceeds token count

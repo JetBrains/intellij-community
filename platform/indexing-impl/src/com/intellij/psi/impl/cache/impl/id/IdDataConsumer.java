@@ -21,9 +21,10 @@ public class IdDataConsumer {
     if (end == start) return;
     final IdIndexEntry entry = new IdIndexEntry(charSequence, start, end, true);
     addOccurrence(entry, occurrenceMask);
-    final IdIndexEntry entryNoCase = new IdIndexEntry(charSequence, start, end, false);
-    if (entryNoCase != entry) {
-      addOccurrence(entryNoCase, occurrenceMask);
+
+    int hashNoCase = IdIndexEntry.getWordHash(charSequence, start, end, false);
+    if (hashNoCase != entry.getWordHashCode()) {
+      addOccurrence(new IdIndexEntry(hashNoCase), occurrenceMask);
     }
   }
 

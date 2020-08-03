@@ -37,12 +37,17 @@ class StreamConversion {
     PsiType type = qualifier.getType();
     if (type instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)type).resolve();
-      if (qualifierClass == null) return Collections.emptyList();
+      if (qualifierClass == null || InheritanceUtil.isInheritor(qualifierClass, JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return Collections.emptyList();
+      }
 
-      PsiMethod streamMethod = ContainerUtil.find(qualifierClass.findMethodsByName("stream", true), m ->
-        !m.hasParameters() &&
-        InheritanceUtil.isInheritor(m.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM));
-      if (streamMethod == null) return Collections.emptyList();
+      PsiMethod streamMethod = ContainerUtil.find(qualifierClass.findMethodsByName("stream", true), m -> !m.hasParameters());
+      if (streamMethod == null ||
+          streamMethod.hasModifierProperty(PsiModifier.STATIC) ||
+          !PsiUtil.isAccessible(streamMethod, ref, null) ||
+          !InheritanceUtil.isInheritor(streamMethod.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return Collections.emptyList();
+      }
 
       return generateStreamSuggestions(parameters, qualifier, qualifier.getText() + ".stream()", context -> {
         String space = getSpace(CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);

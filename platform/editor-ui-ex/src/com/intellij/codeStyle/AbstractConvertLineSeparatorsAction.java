@@ -14,7 +14,9 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 /**
@@ -78,8 +81,9 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
       return;
     }
 
-    VirtualFile projectVirtualDirectory = ProjectKt.getStateStore(project).getDirectoryStoreFile();
-    final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
+    Path directoryStorePath = ProjectKt.getStateStore(project).getDirectoryStorePath();
+    VirtualFile projectVirtualDirectory = directoryStorePath == null ? null : StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(directoryStorePath.toString()));
+    FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @NotNull

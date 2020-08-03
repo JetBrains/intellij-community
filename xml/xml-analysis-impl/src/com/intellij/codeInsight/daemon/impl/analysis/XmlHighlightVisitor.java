@@ -300,7 +300,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       return;
     }
 
-    XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
+    XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {
@@ -422,8 +422,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       return;
     }
 
-    XmlElementDescriptor elementDescriptor = tag.getDescriptor();
-    XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;
+    XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
 
     if (attributeDescriptor != null && !skipValidation(value)) {
       String error = attributeDescriptor.validateValue(value, attribute.getValue());

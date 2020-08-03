@@ -27,6 +27,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   override fun loadState(state: State) {
     myState.myStartingDirectory = state.myStartingDirectory
+    myState.myShellPath = state.myShellPath
     myState.envDataOptions = state.envDataOptions
   }
 

@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class DotCompletionTest extends LightCompletionTestCase {
@@ -43,7 +43,7 @@ public class DotCompletionTest extends LightCompletionTestCase {
     assertContainsItems("util", "lang");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testArrayElement() {
     configureByFile("Dot6.java");
     assertContainsItems("toString", "substring");
@@ -81,7 +81,7 @@ public class DotCompletionTest extends LightCompletionTestCase {
     assertNotContainItems("foo1");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testMultiCatch() {
     configureByFile("MultiCatch.java");
     assertContainsItems("i", "addSuppressed", "getMessage", "printStackTrace");

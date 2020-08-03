@@ -16,7 +16,6 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.SyntaxTreeBuilder;
-import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -83,14 +82,9 @@ public class FunctionParsing extends Parsing {
     while (myBuilder.getTokenType() == PyTokenTypes.AT) {
       SyntaxTreeBuilder.Marker decoratorMarker = myBuilder.mark();
       myBuilder.advanceLexer();
-      getStatementParser().parseDottedName();
-      if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-        getExpressionParser().parseArgumentList();
-      }
-      else { // empty arglist node, so we always have it
-        SyntaxTreeBuilder.Marker argListMarker = myBuilder.mark();
-        argListMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
-        argListMarker.done(PyElementTypes.ARGUMENT_LIST);
+
+      if (!getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
         decoratorMarker.done(PyElementTypes.DECORATOR_CALL);

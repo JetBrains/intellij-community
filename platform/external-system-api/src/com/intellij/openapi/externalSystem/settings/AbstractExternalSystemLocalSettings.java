@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.StoragePathMacros;
@@ -13,7 +13,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,10 +188,10 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
-    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = new THashMap<>();
-    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = new THashMap<>();
-    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = new THashMap<>();
-    public Map<String/* linked project path */, SyncType> projectSyncType = new THashMap<>();
+    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = new Object2ObjectOpenHashMap<>();
+    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = new Object2ObjectOpenHashMap<>();
+    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = new Object2ObjectOpenHashMap<>();
+    public Map<String/* linked project path */, SyncType> projectSyncType = new Object2ObjectOpenHashMap<>();
   }
 
   public enum SyncType {

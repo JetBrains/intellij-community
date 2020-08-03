@@ -19,7 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -40,7 +40,7 @@ class MagicConstantCompletion4Test extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void "test suppress class constants in MagicConstant presence"() {
     FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, { ->
       assert !myFixture.javaFacade.findClass(MagicConstant.name, GlobalSearchScope.allScope(myFixture.project))

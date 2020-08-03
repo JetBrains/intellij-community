@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
@@ -27,13 +27,13 @@ public class JavaCompletionTestSuite extends TestSuite {
     public boolean shouldIgnore(@NotNull Class<? extends TestIndexingModeSupporter> aClass) {
       return JavaCompletionAutoPopupTestCase.class.isAssignableFrom(aClass) ||
              CompletionHintsTest.class == aClass ||
-             aClass.isAnnotationPresent(NeedsIndicesState.SmartMode.class);
+             aClass.isAnnotationPresent(NeedsIndex.SmartMode.class);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull Method method,
                                 @NotNull Class<? extends TestIndexingModeSupporter> aClass) {
-      return method.isAnnotationPresent(NeedsIndicesState.SmartMode.class);
+      return method.isAnnotationPresent(NeedsIndex.SmartMode.class);
     }
 
     @Override
@@ -52,13 +52,13 @@ public class JavaCompletionTestSuite extends TestSuite {
 
     @Override
     public boolean shouldIgnore(@NotNull Class<? extends TestIndexingModeSupporter> aClass) {
-      return FULL_INDEX_TRANSFORMATION.shouldIgnore(aClass) || aClass.isAnnotationPresent(NeedsIndicesState.FullIndices.class);
+      return FULL_INDEX_TRANSFORMATION.shouldIgnore(aClass) || aClass.isAnnotationPresent(NeedsIndex.Full.class);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull Method method,
                                 @NotNull Class<? extends TestIndexingModeSupporter> aClass) {
-      return FULL_INDEX_TRANSFORMATION.shouldIgnore(method, aClass) || method.isAnnotationPresent(NeedsIndicesState.FullIndices.class);
+      return FULL_INDEX_TRANSFORMATION.shouldIgnore(method, aClass) || method.isAnnotationPresent(NeedsIndex.Full.class);
     }
 
     @Override
@@ -77,12 +77,12 @@ public class JavaCompletionTestSuite extends TestSuite {
 
     @Override
     public boolean shouldIgnore(@NotNull Class<? extends TestIndexingModeSupporter> aClass) {
-      return RUNTIME_ONLY_INDEX_TRANSFORMATION.shouldIgnore(aClass) || aClass.isAnnotationPresent(NeedsIndicesState.StandardLibraryIndices.class);
+      return RUNTIME_ONLY_INDEX_TRANSFORMATION.shouldIgnore(aClass) || aClass.isAnnotationPresent(NeedsIndex.ForStandardLibrary.class);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull Method method, @NotNull Class<? extends TestIndexingModeSupporter> aClass) {
-      return RUNTIME_ONLY_INDEX_TRANSFORMATION.shouldIgnore(method, aClass) || method.isAnnotationPresent(NeedsIndicesState.StandardLibraryIndices.class);
+      return RUNTIME_ONLY_INDEX_TRANSFORMATION.shouldIgnore(method, aClass) || method.isAnnotationPresent(NeedsIndex.ForStandardLibrary.class);
     }
 
     @Override

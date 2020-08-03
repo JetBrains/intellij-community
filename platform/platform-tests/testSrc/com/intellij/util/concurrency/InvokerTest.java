@@ -375,7 +375,7 @@ public class InvokerTest {
   private void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
-      -> process(foreground, background, Thread::currentThread, thread
+      -> process(background, foreground, Thread::currentThread, thread
       -> countDown(latch, 0, error, "unexpected thread", ()
       -> isExpected(thread, equal))));
   }

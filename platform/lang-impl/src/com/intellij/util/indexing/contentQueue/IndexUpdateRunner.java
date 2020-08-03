@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
 import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -161,6 +163,7 @@ public final class IndexUpdateRunner {
     long contentLoadingTime = System.nanoTime();
     ContentLoadingResult loadingResult;
     try {
+      // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
       loadingResult = loadNextContent(indexingJob, indexingJob.myIndicator);
     }
     catch (TooLargeContentException e) {
@@ -180,7 +183,6 @@ public final class IndexUpdateRunner {
     }
 
     if (loadingResult == null) {
-      indexingJob.myNoMoreFilesInQueue.set(true);
       return;
     }
 
@@ -220,20 +222,51 @@ public final class IndexUpdateRunner {
                                                                                                               ProcessCanceledException {
     VirtualFile file = indexingJob.myQueueOfFiles.poll();
     if (file == null) {
+      indexingJob.myNoMoreFilesInQueue.set(true);
       return null;
     }
     if (myFileBasedIndex.isTooLarge(file)) {
       throw new TooLargeContentException(file);
     }
+
+    long fileLength;
     try {
-      long fileLength = file.getLength();
-      waitForFreeMemoryToLoadFileContent(indicator, fileLength);
-      CachedFileContent fileContent = indexingJob.myContentLoader.loadContent(file);
-      return new ContentLoadingResult(fileContent, fileLength);
+      fileLength = file.getLength();
     }
     catch (ProcessCanceledException e) {
       indexingJob.myQueueOfFiles.add(file);
       throw e;
+    }
+    catch (Throwable e) {
+      throw new FailedToLoadContentException(file, e);
+    }
+
+    // Reserve bytes for the file.
+    try {
+      waitForFreeMemoryToLoadFileContent(indicator, fileLength);
+    }
+    catch (ProcessCanceledException e) {
+      indexingJob.myQueueOfFiles.add(file);
+      throw e;
+    } // Propagate other exceptions (if any) and fail the whole indexing (see IndexingJob.myError).
+
+    try {
+      CachedFileContent fileContent = indexingJob.myContentLoader.loadContent(file);
+      return new ContentLoadingResult(fileContent, fileLength);
+    }
+    catch (ProcessCanceledException e) {
+      signalThatFileIsUnloaded(fileLength);
+      indexingJob.myQueueOfFiles.add(file);
+      throw e;
+    }
+    catch (FailedToLoadContentException | TooLargeContentException e) {
+      signalThatFileIsUnloaded(fileLength);
+      throw e;
+    }
+    catch (Throwable e) {
+      signalThatFileIsUnloaded(fileLength);
+      ExceptionUtil.rethrow(e);
+      return null;
     }
   }
 
@@ -247,7 +280,8 @@ public final class IndexUpdateRunner {
     }
   }
 
-  private static void waitForFreeMemoryToLoadFileContent(@NotNull ProgressIndicator indicator, long fileLength) {
+  private static void waitForFreeMemoryToLoadFileContent(@NotNull ProgressIndicator indicator,
+                                                         long fileLength) throws ProcessCanceledException {
     ourLoadedBytesLimitLock.lock();
     try {
       while (ourTotalBytesLoadedIntoMemory >= SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
@@ -284,7 +318,7 @@ public final class IndexUpdateRunner {
     Throwable cause = e.getCause();
     VirtualFile file = e.getFile();
     String fileUrl = "File: " + file.getUrl();
-    if (cause instanceof FileNotFoundException) {
+    if (cause instanceof FileNotFoundException || cause instanceof NoSuchFileException) {
       // It is possible to not observe file system change until refresh finish, we handle missed file properly anyway.
       FileBasedIndexImpl.LOG.debug(fileUrl, e);
     }

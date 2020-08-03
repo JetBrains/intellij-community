@@ -53,8 +53,9 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static char toLowerCase(char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') return a;
-    if (a <= 'Z') return (char)(a + ('a' - 'A'));
+    if (a <= 'z') {
+      return a >= 'A' && a <= 'Z' ? (char)(a + ('a' - 'A')) : a;
+    }
     return Character.toLowerCase(a);
   }
 

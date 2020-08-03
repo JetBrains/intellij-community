@@ -3,11 +3,14 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -47,18 +50,26 @@ public class RecordConstructorMember implements ClassMember {
   @NotNull
   public PsiMethod generateRecordConstructor() {
     String constructor;
+    AccessModifier accessModifier = AccessModifier.PUBLIC;
+    if (PsiUtil.getLanguageLevel(myRecord) != LanguageLevel.JDK_14_PREVIEW) {
+      PsiModifierList list = myRecord.getModifierList();
+      if (list != null) {
+        accessModifier = AccessModifier.fromModifierList(list);
+      }
+    }
     if (myCompact) {
-      constructor = "public " + myRecord.getName() + "{\n}";
+      constructor = myRecord.getName() + "{\n}";
     }
     else {
       PsiRecordComponent[] components = myRecord.getRecordComponents();
       String parameters = StreamEx.of(components).map(PsiRecordComponent::getText).joining(",", "(", ")");
       String body =
         StreamEx.of(components).map(PsiRecordComponent::getName).map(name -> "this." + name + "=" + name + ";\n").joining("", "{", "}");
-      constructor = "public " + myRecord.getName() + parameters + body;
+      constructor = myRecord.getName() + parameters + body;
     }
     Project project = myRecord.getProject();
     PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(constructor, myRecord);
+    ctor.getModifierList().setModifierProperty(accessModifier.toPsiModifier(), true);
     if (!myCompact) {
       JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myRecord.getContainingFile());
       boolean finalParameters = settings.isGenerateFinalParameters();

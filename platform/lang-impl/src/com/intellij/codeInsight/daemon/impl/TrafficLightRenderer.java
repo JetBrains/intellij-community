@@ -47,6 +47,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,16 +72,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   String statusExtraLine;
   boolean passStatusesVisible;
   final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = new LinkedHashMap<>();
+  private final TObjectIntHashMap<HighlightSeverity> errorCount = new TObjectIntHashMap<>();
   static final int MAX = 100;
   boolean progressBarsEnabled;
   Boolean progressBarsCompleted;
-
-  /**
-   * array filled with number of highlighters with a given severity.
-   * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
-   * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
-   */
-  protected int[] errorCount;
 
   /**
    * @deprecated Please use {@link #TrafficLightRenderer(Project, Document)} instead
@@ -127,14 +122,28 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return mySeverityRegistrar;
   }
 
+  /**
+   * @return new instance of array filled with number of highlighters with a given severity.
+   * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
+   * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
+   */
+  public int[] getErrorCount() {
+    List<HighlightSeverity> severities = mySeverityRegistrar.getAllSeverities();
+    int[] result = new int[severities.size()];
+    for (HighlightSeverity severity : severities) {
+      int severityIndex = mySeverityRegistrar.getSeverityIdx(severity);
+      result[severityIndex] = errorCount.get(severity);
+    }
+
+    return result;
+  }
+
   protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
-    int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
-    if (errorCount != null && maxIndex + 1 == errorCount.length) return;
-    errorCount = new int[maxIndex + 1];
   }
 
   @Override
   public void dispose() {
+    errorCount.clear();
   }
 
   private void incErrorCount(RangeHighlighter highlighter, int delta) {
@@ -142,9 +151,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (info == null) return;
     HighlightSeverity infoSeverity = info.getSeverity();
     if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
-    final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
-    if (severityIdx != -1) {
-      errorCount[severityIdx] += delta;
+
+    if (errorCount.containsKey(infoSeverity)) {
+      errorCount.adjustValue(infoSeverity, delta);
+    }
+    else {
+      errorCount.put(infoSeverity, delta);
     }
   }
 
@@ -243,7 +255,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return status;
     }
 
-    status.errorCount = errorCount.clone();
+    status.errorCount = getErrorCount();
 
     status.passes = ContainerUtil.filter(myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument),
                                          p -> !StringUtil.isEmpty(p.getPresentableName()) && p.getProgress() >= 0);
@@ -443,12 +455,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         return new AnalyzerStatus(AllIcons.General.InspectionsPause,
                                   DaemonBundle.message("analysis.suspended"),
                                   status.reasonWhySuspended, () -> createUIController(editor)).
-          withTextStatus(status.heavyProcessType != null ? status.heavyProcessType.toString() : DaemonBundle.message("iw.status.paused"));
+          withTextStatus(status.heavyProcessType != null ? status.heavyProcessType.toString() : DaemonBundle.message("iw.status.paused")).
+          withAnalyzingType(AnalyzingType.SUSPENDED);
       }
       if (status.errorAnalyzingFinished) {
         return isDumb ?
           new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, () -> createUIController(editor)).
-            withTextStatus(UtilBundle.message("heavyProcess.type.indexing")) :
+            withTextStatus(UtilBundle.message("heavyProcess.type.indexing")).
+            withAnalyzingType(AnalyzingType.SUSPENDED) :
           new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"), details, () -> createUIController(editor));
       }
 
@@ -503,7 +517,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     @Override
     @NotNull
     public List<InspectionsLevel> getAvailableLevels() {
-      return inLibrary ? Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.ERRORS): Arrays.asList(InspectionsLevel.values());
+      return inLibrary ? Arrays.asList(InspectionsLevel.NONE, InspectionsLevel.SYNTAX) : Arrays.asList(InspectionsLevel.values());
     }
 
     @NotNull
@@ -524,7 +538,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           if (level.getLevel() == InspectionsLevel.NONE) {
             HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_HIGHLIGHTING);
           }
-          else if (level.getLevel() == InspectionsLevel.ERRORS) {
+          else if (level.getLevel() == InspectionsLevel.SYNTAX) {
             HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_INSPECTION);
           }
           else {
@@ -607,7 +621,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   @NotNull
   private static InspectionsLevel getHighlightLevel(boolean highlight, boolean inspect) {
     if (!highlight && !inspect) return InspectionsLevel.NONE;
-    else if (highlight && !inspect) return InspectionsLevel.ERRORS;
+    else if (highlight && !inspect) return InspectionsLevel.SYNTAX;
     else return InspectionsLevel.ALL;
   }
 

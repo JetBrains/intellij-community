@@ -86,8 +86,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
         return;
       }
 
-      XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
-
+      XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
       if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
         final String name = attribute.getName();
         if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {

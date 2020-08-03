@@ -170,17 +170,11 @@ public class PluginGroups {
       "com.intellij.quarkus",
       "com.intellij.helidon",
 
-      "com.intellij.gwt",
-      "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
-      "JBoss jBPM:JBPM",
-      "Struts:com.intellij.struts2",
-      "com.intellij.tapestry",
       "com.intellij.guice",
 
       "com.intellij.freemarker",
       "com.intellij.velocity",
-      "com.intellij.aspectj",
-      "Osmorc"
+      "com.intellij.aspectj"
     )));
     groups.add(new Group("Build Tools", PlatformImplIcons.BuildTools, null, Arrays.asList(
       "AntSupport",
@@ -222,11 +216,9 @@ public class PluginGroups {
       "GlassFish",
       "JBoss",
       "Jetty",
-      "Resin",
       "Tomcat",
       "Weblogic",
       "WebSphere",
-      "com.intellij.dmserver",
       "JSR45Plugin"
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));

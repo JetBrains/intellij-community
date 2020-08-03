@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -21,7 +21,6 @@ interface StateStorageManager {
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
-   * *
    * @param newName Only new file name (foo.iml)
    */
   fun rename(path: String, newName: String)

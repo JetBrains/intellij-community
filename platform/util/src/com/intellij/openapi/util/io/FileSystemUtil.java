@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,7 +34,8 @@ import java.util.Set;
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
-  private static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
+  @ApiStatus.Internal
+  public static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 

@@ -21,7 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -187,7 +187,7 @@ public final class MadTestingUtil {
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
     manager.setCurrentProfile(profile);
-    Disposer.register(((ProjectImpl)project).getEarlyDisposable(), () -> {
+    Disposer.register(((ProjectEx)project).getEarlyDisposable(), () -> {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
       manager.setCurrentProfile(prev);
       manager.deleteProfile(profile);
@@ -458,7 +458,7 @@ public final class MadTestingUtil {
                          Arrays.stream(histogram).sum(), report.toString().replaceFirst("[\\s|]+$", ""));
   }
 
-  private static class FileGenerator implements Function<GenerationEnvironment, File> {
+  private static final class FileGenerator implements Function<GenerationEnvironment, File> {
     private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
       TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(Objects.requireNonNull(f.listFiles())) : Collections.emptyList());
     private final File myRoot;
@@ -516,7 +516,7 @@ public final class MadTestingUtil {
     }
   }
 
-  private static class RouletteWheelFileGenerator implements Function<GenerationEnvironment, File> {
+  private static final class RouletteWheelFileGenerator implements Function<GenerationEnvironment, File> {
     private final File myRoot;
     private final FileFilter myFilter;
     private static final File[] EMPTY_DIRECTORY = new File[0];

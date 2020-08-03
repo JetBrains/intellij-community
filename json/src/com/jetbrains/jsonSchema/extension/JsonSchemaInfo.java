@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 
@@ -136,17 +141,35 @@ public class JsonSchemaInfo {
   @NotNull
   public static String getRelativePath(@NotNull Project project, @NotNull String text) {
     text = text.trim();
-    if (project.isDefault() || project.getBasePath() == null) return text;
-    if (StringUtil.isEmptyOrSpaces(text)) return text;
-    final File ioFile = new File(text);
-    if (!ioFile.isAbsolute()) return text;
-    VirtualFile file = VfsUtil.findFileByIoFile(ioFile, false);
-    if (file == null) return text;
-    final String relativePath = VfsUtilCore.getRelativePath(file, project.getBaseDir());
-    if (relativePath != null) return relativePath;
-    if (isMeaningfulAncestor(VfsUtilCore.getCommonAncestor(file, project.getBaseDir()))) {
-      String path = VfsUtilCore.findRelativePath(project.getBaseDir(), file, File.separatorChar);
-      if (path != null) return path;
+    if (project.isDefault() || project.getBasePath() == null || Strings.isEmptyOrSpaces(text)) {
+      return text;
+    }
+
+    Path ioFile = Paths.get(text);
+    if (!ioFile.isAbsolute()) {
+      return text;
+    }
+
+    String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(ioFile.toString()), project.getBasePath(), '/');
+    if (relativePath != null) {
+      return relativePath;
+    }
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByNioFile(ioFile);
+    if (file == null) {
+      return text;
+    }
+
+    VirtualFile projectBaseDir = LocalFileSystem.getInstance().findFileByPath(project.getBasePath());
+    if (projectBaseDir == null) {
+      return text;
+    }
+
+    if (isMeaningfulAncestor(VfsUtilCore.getCommonAncestor(file, projectBaseDir))) {
+      String path = VfsUtilCore.findRelativePath(projectBaseDir, file, File.separatorChar);
+      if (path != null) {
+        return path;
+      }
     }
     return text;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -42,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
@@ -71,17 +59,24 @@ public class LightProjectDescriptor {
 
   @NotNull
   public Module createMainModule(@NotNull Project project) {
-    return createModule(project, FileUtil.join(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
+    return createModule(project, Paths.get(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
   }
 
-  protected Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+  protected final Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+    return createModule(project, Paths.get(moduleFilePath));
+  }
+
+  protected Module createModule(@NotNull Project project, @NotNull Path moduleFile) {
+    try {
+      // temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
+      Files.deleteIfExists(moduleFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     return WriteAction.compute(() -> {
-      File imlFile = new File(moduleFilePath);
-      if (imlFile.exists()) {
-        //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
-        FileUtil.delete(imlFile);
-      }
-      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleTypeId());
+      return ModuleManager.getInstance(project).newModule(moduleFile.toString(), getModuleTypeId());
     });
   }
 

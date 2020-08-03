@@ -82,7 +82,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
           return;
         }
 
-        XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
+        XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
         if (attributeDescriptor != null && !(attributeDescriptor instanceof AnyXmlAttributeDescriptor)) {
           String name = attribute.getName();
           if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
