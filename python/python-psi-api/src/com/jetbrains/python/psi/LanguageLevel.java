@@ -206,10 +206,9 @@ public enum LanguageLevel {
     return getDefault();
   }
 
-  @Nullable
-  @Contract("null->null;!null->!null")
-  public static String toPythonVersion(@Nullable LanguageLevel level) {
-    return level == null ? null : level.getMajorVersion() + "." + level.getMinorVersion();
+  @NotNull
+  public String toPythonVersion() {
+    return getMajorVersion() + "." + getMinorVersion();
   }
 
   @NotNull
@@ -224,6 +223,6 @@ public enum LanguageLevel {
 
   @Override
   public String toString() {
-    return toPythonVersion(this);
+    return toPythonVersion();
   }
 }
