@@ -77,11 +77,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       else {
         final PsiElement[] elements = declarationStatement.getDeclaredElements();
         List<PsiVariable> psiVariables = StreamEx.of(elements).select(PsiVariable.class).collect(Collectors.toList());
-        SingleDeclarationNormalizer singleDeclarationNormalizer = new SingleDeclarationNormalizer(psiVariables);
-        if (myCStyleDeclaration && elements.length == psiVariables.size() && singleDeclarationNormalizer.possibleToNormalize()) {
-          singleDeclarationNormalizer.normalize();
-        }
-        else {
+        if (!myCStyleDeclaration || elements.length != psiVariables.size() || !new SingleDeclarationNormalizer(psiVariables).normalize()) {
           final PsiVariable variable = (PsiVariable)elements[0];
           variable.normalizeDeclaration();
           for (int i = 1; i < elements.length; i++) {
@@ -103,11 +99,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         psiFields.add(nextField);
         nextField = DeclarationSearchUtils.findNextFieldInDeclaration(nextField);
       }
-      SingleDeclarationNormalizer singleDeclarationNormalizer = new SingleDeclarationNormalizer(psiFields);
-      if (myCStyleDeclaration && singleDeclarationNormalizer.possibleToNormalize()) {
-        singleDeclarationNormalizer.normalize();
-      }
-      else {
+      if (!myCStyleDeclaration || !new SingleDeclarationNormalizer(psiFields).normalize()) {
         field.normalizeDeclaration();
         for (int i = 1; i < count; i++) {
           field = PsiTreeUtil.getNextSiblingOfType(field, PsiField.class);
