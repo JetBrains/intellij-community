@@ -426,8 +426,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val panel = JPanel(BorderLayout())
-    createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
-      panel.add(it, BorderLayout.CENTER)
+    if (!(configurationType is UnknownConfigurationType)) {
+      createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
+        panel.add(it, BorderLayout.CENTER)
+      }
     }
 
     if (configurationType == null) {
