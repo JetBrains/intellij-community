@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.util.containers.IntStack
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -48,38 +47,30 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     if (startNode < 0 || startNode >= graph.nodesCount()) return
 
     val visited = BitSetFlags(graph.nodesCount(), false)
-
-    val stack = IntStack()
-    stack.push(startNode)
-    val paths = Stack<MaybeDeletedFilePath>()
-    paths.push(startPath)
+    val stack = Stack<Pair<Int, MaybeDeletedFilePath>>(Pair(startNode, startPath))
 
     outer@ while (!stack.empty()) {
-      val currentNode = stack.peek()
+      val (currentNode, currentPath) = stack.peek()
       val down = isDown(stack)
       if (!visited.get(currentNode)) {
         visited.set(currentNode, true)
-        val currentPath = getPath(currentNode, getPreviousNode(stack), paths.last(), down)
-        val currentCommitId = permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))
-        pathsForCommits[currentCommitId] = currentPath
-        paths.push(currentPath)
+        pathsForCommits[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentPath
       }
 
       for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
         if (!visited.get(nextNode)) {
-          stack.push(nextNode)
+          stack.push(Pair(nextNode, getPath(nextNode, currentNode, currentPath, down)))
           continue@outer
         }
       }
 
       for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
         if (!visited.get(nextNode)) {
-          stack.push(nextNode)
+          stack.push(Pair(nextNode, getPath(nextNode, currentNode, currentPath, !down)))
           continue@outer
         }
       }
 
-      paths.pop()
       stack.pop()
     }
   }
@@ -118,15 +109,15 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-private fun getPreviousNode(stack: IntStack): Int {
-  return if (stack.size() < 2) {
+private fun <T> getPreviousNode(stack: Stack<Pair<Int, T>>): Int {
+  return if (stack.size < 2) {
     Dfs.NextNode.NODE_NOT_FOUND
   }
-  else stack.get(stack.size() - 2)
+  else stack[stack.size - 2].first
 }
 
-private fun isDown(stack: IntStack): Boolean {
-  val currentNode = stack.peek()
+private fun <T> isDown(stack: Stack<Pair<Int, T>>): Boolean {
+  val (currentNode, _) = stack.peek()
   val previousNode = getPreviousNode(stack)
   if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return true
   return previousNode < currentNode
