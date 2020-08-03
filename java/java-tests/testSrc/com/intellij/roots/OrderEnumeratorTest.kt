@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.roots.ModuleRootManagerTestCase.assertRoots
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PsiTestUtil
@@ -14,10 +15,7 @@ import com.intellij.testFramework.UsefulTestCase.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 
 class OrderEnumeratorTest {
   companion object {
@@ -51,6 +49,11 @@ class OrderEnumeratorTest {
       it.addRoot(jdkJar, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  }
+
+  @After
+  fun tearDown() {
+    JarFileSystemImpl.cleanupForNextTest() // WTF, won't let delete jar otherwise
   }
 
   @Test
