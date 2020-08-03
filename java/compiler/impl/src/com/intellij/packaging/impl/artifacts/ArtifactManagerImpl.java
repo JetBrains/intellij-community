@@ -43,6 +43,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
   @NonNls public static final String TYPE_ID_ATTRIBUTE = "id";
+  public static final String FEATURE_TYPE = "com.intellij.packaging.artifacts.ArtifactType";
   private final ArtifactManagerModel myModel;
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
@@ -253,7 +254,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
   private InvalidArtifact createInvalidArtifact(ArtifactState state, ProjectModelExternalSource externalSource, String errorMessage) {
     final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
-    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature("com.intellij.packaging.artifacts.ArtifactType", state.getArtifactType(), "Artifact");
+    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");
     return artifact;
   }
 

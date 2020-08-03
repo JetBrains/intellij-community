@@ -25,6 +25,7 @@ import java.util.Objects;
 @ApiStatus.Internal
 public abstract class FacetManagerBase extends FacetManager {
   private static final Logger LOG = Logger.getInstance(FacetManagerBase.class);
+  public static final String FEATURE_TYPE = "com.intellij.facetType";
 
   @Override
   @NotNull
@@ -138,7 +139,7 @@ public abstract class FacetManagerBase extends FacetManager {
         FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
         ProjectLoadingErrorsNotifier.getInstance(project).registerError(description);
         if (unknownType) {
-          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature("com.intellij.facetType", state.getFacetType(), "Facet");
+          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, state.getFacetType(), "Facet");
         }
       }
     }

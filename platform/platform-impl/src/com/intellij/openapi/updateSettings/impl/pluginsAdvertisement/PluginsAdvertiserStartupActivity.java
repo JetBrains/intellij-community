@@ -2,10 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -82,12 +79,21 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     final Map<PluginId, PluginsAdvertiser.Plugin> ids = new HashMap<>();
     for (UnknownFeature feature : unknownFeatures) {
       ProgressManager.checkCanceled();
-      final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
-      if (!pluginId.isEmpty()) {
-        for (PluginsAdvertiser.Plugin plugin : pluginId) {
-          PluginId id = PluginId.getId(plugin.myPluginId);
-          ids.put(id, plugin);
-          features.putValue(id, feature);
+      PluginFeatureService.FeaturePluginData bundledPlugin = PluginFeatureService.getInstance().getPluginForFeature(feature.getFeatureType(),
+                                                                                                      feature.getImplementationName());
+      if (bundledPlugin != null) {
+        PluginId id = PluginId.getId(bundledPlugin.getPluginId());
+        ids.put(id, new PluginsAdvertiser.Plugin(bundledPlugin.getPluginId(), bundledPlugin.getPluginName(), true));
+        features.putValue(id, feature);
+      }
+      else {
+        final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
+        if (!pluginId.isEmpty()) {
+          for (PluginsAdvertiser.Plugin plugin : pluginId) {
+            PluginId id = PluginId.getId(plugin.myPluginId);
+            ids.put(id, plugin);
+            features.putValue(id, feature);
+          }
         }
       }
     }
