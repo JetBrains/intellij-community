@@ -552,7 +552,9 @@ public final class ExpectedTypesProvider {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       PsiType type = variable.getType();
-      TailType tail = variable instanceof PsiResourceVariable ? TailType.NONE : TailType.SEMICOLON;
+      TailType tail = variable instanceof PsiResourceVariable ? TailType.NONE :
+                      PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(variable)) == JavaTokenType.COMMA ? CommaTailType.INSTANCE :
+                      TailType.SEMICOLON;
       myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, tail, null, getPropertyName(variable)));
     }
 

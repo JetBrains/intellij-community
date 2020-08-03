@@ -1476,4 +1476,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.complete(CompletionType.SMART);
     checkResultByFile("second/MethodAsQualifier-out.java");
   }
+
+  public void testNoSemicolonAfterNonLastVariableInitializer() { doTest(); }
+
 }
