@@ -32,7 +32,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
   @SuppressWarnings("DialogTitleCapitalization")
   public JComponent createOptionsPanel() {
     return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.borderTitle"),
+                                              InspectionGadgetsBundle.message("options.title.ignored.classes"),
                                               InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"));
   }
 

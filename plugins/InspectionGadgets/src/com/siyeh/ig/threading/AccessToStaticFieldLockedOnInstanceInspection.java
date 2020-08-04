@@ -43,7 +43,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
   @Override
   public JComponent createOptionsPanel() {
     return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.options.ignored.class"),
+                                              InspectionGadgetsBundle.message("options.title.ignored.classes"),
                                               InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.options.chooser"));
   }
 
