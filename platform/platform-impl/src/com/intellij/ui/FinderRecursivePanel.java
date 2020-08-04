@@ -663,7 +663,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer<T> {
-    private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
+    @NonNls private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
 
     @Override
     public String getToolTipText(MouseEvent event) {

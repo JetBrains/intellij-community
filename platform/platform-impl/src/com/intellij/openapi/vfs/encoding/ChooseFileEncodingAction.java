@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -20,6 +21,7 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,9 +119,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
   @NotNull
-  protected DefaultActionGroup createCharsetsActionGroup(@Nullable String clearItemText,
+  protected DefaultActionGroup createCharsetsActionGroup(@Nullable @NlsActions.ActionText String clearItemText,
                                                          @Nullable Charset alreadySelected,
-                                                         @NotNull Function<? super Charset, String> descriptionSupplier) {
+                                                         @NotNull Function<? super Charset, @Nls String> descriptionSupplier) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
@@ -152,7 +154,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   private abstract static class CharsetAction extends DumbAwareAction implements LightEditCompatible {
-    CharsetAction(String name, String description, Icon icon) {
+    CharsetAction(@NlsActions.ActionText String name, @NlsActions.ActionDescription String description, Icon icon) {
       super(name, description, icon);
     }
   }

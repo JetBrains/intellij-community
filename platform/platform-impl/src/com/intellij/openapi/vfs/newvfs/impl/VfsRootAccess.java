@@ -25,6 +25,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -97,7 +98,7 @@ public final class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = CollectionFactory.createFilePathSet();
+    @NonNls Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests

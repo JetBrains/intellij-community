@@ -183,6 +183,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "LocalFileSystem";
   }

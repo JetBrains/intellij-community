@@ -11,6 +11,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 import kotlin.reflect.KProperty
 
@@ -48,12 +49,12 @@ data class StringEventField(override val name: String): PrimitiveEventField<Stri
     }
   }
 
-  fun withCustomRule(id: String): StringEventField {
+  fun withCustomRule(@NonNls id: String): StringEventField {
     customRuleId = id
     return this
   }
 
-  fun withCustomEnum(id: String): StringEventField {
+  fun withCustomEnum(@NonNls id: String): StringEventField {
     customEnumId = id
     return this
   }
@@ -228,30 +229,30 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
 
 object EventFields {
   @JvmStatic
-  fun String(name: String): StringEventField = StringEventField(name)
+  fun String(@NonNls name: String): StringEventField = StringEventField(name)
 
   @JvmStatic
-  fun Int(name: String): IntEventField = IntEventField(name)
+  fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
   @JvmStatic
-  fun Long(name: String): LongEventField = LongEventField(name)
+  fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
   @JvmStatic
-  fun Boolean(name: String): BooleanEventField = BooleanEventField(name)
+  fun Boolean(@NonNls name: String): BooleanEventField = BooleanEventField(name)
 
   @JvmStatic
-  fun Class(name: String): ClassEventField = ClassEventField(name)
+  fun Class(@NonNls name: String): ClassEventField = ClassEventField(name)
 
   @JvmStatic
   @JvmOverloads
-  fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  fun <T : Enum<*>> Enum(@NonNls name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, enumClass, transform)
 
-  inline fun <reified T : Enum<*>> Enum(name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
 
   @JvmStatic
-  fun StringList(name: String): StringListEventField = StringListEventField(name)
+  fun StringList(@NonNls name: String): StringListEventField = StringListEventField(name)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {

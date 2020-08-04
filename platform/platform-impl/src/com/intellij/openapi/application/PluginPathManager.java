@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -19,7 +20,7 @@ public final class PluginPathManager {
   }
 
   private static class SubrepoHolder {
-    private static final Set<String> ROOT_NAMES = ContainerUtil.newTroveSet("community", "contrib", "android", "CIDR");
+    @NonNls private static final Set<String> ROOT_NAMES = ContainerUtil.newTroveSet("community", "contrib", "android", "CIDR");
     private static final List<File> subrepos = findSubrepos();
 
     private static List<File> findSubrepos() {

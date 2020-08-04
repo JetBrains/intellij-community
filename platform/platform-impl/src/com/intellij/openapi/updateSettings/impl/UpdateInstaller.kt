@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
+import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -31,6 +32,7 @@ internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDesc
 internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
 
+  @NonNls
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
@@ -165,7 +167,7 @@ internal object UpdateInstaller {
       java = javaCopy.path
     }
 
-    val args = mutableListOf<String>()
+    @NonNls val args = mutableListOf<String>()
 
     if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")

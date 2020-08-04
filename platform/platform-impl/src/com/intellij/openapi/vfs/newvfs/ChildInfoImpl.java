@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +95,7 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return (nameId > 0 ? getName() : "?")+"; nameId: "+nameId + "; id: " + id + " (" + (flags == -1 ? "unknown" : super.toString()) + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));

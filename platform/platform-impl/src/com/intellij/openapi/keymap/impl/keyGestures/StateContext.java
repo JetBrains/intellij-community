@@ -18,10 +18,11 @@ package com.intellij.openapi.keymap.impl.keyGestures;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 class StateContext {
   KeyEvent actionKey;
@@ -36,6 +37,7 @@ class StateContext {
   boolean isModal;
 
   @Override
+  @NonNls
   public String toString() {
     return
       "actionKey=" + actionKey + "\n"

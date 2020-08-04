@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
-  private static final String PINNED = "pinned";
+  @NonNls private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");

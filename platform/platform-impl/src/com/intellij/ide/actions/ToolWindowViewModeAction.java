@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
 
     private final String myActionID;
 
-    ViewMode(String actionID) {
+    ViewMode(@NonNls String actionID) {
       myActionID = actionID;
     }
 

@@ -65,6 +65,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import org.jetbrains.annotations.NonNls
 import java.awt.Window
 import java.io.File
 import java.io.IOException
@@ -138,6 +139,7 @@ object DynamicPlugins {
    */
   @JvmStatic
   @JvmOverloads
+  @NonNls
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,

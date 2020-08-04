@@ -518,7 +518,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   @Override
-  public EditorColorsScheme getScheme(@NotNull String schemeName) {
+  public EditorColorsScheme getScheme(@NonNls @NotNull String schemeName) {
     return mySchemeManager.findSchemeByName(schemeName);
   }
 
@@ -589,8 +589,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return mySchemeManager;
   }
 
-  private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
-  private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
+  @NonNls private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  @NonNls private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 

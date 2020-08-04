@@ -923,6 +923,7 @@ public class PluginManagerConfigurable
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
+          @NonNls
           protected List<String> getAttributes() {
             return Arrays
               .asList(

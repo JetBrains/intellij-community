@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.ui.paint.LinePainter2D;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 class SpecialCharacterFragment implements LineFragment {
-  private static final Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
+  @NonNls private static final Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
   // @formatter:off
     new int[] {
         0x00,   0x01,   0x02,   0x03,   0x04,   0x05,   0x06,   0x07,   0x08,                   0x0B,   0x0C,           0x0E,   0x0F,

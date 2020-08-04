@@ -15,6 +15,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -305,6 +306,7 @@ public class JobLauncherImpl extends JobLauncher {
       }
 
       @Override
+      @NonNls
       public String toString() {
         return super.toString() + " seq="+mySeq;
       }

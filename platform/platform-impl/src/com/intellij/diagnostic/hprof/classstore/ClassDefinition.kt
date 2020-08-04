@@ -16,6 +16,7 @@
 package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
+import org.jetbrains.annotations.NonNls
 import java.util.function.LongUnaryOperator
 
 class ClassDefinition(val name: String,
@@ -52,6 +53,7 @@ class ClassDefinition(val name: String,
     const val OBJECT_PREAMBLE_SIZE = 8
     const val ARRAY_PREAMBLE_SIZE = 12
 
+    @NonNls
     fun computePrettyName(name: String): String {
       if (!name.startsWith('['))
         return name

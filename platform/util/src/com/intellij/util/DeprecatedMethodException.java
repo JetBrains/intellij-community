@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -17,7 +18,7 @@ public final class DeprecatedMethodException extends RuntimeException {
   /**
    * This method reports the error only once for every same {@param message}
    */
-  public static void report(@NotNull String message) {
+  public static void report(@NotNull @NonNls String message) {
     if (!BEAT_DEAD_HORSE.add(message)) return;
     Class<?> superClass = ReflectionUtil.findCallerClass(2);
     String superClassName = superClass != null ? superClass.getName() : "<no class>";

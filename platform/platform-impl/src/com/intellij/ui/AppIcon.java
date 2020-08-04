@@ -18,6 +18,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.*;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class AppIcon {
@@ -59,7 +59,7 @@ public abstract class AppIcon {
     return ourIcon;
   }
 
-  public abstract boolean setProgress(Project project, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+  public abstract boolean setProgress(Project project, @NonNls Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
   public abstract boolean hideProgress(Project project, Object processId);
 
@@ -376,7 +376,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static Method getAppMethod(final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
+    private static Method getAppMethod(@NonNls final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
       return getAppClass().getMethod(name, args);
     }
 

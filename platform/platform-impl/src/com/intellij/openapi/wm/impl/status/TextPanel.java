@@ -46,7 +46,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   public void recomputeSize() {
-    final JLabel label = new JLabel("XXX");
+    final JLabel label = new JLabel("XXX"); //NON-NLS
     label.setFont(getFont());
     myPrefHeight = label.getPreferredSize().height;
   }

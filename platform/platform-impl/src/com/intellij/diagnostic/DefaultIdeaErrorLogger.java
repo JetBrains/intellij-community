@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,9 +31,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourLoggerBroken = false;
   private static boolean ourMappingFailedNotificationPosted = false;
 
-  private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
-  private static final String DISABLED_VALUE = "disabled";
-  private static final String ENABLED_VALUE = "enabled";
+  @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
+  @NonNls private static final String DISABLED_VALUE = "disabled";
+  @NonNls private static final String ENABLED_VALUE = "enabled";
 
   @Override
   public boolean canHandle(IdeaLoggingEvent event) {

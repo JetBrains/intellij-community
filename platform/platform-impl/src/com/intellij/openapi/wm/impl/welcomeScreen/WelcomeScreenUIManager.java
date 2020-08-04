@@ -9,6 +9,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -31,7 +32,7 @@ public class WelcomeScreenUIManager {
   @NotNull
   private static Font loadFont() {
     @SuppressWarnings("SpellCheckingInspection")
-    String fontPath = "/fonts/Roboto-Light.ttf";
+    @NonNls String fontPath = "/fonts/Roboto-Light.ttf";
     URL url = AppUIUtil.class.getResource(fontPath);
     if (url == null) {
       Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + fontPath);
