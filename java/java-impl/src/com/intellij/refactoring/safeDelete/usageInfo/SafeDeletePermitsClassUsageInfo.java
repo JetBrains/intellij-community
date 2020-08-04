@@ -41,7 +41,7 @@ public class SafeDeletePermitsClassUsageInfo extends SafeDeleteReferenceUsageInf
 
   @Override
   public boolean isSafeDelete() {
-    return getElement() != null && findReference() != null;
+    return findReference() != null;
   }
 
   private @Nullable PsiJavaCodeReferenceElement findReference() {
@@ -58,11 +58,11 @@ public class SafeDeletePermitsClassUsageInfo extends SafeDeleteReferenceUsageInf
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
     SafeDeletePermitsClassUsageInfo info = (SafeDeletePermitsClassUsageInfo)o;
-    return Objects.equals(myParentClass, info.myParentClass);
+    return myChangeParentModifier == info.myChangeParentModifier && Objects.equals(myParentClass, info.myParentClass);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), myParentClass);
+    return Objects.hash(super.hashCode(), myParentClass, myChangeParentModifier);
   }
 }
