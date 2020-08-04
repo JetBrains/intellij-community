@@ -5,6 +5,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Locale;
 
@@ -13,35 +14,41 @@ import java.util.Locale;
  * The main purpose of this enum is to be able to display localized element name in UI
  */
 public enum JavaElementKind {
-  ABSTRACT_METHOD,
-  ANNOTATION,
-  CLASS,
-  CONSTANT,
-  CONSTRUCTOR,
-  ENUM,
-  ENUM_CONSTANT,
-  EXPRESSION,
-  FIELD,
-  INITIALIZER,
-  INTERFACE,
-  LOCAL_VARIABLE,
-  METHOD,
-  MODULE,
-  PACKAGE,
-  PARAMETER,
-  PATTERN_VARIABLE,
-  RECORD,
-  RECORD_COMPONENT,
-  STATEMENT,
-  UNKNOWN,
-  VARIABLE;
+  ABSTRACT_METHOD("element.abstract_method"),
+  ANNOTATION("element.annotation"),
+  CLASS("element.class"),
+  CONSTANT("element.constant"),
+  CONSTRUCTOR("element.constructor"),
+  ENUM("element.enum"),
+  ENUM_CONSTANT("element.enum_constant"),
+  EXPRESSION("element.expression"),
+  FIELD("element.field"),
+  INITIALIZER("element.initializer"),
+  INTERFACE("element.interface"),
+  LOCAL_VARIABLE("element.local_variable"),
+  METHOD("element.method"),
+  MODULE("element.module"),
+  PACKAGE("element.package"),
+  PARAMETER("element.parameter"),
+  PATTERN_VARIABLE("element.pattern_variable"),
+  RECORD("element.record"),
+  RECORD_COMPONENT("element.record_component"),
+  STATEMENT("element.statement"),
+  UNKNOWN("element.unknown"),
+  VARIABLE("element.variable");
+  
+  private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String propertyKey;
+
+  JavaElementKind(@PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
+    propertyKey = key;
+  }
 
   /**
    * @return human-readable name of the item having the subject role in the sentence (nominative case)
    */
   @Nls
   public @NotNull String subject() {
-    return JavaPsiBundle.message("element." + name().toLowerCase(Locale.ROOT), 0);
+    return JavaPsiBundle.message(propertyKey, 0);
   }
 
   /**
@@ -49,7 +56,7 @@ public enum JavaElementKind {
    */
   @Nls
   public @NotNull String object() {
-    return JavaPsiBundle.message("element." + name().toLowerCase(Locale.ROOT), 1);
+    return JavaPsiBundle.message(propertyKey, 1);
   }
 
   public static JavaElementKind fromElement(@NotNull PsiElement element) {
