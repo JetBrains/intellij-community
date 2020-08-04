@@ -48,6 +48,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.LinkOption;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
@@ -508,18 +511,31 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
-        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
-        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
-          final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-          if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
-            results.add(rootFile);
-            continue;
+        String normalizedPath = restorePathCapitalization(path);
+        if (normalizedPath != null) {
+          final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(normalizedPath);
+          if (virtualFile != null && !virtualFile.equals(condaFolder)) {
+            final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
+            if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
+              results.add(rootFile);
+              continue;
+            }
           }
         }
       }
       LOG.info("Bogus sys.path entry " + path);
     }
     return results;
+  }
+
+  @Nullable
+  private static String restorePathCapitalization(@NotNull String path) {
+    try {
+      return Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   /**
