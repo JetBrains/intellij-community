@@ -15,25 +15,20 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public final class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
-  private final State myState = new State();
+  private @NotNull State myState = new State();
 
   public static PyDebuggerOptionsProvider getInstance(Project project) {
     return project.getService(PyDebuggerOptionsProvider.class);
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myState.myAttachToSubprocess = state.myAttachToSubprocess;
-    myState.mySaveCallSignatures = state.mySaveCallSignatures;
-    myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
-    myState.mySupportQtDebugging = state.mySupportQtDebugging;
-    myState.myPyQtBackend = state.myPyQtBackend;
-    myState.myAttachProcessFilter = state.myAttachProcessFilter;
+    myState = state;
   }
 
   public static class State {
