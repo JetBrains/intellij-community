@@ -140,7 +140,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
       String lastComponent;
 
       FirstPassVisitor() {
-        super(StubBuildingVisitor.ASM_API);
+        super(Opcodes.API_VERSION);
       }
 
       @Override

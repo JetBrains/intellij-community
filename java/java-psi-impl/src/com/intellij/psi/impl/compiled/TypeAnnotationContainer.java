@@ -1,16 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,31 +103,7 @@ public class TypeAnnotationContainer {
         List<PsiAnnotation> result = new ArrayList<>();
         for (TypeAnnotationEntry entry : myList) {
           if (entry.myPath.length == 0) {
-            Ref<PsiAnnotation> annotationRef = Ref.create();
-            PsiAnnotationStubImpl stub = new PsiAnnotationStubImpl(null, entry.myText) {
-              @Override
-              public Project getProject() {
-                return parent.getProject();
-              }
-
-              @Override
-              public PsiAnnotation getPsi() {
-                return annotationRef.get();
-              }
-            };
-            PsiAnnotation annotation = new ClsAnnotationImpl(stub) {
-              @Override
-              public PsiFile getContainingFile() {
-                return parent.getContainingFile();
-              }
-
-              @Override
-              public PsiElement getParent() {
-                return parent;
-              }
-            };
-            annotationRef.set(annotation);
-            result.add(annotation);
+            result.add(new ClsTypeAnnotationImpl(parent, entry.myText));
           }
         }
         return result.toArray(PsiAnnotation.EMPTY_ARRAY);
@@ -351,4 +331,109 @@ public class TypeAnnotationContainer {
       return result + "->" + myText;
     }
   }
+
+  static class ClsTypeAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
+    private final NotNullLazyValue<ClsJavaCodeReferenceElementImpl> myReferenceElement;
+    private final NotNullLazyValue<ClsAnnotationParameterListImpl> myParameterList;
+    private final PsiElement myParent;
+    private final String myText;
+    
+    ClsTypeAnnotationImpl(PsiElement parent, String text) {
+      myParent = parent;
+      myText = text;
+      myReferenceElement = new AtomicNotNullLazyValue<ClsJavaCodeReferenceElementImpl>() {
+        @NotNull
+        @Override
+        protected ClsJavaCodeReferenceElementImpl compute() {
+          int index = myText.indexOf('(');
+          String refText = index > 0 ? myText.substring(1, index) : myText.substring(1);
+          return new ClsJavaCodeReferenceElementImpl(ClsTypeAnnotationImpl.this, refText);
+        }
+      };
+      myParameterList = new AtomicNotNullLazyValue<ClsAnnotationParameterListImpl>() {
+        @NotNull
+        @Override
+        protected ClsAnnotationParameterListImpl compute() {
+          PsiNameValuePair[] attrs = myText.indexOf('(') > 0
+                                     ? JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText(myText, myParent)
+                                       .getParameterList().getAttributes()
+                                     : PsiNameValuePair.EMPTY_ARRAY;
+          return new ClsAnnotationParameterListImpl(ClsTypeAnnotationImpl.this, attrs);
+        }
+      };
+    }
+    
+    @Override
+    public @NotNull PsiAnnotationParameterList getParameterList() {
+      return myParameterList.getValue();
+    }
+
+    @Override
+    public @Nullable String getQualifiedName() {
+      return getNameReferenceElement().getCanonicalText();
+    }
+
+    @Override
+    public @NotNull PsiJavaCodeReferenceElement getNameReferenceElement() {
+      return myReferenceElement.getValue();
+    }
+
+    @Override
+    public @Nullable PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
+      return PsiImplUtil.findAttributeValue(this, attributeName);
+    }
+
+    @Override
+    public @Nullable PsiAnnotationMemberValue findDeclaredAttributeValue(@Nullable String attributeName) {
+      return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
+    }
+
+    @Override
+    public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable String attributeName, @Nullable T value) {
+      throw cannotModifyException(this);
+    }
+
+    @Override
+    public @Nullable PsiAnnotationOwner getOwner() {
+      return ObjectUtils.tryCast(myParent, PsiAnnotationOwner.class);
+    }
+
+    @Override
+    public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+      buffer.append(myText);
+    }
+
+    @Override
+    public String getText() {
+      return myText;
+    }
+
+    @Override
+    public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+      setMirrorCheckingType(element, null);
+      PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+      setMirror(getNameReferenceElement(), mirror.getNameReferenceElement());
+      setMirror(getParameterList(), mirror.getParameterList());
+    }
+
+    @Override
+    public PsiElement @NotNull [] getChildren() {
+      return new PsiElement[]{myReferenceElement.getValue(), getParameterList()};
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myParent;
+    }
+    
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitAnnotation(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+  } 
 }

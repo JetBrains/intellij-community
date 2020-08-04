@@ -63,18 +63,6 @@ public class TypeInfo {
   public final boolean isEllipsis;
   private TypeAnnotationContainer myTypeAnnotations;
 
-  static final class TypeInfoWithAnnotationStubs extends TypeInfo {
-    private final PsiAnnotationStub[] myAnnotationStubs;
-
-    TypeInfoWithAnnotationStubs(String text,
-                                byte arrayCount,
-                                boolean ellipsis,
-                                PsiAnnotationStub @NotNull [] annotationStubs) {
-      super(text, arrayCount, ellipsis);
-      myAnnotationStubs = annotationStubs;
-    }
-  }
-
   /**
    * Creates a non-array type info
    * 
@@ -110,27 +98,6 @@ public class TypeInfo {
    */
   public @NotNull TypeAnnotationContainer getTypeAnnotations() {
     return myTypeAnnotations == null ? TypeAnnotationContainer.EMPTY : myTypeAnnotations;
-  }
-
-  @NotNull
-  public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
-    PsiModifierListStub modifierList = owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (modifierList == null) return this;
-
-    List<PsiAnnotationStub> annotationStubs = null;
-    for (StubElement child : modifierList.getChildrenStubs()) {
-      if (!(child instanceof PsiAnnotationStub)) continue;
-      PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
-        if (annotationStubs == null) annotationStubs = new SmartList<>();
-        annotationStubs.add(annotationStub);
-      }
-    }
-
-    PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
-    if (annotationStubs != null) stubArray = annotationStubs.toArray(PsiAnnotationStub.EMPTY_ARRAY);
-    if (stubArray.length == 0) return this;
-    return new TypeInfoWithAnnotationStubs(text, arrayCount, isEllipsis, stubArray);
   }
 
   @NotNull
@@ -274,22 +241,20 @@ public class TypeInfo {
     }
   }
 
+  /**
+   * @param typeInfo
+   * @return type text without annotations
+   */
   @Nullable
   public static String createTypeText(@NotNull TypeInfo typeInfo) {
     if (typeInfo == NULL || typeInfo.text == null) {
       return null;
     }
-    if (typeInfo.arrayCount == 0 && !(typeInfo instanceof TypeInfoWithAnnotationStubs)) {
+    if (typeInfo.arrayCount == 0) {
       return typeInfo.text;
     }
 
     StringBuilder buf = new StringBuilder();
-
-    if (typeInfo instanceof TypeInfoWithAnnotationStubs) {
-      for (PsiAnnotationStub stub : ((TypeInfoWithAnnotationStubs)typeInfo).myAnnotationStubs) {
-        buf.append(stub.getText()).append(' ');
-      }
-    }
 
     buf.append(typeInfo.text);
 

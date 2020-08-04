@@ -3,19 +3,21 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 
 final class AnnotationTextCollector extends AnnotationVisitor {
   private final StringBuilder myBuilder = new StringBuilder();
-  private final Function<String, String> myMapping;
+  private final Function<@NotNull String, @NotNull String> myMapping;
   private final Consumer<? super String> myCallback;
   private boolean hasPrefix;
   private boolean hasParams;
 
   AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<? super String> callback) {
-    super(StubBuildingVisitor.ASM_API);
+    super(Opcodes.API_VERSION);
     myMapping = mapping;
     myCallback = callback;
 

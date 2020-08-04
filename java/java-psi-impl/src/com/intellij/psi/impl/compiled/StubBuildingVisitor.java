@@ -44,8 +44,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
-  static final int ASM_API = Opcodes.API_VERSION;
-
   private final T mySource;
   private final InnerClassSourceStrategy<T> myInnersStrategy;
   private final StubElement<?> myParent;
@@ -67,7 +65,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement<?> parent, int access, String shortName,
                              boolean anonymousInner, boolean localClassInner) {
-    super(ASM_API);
+    super(Opcodes.API_VERSION);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;
@@ -517,7 +515,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private FieldAnnotationCollectingVisitor(@NotNull PsiFieldStub stub,
                                              @NotNull PsiModifierListStub modList,
                                              @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
       myAnnoBuilder = new TypeAnnotationContainer.Builder(stub.getType(false), firstPassData);
@@ -549,7 +547,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private RecordComponentAnnotationCollectingVisitor(@NotNull PsiRecordComponentStub stub,
                                                        @NotNull PsiModifierListStub modList,
                                                        @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
       myAnnoBuilder = new TypeAnnotationContainer.Builder(stub.getType(false), firstPassData);
@@ -594,7 +592,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
                                               int paramIgnoreCount,
                                               int localVarIgnoreCount,
                                               @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myOwner = owner;
       myMethodInfo = methodInfo;
       myModList = modList;
