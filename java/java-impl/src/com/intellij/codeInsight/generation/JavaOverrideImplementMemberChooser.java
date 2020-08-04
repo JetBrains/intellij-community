@@ -12,11 +12,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +93,15 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
       if (onlyPrimary.length == 0) {
         javaOverrideImplementMemberChooser.selectElements(new ClassMember[] {all[0]});
       } else {
-        javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        PsiClass currClass = ObjectUtils.tryCast(aClass, PsiClass.class);
+        if (currClass != null && currClass.isRecord()) {
+          PsiMethodMember[] toImplementMembers = ContainerUtil
+            .filter(onlyPrimary, m -> !OverrideImplementExploreUtil.belongsToRecord(m.getElement()))
+            .toArray(new PsiMethodMember[0]);
+          javaOverrideImplementMemberChooser.selectElements(ArrayUtil.isEmpty(toImplementMembers) ? onlyPrimary : toImplementMembers);
+        } else {
+          javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        }
       }
     }
 

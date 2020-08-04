@@ -39,6 +39,8 @@ class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testImplementRecordMethods() { addRecordClass();doTest(true) }
 
+  void testImplementInterfaceMethodsInRecord() { addRecordClass();doTest(true) }
+
   void testOverrideRecordMethods() { addRecordClass();doTest(false) }
 
   void testImplementExtensionMethods() { doTest(true) }

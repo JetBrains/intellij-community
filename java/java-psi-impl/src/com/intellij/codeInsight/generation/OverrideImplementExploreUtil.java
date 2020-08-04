@@ -169,7 +169,11 @@ public class OverrideImplementExploreUtil {
     return isDefaultMethod(aClass, abstractOne) ||
            // abstract methods from java.lang.Record (equals/hashCode/toString) are implicitly implemented in subclasses
            // so it could be reasonable to expect them in 'override' method dialog
-           CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(abstractOne.getContainingClass()).getQualifiedName());
+           belongsToRecord(abstractOne);
+  }
+
+  static boolean belongsToRecord(@NotNull PsiMethod method) {
+    return CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(method.getContainingClass()).getQualifiedName());
   }
 
   private static boolean preferLeftForImplement(@NotNull PsiMethod left, @NotNull PsiMethod right) {
