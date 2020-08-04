@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.*;
 
@@ -146,7 +145,9 @@ public final class PathUtil {
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
     List<VirtualFile> hierarchy = getHierarchy(file);
-
+    if (ancestorPath.isEmpty()) {
+      return true;
+    }
     int i = 0;
     boolean result = false;
     int j;
@@ -169,11 +170,6 @@ public final class PathUtil {
         result = true;
         break;
       }
-    }
-    boolean old = FileUtil.startsWith(file.getPath(), ancestorPath);
-    if (old != result) {
-      throw new RuntimeException("old=" + old + "; ancestorPath=" + ancestorPath + "; file=" + file + "; hierarchy=" + hierarchy + "; names=" +
-                                 ContainerUtil.map(hierarchy, v->v.getName())+"; i="+i+"; j="+j);
     }
     return result;
   }
