@@ -86,4 +86,66 @@ static void main(String[] args) {
 }
 """
   }
+
+  @Test
+  void 'includes induces order of parameters'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = 'referrerUrl, actionType ')
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr(true, "groovy")
+}
+"""
+  }
+
+  @Test
+  void 'internal names are not among parameters'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor()
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+}
+"""
+  }
+
+  @Test
+  void 'include internal names'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allNames = true)
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr("")
+}
+"""
+  }
+
+  @Test
+  void 'include does not affect internal name'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = "\$actionType")
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+}
+"""
+  }
 }
