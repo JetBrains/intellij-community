@@ -967,6 +967,7 @@
                         serviceImplementation="com.intellij.ide.lightEdit.LightEditServiceImpl"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.ide.lightEdit.LightEditDocumentSaveVetoer"/>
     <fileTypeOverrider implementation="com.intellij.ide.lightEdit.LightEditFileTypeOverrider"/>
+    <daemon.intentionActionFilter implementation="com.intellij.ide.lightEdit.intentions.LightEditIntentionActionFilter"/>
     <intentionAction>
       <className>com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention</className>
       <category>LightEdit mode</category>

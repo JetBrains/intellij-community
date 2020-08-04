@@ -24,7 +24,6 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
@@ -131,8 +130,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     try {
       Project project = psiFile.getProject();
       action = IntentionActionDelegate.unwrap(action);
-
-      if (LightEdit.owns(project) && !(action instanceof LightEditCompatible)) return false;
 
       if (action instanceof SuppressIntentionActionFromFix) {
         final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
