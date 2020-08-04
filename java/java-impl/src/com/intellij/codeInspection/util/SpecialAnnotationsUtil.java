@@ -116,7 +116,7 @@ public final class SpecialAnnotationsUtil {
           new AnActionButton(JavaBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern"),
+              String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern.message"),
                                                                 JavaBundle.message("special.annotations.list.annotation.pattern"),
                                                                 Messages.getQuestionIcon());
               if (selectedPattern != null) {
@@ -124,7 +124,8 @@ public final class SpecialAnnotationsUtil {
               }
             }
           }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
-                                 JavaBundle.message("special.annotations.list.annotation.pattern"), "Remove");
+                                 JavaBundle.message("special.annotations.list.annotation.pattern"),
+                                 JavaBundle.message("special.annotations.list.remove.pattern"));
     }
 
     if (borderTitle == null) {

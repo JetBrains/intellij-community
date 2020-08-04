@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
+import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -82,7 +83,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
         slider.setValue(ArrayUtil.find(modifiers, myCurrentModifier) + 1);
         final JBPopup popup = JBPopupFactory.getInstance()
           .createComponentPopupBuilder(slider, null)
-          .setTitle("Effective Visibility")
+          .setTitle(RefactorJBundle.message("popup.title.effective.visibility"))
           .setCancelOnClickOutside(true)
           .setMovable(true)
           .createPopup();

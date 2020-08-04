@@ -27,6 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -323,6 +324,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", JAVA_UTIL_STREAM_STREAM,
                                                                               OF_METHOD) : null);
 
+    private static final String STREAM_SUFFIX = ".stream()";
+
     private final String myClassName;
     private final String myMethodName;
     private final String myQualifierCall;
@@ -336,7 +339,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     @NotNull
     public String getMessage() {
-      return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
+      String oldExpr = myQualifierCall + STREAM_SUFFIX;
+      String newExpr = ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
+      return InspectionGadgetsBundle.message("simplify.stream.inspection.message.can.be.replaced.with", oldExpr, newExpr);
     }
 
     @Nls
@@ -446,6 +451,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   static class ReplaceForEachMethodFix implements CallChainSimplification {
     private static final CallMatcher STREAM_FOR_EACH =
       instanceCall(JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterCount(1);
+    private static final String STREAM_PREFIX = "stream().";
 
     private final String myStreamMethod;
     private final String myReplacementMethod;
@@ -473,9 +479,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     @NotNull
     public String getMessage() {
-      return "The 'stream()." + myStreamMethod +
-             "()' chain can be replaced with '" + myReplacementMethod + "()'" +
-             (myChangeSemantics ? " (may change semantics)" : "");
+      String before = "'" + STREAM_PREFIX + myStreamMethod + "()'";
+      String after = myReplacementMethod + "()'";
+      if (myChangeSemantics) {
+        return "The " + before + " chain can be replaced with '" + after;
+      } else {
+        return "The " + before + " chain can be replaced with '" + after + " (may change semantics)";
+      }
     }
 
     @Override

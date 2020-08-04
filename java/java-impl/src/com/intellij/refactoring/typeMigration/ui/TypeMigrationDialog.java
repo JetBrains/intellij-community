@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -179,8 +180,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType()))
-        throw new ConfigurationException("'" + StringUtil.escapeXmlEntities(myTypeCodeFragment.getText()) + "' is an invalid type");
-      if (isVoidVariableMigration()) throw new ConfigurationException("'void' is not applicable");
+        throw new ConfigurationException(
+          JavaBundle.message("type.migration.dialog.message.invalid.type", StringUtil.escapeXmlEntities(myTypeCodeFragment.getText())));
+      if (isVoidVariableMigration()) throw new ConfigurationException(
+        JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
     }
 
     @Override

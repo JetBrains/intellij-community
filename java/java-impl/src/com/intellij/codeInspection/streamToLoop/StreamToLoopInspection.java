@@ -71,11 +71,11 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         PsiClass aClass = method.getContainingClass();
         if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
           if (extractOperations(ChainVariable.STUB, call, SUPPORT_UNKNOWN_SOURCES) != null) {
-            register(call, nameElement, "Replace Stream API chain with loop");
+            register(call, nameElement, JavaBundle.message("stream.to.loop.inspection.message.replace.stream.api.chain.with.loop"));
           }
         }
         else if (extractIterableForEach(call) != null || extractMapForEach(call) != null) {
-          register(call, nameElement, "Replace 'forEach' call with loop");
+          register(call, nameElement, JavaBundle.message("stream.to.loop.inspection.message.replace.foreach.call.with.loop"));
         }
       }
 
