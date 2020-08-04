@@ -118,7 +118,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   @Nls
   protected String getFormatString() {
-    return JavaBundle.message("side.effects.pattern.message");
+    return JavaBundle.partialMessage("side.effects.pattern.message", 3);
   }
 
   protected String sideEffectsDescription() {
