@@ -39,6 +39,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,9 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
     if (!(element instanceof PsiClass)) return false;
     if (element instanceof PsiAnonymousClass) return false;
-    return findClassInheritors((PsiClass)element);
+    PsiClass psiClass = (PsiClass)element;
+    if (!findClassInheritors(psiClass)) return false;
+    return !isParentSealed(psiClass);
   }
 
   private static boolean findClassInheritors(final PsiClass element) {
@@ -90,6 +93,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }), JavaRefactoringBundle.message("inline.anonymous.conflict.progress", element.getQualifiedName()), true, element.getProject())) return false;
     return inheritors.isEmpty();
+  }
+
+  private static boolean isParentSealed(@NotNull PsiClass psiClass) {
+    if (PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) == null) return false;
+    return ClassUtils.hasSealedParent(psiClass);
   }
 
   @Override

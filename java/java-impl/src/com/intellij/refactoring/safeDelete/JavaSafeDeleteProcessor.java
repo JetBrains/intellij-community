@@ -575,7 +575,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement) element;
             final PsiClass inheritor = (PsiClass) pparent;
             if (parent.equals(inheritor.getPermitsList())) {
-              usages.add(new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor));
+              usages.add(new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true));
               return true;
             }
             //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly

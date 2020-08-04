@@ -2,21 +2,24 @@
 package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class SafeDeletePermitsClassUsageInfo extends SafeDeleteReferenceUsageInfo {
   private final PsiClass myParentClass;
+  private final boolean myChangeParentModifier;
 
-  public SafeDeletePermitsClassUsageInfo(final PsiJavaCodeReferenceElement reference, PsiClass refClass, PsiClass parentClass) {
+  public SafeDeletePermitsClassUsageInfo(PsiJavaCodeReferenceElement reference, PsiClass refClass,
+                                         PsiClass parentClass, boolean changeParentModifier) {
     super(reference, refClass, true);
     myParentClass = parentClass;
+    myChangeParentModifier = changeParentModifier;
   }
 
   @Override
@@ -27,17 +30,26 @@ public class SafeDeletePermitsClassUsageInfo extends SafeDeleteReferenceUsageInf
   @Override
   public void deleteElement() throws IncorrectOperationException {
     final PsiClass refClass = getReferencedElement();
-    ClassUtils.removeFromPermitsList(myParentClass, refClass);
+    if (myChangeParentModifier) {
+      ClassUtils.removeFromPermitsList(myParentClass, refClass);
+    }
+    else {
+      PsiJavaCodeReferenceElement exChildRef = findReference();
+      if (exChildRef != null) exChildRef.delete();
+    }
   }
 
   @Override
   public boolean isSafeDelete() {
-    if (getElement() != null) return true;
+    return getElement() != null && findReference() != null;
+  }
+
+  private @Nullable PsiJavaCodeReferenceElement findReference() {
     PsiReferenceList permitsList = myParentClass.getPermitsList();
-    if (permitsList == null) return false;
+    if (permitsList == null) return null;
     PsiJavaCodeReferenceElement[] childRefs = permitsList.getReferenceElements();
-    if (childRefs.length < 1) return false;
-    return ContainerUtil.exists(childRefs, ref -> ref.resolve() == getReferencedElement());
+    if (childRefs.length < 1) return null;
+    return ContainerUtil.find(childRefs, ref -> ref.resolve() == getReferencedElement());
   }
 
   @Override

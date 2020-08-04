@@ -119,9 +119,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
               if (parent instanceof PsiReferenceList) {
                 final PsiElement pparent = parent.getParent();
                 if (pparent instanceof PsiClass) {
+                  final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)element;
                   final PsiClass inheritor = (PsiClass)pparent;
                   if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
-                    usages.add(new ReplaceExtendsListUsageInfo((PsiJavaCodeReferenceElement)element, mySuperClass, inheritor));
+                    usages.add(new ReplaceExtendsListUsageInfo(classRef, mySuperClass, inheritor));
+                  }
+                  else if (parent.equals(inheritor.getPermitsList())) {
+                    usages.add(new RemovePermitsListUsageInfo(classRef, mySuperClass, inheritor));
                   }
                 }
               } else {
