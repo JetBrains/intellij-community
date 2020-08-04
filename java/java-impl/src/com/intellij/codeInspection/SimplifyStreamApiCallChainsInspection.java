@@ -27,6 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -1679,8 +1680,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       String typeParametersText = typeParameters == null ? "" : ct.text(typeParameters);
       String factory;
       if (PsiUtil.isLanguageLevel9OrHigher(call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
-          Stream.of(qualifierArgs.getExpressions())
-                .allMatch(e -> NullabilityUtil.getExpressionNullability(e, true) == Nullability.NOT_NULL)) {
+          ContainerUtil
+            .and(qualifierArgs.getExpressions(), e -> NullabilityUtil.getExpressionNullability(e, true) == Nullability.NOT_NULL)) {
         factory = JAVA_UTIL_LIST + "." + typeParametersText + "of";
       } else {
         factory = JAVA_UTIL_ARRAYS + "." + typeParametersText + "asList";
