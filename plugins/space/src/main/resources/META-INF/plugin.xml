@@ -55,29 +55,25 @@
       <separator/>
       <action id="com.intellij.space.actions.SpaceMainToolBarAction"
               class="com.intellij.space.actions.SpaceMainToolBarAction"
-              icon="SpaceIcons.MainToolwindow"
-              text="Space Toolbar Menu">
+              icon="SpaceIcons.MainToolwindow">
       </action>
       <add-to-group group-id="NavBarToolBar" anchor="last"/>
     </group>
 
 
     <action id="com.intellij.space.vcs.clone.SpaceCloneAction"
-            class="com.intellij.space.vcs.clone.SpaceCloneAction"
-            text="Clone Repository..."/>
+            class="com.intellij.space.vcs.clone.SpaceCloneAction"/>
 
     <action id="com.intellij.space.actions.SpaceLoginAction"
-            class="com.intellij.space.actions.SpaceLoginAction"
-            text="Log In to Space..."/>
+            class="com.intellij.space.actions.SpaceLoginAction"/>
     <action id="com.intellij.space.actions.SpaceLogoutAction"
-            class="com.intellij.space.actions.SpaceLogoutAction"
-            text="Log Out..."/>
+            class="com.intellij.space.actions.SpaceLogoutAction"/>
 
-    <group id="com.intellij.space.vcs.OpenReviews" class="com.intellij.space.vcs.OpenReviews" text="Open Code Reviews..."/>
-    <group id="com.intellij.space.vcs.OpenChecklists" class="com.intellij.space.vcs.OpenChecklists" text="Open Checklists..."/>
-    <group id="com.intellij.space.vcs.OpenIssues" class="com.intellij.space.vcs.OpenIssues" text="Open Issues..."/>
+    <group id="com.intellij.space.vcs.OpenReviews" class="com.intellij.space.vcs.OpenReviews"/>
+    <group id="com.intellij.space.vcs.OpenChecklists" class="com.intellij.space.vcs.OpenChecklists"/>
+    <group id="com.intellij.space.vcs.OpenIssues" class="com.intellij.space.vcs.OpenIssues"/>
 
-    <group text="Space" id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
+    <group id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
       <reference id="com.intellij.space.vcs.clone.SpaceCloneAction"/>
       <separator/>
@@ -90,8 +86,7 @@
     </group>
 
     <group id="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup"
-           class="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup"
-           text="Open On Space">
+           class="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
@@ -100,8 +95,7 @@
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </group>
     <action id="com.intellij.space.vcs.share.SpaceShareProjectAction"
-            class="com.intellij.space.vcs.share.SpaceShareProjectAction"
-            text="Share Project on Space">
+            class="com.intellij.space.vcs.share.SpaceShareProjectAction">
       <add-to-group group-id="SpaceGroup" anchor="first"/>
       <add-to-group group-id="Vcs.Import" anchor="last"/>
     </action>
