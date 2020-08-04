@@ -5,5 +5,5 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.ModificationTracker
 
 interface ModifiableRootModelBridge: ModifiableRootModel, ModificationTracker {
-  fun commitWithoutStorageUpdate()
+  fun prepareForCommit()
 }

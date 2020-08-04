@@ -141,19 +141,19 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
           Disposer.dispose(modifiableModel);
         }
         else {
-          ((LibraryModifiableModelBridge)modifiableModel).commitWithoutStorageUpdate();
+          ((LibraryModifiableModelBridge)modifiableModel).prepareForCommit();
         }
       }
-      ((ProjectModifiableLibraryTableBridge)getModifiableProjectLibrariesModel()).commitWithoutStorageUpdate();
+      ((ProjectModifiableLibraryTableBridge)getModifiableProjectLibrariesModel()).prepareForCommit();
 
       Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
       ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
       for (ModifiableRootModel model: rootModels1) {
         assert !model.isDisposed() : "Already disposed: " + model;
       }
-      if (myModifiableModuleModel != null) ((ModifiableModuleModelBridge)myModifiableModuleModel).commitWithoutStorageUpdate();
+      if (myModifiableModuleModel != null) ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
       for (ModifiableRootModel model : rootModels1) {
-        ((ModifiableRootModelBridge)model).commitWithoutStorageUpdate();
+        ((ModifiableRootModelBridge)model).prepareForCommit();
       }
 
       for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
@@ -162,7 +162,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
       for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
         if (!each.getKey().isDisposed()) {
-          ((ModifiableFacetModelBridge)each.getValue()).commitWithoutStorageUpdate();
+          ((ModifiableFacetModelBridge)each.getValue()).prepareForCommit();
         }
       }
       myModifiableModels.values().forEach(ModifiableModel::commit);

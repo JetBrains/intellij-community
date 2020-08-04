@@ -5,5 +5,5 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 
 
 interface LibraryModifiableModelBridge: LibraryEx.ModifiableModelEx, LibraryEx {
-  fun commitWithoutStorageUpdate()
+  fun prepareForCommit()
 }

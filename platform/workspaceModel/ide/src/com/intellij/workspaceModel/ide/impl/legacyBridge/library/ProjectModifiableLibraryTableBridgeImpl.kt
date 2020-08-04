@@ -97,19 +97,13 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun commit() {
-    assertModelIsLive()
-    modelIsCommittedOrDisposed = true
-
-    myAddedLibraries.forEach { library ->
-      library.clearTargetBuilder()
-    }
-
+    prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }
 
-  override fun commitWithoutStorageUpdate() {
+  override fun prepareForCommit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
     myAddedLibraries.forEach { library -> library.clearTargetBuilder() }

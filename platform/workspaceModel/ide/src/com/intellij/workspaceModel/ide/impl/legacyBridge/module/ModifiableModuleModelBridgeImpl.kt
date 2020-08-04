@@ -177,7 +177,6 @@ internal class ModifiableModuleModelBridgeImpl(
     }
 
     myNewNameToModule.inverse().remove(module)
-    println(module.name)
     myModulesToDispose[module.name] = module
     val moduleEntity = diff.findModuleEntity(module) ?: error("Could not find module entity to remove by $module")
     moduleEntity.dependencies
@@ -234,32 +233,13 @@ internal class ModifiableModuleModelBridgeImpl(
     }
   }
 
-  override fun commitWithoutStorageUpdate() {
+  override fun prepareForCommit() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val storage = entityStorageOnDiff.current
-    for (moduleToDispose in myModulesToDispose.values) {
-      val moduleEntity = storage.findModuleEntity(moduleToDispose)
-                         ?: error("Could not find module to remove by $moduleToDispose")
-      val libraries = if (!moduleToDispose.isDisposed)
-        ModuleRootComponentBridge.getInstance(moduleToDispose).moduleLibraryTable.libraryEntities().toList()
-      else {
-        val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(moduleToDispose.moduleEntityId)
-        storage.entities(LibraryEntity::class.java).filter { it.tableId == moduleLibraryTableId }.toList()
-      }
-      libraries.forEach { diff.removeEntity(it) }
-      diff.removeEntity(moduleEntity)
-    }
     myUncommittedModulesToDispose.forEach {module -> Disposer.dispose(module) }
   }
 
   fun collectChanges(): WorkspaceEntityStorageBuilder {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    for (module in myUncommittedModulesToDispose) {
-      Disposer.dispose(module)
-    }
-
+    prepareForCommit()
     return diff
   }
 

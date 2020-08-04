@@ -97,18 +97,13 @@ internal class LibraryModifiableModelBridgeImpl(
     }
   }
 
-  override fun commitWithoutStorageUpdate() {
+  override fun prepareForCommit() {
     assertModelIsLive()
 
     modelIsCommittedOrDisposed = true
 
-    if (reloadKind) {
-      originalLibrary.cleanCachedValue()
-    }
-    if (isChanged) {
-      originalLibrary.entityId = entityId
-      originalLibrary.fireRootSetChanged()
-    }
+    if (reloadKind) originalLibrary.cleanCachedValue()
+    if (isChanged) originalLibrary.entityId = entityId
   }
 
   private fun update(updater: ModifiableLibraryEntity.() -> Unit) {

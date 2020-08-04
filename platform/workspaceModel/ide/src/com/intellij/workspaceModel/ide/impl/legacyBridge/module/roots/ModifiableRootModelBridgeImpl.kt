@@ -359,7 +359,7 @@ class ModifiableRootModelBridgeImpl(
     }
   }
 
-  override fun commitWithoutStorageUpdate() {
+  override fun prepareForCommit() {
     collectChangesAndDispose()
   }
 
