@@ -131,7 +131,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createTextTitles(myRequest, getEditors()));
+    return DiffUtil.createTextTitles(myRequest, getEditors());
   }
 
   //
