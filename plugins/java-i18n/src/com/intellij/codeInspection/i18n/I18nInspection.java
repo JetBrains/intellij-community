@@ -697,29 +697,26 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       List<LocalQuickFix> fixes = new ArrayList<>();
 
+      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
+        for (PsiModifierListOwner element : nonNlsTargets) {
+          if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
+            if (!element.getManager().isInProject(element) ||
+                facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+              fixes.add(new NonNlsAnnotationProvider().createFix(element));
+            }
+          }
+        }
+      }
+
       if (myOnTheFly) {
         fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
         if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
           fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
         }
 
-        if (sourcePsi instanceof PsiLiteralExpression) {
-
-          if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
-            fixes.add(createIntroduceConstantFix());
-          }
-
-          if (PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
-            for (PsiModifierListOwner element : nonNlsTargets) {
-              if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
-                if (!element.getManager().isInProject(element) ||
-                    facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-                  fixes.add(new NonNlsAnnotationProvider().createFix(element));
-                }
-              }
-            }
-          }
+        if (sourcePsi instanceof PsiLiteralExpression && !isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
+          fixes.add(createIntroduceConstantFix());
         }
       }
       else {
