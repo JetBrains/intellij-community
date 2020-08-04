@@ -12,11 +12,11 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.THashSet
-import java.util.HashMap
+import java.util.*
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,
-                                  private val historyData: FileHistoryData) : NodeVisitor {
+                                  private val historyData: FileHistoryData) {
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
@@ -26,7 +26,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
   fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
     paths.push(startPath)
-    LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
+    walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row)
 
     val excluded = THashSet<Int>()
     for ((commit, path) in pathsForCommits) {
@@ -39,7 +39,51 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     return Pair(pathsForCommits, excluded)
   }
 
-  override fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
+  /*
+   * Depth-first walk for a graph. For each node, walks both into upward and downward siblings.
+   * Tries to preserve direction of travel: when a node is entered from up-sibling, goes to the down-siblings first.
+   * Then goes to the other up-siblings.
+   * And when a node is entered from down-sibling, goes to the up-siblings first.
+   * Then goes to the other down-siblings.
+   * When a node is entered the first time, enterNode is called.
+   * When a all the siblings of the node are visited, exitNode is called.
+   */
+  private fun walk(graph: LiteLinearGraph, start: Int) {
+    if (start < 0 || start >= graph.nodesCount()) return
+
+    val visited = BitSetFlags(graph.nodesCount(), false)
+
+    val stack = IntStack()
+    stack.push(start) // commit + direction of travel
+
+    outer@ while (!stack.empty()) {
+      val currentNode = stack.peek()
+      val down = isDown(stack)
+      if (!visited.get(currentNode)) {
+        visited.set(currentNode, true)
+        enterNode(currentNode, getPreviousNode(stack), down)
+      }
+
+      for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
+        if (!visited.get(nextNode)) {
+          stack.push(nextNode)
+          continue@outer
+        }
+      }
+
+      for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
+        if (!visited.get(nextNode)) {
+          stack.push(nextNode)
+          continue@outer
+        }
+      }
+
+      exitNode(currentNode)
+      stack.pop()
+    }
+  }
+
+  private fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
     val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
     val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
 
@@ -80,57 +124,8 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     return path
   }
 
-  override fun exitNode(node: Int) {
+  private fun exitNode(node: Int) {
     paths.pop()
-  }
-}
-
-private interface NodeVisitor {
-  fun enterNode(node: Int, previousNode: Int, travelDirection: Boolean)
-  fun exitNode(node: Int)
-}
-
-/*
- * Depth-first walk for a graph. For each node, walks both into upward and downward siblings.
- * Tries to preserve direction of travel: when a node is entered from up-sibling, goes to the down-siblings first.
- * Then goes to the other up-siblings.
- * And when a node is entered from down-sibling, goes to the up-siblings first.
- * Then goes to the other down-siblings.
- * When a node is entered the first time, enterNode is called.
- * When a all the siblings of the node are visited, exitNode is called.
- */
-private fun LiteLinearGraph.walk(start: Int, visitor: NodeVisitor) {
-  if (start < 0 || start >= nodesCount()) return
-
-  val visited = BitSetFlags(nodesCount(), false)
-
-  val stack = IntStack()
-  stack.push(start) // commit + direction of travel
-
-  outer@ while (!stack.empty()) {
-    val currentNode = stack.peek()
-    val down = isDown(stack)
-    if (!visited.get(currentNode)) {
-      visited.set(currentNode, true)
-      visitor.enterNode(currentNode, getPreviousNode(stack), down)
-    }
-
-    for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
-      if (!visited.get(nextNode)) {
-        stack.push(nextNode)
-        continue@outer
-      }
-    }
-
-    for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
-      if (!visited.get(nextNode)) {
-        stack.push(nextNode)
-        continue@outer
-      }
-    }
-
-    visitor.exitNode(currentNode)
-    stack.pop()
   }
 }
 
