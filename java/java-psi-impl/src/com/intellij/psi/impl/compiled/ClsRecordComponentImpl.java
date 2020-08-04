@@ -154,7 +154,7 @@ public class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRecordCom
 
   @Override
   public String toString() {
-    return "PsiRecordComponent";
+    return "PsiRecordComponent:" + getName();
   }
 
   @Override

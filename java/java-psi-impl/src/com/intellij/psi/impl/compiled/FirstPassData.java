@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -21,6 +22,8 @@ import static com.intellij.util.BitUtil.isSet;
  * Information retrieved during the first pass of a class file parsing
  */
 class FirstPassData implements Function<@NotNull String, @NotNull String> {
+  private static final Logger LOG = Logger.getInstance(FirstPassData.class);
+  
   private static class InnerClassEntry {
     final @NotNull String myOuterName;
     final @Nullable String myInnerName;
@@ -181,7 +184,8 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
       new ClassReader(classBytes).accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, 
                                          ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
     }
-    catch (Exception ignored) {
+    catch (Exception ex) {
+      LOG.debug(ex);
     }
     String varArgComponent = null;
     if (visitor.canonicalSignature != null) {
