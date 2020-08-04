@@ -239,27 +239,27 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         DONT_REPORT_TRUE_ASSERT_STATEMENTS, box -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = box.isSelected());
 
       JCheckBox ignoreAssertions = createCheckBoxWithHTML(
-        "Ignore assert statements",
+        message("inspection.data.flow.ignore.assert.statements"),
         IGNORE_ASSERT_STATEMENTS, box -> IGNORE_ASSERT_STATEMENTS = box.isSelected());
 
       JCheckBox reportConstantReferences = createCheckBoxWithHTML(
-        "Warn when reading a value guaranteed to be constant",
+        message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"),
         REPORT_CONSTANT_REFERENCE_VALUES, box -> REPORT_CONSTANT_REFERENCE_VALUES = box.isSelected());
 
       JCheckBox treatUnknownMembersAsNullable = createCheckBoxWithHTML(
-        "Treat non-annotated members and parameters as @Nullable",
+        message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable"),
         TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, box -> TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = box.isSelected());
 
       JCheckBox reportNullArguments = createCheckBoxWithHTML(
-        "Report not-null required parameter with null-literal argument usages",
+        message("inspection.data.flow.report.not.null.required.parameter.with.null.literal.argument.usages"),
         REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER, box -> REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = box.isSelected());
 
       JCheckBox reportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
-        "Report nullable methods that always return a non-null value",
+        message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value"),
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
       JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
-        "Report problems that happen only on some code paths",
+        message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths"),
         REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
 
       gc.insets = JBUI.emptyInsets();
