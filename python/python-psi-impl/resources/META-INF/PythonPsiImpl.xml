@@ -397,7 +397,7 @@
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
 
-    <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider"/>
+    <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider" order="last"/>
 
 
     <!-- typing -->
