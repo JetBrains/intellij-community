@@ -200,10 +200,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   private static void assertStubsAreSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
-    assert stub.getStubType() == stub2.getStubType();
+    assert stub.getStubType() == stub2.getStubType() : stub.getStubType() + "!=" + stub2.getStubType();
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();
-    assert stubs.size() == stubs2.size();
+    assert stubs.size() == stubs2.size() : stub.getStubType() + ": " + stubs.size() + "!=" + stubs2.size();
     for (int i = 0, len = stubs.size(); i < len; ++i) {
       assertStubsAreSimilar(stubs.get(i), stubs2.get(i));
     }
