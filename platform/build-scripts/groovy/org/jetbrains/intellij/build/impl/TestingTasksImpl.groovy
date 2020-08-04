@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
@@ -13,6 +14,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
@@ -381,6 +383,12 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.add(debuggerParameter)
     }
 
+    if (options.enableCausalProfiling) {
+      def causalProfilingOptions = CausalProfilingOptions.IMPL
+      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
+      jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
+    }
+
     if (suspendDebugProcess) {
       context.messages.info("""
 ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
@@ -519,5 +527,25 @@ class TestingTasksImpl extends TestingTasks {
 
   protected boolean isBootstrapSuiteDefault() {
     return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
+  }
+
+  private List<String> buildCausalProfilingAgentJvmArg(CausalProfilingOptions options) {
+    List<String> causalProfilingJvmArgs = []
+
+    String causalProfilerAgentName = SystemInfo.isLinux || SystemInfo.isMac ? "liblagent.so" : null
+    if (causalProfilerAgentName != null) {
+      def agentArgs = options.buildAgentArgsString()
+      if (agentArgs != null) {
+        causalProfilingJvmArgs << "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/$causalProfilerAgentName=$agentArgs".toString()
+      }
+      else {
+        context.messages.info("Could not find agent options")
+      }
+    }
+    else {
+      context.messages.info("Causal profiling is supported for Linux and Mac only")
+    }
+
+    return causalProfilingJvmArgs
   }
 }
