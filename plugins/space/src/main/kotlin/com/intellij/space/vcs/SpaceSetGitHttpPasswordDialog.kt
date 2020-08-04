@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
@@ -57,8 +58,8 @@ internal class SpaceSetGitHttpPasswordDialog(
   }
 
   init {
-    title = "Set Git HTTP password"
-    setOKButtonText("Save")
+    title = SpaceBundle.message("set.http.password.dialog.title")
+    setOKButtonText(SpaceBundle.message("set.http.password.dialog.ok.button"))
     init()
     Disposer.register(disposable, Disposable { lifetime.terminate() })
   }
@@ -102,7 +103,7 @@ internal class SpaceSetGitHttpPasswordDialog(
         }
         catch (e: Exception) {
           log.error(e, "Unable to set password")
-          setErrorText("Unable to set password")
+          setErrorText(SpaceBundle.message("set.http.password.dialog.error.text.unable.to.set.password"))
         }
       }
 
@@ -112,7 +113,7 @@ internal class SpaceSetGitHttpPasswordDialog(
   }
 
   override fun createCenterPanel(): JComponent? = panel {
-    row("Username:") {
+    row(SpaceBundle.message("set.http.password.dialog.username.label")) {
       JBTextField(me.username)().component.apply {
         isEditable = false
       }
@@ -127,7 +128,7 @@ internal class SpaceSetGitHttpPasswordDialog(
 
   override fun doValidate(): ValidationInfo? {
     if (passwordField.password.isEmpty()) {
-      return ValidationInfo("Password shouldn't be empty", passwordField)
+      return ValidationInfo(SpaceBundle.message("set.http.password.dialog.validation.message.empty.password"), passwordField)
     }
     return null
   }
