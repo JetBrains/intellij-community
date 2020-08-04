@@ -72,9 +72,9 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         component.add(runnerEditor.getComponent(), configEditor == null ? BorderLayout.CENTER : BorderLayout.SOUTH);
       }
       RunConfigurationEditorFragment<Settings, JComponent> fragment =
-        new RunConfigurationEditorFragment<Settings, JComponent>(executor.getId() + ".config", executor.getStartActionText(),
-                                                                 ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
-                                                                 component, 0) {
+        new RunConfigurationEditorFragment<>(executor.getId() + ".config", executor.getStartActionText(),
+                                             ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
+                                             component, 0) {
           @Override
           public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
             if (configEditor != null) {

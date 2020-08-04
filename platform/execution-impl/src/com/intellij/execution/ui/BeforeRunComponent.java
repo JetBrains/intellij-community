@@ -13,6 +13,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
@@ -104,12 +106,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
       if (tag.isVisible()) {
         continue;
       }
-      group.add(new AnAction(tag.myProvider.getName(), null, tag.myProvider.getIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          createTask(e, tag);
-        }
-      });
+      group.add(new TagAction(tag));
     }
     ListPopup
       popup = JBPopupFactory
@@ -286,8 +283,10 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
-            myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
-              .onSuccess(aBoolean -> setTask(myTask));
+            if (!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider)) {
+              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
+                .onSuccess(aBoolean -> setTask(myTask));
+            }
           }
         }
       });
@@ -311,7 +310,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
       myTask = task;
       setVisible(task != null);
       if (task != null) {
-        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task));
+        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task),
+                     !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
       }
     }
 
@@ -332,6 +332,25 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     @Override
     public String toString() {
       return myProvider.getName();
+    }
+  }
+
+  private class TagAction extends AnAction implements PossiblyDumbAware {
+    private final TaskButton myTag;
+
+    private TagAction(TaskButton tag) {
+      super(tag.myProvider.getName(), null, tag.myProvider.getIcon());
+      myTag = tag;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      createTask(e, myTag);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return DumbService.isDumbAware(myTag.myProvider);
     }
   }
 }

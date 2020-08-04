@@ -16,10 +16,11 @@
 package com.intellij.tools;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public class ToolBeforeRunTaskProvider extends AbstractToolBeforeRunTaskProvider<ToolBeforeRunTask> {
+public class ToolBeforeRunTaskProvider extends AbstractToolBeforeRunTaskProvider<ToolBeforeRunTask> implements DumbAware {
   static final Key<ToolBeforeRunTask> ID = Key.create("ToolBeforeRunTask");
 
   @Override

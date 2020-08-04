@@ -62,7 +62,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 C component,
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
-                                Predicate<? super Settings> initialSelection)  {
+                                Predicate<? super Settings> initialSelection) {
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 

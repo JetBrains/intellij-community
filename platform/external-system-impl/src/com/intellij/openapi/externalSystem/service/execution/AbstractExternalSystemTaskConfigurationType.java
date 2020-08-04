@@ -35,7 +35,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   @NotNull private final ProjectSystemId myExternalSystemId;
   private final ConfigurationFactory @NotNull [] myFactories = new ConfigurationFactory[1];
 
-  @NotNull private final NotNullLazyValue<Icon> myIcon = new NotNullLazyValue<Icon>() {
+  @NotNull private final NotNullLazyValue<Icon> myIcon = new NotNullLazyValue<>() {
     @NotNull
     @Override
     protected Icon compute() {
@@ -61,7 +61,16 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       public @NotNull String getId() {
         return getConfigurationFactoryId();
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return AbstractExternalSystemTaskConfigurationType.this.isEditableInDumbMode();
+      }
     };
+  }
+
+  protected boolean isEditableInDumbMode() {
+    return false;
   }
 
   /**

@@ -67,7 +67,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
     setSelected(!variant.equals(getVariants()[0]));
-    component().updateButton(getName() + ": " + getVariantName(variant), null);
+    component().updateButton(getName() + ": " + getVariantName(variant), null, true);
   }
 
   protected V[] getVariants() {
@@ -94,7 +94,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   @Nls
   protected String getVariantName(V variant) {
-    //noinspection HardCodedStringLiteral
     return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant);
   }
 
@@ -118,6 +117,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         if (myToggleListener != null) {
           myToggleListener.accept(s);
         }
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
       }
     })) {
       @Override

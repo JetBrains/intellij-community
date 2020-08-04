@@ -39,7 +39,9 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
   private final ListTableModel<LogFileOptions> myModel;
 
   public LogsFragment() {
-    super("log.monitor", DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"), t -> !t.getLogFiles().isEmpty());
+    super("log.monitor",
+          DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"),
+          t -> !t.getLogFiles().isEmpty());
     setActionHint(ExecutionBundle.message("the.ide.will.display.the.selected.logs.in.the.run.tool.window"));
 
     ColumnInfo<LogFileOptions, String> TAB_NAME = new TabNameColumnInfo();

@@ -706,6 +706,9 @@
     <experimentalFeature id="run.targets" percentOfUsers="0">
       <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
     </experimentalFeature>
+    <experimentalFeature id="edit.run.configurations.while.dumb" percentOfUsers="0">
+      <description>Enables editing of Run Configurations during indexing</description>
+    </experimentalFeature>
     <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>

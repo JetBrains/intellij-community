@@ -42,6 +42,11 @@ public final class GradleExternalTaskConfigurationType extends AbstractExternalS
   public boolean isDumbAware() {
     return true;
   }
+
+  @Override
+  protected boolean isEditableInDumbMode() {
+    return true;
+  }
 }
 
 

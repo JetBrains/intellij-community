@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -14,6 +15,8 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +66,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
       return new Filter<>() {
         @Override
         public boolean isAccepted(final PsiClass element) {
-          return ReadAction.compute(() -> classFilter.isAccepted(element));
+          return ReadAction.compute(() -> DumbService.getInstance(element.getProject()).isDumb() || classFilter.isAccepted(element));
         }
       };
     }
@@ -85,8 +88,10 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
                                             final String pattern,
                                             final GlobalSearchScope searchScope) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
-    PsiClass[] classes =
-      cache.getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
+    PsiClass[] classes = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      return cache
+        .getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
+    });
     return ContainerUtil.newArrayList(classes);
   }
 

@@ -6,8 +6,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ide.util.TreeChooser
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -17,12 +20,17 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.TextAccessor
 import com.intellij.util.ProcessingContext
+import com.intellij.util.Processor
 import com.intellij.util.TextFieldCompletionProvider
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FindSymbolParameters
+import com.intellij.util.indexing.IdFilter
 import com.intellij.util.textCompletion.TextFieldWithCompletion
-import com.jetbrains.extensions.getQName
-import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.extensions.ContextAnchor
 import com.jetbrains.extensions.QNameResolveContext
+import com.jetbrains.extensions.getQName
+import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyGotoSymbolContributor
@@ -86,7 +94,7 @@ private fun PyType.getVariants(element: PsiElement): Array<LookupElement> =
 
 private class PyNameCompletionProvider(private val contextAnchor: ContextAnchor,
                                        private val filter: ((PsiElement) -> Boolean)?,
-                                       private val startFromDirectory: (() -> VirtualFile)? = null) : TextFieldCompletionProvider() {
+                                       private val startFromDirectory: (() -> VirtualFile)? = null) : TextFieldCompletionProvider(), DumbAware {
   override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
 
     val lookups: Array<LookupElement>
@@ -149,5 +157,41 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
     return PyClassNameIndex.find(name, project, searchScope) + PyFunctionNameIndex.find(name, project, searchScope)
   }
 
-  override fun createChooseByNameModel() = GotoSymbolModel2(project, arrayOf(PyGotoSymbolContributor()))
+  override fun createChooseByNameModel() = GotoSymbolModel2(project, arrayOf(object : PyGotoSymbolContributor(), DumbAware {
+    override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                         ThrowableComputable<Array<String>, RuntimeException> {
+                                                           super.getNames(project, includeNonProjectItems)
+                                                         })
+    }
+
+    override fun getItemsByName(name: String?,
+                                pattern: String?,
+                                project: Project?,
+                                includeNonProjectItems: Boolean): Array<NavigationItem> {
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                         ThrowableComputable<Array<NavigationItem>, RuntimeException> {
+                                                           super.getItemsByName(name, pattern, project, includeNonProjectItems)
+                                                         })
+    }
+
+    override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
+      FileBasedIndex.getInstance().ignoreDumbMode({
+                                                    super.processNames(processor, scope, filter)
+                                                  }, DumbModeAccessType.RELIABLE_DATA_ONLY)
+    }
+
+    override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
+      FileBasedIndex.getInstance().ignoreDumbMode({
+                                                    super.processElementsWithName(name, processor, parameters)
+                                                  }, DumbModeAccessType.RELIABLE_DATA_ONLY)
+    }
+
+    override fun getQualifiedName(item: NavigationItem?): String? {
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                         ThrowableComputable<String?, RuntimeException> {
+                                                           super.getQualifiedName(item)
+                                                         })
+    }
+  }))
 }

@@ -42,6 +42,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IconUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -601,14 +604,16 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     @Override
     protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      try {
-        return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
-      }
-      catch (JUnitUtil.NoJUnitException e) {
-        throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
-                                                               e.getMessage(),
-                                                               JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
-      }
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+        try {
+          return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
+        }
+        catch (JUnitUtil.NoJUnitException e) {
+          throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
+                                                                 e.getMessage(),
+                                                                 JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
+        }
+      });
     }
 
     @Override

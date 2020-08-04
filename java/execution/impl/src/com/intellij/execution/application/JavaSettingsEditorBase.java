@@ -85,20 +85,16 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
       }
     };
     LabeledComponent<ShortenCommandLineModeCombo> component = LabeledComponent.create(combo,
-                                                                                      ExecutionBundle.message("application.configuration.shorten.command.line.label"),
+                                                                                      ExecutionBundle.message(
+                                                                                        "application.configuration.shorten.command.line.label"),
                                                                                       BorderLayout.WEST);
     SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> fragment =
       new SettingsEditorFragment<>("shorten.command.line",
                                    ExecutionBundle.message("application.configuration.shorten.command.line"),
                                    ExecutionBundle.message("group.java.options"),
                                    component,
-                                   (t, c) -> c
-                                     .getComponent()
-                                     .setItem(t.getShortenCommandLine()),
-                                   (t, c) -> t.setShortenCommandLine(
-                                       c.isVisible()
-                                       ? c.getComponent().getSelectedItem()
-                                       : null),
+                                   (t, c) -> c.getComponent().setItem(t.getShortenCommandLine()),
+                                   (t, c) -> t.setShortenCommandLine(c.isVisible() ? c.getComponent().getSelectedItem() : null),
                                    configuration -> configuration.getShortenCommandLine() != null);
     fragment.setActionHint(ExecutionBundle.message("select.a.method.to.shorten.the.command.if.it.exceeds.the.os.limit"));
     return fragment;

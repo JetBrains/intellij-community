@@ -42,6 +42,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
       public @NotNull String getId() {
         return ApplicationConfigurationType.this.getId();
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return true;
+      }
     };
   }
 

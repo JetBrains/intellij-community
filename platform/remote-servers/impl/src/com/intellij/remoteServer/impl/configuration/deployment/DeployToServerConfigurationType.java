@@ -154,6 +154,11 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     private DeploymentSourceType<?> getSourceTypeImpl() {
       return DeploymentSourceType.EP_NAME.findFirstSafe(next -> mySourceTypeId.equals(next.getId()));
     }
+
+    @Override
+    public boolean isEditableInDumbMode() {
+      return getSourceTypeImpl().isEditableInDumbMode();
+    }
   }
 }
 
