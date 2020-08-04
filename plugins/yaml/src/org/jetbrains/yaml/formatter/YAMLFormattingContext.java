@@ -59,6 +59,7 @@ class YAMLFormattingContext {
     CommonCodeStyleSettings common = mySettings.getCommonSettings(YAMLLanguage.INSTANCE);
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
       .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
+      .after(YAMLTokenTypes.COLON).spaces(1)
       .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
       .before(YAMLTokenTypes.RBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
       .after(YAMLTokenTypes.LBRACE).spaceIf(common.SPACE_WITHIN_BRACES)
