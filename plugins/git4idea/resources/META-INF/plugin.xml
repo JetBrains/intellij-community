@@ -132,6 +132,8 @@
       <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction"/>
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction"/>
       <separator/>
+      <reference id="Vcs.QuickListPopupAction" />
+      <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
 
