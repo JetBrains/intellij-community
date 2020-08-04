@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.application.options.ModulesCombo;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -21,13 +23,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
+public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> implements ModulesCombo {
 
   private final Item[] myOptionItems;
   private boolean myPreventPopupClosing;
+  private @Nullable String myNoModule;
+  private static final Item mySeparator = new Item((String)null);
 
   public static class Item {
     public Item(Module module) {
@@ -57,36 +62,69 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
     myPreventPopupClosing = false;
   }
 
-  public CollectionComboBoxModel<Item> buildModel(Project project) {
-    List<@NotNull Item> items = ContainerUtil
-      .mapNotNull(ModuleManager.getInstance(project).getModules(), module -> isModuleAccepted(module) ? new Item(module) : null);
+  private void buildModel(@NotNull Collection<? extends Module> modules) {
+    List<@NotNull Item> items = ContainerUtil.map(modules, module -> new Item(module));
     items.sort(Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
-    model.add(new Item((String)null));
+    if (myNoModule != null) {
+      model.add(new Item((Module)null));
+    }
+    if (myOptionItems.length > 0) {
+      model.add(mySeparator);
+    }
     model.add(Arrays.asList(myOptionItems));
     setModel(model);
-    return model;
   }
 
   private static boolean isModuleAccepted(final Module module) {
     return ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module));
   }
 
-  public void reset(ModuleBasedConfiguration configuration) {
-    CollectionComboBoxModel<Item> model = buildModel(configuration.getProject());
-    Module module = configuration.getConfigurationModule().getModule();
-    setSelectedItem(ContainerUtil.find(model.getItems(), item -> module == item.myModule));
+  public void reset(ModuleBasedConfiguration<?,?> configuration) {
+    Module[] all = ModuleManager.getInstance(configuration.getProject()).getModules();
+    buildModel(ContainerUtil.filter(all, module -> isModuleAccepted(module)));
+    setSelectedModule(configuration.getConfigurationModule().getModule());
   }
 
-  public void applyTo(ModuleBasedConfiguration configuration) {
+  public void applyTo(ModuleBasedConfiguration<?,?> configuration) {
     configuration.setModule(getSelectedModule());
   }
 
+  @Override
   @Nullable
   public Module getSelectedModule() {
     Item item = (Item)getSelectedItem();
     return item != null ? item.myModule : null;
+  }
+
+  @Override
+  public void setSelectedModule(Module module) {
+    List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
+    setSelectedItem(ContainerUtil.find(items, item -> module == item.myModule));
+  }
+
+  @Override
+  public void setModules(Collection<? extends Module> modules) {
+    buildModel(modules);
+  }
+
+  @Override
+  public void allowEmptySelection(String noModuleText) {
+    myNoModule = noModuleText;
+  }
+
+  @Override
+  public String getSelectedModuleName() {
+    Module module = getSelectedModule();
+    return module == null ? null : module.getName();
+  }
+
+  @Override
+  public void setSelectedModule(Project project, String name) {
+    List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
+    Item selectedItem = ContainerUtil.find(items, item -> item.myModule != null && item.myModule.getName().equals(name));
+    setSelectedItem(selectedItem);
   }
 
   private class ModelWithOptions extends CollectionComboBoxModel<Item> {
@@ -105,7 +143,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
     }
   }
 
-  private static class ListRenderer extends ColoredListCellRenderer<Item> {
+  private class ListRenderer extends ColoredListCellRenderer<Item> {
     private final JCheckBox myCheckBox = new JBCheckBox();
     @Override
     public Component getListCellRendererComponent(JList<? extends Item> list,
@@ -113,10 +151,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      if (value == null || value.myModule != null) {
-        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-      if (value.myOptionName == null) {
+      if (value == mySeparator) {
         JPanel pane = new JPanel(new GridBagLayout());
         pane.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -126,24 +161,22 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
         pane.add(new JSeparator(), gbc);
         return pane;
       }
-      else {
+      else if (value != null && value.myOptionName != null){
         myCheckBox.setOpaque(false);
         myCheckBox.setText(value.myOptionName);
         myCheckBox.setSelected(value.myOptionValue);
         return myCheckBox;
       }
+      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      if (value == null) return;
-      if (index == -1) {
+      String name = value == null ? myNoModule : value.myModule.getName();
+      if (index == -1 && name != null) {
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        append(value.myModule.getName());
       }
-      else {
-        append(value.myModule.getName());
-      }
+      append(StringUtil.notNullize(name));
     }
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.application.options.ModuleListCellRenderer;
+import com.intellij.application.options.ModulesCombo;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -40,7 +41,7 @@ public class ConfigurationModuleSelector {
   public static final String NO_MODULE_TEXT = "<no module>";
   private final Project myProject;
   /** this field is {@code null} if and only if {@link #myModulesList} is not null */
-  private final ModuleDescriptionsComboBox myModulesDescriptionsComboBox;
+  private final ModulesCombo myModulesDescriptionsComboBox;
   /** this field is {@code null} if and only if {@link #myModulesDescriptionsComboBox} is not null */
   private final JComboBox<? extends Module> myModulesList;
 
