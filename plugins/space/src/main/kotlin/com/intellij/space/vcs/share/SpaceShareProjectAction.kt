@@ -98,9 +98,9 @@ class SpaceShareProjectAction : DumbAwareAction() {
     val result = createSpaceProject(project) ?: return
     val (repoInfo, repoDetails, url) = result
 
-    object : Task.Backgroundable(project, "Sharing Project on Space...") {
+    object : Task.Backgroundable(project, SpaceBundle.message("share.project.action.progress.title.sharing.title")) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Search for git repository"
+        indicator.text = SpaceBundle.message("share.project.action.progress.title.searching.repository.title")
         val repository = if (file != null) {
           VcsRepositoryManager.getInstance(project).getRepositoryForFile(file, false)
         }
@@ -181,7 +181,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private fun createEmptyGitRepository(project: Project, root: VirtualFile, indicator: ProgressIndicator): Boolean {
-    indicator.text = "Init new git repository"
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.initializing.repository.title")
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
       VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
@@ -200,7 +200,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     } as String
 
     val remoteName = "origin"
-    indicator.text = "Adding remote url"
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.adding.remote.title")
     val commandResult = git.addRemote(gitRepo, remoteName, remoteUrl)
     if (commandResult.success()) {
       gitRepo.update()
@@ -225,7 +225,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
     try {
       log.info("Adding files for commit")
-      indicator.text = "Adding files to git..."
+      indicator.text = SpaceBundle.message("share.project.action.progress.title.adding.files.title")
 
       // ask for files to add
       val changeListManager = ChangeListManager.getInstance(project)
@@ -249,7 +249,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
       // commit
       log.info("Performing commit")
-      indicator.text = "Performing commit..."
+      indicator.text = SpaceBundle.message("share.project.action.progress.title.committing.title")
       val handler = GitLineHandler(project, root, GitCommand.COMMIT)
       handler.setStdoutSuppressed(false)
       handler.addParameters("-m", "Initial commit")
@@ -280,7 +280,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       val selectFilesDialog = SelectFilesDialog.init(project, allFiles, null, null, true, false,
                                                      CommonBundle.getAddButtonText(),
                                                      CommonBundle.getCancelButtonText())
-      selectFilesDialog.title = "Add Files For Initial Commit"
+      selectFilesDialog.title = SpaceBundle.message("share.project.action.progress.title.adding.files.to.commit.title")
       if (preselectedFiles.isNotEmpty()) {
         selectFilesDialog.selectedFiles = preselectedFiles
       }
@@ -300,7 +300,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
                                 url: String,
                                 indicator: ProgressIndicator): Boolean {
     log.info("Pushing to master")
-    indicator.text = "Pushing to master..."
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
     val repositoryLink = formatLink(url, "'$name'")
