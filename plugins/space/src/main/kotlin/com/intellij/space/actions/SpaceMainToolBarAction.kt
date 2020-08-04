@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.*
 import com.intellij.space.ui.*
 import com.intellij.space.vcs.SpaceProjectContext
@@ -96,8 +97,8 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       workspace.me.value.englishFullName(),
       serverUrl,
       resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-      listOf(browseAction("Open $serverUrl", host, true)))
-    menuItems += AccountMenuItem.Action("Clone Repository...",
+      listOf(browseAction(SpaceBundle.message("main.toolbar.open.server", serverUrl), host, true)))
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.clone.repository.action"),
                                         { SpaceCloneAction.runClone(project) },
                                         showSeparatorAbove = true)
     val projectContext = SpaceProjectContext.getInstance(project)
@@ -105,33 +106,33 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     if (context.isAssociatedWithSpaceRepository) {
       val descriptions = context.reposInProject.keys
       if (descriptions.size > 1) {
-        menuItems += AccountMenuItem.Group("Code Reviews", descriptions.map {
+        menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.code.reviews"), descriptions.map {
           val reviewsUrl = Navigator.p.project(it.key).reviews.absoluteHref(host)
-          browseAction("Open for ${it.project.name} project", reviewsUrl)
+          browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), reviewsUrl)
         }.toList())
 
-        menuItems += AccountMenuItem.Group("Checklists", descriptions.map {
+        menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.checklists"), descriptions.map {
           val checklistsUrl = Navigator.p.project(it.key).checklists().absoluteHref(host)
-          browseAction("Open for ${it.project.name} project", checklistsUrl)
+          browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), checklistsUrl)
         }.toList())
 
-        menuItems += AccountMenuItem.Group("Issues", descriptions.map {
+        menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.issues"), descriptions.map {
           val issuesUrl = Navigator.p.project(it.key).issues().absoluteHref(host)
-          browseAction("Open for ${it.project.name} project", issuesUrl)
+          browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), issuesUrl)
         }.toList())
       }
       else if (descriptions.size != 0) {
         val p = Navigator.p.project(descriptions.first().key)
 
-        menuItems += browseAction("Code Reviews", p.reviews.absoluteHref(host))
-        menuItems += browseAction("Checklists", p.checklists().absoluteHref(host))
-        menuItems += browseAction("Issues", p.issues().absoluteHref(host))
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), p.reviews.absoluteHref(host))
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.checklists.action"), p.checklists().absoluteHref(host))
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.issues.action"), p.issues().absoluteHref(host))
       }
     }
-    menuItems += AccountMenuItem.Action("Settings...",
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.settings.action"),
                                         { SpaceSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action("Log Out...", { space.signOut() })
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { space.signOut() })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }
