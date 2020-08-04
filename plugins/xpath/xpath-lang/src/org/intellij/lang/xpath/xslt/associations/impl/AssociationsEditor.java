@@ -44,7 +44,7 @@ import java.util.List;
 
 final class AssociationsEditor {
   private JPanel myComponent;
-  private JBList myList;
+  private JBList<PsiFile> myList;
   private Tree myTree;
 
   private final AssociationsModel myListModel;
@@ -108,7 +108,7 @@ final class AssociationsEditor {
     leftPanel.add(new JBScrollPane(myTree), BorderLayout.CENTER);
     splitter.setFirstComponent(leftPanel);
 
-    myList = new JBList();
+    myList = new JBList<>();
     myList.setCellRenderer(new MyCellRenderer());
     myList.setMinimumSize(new Dimension(120, 200));
     myList.getEmptyText().setText("No associated files");
@@ -277,7 +277,7 @@ final class AssociationsEditor {
     }
   }
 
-  static class AssociationsModel extends AbstractListModel implements TreeSelectionListener {
+  static class AssociationsModel extends AbstractListModel<PsiFile> implements TreeSelectionListener {
     private final Tree myTree;
     private final FileAssociationsManager myManager;
     private PsiFile[] myFiles;
@@ -295,7 +295,7 @@ final class AssociationsEditor {
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public PsiFile getElementAt(int index) {
       return myFiles[index];
     }
 
