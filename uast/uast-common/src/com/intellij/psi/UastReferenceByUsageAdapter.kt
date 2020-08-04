@@ -126,7 +126,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   val cacheManager = CacheManager.getInstance(variablePsi.project)
   val containingFiles = cacheManager.getVirtualFilesWithWord(
     variableName,
-    UsageSearchContext.ANY,
+    UsageSearchContext.IN_CODE,
     uastScope,
     true)
   val useScope = variablePsi.useScope
