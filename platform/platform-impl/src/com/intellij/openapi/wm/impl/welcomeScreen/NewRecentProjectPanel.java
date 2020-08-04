@@ -195,7 +195,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         final Color fore = getListForeground(selected, list.hasFocus());
         final Color back = getListBackground(selected, list.hasFocus());
         final JLabel name = new JLabel();
-        final JLabel path = ComponentPanelBuilder.createNonWrappingCommentComponent("");;
+        final JLabel path = ComponentPanelBuilder.createNonWrappingCommentComponent("");
         name.setForeground(fore);
         path.setForeground(UIUtil.getInactiveTextColor());
 

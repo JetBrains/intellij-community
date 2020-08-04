@@ -120,7 +120,7 @@ public final class PluginsAdvertiser {
   }
 
   static void enablePlugins(Project project, final Collection<PluginId> disabledPlugins) {
-    PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new PluginId[0]));
+    PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(PluginId.EMPTY_ARRAY));
   }
 
   static @Nullable List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
