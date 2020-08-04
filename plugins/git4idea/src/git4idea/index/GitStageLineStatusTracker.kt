@@ -26,6 +26,8 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.PeekableIteratorWrapper
 import git4idea.i18n.GitBundle
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.*
 import java.util.*
@@ -210,17 +212,9 @@ class GitStageLineStatusTracker(
   private fun runBulkRollback(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
-    if (toRevert.any { it.hasUnstaged }) {
-      val filter = BlockFilter.create(toRevert, Side.RIGHT)
-      updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
-        unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
-      }
-    }
-    else {
-      val filter = BlockFilter.create(toRevert, Side.LEFT)
-      updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
-        stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
-      }
+    val filter = BlockFilter.create(toRevert, Side.RIGHT)
+    updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
+      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
     }
   }
 
@@ -236,6 +230,21 @@ class GitStageLineStatusTracker(
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
       unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+    }
+  }
+
+  private fun unstageChanges(range: Range) {
+    val newRange = blockOperations.findBlock(range) ?: return
+    runBulkUnstage(listOf(newRange))
+  }
+
+  @CalledInAwt
+  private fun runBulkUnstage(toRevert: List<StagedRange>) {
+    if (!isValid()) return
+
+    val filter = BlockFilter.create(toRevert, Side.LEFT)
+    updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
+      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
     }
   }
 
@@ -398,6 +407,7 @@ class GitStageLineStatusTracker(
       actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(AddLineStatusRangeAction(editor, range))
+      actions.add(ResetLineStatusRangeAction(editor, range))
       actions.add(ShowLineStatusRangeDiffAction(editor, range))
       actions.add(CopyLineStatusRangeAction(editor, range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
@@ -405,7 +415,12 @@ class GitStageLineStatusTracker(
     }
 
     private inner class AddLineStatusRangeAction(editor: Editor, range: Range) :
-      RangeMarkerAction(editor, range, "Git.Add"), LightEditCompatible {
+      RangeMarkerAction(editor, range, null), LightEditCompatible {
+      init {
+        templatePresentation.setText(GitAddOperation.actionText)
+        templatePresentation.icon = GitAddOperation.icon
+      }
+
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
@@ -413,9 +428,23 @@ class GitStageLineStatusTracker(
       }
     }
 
+    private inner class ResetLineStatusRangeAction(editor: Editor, range: Range) :
+      RangeMarkerAction(editor, range, null), LightEditCompatible {
+      init {
+        templatePresentation.setText(GitResetOperation.actionText)
+        templatePresentation.icon = GitResetOperation.icon
+      }
+
+      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasStaged
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        tracker.unstageChanges(range)
+      }
+    }
+
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
       : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
-      override fun isEnabled(editor: Editor, range: Range): Boolean = true
+      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
         RollbackLineStatusAction.rollback(tracker, range, editor)
