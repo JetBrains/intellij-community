@@ -411,7 +411,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(psiClass.getName(), null));
       } else {
         while (true) {
-          final String paramName = idx > 0 ? "T" + idx : "T";
+          final @NonNls String paramName = idx > 0 ? "T" + idx : "T";
           if (typeParamNames.add(paramName)) {
             targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(paramName, null));
             break;

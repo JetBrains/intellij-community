@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -114,36 +116,15 @@ public class SideEffectWarningDialog extends DialogWrapper {
     return panel;
   }
 
+  @Nls
   protected String getFormatString() {
-    return "<html>\n" +
-           "<body>\n" +
-           "There are possible side effects found in {0}<br>\n" +
-           "You can:\n" +
-           "<br>\n" +
-           "-&nbsp;<b>Remove</b> variable usages along with all expressions involved, or<br>\n" +
-           "-&nbsp;<b>Transform</b> expressions assigned to variable into the statements on their own.<br>\n" +
-           "<div style=\"padding-left: 0.6cm;\">\n" +
-           "  That is,<br>\n" +
-           "  <table border=\"0\">\n" +
-           "    <tr>\n" +
-           "      <td><code>{1};</code></td>\n" +
-           "    </tr>\n" +
-           "  </table>\n" +
-           "  becomes: <br>\n" +
-           "  <table border=\"0\">\n" +
-           "    <tr>\n" +
-           "      <td><code>{2};</code></td>\n" +
-           "    </tr>\n" +
-           "  </table>\n" +
-           "</div>\n" +
-           "</body>\n" +
-           "</html>";
+    return JavaBundle.message("side.effects.pattern.message");
   }
 
   protected String sideEffectsDescription() {
     if (myCanCopeWithSideEffects) {
       return MessageFormat.format(getFormatString(),
-                                  "expressions assigned to the variable '" + myVariable.getName() + "'",
+                                  JavaBundle.message("side.effects.expressions.assigned.to.the.variable", myVariable.getName()),
                                   myVariable.getType().getPresentableText() + " " + myVariable.getName() + " = " + myBeforeText,
                                   myAfterText);
     }

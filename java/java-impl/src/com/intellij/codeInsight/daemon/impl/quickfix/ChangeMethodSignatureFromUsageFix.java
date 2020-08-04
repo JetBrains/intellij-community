@@ -13,6 +13,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -113,7 +114,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                       p.getTypeText());
       }
     }
-    return "<html> Change signature of " + targetMethodName + "(" + buf + ")</html>";
+    return JavaBundle.message("change.signature.from.usage.short.name", targetMethodName, buf);
   }
 
   @Nullable
@@ -270,7 +271,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private ParameterInfoImpl @Nullable [] getNewParametersInfo(PsiExpression[] expressions,
                                                               PsiMethod targetMethod,
                                                               PsiSubstitutor substitutor,
-                                                              final StringBuilder buf,
+                                                              @NonNls final StringBuilder buf,
                                                               final HashSet<? super ParameterInfoImpl> newParams,
                                                               final HashSet<? super ParameterInfoImpl> removedParams,
                                                               final HashSet<? super ParameterInfoImpl> changedParams) {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
@@ -34,7 +35,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
   @NotNull
   @Override
   protected String getBaseText() {
-    return "Qualify static constant access";
+    return JavaBundle.message("qualify.static.constant.access");
   }
 
   @NotNull
