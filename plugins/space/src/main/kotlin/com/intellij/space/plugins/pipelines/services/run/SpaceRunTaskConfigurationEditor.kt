@@ -1,6 +1,7 @@
 package com.intellij.space.plugins.pipelines.services.run
 
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.JBTextField
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -17,7 +18,7 @@ class SpaceRunTaskConfigurationEditor : SettingsEditor<SpaceRunConfiguration>() 
   override fun createEditor(): JComponent {
     val panel = JPanel()
     panel.layout = BoxLayout(panel, BoxLayout.LINE_AXIS)
-    panel.add(JLabel("Task name:"))
+    panel.add(JLabel(SpaceBundle.message("run.configuration.editor.task.name.label")))
     panel.add(taskNameField)
     return panel
   }

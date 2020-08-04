@@ -2,13 +2,14 @@ package com.intellij.space.vcs.share
 
 import circlet.client.api.*
 import circlet.client.repoService
-import com.intellij.space.components.space
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -38,7 +39,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   private val projectComboBox: ComboBox<PR_Project> = ComboBox(projectComboBoxModel).apply {
     renderer = SpaceProjectListComboRenderer()
   }
-  private val createNewProjectButton: JButton = JButton("New...").apply {
+  private val createNewProjectButton: JButton = JButton(SpaceBundle.message("share.project.dialog.new.button.text")).apply {
     addActionListener {
       val createProjectDialog = SpaceCreateProjectDialog(this@SpaceShareProjectDialog.contentPanel)
       if (createProjectDialog.showAndGet()) {
@@ -66,8 +67,8 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   private val repoDescription: JBTextField = JBTextField()
 
   init {
-    title = "Share Project on Space"
-    setOKButtonText("Share")
+    title = SpaceBundle.message("share.project.dialog.title")
+    setOKButtonText(SpaceBundle.message("share.project.dialog.ok.button.text"))
     init()
     Disposer.register(disposable, Disposable { lifetime.terminate() })
 
@@ -122,7 +123,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
           setErrorText(e.failure.message())
         }
         catch (e: Exception) {
-          setErrorText("Unable to create repository: ${e.message}")
+          setErrorText(SpaceBundle.message("share.project.dialog.error.unable.to.create.repository", e.message ?: e.javaClass.simpleName))
         }
       }
 
@@ -134,16 +135,16 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   override fun createCenterPanel(): JComponent = panel {
     row {
       cell(isFullWidth = true) {
-        JLabel("Create Repository in Project:")()
+        JLabel(SpaceBundle.message("share.project.dialog.create.repository.label"))()
         projectComboBox(pushX, growX)
         loadingProjectsProgress()
         createNewProjectButton()
       }
     }
-    row("Repository name:") {
+    row(SpaceBundle.message("share.project.dialog.repository.name.label")) {
       repoNameField(pushX, growX)
     }
-    row("Repository description:") {
+    row(SpaceBundle.message("share.project.dialog.repository.description.label")) {
       repoDescription(pushX, growX)
     }
   }
@@ -160,7 +161,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   override fun doValidateAll(): MutableList<ValidationInfo> {
     val list = mutableListOf<ValidationInfo>()
     if (projectComboBoxModel.selectedItem == null) {
-      list.add(ValidationInfo("Project should be specified", projectComboBox))
+      list.add(ValidationInfo(SpaceBundle.message("share.project.dialog.validation.text.project.should.be.specified"), projectComboBox))
     }
     val nameError = repositoryNameValid(repoNameField.text).second
     if (nameError != null) {

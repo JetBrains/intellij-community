@@ -1,6 +1,7 @@
 package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import javax.swing.JList
@@ -14,6 +15,6 @@ class SpaceProjectListComboRenderer : ColoredListCellRenderer<PR_Project>() {
     project ?: return
     append(project.name)
     append("  ")
-    append("key: ${project.key.key}", SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
+    append(SpaceBundle.message("project.list.project.key.description", project.key.key), SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
   }
 }

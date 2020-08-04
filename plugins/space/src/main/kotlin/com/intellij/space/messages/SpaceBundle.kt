@@ -1,6 +1,7 @@
 package com.intellij.space.messages
 
 import com.intellij.BundleBase
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
@@ -20,6 +21,7 @@ object SpaceBundle {
       b
     }
 
+  @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg parameters: Any): String =
     BundleBase.message(bundle, key, *parameters)
 }

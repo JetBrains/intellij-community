@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.cleanupUrl
 import com.intellij.space.ui.resizeIcon
 import com.intellij.ui.EnumComboBoxModel
@@ -41,8 +42,11 @@ class SpaceSettingsPanel :
 
   private val accountPanel = JPanel(BorderLayout())
 
-  private val linkLabel: LinkLabel<Any> = LinkLabel<Any>("Configure Git SSH Keys & HTTP Password", AllIcons.Ide.External_link_arrow,
-                                                         null).apply {
+  private val linkLabel: LinkLabel<Any> = LinkLabel<Any>(
+    SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"),
+    AllIcons.Ide.External_link_arrow,
+    null
+  ).apply {
     iconTextGap = 0
     setHorizontalTextPosition(SwingConstants.LEFT)
   }
@@ -66,7 +70,7 @@ class SpaceSettingsPanel :
     }
     row {
       cell(isFullWidth = true) {
-        label("Clone repositories with:")
+        label(SpaceBundle.message("settings.panel.clone.repositories.with.label"))
         comboBox(EnumComboBoxModel(CloneType::class.java), settings::cloneType)
         linkLabel()
       }
@@ -92,7 +96,7 @@ class SpaceSettingsPanel :
         val serverComponent = JLabel(cleanupUrl(st.server)).apply {
           foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
         }
-        val logoutButton = JButton("Log Out").apply {
+        val logoutButton = JButton(SpaceBundle.message("settings.panel.log.out.button.text")).apply {
           addActionListener {
             space.signOut()
           }

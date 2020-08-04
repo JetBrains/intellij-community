@@ -2,11 +2,13 @@ package com.intellij.space.settings
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponent
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import javax.swing.JButton
 import javax.swing.JTextField
 
@@ -17,7 +19,7 @@ internal fun buildLoginPanel(st: SpaceLoginState.Disconnected,
   return panel {
     val serverField = JTextField(st.server, 30)
 
-    val loginButton = JButton("Log In").apply {
+    val loginButton = JButton(SpaceBundle.message("login.panel.log.in.button")).apply {
       addActionListener {
         isEnabled = false
         var url = serverField.text
@@ -28,13 +30,13 @@ internal fun buildLoginPanel(st: SpaceLoginState.Disconnected,
 
     row {
       cell(isFullWidth = true) {
-        val jbLabel = JBLabel("Log In to Space", UIUtil.ComponentStyle.LARGE).apply {
+        val jbLabel = JBLabel(SpaceBundle.message("login.panel.log.in.to.space.label"), UIUtil.ComponentStyle.LARGE).apply {
           font = JBFont.label().biggerOn(5.0f)
         }
         jbLabel()
       }
     }
-    row("Organization URL:") {
+    row(SpaceBundle.message("login.panel.organization.url.label")) {
       serverField()
     }
     row("") {
@@ -62,10 +64,10 @@ private fun RowBuilder.buildRow(popupMode: Boolean): Row {
 
 internal fun buildConnectingPanel(st: SpaceLoginState.Connecting, cancelAction: () -> Unit): DialogPanel {
   return panel {
-    val cancelButton = JButton("Cancel").apply {
+    val cancelButton = JButton(SpaceBundle.message("login.panel.cancel.connecting.button.text")).apply {
       addActionListener { cancelAction() }
     }
-    row("Connecting to ${st.server}\u2026") {
+    row(SpaceBundle.message("login.panel.connecting.to.server.label", st.server)) {
       cancelButton()
     }
   }

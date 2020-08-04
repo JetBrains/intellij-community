@@ -20,6 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.space.auth.SpaceAuthNotifier
 import com.intellij.space.auth.startRedirectHandling
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.runtime.ApplicationDispatcher
 import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceServerSettings
@@ -119,7 +120,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
     val (port, redirectUrl) = startRedirectHandling(lifetime, ports)
-                              ?: return OAuthTokenResponse.Error(server, "", "The ports required for authorization are busy")
+                              ?: return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.ports.busy.label"))
 
     val authUrl = portsMapping.getValue(port)
     val codeFlow = CodeFlowConfig(newManager.wsConfig, authUrl.toExternalForm())
@@ -128,7 +129,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       BrowserLauncher.instance.browse(uri)
     }
     catch (th: Throwable) {
-      return OAuthTokenResponse.Error(server, "", "Can't open '$server' in system browser.")
+      return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.cant.open.browser.label", server))
     }
 
     val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
@@ -162,7 +163,10 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
         }
         catch (th: Throwable) {
           log.error(th)
-          loginState.value = SpaceLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+          loginState.value = SpaceLoginState.Disconnected(
+            serverName,
+            th.message ?: SpaceBundle.message("auth.error.unknown.label", th.javaClass.simpleName)
+          )
         }
         val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, component)
         AppIcon.getInstance().requestFocus(frame as IdeFrame?)
