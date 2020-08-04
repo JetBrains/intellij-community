@@ -627,16 +627,6 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  @Nls
-  @NotNull
-  private static String generateReplaceFixName(String introduce, String update, boolean isNullSafe) {
-    if (isNullSafe) {
-      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.null.safe", introduce, update);
-    } else {
-      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", introduce, update);
-    }
-  }
-
   static class IntroduceStringBuilderFix extends InspectionGadgetsFix {
     final String myName;
     final String myTargetType;
@@ -722,7 +712,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return generateReplaceFixName(myName, StringUtil.getShortName(myTargetType), myNullSafe);
+      final String introduce = StringUtil.getShortName(myTargetType);
+      if (myNullSafe) {
+        return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.null.safe", myName, introduce);
+      } else {
+        return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, introduce);
+      }
     }
 
     @Nls
@@ -771,7 +766,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return generateReplaceFixName(myName, StringUtil.getShortName(myTargetType), myNullSafe);
+      final String introduce = StringUtil.getShortName(myTargetType);
+      if (myNullSafe) {
+        return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name.null.safe", myName, introduce);
+      } else {
+        return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, introduce);
+      }
     }
 
     @Nls
