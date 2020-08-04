@@ -296,36 +296,49 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             if (!colorizationAffectsBorders)
                 return defaultActiveBorder
 
-            Toolkit.getDefaultToolkit().apply {
-                val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
-                if (colorizationColor != null) {
-                    // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
-                    // colorization color balance.
-                    var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
-                    if (colorizationColorBalance != null) {
-                        // If the desktop setting "Automatically pick an accent color from my background" is active, then the border color
-                        // should be the same as the colorization color read from the registry. To detect that setting, we use the fact that
-                        // colorization color balance is set to 0xfffffff3 when the setting is active.
-                        if (colorizationColorBalance < 0)
-                            colorizationColorBalance = 100
+            try {
+                Toolkit.getDefaultToolkit().apply {
+                    val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
+                    if (colorizationColor != null) {
+                        // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
+                        // colorization color balance.
+                        var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
+                        if (colorizationColorBalance != null) {
+                            // Sanity check, see IDEA-247359:
+                            if (colorizationColorBalance > 100) {
+                                LOGGER.error("colorizationColorBalance > 100: $colorizationColorBalance")
+                                colorizationColorBalance = 100
+                            }
 
-                        return when (colorizationColorBalance) {
-                            0 -> Color(0xD9D9D9)
-                            100 -> colorizationColor
-                            else -> {
-                                val alpha = colorizationColorBalance / 100.0f
-                                val remainder = 1 - alpha
-                                val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
-                                val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
-                                val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
-                                Color(r, g, b)
+                            // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
+                            // color should be the same as the colorization color read from the registry. To detect that setting, we use the
+                            // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
+                            if (colorizationColorBalance < 0)
+                                colorizationColorBalance = 100
+
+                            return when (colorizationColorBalance) {
+                                0 -> Color(0xD9D9D9)
+                                100 -> colorizationColor
+                                else -> {
+                                    val alpha = colorizationColorBalance / 100.0f
+                                    val remainder = 1 - alpha
+                                    val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
+                                    val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
+                                    val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
+                                    Color(r, g, b)
+                                }
                             }
                         }
                     }
+
+                    return colorizationColor
+                           ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
+                           ?: menuBarBorderColor
                 }
-                return colorizationColor
-                       ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
-                       ?: menuBarBorderColor
+            } catch (t: Throwable) {
+                // Should be as fail-safe as possible, since any errors during border coloring could lead to an IDE being broken.
+                LOGGER.error(t)
+                return defaultActiveBorder
             }
         }
 
