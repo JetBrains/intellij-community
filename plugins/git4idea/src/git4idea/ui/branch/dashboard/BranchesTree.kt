@@ -251,6 +251,8 @@ internal class FilteringBranchesTree(project: Project,
 
   fun getSelectedRemotes() = component.getSelectedRemotes()
 
+  fun getSelectedBranchNodes() = component.getSelectedNodes().map(BranchTreeNode::getNodeDescriptor).toSet()
+
   private fun restorePreviouslyExpandedPaths() {
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
   }

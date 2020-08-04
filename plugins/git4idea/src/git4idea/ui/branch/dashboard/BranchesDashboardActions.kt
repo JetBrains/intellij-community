@@ -98,6 +98,12 @@ internal object BranchesDashboardActions {
       arrayListOf<AnAction>(EditRemoteAction(currentRepository), RemoveRemoteAction(currentRepository)).toTypedArray()
   }
 
+  class RemoteGlobalActions : ActionGroup(), DumbAware {
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      arrayListOf<AnAction>(ActionManager.getInstance().getAction("Git.Configure.Remotes")).toTypedArray()
+  }
+
   class BranchActionsBuilder(private val project: Project, private val tree: FilteringBranchesTree) {
     fun build(): ActionGroup? {
       val selectedBranches = tree.getSelectedBranches()
@@ -120,6 +126,11 @@ internal object BranchesDashboardActions {
       val selectedRemotes = tree.getSelectedRemotes()
       if (selectedRemotes.size == 1) {
         return GroupActions(guessRepo)
+      }
+
+      val selectedBranchNodes = tree.getSelectedBranchNodes()
+      if (selectedBranchNodes.size == 1 && selectedBranchNodes.first().type == NodeType.REMOTE_ROOT) {
+        return RemoteGlobalActions()
       }
 
       return null
