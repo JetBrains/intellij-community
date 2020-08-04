@@ -1509,7 +1509,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FSRecords.storeSymlinkTarget(id, target);
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getPath(), target);
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getNameSequence(), file.getPath(), target);
     }
   }
 

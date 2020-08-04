@@ -1046,7 +1046,7 @@ public final class FSRecords {
         VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
         assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
         String linkPath = parent.getPath() + '/' + name;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
       }
     }
   }

@@ -10,8 +10,12 @@ import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PathUtil {
   private PathUtil() { }
@@ -128,6 +132,50 @@ public final class PathUtil {
       li = i;
     }
     return li == -1 && file == null;
+  }
+
+  private static @NotNull List<VirtualFile> getHierarchy(@NotNull VirtualFile file) {
+    List<VirtualFile> result = new ArrayList<>();
+    while (file != null) {
+      result.add(file);
+      file = file.getParent();
+    }
+    return result;
+  }
+
+  public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
+    ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
+    List<VirtualFile> hierarchy = getHierarchy(file);
+
+    int i = 0;
+    boolean result = false;
+    int j;
+    for (j = hierarchy.size() - 1; j >= 0; j--) {
+      VirtualFile part = hierarchy.get(j);
+      String name = part.getName();
+      boolean matches = part.isCaseSensitive() ? StringUtil.startsWith(ancestorPath, i, name) :
+                        StringUtil.startsWithIgnoreCase(ancestorPath, i, name);
+      if (!matches) {
+        break;
+      }
+      i += name.length();
+      if (!name.endsWith("/")) {
+        if (i != ancestorPath.length() && ancestorPath.charAt(i) != '/') {
+          break;
+        }
+        i++;
+      }
+      if (i >= ancestorPath.length()) {
+        result = true;
+        break;
+      }
+    }
+    boolean old = FileUtil.startsWith(file.getPath(), ancestorPath);
+    if (old != result) {
+      throw new RuntimeException("old=" + old + "; ancestorPath=" + ancestorPath + "; file=" + file + "; hierarchy=" + hierarchy + "; names=" +
+                                 ContainerUtil.map(hierarchy, v->v.getName())+"; i="+i+"; j="+j);
+    }
+    return result;
   }
 
   //<editor-fold desc="Deprecated stuff.">

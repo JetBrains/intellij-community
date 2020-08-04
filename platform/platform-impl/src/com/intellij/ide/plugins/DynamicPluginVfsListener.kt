@@ -8,13 +8,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 
 /**
@@ -46,7 +47,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
     for (event in events) {
       if (!event.isFromRefresh) continue
       if (event is VFileContentChangeEvent) {
-        findPluginByPath(event.path)?.let {
+        findPluginByPath(event.file)?.let {
           LOG.info("Detected plugin .jar file change ${event.path}, reloading plugin")
           pluginsToReload.add(it)
         }
@@ -88,12 +89,12 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
   }
 
-  private fun findPluginByPath(path: String): IdeaPluginDescriptorImpl? {
-    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) {
+  private fun findPluginByPath(file: VirtualFile): IdeaPluginDescriptorImpl? {
+    if (!PathUtil.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
       return null
     }
     return PluginManager.getPlugins().firstOrNull {
-      FileUtil.isAncestor(it.pluginPath.toAbsolutePath().toString(), path, false)
+      PathUtil.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
     } as IdeaPluginDescriptorImpl?
   }
 

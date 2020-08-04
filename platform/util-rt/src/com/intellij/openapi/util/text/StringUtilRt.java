@@ -253,9 +253,14 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
+    return startsWithIgnoreCase(str, 0, prefix);
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWithIgnoreCase(@NotNull String str, int startOffset, @NotNull String prefix) {
     int stringLength = str.length();
     int prefixLength = prefix.length();
-    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+    return stringLength >= prefixLength && str.regionMatches(true, startOffset, prefix, 0, prefixLength);
   }
 
   @Contract(pure = true)
