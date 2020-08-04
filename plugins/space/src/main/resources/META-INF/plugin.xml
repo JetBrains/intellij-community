@@ -107,4 +107,5 @@
     </action>
   </actions>
 
+  <resource-bundle>messages.SpaceBundle</resource-bundle>
 </idea-plugin>
