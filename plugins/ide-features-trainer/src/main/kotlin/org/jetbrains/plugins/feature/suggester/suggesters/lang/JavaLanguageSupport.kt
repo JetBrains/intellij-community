@@ -8,7 +8,8 @@ import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
 
-    override val supportedLang: Language = JavaLanguage.INSTANCE
+    override val supportedLang: Language
+        get() = JavaLanguage.INSTANCE
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PsiIfStatement

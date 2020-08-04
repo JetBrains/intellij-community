@@ -9,7 +9,8 @@ import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
 class PythonLanguageSupport : LanguageSupport {
 
-    override val supportedLang: Language = PythonLanguage.INSTANCE
+    override val supportedLang: Language
+        get() = PythonLanguage.INSTANCE
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PyIfStatement
