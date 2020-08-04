@@ -1109,6 +1109,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       anyOf(
         staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
         staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"));
+    private static final String STREAM_SUFFIX = ".stream()";
+    private static final String ARRAY_STREAM_PREFIX = "Arrays.stream(";
 
     private final @IntentionName String myName;
 
@@ -1116,7 +1118,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       PsiExpression qualifier = container.getQualifier();
       String qualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       PsiType type = qualifier.getType();
-      String replacement = type instanceof PsiArrayType ? "Arrays.stream(" + qualifierText + ")" : qualifierText + ".stream()";
+      String replacement = type instanceof PsiArrayType ? ARRAY_STREAM_PREFIX + qualifierText + ")" : qualifierText + STREAM_SUFFIX;
       myName = CommonQuickFixBundle.message("fix.replace.x.with.y", "IntStream.range()." + name + "()", replacement);
     }
 
