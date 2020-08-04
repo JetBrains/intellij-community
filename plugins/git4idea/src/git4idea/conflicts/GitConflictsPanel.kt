@@ -141,12 +141,11 @@ class GitConflictsPanel(
 
   fun canShowMergeWindowForSelection(): Boolean {
     val selectedConflicts = getSelectedConflicts()
-    return selectedConflicts.any { mergeHandler.canResolveConflict(it) } &&
-           selectedConflicts.none { getConflictOperationLock(it).isLocked }
+    return selectedConflicts.any { mergeHandler.canResolveConflict(it) && !getConflictOperationLock(it).isLocked }
   }
 
   fun showMergeWindowForSelection() {
-    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toList()
+    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) && !getConflictOperationLock(it).isLocked }.toList()
     if (conflicts.isEmpty()) return
 
     val reversed = HashSet(reversedRoots)
@@ -168,18 +167,16 @@ class GitConflictsPanel(
 
   fun canAcceptConflictSideForSelection(): Boolean {
     val selectedConflicts = getSelectedConflicts()
-    return selectedConflicts.isNotEmpty() &&
-           selectedConflicts.none { getConflictOperationLock(it).isLocked }
+    return selectedConflicts.any { !getConflictOperationLock(it).isLocked }
   }
 
   fun acceptConflictSideForSelection(takeTheirs: Boolean) {
-    val conflicts = getSelectedConflicts()
+    val conflicts = getSelectedConflicts().filterNot { getConflictOperationLock(it).isLocked }
     if (conflicts.isEmpty()) return
 
     val reversed = HashSet(reversedRoots)
 
     val locks = conflicts.map { getConflictOperationLock(it) }
-    if (locks.any { it.isLocked }) return
     locks.forEach { it.lock() }
 
     object : Task.Backgroundable(project, GitBundle.message("conflicts.accept.progress", conflicts.size), true) {
