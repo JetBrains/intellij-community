@@ -117,7 +117,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       myClassInfo = parseClassDescription(superName, interfaces);
     }
 
-    myClassInfo.typeParameters.createTypeParameterList(myResult);
+    new PsiTypeParameterListStubImpl(myResult);
 
     if (myResult.isInterface()) {
       if (myClassInfo.interfaces != null && myResult.isAnnotationType()) {
@@ -267,8 +267,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   public void visitEnd() {
     if (myAnnoBuilders != null) {
       myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
-      myClassInfo.typeParameters.createTypeParameterAnnotations(myResult);
     }
+    myClassInfo.typeParameters.fillInTypeParameterList(myResult);
   }
 
   @Override
@@ -396,7 +396,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
 
-    info.typeParameters.createTypeParameterList(stub);
+    new PsiTypeParameterListStubImpl(stub);
 
     boolean isEnumConstructor = isConstructor && isEnum;
     boolean isInnerClassConstructor = isConstructor && !isEnum && isInner() && !isGroovyClosure(canonicalMethodName);
@@ -662,8 +662,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     public void visitEnd() {
       if (myAnnoBuilders != null) {
         myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
-        myMethodInfo.typeParameters.createTypeParameterAnnotations(myOwner);
       }
+      myMethodInfo.typeParameters.fillInTypeParameterList(myOwner);
     }
 
     @Override
