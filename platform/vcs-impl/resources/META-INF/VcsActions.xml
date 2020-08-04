@@ -100,6 +100,9 @@
       <reference ref="ChangesView.ApplyPatchFromClipboard"/>
     </group>
 
+    <group id="Vcs.UmlDiff">
+    </group>
+
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
 
