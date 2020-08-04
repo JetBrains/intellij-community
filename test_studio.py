@@ -161,7 +161,7 @@ class StudioTests(unittest.TestCase):
 
   def test_trace_agent_jar_present(self):
     """Tests that trace_agent.jar is included in distribution"""
-    expected = "plugins/android/lib/trace_agent.jar"
+    expected = "plugins/android/resources/trace_agent.jar"
     artifact_prefix = os.path.join(dist_dir, self.artifact_prefix() + build)
 
     for platform_suffix in [".win.zip", ".mac.zip"]:

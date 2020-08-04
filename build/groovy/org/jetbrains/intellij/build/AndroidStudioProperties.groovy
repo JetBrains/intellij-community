@@ -375,7 +375,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     // Trace agent. TODO(b/149320690): remove in 4.1 final release.
-    buildContext.ant.copy(todir: "$androidPluginLib") {
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/bazel-bin/tools/base/tracer/trace_agent.jar")
     }
 
