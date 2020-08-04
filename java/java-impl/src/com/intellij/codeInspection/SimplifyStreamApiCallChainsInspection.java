@@ -27,7 +27,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -341,7 +340,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public String getMessage() {
       String oldExpr = myQualifierCall + STREAM_SUFFIX;
       String newExpr = ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
-      return InspectionGadgetsBundle.message("simplify.stream.inspection.message.can.be.replaced.with", oldExpr, newExpr);
+      return JavaBundle.message("simplify.stream.inspection.message.can.be.replaced", oldExpr, newExpr);
     }
 
     @Nls
@@ -481,11 +480,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public String getMessage() {
       String before = "'" + STREAM_PREFIX + myStreamMethod + "()'";
       String after = myReplacementMethod + "()'";
-      if (myChangeSemantics) {
-        return "The " + before + " chain can be replaced with '" + after;
-      } else {
-        return "The " + before + " chain can be replaced with '" + after + " (may change semantics)";
-      }
+      return JavaBundle.message(myChangeSemantics
+                                ? "simplify.stream.inspection.message.can.be.replaced.may.change.semantics"
+                                : "simplify.stream.inspection.message.can.be.replaced", before, after);
     }
 
     @Override
@@ -593,9 +590,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @NotNull
     public @InspectionMessage String getMessage() {
-      return "The 'collect(" + myCollector +
-             "())' call can be replaced with '" + myStreamSequenceStripped + "'" +
-             (myChangeSemantics ? " (may change semantics when result is null)" : "");
+      String before = "collect(" + myCollector + "())";
+      return JavaBundle.message(myChangeSemantics
+                                ? "simplify.stream.inspection.message.can.be.replaced.may.change.semantics"
+                                : "simplify.stream.inspection.message.can.be.replaced", before, myStreamSequenceStripped);
     }
 
     static CallHandler<ReplaceCollectorFix> handler(String collectorName, int parameterCount, String template, boolean changeSemantics) {
@@ -640,7 +638,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @NotNull
     public @InspectionMessage String getMessage() {
-      return "The 'filter()." + myFindMethodName + "().isPresent()' chain can be replaced with 'anyMatch()'";
+      return JavaBundle.message("inspection.message.filter.is.present.chain.can.be.replaced.with.anymatch", myFindMethodName);
     }
   }
 
@@ -657,12 +655,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Replace "+myFrom+" with "+myTo+"(...)";
+      return JavaBundle.message("simplify.stream.match.negation.fix.name", myFrom, myTo);
     }
 
     @Override
     public String getMessage() {
-      return myFrom+" can be replaced with "+myTo+"(...)";
+      return CommonQuickFixBundle.message("fix.can.replace.x.with.y", myFrom, myTo + "()");
     }
 
     @Override
@@ -753,7 +751,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Replace with '"+myReplacement+"' constructor";
+      return JavaBundle.message("simplify.stream.collection.creation.fix.name", myReplacement);
     }
 
     @Override
@@ -803,7 +801,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'peek'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "peek");
     }
 
     @Override
@@ -870,12 +868,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       if (myMode == ReplacementMode.OPTIONAL) {
         return CommonQuickFixBundle.message("fix.replace.with.x", "Optional.of");
       }
-      return "Use Stream element explicitly";
+      return JavaBundle.message("simplify.stream.simple.stream.of.fix.name.use.stream.element.explicitly");
     }
 
     @Override
     public String getMessage() {
-      return "Unnecessary single-element Stream";
+      return JavaBundle.message("simplify.stream.simple.stream.of.message");
     }
 
     @Override
@@ -935,7 +933,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'boxed'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "boxed");
     }
 
     @Override
@@ -1015,7 +1013,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Replace 'stream().toArray()' with 'toArray()'";
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "stream().toArray()", "toArray()");
     }
 
     @Override
@@ -1025,7 +1023,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with collection.toArray()";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "collection.toArray()");
     }
 
     @Override
@@ -1118,7 +1116,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       String qualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       PsiType type = qualifier.getType();
       String replacement = type instanceof PsiArrayType ? "Arrays.stream(" + qualifierText + ")" : qualifierText + ".stream()";
-      myName = "Replace IntStream.range()." + name + "() with " + replacement;
+      myName = CommonQuickFixBundle.message("fix.replace.x.with.y", "IntStream.range()." + name + "()", replacement);
     }
 
     @Override
@@ -1128,7 +1126,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with element iteration";
+      return JavaBundle.message("simplify.stream.replace.with.element.iteration.fix.message");
     }
 
     @Override
@@ -1265,12 +1263,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Merge with previous 'map' call";
+      return JavaBundle.message("simplify.stream.remove.boolean.identity.fix.name");
     }
 
     @Override
     public String getMessage() {
-      return "Can be merged with previous 'map' call";
+      return JavaBundle.message("simplify.stream.remove.boolean.identity.fix.message");
     }
 
     @Override
@@ -1430,12 +1428,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Replace with '" + myQualifierText + "." + getMethodName() + "' call";
+      return JavaBundle.message("simplify.stream.replace.support.with.collection.fix.name", myQualifierText, getMethodName());
     }
 
     @Override
     public String getMessage() {
-      return "Can be replaced with '" + myQualifierText + "." + (getMethodName()) + "' call";
+      return JavaBundle.message("simplify.stream.replace.support.with.collection.fix.message", myQualifierText, getMethodName());
     }
 
     @NotNull
@@ -1481,7 +1479,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with Arrays.stream()";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "Arrays.stream()");
     }
 
     @Override
@@ -1537,7 +1535,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with Stream.generate()";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "Stream.generate()");
     }
 
     @Override
@@ -1607,7 +1605,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with " + myMethodName + "()";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", myMethodName + "()");
     }
 
     @Override
@@ -1661,7 +1659,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with List.contains()";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "List.contains()");
     }
 
     @Override
@@ -1732,12 +1730,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Can be replaced with 'containsAll'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "containsAll");
     }
 
     @Override
     public String getMessage() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", "containsAll");
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "containsAll");
     }
 
     @Override
@@ -1819,7 +1817,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'String.join'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "String.join");
     }
 
     @Override
@@ -1893,7 +1891,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'Collectors.joining'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "Collectors.joining");
     }
 
     @Override
@@ -1971,7 +1969,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with '." + myMapMethod + "().stream()'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "." + "().stream()");
     }
 
     @Override
@@ -2105,7 +2103,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'count()'";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "count()");
     }
 
     @Override
@@ -2145,12 +2143,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   private static class IterateTakeWhileFix implements CallChainSimplification {
     @Override
     public String getName() {
-      return "Replace with three-arg 'iterate()'";
+      return JavaBundle.message("simplify.stream.inspection.iterate.take.while.fix.name");
     }
 
     @Override
     public String getMessage() {
-      return "Can be replaced with three-arg 'iterate()'";
+      return JavaBundle.message("simplify.stream.inspection.iterate.take.while.fix.message");
     }
 
     @Override
