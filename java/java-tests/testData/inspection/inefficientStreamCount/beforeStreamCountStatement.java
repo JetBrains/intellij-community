@@ -1,4 +1,4 @@
-// "Replace Collection.stream().count() with Collection.size()" "true"
+// "Replace 'Collection.stream().count()' with 'Collection.size()'" "true"
 
 import java.util.Arrays;
 
