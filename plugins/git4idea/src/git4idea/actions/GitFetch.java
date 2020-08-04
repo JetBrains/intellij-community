@@ -27,7 +27,7 @@ public class GitFetch extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setEnabledAndVisible(hasRemotes(project));
+      e.getPresentation().setEnabled(hasRemotes(project));
     }
   }
 
