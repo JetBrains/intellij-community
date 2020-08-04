@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -50,8 +51,8 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
   }
 
   init {
-    title = "Create New Project on Space"
-    setOKButtonText("Create")
+    title = SpaceBundle.message("create.project.dialog.title")
+    setOKButtonText(SpaceBundle.message("create.project.dialog.ok.button"))
     init()
     Disposer.register(disposable, Disposable { lifetime.terminate() })
   }
@@ -82,7 +83,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
           setErrorText(e.failure.message())
         }
         catch (e: Exception) {
-          setErrorText("Unable to create project: ${e.message}")
+          setErrorText(SpaceBundle.message("create.project.dialog.error.unable.to.create.text", e.message ?: e.javaClass.simpleName))
         }
       }
 
@@ -93,19 +94,19 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
 
   override fun createCenterPanel(): JComponent? {
     return panel {
-      row("Name:") {
+      row(SpaceBundle.message("create.project.dialog.name.label")) {
         projectNameField()
       }
-      row("Key:") {
+      row(SpaceBundle.message("create.project.dialog.key.label")) {
         projectKeyField().comment("A short identifier that is used to generate IDs for other objects that belong to this project.<br/>" +
                                   "Once the project has been created, the key cannot be changed.",
                                   "A short identifier that is used to generate IDs for other objects that belong to this project.<br/>".length
         )
       }
-      row("Private:") {
+      row(SpaceBundle.message("create.project.dialog.private.label")) {
         privateCheckbox().comment("A private project is only visible to its members")
       }
-      row("Description") {
+      row(SpaceBundle.message("create.project.dialog.description.label")) {
         scrollPane(projectDescriptionField)
       }
     }
@@ -124,7 +125,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
     val list = mutableListOf<ValidationInfo>()
     projectNameField.text.let {
       if (it.length < 2 || it.length > 100) {
-        list.add(ValidationInfo("Name should be between 2 and 100 characters long", projectKeyField))
+        list.add(ValidationInfo(SpaceBundle.message("create.project.dialog.validation.info.name"), projectKeyField))
       }
     }
 

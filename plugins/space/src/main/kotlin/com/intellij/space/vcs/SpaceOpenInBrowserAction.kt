@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
 import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
@@ -29,8 +31,8 @@ import icons.SpaceIcons
 import runtime.routing.Location
 import com.intellij.openapi.util.Ref as Ref1
 
-abstract class SpaceOpenInBrowserActionGroup<T>(groupName: String) :
-  ActionGroup(groupName, "Open link in browser", SpaceIcons.Main),
+abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName: String) :
+  ActionGroup(groupName, SpaceBundle.message("open.in.browser.group.description"), SpaceIcons.Main),
   DumbAware {
 
   abstract fun getData(dataContext: DataContext): List<T>?
@@ -56,7 +58,7 @@ abstract class SpaceOpenInBrowserActionGroup<T>(groupName: String) :
   }
 }
 
-abstract class SpaceOpenInBrowserAction(groupName: String) :
+abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String) :
   SpaceOpenInBrowserActionGroup<Pair<SpaceProjectInfo, String>>(groupName) {
 
   override fun update(e: AnActionEvent) {
@@ -74,7 +76,7 @@ abstract class SpaceOpenInBrowserAction(groupName: String) :
   }
 
   override fun buildAction(it: Pair<SpaceProjectInfo, String>): AnAction =
-    object : AnAction("Open for ${it.first.key.key} project") {
+    object : AnAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.first.key.key)) {
       override fun actionPerformed(e: AnActionEvent) = BrowserUtil.browse(it.second)
     }
 
@@ -95,26 +97,28 @@ abstract class SpaceOpenInBrowserAction(groupName: String) :
   }
 }
 
-class OpenReviews : SpaceOpenInBrowserAction("Code reviews") {
+class OpenReviews : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.code.reviews")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
     return getProjectAwareUrls(ProjectLocation::reviews, dataContext)
   }
 }
 
-class OpenChecklists : SpaceOpenInBrowserAction("Checklists") {
+class OpenChecklists : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.checklists")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
     return getProjectAwareUrls(ProjectLocation::checklists, dataContext)
   }
 }
 
-class OpenIssues : SpaceOpenInBrowserAction("Issues") {
+class OpenIssues : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.issues")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
     return getProjectAwareUrls(ProjectLocation::issues, dataContext)
   }
 }
 
 class SpaceVcsOpenInBrowserActionGroup :
-  SpaceOpenInBrowserActionGroup<SpaceVcsOpenInBrowserActionGroup.Companion.OpenData>("Open on Space") {
+  SpaceOpenInBrowserActionGroup<SpaceVcsOpenInBrowserActionGroup.Companion.OpenData>(
+    SpaceBundle.message("open.in.browser.group.open.on.space")
+  ) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = (getData(e.dataContext) != null)
@@ -181,7 +185,9 @@ class SpaceVcsOpenInBrowserActionGroup :
   }
 
   companion object {
-    class OpenAction(private val data: OpenData) : DumbAwareAction("Open for ${data.info.project.name} project") {
+    class OpenAction(private val data: OpenData) : DumbAwareAction(
+      SpaceBundle.message("open.in.browser.open.for.project.action", data.info.project.name)
+    ) {
 
       override fun actionPerformed(e: AnActionEvent) {
         data.url?.let { BrowserUtil.browse(it) }
@@ -241,7 +247,7 @@ class SpaceVcsOpenInBrowserActionGroup :
 
         private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
           val ref = Ref1<GitRevisionNumber>()
-          object : Task.Modal(project, "Getting Last Revision", true) {
+          object : Task.Modal(project, SpaceBundle.message("open.file.on.space.getting.last.revision.indicator.text"), true) {
             override fun run(indicator: ProgressIndicator) {
               ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), GitUtil.HEAD) as GitRevisionNumber?)
             }
