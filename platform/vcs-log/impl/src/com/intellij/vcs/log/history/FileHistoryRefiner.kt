@@ -20,13 +20,11 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
-  private val paths = Stack<MaybeDeletedFilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
   private val pathsForCommits = HashMap<Int, MaybeDeletedFilePath>()
 
   fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
-    paths.push(startPath)
-    walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row)
+    walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, startPath)
 
     val excluded = THashSet<Int>()
     for ((commit, path) in pathsForCommits) {
@@ -45,23 +43,26 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
    * Then goes to the other up-siblings.
    * And when a node is entered from down-sibling, goes to the up-siblings first.
    * Then goes to the other down-siblings.
-   * When a node is entered the first time, enterNode is called.
-   * When a all the siblings of the node are visited, exitNode is called.
    */
-  private fun walk(graph: LiteLinearGraph, start: Int) {
-    if (start < 0 || start >= graph.nodesCount()) return
+  private fun walk(graph: LiteLinearGraph, startNode: Int, startPath: MaybeDeletedFilePath) {
+    if (startNode < 0 || startNode >= graph.nodesCount()) return
 
     val visited = BitSetFlags(graph.nodesCount(), false)
 
     val stack = IntStack()
-    stack.push(start) // commit + direction of travel
+    stack.push(startNode)
+    val paths = Stack<MaybeDeletedFilePath>()
+    paths.push(startPath)
 
     outer@ while (!stack.empty()) {
       val currentNode = stack.peek()
       val down = isDown(stack)
       if (!visited.get(currentNode)) {
         visited.set(currentNode, true)
-        enterNode(currentNode, getPreviousNode(stack), down)
+        val currentPath = getPath(currentNode, getPreviousNode(stack), paths.last(), down)
+        val currentCommitId = permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))
+        pathsForCommits[currentCommitId] = currentPath
+        paths.push(currentPath)
       }
 
       for (nextNode in graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
@@ -78,17 +79,9 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
         }
       }
 
-      exitNode(currentNode)
+      paths.pop()
       stack.pop()
     }
-  }
-
-  private fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
-    val currentPath = getPath(currentNode, previousNode, paths.last(), down)
-    val currentCommitId = permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))
-
-    pathsForCommits[currentCommitId] = currentPath
-    paths.push(currentPath)
   }
 
   private fun getPath(currentNode: Int, previousNode: Int, previousPath: MaybeDeletedFilePath, down: Boolean): MaybeDeletedFilePath {
@@ -122,10 +115,6 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
     if (parents.subList(1, parents.size).find { pathGetter(it) != path } != null) return null
     return path
-  }
-
-  private fun exitNode(node: Int) {
-    paths.pop()
   }
 }
 
