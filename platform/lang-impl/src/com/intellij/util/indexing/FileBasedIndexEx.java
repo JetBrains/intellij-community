@@ -34,6 +34,7 @@ import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -341,6 +342,29 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     IntSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet);
     return set != null && processVirtualFiles(set, filter, processor);
+  }
+
+
+  @Override
+  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+                                               @NotNull GlobalSearchScope filter,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
+    IntSet set = null;
+    //noinspection rawtypes
+    for (AllKeysQuery query : queries) {
+      @SuppressWarnings("unchecked")
+      IntSet queryResult = collectFileIdsContainingAllKeys(query.indexId, query.dataKeys, filter, query.valueChecker, filesSet);
+      if (queryResult == null) return false;
+      if (queryResult.isEmpty()) return true;
+      if (set == null) {
+        set = new IntOpenHashSet(queryResult);
+      }
+      else {
+        set.retainAll(queryResult);
+      }
+    }
+    return set == null || processVirtualFiles(set, filter, processor);
   }
 
   @Override
