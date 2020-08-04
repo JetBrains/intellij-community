@@ -27,6 +27,7 @@ import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.MultiSourceFileLocator;
 import org.jacoco.report.html.HTMLFormatter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,7 +193,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      boolean collectLineInfo,
                                      boolean isSampling,
                                      String sourceMapPath) {
-    StringBuilder argument = new StringBuilder("-javaagent:");
+    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
     if (agentPath == null) return;
     argument.append(agentPath);

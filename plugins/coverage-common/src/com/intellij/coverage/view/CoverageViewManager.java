@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import java.util.Map;
 @State(name = "CoverageViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
-  public static final String TOOLWINDOW_ID = "Coverage";
+  public static final @NonNls String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
   private final ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
