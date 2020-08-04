@@ -75,7 +75,7 @@ class GithubAuthenticationManager internal constructor() {
     )?.registerAccount()
 
   internal fun isAccountUnique(name: String, server: GithubServerPath) =
-    accountManager.accounts.none { it.name == name && it.server == server }
+    accountManager.accounts.none { it.name == name && it.server.equals(server, true) }
 
   @CalledInAwt
   @JvmOverloads
