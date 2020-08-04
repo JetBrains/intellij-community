@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -54,17 +55,19 @@ class YAMLFormattingContext {
   YAMLFormattingContext(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     mySettings = settings;
     myFile = file;
+    YAMLCodeStyleSettings custom = mySettings.getCustomSettings(YAMLCodeStyleSettings.class);
+    CommonCodeStyleSettings common = mySettings.getCommonSettings(YAMLLanguage.INSTANCE);
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
-      .before(YAMLTokenTypes.COLON).spaces(0)
-      .after(YAMLTokenTypes.LBRACKET).spaces(1)
-      .after(YAMLTokenTypes.LBRACE).spaces(1)
-      .before(YAMLTokenTypes.RBRACKET).spaces(1)
-      .before(YAMLTokenTypes.RBRACE).spaces(1)
+      .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
+      .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
+      .before(YAMLTokenTypes.RBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
+      .after(YAMLTokenTypes.LBRACE).spaceIf(common.SPACE_WITHIN_BRACES)
+      .before(YAMLTokenTypes.RBRACE).spaceIf(common.SPACE_WITHIN_BRACES)
     ;
-    shouldIndentSequenceValue = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).INDENT_SEQUENCE_VALUE;
-    shouldInlineSequenceIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).SEQUENCE_ON_NEW_LINE;
-    shouldInlineBlockMappingIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).BLOCK_MAPPING_ON_NEW_LINE;
-    getValueAlignment = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).ALIGN_VALUES_PROPERTIES;
+    shouldIndentSequenceValue = custom.INDENT_SEQUENCE_VALUE;
+    shouldInlineSequenceIntoSequence = !custom.SEQUENCE_ON_NEW_LINE;
+    shouldInlineBlockMappingIntoSequence = !custom.BLOCK_MAPPING_ON_NEW_LINE;
+    getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
   @Nullable
