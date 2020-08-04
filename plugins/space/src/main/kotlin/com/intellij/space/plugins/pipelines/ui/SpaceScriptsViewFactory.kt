@@ -289,12 +289,12 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
     val panel = JPanel()
     panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
 
-    val infoText = JLabel("Automation is not configured")
+    val infoText = JLabel(SpaceBundle.message("kts.toolwindow.automation.is.not.configured.label"))
     infoText.isEnabled = false
     infoText.alignmentX = Component.CENTER_ALIGNMENT
     panel.add(infoText)
 
-    val createDslLink = LinkLabel.create("Add automation script") {
+    val createDslLink = LinkLabel.create(SpaceBundle.message("kts.toolwindow.add.automation.script.link")) {
       val basePath = project.basePath
       if (basePath != null) {
         val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
@@ -322,7 +322,7 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
 
     panel.add(JLabel(" ")) // just separator
 
-    val showHelpLink = LinkLabel.create("Getting started with automation") {
+    val showHelpLink = LinkLabel.create(SpaceBundle.message("kts.toolwindow.help.link")) {
       BrowserUtil.browse("https://jetbrains.team")
     }
     showHelpLink.icon = AllIcons.General.ContextHelp

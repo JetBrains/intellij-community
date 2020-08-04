@@ -3,19 +3,12 @@ package com.intellij.space.plugins.pipelines.services
 import circlet.automation.bootstrap.AutomationCompilerBootstrap
 import circlet.automation.bootstrap.embeddedMavenServer
 import circlet.automation.bootstrap.publicMavenServer
-import com.intellij.space.components.space
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.dsl.script.exec.common.ProjectConfigValidationResult
 import circlet.pipelines.config.dsl.script.exec.common.evaluateModel
 import circlet.pipelines.config.dsl.script.exec.common.validate
 import circlet.pipelines.config.utils.AutomationCompilerConfiguration
 import circlet.platform.client.backgroundDispatcher
-import com.intellij.space.plugins.pipelines.utils.ObservableQueue
-import com.intellij.space.plugins.pipelines.viewmodel.LogData
-import com.intellij.space.plugins.pipelines.viewmodel.ScriptModel
-import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
-import com.intellij.space.utils.LifetimedDisposable
-import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -23,6 +16,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.plugins.pipelines.utils.ObservableQueue
+import com.intellij.space.plugins.pipelines.viewmodel.LogData
+import com.intellij.space.plugins.pipelines.viewmodel.ScriptModel
+import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.using
@@ -116,7 +117,11 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
     }
 
     fun rebuildModel() {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
+      ProgressManager.getInstance().run(object : Task.Backgroundable(
+        project,
+        SpaceBundle.message("kts.progress.title.building.dsl.model"),
+        false
+      ) {
         override fun run(pi: ProgressIndicator) {
           // todo: implement build cancellation and re-building
           synchronized(sync) {
