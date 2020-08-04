@@ -3,14 +3,11 @@ package git4idea.index.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xml.util.XmlStringUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
@@ -22,11 +19,12 @@ interface StagingAreaOperation {
   val actionText: Supplier<String>
   val progressTitle: String
   val icon: Icon?
+  val errorMessage: String
+
   fun matches(statusNode: GitFileStatusNode): Boolean
 
   @Throws(VcsException::class)
   fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>)
-  fun showErrorMessage(project: Project, exceptions: Collection<VcsException>)
 }
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
@@ -37,15 +35,12 @@ object GitAddOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("add.action.name")
   override val progressTitle get() = GitBundle.message("add.adding")
   override val icon = AllIcons.General.Add
+  override val errorMessage: String get() = VcsBundle.message("error.adding.files.title")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
 
   override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
     GitFileUtils.addPaths(project, root, paths, false)
-  }
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, VcsBundle.message("error.adding.files.title"), exceptions)
   }
 }
 
@@ -53,15 +48,12 @@ object GitResetOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("stage.reset.action.text")
   override val progressTitle get() = GitBundle.message("stage.reset.process")
   override val icon = AllIcons.General.Remove
+  override val errorMessage: String get() = GitBundle.message("stage.reset.error.title")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.STAGED
 
   override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
     GitFileUtils.resetPaths(project, root, paths)
-  }
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, GitBundle.message("stage.reset.error.title"), exceptions)
   }
 }
 
@@ -69,6 +61,7 @@ object GitRevertOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("stage.revert.action.text")
   override val progressTitle get() = GitBundle.message("stage.revert.process")
   override val icon = AllIcons.Actions.Rollback
+  override val errorMessage: String get() = GitBundle.message("stage.revert.error.title")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED
 
@@ -76,14 +69,4 @@ object GitRevertOperation : StagingAreaOperation {
     GitFileUtils.revertUnstagedPaths(project, root, paths)
     LocalFileSystem.getInstance().refreshFiles(paths.mapNotNull { it.virtualFile })
   }
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, GitBundle.message("stage.revert.error.title"), exceptions)
-  }
-}
-
-private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, XmlStringUtil.wrapInHtmlTag("$messageTitle:", "b")
-                                                                + "\n" + exceptions.joinToString("\n") { it.localizedMessage },
-                                                       MessageType.ERROR)
 }

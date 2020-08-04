@@ -5,11 +5,14 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 
@@ -40,7 +43,7 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
     }
 
     if (exceptions.isNotEmpty()) {
-      operation.showErrorMessage(project, exceptions)
+      showErrorMessage(project, operation.errorMessage, exceptions)
     }
   }
 }
@@ -48,4 +51,10 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
 fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, canBeCancelled: Boolean, process: () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
                                                                                          title, canBeCancelled, project)
+}
+
+private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
+  VcsBalloonProblemNotifier.showOverVersionControlView(project, XmlStringUtil.wrapInHtmlTag("$messageTitle:", "b")
+                                                                + "\n" + exceptions.joinToString("\n") { it.localizedMessage },
+                                                       MessageType.ERROR)
 }
