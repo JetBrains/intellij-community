@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.quickfix
 
 import com.intellij.codeInspection.i18n.I18nizeAction
+import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix
 import com.intellij.codeInspection.i18n.JavaI18nUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -138,6 +139,26 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
     val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
+    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    assertNotNull(concatenation)
+    val args = ArrayList<UExpression?>()
+    Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+    assertSize(2, args)
+    assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
+    assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+  }
+
+  fun testConcatenationWithIfExprNested1() {
+    myFixture.configureByText("Test.kt", """
+      class MyTest {
+        fun f(list : java.util.List<String>){
+          val s = "Not a valid java identifier part in " + (if (list.size() == 1) list.get(0) + " prefix's" else "su<caret>ffix's"))
+        }
+      }
+    """.trimIndent())
+    val enclosingStringLiteral = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(myFixture.file.findElementAt(myFixture.editor.caretModel.offset))
+    
     val concatenation = createFromTopConcatenation(enclosingStringLiteral)
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()

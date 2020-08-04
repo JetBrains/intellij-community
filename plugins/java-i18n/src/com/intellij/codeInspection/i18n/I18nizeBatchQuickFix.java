@@ -49,8 +49,9 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     Set<PsiFile> contextFiles = new LinkedHashSet<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+      UPolyadicExpression polyadicExpression = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(psiElement);
       UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(
-        UastContextKt.toUElement(psiElement, UInjectionHost.class)
+        polyadicExpression != null ? polyadicExpression : UastContextKt.toUElement(psiElement, UInjectionHost.class)
       );
       if (concatenation != null) {
         PartiallyKnownString pks = concatenation.asPartiallyKnownString();
