@@ -10,13 +10,13 @@
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.modules.python</depends>
-    <depends>org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="with-java.xml">com.intellij.modules.java</depends>
+    <depends optional="true" config-file="with-python.xml">com.intellij.modules.python</depends>
+    <depends optional="true" config-file="with-kotlin.xml">org.jetbrains.kotlin</depends>
 
     <extensionPoints>
-        <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester"/>
-        <extensionPoint name="languageSupport" interface="org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport"/>
+        <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester" dynamic="true"/>
+        <extensionPoint name="languageSupport" interface="org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport" dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.intellij">
@@ -27,10 +27,6 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
-
-        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.JavaLanguageSupport"/>
-        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.KotlinLanguageSupport"/>
-        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.PythonLanguageSupport"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
