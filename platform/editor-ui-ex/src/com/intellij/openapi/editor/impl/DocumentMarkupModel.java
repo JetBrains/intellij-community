@@ -89,7 +89,7 @@ public final class DocumentMarkupModel {
     return markupModelMap;
   }
 
-  public static void removeMarkupModel(@NotNull Document document, @NotNull Project project) {
+  static void removeMarkupModel(@NotNull Document document, @NotNull Project project) {
     MarkupModelImpl removed = getMarkupModelMap(document).remove(project);
     if (removed != null) {
       removed.dispose();
