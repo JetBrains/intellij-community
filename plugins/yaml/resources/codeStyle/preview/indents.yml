@@ -10,3 +10,5 @@ components:
 # A list of possible places the third component could be got from
 - - first/possible/place
   - second/possible/place
+
+- { jsonStyle: [ {x: y}, {x: z} ] }
