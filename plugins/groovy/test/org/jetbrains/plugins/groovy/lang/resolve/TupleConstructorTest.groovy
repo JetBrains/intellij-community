@@ -135,7 +135,7 @@ static void main(String[] args) {
   }
 
   @Test
-  void 'include does not affect internal name'() {
+  void 'includes does not affect internal name'() {
     highlightingTest """
 @groovy.transform.TupleConstructor(includes = "\$actionType")
 class Rr {
@@ -147,5 +147,49 @@ static void main(String[] args) {
     new Rr<error>("")</error>
 }
 """
+  }
+
+  @Test
+  void 'defaults removes additional constructors'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(defaults = false)
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+    new Rr<error>("", 1)</error>
+    new Rr("", 1, true)
+    new Rr<error>(actionType: "a", referrerUrl: true, referrerCode: 1)</error>
+}
+"""
+  }
+
+  @Test
+  void 'defaults with superclass'() {
+    highlightingTest """
+class NN {
+    String top
+}
+
+@groovy.transform.TupleConstructor(defaults = false, includeSuperProperties = true)
+class Rr extends NN {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+    new Rr<error>("", 1)</error>
+    new Rr<error>("", 1, true)</error>
+    new Rr("", "", 1, true)
+    new Rr<error>(actionType: "a", referrerUrl: true, referrerCode: 1)</error>
+}"""
   }
 }

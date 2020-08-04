@@ -50,10 +50,12 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
 
     final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical);
-    final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
-
     context.addMethod(fieldsConstructor);
-    context.addMethod(mapConstructor);
+
+    if (tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "defaults", true)) {
+      GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
+      context.addMethod(mapConstructor);
+    }
   }
 
   @NotNull
@@ -131,20 +133,28 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     Predicate<? super String> filter = namesOrder == null ? name -> true : namesOrder.first;
     List<String> includes = namesOrder == null ? null : namesOrder.second;
 
+    boolean isOptional;
+    if (tupleConstructor != null) {
+      isOptional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, "defaults", true);
+    }
+    else {
+      isOptional = !immutable;
+    }
+
     List<GrParameter> parameterCollector = new ArrayList<>();
     if (tupleConstructor != null) {
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
         PsiClass superClass = context.getHierarchyView().getSuperClass();
-        addParametersForSuper(superClass, parameterCollector, fieldsConstructor, superFields, superProperties, new HashSet<>(), filter);
+        addParametersForSuper(superClass, parameterCollector, fieldsConstructor, isOptional, superFields, superProperties, new HashSet<>(),
+                              filter);
       }
     }
 
-    addParameters(typeDefinition, parameterCollector, fieldsConstructor,
-                  tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true),
-                  tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical,
-                  !immutable, filter);
+    boolean includeProperties = tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true);
+    boolean includeFields = tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical;
+    addParameters(typeDefinition, parameterCollector, fieldsConstructor, includeProperties, includeFields, isOptional, filter);
 
     if (includes != null) {
       Comparator<GrParameter> includeComparator = Comparator.comparingInt(param -> includes.indexOf(param.getName()));
@@ -170,6 +180,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   private static void addParametersForSuper(@Nullable PsiClass typeDefinition,
                                             @NotNull List<@NotNull GrParameter> collector,
                                             @NotNull GrLightMethodBuilder builder,
+                                            boolean isOptional,
                                             boolean superFields,
                                             boolean superProperties,
                                             Set<? super PsiClass> visited,
@@ -180,8 +191,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     if (!visited.add(typeDefinition) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(typeDefinition.getQualifiedName())) {
       return;
     }
-    addParametersForSuper(typeDefinition.getSuperClass(), collector, builder, superFields, superProperties, visited, nameFilter);
-    addParameters(typeDefinition, collector, builder, superProperties, superFields, true, nameFilter);
+    addParametersForSuper(typeDefinition.getSuperClass(), collector, builder, isOptional, superFields, superProperties, visited,
+                          nameFilter);
+    addParameters(typeDefinition, collector, builder, superProperties, superFields, isOptional, nameFilter);
   }
 
   private static void addParameters(@NotNull PsiClass psiClass,
