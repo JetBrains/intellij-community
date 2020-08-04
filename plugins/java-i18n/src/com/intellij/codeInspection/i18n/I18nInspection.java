@@ -304,6 +304,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         reportUnannotatedReferences = reportRefs.isSelected();
       }
     });
+    reportRefs.setEnabled(ignoreForAllButNls);
     final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
     ignoreAllButNls.addChangeListener(new ChangeListener() {
       @Override
