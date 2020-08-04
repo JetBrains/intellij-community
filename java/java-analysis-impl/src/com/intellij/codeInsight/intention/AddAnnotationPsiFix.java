@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -163,7 +164,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
 
     PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(myModifierListOwner, myAnnotation);
-    if (target == null || target.hasAnnotation(myAnnotation)) return;
+    if (target == null || ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation))) {
+      return;
+    }
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     ExternalAnnotationsManager.AnnotationPlace place = myAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NEED_ASK_USER ?
                                                        annotationsManager.chooseAnnotationsPlace(myModifierListOwner) : myAnnotationPlace;

@@ -5,6 +5,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -668,7 +669,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
         AddAnnotationFix fixSafe = null;
         if (JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null) {
-          fixSafe = new AddAnnotationFix(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
+          fixSafe = new MarkAsSafeFix(target);
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
         final ProblemDescriptor problem = myManager.createProblemDescriptor(
@@ -1166,4 +1167,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
+  private static class MarkAsSafeFix extends AddAnnotationFix implements LowPriorityAction {
+    MarkAsSafeFix(PsiModifierListOwner target) {
+      super(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
+    }
+  }
 }
