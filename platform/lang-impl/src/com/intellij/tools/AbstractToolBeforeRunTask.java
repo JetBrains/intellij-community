@@ -80,7 +80,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
             result.set(event.getExitCode() == 0);
             targetDone.up();
           }
-      }), ModalityState.NON_MODAL);
+      }), ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);
