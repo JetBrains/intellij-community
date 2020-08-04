@@ -155,23 +155,8 @@ class GitConflictsPanel(
   }
 
   fun acceptConflictSideForSelection(takeTheirs: Boolean) {
-    val conflicts = getSelectedConflicts().filterNot { getConflictOperationLock(it).isLocked }
-    if (conflicts.isEmpty()) return
-
     val reversed = HashSet(reversedRoots)
-
-    val locks = conflicts.map { getConflictOperationLock(it) }
-    locks.forEach { it.lock() }
-
-    object : Task.Backgroundable(project, GitBundle.message("conflicts.accept.progress", conflicts.size), true) {
-      override fun run(indicator: ProgressIndicator) {
-        mergeHandler.acceptOneVersion(conflicts, reversed, takeTheirs)
-      }
-
-      override fun onFinished() {
-        locks.forEach { it.unlock() }
-      }
-    }.queue()
+    acceptConflictSide(project, mergeHandler, getSelectedConflicts(), takeTheirs, reversed::contains)
   }
 
   private fun getConflictOperationLock(conflict: GitConflict) = getConflictOperationLock(project, conflict)
@@ -193,6 +178,26 @@ class GitConflictsPanel(
 
 internal fun getConflictOperationLock(project: Project, conflict: GitConflict): BackgroundableActionLock {
   return BackgroundableActionLock.getLock(project, conflict.filePath)
+}
+
+internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean,
+                                isReversed: (VirtualFile) -> Boolean) {
+  val conflicts = selectedConflicts.filterNot { getConflictOperationLock(project, it).isLocked }.toList()
+  if (conflicts.isEmpty()) return
+
+  val locks = conflicts.map { getConflictOperationLock(project, it) }
+  locks.forEach { it.lock() }
+
+  object : Task.Backgroundable(project, GitBundle.message("conflicts.accept.progress", conflicts.size), true) {
+    override fun run(indicator: ProgressIndicator) {
+      val reversedRoots = conflicts.mapTo(mutableSetOf()) { it.root }.filter(isReversed)
+      handler.acceptOneVersion(conflicts, reversedRoots, takeTheirs)
+    }
+
+    override fun onFinished() {
+      locks.forEach { it.unlock() }
+    }
+  }.queue()
 }
 
 internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, isReversed: (VirtualFile) -> Boolean) {

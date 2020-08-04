@@ -39,10 +39,7 @@ import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.GitAddOperation
-import git4idea.index.actions.GitResetOperation
-import git4idea.index.actions.StagingAreaOperation
-import git4idea.index.actions.performStageOperation
+import git4idea.index.actions.*
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
@@ -175,17 +172,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
 
-        val mergeHandler = GitMergeHandler(myProject, GitDefaultMergeDialogCustomizer(myProject))
+        val mergeHandler = createMergeHandler(myProject)
         val conflicts = getConflictsToMerge(mergeHandler)
         if (conflicts.isEmpty()) {
           OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
         }
         else {
-          showMergeWindow(project, mergeHandler, conflicts) {
-            GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(it)?.let { repository ->
-              GitMergeUtil.isReverseRoot(repository)
-            } ?: false
-          }
+          showMergeWindow(project, mergeHandler, conflicts, myProject::isReversedRoot)
         }
         true
       }
@@ -269,3 +262,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     }
   }
 }
+
+internal fun Project.isReversedRoot(root: VirtualFile): Boolean {
+  return GitRepositoryManager.getInstance(this).getRepositoryForRootQuick(root)?.let { repository ->
+    GitMergeUtil.isReverseRoot(repository)
+  } ?: false
+}
+
+internal fun createMergeHandler(project: Project) = GitMergeHandler(project, GitDefaultMergeDialogCustomizer(project))
