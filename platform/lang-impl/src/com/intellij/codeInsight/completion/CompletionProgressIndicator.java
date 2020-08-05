@@ -796,12 +796,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
-    return CompletionContributor.forParameters(parameters)
-                                       .stream()
-                                       .map(c -> c.handleEmptyLookup(parameters, getEditor()))
-                                       .filter(StringUtil::isNotEmpty)
-                                       .findFirst()
-                                       .orElse(LangBundle.message("completion.no.suggestions"));
+    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      return CompletionContributor.forParameters(parameters)
+        .stream()
+        .map(c -> c.handleEmptyLookup(parameters, getEditor()))
+        .filter(StringUtil::isNotEmpty)
+        .findFirst()
+        .orElse(LangBundle.message("completion.no.suggestions"));
+    });
   }
 
   private LightweightHint showErrorHint(Project project, Editor editor, String text) {
