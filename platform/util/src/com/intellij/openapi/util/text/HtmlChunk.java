@@ -7,10 +7,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
@@ -79,8 +76,8 @@ public abstract class HtmlChunk {
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append('<').append(myTagName);
-      myAttributes.forEach((attrKey, attrValue) -> {
-        builder.append(' ').append(attrKey).append("=\"").append(StringUtil.escapeXmlEntities(attrValue)).append('"');
+      myAttributes.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+        builder.append(' ').append(entry.getKey()).append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
       });
       if (myChildren.isEmpty()) {
         builder.append("/>");
