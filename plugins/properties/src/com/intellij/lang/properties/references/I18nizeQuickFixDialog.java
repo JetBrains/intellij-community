@@ -251,7 +251,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         PropertiesFile propertiesFile = getPropertyFileByPath(path);
         if (propertiesFile != null) {
           for (IProperty property : propertiesFile.getProperties()) {
-            if (Comparing.strEqual(property.getValue(), value) && property.getUnescapedKey() != null) {
+            if (Comparing.strEqual(property.getUnescapedValue(), value) && property.getUnescapedKey() != null) {
               result.add(property);
             }
           }
@@ -397,6 +397,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myPropertiesFile.setHistory(paths);
     if (lastPath != null) {
       myPropertiesFile.setSelectedItem(lastPath);
+      myPropertiesFile.setText(lastPath);
     }
     if (myPropertiesFile.getSelectedIndex() == -1 && !paths.isEmpty()) {
       myPropertiesFile.setText(paths.get(0));
