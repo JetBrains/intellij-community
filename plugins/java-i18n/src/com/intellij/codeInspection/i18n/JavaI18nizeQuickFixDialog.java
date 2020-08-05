@@ -221,6 +221,17 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   }
 
   @Override
+  protected String escapeValue(String value, @NotNull PsiFile context) {
+    try {
+      ResourceBundleManager manager = ResourceBundleManager.getManager(context);
+      return manager != null ? manager.escapeValue(value) : super.escapeValue(value, context);
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      return super.escapeValue(value, context);
+    }
+  }
+
+  @Override
   protected String defaultSuggestPropertyKey(String value) {
     return myResourceBundleManager.suggestPropertyKey(value);
   }

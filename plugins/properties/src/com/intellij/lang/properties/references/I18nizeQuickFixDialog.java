@@ -118,7 +118,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myContext = FileContextUtil.getContextFile(context);
     myContextModules = ContainerUtil.createMaybeSingletonSet(ModuleUtilCore.findModuleForFile(myContext));
 
-    myDefaultPropertyValue = defaultPropertyValue;
+    myDefaultPropertyValue = escapeValue(defaultPropertyValue, context);
     myCustomization = customization != null ? customization:new DialogCustomization();
     setTitle(myCustomization.title != null ? myCustomization.title : PropertiesBundle.message("i18nize.dialog.title"));
 
@@ -214,6 +214,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myExistingProperties.setEnabled(false);
     
     if (!ancestorResponsible) init();
+  }
+
+  protected String escapeValue(String value, @NotNull PsiFile context) {
+    return value;
   }
 
   @Override
