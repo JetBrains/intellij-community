@@ -5,6 +5,7 @@ package org.jetbrains.plugins.feature.suggester.statistics
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.log.statistics.CustomStringsValidationRule
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 
@@ -34,11 +35,14 @@ class FeatureSuggestersStatisticsCollector {
     }
 
     fun sendStatistics(eventId: String, suggesterId: String) {
-        FUCounterUsageLogger.getInstance().logEvent(
-            GROUP_ID,
-            eventId,
-            FeatureUsageData().addData("suggester_id", suggesterId)
-        )
+        val sendStatistics = Registry.get("feature.suggester.send.statistics").asBoolean()
+        if (sendStatistics) {
+            FUCounterUsageLogger.getInstance().logEvent(
+                GROUP_ID,
+                eventId,
+                FeatureUsageData().addData("suggester_id", suggesterId)
+            )
+        }
     }
 }
 
