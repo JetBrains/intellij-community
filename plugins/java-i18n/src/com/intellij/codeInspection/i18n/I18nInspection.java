@@ -80,7 +80,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage").parameterCount(0),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
-  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>|&\\w+;";
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body|li|ol|ul)>|&\\w+;)*";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
@@ -807,6 +807,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return NlsInfo.nonLocalized();
     }
 
+    if (isSuppressedByComment(project, expression)) {
+      return NlsInfo.nonLocalized();
+    }
+
+    if (value != null && myCachedLiteralPattern != null && myCachedLiteralPattern.matcher(value).matches()) {
+      return NlsInfo.nonLocalized();
+    }
+
     List<UExpression> usages = findIndirectUsages(expression);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);
@@ -816,9 +824,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
         case YES: {
-          if (isSuppressedByComment(project, expression)) {
-            return NlsInfo.nonLocalized();
-          }
           return info;
         }
         case UNSURE: {
@@ -870,10 +875,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                     @Nullable String value,
                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
                                     @NotNull UExpression usage) {
-    if (value != null && myCachedLiteralPattern != null && myCachedLiteralPattern.matcher(value).matches()) {
-      return true;
-    }
-    
     if (isInNonNlsCall(usage, nonNlsTargets)) {
       return true;
     }
