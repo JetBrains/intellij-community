@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
@@ -70,7 +71,7 @@ public interface TypeConstraint {
    * @param type declared PsiType of the value
    * @return presentation text that tells about additional constraints; can be empty if no additional constraints are known
    */
-  default @NotNull String getPresentationText(@Nullable PsiType type) {
+  default @NotNull @NlsSafe String getPresentationText(@Nullable PsiType type) {
     return toShortString();
   }
 
