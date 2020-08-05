@@ -16,9 +16,11 @@ import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.PROJECT
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
@@ -27,9 +29,11 @@ import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.dashboard.BranchTreeNode
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Font
+import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -66,6 +70,14 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     table.intercellSpacing = JBUI.emptySize()
     table.setDefaultRenderer(Any::class.java, MyCellRenderer())
+
+    object : DoubleClickListener() {
+      override fun onDoubleClick(e: MouseEvent): Boolean {
+        getSelectedRemote() ?: return false
+        editRemote()
+        return true
+      }
+    }.installOn(table)
 
     return ToolbarDecorator.createDecorator(table).
         setAddAction { addRemote() }.
