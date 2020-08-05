@@ -163,10 +163,19 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
+    showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable);
+  }
+
+  private static void showPopupAt(@NotNull Editor editor,
+                                  @NotNull ActionToolbar toolbar,
+                                  @Nullable JComponent editorComponent,
+                                  @Nullable JComponent additionalInfoPanel,
+                                  @Nullable Point mousePosition,
+                                  @NotNull Disposable childDisposable) {
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
     LightweightHint hint = new LightweightHint(popupPanel);
-    HintListener closeListener = __ -> Disposer.dispose(disposable);
+    HintListener closeListener = __ -> Disposer.dispose(childDisposable);
     hint.addHintListener(closeListener);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -182,7 +191,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
-    ApplicationManager.getApplication().getMessageBus().connect(disposable)
+    ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
       .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
         // Ex: if popup re-shown by ToggleByWordDiffAction
         if (newHint.getComponent() instanceof PopupPanel) {
