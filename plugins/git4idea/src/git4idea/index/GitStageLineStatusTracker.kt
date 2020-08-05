@@ -324,8 +324,6 @@ class GitStageLineStatusTracker(
 
   private class MyLineStatusMarkerPopupRenderer(val tracker: GitStageLineStatusTracker)
     : LineStatusMarkerPopupRenderer(tracker) {
-    override fun getFileType(): FileType = tracker.virtualFile.fileType
-
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun shouldPaintGutter(): Boolean {

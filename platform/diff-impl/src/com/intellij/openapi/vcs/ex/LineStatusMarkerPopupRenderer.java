@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -97,7 +96,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   @NotNull
   protected FileType getFileType() {
-    return PlainTextFileType.INSTANCE;
+    VirtualFile virtualFile = myTracker.getVirtualFile();
+    return virtualFile != null ? virtualFile.getFileType() : PlainTextFileType.INSTANCE;
   }
 
   private static boolean isShowInnerDifferences() {
@@ -146,8 +146,17 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     List<DiffFragment> wordDiff = computeWordDiff(range);
 
     installMasterEditorHighlighters(editor, range, wordDiff, disposable);
-    EditorTextField textField = createEditorComponent(editor, range, wordDiff);
-    JComponent editorComponent = createEditorComponent(editor, textField);
+
+    JComponent editorComponent = null;
+    if (range.hasVcsLines()) {
+      String content = getVcsContent(range).toString();
+      EditorTextField textField = createTextField(editor, content, wordDiff);
+
+      TextRange vcsTextRange = getVcsTextRange(range);
+      installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(), vcsTextRange, getFileType());
+
+      editorComponent = createEditorComponent(editor, textField);
+    }
 
     List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
     ActionToolbar toolbar = buildToolbar(editor, actions, disposable);
@@ -220,21 +229,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
   }
 
-  @Nullable
-  private EditorTextField createEditorComponent(@NotNull Editor editor,
-                                                @NotNull Range range,
-                                                @Nullable List<? extends DiffFragment> wordDiff) {
-    if (!range.hasVcsLines()) return null;
-
-    TextRange vcsTextRange = getVcsTextRange(range);
-    String content = getVcsContent(range).toString();
-
-    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
-    EditorHighlighter highlighter =
-      highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
-    highlighter.setText(myTracker.getVcsDocument().getImmutableCharSequence());
-    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
-
+  @NotNull
+  private static EditorTextField createTextField(@NotNull Editor editor,
+                                                 @NotNull String content,
+                                                 @Nullable List<? extends DiffFragment> wordDiff) {
     EditorTextField field = new EditorTextField(content);
     field.setBorder(null);
     field.setOneLineMode(false);
@@ -255,8 +253,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
       uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
 
-      uEditor.setHighlighter(fragmentedHighlighter);
-
       if (wordDiff != null) {
         for (DiffFragment fragment : wordDiff) {
           int vcsStart = fragment.getStartOffset1();
@@ -271,9 +267,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     return field;
   }
 
-  @Nullable
-  private static JComponent createEditorComponent(@NotNull Editor editor, @Nullable EditorTextField textField) {
-    if (textField == null) return null;
+  @NotNull
+  private static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
     JPanel editorComponent = JBUI.Panels.simplePanel(textField);
     editorComponent.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
     editorComponent.setBackground(EditorFragmentComponent.getBackgroundColor(editor, true));
@@ -285,12 +280,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       return null;
     });
     return editorComponent;
-  }
-
-  private static String getFileName(@NotNull Document document) {
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return "";
-    return file.getName();
   }
 
   @NotNull
@@ -308,6 +297,17 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
     return toolbar;
+  }
+
+  private static void installBaseEditorSyntaxHighlighters(@Nullable Project project,
+                                                          @NotNull EditorTextField textField,
+                                                          @NotNull Document vcsDocument,
+                                                          TextRange vcsTextRange,
+                                                          @NotNull FileType fileType) {
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
+    highlighter.setText(vcsDocument.getImmutableCharSequence());
+    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
+    textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
   }
 
   private static class PopupPanel extends JPanel {

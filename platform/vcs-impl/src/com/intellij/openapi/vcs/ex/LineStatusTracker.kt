@@ -124,8 +124,6 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       return actions
     }
 
-    override fun getFileType(): FileType = tracker.virtualFile.fileType
-
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
       : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
