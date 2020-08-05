@@ -380,7 +380,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(@NotNull GlobalSearchScope searchScope) {
-      Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
+      Set<VirtualFile> files = new LinkedHashSet<>();
       dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 

@@ -1213,7 +1213,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     private final Set<Integer> myTrigrams;
     @Nullable
     private final Short myContext;
-    private boolean myUseOnlyWeakHashToSearch;
+    private final boolean myUseOnlyWeakHashToSearch;
 
     private TextIndexQuery(@NotNull Set<IdIndexEntry> idIndexEntries,
                            @NotNull Set<Integer> trigrams,
