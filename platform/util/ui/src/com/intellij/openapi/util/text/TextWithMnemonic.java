@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,8 +55,15 @@ public final class TextWithMnemonic {
    * Drops a mnemonic
    * @return a TextWithMnemonic object where mnemonic is not set
    */
-  public TextWithMnemonic dropMnemonic() {
-    return hasMnemonic() ? fromPlainText(myText) : this;
+  public TextWithMnemonic dropMnemonic(boolean forceRemove) {
+    if (!hasMnemonic()) return this;
+    if (!forceRemove) return fromPlainText(myText);
+
+    Matcher matcher = MNEMONIC.matcher(myText);
+    if (matcher.find()) {
+      return fromPlainText(matcher.replaceAll(""));
+    }
+    return this;
   }
 
   /**
@@ -114,10 +119,6 @@ public final class TextWithMnemonic {
     return new TextWithMnemonic(text, -1);
   }
 
-  public static TextWithMnemonic parse(@NotNull String text) {
-    return parse(text, false);
-  }
-
   /**
    * Parses a text in text-with-mnemonic format.
    * A mnemonic is prepended either with '_', or with '&' or with '\x1B' character.
@@ -126,12 +127,11 @@ public final class TextWithMnemonic {
    * E.g. "A__b_c__d" in text-with-mnemonic format will be displayed as "A_bc__d" with mnemonic 'c'.
    * 
    * @param text text to parse
-   * @param removeMnemonic indicates whether mnemonics should be stripped or not
    * @return TextWithMnemonic object which corresponds to the parsed text.
    */
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonic parse(@NotNull String text, boolean removeMnemonic) {
+  public static TextWithMnemonic parse(@NotNull String text) {
     if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
       text = text.replace(UIUtil.MNEMONIC, '&');
     }
@@ -157,22 +157,9 @@ public final class TextWithMnemonic {
         }
         plainText.append(ch);
       }
-      text = plainText.toString();
-
-      return ObjectUtils.notNull(stripMnemonic(text, removeMnemonic), new TextWithMnemonic(text, mnemonicIndex));
+      return new TextWithMnemonic(plainText.toString(), mnemonicIndex);
     }
-
-    return ObjectUtils.notNull(stripMnemonic(text, removeMnemonic), fromPlainText(text));
-  }
-
-  @Nullable
-  private static TextWithMnemonic stripMnemonic(@NotNull String text, boolean stripMnemonic) {
-    Matcher matcher = MNEMONIC.matcher(text);
-    if (!stripMnemonic || !matcher.find()) return null;
-
-    int start = matcher.start() - 1;
-    String stripped = matcher.replaceAll("");
-    return new TextWithMnemonic(stripped, start);
+    return fromPlainText(text);
   }
 
   @Override

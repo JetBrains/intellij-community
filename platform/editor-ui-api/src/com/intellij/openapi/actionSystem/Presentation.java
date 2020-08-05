@@ -108,8 +108,8 @@ public final class Presentation implements Cloneable {
   private boolean myEnabled = true;
   private boolean myMultipleChoice = false;
   private double myWeight = DEFAULT_WEIGHT;
-  private static final @NotNull NotNullLazyValue<Boolean> showMnemonics =
-    NotNullLazyValue.createValue(() -> !SystemInfo.isMac || !DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions());
+  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics =
+    NotNullLazyValue.createValue(() -> SystemInfo.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions());
 
   public Presentation() {
   }
@@ -172,7 +172,7 @@ public final class Presentation implements Cloneable {
 
     UISettings uiSettings = UISettings.getInstanceOrNull();
     if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-      return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it, !showMnemonics.getValue()).dropMnemonic())
+      return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it).dropMnemonic(removeMnemonics.getValue()))
         .orElse(null);
     }
     return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it)).orElse(null);
