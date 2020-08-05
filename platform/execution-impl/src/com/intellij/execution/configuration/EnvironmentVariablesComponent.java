@@ -6,7 +6,6 @@ package com.intellij.execution.configuration;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -19,7 +18,7 @@ import javax.swing.event.ChangeListener;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton>
-  implements UserActivityProviderComponent, SettingsEditorFragment.FragmentComponent<CommonProgramRunConfigurationParameters> {
+  implements UserActivityProviderComponent {
   @NonNls private static final String ENVS = "envs";
   @NonNls public static final String ENV = "env";
   @NonNls public static final String NAME = "name";
@@ -62,21 +61,14 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setData(envData);
   }
 
-  @Override
   public void reset(CommonProgramRunConfigurationParameters s) {
     setEnvs(s.getEnvs());
     setPassParentEnvs(s.isPassParentEnvs());
   }
 
-  @Override
   public void apply(CommonProgramRunConfigurationParameters s) {
     s.setEnvs(getEnvs());
     s.setPassParentEnvs(isPassParentEnvs());
-  }
-
-  @Override
-  public boolean isVisible(CommonProgramRunConfigurationParameters s) {
-    return !s.getEnvs().isEmpty();
   }
 
   /**

@@ -151,7 +151,10 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
-      if (referenceList.getParent() instanceof PsiClass) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
+      if (referenceList.getParent() instanceof PsiClass) {
+        if (referenceList.getRole() != PsiReferenceList.Role.PERMITS_LIST) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
+        return UsageType.CLASS_PERMITS_LIST;
+      }
       if (referenceList.getParent() instanceof PsiMethod) return UsageType.CLASS_METHOD_THROWS_LIST;
     }
     if (PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class) != null ||

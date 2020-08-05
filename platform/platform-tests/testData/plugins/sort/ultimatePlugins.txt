@@ -85,7 +85,6 @@
 + -JBoss-
 + -JSR45Plugin-
 + -Jetty-
-+ -Resin-
 + -Tomcat-
 + -WebSphere-
 + -Weblogic-
@@ -101,6 +100,7 @@
 + -com-intellij-jboss-arquillian-
 + -com-intellij-tapestry-
 + -com-intellij-tcserver-
++ -com.intellij.resin-
 + -com-intellij-jsp-
 + -com-intellij-jbpm-
 + -org-jetbrains-idea-gradle-ext-

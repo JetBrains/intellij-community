@@ -82,7 +82,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
-  protected boolean isAvailable() {
+  public boolean isAvailable() {
     return true;
   }
 

@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
-import com.intellij.codeInsight.hints.presentation.*;
+import com.intellij.codeInsight.hints.presentation.InlayPresentation;
+import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.PresentationFactory;
+import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -16,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -131,15 +133,14 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           PresentationFactory factory = getFactory();
           Document document = editor.getDocument();
           int offset = getAnchorOffset(element);
-          int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
           int line = document.getLineNumber(offset);
           int startOffset = document.getLineStartOffset(line);
           int column = offset - startOffset;
           List<InlayPresentation> presentations = new SmartList<>();
-          presentations.add(new SpacePresentation(column * columnWidth, 0));
+          presentations.add(factory.textSpacePlaceholder(column, true));
           for (InlResult inlResult : hints) {
             presentations.add(createPresentation(factory, element, editor, inlResult));
-            presentations.add(new SpacePresentation(columnWidth, 0));
+            presentations.add(factory.textSpacePlaceholder(1, true));
           }
           SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
           InlayPresentation withSettings = addSettings(element.getProject(), factory, shiftedPresentation);

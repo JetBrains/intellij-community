@@ -274,8 +274,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
       TemplatesGroup group = new TemplatesGroup(category);
-      myTemplatesMap.remove(group);
-      myTemplatesMap.put(group, new ArrayList<>());
+
+      ModuleBuilder builder = group.getModuleBuilder();
+      if (builder == null || builder.isAvailable()) {
+        myTemplatesMap.remove(group);
+        myTemplatesMap.put(group, new ArrayList<>());
+      }
     }
 
     if (context.isCreatingNewProject()) {

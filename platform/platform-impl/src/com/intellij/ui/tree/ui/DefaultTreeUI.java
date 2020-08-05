@@ -22,12 +22,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.FixedHeightLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.VariableHeightLayoutCache;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -53,6 +56,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
+  @ApiStatus.Internal
+  public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -124,6 +129,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
     return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+  }
+
+  private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
+    Boolean allowed = UIUtil.getClientProperty(tree, AUTO_EXPAND_ALLOWED);
+    return allowed != null ? allowed : tree.isShowing();
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -376,7 +386,41 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
-    return super.createLayoutCache();
+    if (isLargeModel() && getRowHeight() > 0) {
+      return new FixedHeightLayoutCache();
+    }
+    return new VariableHeightLayoutCache() {
+      @Override
+      public void setExpandedState(TreePath path, boolean isExpanded) {
+        int oldRowCount = getRowCount();
+        super.setExpandedState(path, isExpanded);
+        if (isExpanded) onSingleChildInserted(path, oldRowCount);
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent event) {
+        int oldRowCount = getRowCount();
+        super.treeNodesInserted(event);
+        onSingleChildInserted(event.getTreePath(), oldRowCount);
+      }
+
+      private void onSingleChildInserted(TreePath path, int oldRowCount) {
+        if (path == null || oldRowCount + 1 != getRowCount()) return;
+        JTree tree = getTree();
+        if (tree == null || !isAutoExpandAllowed(tree) || !tree.isVisible(path)) return;
+        TreeModel model = tree.getModel();
+        if (model instanceof AsyncTreeModel) {
+          int pathCount = 1 + path.getPathCount();
+          for (int i = 0; i <= oldRowCount; i++) {
+            TreePath row = getPathForRow(i);
+            if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
+              ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              return; // this code is intended to auto-expand a single child node
+            }
+          }
+        }
+      }
+    };
   }
 
   @Override

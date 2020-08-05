@@ -16,7 +16,6 @@ import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.rules.createDeleteAppConfigRule
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.isEmpty
-import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -42,7 +41,7 @@ internal class DefaultProjectStoreTest {
   val ruleChain = RuleChain(tempDirManager, createDeleteAppConfigRule())
 
   @Test
-  fun `new project from default - file-based storage`() = runBlocking {
+  fun `new project from default - file-based storage`() {
     val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
     externalDependenciesManager.allDependencies = requiredPlugins
     try {
@@ -56,15 +55,12 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test
-  fun `new project from default - directory-based storage`() = runBlocking {
+  fun `new project from default - directory-based storage`() {
     checkDefaultProjectAsTemplate { checkTask ->
       // obviously, project must be directory-based also
       val project = ProjectManagerEx.getInstanceEx().openProject(tempDirManager.newPath("test"), createTestOpenProjectOptions().copy(isNewProject = true, useDefaultProjectAsTemplate = true))!!
-      try {
+      project.use {
         checkTask(project, true)
-      }
-      finally {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       }
     }
   }
@@ -79,7 +75,7 @@ internal class DefaultProjectStoreTest {
     assertThat(element.isEmpty()).isTrue()
 
     val directoryTree = tempDir.getDirectoryTree()
-    assertThat(directoryTree.trim()).toMatchSnapshot(testData.resolve("testData1.txt"))
+    assertThat(directoryTree).toMatchSnapshot(testData.resolve("testData1.txt"))
   }
 
   @Test

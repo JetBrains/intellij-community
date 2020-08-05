@@ -37,12 +37,6 @@ import java.nio.file.Path
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator {
-  companion object {
-    internal fun getPresentableName(options: OpenProjectTask, projectStoreBaseDir: Path): String {
-      return options.projectName ?: projectStoreBaseDir.fileName.toString()
-    }
-  }
-
   open fun <T : Any> run(task: () -> T?): T? {
     return task()
   }
@@ -70,8 +64,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun <T : Any> run(task: () -> T?): T? {
     var result: T? = null
-    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name",
-                                                                        getPresentableName(options, projectStoreBaseDir))
+    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName ?: projectStoreBaseDir.fileName.toString())
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
       val progressTask = object : Task.Modal(null, progressTitle, true) {

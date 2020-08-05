@@ -3,6 +3,8 @@ package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.config.GitVersionSpecialty
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 
@@ -60,8 +62,10 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
-    operation.undo()
+    val result = operation.execute() as Complete
+
+    assertTrue(result.checkUndoPossibility() is Possible)
+    result.undo()
 
     assertLastMessage("Wrong message", "Message reworded incorrectly")
   }
@@ -73,17 +77,17 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
+    val result = operation.execute() as Complete
 
     file("b").create().addCommit("New commit")
 
-    operation.undo()
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.HeadMoved)
 
     repo.assertLatestHistory(
       "New commit",
       "Correct message"
     )
-    assertErrorNotification("Can't Undo Commit Message Edit", "Repository has already been changed")
   }
 
   fun `test undo is not possible if commit was pushed`() {
@@ -97,18 +101,18 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
+    val result = operation.execute() as Complete
 
     git("update-ref refs/remotes/origin/master HEAD")
 
-    operation.undo()
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.PushedToProtectedBranch && undoPossibility.branch == "origin/master")
 
     repo.assertLatestHistory(
       "Third commit",
       "Correct message",
       "First commit"
     )
-    assertErrorNotification("Can't Undo Commit Message Edit", "Commit has already been pushed to origin/master")
   }
 
   // IDEA-175002

@@ -52,6 +52,7 @@ apply from: 'setupDelve.gradle'
 /* Android Studio: fails with "Could not get unknown property 'rkernelVersion' for task ':setupRkernelOsx'"
 apply from: 'setupRpluginDeps.gradle'
 Android Studio: fails with "Could not get unknown property 'rkernelVersion' for task ':setupRkernelOsx'" */
+apply from: 'setupZkm.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')

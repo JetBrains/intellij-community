@@ -4,9 +4,12 @@ package org.jetbrains.plugins.github.ui
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.ui.BaseButtonBehavior
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -31,6 +34,7 @@ class InlineIconButton(val icon: Icon,
   private class InlineIconButtonUI : ComponentUI() {
 
     private var buttonBehavior: BaseButtonBehavior? = null
+    private var tooltipConnector: UiNotifyConnector? = null
 
     override fun paint(g: Graphics, c: JComponent) {
       c as InlineIconButton
@@ -81,13 +85,21 @@ class InlineIconButton(val icon: Icon,
           }
         }
       }
-      HelpTooltip.dispose(c)
-      if (c.tooltip != null) {
-        HelpTooltip()
-          .setTitle(c.tooltip)
-          .setShortcut(c.shortcut?.let { KeymapUtil.getFirstKeyboardShortcutText(it) })
-          .installOn(c)
-      }
+
+      tooltipConnector = UiNotifyConnector(c, object : Activatable {
+        override fun showNotify() {
+          if (c.tooltip != null) {
+            HelpTooltip()
+              .setTitle(c.tooltip)
+              .setShortcut(c.shortcut?.let { KeymapUtil.getFirstKeyboardShortcutText(it) })
+              .installOn(c)
+          }
+        }
+
+        override fun hideNotify() {
+          HelpTooltip.dispose(c)
+        }
+      })
 
       c.isOpaque = false
       c.isFocusable = true
@@ -95,6 +107,10 @@ class InlineIconButton(val icon: Icon,
     }
 
     override fun uninstallUI(c: JComponent) {
+      tooltipConnector?.let {
+        Disposer.dispose(it)
+      }
+      tooltipConnector = null
       buttonBehavior = null
       HelpTooltip.dispose(c)
     }

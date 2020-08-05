@@ -78,7 +78,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           AllIcons.Nodes.Favorite
         }
         isBranchNode -> {
-          AllIcons.Vcs.Branch_node
+          AllIcons.Vcs.BranchNode
         }
         isGroupNode -> {
           PlatformIcons.FOLDER_ICON

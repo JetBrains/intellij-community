@@ -44,7 +44,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -262,7 +261,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = true;
@@ -279,7 +278,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = false;

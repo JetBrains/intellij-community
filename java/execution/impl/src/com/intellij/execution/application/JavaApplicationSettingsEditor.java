@@ -43,9 +43,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
-    fragments.add(CommonParameterFragments.createRedirectFragment(hasModule));
 
     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
+    fragments.add(commonParameterFragments.createRedirectFragment(hasModule));
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
 
@@ -53,18 +53,13 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.add(jrePath);
 
     String group = ExecutionBundle.message("group.java.options");
-    RawCommandLineEditor vmOptions = new RawCommandLineEditor() {
-      @Override
-      public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, y, width, height);
-      }
-    };
+    RawCommandLineEditor vmOptions = new RawCommandLineEditor();
     setMinimumWidth(vmOptions, 400);
     vmOptions.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text"));
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
-                                               (configuration, component) -> component.setText(configuration.getVMParameters()),
-                                               (configuration, component) -> configuration.setVMParameters(component.getText()),
+                                               (configuration, c) -> c.setText(configuration.getVMParameters()),
+                                               (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
 
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
@@ -82,7 +77,8 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
                                                group, LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"), BorderLayout.WEST),
                                                (configuration, c) -> c.getComponent().setItem(configuration.getShortenCommandLine()),
-                                               (configuration, c) -> configuration.setShortenCommandLine(c.getComponent().getSelectedItem()),
+                                               (configuration, c) -> configuration.setShortenCommandLine(
+                                                 c.isVisible() ? c.getComponent().getSelectedItem() : null),
                                                configuration -> configuration.getShortenCommandLine() != null));
     fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
                                                    configuration -> configuration.isSwingInspectorEnabled(),

@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
@@ -174,11 +174,20 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
   public void dispose() {
   }
 
-  private class FileHistoryContentPanel extends JBPanel {
+  private class FileHistoryContentPanel extends JBPanelWithEmptyText {
     @Nullable private FileHistoryPanelImpl myFileHistoryPanel;
 
     private FileHistoryContentPanel() {
       super(new BorderLayout());
+      String text;
+      if (myStartingRevisionNumber != null) {
+        text = VcsBundle.message("loading.file.history.up.to.revision.status", myPath.getName(),
+                                 VcsUtil.getShortRevisionString(myStartingRevisionNumber));
+      }
+      else {
+        text = VcsBundle.message("loading.file.history.status", myPath.getName());
+      }
+      withEmptyText(text);
     }
 
     public void setHistorySession(@NotNull VcsHistorySession session) {

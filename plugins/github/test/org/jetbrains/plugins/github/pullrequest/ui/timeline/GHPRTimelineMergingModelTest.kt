@@ -49,7 +49,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
       GHPRRenamedTitleEvent(actor1, currentDate, "old", "new"),
       GHPRClosedEvent(actor1, currentDate),
       GHPRReopenedEvent(actor1, currentDate),
-      GHPRMergedEvent(actor1, currentDate)
+      GHPRMergedEvent(actor1, currentDate, null, "master")
     ))
 
     assertEquals(2, model.size)
@@ -63,7 +63,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
 
     model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
     model.add(listOf(GHPRReopenedEvent(actor1, currentDate)))
-    model.add(listOf(GHPRMergedEvent(actor1, currentDate)))
+    model.add(listOf(GHPRMergedEvent(actor1, currentDate, null, "master")))
 
     assertEquals(2, model.size)
   }
@@ -120,7 +120,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
       //date difference
       GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR)),
       //actor difference
-      GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR))
+      GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")
     ))
     assertEquals(7, model.size)
   }
@@ -132,7 +132,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user3"))))
     model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
     model.add(listOf(GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR))))
-    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR))))
+    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")))
     assertEquals(7, model.size)
   }
 

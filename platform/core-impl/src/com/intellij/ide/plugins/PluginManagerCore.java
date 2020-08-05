@@ -714,7 +714,8 @@ public final class PluginManagerCore {
       brokenPluginVersions != null ? brokenPluginVersions : getBrokenPluginVersions(),
       () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
     );
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), loadingResult);
+    int flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR | DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult);
     if (bundledPluginsPath != null) {
       context.loadBundledPlugins = true;
       context.bundledPluginsPath = bundledPluginsPath;

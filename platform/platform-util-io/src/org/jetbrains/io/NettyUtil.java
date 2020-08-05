@@ -2,6 +2,7 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -22,7 +23,7 @@ import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
-  public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
+  public static final int MAX_CONTENT_LENGTH = Registry.intValue("ide.netty.max.frame.size.in.mb") * 1024 * 1024;
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;

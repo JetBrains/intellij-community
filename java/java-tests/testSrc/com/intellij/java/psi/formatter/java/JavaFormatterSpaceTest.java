@@ -785,6 +785,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "}");
   }
 
+  public void testSpaceBetweenGenericsAndName() {
+    doTextTest("record A(List<String> string){}",
+                 "record A(List<String> string) {\n" +
+                 "}");
+  }
+
+  public void testSpaceBetweenAnnotationAndType() {
+    doTextTest("record A(@Foo()String string) {}",
+               "record A(@Foo() String string) {\n" +
+               "}");
+  }
+
   public void testSpacesAroundRelationalOperators() {
     getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = true;
     doMethodTest(

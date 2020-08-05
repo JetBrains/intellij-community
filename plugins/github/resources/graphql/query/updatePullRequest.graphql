@@ -1,0 +1,7 @@
+mutation ($pullRequestId: ID!, $title: String, $body: String) {
+    updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title, body: $body}) {
+        pullRequest {
+            ...pullRequestInfo
+        }
+    }
+}

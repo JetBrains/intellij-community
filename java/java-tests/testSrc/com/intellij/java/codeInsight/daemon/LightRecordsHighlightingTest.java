@@ -38,6 +38,9 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRecordCompactConstructors() {
     doTest();
   }
+  public void testRecordCompactConstructorsJava15() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
+  }
   public void testLocalRecords() {
     doTest();
   }

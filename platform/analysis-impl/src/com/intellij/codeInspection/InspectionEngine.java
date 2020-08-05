@@ -272,8 +272,9 @@ public final class InspectionEngine {
 
   private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
     for (Language dialect : language.getDialects()) {
-      result.add(dialect.getID());
-      addDialects(dialect, result);
+      if (result.add(dialect.getID())) {
+        addDialects(dialect, result);
+      }
     }
   }
 

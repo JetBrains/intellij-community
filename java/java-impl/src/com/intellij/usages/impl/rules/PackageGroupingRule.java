@@ -17,6 +17,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -40,8 +41,14 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
   }
 
   @Override
+  @Deprecated
   public String getActionTitle() {
     return JavaBundle.message("action.group.by.package");
+  }
+
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.Package";
   }
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {

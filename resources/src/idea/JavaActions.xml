@@ -728,6 +728,8 @@
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
+
+    <action class="com.intellij.find.findUsages.GroupByPackageAction" id="UsageGrouping.Package"/>
   </actions>
 </idea-plugin>
 

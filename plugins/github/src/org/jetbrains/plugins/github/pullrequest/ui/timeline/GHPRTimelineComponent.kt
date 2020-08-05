@@ -9,8 +9,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
@@ -18,7 +20,8 @@ import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
+class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullRequestShort>,
+                            private val model: ListModel<GHPRTimelineItem>,
                             private val itemComponentFactory: GHPRTimelineItemComponentFactory)
   : JPanel(VerticalLayout(UI.scale(20))) {
 
@@ -35,7 +38,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     model.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
         for (i in e.index1 downTo e.index0) {
-          remove(i)
+          remove(i + 1)
         }
         revalidate()
         repaint()
@@ -43,20 +46,31 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
         }
         revalidate()
         repaint()
       }
 
       override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index1 downTo e.index0) {
+          remove(i + 1)
+        }
+        for (i in e.index0..e.index1) {
+          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
+        }
         validate()
         repaint()
       }
     })
+    detailsModel.addValueChangedListener {
+      remove(0)
+      add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
+    }
 
+    add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
     for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
     }
   }
 
@@ -65,7 +79,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     // paint time LINE
     // painted from bottom to top
     synchronized(treeLock) {
-      val lastIdx = componentCount - 1
+      val lastIdx = components.indexOfLast { it.isVisible }
       if (lastIdx < 0) return
       val lastComp = getComponent(lastIdx) as? Item ?: return
       var yEnd = computeYEnd(lastComp)
@@ -74,8 +88,8 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
       g.color = timeLineColor
       val x = timeLineX.float.toDouble()
 
-      for (i in componentCount - 2 downTo 0) {
-        val comp = getComponent(i) as? Item ?: continue
+      for (i in lastIdx - 1 downTo 0) {
+        val comp = getComponent(i).takeIf { it.isVisible } as? Item ?: continue
         val yStart = computeYStart(comp)
         if (yStart >= yEnd) continue
         LinePainter2D.paint(g, x, yStart.toDouble(), x, yEnd.toDouble(), LinePainter2D.StrokeType.INSIDE, timeLineWidth.float.toDouble())

@@ -94,8 +94,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `path outside of project`() {
     val projectDir = tempDirManager.newPath()
-    val project = PlatformTestUtil.loadAndOpenProject(projectDir)
-    try {
+    PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
       projectDir.createDirectories()
       runBlocking {
         createModule(projectDir, project)
@@ -106,16 +105,12 @@ internal class HeavyBuiltInWebServerTest {
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND)
     }
-    finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-    }
   }
 
   @Test
   fun `file in hidden folder`() {
     val projectDir = tempDirManager.newPath()
-    val project = PlatformTestUtil.loadAndOpenProject(projectDir)
-    try {
+    PlatformTestUtil.loadAndOpenProject(projectDir).use { project ->
       projectDir.createDirectories()
       runBlocking {
         createModule(projectDir, project)
@@ -130,9 +125,6 @@ internal class HeavyBuiltInWebServerTest {
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK)
-    }
-    finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
 }

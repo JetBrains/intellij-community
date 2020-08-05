@@ -50,7 +50,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.ProjectRule.Companion.checkThatNoOpenProjects
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -170,18 +169,6 @@ fun replaceIdeEventQueueSafely() {
   EventQueue.invokeAndWait(EmptyRunnable.getInstance())
 }
 
-private inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -> Unit) {
-  try {
-    executor()
-  }
-  catch (e: CompoundRuntimeException) {
-    addAll(e.exceptions)
-  }
-  catch (e: Throwable) {
-    add(e)
-  }
-}
-
 inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as TI?
 
 private var testCounter = 0
@@ -242,13 +229,13 @@ fun tearDownProjectAndApp(project: Project) {
   l.catchAndStoreExceptions { waitForProjectLeakingThreads(project) }
   l.catchAndStoreExceptions { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
 
+  // reset data provider before disposing project to ensure that disposed project is not accessed
+  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions {
     ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-    checkThatNoOpenProjects()
   }
   l.catchAndStoreExceptions { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
-  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions { UiInterceptors.clear() }
   l.catchAndStoreExceptions { CompletionProgressIndicator.cleanupForNextTest() }
   l.catchAndStoreExceptions {
@@ -259,7 +246,7 @@ fun tearDownProjectAndApp(project: Project) {
     }
   }
 
-  CompoundRuntimeException.throwIfNotEmpty(l)
+  l.throwIfNotEmpty()
 }
 
 /**

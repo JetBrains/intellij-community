@@ -168,7 +168,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       message = "Synchronous execution under ReadAction: ";
     }
     if (message != null && REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
-      LOG.error(message + processHandler);
+      LOG.error(message + processHandler + ", see com.intellij.execution.process.OSProcessHandler#checkEdtAndReadAction() Javadoc for resolutions");
     }
   }
 

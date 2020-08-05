@@ -15,10 +15,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.io.File
+import java.nio.file.Path
 
 @DslMarker
 annotation class ProjectStructureDsl
@@ -77,8 +79,7 @@ private class ContentSpecPathImpl(override val rootDirectory: VirtualFile, overr
   override val parentPath: ContentSpecPath
     get() {
       check(path.isNotEmpty()) { "This path is already the root path $rootDirectory" }
-      return ContentSpecPathImpl(rootDirectory, path.substringBeforeLast(
-        ContentSpecPath.SEPARATOR, ""))
+      return ContentSpecPathImpl(rootDirectory, path.substringBeforeLast(ContentSpecPath.SEPARATOR, ""))
     }
 }
 
@@ -275,7 +276,7 @@ fun buildDirectoryContent(
 
 fun ProjectModelRule.createJavaModule(moduleName: String, content: ModuleContentBuilder.() -> Unit): Module {
   val moduleRoot = baseProjectDir.newVirtualDirectory(moduleName)
-  val module = createJavaModule(project, moduleName, moduleRoot)
+  val module = createJavaModule(project, moduleName, moduleRoot.toNioPath())
   val rootPath = ContentSpecPathImpl(moduleRoot, "")
   val directorySpec = DirectorySpec(rootPath)
   ModuleContentBuilderImpl(module, directorySpec).content()
@@ -283,18 +284,12 @@ fun ProjectModelRule.createJavaModule(moduleName: String, content: ModuleContent
   return module
 }
 
-private fun createJavaModule(
-  project: Project,
-  moduleName: String,
-  moduleRootDirectory: VirtualFile
-): Module {
+private fun createJavaModule(project: Project, moduleName: String, moduleRootDirectory: Path): Module {
   val type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE)
   return WriteCommandAction.writeCommandAction(project).compute(
     ThrowableComputable<Module, RuntimeException> {
-      val moduleFile = moduleRootDirectory.path + "/" + moduleName + ".iml"
-
       val moduleModel = ModuleManager.getInstance(project).modifiableModel
-      val module = moduleModel.newModule(moduleFile, type.id)
+      val module = moduleModel.newModule(moduleRootDirectory.resolve("$moduleName.iml").systemIndependentPath, type.id)
       moduleModel.commit()
       module
     }

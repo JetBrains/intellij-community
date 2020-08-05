@@ -62,13 +62,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, FragmentComponent<? super S> component) {
-    return new SettingsEditorFragment<>(id, name, group, (JComponent)component,
-                                        (settings, c) -> component.reset(settings),
-                                        (settings, c) -> component.apply(settings),
-                                        s -> component.isVisible(s));
-  }
-
   public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, String name, String group, @NotNull SettingsEditor<S> inner) {
     JComponent component = inner.getComponent();
     SettingsEditorFragment<S, JComponent> fragment = new SettingsEditorFragment<>(id, name, group, component,

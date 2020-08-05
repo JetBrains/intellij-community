@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -19,12 +20,14 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -64,6 +67,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker myOldSdks;
 
+  private AccessToken projectTracker;
+
   HeavyIdeaTestFixtureImpl(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject) {
     myName = name;
     myProjectPath = projectPath;
@@ -79,6 +84,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     super.setUp();
 
     initApplication();
+    projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
     setUpProject();
 
     EncodingManager.getInstance(); // adds listeners
@@ -138,6 +144,13 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
     runAll
       .append(
+        () -> {
+          AccessToken projectTracker = this.projectTracker;
+          if (projectTracker != null) {
+            this.projectTracker = null;
+            projectTracker.finish();
+          }
+        },
         () -> super.tearDown(),
         () -> {
           if (myEditorListenerTracker != null) {

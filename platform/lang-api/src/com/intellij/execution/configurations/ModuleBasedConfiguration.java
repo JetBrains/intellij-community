@@ -232,4 +232,8 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public boolean isModuleDirMacroSupported() {
     return false;
   }
+
+  public Module getDefaultModule() {
+    return ArrayUtil.getFirstElement(ModuleManager.getInstance(getProject()).getModules());
+  }
 }

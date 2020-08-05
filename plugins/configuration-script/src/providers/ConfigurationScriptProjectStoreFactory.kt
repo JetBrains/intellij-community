@@ -6,18 +6,14 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else MyProjectStore(project)
-  }
+private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl() {
+  override fun createStore(project: Project) = MyProjectStore(project)
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {

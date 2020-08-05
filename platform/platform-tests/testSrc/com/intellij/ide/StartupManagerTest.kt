@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -29,12 +30,11 @@ class StartupManagerTest {
   @Test(timeout = 5_000)
   //@Test()
   fun runAfterOpenedMustBeDumbAware() {
-    val project = createHeavyProject(fsRule.fs.getPath("/"))
-    try {
+    val done = CountDownLatch(1)
+    val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p"), createTestOpenProjectOptions().copy(beforeOpen = { project ->
       val startupManager = StartupManagerImpl.getInstance(project) as StartupManagerImpl
       assertThat(startupManager.postStartupActivityPassed()).isFalse()
 
-      val done = CountDownLatch(1)
       val dumbService = DumbService.getInstance(project) as DumbServiceImpl
       ExtensionTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(StartupActivity.DumbAware {
         runInEdtAndWait {
@@ -49,8 +49,9 @@ class StartupManagerTest {
       }), project, fireEvents = false)
 
       assertThat(startupManager.postStartupActivityPassed()).isFalse()
-
-      PlatformTestUtil.openProject(project)
+      true
+    }))!!
+    try {
       done.await(1, TimeUnit.SECONDS)
     }
     finally {

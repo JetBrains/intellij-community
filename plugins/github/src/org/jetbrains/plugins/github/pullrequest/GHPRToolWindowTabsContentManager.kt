@@ -8,9 +8,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import java.util.*
 import javax.swing.JPanel
@@ -33,7 +35,8 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
       val content = event.content
       if (content.getUserData(INIT_DONE_KEY) != null) return
 
-      content.component = GHPRToolWindowComponentFactory(project, content.remoteUrl ?: return, content.disposer ?: return).createComponent()
+      content.component = GHPRToolWindowTabComponentFactory(project, content.remoteUrl ?: return,
+                                                            content.disposer ?: return).createComponent()
       IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(INIT_DONE_KEY, Any())
     }
@@ -53,9 +56,12 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
   }
 
   @CalledInAwt
-  internal fun focusTab(remoteUrl: GitRemoteUrlCoordinates) {
+  internal fun focusTab(remoteUrl: GitRemoteUrlCoordinates, onFocused: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
     val content = contentManager.contents.firstOrNull { it.remoteUrl == remoteUrl } ?: return
     contentManager.setSelectedContent(content, true)
+
+    val controller = UIUtil.getClientProperty(content.component, GHPRToolWindowTabComponentController.KEY)
+    onFocused?.invoke(controller)
   }
 
   private fun createContent(remoteUrl: GitRemoteUrlCoordinates): Content {

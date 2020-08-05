@@ -626,13 +626,17 @@ public class EquivalenceChecker {
     }
     final PsiElement body1 = unwrapLambdaBody(expression1.getBody());
     final PsiElement body2 = unwrapLambdaBody(expression2.getBody());
+    Match match;
     if (body1 instanceof PsiCodeBlock && body2 instanceof PsiCodeBlock) {
-      return codeBlocksMatch((PsiCodeBlock)body1, (PsiCodeBlock)body2);
+      match = codeBlocksMatch((PsiCodeBlock)body1, (PsiCodeBlock)body2);
     }
     else if (body1 instanceof PsiExpression && body2 instanceof PsiExpression) {
-      return expressionsMatch((PsiExpression)body1, (PsiExpression)body2);
+      match = expressionsMatch((PsiExpression)body1, (PsiExpression)body2);
     }
-    return EXACT_MISMATCH;
+    else {
+      match = EXACT_MISMATCH;
+    }
+    return match == EXACT_MISMATCH ? new Match(body1, body2) : match;
   }
 
   private static PsiElement unwrapLambdaBody(PsiElement element) {
@@ -984,10 +988,10 @@ public class EquivalenceChecker {
   protected Match binaryExpressionsMatch(@NotNull PsiBinaryExpression binaryExpression1, @NotNull PsiBinaryExpression binaryExpression2) {
     final IElementType tokenType1 = binaryExpression1.getOperationTokenType();
     final IElementType tokenType2 = binaryExpression2.getOperationTokenType();
-    final PsiExpression left1 = binaryExpression1.getLOperand();
-    final PsiExpression left2 = binaryExpression2.getLOperand();
-    final PsiExpression right1 = binaryExpression1.getROperand();
-    final PsiExpression right2 = binaryExpression2.getROperand();
+    final PsiExpression left1 = PsiUtil.skipParenthesizedExprDown(binaryExpression1.getLOperand());
+    final PsiExpression left2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getLOperand());
+    final PsiExpression right1 = PsiUtil.skipParenthesizedExprDown(binaryExpression1.getROperand());
+    final PsiExpression right2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getROperand());
     if (right1 == null || right2 == null) {
       return Match.exact(right1 == right2);
     }
@@ -1075,6 +1079,9 @@ public class EquivalenceChecker {
       else if (equivalence1 == EXACT_MISMATCH) {
         return new Match(left1, right1);
       }
+      else {
+        return equivalence1;
+      }
     }
     else if (equivalence2 == EXACT_MISMATCH) {
       if (equivalence1 == EXACT_MISMATCH) {
@@ -1084,7 +1091,7 @@ public class EquivalenceChecker {
         return new Match(left2, right2);
       }
     }
-    return EXACT_MISMATCH;
+    return equivalence1 == EXACT_MATCH ? equivalence2 : EXACT_MISMATCH;
   }
 
   private static boolean modifierListsAreEquivalent(PsiModifierList modifierList1, PsiModifierList modifierList2) {

@@ -3,6 +3,8 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +20,12 @@ public class JavaPsiRecordUtil {
   @Nullable
   public static PsiRecordComponent getRecordComponentForAccessor(@NotNull PsiMethod accessor) {
     PsiClass aClass = accessor.getContainingClass();
+    if (aClass == null) {
+      PsiElement parent = accessor.getParent();
+      if (parent instanceof DummyHolder) {
+        aClass = ObjectUtils.tryCast(parent.getContext(), PsiClass.class);
+      }
+    }
     if (aClass == null || !aClass.isRecord()) return null;
     if (!accessor.getParameterList().isEmpty()) return null;
     String name = accessor.getName();

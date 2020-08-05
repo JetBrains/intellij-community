@@ -222,7 +222,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
               myProblems.putIfAbsent(methodCall, myManager.createProblemDescriptor(methodCall,
                                                                JavaI18nBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
                                                                onTheFly, LocalQuickFix.EMPTY_ARRAY,
-                                                               ProblemHighlightType.GENERIC_ERROR));
+                                                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
             }
             break;
           }

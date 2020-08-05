@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.messages.Topic
 import org.jdom.Element
+import java.util.*
 
 @State(name = "InlayHintsSettings", storages = [Storage("editor.xml"), Storage("workspace.xml", deprecated = true)])
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
@@ -24,7 +25,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
      */
     @Topic.AppLevel
     @JvmStatic
-    val INLAY_SETTINGS_CHANGED = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+    val INLAY_SETTINGS_CHANGED: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }
 
   private val listener: SettingsListener
@@ -34,7 +35,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   private val lock = Any()
 
   class State {
-    val disabledHintProviderIds = sortedSetOf<String>()
+    var disabledHintProviderIds: TreeSet<String> = sortedSetOf()
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement = Element("settingsMapElement")
 
@@ -42,7 +43,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
     var isEnabled: Boolean = true
 
-    val disabledLanguages = sortedSetOf<String>()
+    var disabledLanguages: TreeSet<String> = sortedSetOf()
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()

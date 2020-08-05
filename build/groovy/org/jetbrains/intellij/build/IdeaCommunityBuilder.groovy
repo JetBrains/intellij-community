@@ -22,6 +22,7 @@ class IdeaCommunityBuilder {
 
   void buildFullUpdater() {
     def tasks = BuildTasks.create(buildContext)
+    // Android Studio: modified by Change I7926a643 / commit 6ebec700
     if (buildContext.options.studioSdk) {
       tasks.compileModules(["intellij.platform.updater"])
     } else {

@@ -40,7 +40,7 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testRecordTopLevel() {
-    doTest(LanguageLevel.JDK_15_PREVIEW);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest(LanguageLevel.JDK_15_PREVIEW));
   }
 
   public void testRecordInClass() {

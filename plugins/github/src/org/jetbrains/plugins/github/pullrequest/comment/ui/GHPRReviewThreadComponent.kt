@@ -39,11 +39,12 @@ object GHPRReviewThreadComponent {
       isOpaque = false
     }
     if (diffComponentFactory != null) {
-      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk), VerticalLayout.FILL_HORIZONTAL)
+      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk, thread.commit?.oid), VerticalLayout.FILL_HORIZONTAL)
     }
 
     panel.add(
-      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(reviewDataProvider, avatarIconsProvider)))
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(reviewDataProvider, avatarIconsProvider)),
+      VerticalLayout.FILL_HORIZONTAL)
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser), VerticalLayout.FILL_HORIZONTAL)

@@ -31,7 +31,7 @@ import java.nio.charset.Charset;
  */
 public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private Charset myCharset;
-  private byte[] myContent;
+  protected byte[] myContent;
   private CharSequence myContentAsText;
   private final long myStamp;
   private byte[] myFileContentHash;
@@ -46,7 +46,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     this(file, null, content, -1, true);
   }
 
-  private FileContentImpl(@NotNull VirtualFile file,
+  protected FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
                           long stamp,

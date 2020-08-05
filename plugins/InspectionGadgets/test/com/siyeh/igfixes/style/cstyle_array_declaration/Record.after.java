@@ -1,2 +1,2 @@
-record Record(int[]x) {
+record Record(int[] x) {
 }

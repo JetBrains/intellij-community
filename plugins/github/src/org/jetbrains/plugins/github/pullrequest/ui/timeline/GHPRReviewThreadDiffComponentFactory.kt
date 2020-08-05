@@ -16,32 +16,50 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ClickListener
+import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
+import java.awt.Cursor
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
 
 class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTypeRegistry,
                                            private val project: Project,
-                                           private val editorFactory: EditorFactory) {
-  fun createComponent(filePath: String, diffHunk: String): JComponent = JBUI.Panels
+                                           private val editorFactory: EditorFactory,
+                                           private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper) {
+
+  fun createComponent(filePath: String, diffHunk: String, commit: String?): JComponent = JBUI.Panels
     .simplePanel(createDiff(filePath, diffHunk))
-    .addToTop(createFileName(filePath))
+    .addToTop(createFileName(filePath, commit))
     .andTransparent()
 
-  private fun createFileName(filePath: String): SimpleColoredComponent {
+  private fun createFileName(filePath: String, commit: String?): JComponent {
     val name = PathUtil.getFileName(filePath)
     val path = PathUtil.getParentPath(filePath)
     val fileType = fileTypeRegistry.getFileTypeByFileName(name)
 
-    return SimpleColoredComponent().apply {
-      isOpaque = false
+    return NonOpaquePanel(HorizontalLayout(UI.scale(5))).apply {
+      add(JLabel(name, fileType.icon, SwingConstants.LEFT).apply {
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        object : ClickListener() {
+          override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+            selectInToolWindowHelper.selectChange(commit, filePath)
+            return true
+          }
+        }.installOn(this)
+      })
 
-      icon = fileType.icon
-      append(name)
-      if (!path.isBlank()) append(" ").append(path, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      if (!path.isBlank())
+        add(JLabel(path).apply {
+          foreground = UIUtil.getContextHelpForeground()
+        })
     }
   }
 

@@ -13,7 +13,7 @@ task setupRkernel {
     outputs.file(artifact)
     doLast {
       download {
-        src "https://jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
+        src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
         tempAndMove true
         dest artifact
         timeout TimeUnit.MINUTES.toMillis(30).toInteger()

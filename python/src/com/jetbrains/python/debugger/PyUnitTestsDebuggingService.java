@@ -186,13 +186,12 @@ final class PyUnitTestsDebuggingService {
       g.setColor(UIUtil.getErrorForeground());
       g.fillRect(targetRegion.x, targetRegion.y, targetRegion.x + RIGHT_BAR_THICKNESS, calcHeightInPixels(inlay));
 
-      g.setColor(UIUtil.getErrorForeground());
-      g.setFont(UIUtil.getToolTipFont());
+      g.setFont(getFont(inlay.getEditor()));
 
+      g.setColor(UIUtil.getErrorForeground());
       drawStringToInlayBox((myIsTestSetUpFail ? getErrorInTestSetUpCaption() : getFailedTestCaption()) + ":", inlay, g, targetRegion);
 
       g.setColor(UIUtil.getToolTipForeground());
-      g.setFont(UIUtil.getToolTipFont());
 
       String[] lines = StringUtil.splitByLines(myErrorMessage);
       drawStringToInlayBox(myExceptionType + ": " + lines[0], inlay, g, targetRegion);
@@ -202,6 +201,12 @@ final class PyUnitTestsDebuggingService {
           drawStringToInlayBox(lines[k], inlay, g, targetRegion);
         }
       }
+    }
+
+    private static @NotNull Font getFont(@NotNull Editor editor) {
+      String fontName = UIUtil.getToolTipFont().getFontName();
+      int fontSize = editor.getColorsScheme().getEditorFontSize();
+      return UIUtil.getFontWithFallback(fontName, Font.PLAIN, fontSize);
     }
 
     private void drawStringToInlayBox(@NotNull String str, @NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion) {

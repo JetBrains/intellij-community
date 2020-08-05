@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
-import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -17,9 +16,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RuleChain
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.junit.Assume
@@ -27,7 +28,7 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.File
+import java.nio.file.Path
 
 class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
   companion object {
@@ -43,19 +44,20 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   val baseProjectDir = TempDirectory()
   private val disposableRule = DisposableRule()
+
   lateinit var project: Project
+  lateinit var projectRootDir: Path
+
   private val projectResource = object : ExternalResource() {
     override fun before() {
-      project = if (forceEnableWorkspaceModel) {
+      projectRootDir = baseProjectDir.root.toPath()
+      if (forceEnableWorkspaceModel) {
         WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-          createHeavyProject(baseProjectDir.root.toPath())
+          project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
         }
       }
       else {
-        createHeavyProject(baseProjectDir.root.toPath())
-      }
-      runInEdtAndWait {
-        PlatformTestUtil.openProject(project)
+        project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
       }
     }
 
@@ -63,6 +65,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
+
   private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
 
   override fun apply(base: Statement, description: Description): Statement {
@@ -70,7 +73,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   }
 
   fun createModule(name: String = "module"): Module {
-    val imlFile = File(baseProjectDir.root, "$name/$name.iml")
+    val imlFile = generateImlPath(name)
     val manager = moduleManager
     return runWriteActionAndWait {
       manager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
@@ -78,10 +81,10 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   }
 
   fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
-    val imlFile = baseProjectDir.newFile("$name/$name.iml")
-    return moduleModel.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+    return moduleModel.newModule(generateImlPath(name).systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
   }
 
+  private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
 
   fun createSdk(name: String = "sdk"): Sdk {
     return ProjectJdkTable.getInstance().createSdk(name, sdkType)
@@ -93,7 +96,8 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       val sdkModificator = sdk.sdkModificator
       try {
         setup(sdkModificator)
-      } finally {
+      }
+      finally {
         sdkModificator.commitChanges()
       }
     }
@@ -132,7 +136,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   }
 
   private fun disposeOnTearDown(library: LibraryEx) {
-    disposableRule.disposable.attach {
+    disposableRule.register {
       runWriteActionAndWait {
         if (!library.isDisposed && library.table.getLibraryByName(library.name!!) == library) {
           library.table.removeLibrary(library)

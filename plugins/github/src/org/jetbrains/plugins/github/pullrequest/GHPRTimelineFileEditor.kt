@@ -38,6 +38,8 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   val timelineLoader = dataProvider.acquireTimelineLoader(this)
 
+  val remoteUrl = dataContext.gitRepositoryCoordinates
+
   override fun getName() = "Pull Request Timeline"
 
   private val content by lazy(LazyThreadSafetyMode.NONE, ::createContent)

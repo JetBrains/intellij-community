@@ -7,6 +7,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
@@ -47,6 +49,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -123,6 +126,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private @Nullable CodeStyleSettingsTracker myCodeStyleSettingsTracker;
+
+  private AccessToken projectTracker;
 
   public @NotNull TempFiles getTempDir() {
     return myTempFiles;
@@ -217,6 +222,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LOG.debug(getClass().getName() + ".setUp()");
 
     initApplication();
+
+    projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
+
     if (myOldSdks == null) { // some bastard's overridden initApplication completely
       myOldSdks = new SdkLeakTracker();
     }
@@ -325,7 +333,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       .processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink) -> {
         int hashCode = System.identityHashCode(leaked);
         leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-          .append(ProjectRule.getCreationPlace(leaked)).append("\n");
+          .append(TestProjectManager.getCreationPlace(leaked)).append("\n");
         leakers.append(backLink).append("\n");
         leakers.append(";-----\n");
 
@@ -499,6 +507,13 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         }
         // must be set to null only after dispose (maybe used by tests during dispose)
         myProject = null;
+      },
+      () -> {
+        AccessToken projectTracker = this.projectTracker;
+        if (projectTracker != null) {
+          this.projectTracker = null;
+          projectTracker.finish();
+        }
       },
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {

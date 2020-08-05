@@ -20,9 +20,9 @@ class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
 
   class TerminalCommandHandlerOptions(val project: Project) {
     var enabled: Boolean
-      get() = PropertiesComponent.getInstance(project).getBoolean(TERMINAL_CUSTOM_COMMAND_EXECUTION, true)
+      get() = PropertiesComponent.getInstance().getBoolean(TERMINAL_CUSTOM_COMMAND_EXECUTION, true)
       set(value) {
-        PropertiesComponent.getInstance(project).setValue(TERMINAL_CUSTOM_COMMAND_EXECUTION, value, true)
+        PropertiesComponent.getInstance().setValue(TERMINAL_CUSTOM_COMMAND_EXECUTION, value, true)
       }
   }
 
@@ -30,8 +30,8 @@ class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
     BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)), Configurable {
     init {
       checkBox(IdeBundle.message("settings.terminal.smart.command.handling"),
-               Getter<Boolean> { instance!!.enabled },
-               Setter<Boolean> { instance!!.enabled = it })
+               Getter { instance!!.enabled },
+               Setter { instance!!.enabled = it })
     }
 
     override fun getDisplayName(): String {

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.icons.AllIcons;
@@ -15,11 +16,9 @@ import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -60,6 +60,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
@@ -184,7 +185,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     };
   }
 
-  private void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable) throws IOException, JDOMException {
+  private void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+    throws IOException, JDOMException, InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
@@ -210,6 +212,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       gracefulExit();
       return;
     }
+    waitAllStartupActivitiesPassed(project);
+
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> isMappingLoaded.setResult(null));
 
@@ -281,6 +285,22 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
   }
 
+  private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.info("Waiting for startup activities");
+    int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
+    try {
+      StartupManagerEx.getInstanceEx(project).getAllActivitiesPassedFuture().get(timeout, TimeUnit.MINUTES);
+      LOG.info("Startup activities finished");
+    }
+    catch (TimeoutException e) {
+      String threads = ThreadDumper.dumpThreadsToString();
+      throw new RuntimeException(String.format("Cannot process startup activities in %s minutes. ", timeout) +
+                                 "You can try to increase batch.inspections.startup.activities.timeout registry value. " +
+                                 "Thread dumps\n: " + threads, e);
+    }
+  }
+
   private @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
     final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
@@ -330,6 +350,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         configurator.configureProject(project, context);
       }
     }
+    waitForInvokeLaterActivities();
+  }
+
+  private static void waitForInvokeLaterActivities() {
+    ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
   }
 
   private void runAnalysis(Project project,

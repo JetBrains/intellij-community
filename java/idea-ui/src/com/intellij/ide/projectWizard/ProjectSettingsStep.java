@@ -113,6 +113,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   public void onStepLeaving() {
     SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
     settings.EXPERT_MODE = myExpertDecorator.isExpanded();
+    if (mySettingsStep != null) {
+      mySettingsStep.onStepLeaving();
+    }
   }
 
   @Override

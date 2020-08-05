@@ -61,6 +61,7 @@ public interface ExtensionPoint extends DomElement {
 
   @NotNull
   @Attribute("dynamic")
+  @Stubbed
   GenericAttributeValue<Boolean> getDynamic();
 
   @NotNull

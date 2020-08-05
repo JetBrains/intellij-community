@@ -6,7 +6,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.stateStore
 import com.intellij.testFramework.WrapRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -31,7 +30,7 @@ private class TestComponent : SimplePersistentStateComponent<TestComponent.TestC
 @ApiStatus.Internal
 fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultProjectTemplateShouldBeApplied: Boolean) -> Unit) -> Unit) {
   val defaultTestComponent = TestComponent()
-  val defaultStateStore = (ProjectManager.getInstance().defaultProject as ProjectStoreOwner).getComponentStore()
+  val defaultStateStore = ProjectManager.getInstance().defaultProject.service<IComponentStore>()
   defaultStateStore.initComponent(defaultTestComponent, null, null)
   // must be after init otherwise will be not saved on disk (as will be not modified since init)
   defaultTestComponent.state.foo = Ksuid.generate()

@@ -322,6 +322,11 @@ public final class TreeUtil {
     return selectionPath;
   }
 
+  public static int getRowForNode(@NotNull JTree tree, @NotNull DefaultMutableTreeNode targetNode) {
+    TreeNode[] path = targetNode.getPath();
+    return tree.getRowForPath(new TreePath(path));
+  }
+
   /**
    * @deprecated use {@link #promiseSelectFirstLeaf}
    */

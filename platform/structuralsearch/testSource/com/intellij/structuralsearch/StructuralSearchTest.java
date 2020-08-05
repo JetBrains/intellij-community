@@ -6,6 +6,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -2630,27 +2632,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     } catch (MalformedPatternException ignored) {}
   }
 
-  public void testNotApplicableConstraints() {
-    options.fillSearchCriteria("class A extends '_B* {}");
-    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options, getProject()));
+  public void testApplicableConstraints() {
+    final CompiledPattern pattern = compilePattern("class A extends '_B* {}", true);
+    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options, pattern));
+    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options, compilePattern("'_a?.'_b?", true)));
+    assertNull(checkApplicableConstraints(options, compilePattern("case '_a* :", true)));
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, compilePattern("int '_a:* ;", true)));
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, compilePattern("void '_a:* ();", true)));
+    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options, compilePattern("if (true) '_st{0,0};", true)));
+    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options, compilePattern("while (true) '_st+;", true)));
+    assertNull(checkApplicableConstraints(options, compilePattern("class A { '_body* }", false)));
+  }
 
-    options.fillSearchCriteria("'_a?.'_b?");
-    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options, getProject()));
-
-    options.fillSearchCriteria("case '_a* :");
-    assertEquals(null, checkApplicableConstraints(options, getProject()));
-
-    options.fillSearchCriteria("int '_a:* ;");
-    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, getProject()));
-
-    options.fillSearchCriteria("void '_a:* ();");
-    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, getProject()));
-
-    options.fillSearchCriteria("if (true) '_st{0,0};");
-    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options, getProject()));
-
-    options.fillSearchCriteria("while (true) '_st+;");
-    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options, getProject()));
+  private CompiledPattern compilePattern(String criteria, boolean checkForErrors) {
+    options.fillSearchCriteria(criteria);
+    return PatternCompiler.compilePattern(getProject(), options, checkForErrors, false);
   }
 
   public void testFindInnerClass() {

@@ -787,11 +787,15 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private class InlineProgressPanel extends NonOpaquePanel {
     private MyInlineProgressIndicator myIndicator;
     private AsyncProcessIcon myProcessIconComponent;
-    private final LinkLabel<?> myMultiProcessLink = LinkLabel.create("", InfoAndProgressPanel.this::triggerPopupShowing);
+    private final LinkLabel<?> myMultiProcessLink = new LinkLabel<Object>("", null, (__, ___) -> triggerPopupShowing(), null, null) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+      }
+    };
 
     InlineProgressPanel() {
-      myMultiProcessLink.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
-
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {

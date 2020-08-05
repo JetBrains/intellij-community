@@ -47,6 +47,10 @@ class JBNavigateCommandTest {
   @Rule
   val testName = TestName()
 
+  @JvmField
+  @Rule
+  val projectTrackingRule = ProjectTrackingRule()
+
   @Rule
   @JvmField
   internal val busConnection = RecentProjectManagerListenerRule()
@@ -111,8 +115,6 @@ class JBNavigateCommandTest {
         assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
       }
     }
-
-    ProjectRule.checkThatNoOpenProjects()
   }
 
   private fun configure(project: Project) {

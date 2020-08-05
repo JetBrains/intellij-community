@@ -107,6 +107,6 @@ static def prefixes(Arch arch, String forcedPrefix) {
     ['jbr-']
   }
   else {
-    ['jbr-', 'jbr_jcef-', 'jbr_jfx-']
+    ['jbr_jcef-']
   }
 }

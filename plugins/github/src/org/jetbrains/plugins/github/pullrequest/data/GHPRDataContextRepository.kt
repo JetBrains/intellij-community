@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -41,7 +43,13 @@ internal class GHPRDataContextRepository(private val project: Project) {
       val contextDisposable = Disposer.newDisposable()
       LazyCancellableBackgroundProcessValue.create { indicator ->
         ProgressManager.getInstance().submitIOTask(indicator) {
-          loadContext(indicator, account, requestExecutor, gitRemoteCoordinates)
+          try {
+            loadContext(indicator, account, requestExecutor, gitRemoteCoordinates)
+          }
+          catch (e: Exception) {
+            if (e !is ProcessCanceledException) LOG.info("Error occurred while creating data context", e)
+            throw e
+          }
         }.successOnEdt { ctx ->
           if (Disposer.isDisposed(contextDisposable)) {
             Disposer.dispose(ctx)
@@ -147,6 +155,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
     repositories.values.mapNotNull { it.lastLoadedValue }.find { it.repositoryCoordinates == repositoryCoordinates }
 
   companion object {
+    private val LOG = logger<GHPRDataContextRepository>()
+
     fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()
 
     private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {

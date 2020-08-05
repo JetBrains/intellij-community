@@ -65,7 +65,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
     nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myObject2NodeMap")
-    nav.goToInstanceField("gnu.trove.THashMap", "_values")
+    nav.goToInstanceField("it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap", "value")
 
     val groupingToObjectStats = HashMap<Grouping, InstanceStats>()
     val maxTreeDepth = 200

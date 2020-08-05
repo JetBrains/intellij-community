@@ -23,7 +23,6 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -40,10 +39,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-@HeavyPlatformTestCase.WrapInCommand
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
-  protected void setUpProject() throws Exception {
+  protected void setUpProject() {
     loadAndSetupProject(getProjectDirOrFile());
   }
 
@@ -65,7 +63,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", JavaFileType.INSTANCE, "class A{ Object o;}");
     final PsiFile finalFile = file;
-    file = WriteAction.compute(()->(PsiFile)root.add(finalFile));
+    file = WriteAction.compute(() -> (PsiFile)root.add(finalFile));
     assertNotNull(file);
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));

@@ -61,6 +61,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Element:extensionPoint\n" +
                   "        Attribute:name:myEP\n" +
                   "        Attribute:interface:SomeInterface\n" +
+                  "        Attribute:dynamic:true\n" +
                   "        Element:with\n" +
                   "          Attribute:attribute:attributeName\n" +
                   "          Attribute:implements:SomeImplements\n" +

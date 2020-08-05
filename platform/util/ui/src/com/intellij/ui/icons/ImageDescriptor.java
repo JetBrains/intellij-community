@@ -78,6 +78,10 @@ public final class ImageDescriptor {
     this.origUsrSize = new ImageLoader.Dimension2DDouble(0, 0);
   }
 
+  public @NotNull String getPath() {
+    return path;
+  }
+
   @Nullable
   public Image load(boolean useCache) throws IOException {
     return load(useCache, null);

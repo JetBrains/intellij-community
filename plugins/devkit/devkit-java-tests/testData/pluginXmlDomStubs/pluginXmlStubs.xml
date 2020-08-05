@@ -8,7 +8,7 @@
   <idea-version since-build="sinceBuildValue" until-build="untilBuildValue"/>
 
   <extensionPoints>
-    <extensionPoint name="myEP" interface="SomeInterface">
+    <extensionPoint name="myEP" interface="SomeInterface" dynamic="true">
       <with attribute="attributeName" implements="SomeImplements"/>
     </extensionPoint>
 

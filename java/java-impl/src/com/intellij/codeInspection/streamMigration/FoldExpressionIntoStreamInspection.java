@@ -82,8 +82,10 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
         PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(operands[0]), PsiBinaryExpression.class);
         if (binOp != null) {
           if (ComparisonUtils.isComparison(binOp) &&
-              (left == binOp.getLOperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
-              (left == binOp.getROperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
+              (left == PsiUtil.skipParenthesizedExprDown(binOp.getLOperand()) && 
+               ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
+              (left == PsiUtil.skipParenthesizedExprDown(binOp.getROperand()) && 
+               ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
             // Disable for simple comparison chains like "a == null && b == null && c == null":
             // using Stream API here looks an overkill
             return Collections.emptyList();

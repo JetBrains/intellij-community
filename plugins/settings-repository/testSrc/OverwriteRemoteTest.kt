@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
@@ -10,19 +10,20 @@ import org.junit.Test
 
 // empty means "no files, no HEAD, no commits"
 internal class OverwriteRemote : GitTestCase() {
-  @Test fun `not empty local and not empty remote`() {
+  @Test
+  fun `not empty local and not empty remote`() {
     addLocalToFs()
     doTest(true)
   }
 
-  @Test fun `not empty local and empty remote`() {
+  @Test
+  fun `not empty local and empty remote`() {
     addLocalToFs()
     doTest(false)
   }
 
   private fun addLocalToFs() {
-    fs
-      .file("local.xml", """<file path="local.xml" />""")
+    fs.file("local.xml", """<file path="local.xml" />""")
   }
 
   @Test

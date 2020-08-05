@@ -6,6 +6,7 @@ import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,9 +37,10 @@ abstract class FileIndexBase implements FileIndex {
   }
 
   @Override
-  public boolean iterateContentUnderDirectory(@NotNull final VirtualFile dir,
-                                              @NotNull final ContentIterator processor,
+  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
+                                              @NotNull ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
+    ContentIteratorEx processorEx = toContentIteratorEx(processor);
     final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
@@ -46,7 +48,7 @@ abstract class FileIndexBase implements FileIndex {
         DirectoryInfo info = ReadAction.compute(() -> getInfoForFileOrDirectory(file));
         if (file.isDirectory()) {
           if (info.isExcluded(file)) {
-            if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processor, customFilter))) {
+            if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processorEx, customFilter))) {
               return skipTo(dir);
             }
             return SKIP_CHILDREN;
@@ -58,10 +60,26 @@ abstract class FileIndexBase implements FileIndex {
         }
         boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
                            && (customFilter == null || customFilter.accept(file));
-        return !accepted || processor.processFile(file) ? CONTINUE : skipTo(dir);
+        ContentIteratorEx.Status status = accepted ? processorEx.processFileEx(file) : ContentIteratorEx.Status.CONTINUE;
+        if (status == ContentIteratorEx.Status.CONTINUE) {
+          return CONTINUE;
+        }
+        if (status == ContentIteratorEx.Status.SKIP_CHILDREN) {
+          return SKIP_CHILDREN;
+        }
+        return skipTo(dir);
       }
     });
     return !Comparing.equal(result.skipToParent, dir);
+  }
+
+  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
+    if (processor instanceof ContentIteratorEx) {
+      return (ContentIteratorEx)processor;
+    }
+    return fileOrDir -> {
+      return processor.processFile(fileOrDir) ? ContentIteratorEx.Status.CONTINUE : ContentIteratorEx.Status.STOP;
+    };
   }
 
   @Override

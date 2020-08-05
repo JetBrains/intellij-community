@@ -5,9 +5,11 @@ import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +38,9 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final static long PARSING_CALL_TIMEOUT_MS = 50L;
@@ -367,17 +372,49 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     myPooledAlarm.addRequest(() -> updateHtml(true), 0);
   }
 
-  private static void updatePanelCssSettings(@NotNull MarkdownHtmlPanel panel, @NotNull final MarkdownCssSettings cssSettings) {
+  private void updatePanelCssSettings(@NotNull MarkdownHtmlPanel panel, @NotNull MarkdownCssSettings cssSettings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
-    final String customCssURI = cssSettings.isUriEnabled()
-                                ? cssSettings.getStylesheetUri()
-                                : MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri();
+    String styles = getCustomStyles();
 
-    panel.setCSS(inlineCss, customCssURI);
+    if (styles != null) {
+      panel.setCSS(styles, MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri());
+    }
+    else {
+      String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
+      String customCssURI = cssSettings.isUriEnabled()
+                            ? cssSettings.getStylesheetUri()
+                            : MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri();
+
+      panel.setCSS(inlineCss, customCssURI);
+    }
 
     panel.render();
+  }
+
+  @Nullable
+  private String getCustomStyles() {
+    ExtensionPointName<MarkdownPreviewStylesProvider> epName = MarkdownPreviewStylesProvider.Companion.getExtensionPointName();
+    List<String> styles = epName.extensions()
+      .map(provider -> provider.getStyles(myFile))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+
+    if (styles.isEmpty()) return null;
+
+    if (styles.size() > 1) {
+      String providerClasses = epName.extensions()
+        .filter(provider -> provider.getStyles(myFile) != null)
+        .map(MarkdownPreviewStylesProvider::getClass)
+        .map(Class::getName)
+        .collect(Collectors.joining(", "));
+
+      Logger.getInstance(MarkdownPreviewFileEditor.class)
+        .warn(String.format("Two or more extensions trying to apply custom Markdown preview styles in '%s': %s",
+                            myFile.getName(), providerClasses));
+    }
+
+    return styles.get(0);
   }
 
   private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {

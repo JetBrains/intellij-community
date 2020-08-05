@@ -28,6 +28,7 @@ public class StructuralSearchAction extends DumbAwareAction {
 
     final DialogWrapper dialog = StructuralSearchPlugin.getInstance(project).getDialog();
     if (dialog != null) {
+      assert !dialog.isDisposed() && dialog.isVisible();
       final JComponent component = dialog.getPreferredFocusedComponent();
       assert component != null;
       IdeFocusManager.getInstance(project).requestFocus(component, true);

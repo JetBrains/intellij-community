@@ -1,0 +1,41 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+repositories {
+  maven {
+    url 'https://repo.labs.intellij.net/intellij'
+  }
+}
+
+configurations {
+  zkm
+}
+
+dependencies {
+  zkm "com.jetbrains:zkm:$zkmVersion"
+}
+
+task setupZkm(dependsOn: configurations.zkm) {
+  if (!inJetBrainsNetwork) {
+    return
+  }
+  def ultimateProjectDir = ultimateProjectDir()
+  if (!ultimateProjectDir) {
+    return
+  }
+  def zkmJar = { configurations.zkm.singleFile }
+  def outputDir = file("$ultimateProjectDir/build/lib/")
+  inputs.file(zkmJar)
+  outputs.file("$outputDir/ZKM.jar")
+  doLast {
+    logger.info("Copying $zkmJar to $outputDir")
+    copy {
+      from file(zkmJar)
+      into outputDir
+      rename '.+\\.jar', 'ZKM.jar'
+    }
+  }
+}
+
+def ultimateProjectDir() {
+  def communityDir = project.file("../..")
+  communityDir.name == 'community' ? communityDir.parent : null
+}

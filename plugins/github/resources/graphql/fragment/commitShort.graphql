@@ -1,0 +1,14 @@
+fragment commitShort on Commit {
+    ...commitHash
+    url
+    messageHeadlineHTML
+    author {
+        name
+        email
+        avatarUrl
+        date
+        user {
+            url
+        }
+    }
+}

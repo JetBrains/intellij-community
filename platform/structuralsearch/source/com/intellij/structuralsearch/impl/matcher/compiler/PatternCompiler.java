@@ -75,9 +75,7 @@ public final class PatternCompiler {
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
       final CompiledPattern pattern = context.getPattern();
-      if (checkForErrors) {
-        checkForUnknownVariables(pattern, elements);
-      }
+      collectVariableNodes(pattern, elements, checkForErrors);
       pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
@@ -112,37 +110,14 @@ public final class PatternCompiler {
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<? extends PsiElement> elements)
+  private static void collectVariableNodes(final CompiledPattern pattern, List<? extends PsiElement> elements, boolean checkForErrors)
     throws MalformedPatternException {
 
     for (PsiElement element : elements) {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
-      element.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
-            return;
-          }
-          super.visitElement(element);
-
-          if (!(element instanceof LeafElement)) {
-            return;
-          }
-          final String text = element.getText();
-          if (!pattern.isTypedVar(text)) {
-            for (String prefix : pattern.getTypedVarPrefixes()) {
-              if (text.contains(prefix)) {
-                throw new MalformedPatternException();
-              }
-            }
-            return;
-          }
-          final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
-          if (handler == null) {
-            throw new MalformedPatternException();
-          }
-        }
-      });
+      if (checkForErrors) {
+        checkForUnknownVariables(pattern, element);
+      }
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement element) {
@@ -164,6 +139,35 @@ public final class PatternCompiler {
         }
       });
     }
+  }
+
+  private static void checkForUnknownVariables(CompiledPattern pattern, PsiElement element) {
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
+          return;
+        }
+        super.visitElement(element);
+
+        if (!(element instanceof LeafElement)) {
+          return;
+        }
+        final String text = element.getText();
+        if (!pattern.isTypedVar(text)) {
+          for (String prefix : pattern.getTypedVarPrefixes()) {
+            if (text.contains(prefix)) {
+              throw new MalformedPatternException();
+            }
+          }
+          return;
+        }
+        final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
+        if (handler == null) {
+          throw new MalformedPatternException();
+        }
+      }
+    });
   }
 
   @TestOnly

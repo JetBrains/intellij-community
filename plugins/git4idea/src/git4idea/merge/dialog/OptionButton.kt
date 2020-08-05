@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -47,8 +51,30 @@ internal class OptionButton<T>(val option: T,
     g2.fill(shape)
   }
 
-  private fun createRemoveButton() = InplaceButton(
-    IconButton(GitBundle.message("merge.option.remove"),
-               Actions.Close,
-               Actions.CloseHovered)) { removeClickListener() }
+  private fun createRemoveButton(): InplaceButton {
+    val iconButton = IconButton(GitBundle.message("merge.option.remove"), Actions.Close, Actions.CloseHovered)
+    return InplaceButton(iconButton) { removeClickListener() }.apply {
+      isFocusable = true
+
+      addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          iconButton.setActive(true)
+          repaint()
+        }
+
+        override fun focusLost(e: FocusEvent?) {
+          iconButton.setActive(false)
+          repaint()
+        }
+      })
+
+      addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent?) {
+          if (e?.keyCode == KeyEvent.VK_SPACE) {
+            removeClickListener()
+          }
+        }
+      })
+    }
+  }
 }

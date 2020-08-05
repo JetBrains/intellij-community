@@ -43,6 +43,11 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
       }
 
       @Override
+      public boolean isInitiallyVisible(Settings settings) {
+        return isSelected();
+      }
+
+      @Override
       public boolean isTag() {
         return true;
       }

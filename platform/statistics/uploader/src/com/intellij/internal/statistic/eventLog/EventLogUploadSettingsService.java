@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final String SEND = "send";
-  private static final String WHITELIST = "whitelist";
+  private static final String METADATA = "metadata";
   private static final String DICTIONARY = "dictionary";
 
   @NotNull
@@ -98,7 +98,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   @NonNls
   @Nullable
   public String getWhiteListProductUrl() {
-    String baseWhitelistUrl = getEndpointValue(WHITELIST);
+    String baseWhitelistUrl = getEndpointValue(METADATA);
     if (baseWhitelistUrl == null) return null;
     return baseWhitelistUrl + myApplicationInfo.getProductCode() + ".json";
   }

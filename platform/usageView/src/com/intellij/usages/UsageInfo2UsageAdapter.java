@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
@@ -46,6 +47,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
+  @NotNull
   private final UsageInfo myUsageInfo;
   @NotNull
   private Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
@@ -215,6 +217,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
+      UsageViewStatisticsCollector.logUsageNavigate(getProject(), this);
       openTextEditor(focus);
     }
   }
@@ -578,5 +581,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       myUsageType = usageType;
     }
     return usageType;
+  }
+
+  @Override
+  public @Nullable Class<? extends PsiReference> getReferenceClass() {
+    return myUsageInfo.getReferenceClass();
   }
 }

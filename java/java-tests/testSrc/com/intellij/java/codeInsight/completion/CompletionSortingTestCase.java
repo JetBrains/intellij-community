@@ -67,9 +67,10 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
       myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
   }
 
-  protected static void incUseCount(final LookupImpl lookup, final int index) {
-    imitateItemSelection(lookup, index);
-    refreshSorting(lookup);
+  protected void incUseCount(int index) {
+    imitateItemSelection(getLookup(), index);
+    getLookup().hideLookup(true);
+    complete();
   }
 
   protected static void refreshSorting(final LookupImpl lookup) {

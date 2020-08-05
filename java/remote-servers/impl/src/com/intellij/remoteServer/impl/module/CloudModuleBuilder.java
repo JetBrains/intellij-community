@@ -157,7 +157,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  protected boolean isAvailable() {
+  public boolean isAvailable() {
     return CloudModuleBuilderContributionFactory.EP_NAME.getExtensions().length > 0;
   }
 }

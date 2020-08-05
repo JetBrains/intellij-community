@@ -15,6 +15,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -23,10 +24,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -122,12 +121,11 @@ public class CompilerTester {
   }
 
   @Nullable
-  public VirtualFile findClassFile(String className, Module module) {
-    VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    assert path != null;
-    path.getChildren();
-    path.refresh(false, true);
-    return path.findFileByRelativePath(className.replace('.', '/') + ".class");
+  public File findClassFile(String className, Module module) {
+    VirtualFile out = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    assert out != null;
+    File cls = new File(out.getPath(), className.replace('.', '/') + ".class");
+    return cls.exists() ? cls : null;
   }
 
   public void touch(final VirtualFile file) throws IOException {
@@ -237,7 +235,25 @@ public class CompilerTester {
       throw new RuntimeException("External javac thread is still running. Thread dump:" + ThreadDumper.dumpThreadsToString());
     }
 
+    checkVfsNotLoadedForOutput();
+
     return callback.getMessages();
+  }
+
+  private void checkVfsNotLoadedForOutput() {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension != null) {
+        for (String url : extension.getOutputRootUrls(true)) {
+          VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+          if (root != null) {
+            UsefulTestCase.assertEmpty(
+              "VFS should not be loaded for output: that increases the number of VFS events and reindexing costs",
+              ((NewVirtualFile)root).getCachedChildren());
+          }
+        }
+      }
+    }
   }
 
   public static void printBuildLog() {

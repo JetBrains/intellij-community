@@ -17,13 +17,14 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
@@ -43,6 +44,11 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     boolean isInLib = fileIndex.isInLibrary(virtualFile);
     if (isInLib) return LIBRARY;
     return TestSourcesFilter.isTestSources(virtualFile, project) ? TEST : PRODUCTION;
+  }
+
+  @Override
+  public String getGroupingActionId() {
+    return "UsageGrouping.Scope";
   }
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {

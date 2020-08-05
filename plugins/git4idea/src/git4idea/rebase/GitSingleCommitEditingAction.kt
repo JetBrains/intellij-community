@@ -17,11 +17,11 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     log: VcsLog,
     logData: VcsLogData,
     logUi: VcsLogUi
-  ): SingleCommitEditingData? {
+  ): CommitEditingDataCreationResult<SingleCommitEditingData> {
     if (log.selectedCommits.size != 1) {
-      return null
+      return CommitEditingDataCreationResult.Prohibited()
     }
-    return SingleCommitEditingData(repository, log, logData, logUi)
+    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, log, logData, logUi))
   }
 
   override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {

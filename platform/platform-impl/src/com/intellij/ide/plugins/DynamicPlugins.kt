@@ -6,6 +6,7 @@ import com.intellij.application.options.RegistryManager
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.diagnostic.MessagePool
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -370,8 +371,7 @@ object DynamicPlugins {
   fun unloadPluginWithProgress(project: Project? = null,
                                parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
-                               disable: Boolean = false,
-                               isUpdate: Boolean = false): Boolean {
+                               options: UnloadPluginOptions): Boolean {
     var result = false
     if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
       runInAutoSaveDisabledMode {
@@ -384,7 +384,7 @@ object DynamicPlugins {
     }
     val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
     indicator.runInSwingThread {
-      result = unloadPlugin(pluginDescriptor, UnloadPluginOptions(disable, isUpdate, save = false))
+      result = unloadPlugin(pluginDescriptor, options.withSave(false))
     }
     return result
   }
@@ -405,6 +405,7 @@ object DynamicPlugins {
     fun withWaitForClassloaderUnload(value: Boolean): UnloadPluginOptions { waitForClassloaderUnload = value; return this }
     fun withDisable(value: Boolean): UnloadPluginOptions { disable = value; return this }
     fun withRequireMemorySnapshot(value: Boolean): UnloadPluginOptions { requireMemorySnapshot = value; return this }
+    fun withSave(value: Boolean): UnloadPluginOptions { save = value; return this }
   }
 
   @JvmStatic
@@ -474,6 +475,7 @@ object DynamicPlugins {
           PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
+          MessagePool.getInstance().clearErrors()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()

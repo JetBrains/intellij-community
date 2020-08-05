@@ -10,6 +10,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import java.nio.file.Path
 
 internal val testPluginDescriptor = DefaultPluginDescriptor("test")
 
@@ -27,7 +28,7 @@ private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
 
-  override fun setPath(path: String) {
+  override fun setPath(path: Path) {
   }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {

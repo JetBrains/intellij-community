@@ -17,18 +17,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -114,7 +110,11 @@ public class CollapseIntoLoopAction implements IntentionAction {
       block.addRangeBefore(myStatements.get(0), myStatements.get(myStatementCount - 1), brace);
       PsiElement origBlock = context.getParent();
       JavaCodeStyleManager.getInstance(block.getProject()).shortenClassReferences(origBlock.addBefore(loop, myStatements.get(0)));
-      origBlock.deleteChildRange(myStatements.get(0), myStatements.get(myStatements.size() - 1));
+      CommentTracker ct = new CommentTracker();
+      myLoopElements.forEach(ct::markUnchanged);
+      ct.delete(myStatements.subList(myStatementCount, myStatements.size()).toArray(PsiStatement.EMPTY_ARRAY));
+      ct.insertCommentsBefore(myStatements.get(0));
+      origBlock.deleteChildRange(myStatements.get(0), myStatements.get(myStatementCount - 1));
     }
 
     private String tryCollapseIntoCountingLoop(String varName) {
@@ -140,6 +140,13 @@ public class CollapseIntoLoopAction implements IntentionAction {
         last = cur;
       }
       if (start == null || step == null) return null;
+      // Prefer for(int x : new int[] {12, 17}) over for(int x = 12; x <= 17; x+= 5)  
+      if (myLoopElements.size() == 2 && step != 1L && step != -1L) return null;
+      PsiElement parent = myStatements.get(0).getParent();
+      boolean mustBeEffectivelyFinal = myExpressionsToReplace.stream()
+        .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
+        .anyMatch(ctx -> ctx != null && PsiTreeUtil.isAncestor(parent, ctx, false));
+      if (mustBeEffectivelyFinal) return null;
       String suffix = PsiType.LONG.equals(myType) ? "L" : "";
       String initial = myType.getCanonicalText() + " " + varName + "=" + start + suffix;
       String condition =
@@ -218,20 +225,24 @@ public class CollapseIntoLoopAction implements IntentionAction {
       PsiExpression firstIterationExpression = null;
       PsiExpression curIterationExpression = null;
       boolean secondIteration = count == offset;
+      int mismatchedStatements = 0;
       for (int index = 0; index < count; index++) {
         PsiStatement first = statements.get(index);
         PsiStatement cur = statements.get(index + offset);
-        EquivalenceChecker.Match match = equivalence.statementsMatch(first, cur);
+        EquivalenceChecker.Match match = new TrackingEquivalenceChecker().statementsMatch(first, cur);
         if (match.isExactMismatch()) return false;
         if (match.isExactMatch()) continue;
+        mismatchedStatements++;
         PsiElement leftDiff = match.getLeftDiff();
         PsiElement rightDiff = match.getRightDiff();
         if (!(leftDiff instanceof PsiExpression) || !(rightDiff instanceof PsiExpression)) return false;
         curIterationExpression = (PsiExpression)rightDiff;
         firstIterationExpression = (PsiExpression)leftDiff;
+        if (PsiUtil.isAccessedForWriting(curIterationExpression)) return false;
         PsiType curType = curIterationExpression.getType();
         PsiType firstType = firstIterationExpression.getType();
         if (curType == null || !curType.equals(firstType)) return false;
+        Set<PsiVariable> usedVariables;
         if (secondIteration) {
           if (!expressionsToReplace.isEmpty()) {
             PsiExpression firstExpressionToReplace = expressionsToReplace.get(0);
@@ -239,13 +250,24 @@ public class CollapseIntoLoopAction implements IntentionAction {
             if (!firstType.equals(firstExpressionToReplace.getType())) return false;
           }
           expressionsToReplace.add(firstIterationExpression);
+          usedVariables = StreamEx.of(firstIterationExpression, curIterationExpression)
+            .map(VariableAccessUtils::collectUsedVariables).toFlatCollection(Function.identity(), HashSet::new);
         }
         else {
           if (!expressionsToReplace.contains(firstIterationExpression)) return false;
+          usedVariables = VariableAccessUtils.collectUsedVariables(curIterationExpression);
+        }
+        if (!usedVariables.isEmpty() &&
+            statements.subList(0, count).stream().anyMatch(st -> VariableAccessUtils.isAnyVariableAssigned(usedVariables, st))) {
+          return false;
         }
       }
       if (secondIteration) {
         ContainerUtil.addIfNotNull(expressionsToIterate, firstIterationExpression);
+      } else {
+        if (mismatchedStatements != expressionsToReplace.size()) {
+          return false;
+        }
       }
       ContainerUtil.addIfNotNull(expressionsToIterate, curIterationExpression);
       return true;

@@ -112,7 +112,7 @@ public class ProjectBytecodeAnalysis {
       if (listOwner instanceof PsiMethod) {
         List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
-        return toPsi(primaryKey, methodAnnotations, ((PsiMethod)listOwner).getParameterList().getParametersCount());
+        return toPsi(primaryKey, methodAnnotations);
       }
       else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
@@ -143,10 +143,9 @@ public class ProjectBytecodeAnalysis {
    *
    * @param primaryKey primary compressed key for method
    * @param methodAnnotations inferred annotations
-   * @param arity method arity
    * @return Psi annotations
    */
-  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations, int arity) {
+  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     MutationSignature mutationSignature = methodAnnotations.mutates.getOrDefault(primaryKey, MutationSignature.unknown());
@@ -159,17 +158,7 @@ public class ProjectBytecodeAnalysis {
       annotationParameters.put("pure", "true");
     }
     else if (mutationSignature != MutationSignature.unknown()) {
-      List<String> mutations = new ArrayList<>();
-      if (mutationSignature.mutatesThis()) {
-        mutations.add("this");
-      }
-      for (int i = 0; i < arity; i++) {
-        if (mutationSignature.mutatesArg(i)) {
-          mutations.add("param" + (i + 1));
-        }
-      }
-      assert !mutations.isEmpty();
-      annotationParameters.put("mutates", '"'+String.join(",", mutations)+'"');
+      annotationParameters.put("mutates", "\"" + mutationSignature + '"');
     }
 
     String contractPsiText = generateAnnotationAttributesText(annotationParameters);

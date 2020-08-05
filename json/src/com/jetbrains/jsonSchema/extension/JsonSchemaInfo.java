@@ -145,18 +145,18 @@ public class JsonSchemaInfo {
       return text;
     }
 
-    Path ioFile = Paths.get(text);
-    if (!ioFile.isAbsolute()) {
+    Path file = Paths.get(text);
+    if (!file.isAbsolute()) {
       return text;
     }
 
-    String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(ioFile.toString()), project.getBasePath(), '/');
+    String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(file.toString()), project.getBasePath(), '/');
     if (relativePath != null) {
       return relativePath;
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByNioFile(ioFile);
-    if (file == null) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(file);
+    if (virtualFile == null) {
       return text;
     }
 
@@ -165,8 +165,8 @@ public class JsonSchemaInfo {
       return text;
     }
 
-    if (isMeaningfulAncestor(VfsUtilCore.getCommonAncestor(file, projectBaseDir))) {
-      String path = VfsUtilCore.findRelativePath(projectBaseDir, file, File.separatorChar);
+    if (isMeaningfulAncestor(VfsUtilCore.getCommonAncestor(virtualFile, projectBaseDir))) {
+      String path = VfsUtilCore.findRelativePath(projectBaseDir, virtualFile, File.separatorChar);
       if (path != null) {
         return path;
       }

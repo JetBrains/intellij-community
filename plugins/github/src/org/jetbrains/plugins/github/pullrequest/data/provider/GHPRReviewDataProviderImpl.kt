@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import org.jetbrains.plugins.github.util.completionOnEdt
@@ -22,7 +23,8 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
-class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
+class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
+                                 private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
                                  private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
@@ -66,6 +68,15 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     return future.dropReviews().notifyReviews()
   }
 
+  override fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String) =
+    commentService.getCommentMarkdownBody(progressIndicator, reviewId)
+
+  override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
+    reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
+      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
+      it.bodyHTML
+    }
+
   override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
     val future = reviewService.deleteReview(progressIndicator, pullRequestId, reviewId)
     pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->
@@ -78,7 +89,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   override fun canComment() = reviewService.canComment()
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
-    reviewService.getCommentMarkdownBody(progressIndicator, commentId)
+    commentService.getCommentMarkdownBody(progressIndicator, commentId)
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           reviewId: String,
@@ -143,7 +154,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       list.map {
         GHPullRequestReviewThread(it.id, it.isResolved, GHNodes(it.comments.map { comment ->
           if (comment.id == commentId)
-            GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author, newComment.bodyHtml, comment.createdAt,
+            GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author, newComment.bodyHTML, comment.createdAt,
                                        comment.state, comment.path, comment.commit, comment.position,
                                        comment.originalCommit, comment.originalPosition, comment.replyTo, comment.diffHunk,
                                        comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete, comment.viewerCanUpdate)

@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,14 +36,12 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.ProjectRule;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
-    Set<Object> alreadyLeaking = new THashSet<>(ContainerUtil.identityStrategy());
+    Set<Object> alreadyLeaking = new ReferenceOpenHashSet<>();
     Condition<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {
@@ -64,7 +63,7 @@ public class UsageViewTest extends BasePlatformTestCase {
         }
         Project project = ((PsiFile)file).getProject();
         if (alreadyLeaking.add(project)) {
-          System.err.println(project + " already leaking; its creation trace: " + ProjectRule.getCreationPlace(project));
+          System.err.println(project + " already leaking; its creation trace: " + ((ProjectEx)project).getCreationTrace());
         }
       }
       alreadyLeaking.add(file);

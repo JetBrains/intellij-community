@@ -83,7 +83,7 @@ public final class NewProjectUtil {
   private static Project doCreate(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
     String projectFilePath = wizard.getNewProjectFilePath();
     for (Project p : ProjectUtil.getOpenProjects()) {
-      if (ProjectUtil.isSameProject(projectFilePath, p)) {
+      if (ProjectUtil.isSameProject(Paths.get(projectFilePath), p)) {
         ProjectUtil.focusProjectWindow(p, false);
         return null;
       }

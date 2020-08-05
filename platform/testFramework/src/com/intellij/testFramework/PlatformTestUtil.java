@@ -1109,10 +1109,4 @@ public final class PlatformTestUtil {
       dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
-
-  public static @NotNull Project createProject(@NotNull Path file, @NotNull Disposable parentDisposable) {
-    Project project = FixtureRuleKt.createHeavyProject(file, /* useDefaultProjectAsTemplate = */ false);
-    Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
-    return project;
-  }
 }

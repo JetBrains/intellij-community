@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
+import com.intellij.testFramework.FixtureRuleKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -800,16 +801,21 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       File temp = createTempDirectory();
       VirtualFile tempDir = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      Project newProject = PlatformTestUtil.createProject(Paths.get(tempDir.getPath()), getTestRootDisposable());
-      PlatformTestUtil.saveProject(newProject);
+      Project newProject = ProjectManagerEx.getInstanceEx().newProject(Paths.get(tempDir.getPath()), FixtureRuleKt.createTestOpenProjectOptions());
+      try {
+        PlatformTestUtil.saveProject(newProject);
 
-      Charset newProjectEncoding = EncodingProjectManager.getInstance(newProject).getDefaultCharset();
-      assertEquals(differentFromDefault, newProjectEncoding.name());
+        Charset newProjectEncoding = EncodingProjectManager.getInstance(newProject).getDefaultCharset();
+        assertEquals(differentFromDefault, newProjectEncoding.name());
 
-      PsiFile psiFile = createFile("x.txt", "xx");
-      VirtualFile file = psiFile.getVirtualFile();
+        PsiFile psiFile = createFile("x.txt", "xx");
+        VirtualFile file = psiFile.getVirtualFile();
 
-      assertEquals(differentFromDefault, file.getCharset().name());
+        assertEquals(differentFromDefault, file.getCharset().name());
+      }
+      finally {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(newProject);
+      }
     }
     finally {
       EncodingManager.getInstance().setDefaultCharsetName(oldIDE);

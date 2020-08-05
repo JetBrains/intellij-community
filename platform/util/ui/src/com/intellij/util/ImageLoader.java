@@ -82,7 +82,8 @@ public final class ImageLoader implements Serializable {
     }
   }
 
-  private static final class ImageDescriptorListBuilder {
+  @ApiStatus.Internal
+  public static final class ImageDescriptorListBuilder {
     private final List<ImageDescriptor> list = new SmartList<>();
     final String name;
     final String ext;
@@ -131,7 +132,7 @@ public final class ImageLoader implements Serializable {
     ImageDescriptorList.IO_MISS_CACHE.clear();
   }
 
-  private static final class ImageDescriptorList {
+  public static final class ImageDescriptorList {
     private static final Set<String> IO_MISS_CACHE = ContainerUtil.newConcurrentSet();
 
     private final List<ImageDescriptor> list;
@@ -142,6 +143,10 @@ public final class ImageLoader implements Serializable {
       this.list = list;
       this.name = name;
       this.type = type;
+    }
+
+    public @NotNull List<@NotNull ImageDescriptor> getDescriptors() {
+      return list;
     }
 
     @Nullable

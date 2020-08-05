@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -776,6 +777,11 @@ public class GenerateMembersUtil {
       PsiMethod superMethod = targetClass.findMethodBySignature(generated, true);
       if (superMethod != null && superMethod.getContainingClass() != targetClass && PsiUtil.isAccessible(superMethod, targetClass, null)) {
         OverrideImplementUtil.annotateOnOverrideImplement(generated, targetClass, superMethod, true);
+      }
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(generated) != null &&
+          PsiUtil.getLanguageLevel(targetClass) != LanguageLevel.JDK_14_PREVIEW) {
+        AddAnnotationPsiFix
+          .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE, PsiNameValuePair.EMPTY_ARRAY, generated.getModifierList());
       }
     }
     return generated;

@@ -3,7 +3,7 @@ package git4idea.pull
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -11,8 +11,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
@@ -25,6 +27,7 @@ import git4idea.merge.dialog.*
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -35,6 +38,8 @@ import java.awt.event.ItemEvent
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.event.DocumentEvent
+import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitPullDialog(private val project: Project,
                     private val roots: List<VirtualFile>,
@@ -104,10 +109,14 @@ class GitPullDialog(private val project: Project,
   fun isCommitAfterMerge() = PullOption.NO_COMMIT !in selectedOptions
 
   private fun validateBranchField(): ValidationInfo? {
-    if (branchField.item.isNullOrEmpty()) {
+    val item = branchField.item ?: ""
+    val text = GitUIUtil.getTextField(branchField).text
+    val value = if (item == text) item else text
+
+    if (value.isNullOrEmpty()) {
       return ValidationInfo(GitBundle.message("pull.branch.not.selected.error"), branchField)
     }
-    if (branchField.item !in (branchField.model as CollectionComboBoxModel).items) {
+    if (value !in (branchField.model as CollectionComboBoxModel).items) {
       return ValidationInfo(GitBundle.message("pull.branch.no.matching.error"), branchField)
     }
     return null
@@ -136,6 +145,10 @@ class GitPullDialog(private val project: Project,
     val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
                          ?: branches.find { branch -> branch == repository.currentBranchName }
                          ?: ""
+
+    if (matchingBranch.isEmpty()) {
+      startTrackingValidation()
+    }
 
     model.selectedItem = matchingBranch
   }
@@ -306,7 +319,7 @@ class GitPullDialog(private val project: Project,
   private fun createRepositoryField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
-    setUI(FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0)))
+    ui = FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0))
 
     item = repositories.find { repo -> repo.root == defaultRoot }
 
@@ -319,10 +332,9 @@ class GitPullDialog(private val project: Project,
   private fun createRemoteField() = ComboBox<GitRemote>(MutableCollectionComboBoxModel()).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
-    val bw = DarculaUIUtil.BW.get()
-    setUI(FlatComboBoxUI(
-      outerInsets = Insets(bw, 0, bw, 0),
-      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes")))
+    ui = FlatComboBoxUI(
+      outerInsets = Insets(BW.get(), 0, BW.get(), 0),
+      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes"))
 
     item = getCurrentOrDefaultRemote(getRepository())
 
@@ -336,11 +348,21 @@ class GitPullDialog(private val project: Project,
   private fun createBranchField() = ComboBox<String>(MutableCollectionComboBoxModel()).apply {
     isSwingPopup = false
     isEditable = true
+    editor = object : BasicComboBoxEditor() {
+      override fun createEditorComponent() = JBTextField().apply {
+        emptyText.text = GitBundle.message("pull.branch.field.placeholder")
 
-    val bw = DarculaUIUtil.BW.get()
-    setUI(FlatComboBoxUI(
+        document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            startTrackingValidation()
+          }
+        })
+      }
+    }
+
+    ui = FlatComboBoxUI(
       Insets(1, 0, 1, 1),
-      Insets(bw, 0, bw, bw),
-      GitBundle.message("pull.branch.nothing.to.pull")))
+      Insets(BW.get(), 0, BW.get(), BW.get()),
+      GitBundle.message("pull.branch.nothing.to.pull"))
   }
 }

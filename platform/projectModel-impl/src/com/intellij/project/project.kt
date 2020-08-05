@@ -1,20 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 val Project.stateStore: IProjectStore
   get() = (this as ComponentManager).stateStore as IProjectStore
 
+@ApiStatus.Internal
 interface ProjectStoreOwner {
-  fun getComponentStore(): IComponentStore
+  /**
+   * Setter is temporary allowed to allow overriding project store class for a specific project. Overriding ProjectStoreFactory
+   * service won't work because a service may be overridden in a single plugin only.
+   */
+  var componentStore: IProjectStore
 }
 
 val Project.isDirectoryBased: Boolean

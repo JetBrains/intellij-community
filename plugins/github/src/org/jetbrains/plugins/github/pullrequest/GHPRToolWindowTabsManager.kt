@@ -16,10 +16,12 @@ import com.intellij.openapi.wm.ToolWindowManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubGitHelper
@@ -53,13 +55,19 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   fun isAvailable(): Boolean = getRemoteUrls().isNotEmpty()
 
   @CalledInAwt
-  fun showTab(remoteUrl: GitRemoteUrlCoordinates) {
+  fun showTab(remoteUrl: GitRemoteUrlCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
     settings.removeHiddenUrl(remoteUrl.url)
     updateTabs {
       ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.show {
-        contentManager?.focusTab(remoteUrl)
+        contentManager?.focusTab(remoteUrl, onShown)
       }
     }
+  }
+
+  @CalledInAwt
+  fun showTab(repository: GHRepositoryCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
+    val remoteUrl = gitHelper.findRemoteUrlsForRepository(project, repository).firstOrNull() ?: return
+    showTab(remoteUrl, onShown)
   }
 
   private fun updateTabs(afterUpdate: (() -> Unit)? = null) {

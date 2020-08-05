@@ -10,12 +10,13 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
+class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
   private final Project myProject;
 
   NonCodeUsageGroupingRule(@NotNull Project project) {
@@ -147,5 +148,10 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isGroupingToggleable() {
+    return false;
   }
 }

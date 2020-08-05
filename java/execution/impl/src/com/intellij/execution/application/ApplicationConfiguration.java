@@ -17,6 +17,7 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -100,8 +101,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", false) ||
-        Experiments.getInstance().isFeatureEnabled("ide.new.run.config")) {
+    if (Registry.is("ide.new.run.config", true)) {
       return new JavaApplicationSettingsEditor(this);
     }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
@@ -363,6 +363,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public void setSwingInspectorEnabled(boolean value) {
     getOptions().setSwingInspectorEnabled(value);
+  }
+
+  @Override
+  public Module getDefaultModule() {
+    PsiClass mainClass = getMainClass();
+    if (mainClass != null) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);
+      if (module != null) return module;
+    }
+    return super.getDefaultModule();
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {

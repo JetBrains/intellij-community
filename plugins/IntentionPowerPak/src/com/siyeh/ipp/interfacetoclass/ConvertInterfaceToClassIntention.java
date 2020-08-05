@@ -191,25 +191,21 @@ public class ConvertInterfaceToClassIntention extends Intention {
   }
 
   private static void moveSubClassImplementsToExtends(PsiClass oldInterface, Collection<PsiClass> inheritors) {
-    final PsiJavaCodeReferenceElement oldInterfaceReference =
-      JavaPsiFacade.getElementFactory(oldInterface.getProject()).createClassReferenceElement(oldInterface);
     for (PsiClass inheritor : inheritors) {
       final PsiReferenceList implementsList = inheritor.getImplementsList();
       final PsiReferenceList extendsList = inheritor.getExtendsList();
       if (implementsList != null) {
-        moveReference(implementsList, extendsList, oldInterfaceReference);
+        moveReference(implementsList, extendsList, oldInterface);
       }
     }
   }
 
   private static void moveReference(@NotNull PsiReferenceList source,
                                     @Nullable PsiReferenceList target,
-                                    @NotNull PsiJavaCodeReferenceElement reference) {
+                                    @NotNull PsiClass oldInterface) {
     final PsiJavaCodeReferenceElement[] implementsReferences = source.getReferenceElements();
-    final String qualifiedName = reference.getQualifiedName();
     for (PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
-      final String implementsReferenceQualifiedName = implementsReference.getQualifiedName();
-      if (qualifiedName.equals(implementsReferenceQualifiedName)) {
+      if (implementsReference.isReferenceTo(oldInterface)) {
         if (target != null) {
           final PsiJavaCodeReferenceElement[] referenceElements = target.getReferenceElements();
           if (referenceElements.length > 0) {

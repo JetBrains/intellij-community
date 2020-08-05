@@ -2,11 +2,13 @@
 package com.intellij.openapi.progress
 
 inline fun <Y> ProgressIndicator.withPushPop(action: () -> Y): Y {
+  val wasIndeterminate = isIndeterminate
   pushState()
   try {
     return action()
   }
   finally {
+    isIndeterminate = wasIndeterminate
     popState()
   }
 }

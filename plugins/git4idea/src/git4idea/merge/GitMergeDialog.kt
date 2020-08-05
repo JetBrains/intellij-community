@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -10,9 +10,11 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
@@ -24,6 +26,7 @@ import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepository
+import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -37,6 +40,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+import javax.swing.event.DocumentEvent
+import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
@@ -129,13 +134,19 @@ class GitMergeDialog(private val project: Project,
     .forEach { option -> selectedOptions += option }
 
   private fun validateBranchField(): ValidationInfo? {
-    if (branchField.item == null) {
+    val item = branchField.item ?: ""
+    val text = GitUIUtil.getTextField(branchField).text
+    val value = if (item == text) item else text
+
+    if (value.isNullOrEmpty()) {
       return ValidationInfo(GitBundle.message("merge.no.branch.selected.error"), branchField)
     }
+
     val items = (branchField.model as CollectionComboBoxModel).items
-    if (branchField.item !in items) {
+    if (value !in items) {
       return ValidationInfo(GitBundle.message("merge.no.matching.branch.error"), branchField)
     }
+
     return null
   }
 
@@ -250,9 +261,7 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply {
       item = defaultRoot.name
       isSwingPopup = false
-
-      val bw = DarculaUIUtil.BW.get()
-      setUI(FlatComboBoxUI(outerInsets = Insets(bw, bw, bw, 0)))
+      ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
 
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
@@ -273,12 +282,21 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply<ComboBox<String>> {
       isSwingPopup = false
       isEditable = true
+      editor = object : BasicComboBoxEditor() {
+        override fun createEditorComponent() = JBTextField().apply {
+          emptyText.text = GitBundle.message("merge.branch.field.placeholder")
 
-      val bw = DarculaUIUtil.BW.get()
+          document.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+              startTrackingValidation()
+            }
+          })
+        }
+      }
 
-      setUI(FlatComboBoxUI(
-        outerInsets = Insets(bw, 0, bw, bw),
-        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
+      ui = FlatComboBoxUI(
+        outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
+        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
     }
   }
 

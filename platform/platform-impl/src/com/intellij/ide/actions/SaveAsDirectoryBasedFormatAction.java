@@ -12,12 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +38,11 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
     }
 
     IProjectStore store = ProjectKt.getStateStore(project);
-    String baseDir = PathUtilRt.getParentPath(store.getProjectFilePath());
-    Path ideaDir = Paths.get(baseDir, Project.DIRECTORY_STORE_FOLDER);
+    Path baseDir = Paths.get(store.getProjectFilePath()).getParent();
+    Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
     try {
       if (Files.isDirectory(ideaDir)) {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ideaDir.toString()));
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir);
       }
       else {
         createDir(ideaDir);
