@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,6 +71,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   @Override
   public JComponent createComponent() {
     getBinder().bindAnnotations(this);
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     return myPanel;
   }
 
