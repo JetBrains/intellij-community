@@ -100,10 +100,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     return virtualFile != null ? virtualFile.getFileType() : PlainTextFileType.INSTANCE;
   }
 
-  private static boolean isShowInnerDifferences() {
-    return DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
-  }
-
   @Nullable
   protected JComponent createAdditionalInfoPanel(@NotNull Editor editor,
                                                  @NotNull Range range,
@@ -143,17 +139,15 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!myTracker.isValid()) return;
     final Disposable disposable = Disposer.newDisposable();
 
-    List<DiffFragment> wordDiff = computeWordDiff(range);
-
-    installMasterEditorHighlighters(editor, range, wordDiff, disposable);
-
     JComponent editorComponent = null;
     if (range.hasVcsLines()) {
       String content = getVcsContent(range).toString();
-      EditorTextField textField = createTextField(editor, content, wordDiff);
+      EditorTextField textField = createTextField(editor, content);
 
       TextRange vcsTextRange = getVcsTextRange(range);
       installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(), vcsTextRange, getFileType());
+
+      installWordDiff(editor, textField, range, disposable);
 
       editorComponent = createEditorComponent(editor, textField);
     }
@@ -207,29 +201,34 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  @Nullable
-  private List<DiffFragment> computeWordDiff(@NotNull Range range) {
-    if (!isShowInnerDifferences()) return null;
-    if (!range.hasLines() || !range.hasVcsLines()) return null;
+  private void installWordDiff(@NotNull Editor editor,
+                               @NotNull EditorTextField textField,
+                               @NotNull Range range,
+                               @NotNull Disposable disposable) {
+    if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return;
+    if (!range.hasLines() || !range.hasVcsLines()) return;
 
-    final CharSequence vcsContent = getVcsContent(range);
-    final CharSequence currentContent = getCurrentContent(range);
+    CharSequence vcsContent = getVcsContent(range);
+    CharSequence currentContent = getCurrentContent(range);
+    int currentStartOffset = getCurrentTextRange(range).getStartOffset();
 
-    return BackgroundTaskUtil.tryComputeFast(
+    List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
+
+    installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
+    installPopupEditorWordHighlighters(textField, wordDiff);
   }
 
-  private void installMasterEditorHighlighters(@NotNull Editor editor,
-                                               @NotNull Range range,
-                                               @Nullable List<? extends DiffFragment> wordDiff,
-                                               @NotNull Disposable parentDisposable) {
+  private static void installMasterEditorWordHighlighters(@NotNull Editor editor,
+                                                          int currentStartOffset,
+                                                          @Nullable List<? extends DiffFragment> wordDiff,
+                                                          @NotNull Disposable parentDisposable) {
     if (wordDiff == null) return;
     final List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    int currentStartShift = getCurrentTextRange(range).getStartOffset();
     for (DiffFragment fragment : wordDiff) {
-      int currentStart = currentStartShift + fragment.getStartOffset2();
-      int currentEnd = currentStartShift + fragment.getEndOffset2();
+      int currentStart = currentStartOffset + fragment.getStartOffset2();
+      int currentEnd = currentStartOffset + fragment.getEndOffset2();
       TextDiffType type = getDiffType(fragment);
 
       highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
@@ -238,10 +237,22 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
   }
 
+  private static void installPopupEditorWordHighlighters(@NotNull EditorTextField textField,
+                                                         @Nullable List<? extends DiffFragment> wordDiff) {
+    if (wordDiff == null) return;
+    textField.addSettingsProvider(uEditor -> {
+      for (DiffFragment fragment : wordDiff) {
+        int vcsStart = fragment.getStartOffset1();
+        int vcsEnd = fragment.getEndOffset1();
+        TextDiffType type = getDiffType(fragment);
+
+        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
+      }
+    });
+  }
+
   @NotNull
-  private static EditorTextField createTextField(@NotNull Editor editor,
-                                                 @NotNull String content,
-                                                 @Nullable List<? extends DiffFragment> wordDiff) {
+  private static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
     EditorTextField field = new EditorTextField(content);
     field.setBorder(null);
     field.setOneLineMode(false);
@@ -261,16 +272,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
       uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
       uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
-
-      if (wordDiff != null) {
-        for (DiffFragment fragment : wordDiff) {
-          int vcsStart = fragment.getStartOffset1();
-          int vcsEnd = fragment.getEndOffset1();
-          TextDiffType type = getDiffType(fragment);
-
-          DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-        }
-      }
     });
 
     return field;
