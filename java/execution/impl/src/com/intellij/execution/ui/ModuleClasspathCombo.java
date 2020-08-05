@@ -172,7 +172,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null ? myNoModule : value.myModule.getName();
+      String name = value == null ? null : value.myModule == null ? myNoModule : value.myModule.getName();
       if (index == -1 && name != null) {
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
