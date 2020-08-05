@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -53,9 +52,6 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       LOG.info(e);
       repairNameStorage(); // need this in order for myNameStorage not to be null
       nameStorageCrashed();
-    }
-    finally {
-      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
     }
 
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
