@@ -70,7 +70,7 @@ public class IndexCacheManagerImpl implements CacheManager {
                                                  @NotNull GlobalSearchScope scope,
                                                  boolean caseSensitively,
                                                  @NotNull Processor<? super VirtualFile> processor) {
-    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, occurenceMask);
+    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
     return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
   }
 

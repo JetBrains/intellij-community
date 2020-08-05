@@ -396,13 +396,11 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
             return true;
           });
 
-        PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
+        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(likelyNames),
-                                                                  ProgressIndicatorProvider.getGlobalProgressIndicator(), word -> {
-            helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
-            return true;
-          });
+        for (String word : likelyNames) {
+          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, true, word, processor);
+        }
       });
       return files;
     }

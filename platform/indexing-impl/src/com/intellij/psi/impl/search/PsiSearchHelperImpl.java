@@ -557,14 +557,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processCandidateFilesForText(scope, searchContext, caseSensitively, text, Processors.cancelableCollectProcessor(result));
   }
 
+  public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
+                                              short searchContext,
+                                              boolean caseSensitively,
+                                              boolean useOnlyWordHashToSearch,
+                                              @NotNull String text,
+                                              @NotNull Processor<? super VirtualFile> processor) {
+    return processFilesContainingAllKeys(myManager.getProject(), scope, processor,
+                                         TextIndexQuery.fromWord(text, caseSensitively, useOnlyWordHashToSearch, searchContext));
+  }
+
   @Override
   public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
                                               short searchContext,
                                               boolean caseSensitively,
                                               @NotNull String text,
                                               @NotNull Processor<? super VirtualFile> processor) {
-    return processFilesContainingAllKeys(myManager.getProject(), scope, processor,
-                                         TextIndexQuery.fromWord(text, caseSensitively, searchContext));
+    return processCandidateFilesForText(scope, searchContext, caseSensitively, false, text, processor);
   }
 
   @Override
@@ -983,7 +992,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       IntRef maskRef = new IntRef();
       for (VirtualFile file : allFilesForKeys) {
         ProgressManager.checkCanceled();
-        for (IdIndexEntry indexEntry : key.idIndexEntries) {
+        for (IdIndexEntry indexEntry : key.myIdIndexEntries) {
           ProgressManager.checkCanceled();
           maskRef.set(0);
           myDumbService.runReadActionInSmartMode(
@@ -1199,22 +1208,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @ApiStatus.Internal
   public static final class TextIndexQuery {
     @NotNull
-    private final Set<IdIndexEntry> idIndexEntries;
+    private final Set<IdIndexEntry> myIdIndexEntries;
     @NotNull
-    private final Set<Integer> trigrams;
+    private final Set<Integer> myTrigrams;
     @Nullable
     private final Short myContext;
+    private boolean myUseOnlyWeakHashToSearch;
 
     private TextIndexQuery(@NotNull Set<IdIndexEntry> idIndexEntries,
                            @NotNull Set<Integer> trigrams,
-                           @Nullable Short context) {
-      this.idIndexEntries = idIndexEntries;
-      this.trigrams = trigrams;
+                           @Nullable Short context,
+                           boolean useOnlyWeakHashToSearch) {
+      myIdIndexEntries = idIndexEntries;
+      myTrigrams = trigrams;
       myContext = context;
+      myUseOnlyWeakHashToSearch = useOnlyWeakHashToSearch;
     }
 
     public boolean isEmpty() {
-      return idIndexEntries.isEmpty();
+      return myIdIndexEntries.isEmpty();
     }
 
     @Override
@@ -1222,14 +1234,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       TextIndexQuery query = (TextIndexQuery)o;
-      return idIndexEntries.equals(query.idIndexEntries) &&
-             trigrams.equals(query.trigrams) &&
+      return myIdIndexEntries.equals(query.myIdIndexEntries) &&
+             myTrigrams.equals(query.myTrigrams) &&
              Objects.equals(myContext, query.myContext);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(idIndexEntries, trigrams, myContext);
+      return Objects.hash(myIdIndexEntries, myTrigrams, myContext);
     }
 
     @NotNull
@@ -1237,39 +1249,51 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Condition<Integer> contextCondition = myContext == null ? null : matchContextCondition(myContext);
 
       FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer> idIndexQuery =
-        new FileBasedIndex.AllKeysQuery<>(IdIndex.NAME, idIndexEntries, contextCondition);
+        new FileBasedIndex.AllKeysQuery<>(IdIndex.NAME, myIdIndexEntries, contextCondition);
 
-      if (trigrams.isEmpty()) {
+      if (myUseOnlyWeakHashToSearch || myTrigrams.isEmpty()) {
         // short words don't produce trigrams
         return Collections.singletonList(idIndexQuery);
       }
 
       FileBasedIndex.AllKeysQuery<Integer, Void> trigramIndexQuery =
-        new FileBasedIndex.AllKeysQuery<>(TrigramIndex.INDEX_ID, trigrams, null);
+        new FileBasedIndex.AllKeysQuery<>(TrigramIndex.INDEX_ID, myTrigrams, null);
 
       return Arrays.asList(idIndexQuery, trigramIndexQuery);
     }
 
     @NotNull
-    public static TextIndexQuery fromWord(@NotNull String word, boolean caseSensitively, @Nullable Short context) {
-      return fromWords(Collections.singleton(word), caseSensitively, context);
+    private static TextIndexQuery fromWord(@NotNull String word,
+                                           boolean caseSensitively,
+                                           boolean useOnlyWeakHashToSearch,
+                                           @Nullable Short context) {
+      return fromWords(Collections.singleton(word), caseSensitively, useOnlyWeakHashToSearch, context);
     }
 
     @NotNull
-    public static TextIndexQuery fromWords(@NotNull Collection<String> words, boolean caseSensitively, @Nullable Short context) {
+    public static TextIndexQuery fromWord(@NotNull String word, boolean caseSensitively, @Nullable Short context) {
+      return fromWord(word, caseSensitively, false, context);
+    }
+
+    @NotNull
+    public static TextIndexQuery fromWords(@NotNull Collection<String> words,
+                                           boolean caseSensitively,
+                                           boolean useOnlyWeakHashToSearch, @Nullable Short context) {
       Set<IdIndexEntry> keys = CollectionFactory.createSmallMemoryFootprintSet(ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively)));
       Set<Integer> trigrams = new IntOpenHashSet();
-      for (String word : words) {
-        TrigramBuilder.processTrigrams(word, new TrigramBuilder.TrigramProcessor() {
-          @Override
-          public boolean test(int value) {
-            trigrams.add(value);
-            return true;
-          }
-        });
+      if (!useOnlyWeakHashToSearch) {
+        for (String word : words) {
+          TrigramBuilder.processTrigrams(word, new TrigramBuilder.TrigramProcessor() {
+            @Override
+            public boolean test(int value) {
+              trigrams.add(value);
+              return true;
+            }
+          });
+        }
       }
 
-      return new TextIndexQuery(keys, trigrams, context);
+      return new TextIndexQuery(keys, trigrams, context, useOnlyWeakHashToSearch);
     }
 
     @NotNull
