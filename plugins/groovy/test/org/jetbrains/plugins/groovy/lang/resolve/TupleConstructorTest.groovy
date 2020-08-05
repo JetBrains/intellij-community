@@ -255,4 +255,12 @@ class Rr {
     def foo() {}
 }"""
   }
+
+  @Test
+  void 'simultaneous includes and excludes'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(<error>includes = "a"</error>, <error>excludes = ['b']</error>)
+class Rr {}
+"""
+  }
 }
