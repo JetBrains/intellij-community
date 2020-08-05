@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.diff.DiffApplicationSettings;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
@@ -15,7 +14,6 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -27,9 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -42,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,18 +132,18 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     JComponent editorComponent = null;
     if (range.hasVcsLines()) {
       String content = getVcsContent(range).toString();
-      EditorTextField textField = createTextField(editor, content);
+      EditorTextField textField = LineStatusMarkerPopupPanel.createTextField(editor, content);
 
-      TextRange vcsTextRange = getVcsTextRange(range);
-      installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(), vcsTextRange, getFileType());
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(),
+                                                                     getVcsTextRange(range), getFileType());
 
       installWordDiff(editor, textField, range, disposable);
 
-      editorComponent = createEditorComponent(editor, textField);
+      editorComponent = LineStatusMarkerPopupPanel.createEditorComponent(editor, textField);
     }
 
     List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
-    ActionToolbar toolbar = buildToolbar(editor, actions, disposable);
+    ActionToolbar toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable);
 
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
@@ -204,75 +198,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
         DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
       }
     });
-  }
-
-  @NotNull
-  private static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
-    EditorTextField field = new EditorTextField(content);
-    field.setBorder(null);
-    field.setOneLineMode(false);
-    field.ensureWillComputePreferredSize();
-    field.setFontInheritedFromLAF(false);
-
-    field.addSettingsProvider(uEditor -> {
-      uEditor.setVerticalScrollbarVisible(true);
-      uEditor.setHorizontalScrollbarVisible(true);
-
-      uEditor.setRendererMode(true);
-      uEditor.setBorder(null);
-
-      uEditor.setColorsScheme(editor.getColorsScheme());
-      uEditor.setBackgroundColor(EditorFragmentComponent.getBackgroundColor(editor, true));
-      uEditor.getSettings().setCaretRowShown(false);
-
-      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
-      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
-    });
-
-    return field;
-  }
-
-  @NotNull
-  private static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
-    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
-    editorComponent.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
-    editorComponent.setBackground(EditorFragmentComponent.getBackgroundColor(editor, true));
-
-    DataManager.registerDataProvider(editorComponent, data -> {
-      if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return textField.getEditor();
-      }
-      return null;
-    });
-    return editorComponent;
-  }
-
-  @NotNull
-  private static ActionToolbar buildToolbar(@NotNull Editor editor,
-                                            @NotNull List<AnAction> actions,
-                                            @NotNull Disposable parentDisposable) {
-    JComponent editorComponent = editor.getComponent();
-    for (AnAction action : actions) {
-      DiffUtil.registerAction(action, editorComponent);
-    }
-
-    Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
-
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
-    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
-    toolbar.setReservePlaceAutoPopupIcon(false);
-    return toolbar;
-  }
-
-  private static void installBaseEditorSyntaxHighlighters(@Nullable Project project,
-                                                          @NotNull EditorTextField textField,
-                                                          @NotNull Document vcsDocument,
-                                                          TextRange vcsTextRange,
-                                                          @NotNull FileType fileType) {
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
-    highlighter.setText(vcsDocument.getImmutableCharSequence());
-    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
-    textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
   }
 
   @NotNull

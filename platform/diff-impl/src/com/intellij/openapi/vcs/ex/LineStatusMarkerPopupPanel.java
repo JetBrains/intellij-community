@@ -5,12 +5,22 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +32,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
+import java.util.List;
 
 public class LineStatusMarkerPopupPanel extends JPanel {
   @Nullable private final JComponent myEditorComponent;
@@ -163,5 +174,74 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     if (!hint.isVisible()) {
       closeListener.hintHidden(new EventObject(hint));
     }
+  }
+
+  @NotNull
+  public static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
+    EditorTextField field = new EditorTextField(content);
+    field.setBorder(null);
+    field.setOneLineMode(false);
+    field.ensureWillComputePreferredSize();
+    field.setFontInheritedFromLAF(false);
+
+    field.addSettingsProvider(uEditor -> {
+      uEditor.setVerticalScrollbarVisible(true);
+      uEditor.setHorizontalScrollbarVisible(true);
+
+      uEditor.setRendererMode(true);
+      uEditor.setBorder(null);
+
+      uEditor.setColorsScheme(editor.getColorsScheme());
+      uEditor.setBackgroundColor(EditorFragmentComponent.getBackgroundColor(editor, true));
+      uEditor.getSettings().setCaretRowShown(false);
+
+      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
+      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
+    });
+
+    return field;
+  }
+
+  @NotNull
+  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
+    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
+    editorComponent.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
+    editorComponent.setBackground(EditorFragmentComponent.getBackgroundColor(editor, true));
+
+    DataManager.registerDataProvider(editorComponent, data -> {
+      if (CommonDataKeys.HOST_EDITOR.is(data)) {
+        return textField.getEditor();
+      }
+      return null;
+    });
+    return editorComponent;
+  }
+
+  @NotNull
+  public static ActionToolbar buildToolbar(@NotNull Editor editor,
+                                           @NotNull List<AnAction> actions,
+                                           @NotNull Disposable parentDisposable) {
+    JComponent editorComponent = editor.getComponent();
+    for (AnAction action : actions) {
+      DiffUtil.registerAction(action, editorComponent);
+    }
+
+    Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
+    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    return toolbar;
+  }
+
+  public static void installBaseEditorSyntaxHighlighters(@Nullable Project project,
+                                                         @NotNull EditorTextField textField,
+                                                         @NotNull Document vcsDocument,
+                                                         TextRange vcsTextRange,
+                                                         @NotNull FileType fileType) {
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
+    highlighter.setText(vcsDocument.getImmutableCharSequence());
+    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
+    textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
   }
 }
