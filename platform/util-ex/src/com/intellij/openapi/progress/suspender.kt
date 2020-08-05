@@ -49,7 +49,7 @@ private val EMPTY_PAUSED_STATE: CoroutineSuspenderState = CoroutineSuspenderStat
 
 private sealed class CoroutineSuspenderState {
   object Active : CoroutineSuspenderState()
-  class Paused(val continuations: Array<Continuation<Boolean>>) : CoroutineSuspenderState()
+  class Paused(val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
 }
 
 /**
@@ -76,27 +76,21 @@ internal class CoroutineSuspenderElement(active: Boolean)
     val oldState = myState.getAndSet(CoroutineSuspenderState.Active)
     if (oldState is CoroutineSuspenderState.Paused) {
       for (suspendedContinuation in oldState.continuations) {
-        suspendedContinuation.resume(true)
+        suspendedContinuation.resume(Unit)
       }
     }
   }
 
   suspend fun checkPaused() {
     while (true) {
-      if (trySuspend()) {
-        return
-      }
-    }
-  }
-
-  private suspend fun trySuspend(): Boolean {
-    return when (val state = myState.get()) {
-      is CoroutineSuspenderState.Active -> true // don't suspend
-      is CoroutineSuspenderState.Paused -> suspendCancellableCoroutine { continuation ->
-        val newState = CoroutineSuspenderState.Paused(state.continuations + continuation)
-        if (!myState.compareAndSet(state, newState)) {
-          // don't suspend here, and trySuspend() again in the next loop iteration
-          continuation.resume(false)
+      when (val state = myState.get()) {
+        is CoroutineSuspenderState.Active -> return // don't suspend
+        is CoroutineSuspenderState.Paused -> suspendCancellableCoroutine { continuation: Continuation<Unit> ->
+          val newState = CoroutineSuspenderState.Paused(state.continuations + continuation)
+          if (!myState.compareAndSet(state, newState)) {
+            // don't suspend here; on the next loop iteration either the CAS will succeed, or the suspender will be in Active state
+            continuation.resume(Unit)
+          }
         }
       }
     }
