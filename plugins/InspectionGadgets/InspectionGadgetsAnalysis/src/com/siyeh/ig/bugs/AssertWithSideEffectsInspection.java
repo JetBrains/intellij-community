@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +99,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  private static String getCallSideEffectDescription(PsiMethodCallExpression call) {
+  private static @Nullable @Nls String getCallSideEffectDescription(PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     if (JavaMethodContractUtil.isPure(method)) return null;
