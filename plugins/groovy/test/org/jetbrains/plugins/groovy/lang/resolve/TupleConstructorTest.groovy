@@ -263,4 +263,12 @@ class Rr {
 class Rr {}
 """
   }
+
+  @Test
+  void 'wrong expressions at pre and post'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(pre = <error>Integer</error>, post = <error>String</error>)
+class Rr {}
+"""
+  }
 }
