@@ -36,7 +36,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diff.DefaultFlagsProvider;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -1392,7 +1394,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
-        paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
+        LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
       }
     }
 

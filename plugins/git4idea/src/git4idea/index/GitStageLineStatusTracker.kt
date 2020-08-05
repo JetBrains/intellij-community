@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -348,7 +349,7 @@ class GitStageLineStatusTracker(
       val stripeThickness = JBUIScale.scale(2)
 
       editor as EditorImpl
-      val area = LineStatusMarkerRenderer.getGutterArea(editor)
+      val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
 
@@ -356,9 +357,9 @@ class GitStageLineStatusTracker(
         if (change.line1 != change.line2) {
           val start = editor.visualLineToY(change.line1)
           val end = editor.visualLineToY(change.line2)
-          val gutterColor = LineStatusMarkerRenderer.getGutterColor(change.type, editor)
+          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
-          LineStatusMarkerRenderer.paintRect(g, gutterColor, null, x, start, endX, end)
+          LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
           if (change.flags.isUnstaged) {
             paintThickLine(g, JBColor.RED, x, start, end, stripeThickness)
           }
@@ -371,8 +372,8 @@ class GitStageLineStatusTracker(
       for (change in block) {
         if (change.line1 == change.line2) {
           val start = editor.visualLineToY(change.line1)
-          val gutterColor = LineStatusMarkerRenderer.getGutterColor(change.type, editor)
-          LineStatusMarkerRenderer.paintTriangle(g, editor, gutterColor, null, x, endX, start)
+          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, null, x, endX, start)
 
           val editorScale = editor.scale
           if (change.flags.isUnstaged) {

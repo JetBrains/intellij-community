@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -76,7 +77,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   @Override
   protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-    return isInsideMarkerArea(e);
+    return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
   }
 
   @Override
