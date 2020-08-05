@@ -30,6 +30,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
 import it.unimi.dsi.fastutil.ints.IntIterable;
@@ -161,7 +162,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
-    // TODO revise behaviour later
+    if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
+        !((FileBasedIndexExtension<K, V>)getIndex(id).getExtension()).needsForwardIndexWhenSharing()) {
+      LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+    }
+
     if (getAccessibleFileIdFilter(project).test(fileId)) {
       Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
       return ContainerUtil.notNullize(map);
