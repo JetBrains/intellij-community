@@ -168,4 +168,20 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
     assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
   }
+  
+  fun testConcatenationOfLiterals() {
+    myFixture.configureByText("Test.kt", """
+      class MyTest {
+        fun f(prefix : Boolean){
+          val s = "<caret>part in " + "suffix {0} and prefix '{1}'"
+        }
+      }
+    """.trimIndent())
+    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
+    val concatenation = createFromTopConcatenation(enclosingStringLiteral)
+    assertNotNull(concatenation)
+    val args = ArrayList<UExpression?>()
+    Assert.assertEquals("part in suffix {0} and prefix '{1}'",
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+  }
 }
