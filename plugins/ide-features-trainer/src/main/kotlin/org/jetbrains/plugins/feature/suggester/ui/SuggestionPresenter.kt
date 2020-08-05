@@ -45,8 +45,8 @@ class HintSuggestionPresenter : SuggestionPresenter {
 @Suppress("UnstableApiUsage")
 class NotificationSuggestionPresenter :
     SuggestionPresenter {
-    private val notificationGroup =
-        NotificationGroup("IDE Feature Suggester", NotificationDisplayType.STICKY_BALLOON, false)
+    private val notificationGroup: NotificationGroup = NotificationGroup.findRegisteredGroup("IDE Feature Suggester")
+        ?: NotificationGroup("IDE Feature Suggester", NotificationDisplayType.STICKY_BALLOON, false)
     private val statisticsCollector = FeatureSuggestersStatisticsCollector()
 
     override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
