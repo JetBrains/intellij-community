@@ -2,9 +2,6 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.DiffApplicationSettings;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
@@ -23,10 +20,12 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -42,20 +41,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffType;
@@ -157,48 +153,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
-    showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable);
-  }
-
-  private static void showPopupAt(@NotNull Editor editor,
-                                  @NotNull ActionToolbar toolbar,
-                                  @Nullable JComponent editorComponent,
-                                  @Nullable JComponent additionalInfoPanel,
-                                  @Nullable Point mousePosition,
-                                  @NotNull Disposable childDisposable) {
-    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
-
-    LightweightHint hint = new LightweightHint(popupPanel);
-    HintListener closeListener = __ -> Disposer.dispose(childDisposable);
-    hint.addHintListener(closeListener);
-
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
-    if (mousePosition != null) { // show right after the nearest line
-      int lineHeight = editor.getLineHeight();
-      int delta = (point.y - mousePosition.y) % lineHeight;
-      if (delta < 0) delta += lineHeight;
-      point.y = mousePosition.y + delta;
-    }
-    point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
-
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
-
-    ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
-      .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
-        // Ex: if popup re-shown by ToggleByWordDiffAction
-        if (newHint.getComponent() instanceof PopupPanel) {
-          PopupPanel newPopupPanel = (PopupPanel)newHint.getComponent();
-          if (newPopupPanel.getEditor().equals(editor)) {
-            hint.hide();
-          }
-        }
-      });
-
-    if (!hint.isVisible()) {
-      closeListener.hintHidden(new EventObject(hint));
-    }
+    LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable);
   }
 
   private void installWordDiff(@NotNull Editor editor,
@@ -319,108 +274,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
     textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));
   }
-
-  private static class PopupPanel extends JPanel {
-    @Nullable private final JComponent myEditorComponent;
-    @NotNull private final Editor myEditor;
-
-    PopupPanel(@NotNull Editor editor,
-               @NotNull ActionToolbar toolbar,
-               @Nullable JComponent editorComponent,
-               @Nullable JComponent additionalInfo) {
-      super(new BorderLayout());
-      setOpaque(false);
-
-      myEditor = editor;
-      myEditorComponent = editorComponent;
-      boolean isEditorVisible = myEditorComponent != null;
-
-      Color borderColor = new JBColor(Gray._206, Gray._75);
-
-      JComponent toolbarComponent = toolbar.getComponent();
-      toolbarComponent.setBorder(null);
-
-      JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
-      Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
-      Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
-      toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
-
-      if (additionalInfo != null) {
-        toolbarPanel.add(additionalInfo, BorderLayout.EAST);
-      }
-
-      if (myEditorComponent != null) {
-        // default border of EditorFragmentComponent is replaced here with our own.
-        Border outsideEditorBorder = JBUI.Borders.customLine(borderColor, 1);
-        Border insideEditorBorder = JBUI.Borders.empty(2);
-        myEditorComponent.setBorder(BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder));
-      }
-
-      // 'empty space' to the right of toolbar
-      JPanel emptyPanel = new JPanel();
-      emptyPanel.setOpaque(false);
-      emptyPanel.setPreferredSize(new Dimension());
-
-      JPanel topPanel = new JPanel(new BorderLayout());
-      topPanel.setOpaque(false);
-      topPanel.add(toolbarPanel, BorderLayout.WEST);
-      topPanel.add(emptyPanel, BorderLayout.CENTER);
-
-      add(topPanel, BorderLayout.NORTH);
-      if (myEditorComponent != null) add(myEditorComponent, BorderLayout.CENTER);
-
-      // transfer clicks into editor
-      MouseAdapter listener = new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-      };
-      emptyPanel.addMouseListener(listener);
-    }
-
-    @NotNull
-    public Editor getEditor() {
-      return myEditor;
-    }
-
-    private static void transferEvent(MouseEvent e, Editor editor) {
-      editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
-    }
-
-    int getEditorTextOffset() {
-      return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      int gap = JBUI.scale(10);
-      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
-      Rectangle maxSize = new Rectangle(screenRectangle.width - gap, screenRectangle.height - gap);
-
-      Dimension size = super.getPreferredSize();
-      if (size.width > maxSize.width) {
-        size.width = maxSize.width;
-        // Space for horizontal scrollbar
-        size.height += JBUI.scale(20);
-      }
-      if (size.height > maxSize.height) {
-        size.height = maxSize.height;
-      }
-      return size;
-    }
-  }
-
 
   @NotNull
   private CharSequence getCurrentContent(Range range) {
