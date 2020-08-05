@@ -104,7 +104,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       public void run(AnActionButton button) {
         TableUtil.removeSelectedItems(myTable);
       }
-    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), "Remove")
+    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), JavaBundle.message("class.filter.editor.toolbar.button.remove"))
           .disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myChooserFilter = classFilter;
@@ -229,9 +229,9 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     @Override
     public @NlsContexts.ColumnName String getColumnName(int column) {
       if (column == FILTER) {
-        return "Pattern";
+        return JavaBundle.message("class.filter.editor.table.model.column.name.pattern");
       }
-      return "Is Active";
+      return JavaBundle.message("class.filter.editor.table.model.column.name.isActive");
     }
 
     @Override
