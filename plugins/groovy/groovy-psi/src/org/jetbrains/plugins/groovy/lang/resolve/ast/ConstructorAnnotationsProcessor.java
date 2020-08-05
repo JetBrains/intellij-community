@@ -238,7 +238,11 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       for (PsiField property : fieldGroups.first) {
         String name = property.getName();
         if (!nameFilter.test(name) || property.hasModifierProperty(PsiModifier.STATIC)) continue;
-        collector.add(new GrLightParameter(name, property.getType(), builder).setOptional(optional));
+        GrParameter lightParameter =new GrLightParameter(name, property.getType(), builder).setOptional(optional);
+        if (property instanceof GrField && optional) {
+          lightParameter.setInitializerGroovy(((GrField)property).getInitializerGroovy());
+        }
+        collector.add(lightParameter);
       }
     }
 
@@ -257,7 +261,11 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       for (PsiField field : fieldGroups.third) {
         String name = field.getName();
         if (!nameFilter.test(name) || field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        collector.add(new GrLightParameter(name, field.getType(), builder).setOptional(optional));
+        GrParameter lightParameter = new GrLightParameter(name, field.getType(), builder).setOptional(optional);
+        if (field instanceof GrField && optional) {
+          lightParameter.setInitializerGroovy(((GrField)field).getInitializerGroovy());
+        }
+        collector.add(lightParameter);
       }
     }
   }
