@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -142,7 +143,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (allConflicts.isEmpty())
       return;
 
-    HtmlBuilder htmlBody = new HtmlBuilder();
+    HtmlBuilder links = new HtmlBuilder();
     final Map<String, Runnable> href2linkAction = new HashMap<>();
     int count = 0;
     boolean empty = true;
@@ -156,8 +157,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final AnAction act = ActionManager.getInstance().getAction(actId);
       final String actText = act == null ? actId : act.getTemplateText();
       if (!empty)
-        htmlBody.append(", ");
-      htmlBody.appendLink(actId, actText);
+        links.append(", ");
+      links.appendLink(actId, actText);
 
       empty = false;
       ++count;
@@ -165,9 +166,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         break;
     }
 
+    String shortcutsMessage;
     if (count > 2 && allConflicts.size() > count) {
       String actionId = "show.more";
-      htmlBody.append(" and ").appendLink(actionId, String.format("%d more", allConflicts.size() - count));
+      HtmlChunk.Element moreLink = HtmlChunk.link(actionId, IdeBundle.message("more.shortcuts.link.text.with.count", allConflicts.size() - count));
 
       href2linkAction.put(actionId, ()->{
         myShowOnlyConflicts = true;
@@ -175,12 +177,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         myActionsTree.filter(null, myQuickLists);
         TreeUtil.expandAll(myActionsTree.getTree());
       });
+      shortcutsMessage = IdeBundle.message("macos.shortcut.conflict.many", links, moreLink);
+    } else {
+      shortcutsMessage = IdeBundle.message("macos.shortcut.conflict.few", links);
     }
 
-    htmlBody.append(" shortcuts conflict with the macOS system shortcuts.")
-      .br().append("Assign custom shortcuts or change the macOS system settings.");
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.appendRaw(shortcutsMessage)
+      .br().append(IdeBundle.message("assign.custom.shortcuts.or.change.the.macos.system.settings"));
 
-    JBLabel jbLabel = new JBLabel(createWarningHtmlText(htmlBody.toString())) {
+    JBLabel jbLabel = new JBLabel(createWarningHtmlText(builder.toString())) {
       @NotNull
       @Override
       protected HyperlinkListener createHyperlinkListener() {
