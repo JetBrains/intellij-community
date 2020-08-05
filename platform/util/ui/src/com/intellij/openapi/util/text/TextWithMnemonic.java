@@ -5,10 +5,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * An immutable object which represents a text string with mnemonic character.
  */
 public final class TextWithMnemonic {
+  public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
+
   @NotNull private final String myText;
   private final int myMnemonicIndex;
 
@@ -50,8 +55,15 @@ public final class TextWithMnemonic {
    * Drops a mnemonic
    * @return a TextWithMnemonic object where mnemonic is not set
    */
-  public TextWithMnemonic dropMnemonic() {
-    return hasMnemonic() ? fromPlainText(myText) : this;
+  public TextWithMnemonic dropMnemonic(boolean forceRemove) {
+    if (!hasMnemonic()) return this;
+    if (!forceRemove) return fromPlainText(myText);
+
+    Matcher matcher = MNEMONIC.matcher(myText);
+    if (matcher.find()) {
+      return fromPlainText(matcher.replaceAll(""));
+    }
+    return this;
   }
 
   /**
