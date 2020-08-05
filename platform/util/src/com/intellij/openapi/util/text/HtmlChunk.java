@@ -3,9 +3,7 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -95,7 +93,8 @@ public abstract class HtmlChunk {
      * @param value attribute value
      * @return a new element that is like this element but has the specified attribute added or replaced
      */
-    public Element attr(@NonNls String name, String value) {
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name, String value) {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
@@ -103,7 +102,8 @@ public abstract class HtmlChunk {
      * @param style CSS style specification
      * @return a new element that is like this element but has the specified style added or replaced
      */
-    public Element style(@NonNls String style) {
+    @Contract(pure = true)
+    public @NotNull Element style(@NonNls String style) {
       return attr("style", style);
     }
 
@@ -111,7 +111,8 @@ public abstract class HtmlChunk {
      * @param text text to add to the list of children (should not be escaped)
      * @return a new element that is like this element but has an extra text child
      */
-    public Element addText(@NotNull @Nls String text) {
+    @Contract(pure = true)
+    public @NotNull Element addText(@NotNull @Nls String text) {
       return child(text(text));
     }
 
@@ -119,7 +120,8 @@ public abstract class HtmlChunk {
      * @param chunks chunks to add to the list of children
      * @return a new element that is like this element but has extra children
      */
-    public Element children(@NotNull HtmlChunk @NotNull ... chunks) {
+    @Contract(pure = true)
+    public @NotNull Element children(@NotNull HtmlChunk @NotNull ... chunks) {
       if (myChildren.isEmpty()) {
         return new Element(myTagName, myAttributes, Arrays.asList(chunks));
       }
@@ -133,6 +135,7 @@ public abstract class HtmlChunk {
      * @param chunk a chunk to add to the list of children
      * @return a new element that is like this element but has an extra child
      */
+    @Contract(pure = true)
     public @NotNull Element child(@NotNull HtmlChunk chunk) {
       if (myChildren.isEmpty()) {
         return new Element(myTagName, myAttributes, Collections.singletonList(chunk));
@@ -148,6 +151,7 @@ public abstract class HtmlChunk {
    * @param tagName name of the tag to wrap with
    * @return an element that wraps this element
    */
+  @Contract(pure = true)
   public @NotNull Element wrapWith(@NotNull @NonNls String tagName) {
     return new Element(tagName, UnmodifiableHashMap.empty(), Collections.singletonList(this));
   }
@@ -155,6 +159,7 @@ public abstract class HtmlChunk {
   /**
    * @return a B element that wraps this element
    */
+  @Contract(pure = true)
   public @NotNull Element bold() {
     return wrapWith("b");
   }
@@ -162,6 +167,7 @@ public abstract class HtmlChunk {
   /**
    * @return an I element that wraps this element
    */
+  @Contract(pure = true)
   public @NotNull Element italic() {
     return wrapWith("i");
   }
@@ -170,6 +176,7 @@ public abstract class HtmlChunk {
    * @param tagName name of the tag
    * @return an empty tag
    */
+  @Contract(pure = true)
   public static @NotNull Element tag(@NotNull @NonNls String tagName) {
     return new Element(tagName, UnmodifiableHashMap.empty(), Collections.emptyList());
   }
@@ -177,6 +184,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;div&gt; element
    */
+  @Contract(pure = true)
   public static @NotNull Element div() {
     return Element.DIV;
   }
@@ -184,6 +192,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;div&gt; element with a specified style.
    */
+  @Contract(pure = true)
   public static @NotNull Element div(@NotNull @NonNls String style) {
     return Element.DIV.style(style);
   }
@@ -191,6 +200,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;span&gt; element.
    */
+  @Contract(pure = true)
   public static @NotNull Element span() {
     return Element.SPAN;
   }
@@ -198,6 +208,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;span&gt; element with a specified style.
    */
+  @Contract(pure = true)
   public static @NotNull Element span(@NonNls @NotNull String style) {
     return Element.SPAN.style(style);
   }
@@ -205,6 +216,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;br&gt; element.
    */
+  @Contract(pure = true)
   public static @NotNull Element br() {
     return Element.BR;
   }
@@ -212,6 +224,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;body&gt; element.
    */
+  @Contract(pure = true)
   public static @NotNull Element body() {
     return Element.BODY;
   }
@@ -219,6 +232,7 @@ public abstract class HtmlChunk {
   /**
    * @return a &lt;html&gt; element.
    */
+  @Contract(pure = true)
   public static @NotNull Element html() {
     return Element.HTML;
   }
@@ -229,6 +243,7 @@ public abstract class HtmlChunk {
    * @param count number of non-breaking spaces
    * @return HtmlChunk that represents a sequence of non-breaking spaces
    */
+  @Contract(pure = true)
   public static @NotNull HtmlChunk nbsp(int count) {
     if (count <= 0) {
       throw new IllegalArgumentException();
@@ -242,6 +257,7 @@ public abstract class HtmlChunk {
    * @param text text to display (no escaping should be done by caller).
    * @return HtmlChunk that represents a HTML text node.
    */
+  @Contract(pure = true)
   public static @NotNull HtmlChunk text(@NotNull @Nls String text) {
     return new Text(text);
   }
@@ -254,6 +270,7 @@ public abstract class HtmlChunk {
    * @param rawHtml raw HTML content. It's the responsibility of the caller to balance tags and escape HTML entities.
    * @return the HtmlChunk that represents the supplied content.
    */
+  @Contract(pure = true)
   public static @NotNull HtmlChunk raw(@NotNull @Nls String rawHtml) {
     return new Raw(rawHtml);
   }
@@ -265,6 +282,7 @@ public abstract class HtmlChunk {
    * @param text link text
    * @return the Element that represents a link
    */
+  @Contract(pure = true)
   public static @NotNull Element link(@NotNull @NonNls String target, @NotNull @Nls String text) {
     return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text(text)));
   }
@@ -280,6 +298,7 @@ public abstract class HtmlChunk {
    * @return the rendered HTML representation of this chunk.
    */
   @Override
+  @Contract(pure = true)
   public @NlsSafe @NotNull String toString() {
     StringBuilder builder = new StringBuilder();
     appendTo(builder);

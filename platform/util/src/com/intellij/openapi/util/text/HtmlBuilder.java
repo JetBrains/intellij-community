@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -116,13 +117,15 @@ public final class HtmlBuilder {
    * @param tag name of the tag to wrap with
    * @return a new Element object that contains elements from this builder
    */
-  public HtmlChunk.Element wrapWith(@NotNull @NonNls String tag) {
+  @Contract(pure = true)
+  public @NotNull Element wrapWith(@NotNull @NonNls String tag) {
     return HtmlChunk.tag(tag).children(myChunks.toArray(new HtmlChunk[0]));
   }
 
   /**
    * @return true if no elements were added to this builder
    */
+  @Contract(pure = true)
   public boolean isEmpty() {
     return myChunks.isEmpty();
   }
@@ -131,6 +134,7 @@ public final class HtmlBuilder {
    * @return a rendered HTML representation of all the chunks in this builder.
    */
   @Override
+  @Contract(pure = true)
   public @NlsSafe String toString() {
     StringBuilder sb = new StringBuilder();
     for (HtmlChunk chunk : myChunks) {
