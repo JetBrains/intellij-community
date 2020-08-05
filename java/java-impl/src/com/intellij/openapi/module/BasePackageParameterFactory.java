@@ -18,6 +18,7 @@ package com.intellij.openapi.module;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -83,7 +84,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
       public boolean validate() throws ConfigurationException {
         String value = getValue();
         if (!StringUtil.isEmpty(value) && !PsiNameHelperImpl.getInstance().isQualifiedName(value)) {
-          throw new ConfigurationException(value + " is not a valid package name");
+          throw new ConfigurationException(JavaBundle.message("base.package.project.wizard.error.x.not.valid.package", value));
         }
         PropertiesComponent.getInstance().setValue(IJ_BASE_PACKAGE, value);
         return true;
