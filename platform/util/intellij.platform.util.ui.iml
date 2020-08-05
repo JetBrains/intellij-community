@@ -19,5 +19,8 @@
     <orderEntry type="library" name="batik-codec" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="library" name="lz4-java" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>

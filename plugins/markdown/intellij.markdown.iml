@@ -38,5 +38,6 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>
