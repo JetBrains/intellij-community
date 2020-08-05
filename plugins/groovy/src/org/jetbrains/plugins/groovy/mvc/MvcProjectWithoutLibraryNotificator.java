@@ -25,7 +25,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,16 +51,16 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity.Dumb
       final String name = framework.getFrameworkName();
       final Map<String, Runnable> actions = framework.createConfigureActions(module);
 
-      final StringBuilder content = new StringBuilder()
-        .append("<html><body>")
-        .append("Module ").append('\'').append(module.getName()).append('\'')
-        .append(" has no ").append(name).append(" SDK.");
-      if (!actions.isEmpty()) content.append("<br/>");
-      content.append(StringUtil.join(actions.keySet(), actionName -> String.format("<a href='%s'>%s</a>", actionName, actionName), " "));
-      content.append("</body></html>");
+      HtmlBuilder builder = new HtmlBuilder();
+      builder.append("Module '" + module.getName() + "' has no " + name + " SDK.");
+      if (!actions.isEmpty()) builder.br();
+      for (String actionName : actions.keySet()) {
+        builder.appendLink(actionName, actionName).append(" ");
+      }
+      String message = builder.wrapWith("body").wrapWith("html").toString();
 
       new Notification(
-        name + ".Configure", name + " SDK not found", content.toString(), NotificationType.INFORMATION,
+        name + ".Configure", name + " SDK not found", message, NotificationType.INFORMATION,
         new NotificationListener.Adapter() {
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {

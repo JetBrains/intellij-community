@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -254,16 +256,16 @@ public class FileInEditorProcessor {
     @Override
     @NotNull
     public String getMessage() {
-      StringBuilder builder = new StringBuilder("<html>");
+      HtmlBuilder builder = new HtmlBuilder();
       LayoutCodeInfoCollector notifications = myProcessor.getInfoCollector();
       LOG.assertTrue(notifications != null);
 
       if (notifications.isEmpty() && !myNoChangesDetected) {
         if (myProcessChangesTextOnly) {
-          builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
+          builder.append("No lines changed: changes since last revision are already properly formatted").br();
         }
         else {
-          builder.append("No lines changed: content is already properly formatted").append("<br>");
+          builder.append("No lines changed: content is already properly formatted").br();
         }
       }
       else {
@@ -277,26 +279,25 @@ public class FileInEditorProcessor {
             builder.append(" in changes since last revision");
           }
 
-          builder.append("<br>");
+          builder.br();
         }
         else if (myNoChangesDetected) {
-          builder.append("No lines changed: no changes since last revision").append("<br>");
+          builder.append("No lines changed: no changes since last revision").br();
         }
 
         String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
         if (optimizeImportsNotification != null) {
-          builder.append(StringUtil.capitalize(optimizeImportsNotification)).append("<br>");
+          builder.append(StringUtil.capitalize(optimizeImportsNotification)).br();
         }
       }
 
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
-      String color = ColorUtil.toHex(JBColor.gray);
+      String color = ColorUtil.toHtmlColor(JBColor.gray);
 
-      builder.append("<span style='color:#").append(color).append("'>")
-        .append("<a href=''>Show</a> reformat dialog: ").append(shortcutText).append("</span>")
-        .append("</html>");
+      builder.append(HtmlChunk.span("color:"+color)
+        .child(HtmlChunk.raw("<a href=''>Show</a> reformat dialog: ")).addText(shortcutText));
 
-      return builder.toString();
+      return builder.wrapWith("html").toString();
     }
 
     @Override

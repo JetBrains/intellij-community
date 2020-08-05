@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -43,7 +44,7 @@ public final class PathUtil {
   }
 
   @NotNull
-  public static String toPresentableUrl(@NotNull String url) {
+  public static @NlsSafe String toPresentableUrl(@NotNull String url) {
     return getLocalPath(VirtualFileManager.extractPath(url));
   }
 

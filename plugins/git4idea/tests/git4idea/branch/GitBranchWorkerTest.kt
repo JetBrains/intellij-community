@@ -227,7 +227,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertDetachedState(second, "feature")
 
     assertSuccessfulNotification("Checked out ${bcode("feature")} in community and contrib<br/>" +
-                                 "Revision not found in ${project.stateStore.projectBasePath.fileName}<br><a href='rollback'>Rollback</a>")
+                                 "Revision not found in ${project.stateStore.projectBasePath.fileName}<br><a href=\"rollback\">Rollback</a>")
   }
 
   fun `test checkout with untracked files overwritten by checkout in first repo should show notification`() {
@@ -343,7 +343,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test agree to smart merge should smart merge`() {
     val localChanges = `agree to smart operation`("merge",
-                                                  "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
+                                                  "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href=\"delete\">Delete feature</a>")
 
     cd(last)
     val actual = cat(localChanges.first())
@@ -653,7 +653,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     mergeBranch("master2", TestUiHandler())
 
     assertSuccessfulNotification("Merged ${bcode("master2")} to ${bcode("master")}<br/>" +
-                                 "<a href='delete'>Delete master2</a>")
+                                 "<a href=\"delete\">Delete master2</a>")
     assertFile(last, "branch_file.txt", "branch content")
     assertFile(first, "branch_file.txt", "branch content")
     assertFile(second, "branch_file.txt", "branch content")
@@ -709,7 +709,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     mergeBranch("master2", TestUiHandler())
 
     assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect", "Already up-to-date<br/><a href='delete'>Delete master2</a>",
+    assertEquals("Success message is incorrect", "Already up-to-date<br/><a href=\"delete\">Delete master2</a>",
                  vcsNotifier.lastNotification.content)
   }
 
@@ -722,7 +722,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
     assertEquals("Success message is incorrect",
-                 "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
+                 "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href=\"delete\">Delete master2</a>",
                  vcsNotifier.lastNotification.content)
     assertFile(first, "branch_file.txt", "branch content")
   }

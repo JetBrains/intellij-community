@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -76,16 +78,16 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
-    StringBuilder buffer = new StringBuilder();
+    HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
     buffer.append("Library ");
-    buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
+    buffer.appendLink("http://library/"+name, name);
     buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
-      buffer.append("<br>&nbsp;&nbsp;");
+      buffer.br().nbsp(2);
       buffer.append(PathUtil.toPresentableUrl(url));
     }
-    return XmlStringUtil.wrapInHtml(buffer);
+    return buffer.wrapWith("html").toString();
   }
 
   @NotNull
@@ -135,8 +137,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
-    final String name = StringUtil.escapeXmlEntities(myLibrary.getName());
-    String libraryName = "<a href='http://library/" + name + "'>" + name + "</a>";
+    String libraryName = HtmlChunk.link("http://library/" + myLibrary.getName(), myLibrary.getName()).toString();
     return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);

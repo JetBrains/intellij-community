@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
@@ -581,7 +582,7 @@ public final class PushController implements Disposable {
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
         @NonNls
-        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent("<a href='loadMore'>...</a>", new VcsLinkListener() {
+        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), new VcsLinkListener() {
           @Override
           public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
             TreeNode parent = sourceNode.getParent();

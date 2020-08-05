@@ -3,11 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.DefaultTreeExpander;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -29,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -145,7 +142,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (allConflicts.isEmpty())
       return;
 
-    String htmlBody = "";
+    HtmlBuilder htmlBody = new HtmlBuilder();
     final Map<String, Runnable> href2linkAction = new HashMap<>();
     int count = 0;
     boolean empty = true;
@@ -159,8 +156,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final AnAction act = ActionManager.getInstance().getAction(actId);
       final String actText = act == null ? actId : act.getTemplateText();
       if (!empty)
-        htmlBody += ", ";
-      htmlBody += "<a href='" + actId + "'>" + actText + "</a>";
+        htmlBody.append(", ");
+      htmlBody.appendLink(actId, actText);
 
       empty = false;
       ++count;
@@ -169,10 +166,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     if (count > 2 && allConflicts.size() > count) {
-      final @NotNull String text = String.format("%d more", allConflicts.size() - count);
-      htmlBody += " and <a href='" + text + "'>" + text + "</a>";
+      String actionId = "show.more";
+      htmlBody.append(" and ").appendLink(actionId, String.format("%d more", allConflicts.size() - count));
 
-      href2linkAction.put(text, ()->{
+      href2linkAction.put(actionId, ()->{
         myShowOnlyConflicts = true;
         myActionsTree.setBaseFilter(systemShortcuts.createKeymapConflictsActionFilter());
         myActionsTree.filter(null, myQuickLists);
@@ -180,9 +177,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       });
     }
 
-    htmlBody += " shortcuts conflict with the macOS system shortcuts.<br>Assign custom shortcuts or change the macOS system settings.</p></html>";
+    htmlBody.append(" shortcuts conflict with the macOS system shortcuts.")
+      .br().append("Assign custom shortcuts or change the macOS system settings.");
 
-    JBLabel jbLabel = new JBLabel(createWarningHtmlText(htmlBody)) {
+    JBLabel jbLabel = new JBLabel(createWarningHtmlText(htmlBody.toString())) {
       @NotNull
       @Override
       protected HyperlinkListener createHyperlinkListener() {

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -519,7 +520,8 @@ public final class CompileDriver {
           ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
-        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE?
+                                      HtmlChunk.link("#", statusMessage).toString() : statusMessage;
         final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
           "", wrappedMessage,
           messageType.toNotificationType(),

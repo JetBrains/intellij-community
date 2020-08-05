@@ -8,6 +8,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -135,20 +136,18 @@ class GitCheckoutOperation extends GitBranchOperation {
         }
         else {
           Collection<GitRepository> successfulRepositories = getSuccessfulRepositories();
+          HtmlBuilder builder = new HtmlBuilder();
           String mentionSuccess = GitBundle.message("checkout.operation.in", getSuccessMessage(),
                                                     successfulRepositories.size(),
                                                     joinShortNames(successfulRepositories, REPOSITORIES_LIMIT));
-          String mentionSkipped = wereSkipped()
-                                  ? UIUtil.BR + revisionNotFound
-                                  : "";
+          builder.appendRaw(mentionSuccess);
+          if (wereSkipped()) {
+            builder.br().append(revisionNotFound);
+          }
+          builder.br().appendLink(ROLLBACK_HREF_ATTRIBUTE, GitBundle.message("checkout.operation.rollback"));
 
           VcsNotifier.getInstance(myProject).notifySuccess("",
-                                                           mentionSuccess +
-                                                           mentionSkipped +
-                                                           UIUtil.BR +
-                                                           "<a href='" + ROLLBACK_HREF_ATTRIBUTE + "'>" + //NON-NLS
-                                                           GitBundle.message("checkout.operation.rollback")
-                                                           + "</a>", //NON-NLS
+                                                           builder.toString(),
                                                            new RollbackOperationNotificationListener());
         }
         notifyBranchHasChanged(myStartPointReference);
