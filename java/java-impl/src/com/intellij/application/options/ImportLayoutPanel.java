@@ -17,9 +17,11 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -124,7 +126,11 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
         return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
       })
-      .setButtonComparator(JavaBundle.message("button.add.package"), JavaBundle.message("button.add.blank"), "Remove", "Up", "Down")
+      .setButtonComparator(JavaBundle.message("button.add.package"),
+                           JavaBundle.message("button.add.blank"),
+                           JavaBundle.message("import.layout.panel.remove.button"),
+                           JavaBundle.message("import.layout.panel.up.button"),
+                           JavaBundle.message("import.layout.panel.down.button"))
       .setPreferredSize(new Dimension(-1, 100)).createPanel();
 
 
@@ -333,19 +339,19 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-          append("<blank line>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(JavaBundle.message("import.layout.panel.blank.line.entry"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
-          append("import", SimpleTextAttributes.fromTextAttributes(attributes));
+          append(JavaBundle.message("import.layout.panel.import"), SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            append("static", SimpleTextAttributes.fromTextAttributes(attributes));
+            append(JavaBundle.message("import.layout.panel.static"), SimpleTextAttributes.fromTextAttributes(attributes));
           }
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
           if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-            append("all other imports", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(JavaBundle.message("import.layout.panel.all.other.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
             append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);
