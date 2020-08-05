@@ -34,10 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -201,7 +198,11 @@ public final class VfsRootAccess {
   @TestOnly
   public static void allowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+      if (path.isEmpty()) {
+        throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots)+"'");
+      }
+      ourAdditionalRoots.add(path);
     }
   }
 
