@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmPackage;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    */
   @Override
   @NotNull
+  @NlsSafe
   String getQualifiedName();
 
   /**
