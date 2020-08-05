@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
@@ -26,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +103,7 @@ final class AssociationsEditor {
     myComponent.add(splitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT files:", false, JBUI.emptyInsets()).setShowLine(false));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.project.xslt.files"), false, JBUI.emptyInsets()).setShowLine(false));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -111,12 +113,14 @@ final class AssociationsEditor {
     myList = new JBList<>();
     myList.setCellRenderer(new MyCellRenderer());
     myList.setMinimumSize(new Dimension(120, 200));
-    myList.getEmptyText().setText("No associated files");
+    myList.getEmptyText().setText(XPathBundle.message("status.text.no.associated.files"));
     JPanel rightPanel = ToolbarDecorator.createDecorator(myList)
       .addExtraAction(AnActionButton.fromAction(new AddAssociationActionWrapper()))
       .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
-    UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated files:", false, JBUI.emptyInsets()).setShowLine(false));
+    final IdeaTitledBorder border =
+      IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBUI.emptyInsets());
+    UIUtil.addBorder(rightPanel, border.setShowLine(false));
     splitter.setSecondComponent(rightPanel);
   }
 
@@ -201,7 +205,9 @@ final class AssociationsEditor {
 
   class RemoveAssociationAction extends AnAction {
     RemoveAssociationAction() {
-      super("Remove", "Remove Association", IconUtil.getRemoveIcon());
+      super(XPathBundle.message("action.remove.association.text"),
+            XPathBundle.message("action.remove.association.description"),
+            IconUtil.getRemoveIcon());
     }
 
     @Override

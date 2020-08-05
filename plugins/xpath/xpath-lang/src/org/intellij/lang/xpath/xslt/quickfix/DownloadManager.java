@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.HttpRequests;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -57,7 +58,7 @@ public abstract class DownloadManager {
       return;
     }
 
-    myProgress.setText("Downloading " + location);
+    myProgress.setText(XPathBundle.message("progress.text.downloading", location));
 
     File file = null;
     try {
@@ -82,7 +83,10 @@ public abstract class DownloadManager {
             resourceManager.addResource(location, file.getAbsolutePath());
           }
           else {
-            ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem"), myProject.getDisposed());
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showErrorDialog(myProject,
+                                             XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
+                                             XPathBundle.message("dialog.title.download.problem")), myProject.getDisposed());
           }
         }
 

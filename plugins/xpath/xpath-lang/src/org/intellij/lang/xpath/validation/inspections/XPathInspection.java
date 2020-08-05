@@ -34,12 +34,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XPathInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return "XPath";
-  }
-
-  @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable PsiElement element) {
     final XPathElement e = PsiTreeUtil.getContextOfType(element, XPathElement.class, false);
     return ContextProvider.getContextProvider(e != null ? e : element).getQuickFixFactory().getSuppressActions(this);
