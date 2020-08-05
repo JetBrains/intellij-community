@@ -212,7 +212,7 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl[module]",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.1.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.2.1:jar",
         "//tools/idea/plugins/copyright:intellij.copyright[module]",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",

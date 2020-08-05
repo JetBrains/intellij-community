@@ -62,7 +62,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//prebuilts/tools/common/m2/repository/com/intellij/grazie/grazie-spellchecker/0.1.6:jar",
+        "//prebuilts/tools/common/m2/repository/com/intellij/grazie/grazie-spellchecker/0.1.9:jar",
         "//prebuilts/tools/common/m2/repository/info/debatty/java-string-similarity/1.2.1:jar",
         "//tools/idea/xml/relaxng:intellij.relaxng[module, test]",
     ],

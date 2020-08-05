@@ -48,5 +48,6 @@ iml_module(
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:fastutil-min",
+        "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
     ],
 )
