@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
@@ -10,7 +9,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -77,8 +76,10 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       final Object value1 = o1.getValue();
       final Object value2 = o2.getValue();
       for (Sorter sorter : mySorters) {
-        final int result = sorter.getComparator().compare(value1, value2);
-        if (result != 0) return result;
+        int result = sorter.getComparator().compare(value1, value2);
+        if (result != 0) {
+          return result;
+        }
       }
       return 0;
     }
@@ -123,7 +124,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   private void groupElements(@NotNull Grouper grouper) {
-    ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<>();
+    List<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<>();
     Collection<AbstractTreeNode<?>> children = getChildren();
     for (AbstractTreeNode child : children) {
       if (child instanceof TreeElementWrapper) {
@@ -189,7 +190,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   @NotNull
   private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
-    Map<Group, GroupWrapper> result = new THashMap<>();
+    Map<Group, GroupWrapper> result = new Object2ObjectOpenHashMap<>(groups.size());
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
     }

@@ -52,7 +52,7 @@ class TestWhitelistStorage(
 }
 
 private class TestEventLogWhitelistPersistence(recorderId: String, private var content: String?, private var modified: Long) : EventLogWhitelistPersistence(recorderId) {
-  override fun getCachedWhitelist(): String? = content
+  override fun getCachedMetadata(): String? = content
 
   override fun cacheWhiteList(gsonWhiteListContent: String, lastModified: Long) {
     content = gsonWhiteListContent

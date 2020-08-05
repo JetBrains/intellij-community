@@ -15,6 +15,8 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -1083,6 +1085,21 @@ public class PyStubsTest extends PyTestCase {
   // PY-36008
   public void testTypedDictFieldsKeyword() {
     doTestTypingTypedDictArguments();
+  }
+
+  // PY-41305
+  public void testDecoratorQualifiedNames() {
+    final PyFile file = getTestFile();
+    final PyFunction func = file.findTopLevelFunction("func");
+    assertNotNull(func);
+
+    PyDecoratorList decorators = func.getDecoratorList();
+    assertNotNull(decorators);
+    List<@Nullable String> names = ContainerUtil.map(decorators.getDecorators(),
+                                                     d -> ObjectUtils.doIfNotNull(d.getQualifiedName(), QualifiedName::toString));
+
+    assertEquals(names, Arrays.asList(null, "foo", "foo", "foo.bar", "foo.bar", null, null, null));
+    assertNotParsed(file);
   }
 
   private void doTestTypingTypedDictArguments() {

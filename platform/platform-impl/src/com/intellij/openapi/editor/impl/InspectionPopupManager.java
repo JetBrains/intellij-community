@@ -38,10 +38,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 class InspectionPopupManager {
@@ -59,6 +57,7 @@ class InspectionPopupManager {
   private final JBPopupListener myPopupListener;
   private final PopupState myPopupState = new PopupState();
   private final Alarm popupAlarm = new Alarm();
+  private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
 
   private JBPopup myPopup;
   private boolean insidePopup;
@@ -100,12 +99,19 @@ class InspectionPopupManager {
 
       @Override
       public void mouseExited(MouseEvent event) {
-        if (!myContent.getBounds().contains(event.getPoint())) {
+        Point point = event.getPoint();
+        if (!myContent.getBounds().contains(point) || point.x == 0 || point.y == 0) {
           insidePopup = false;
-          hidePopup();
+          if (canClose()) {
+            hidePopup();
+          }
         }
       }
     });
+  }
+
+  private boolean canClose() {
+    return !insidePopup && levelLinks.stream().allMatch(l -> l.getPopupState().isHidden());
   }
 
   void updateUI() {
@@ -120,7 +126,7 @@ class InspectionPopupManager {
   void scheduleHide() {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
-      if (!insidePopup) {
+      if (canClose()) {
         hidePopup();
       }
     }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
@@ -171,6 +177,7 @@ class InspectionPopupManager {
       return;
     }
     myContent.removeAll();
+    levelLinks.clear();
 
     GridBag gc = new GridBag().nextLine().next().
       anchor(GridBagConstraints.LINE_START).
@@ -282,7 +289,10 @@ class InspectionPopupManager {
         highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
 
         panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START));
-        panel.add(createDropDownLink(levels.get(0), controller), gc.next());
+
+        DropDownLink<?> link = createDropDownLink(levels.get(0), controller);
+        levelLinks.add(link);
+        panel.add(link, gc.next());
       }
       else if (levels.size() > 1) {
         for(LanguageHighlightLevel level: levels) {
@@ -290,7 +300,10 @@ class InspectionPopupManager {
           highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
 
           panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
-          panel.add(createDropDownLink(level, controller), gc.next());
+
+          DropDownLink<?> link = createDropDownLink(levels.get(0), controller);
+          levelLinks.add(link);
+          panel.add(link, gc.next());
         }
       }
     }

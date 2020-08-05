@@ -318,18 +318,32 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     if (analysis == null) return null;
     String text = DfaBasedFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
-    return new AnAction(null, JavaBundle.message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        List<StackLine> nextFrames = nextFramesSupplier.get();
-        StackFilter stackFilter = StackFilter.from(nextFrames);
-        SliceAnalysisParams params = new SliceAnalysisParams();
-        params.dataFlowToThis = true;
-        params.scope = new AnalysisScope(GlobalSearchScope.allScope(myProject), myProject);
-        params.scope.setSearchInLibraries(true);
-        params.valueFilter = new JavaValueFilter(new DfaBasedFilter(analysis.myDfType), stackFilter);
-        SliceManager.getInstance(myProject).createToolWindow(analysis.myAnchor, params);
-      }
-    };
+    return new DfaFromStacktraceAction(analysis, text, nextFramesSupplier);
+  }
+
+  private class DfaFromStacktraceAction extends AnAction {
+    private final @NotNull AnalysisStartingPoint myAnalysis;
+    private @NotNull final Supplier<List<StackLine>> myNextFramesSupplier;
+
+    private DfaFromStacktraceAction(@NotNull AnalysisStartingPoint analysis,
+                                    String text,
+                                    @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+      super(null, JavaBundle
+        .message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null);
+      myAnalysis = analysis;
+      myNextFramesSupplier = nextFramesSupplier;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      List<StackLine> nextFrames = myNextFramesSupplier.get();
+      StackFilter stackFilter = StackFilter.from(nextFrames);
+      SliceAnalysisParams params = new SliceAnalysisParams();
+      params.dataFlowToThis = true;
+      params.scope = new AnalysisScope(GlobalSearchScope.allScope(myProject), myProject);
+      params.scope.setSearchInLibraries(true);
+      params.valueFilter = new JavaValueFilter(new DfaBasedFilter(myAnalysis.myDfType), stackFilter);
+      SliceManager.getInstance(myProject).createToolWindow(myAnalysis.myAnchor, params);
+    }
   }
 }

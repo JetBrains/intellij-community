@@ -8,7 +8,7 @@ public final class CommonTags {
 
   public static <S extends RunConfiguration> SettingsEditorFragment<S, ?> parallelRun() {
     return SettingsEditorFragment.createTag("runParallel",
-                                            ExecutionBundle.message("run.configuration.allow.running.parallel"),
+                                            ExecutionBundle.message("run.configuration.allow.running.parallel.tag"),
                                             ExecutionBundle.message("group.operating.system"),
                                             s -> s.isAllowRunningInParallel(),
                                             (s, value) -> s.setAllowRunningInParallel(value)

@@ -25,7 +25,7 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.JBColor
@@ -59,7 +59,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(JavaPsiFacade.getInstance(getProject()).findPackage("foo.bar.goo").isValid())
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPreferTestCases() throws Throwable {
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java")
     ApplicationManager.application.runWriteAction {
@@ -80,7 +80,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.assertPreferredCompletionItems(0, "SomeTestCase", "SomeAnchor", "SomeTestec")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testAllClassesWhenNothingIsFound() throws Throwable {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}")
 
@@ -90,7 +90,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testAllClassesOnSecondBasicCompletion() throws Throwable {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}")
 
@@ -122,7 +122,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     assert myFixture.completeBasic() == null
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testQualifyInaccessibleClassName() throws Exception {
     PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "second", myFixture.getTempDirFixture().findOrCreateDir("second"))
     myFixture.addFileToProject("second/foo/bar/AxBxCxDxEx.java", "package foo.bar; class AxBxCxDxEx {}")
@@ -132,7 +132,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResult("class Main { foo.bar.AxBxCxDxEx<caret> }")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferOwnMethods() {
     def nanoUrls = IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("NanoXML")
     ModuleRootModificationUtil.addModuleLibrary(module, 'nano1', nanoUrls, [])
@@ -179,7 +179,7 @@ public class Test {
     assert oldCount == tracker.modificationCount
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testForbiddenApiVariants() {
     IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_4)
     myFixture.addClass("""\
@@ -209,7 +209,7 @@ public class SocketChannel {
     assert p.itemTextForeground == JBColor.foreground()
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void "test seemingly scrambled subclass"() {
     PsiTestUtil.addLibrary(module, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
     myFixture.configureByText 'a.java', '''import test.Books;
@@ -224,7 +224,7 @@ class Foo {{ Books.Test.v1<caret> }}
 
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void "test different jdks in different modules"() {
     (StatisticsManager.instance as StatisticsManagerImpl).enableStatistics(myFixture.testRootDisposable)
 

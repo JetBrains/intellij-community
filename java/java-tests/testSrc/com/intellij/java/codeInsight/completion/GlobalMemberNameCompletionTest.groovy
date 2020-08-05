@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
@@ -33,7 +33,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -49,7 +49,7 @@ public class Foo {
 class Bar {{ abcmethod()<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testFieldName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -65,7 +65,7 @@ public class Foo {
 class Bar {{ abcfield<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testFieldNameQualified() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -81,7 +81,7 @@ public class Foo {
 class Bar {{ Foo.abcfield<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testFieldNamePresentation() {
     myFixture.addClass("""
 package foo;
@@ -103,7 +103,7 @@ public class Foo {
     myFixture.complete(CompletionType.BASIC, 2)
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testQualifiedMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -118,7 +118,7 @@ public class Foo {
 class Bar {{ Foo.abcmethod()<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testIfThereAreAlreadyStaticImportsWithThatClass() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -139,7 +139,7 @@ import static foo.Foo.anotherMethod;
 class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testExcludeClassFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -159,7 +159,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
 class Bar {{ abcmethod()<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testExcludeMethodFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -175,7 +175,7 @@ class Bar {{ abcmethod()<caret> }}"""
 class Bar {{ abcmethod1()<caret> }}"""
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testMergeOverloads() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -222,7 +222,7 @@ class A {
 '''
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void "test static import before an identifier"() {
     myFixture.addClass '''
 package test.t1;
@@ -289,7 +289,7 @@ class Foo {
     myFixture.checkResult text
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void "test no global reformatting"() {
     CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true
 

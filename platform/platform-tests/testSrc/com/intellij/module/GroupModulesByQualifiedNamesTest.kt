@@ -29,12 +29,16 @@ class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertEmpty(parentGroup.modulesInGroup(grouper, false))
+    assertEmpty(parentGroup.modulesInGroup(myProject, false))
     assertSameElements(parentGroup.modulesInGroup(grouper, true), module)
 
     val group = assertOneElement(parentGroup.childGroups(grouper))
     Assert.assertArrayEquals(group.groupPath, arrayOf("a", "b"))
+    Assert.assertArrayEquals(assertOneElement(parentGroup.childGroups(myProject)).groupPath, arrayOf("a", "b"))
     assertSameElements(group.modulesInGroup(grouper, false), module)
+    assertSameElements(group.modulesInGroup(myProject), module)
     assertEmpty(group.childGroups(grouper))
+    assertEmpty(group.childGroups(myProject))
   }
 
   fun `test two modules`() {
@@ -46,12 +50,16 @@ class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(grouper, false), module1)
+    assertSameElements(parentGroup.modulesInGroup(myProject), module1)
     assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2)
 
     val group = assertOneElement(parentGroup.childGroups(grouper))
     Assert.assertArrayEquals(group.groupPath, arrayOf("a", "b"))
+    Assert.assertArrayEquals(assertOneElement(parentGroup.childGroups(myProject)).groupPath, arrayOf("a", "b"))
     assertSameElements(group.modulesInGroup(grouper, false), module2)
+    assertSameElements(group.modulesInGroup(myProject), module2)
     assertEmpty(group.childGroups(grouper))
+    assertEmpty(group.childGroups(myProject))
   }
 
   fun `test module as a group`() {
@@ -65,9 +73,11 @@ class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(grouper, false), module1, module2, module3)
+    assertSameElements(parentGroup.modulesInGroup(myProject), module1, module2, module3)
     assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2, module3)
 
     assertEmpty(parentGroup.childGroups(grouper))
+    assertEmpty(parentGroup.childGroups(myProject))
   }
 
   fun `test module as a group with deep ancestor`() {
@@ -79,9 +89,34 @@ class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(grouper, false), module1, module2)
+    assertSameElements(parentGroup.modulesInGroup(myProject), module1, module2)
     assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2)
 
     assertEmpty(parentGroup.childGroups(grouper))
+    assertEmpty(parentGroup.childGroups(myProject))
+  }
+
+  fun `test grand parent group`() {
+    val module1 = createModule("a.foo.x.m1")
+    val module2 = createModule("a.foo.x.m2")
+    val module3 = createModule("a.bar.x.m3")
+    val module4 = createModule("a.bar.x.m4")
+
+    val parentGroup = ModuleGroup(listOf("a"))
+    assertEmpty(parentGroup.modulesInGroup(grouper, false))
+    assertEmpty(parentGroup.modulesInGroup(myProject))
+    assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2, module3, module4)
+
+    val fooGroup = ModuleGroup(listOf("a", "foo"))
+    val barGroup = ModuleGroup(listOf("a", "bar"))
+    assertSameElements(parentGroup.childGroups(grouper), fooGroup, barGroup)
+    assertSameElements(parentGroup.childGroups(myProject), fooGroup, barGroup)
+    val fooXGroup = ModuleGroup(listOf("a", "foo", "x"))
+    val barXGroup = ModuleGroup(listOf("a", "bar", "x"))
+    assertSameElements(fooGroup.childGroups(grouper), fooXGroup)
+    assertSameElements(fooGroup.childGroups(myProject), fooXGroup)
+    assertSameElements(barGroup.childGroups(grouper), barXGroup)
+    assertSameElements(barGroup.childGroups(myProject), barXGroup)
   }
 
   fun `test names with incorrect chars after dots`() {
@@ -93,9 +128,11 @@ class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(grouper, false), module1, module2)
+    assertSameElements(parentGroup.modulesInGroup(myProject), module1, module2)
     assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2)
 
     assertEmpty(parentGroup.childGroups(grouper))
+    assertEmpty(parentGroup.childGroups(myProject))
   }
 
   private val grouper: ModuleGrouper

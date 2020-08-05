@@ -74,7 +74,7 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaBuilder extends ModuleLevelBuilder {
+public final class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
   private static final String JAVA_EXTENSION = "java";
 
@@ -1121,7 +1121,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return map;
   }
 
-  private static class DiagnosticSink implements DiagnosticOutputConsumer {
+  private static final class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
@@ -1281,7 +1281,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private class ClassProcessingConsumer implements OutputFileConsumer {
+  private final class ClassProcessingConsumer implements OutputFileConsumer {
     private final CompileContext myContext;
     private final OutputFileConsumer myDelegateOutputFileSink;
 

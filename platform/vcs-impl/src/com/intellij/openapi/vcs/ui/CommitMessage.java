@@ -315,7 +315,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
       super.refresh(editorMarkupModel);
       if (editorMarkupModel != null) {
-        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(errorCount));
+        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCount()));
       }
     }
 

@@ -83,7 +83,7 @@ public final class ClassFileDecompilers {
   public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
-    EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilersChange(), null);
+    EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange(), null);
   }
 
   public @Nullable Decompiler find(@NotNull VirtualFile file) {

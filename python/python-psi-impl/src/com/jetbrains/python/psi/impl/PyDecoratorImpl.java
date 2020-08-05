@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author dcheryasov
  */
@@ -56,6 +58,11 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   }
 
   @Override
+  public @Nullable PyExpression getExpression() {
+    return findChildByClass(PyExpression.class);
+  }
+
+  @Override
   public boolean isBuiltin() {
     ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     if (node != null) {
@@ -68,8 +75,13 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @Override
   public boolean hasArgumentList() {
-    final ASTNode arglistNode = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
-    return (arglistNode != null) && (arglistNode.findChildByType(PyTokenTypes.LPAR) != null);
+    return getExpression() instanceof PyCallExpression;
+  }
+
+  @Override
+  public PyArgumentList getArgumentList() {
+    final PyCallExpression callExpr = as(getExpression(), PyCallExpression.class);
+    return callExpr != null ? callExpr.getArgumentList() : null;
   }
 
   @Override
@@ -80,26 +92,16 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       return stub.getQualifiedName();
     }
     else {
-      final PyReferenceExpression node = PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class);
-      if (node != null) {
-        return node.asQualifiedName();
-      }
-      return null;
+      final PyReferenceExpression refExpr = as(getCallee(), PyReferenceExpression.class);
+      return refExpr != null ? refExpr.asQualifiedName() : null;
     }
   }
 
   @Override
   @Nullable
   public PyExpression getCallee() {
-    try {
-      return (PyExpression)getFirstChild().getNextSibling(); // skip the @ before call
-    }
-    catch (NullPointerException npe) { // no sibling
-      return null;
-    }
-    catch (ClassCastException cce) { // error node instead
-      return null;
-    }
+    final PyExpression exprAfterAt = getExpression();
+    return exprAfterAt instanceof PyCallExpression ? ((PyCallExpression)exprAfterAt).getCallee() : exprAfterAt;
   }
 
   @NotNull

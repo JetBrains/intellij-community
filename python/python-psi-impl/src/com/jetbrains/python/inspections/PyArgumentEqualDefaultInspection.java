@@ -55,7 +55,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
-      if (node.getArgumentList() == null) {
+      if (node.getParent() instanceof PyDecorator) {
         return;
       }
       final List<PyCallable> callables = node.multiResolveCalleeFunction(getResolveContext());

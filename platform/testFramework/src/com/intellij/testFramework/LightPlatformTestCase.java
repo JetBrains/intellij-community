@@ -84,6 +84,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -176,7 +177,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(@NotNull final LightProjectDescriptor descriptor) {
+  private static void initProject(@NotNull LightProjectDescriptor descriptor) {
     ourProjectDescriptor = descriptor;
 
     if (ourProject != null) {
@@ -185,9 +186,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, FixtureRuleKt.createTestOpenProjectOptions()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    setProject(HeavyPlatformTestCase.createProject(tempDirectory));
-    ourPathToKeep = tempDirectory;
     ourPsiManager = null;
 
     try {
@@ -654,19 +654,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project));
     assertTrue(project.isDisposed());
 
-    // project may be disposed but empty folder may still be there
-    if (ourPathToKeep != null) {
-      Path parent = ourPathToKeep.getParent();
-      if (parent.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-        // delete only empty folders
-        try {
-          Files.deleteIfExists(parent);
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
-
     setProject(null);
     assertTrue(ourModule.isDisposed());
     ourModule = null;
@@ -674,7 +661,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       assertTrue(ourPsiManager.isDisposed());
       ourPsiManager = null;
     }
-    ourPathToKeep = null;
   }
 
   protected static void setProject(Project project) {

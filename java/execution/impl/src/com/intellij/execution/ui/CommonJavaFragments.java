@@ -3,12 +3,14 @@ package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class CommonJavaFragments {
@@ -94,5 +97,40 @@ public class CommonJavaFragments {
                                         (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
                                         (s, c) -> { comboBox.applyTo(s); setter.accept(s, option.myOptionValue); },
                                         s -> s.getConfigurationModule() != null);
+  }
+
+  @NotNull
+  public static SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> createJrePath(Project project) {
+    JrePathEditor jrePathEditor = new JrePathEditor(false);
+    ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
+    comboBox.setRenderer(new ColoredListCellRenderer<JrePathEditor.JreComboBoxItem>() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends JrePathEditor.JreComboBoxItem> list,
+                                           JrePathEditor.JreComboBoxItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
+        if (value != null) {
+          if (index == -1) {
+            append("java ");
+            append("(" + value.getPresentableText() + ")");
+          }
+          else value.render(this, selected);
+        }
+      }
+    });
+
+    setMinimumWidth(jrePathEditor, 100);
+    jrePathEditor.getLabel().setVisible(false);
+    jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
+    return new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
+                                        (configuration, editor) -> editor
+                                          .setPathOrName(configuration.getAlternativeJrePath(),
+                                                         configuration.isAlternativeJrePathEnabled()),
+                                        (configuration, editor) -> {
+                                          configuration.setAlternativeJrePath(editor.getJrePathOrName());
+                                          configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
+                                        },
+                                        configuration -> true);
   }
 }

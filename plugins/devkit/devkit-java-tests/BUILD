@@ -52,5 +52,6 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker[module, test]",
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl[module, test]",
         "//tools/idea/plugins/devkit/devkit-tests-api:intellij.devkit.tests[module]",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
     ],
 )

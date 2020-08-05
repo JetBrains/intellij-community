@@ -19,13 +19,13 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel Dolgov
  */
-@NeedsIndicesState.FullIndices
+@NeedsIndex.Full
 class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_9

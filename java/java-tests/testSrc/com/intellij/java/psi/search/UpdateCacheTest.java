@@ -47,15 +47,15 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     loadAndSetupProject(getProjectDirOrFile());
   }
 
-  private void loadAndSetupProject(@NotNull Path path) throws Exception {
-    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+  private void loadAndSetupProject(@NotNull Path path) {
+    LocalFileSystem.getInstance().refreshNioFiles(myFilesToDelete);
 
     myProject = PlatformTestUtil.loadAndOpenProject(path);
 
     setUpModule();
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/updateCache";
-    createTestProjectStructure( root);
+    createTestProjectStructure(root);
 
     setUpJdk();
   }

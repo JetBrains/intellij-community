@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -50,7 +50,6 @@ public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(afterFile);
     File shelfFile = new File(myProject.getBasePath(), ".shelf");
     FileUtil.createDirectory(shelfFile);
-    myFilesToDelete.add(shelfFile);
     FileUtil.copyDir(beforeFile, shelfFile);
     VirtualFile shelfDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(shelfFile);
     assertNotNull(shelfDir);

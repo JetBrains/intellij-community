@@ -619,6 +619,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
+    protected void setTextValue(@NotNull String text) {
+      super.setTextValue(StringUtil.shortenPathWithEllipsis(text, 50));
+    }
+
+    @Override
     protected JBIterable<ProgressButton> createEastButtons() {
       return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
     }
@@ -692,6 +697,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     private void setIcons(InplaceButton button, Icon compactRegular, Icon regular, Icon compactHovered, Icon hovered) {
       button.setIcons(isCompact() ? compactRegular : regular, null, isCompact() ? compactHovered : hovered);
+      button.revalidate();
+      button.repaint();
     }
 
     protected @Nullable ProgressSuspender getSuspender() {

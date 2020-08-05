@@ -101,7 +101,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       printHelp();
     }
 
-    ApplicationManagerEx.getApplicationEx().isSaveAllowed();
+    ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
     try {
       execute();
     }

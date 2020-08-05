@@ -40,6 +40,8 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
@@ -1807,6 +1809,31 @@ ita<caret>
     assert lookup
     def firstItems = myFixture.lookupElements[0..<4]
     assert firstItems.each { InheritanceUtil.isInheritor(it.object as PsiClass, List.name) }
+  }
+
+  void "test prefer previously selected despite many namesakes"() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
+
+    def count = 400
+    def toSelect = 390
+    for (i in 0..<count) {
+      myFixture.addClass("package p$i; public class MyClass {}")
+    }
+    myFixture.configureByText "a.java", "class C extends <caret>"
+    type 'MyCla'
+    myFixture.assertPreferredCompletionItems 0, Collections.nCopies(count, 'MyClass') as String[]
+
+    edt {
+      assert LookupElementPresentation.renderElement(myFixture.lookup.items[toSelect]).tailText == " p$toSelect"
+      CompletionSortingTestCase.imitateItemSelection(myFixture.lookup, toSelect)
+      myFixture.lookup.hideLookup(true)
+    }
+
+    type 's'
+    myFixture.assertPreferredCompletionItems 0, Collections.nCopies(count, 'MyClass') as String[]
+    edt {
+      assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == " p$toSelect"
+    }
   }
 
 }

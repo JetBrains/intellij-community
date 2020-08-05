@@ -54,7 +54,7 @@
     <statistics.counterUsagesCollector groupId="grazie.count" version="1"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
-    <notificationWhitelist groupIds="Proofreading missing languages information"/>
+    <notificationAllowlist groupIds="Proofreading missing languages information"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

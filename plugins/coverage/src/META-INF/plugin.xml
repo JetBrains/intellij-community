@@ -30,7 +30,7 @@ To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Cove
     <projectService serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
     <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
-    <notificationWhitelist groupIds="Coverage"/>
+    <notificationAllowlist groupIds="Coverage"/>
   </extensions>
 
   <extensionPoints>

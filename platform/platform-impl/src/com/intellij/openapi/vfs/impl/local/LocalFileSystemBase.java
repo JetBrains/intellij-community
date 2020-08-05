@@ -64,8 +64,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return refreshAndFindFileByPath(path);
+    return refreshAndFindFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
   }
 
   private static @NotNull String toIoPath(@NotNull VirtualFile file) {

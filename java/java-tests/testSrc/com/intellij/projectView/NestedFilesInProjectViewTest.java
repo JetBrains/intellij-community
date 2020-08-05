@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
-
   private void doTest(@NotNull final String expected) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
     final TestProjectTreeStructure structure = new TestProjectTreeStructure(getProject(), myFixture.getTestRootDisposable());
@@ -46,7 +45,6 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
       nestingService.setRules(originalRules);
     }
   }
-
 
   public void testJavaAndGroovyAsChildren() {
     doTestWithCustomRules(() -> {

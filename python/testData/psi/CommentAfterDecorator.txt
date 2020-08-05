@@ -5,8 +5,6 @@ PyFile:CommentAfterDecorator.py
         PsiElement(Py:AT)('@')
         PyReferenceExpression: uncallable_deco
           PsiElement(Py:IDENTIFIER)('uncallable_deco')
-        PyArgumentList
-          <empty list>
       PsiWhiteSpace('        ')
       PsiComment(Py:END_OF_LINE_COMMENT)('#  some comment')
     PsiWhiteSpace('\n')

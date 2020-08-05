@@ -15,10 +15,11 @@
  */
 package com.intellij.xdebugger.settings;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class XDebuggerSettingsManager {
+public abstract class XDebuggerSettingsManager implements Disposable {
   public static XDebuggerSettingsManager getInstance() {
     return ServiceManager.getService(XDebuggerSettingsManager.class);
   }

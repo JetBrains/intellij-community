@@ -50,7 +50,7 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
   fun withProjectName(value: String?) = copy(projectName = value)
 
   @ApiStatus.Internal
-  fun asNewProjectAndRunConfigurators() = copy(isNewProject = true, runConfigurators = true)
+  fun asNewProjectAndRunConfigurators() = copy(isNewProject = true, runConfigurators = true, useDefaultProjectAsTemplate = true)
 
   @ApiStatus.Internal
   fun withRunConfigurators() = copy(runConfigurators = true)

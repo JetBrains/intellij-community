@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.Ksuid
 import com.intellij.util.io.exists
 import com.intellij.util.io.move
 import com.intellij.util.io.systemIndependentPath
@@ -59,7 +60,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
-  override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
+  final override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
 
   /**
    * `null` for default or non-directory based project.
@@ -267,11 +268,12 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     return if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtil.getParentPath(projectFilePath).nullize()
   }
 
-  override fun getDirectoryStoreFile(): VirtualFile? = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+  override fun getDirectoryStoreFile(): VirtualFile? = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
 
   override fun getDirectoryStorePathOrBase(): String = PathUtil.getParentPath(projectFilePath)
 
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }  // dummy implementation for Upsource
+  // dummy implementation for Upsource
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }
 }
 
 private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtil.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"

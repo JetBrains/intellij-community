@@ -107,5 +107,7 @@ public interface Project extends ComponentManager, AreaInstance {
 
   boolean isInitialized();
 
-  boolean isDefault();
+  default boolean isDefault() {
+    return false;
+  }
 }

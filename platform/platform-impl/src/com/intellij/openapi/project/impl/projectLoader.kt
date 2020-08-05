@@ -35,14 +35,11 @@ internal fun registerComponents(project: ProjectImpl) {
 
 internal fun notifyThatComponentCreated(project: ProjectImpl) {
   var activity = createActivity(project) { "projectComponentCreated event handling" }
-  val app = ApplicationManager.getApplication()
   @Suppress("DEPRECATION")
-  app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(project)
+  ApplicationManager.getApplication().messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(project)
 
   activity = activity?.endAndStart("projectComponentCreated")
-  runHandler(
-    getExtensionPoint<ProjectServiceContainerInitializedListener>(
-      "com.intellij.projectServiceContainerInitializedListener")) {
+  runHandler(getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
     it.serviceCreated(project)
   }
   activity?.end()

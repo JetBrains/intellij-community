@@ -168,8 +168,8 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       .map { myFixture.addClass(refClassText.replace("classname", "RefClass$it")) }
       .toList()
 
-    // current file is also checked
-    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(nRefClasses + 1 + 1)
+
+    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(nRefClasses + 1)
 
     doTest(targetClass) {
       val factory = JavaPsiFacade.getInstance(project).elementFactory

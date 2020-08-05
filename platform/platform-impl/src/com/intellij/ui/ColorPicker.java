@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
@@ -404,16 +405,19 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     showColorPickerPopup(project, currentColor, listener, location, false);
   }
 
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
+  public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
       final Object groupId = new Object();
 
       @Override
-      public void colorChanged(Color color, Object source) {
-        CommandProcessor.getInstance().executeCommand(project, () -> listener.colorChanged(color, source),
-                                                      IdeBundle.message("command.name.apply.color"), groupId);
+      public void colorChanged(final Color color, final Object source) {
+        ApplicationManager.getApplication().invokeLaterOnWriteThread(
+          () -> CommandProcessor.getInstance().executeCommand(project,
+                                                              () -> listener.colorChanged(color, source),
+                                                              IdeBundle.message("command.name.apply.color"),
+                                                              groupId));
       }
     };
 

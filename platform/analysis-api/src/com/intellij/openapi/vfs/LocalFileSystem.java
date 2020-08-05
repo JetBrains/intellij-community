@@ -2,11 +2,13 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -38,8 +40,16 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
+  public final @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
+    return findFileByPath(file.toString().replace(File.separatorChar, '/'));
+  }
+
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull File file);
+
+  public final @Nullable VirtualFile refreshAndFindFileByNioFile(@NotNull Path file) {
+    return refreshAndFindFileByPath(file.toString().replace(File.separatorChar, '/'));
+  }
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.
@@ -49,6 +59,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    */
   public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
     refreshIoFiles(files, false, false, null);
+  }
+
+  public final void refreshNioFiles(@NotNull Iterable<Path> files) {
+    refreshIoFiles(ContainerUtil.map(files, Path::toFile), false, false, null);
   }
 
   /**

@@ -15,7 +15,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +27,12 @@ import java.util.*;
  * @author yole
  */
 public final class FilenameIndex {
-
   @ApiStatus.Internal
   @NonNls
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   public static String @NotNull [] getAllFilenames(@Nullable Project project) {
-    Set<String> names = new THashSet<>();
+    Set<String> names = new HashSet<>();
     processAllFileNames((String s) -> {
       names.add(s);
       return true;
@@ -115,7 +114,7 @@ public final class FilenameIndex {
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
                                                                     @Nullable final IdFilter idFilter) {
-    final Set<String> keys = new THashSet<>();
+    Set<String> keys = new ObjectOpenHashSet<>();
     processAllFileNames(value -> {
       if (name.equalsIgnoreCase(value)) {
         keys.add(value);
@@ -124,7 +123,7 @@ public final class FilenameIndex {
     }, scope, idFilter);
 
     // values accessed outside of processAllKeys
-    final Set<VirtualFile> files = new THashSet<>();
+    Set<VirtualFile> files = new ObjectOpenHashSet<>();
     for (String each : keys) {
       files.addAll(getVirtualFilesByName(each, scope, idFilter));
     }
@@ -182,7 +181,7 @@ public final class FilenameIndex {
   private static Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
                                                               @NotNull GlobalSearchScope scope,
                                                               IdFilter filter) {
-    Set<VirtualFile> files = new THashSet<>();
+    Set<VirtualFile> files = new ObjectOpenHashSet<>();
     FileBasedIndex.getInstance().processValues(NAME, name, null, (file, value) -> {
       files.add(file);
       return true;

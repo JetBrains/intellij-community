@@ -1083,6 +1083,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Arrow_left = load("/vcs/arrow_left.svg");
     /** 16x16 */ public static final @NotNull Icon Arrow_right = load("/vcs/arrow_right.svg");
     /** 16x16 */ public static final @NotNull Icon Branch = load("/vcs/branch.svg");
+    /** 16x16 */ public static final @NotNull Icon Branch_node = load("/vcs/branch_node.svg");
     /** 16x16 */ public static final @NotNull Icon Changelist = load("/vcs/changelist.svg");
     /** 16x16 */ public static final @NotNull Icon Clone = load("/vcs/clone.svg");
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg");
@@ -1122,10 +1123,12 @@ public class AllIcons {
 
   public final static class Welcome {
     /** 32x32 */ public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
-    /** 24x24 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
-    /** 24x24 */ public static final @NotNull Icon CreateNewProjectSelected = load("/welcome/createNewProjectSelected.svg");
-    /** 24x24 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
-    /** 24x24 */ public static final @NotNull Icon FromVCSSelected = load("/welcome/fromVCSSelected.svg");
+    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectTab = load("/welcome/createNewProjectTab.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectTabSelected = load("/welcome/createNewProjectTabSelected.svg");
+    /** 16x16 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSTab = load("/welcome/fromVCSTab.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSTabSelected = load("/welcome/fromVCSTabSelected.svg");
     /** 24x24 */ public static final @NotNull Icon Open = load("/welcome/open.svg");
     /** 24x24 */ public static final @NotNull Icon OpenSelected = load("/welcome/openSelected.svg");
 

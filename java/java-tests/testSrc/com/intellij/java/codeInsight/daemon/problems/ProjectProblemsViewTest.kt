@@ -4,7 +4,10 @@ package com.intellij.java.codeInsight.daemon.problems
 import com.intellij.codeInsight.daemon.problems.pass.BrokenUsage
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
+import com.intellij.codeInsight.hints.presentation.OnClickPresentation
+import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -36,7 +39,6 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     val clickEvent = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
     val point = Point(0, 0)
     for (inlay in reportedChanges.values) {
-      val startOffset = editor.caretModel.offset
       val renderer = inlay.renderer as BlockInlayRenderer
       val presentation = renderer.getConstrainedPresentations()[0]
       val rootPresentation = presentation.root
@@ -49,11 +51,10 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
       problemsOnClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!
       val openedFile = FileDocumentManager.getInstance().getFile(editor.document)!!
-      val curOffset = editor.caretModel.offset
-      if (openedFile != targetFile || curOffset != startOffset) {
+      if (openedFile != targetFile) {
         // one problem is reported in inlay, we navigated to this problem
         val psiFileWithProblem = PsiManager.getInstance(project).findFile(openedFile)!!
-        val psiElement = psiFileWithProblem.findElementAt(curOffset)!!
+        val psiElement = psiFileWithProblem.findElementAt(editor.caretModel.offset)!!
         problems.add(psiElement)
         // restore file for the next iteration
         editorManager.openFile(targetFile, true)

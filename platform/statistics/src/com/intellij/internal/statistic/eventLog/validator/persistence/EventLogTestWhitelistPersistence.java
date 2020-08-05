@@ -26,7 +26,10 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
     Logger.getInstance(EventLogTestWhitelistPersistence.class);
 
   public static final String TEST_RULE = "{util#fus_test_mode}";
-  public static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
+
+  private static final String DEPRECATED_TEST_EVENTS_SCHEME_FILE = "test-white-list.json";
+  private static final String TEST_EVENTS_SCHEME_FILE = "test-events-scheme.json";
+
   @NotNull
   private final String myRecorderId;
 
@@ -36,7 +39,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   @Override
   @Nullable
-  public String getCachedWhitelist() {
+  public String getCachedMetadata() {
     try {
       final File file = getWhitelistFile();
       if (file.exists()) {
@@ -96,7 +99,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   @NotNull
   public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
-    final String existing = persistence.getCachedWhitelist();
+    final String existing = persistence.getCachedMetadata();
     if (StringUtil.isNotEmpty(existing)) {
       try {
         return FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
@@ -130,7 +133,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   @NotNull
   public File getWhitelistFile() throws IOException {
-    return getDefaultWhitelistFile(myRecorderId, TEST_WHITE_LIST_DATA_FILE);
+    return getDefaultMetadataFile(myRecorderId, TEST_EVENTS_SCHEME_FILE, DEPRECATED_TEST_EVENTS_SCHEME_FILE);
   }
 
   public void updateTestGroups(@NotNull List<LocalWhitelistGroup> groups) throws IOException {

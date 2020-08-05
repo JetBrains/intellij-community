@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +19,8 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class CoreFileTypeRegistry extends FileTypeRegistry {
-  private final Map<String, FileType> myExtensionsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+public final class CoreFileTypeRegistry extends FileTypeRegistry {
+  private final Map<String, FileType> myExtensionsMap = CollectionFactory.createFilePathMap();
   private final List<FileType> myAllFileTypes = new ArrayList<>();
 
   public CoreFileTypeRegistry() {
@@ -67,8 +52,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   @NotNull
   @Override
   public FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
-    final String extension = FileUtilRt.getExtension(fileName);
-    return getFileTypeByExtension(extension);
+    return getFileTypeByExtension(FileUtilRt.getExtension(fileName));
   }
 
   @NotNull

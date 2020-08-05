@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.java.lexer.JavaLexer;
@@ -102,7 +102,9 @@ public class ClsParsingUtil {
 
   static PsiExpression psiToClsExpression(@NotNull PsiExpression expr, @NotNull ClsElementImpl parent) {
     if (expr instanceof PsiLiteralExpression) {
-      boolean forDecompiling = ((ClsFileImpl)parent.getContainingFile()).isForDecompiling();
+      PsiFile file = parent.getContainingFile();
+      if (!(file instanceof ClsFileImpl)) throw new ClassCastException("Unexpected: " + file);
+      boolean forDecompiling = ((ClsFileImpl)file).isForDecompiling();
       PsiType type = forDecompiling ? PsiType.NULL : expr.getType();
       Object value = forDecompiling ? null : ((PsiLiteralExpression)expr).getValue();
       return new ClsLiteralExpressionImpl(parent, expr.getText(), type, value);
@@ -141,7 +143,9 @@ public class ClsParsingUtil {
       return new ClsBinaryExpressionImpl(parent, sign, left, right);
     }
 
-    if (((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
+    PsiFile file = parent.getContainingFile();
+    if (!(file instanceof ClsFileImpl)) throw new ClassCastException("Unexpected: " + file);
+    if (((ClsFileImpl)file).isForDecompiling()) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
     }
 

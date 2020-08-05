@@ -49,4 +49,7 @@ private class TestComponentStore : IComponentStore {
 
   override fun saveComponent(component: PersistentStateComponent<*>) {
   }
+
+  override fun removeComponent(name: String) {
+  }
 }

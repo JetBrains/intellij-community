@@ -240,7 +240,7 @@ public class XmlRefCountHolder {
       final XmlElementDescriptor descriptor = tag.getDescriptor();
       if (descriptor == null) return;
 
-      final XmlAttributeDescriptor attributeDescriptor = descriptor.getAttributeDescriptor(attribute);
+      final XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
       if (attributeDescriptor != null) {
         if (attributeDescriptor.hasIdType()) {
           updateMap(attribute, value, false);

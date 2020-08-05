@@ -10,8 +10,10 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +27,12 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
-      e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
-      e.getPresentation().setSelectedIcon(AllIcons.Welcome.CreateNewProjectSelected);
+      Presentation presentation = e.getPresentation();
+      presentation.setIcon(AllIcons.Welcome.CreateNewProject);
+      if (Registry.is("use.tabbed.welcome.screen")) {
+        presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
+        presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
+      }
     }
     updateActionText(this, e);
   }

@@ -147,7 +147,7 @@
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
-    <notificationWhitelist groupIds="Task Group;Tasks"/>
+    <notificationAllowlist groupIds="Task Group;Tasks"/>
   </extensions>
 
 </idea-plugin>

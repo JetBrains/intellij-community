@@ -36,7 +36,7 @@
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
-    <notificationWhitelist groupIds="Unknown Natures Detected"/>
+    <notificationAllowlist groupIds="Unknown Natures Detected"/>
   </extensions>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">

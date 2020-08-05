@@ -12,7 +12,7 @@ import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
+import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -619,8 +619,8 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      def whiteList = StatisticsRecorderBundledWhiteListProvider.downloadWhiteList(buildContext)
-      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
+      def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
+      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
     }
 
     def libDirectoryMapping = new ProjectStructureMapping()

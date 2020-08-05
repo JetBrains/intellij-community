@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testImportAfterNew() {
     createClass("package pack; public class AAClass {}");
     createClass("package pack; public class WithInnerAClass{\n" +
@@ -67,7 +67,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
                  doc);
   }
 
-  @NeedsIndicesState.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testTypeParametersTemplate() {
     createClass("package pack; public interface Foo<T> {void foo(T t};");
 
@@ -115,7 +115,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
                 "}");
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testAfterNewThrowable2() {
     addClassesForAfterNewThrowable();
     String path = "/afterNewThrowable";
@@ -131,7 +131,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testBracesAfterNew() { doTest(); }
 
-  @NeedsIndicesState.SmartMode(reason = "Smart completion in dumb mode not supported for property files")
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode not supported for property files")
   public void testInPropertiesFile() {
     myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
     complete();
@@ -150,7 +150,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     assertNull(myItems);
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testReplaceReferenceExpressionWithTypeElement() {
     createClass("package foo.bar; public class ABCDEF {}");
     doTest();
@@ -201,7 +201,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/implements3-result.java");
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testAnnotationFiltering() {
     createClass("@interface MyObjectType {}");
 
@@ -284,20 +284,20 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/varType-result.java");
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testExtraSpace() { doJavaTest('\n'); }
 
   public void testAnnotation() { doJavaTest('\n'); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testInStaticImport() { doJavaTest('\n'); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testInCommentWithPackagePrefix() { doJavaTest('\n'); }
 
   public void testNestedAnonymousTab() { doJavaTest('\t');}
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   public void testClassStartsWithUnderscore() {
     myFixture.addClass("package foo; public class _SomeClass {}");
     doJavaTest('\n');

@@ -22,7 +22,7 @@
     <annotator language="TEXT" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
     <annotator language="JSON" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
     <projectService serviceImplementation="com.jetbrains.python.PyCharmProfessionalAdvertiserSettings"/>
-    <notificationWhitelist groupIds="PyCharm Professional Advertiser;Python interpreter configuring;Sync Python requirements;
+    <notificationAllowlist groupIds="PyCharm Professional Advertiser;Python interpreter configuring;Sync Python requirements;
     Python SDK Updater;Python Debugger;Skeletons;CythonWarning;Packaging"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,6 @@ import java.util.*;
  */
 @Tag("ExternalSystemSettings")
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
-
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
@@ -55,7 +53,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskNames = ContainerUtil.copyList(source.myTaskNames);
     myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
 
-    myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
+    myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new HashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
   }
 

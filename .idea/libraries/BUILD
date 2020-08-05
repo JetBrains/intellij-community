@@ -1856,24 +1856,24 @@ java_library(
 java_library(
     name = "rd-swing",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.202.93:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.202.93:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.202.100:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.202.100:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "rd-core",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.202.93:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.202.93:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.202.100:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.202.100:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "rd-framework",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-framework/0.202.93:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-framework/0.202.93:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-framework/0.202.100:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-framework/0.202.100:jar"],
 )
 
 # managed by go/iml_to_build

@@ -5,12 +5,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
-  }
-
   fun testFunctionParameters() {
+    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
     myFixture.configureByText("Foo.kt", """
        class Foo {
           fun foo(s: String) {
@@ -22,8 +18,24 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.testHighlighting()
   }
+  
+  fun testFunctionParametersOnlyNls() {
+    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+       class Foo {
+          fun foo(@org.jetbrains.annotations.Nls s: String) {
+            foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>)
+            foo(<warning descr="Hardcoded string literal: \"templated ${"\$"}s end\"">"templated ${"\$"}s end"</warning>)
+          }
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
 
   fun testConstructorParameter() {
+    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
     myFixture.configureByText("Foo.kt", """
       import org.jetbrains.annotations.Nls
       
@@ -35,6 +47,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testReturnValues() {
+    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
     myFixture.configureByText("Foo.kt", """
         val a = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
         val b get() = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>

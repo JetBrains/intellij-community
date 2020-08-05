@@ -158,6 +158,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     castVariable,
     expectedTypeVariable,
     lambda,
+    likelyMethodRef,
     methodRef,
     variable,
     getter,
@@ -213,8 +214,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (item.getUserData(FunctionalExpressionCompletionProvider.LAMBDA_ITEM) != null) {
       return MyResult.lambda;
     }
-    if (item.getUserData(FunctionalExpressionCompletionProvider.METHOD_REF_ITEM) != null) {
-      return MyResult.methodRef;
+    Boolean methodRefPreference = item.getUserData(FunctionalExpressionCompletionProvider.METHOD_REF_PREFERRED);
+    if (methodRefPreference != null) {
+      return methodRefPreference ? MyResult.likelyMethodRef : MyResult.methodRef;
     }
 
     if (object instanceof PsiMethod) {

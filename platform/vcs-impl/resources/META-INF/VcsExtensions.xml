@@ -250,7 +250,7 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$DetectRootsStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
-    <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
+    <notificationAllowlist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
     Common Version Control Messages" notificationIds="ignored.to.exclude.synchronization.notification;externally.added.files.notification;
     project.configuration.files.added.notification;manage.ignore.files.notification"/>
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
