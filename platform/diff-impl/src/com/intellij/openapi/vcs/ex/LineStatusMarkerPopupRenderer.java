@@ -149,9 +149,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     EditorTextField textField = createEditorComponent(editor, range, wordDiff);
     JComponent editorComponent = createEditorComponent(editor, textField);
 
-    ActionToolbar toolbar = buildToolbar(editor, range, mousePosition, disposable);
-    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
-    toolbar.setReservePlaceAutoPopupIcon(false);
+    List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
+    ActionToolbar toolbar = buildToolbar(editor, actions, disposable);
 
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
@@ -295,12 +294,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @NotNull
-  private ActionToolbar buildToolbar(@NotNull Editor editor,
-                                     @NotNull Range range,
-                                     @Nullable Point mousePosition,
-                                     @NotNull Disposable parentDisposable) {
-    List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
-
+  private static ActionToolbar buildToolbar(@NotNull Editor editor,
+                                            @NotNull List<AnAction> actions,
+                                            @NotNull Disposable parentDisposable) {
     JComponent editorComponent = editor.getComponent();
     for (AnAction action : actions) {
       DiffUtil.registerAction(action, editorComponent);
@@ -308,7 +304,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
+    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    return toolbar;
   }
 
   private static class PopupPanel extends JPanel {
