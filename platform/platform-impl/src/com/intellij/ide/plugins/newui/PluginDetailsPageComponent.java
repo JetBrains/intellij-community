@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -850,6 +851,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        ProjectPluginTracker.getInstance(project)
+          .unregisterProjectPlugin(myPlugin);
+      }
+
       myPluginModel.enablePlugins(Set.of(myPlugin));
     }
   }
@@ -868,6 +875,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        ProjectPluginTracker.getInstance(project)
+          .unregisterProjectPlugin(myPlugin);
+      }
+
       myPluginModel.disablePlugins(Set.of(myPlugin));
     }
   }

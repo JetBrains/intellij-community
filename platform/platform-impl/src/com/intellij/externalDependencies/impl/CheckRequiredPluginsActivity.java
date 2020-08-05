@@ -43,6 +43,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
   public void runActivity(@NotNull Project project) {
     // will trigger 'loadState' and run check if required plugins are specified
     ExternalDependenciesManager.getInstance(project);
+    ProjectPluginTracker.getInstance(project);
   }
 
   public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {
@@ -113,7 +114,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       LOG.info("Automatically enabling plugins required for this project: " +
                StringUtil.join(pluginsToEnableWithoutRestart, (plugin) -> plugin.getPluginId().toString(), ", "));
       for (IdeaPluginDescriptor descriptor : pluginsToEnableWithoutRestart) {
-        ProjectPluginTracker.getInstance().registerProjectPlugin(project, descriptor);
+        ProjectPluginTracker.getInstance(project)
+          .registerProjectPlugin(descriptor);
       }
       ApplicationManager.getApplication().invokeLater(() -> PluginEnabler.enablePlugins(project, pluginsToEnableWithoutRestart, true));
     }
