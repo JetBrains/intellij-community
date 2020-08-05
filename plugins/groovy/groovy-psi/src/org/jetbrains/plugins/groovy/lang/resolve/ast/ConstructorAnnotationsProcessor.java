@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -154,7 +156,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
 
     boolean includeProperties = tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true);
     boolean includeFields = tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical;
-    addParameters(typeDefinition, parameterCollector, fieldsConstructor, includeProperties, includeFields, isOptional, filter);
+    boolean includeBeans = tupleConstructor != null && PsiUtil.getAnnoAttributeValue(tupleConstructor, "allProperties", false);
+    addParameters(typeDefinition, parameterCollector, fieldsConstructor, includeProperties, includeBeans, includeFields, isOptional,
+                  filter);
 
     if (includes != null) {
       Comparator<GrParameter> includeComparator = Comparator.comparingInt(param -> includes.indexOf(param.getName()));
@@ -193,38 +197,67 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
     addParametersForSuper(typeDefinition.getSuperClass(), collector, builder, isOptional, superFields, superProperties, visited,
                           nameFilter);
-    addParameters(typeDefinition, collector, builder, superProperties, superFields, isOptional, nameFilter);
+    addParameters(typeDefinition, collector, builder, superProperties, false, superFields, isOptional, nameFilter);
+  }
+
+  private static Trinity<List<PsiField>, List<PsiMethod>, List<PsiField>> getFieldsAndProperties(@NotNull PsiClass psiClass) {
+    List<PsiField> fields = new ArrayList<>();
+    List<PsiField> properties = new ArrayList<>();
+    List<PsiMethod> setters = new ArrayList<>();
+    PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
+    Map<String, PsiMethod> setterProps = PropertyUtilBase.getAllProperties(true, false, methods);
+    PsiField[] allFields = CollectClassMembersUtil.getFields(psiClass, false);
+    for (PsiField field : allFields) {
+      if (field instanceof GrField && ((GrField)field).isProperty()) {
+        properties.add(field);
+      }
+      else {
+        fields.add(field);
+      }
+    }
+    Set<String> fieldNames = Arrays.stream(allFields).map(PsiField::getName).collect(Collectors.toSet());
+    for (Map.Entry<String, PsiMethod> setterProperty : setterProps.entrySet()) {
+      if (fieldNames.contains(setterProperty.getKey())) {
+        continue;
+      }
+      setters.add(setterProperty.getValue());
+    }
+    return Trinity.create(properties, setters, fields);
   }
 
   private static void addParameters(@NotNull PsiClass psiClass,
                                     @NotNull List<@NotNull GrParameter> collector,
                                     @NotNull GrLightMethodBuilder builder,
                                     boolean includeProperties,
+                                    boolean includeBeans,
                                     boolean includeFields,
                                     boolean optional,
                                     @NotNull Predicate<? super String> nameFilter) {
-
-    PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
+    Trinity<List<PsiField>, List<PsiMethod>, List<PsiField>> fieldGroups = getFieldsAndProperties(psiClass);
     if (includeProperties) {
-      for (PsiMethod method : methods) {
-        if (!method.hasModifierProperty(PsiModifier.STATIC) && PropertyUtilBase.isSimplePropertySetter(method)) {
-          final String name = PropertyUtilBase.getPropertyNameBySetter(method);
-          if (!nameFilter.test(name)) continue;
-          final PsiType type = PropertyUtilBase.getPropertyType(method);
-          assert type != null : method;
-          collector.add(new GrLightParameter(name, type, builder).setOptional(optional));
-        }
+      for (PsiField property : fieldGroups.first) {
+        String name = property.getName();
+        if (!nameFilter.test(name) || property.hasModifierProperty(PsiModifier.STATIC)) continue;
+        collector.add(new GrLightParameter(name, property.getType(), builder).setOptional(optional));
       }
     }
 
-    final Map<String,PsiMethod> properties = PropertyUtilBase.getAllProperties(true, false, methods);
-    for (PsiField field : CollectClassMembersUtil.getFields(psiClass, false)) {
-      final String name = field.getName();
-      if (includeFields ||
-          includeProperties && field instanceof GrField && ((GrField)field).isProperty()) {
-        if (nameFilter.test(name) && !field.hasModifierProperty(PsiModifier.STATIC) && !properties.containsKey(name)) {
-          collector.add(new GrLightParameter(name, field.getType(), builder).setOptional(optional));
-        }
+    if (includeBeans) {
+      for (PsiMethod method : fieldGroups.second) {
+        assert PropertyUtilBase.isSimplePropertySetter(method);
+        final String name = PropertyUtilBase.getPropertyNameBySetter(method);
+        if (!nameFilter.test(name) || method.hasModifierProperty(PsiModifier.STATIC)) continue;
+        final PsiType type = PropertyUtilBase.getPropertyType(method);
+        assert type != null : method;
+        collector.add(new GrLightParameter(name, type, builder).setOptional(optional));
+      }
+    }
+
+    if (includeFields) {
+      for (PsiField field : fieldGroups.third) {
+        String name = field.getName();
+        if (!nameFilter.test(name) || field.hasModifierProperty(PsiModifier.STATIC)) continue;
+        collector.add(new GrLightParameter(name, field.getType(), builder).setOptional(optional));
       }
     }
   }

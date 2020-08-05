@@ -192,4 +192,31 @@ static void main(String[] args) {
     new Rr<error>(actionType: "a", referrerUrl: true, referrerCode: 1)</error>
 }"""
   }
+
+  @Test
+  void 'allProperties enable JavaBean support'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allProperties = true)
+class Rr {
+    Closure actionType
+    long referrerCode;
+
+    void setProp(String s) {
+
+    }
+    
+    private int referrerId;
+
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr({})
+    new Rr({}, 1)
+    new Rr({}, 1, true)
+    new Rr({}, 1, true, "")
+    new Rr(actionType: {}, referrerUrl: true, referrerCode: 1)
+}"""
+  }
 }
