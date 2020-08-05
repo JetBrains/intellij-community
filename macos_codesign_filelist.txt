@@ -10,6 +10,6 @@
 @@bundle@@/Contents/plugins/Kotlin/lib/kotlin-compiler-client-embeddable.jar
 @@bundle@@/Contents/plugins/Kotlin/lib/kotlin-daemon-client-new.jar
 @@bundle@@/Contents/plugins/Kotlin/lib/kotlin-daemon-client.jar
-@@bundle@@/Contents/plugins/gradle/lib/gradle-api-6.1.1.jar
+@@bundle@@/Contents/plugins/gradle/lib/gradle-api-6.5.jar
 @@bundle@@/Contents/plugins/java/lib/debugger-memory-agent-0.0.11.jar
 @@bundle@@/Contents/plugins/svn4idea/lib/sqlite-jdbc-3.20.1.jar
