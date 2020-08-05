@@ -179,19 +179,21 @@ public final class PluginInstaller {
   }
 
   public static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
-    Ref<IOException> ref = new Ref<>();
+    Ref<Throwable> ref = new Ref<>();
     Ref<Path> refTarget = new Ref<>();
+    String pluginName = descriptor.getName();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         refTarget.set(unpackPlugin(sourceFile, Paths.get(PathManager.getPluginsPath())));
       }
-      catch (IOException e) {
+      catch (Throwable e) {
+        LOG.warn("Plugin " + descriptor + " failed to install without restart. " + e.getMessage(), e);
         ref.set(e);
       }
-    }, IdeBundle.message("progress.title.installing.plugin"), false, null, parent instanceof JComponent ? (JComponent)parent : null);
-    IOException exception = ref.get();
+    }, IdeBundle.message("progress.title.installing.plugin", pluginName), false, null, parent instanceof JComponent ? (JComponent)parent : null);
+    Throwable exception = ref.get();
     if (exception != null) {
-      Messages.showErrorDialog(parent, IdeBundle.message("message.plugin.installation.failed.0", exception.getMessage()));
+      Messages.showErrorDialog(parent, IdeBundle.message("message.plugin.installation.failed.0.1", pluginName, exception.getMessage()));
     }
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
