@@ -104,7 +104,7 @@ public final class XmlStringUtil {
     return buffer;
   }
 
-  public static @NotNull String wrapInHtml(@Nls @NotNull CharSequence result) {
+  public static @NotNull @Nls String wrapInHtml(@Nls @NotNull CharSequence result) {
     return HTML_START + result + HTML_END;
   }
 

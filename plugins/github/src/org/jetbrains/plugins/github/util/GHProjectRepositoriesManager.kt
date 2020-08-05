@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListen
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   private val updateQueue = MergingUpdateQueue("GitHub repositories update", 50, true, null, this, null, true)
+    .usePassThroughInUnitTestMode()
   private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
@@ -70,10 +72,11 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("Found remotes: $remotes")
 
+    val authenticatedServers = service<GithubAccountManager>().accounts.map { it.server }
     val servers = mutableListOf<GithubServerPath>().apply {
       add(GithubServerPath.DEFAULT_SERVER)
       GithubAccountsMigrationHelper.getInstance().getOldServer()?.let { add(it) }
-      addAll(service<GithubAccountManager>().accounts.map { it.server })
+      addAll(authenticatedServers)
       addAll(serversFromDiscovery)
     }
 
@@ -87,6 +90,13 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("New list of known repos: $repositories")
     knownRepositories = repositories
+
+    for (server in authenticatedServers) {
+      if (server.isGithubDotCom) continue
+      service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).successOnEdt {
+        GHPRStatisticsCollector.logEnterpriseServerMeta(server, it)
+      }
+    }
   }
 
   @CalledInAwt
@@ -95,13 +105,14 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     LOG.debug("Extracted URI $uri from remote ${remote.url}")
     if (uri == null) return
 
+    val host = uri.host ?: return
     val path = uri.path ?: return
     val pathParts = path.removePrefix("/").split('/').takeIf { it.size >= 2 } ?: return
     val serverSuffix = if (pathParts.size == 2) null else pathParts.subList(0, pathParts.size - 2).joinToString("/", "/")
 
-    val server = GithubServerPath(false, uri.host, null, serverSuffix)
-    val serverHttp = GithubServerPath(true, uri.host, null, serverSuffix)
-    val server8080 = GithubServerPath(true, uri.host, 8080, serverSuffix)
+    val server = GithubServerPath(false, host, null, serverSuffix)
+    val serverHttp = GithubServerPath(true, host, null, serverSuffix)
+    val server8080 = GithubServerPath(true, host, 8080, serverSuffix)
     LOG.debug("Scheduling GHE server discovery for $server, $serverHttp and $server8080")
 
     val serverManager = service<GHEnterpriseServerMetadataLoader>()
@@ -128,9 +139,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     SimpleEventListener.addDisposableListener(eventDispatcher, disposable, listener)
 
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
-
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
-
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
   }
 
@@ -157,7 +166,12 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
 
     private fun updateRepositories(project: Project) {
-      if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+      try {
+        if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+      }
+      catch (e: Exception) {
+        LOG.info("Error occurred while updating repositories", e)
+      }
     }
   }
 

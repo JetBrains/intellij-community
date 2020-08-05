@@ -14,21 +14,21 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
-  internal open val softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
+  internal open val softLinks: MultimapStorageIndex,
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   internal open val persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>,
   internal open val externalMappings: Map<String, ExternalEntityMappingImpl<*>>
 ) {
 
-  constructor(softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
+  constructor(softLinks: MultimapStorageIndex,
               virtualFileIndex: VirtualFileIndex,
               entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
               persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>
   ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
 
   companion object {
-    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(), EntityStorageInternalIndex(),
+    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), EntityStorageInternalIndex(true),
                                HashMap())
   }
 
@@ -85,7 +85,7 @@ internal open class StorageIndexes(
 }
 
 internal class MutableStorageIndexes(
-  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex<PersistentEntityId<*>>,
+  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val persistentIdIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<PersistentEntityId<*>>,
@@ -126,9 +126,11 @@ internal class MutableStorageIndexes(
   }
 
   fun updateIndices(oldEntityId: EntityId, newEntityId: EntityId, builder: AbstractEntityStorage) {
-    builder.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldEntityId)?.forEach {
-      virtualFileIndex.index(newEntityId, it.second, listOf(it.first))
-    }
+    builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
+      .groupBy({ it.propertyName }, { it.vfu })
+      .forEach { (property, vfus) ->
+        virtualFileIndex.index(newEntityId, property, vfus)
+      }
     builder.indexes.entitySourceIndex.getEntryById(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
@@ -165,6 +167,21 @@ internal class MutableStorageIndexes(
         if (mapping.index.isEmpty()) {
           externalMappings.remove(identifier)
         }
+      }
+    }
+  }
+
+  fun updateExternalMappingForEntityId(oldId: EntityId, newId: EntityId = oldId, originStorageIndexes: StorageIndexes) {
+    originStorageIndexes.externalMappings.forEach { (id, mapping) ->
+      val data = mapping.index[oldId] ?: return@forEach
+      val externalMapping = externalMappings[id]
+      if (externalMapping == null) {
+        val newMapping = MutableExternalEntityMappingImpl<Any>()
+        newMapping.index[newId] = data
+        externalMappings[id] = newMapping
+      } else {
+        externalMapping as MutableExternalEntityMappingImpl<Any>
+        externalMapping.index[newId] = data
       }
     }
   }

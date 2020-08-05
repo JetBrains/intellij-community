@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -227,6 +228,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         info.fileLevelComponent = component;
         info.setGroup(group);
         fileLevelInfos.add(info);
+      }
+    }
+  }
+
+  void cleanAllFileLevelHighlights() {
+    final FileEditorManager manager = FileEditorManager.getInstance(myProject);
+    for (FileEditor fileEditor : manager.getAllEditors()) {
+      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+      if (infos != null && !infos.isEmpty()) {
+        for (HighlightInfo info : infos) {
+          manager.removeTopComponent(fileEditor, info.fileLevelComponent);
+        }
+        infos.clear();
       }
     }
   }
@@ -982,20 +996,38 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return result;
   }
 
+  /**
+   * @deprecated Use {@link DaemonCodeAnalyzerImpl#serializeCodeInsightPasses(boolean)} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
+    serializeCodeInsightPasses(flag);
+  }
+
+  /**
+   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behaviour.
+   *
+   * @param flag if {@code true}: enables code insight passes serialization:
+   *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
+   *             completion of Syntax analysis {@link GeneralHighlightingPass}.
+   *             if {@code false} (default behaviour) code insight passes are running in parallel
+   */
+  @ApiStatus.Internal
+  public void serializeCodeInsightPasses(boolean flag) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     setUpdateByTimerEnabled(false);
     try {
-      cancelUpdateProgress(false, "runLocalInspectionPassAfterCompletionOfGeneralHighlightPass");
+      cancelUpdateProgress(false, "serializeCodeInsightPasses");
       myPassExecutorService.cancelAll(true);
 
       TextEditorHighlightingPassRegistrarImpl registrar =
         (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-      registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
+      registrar.serializeCodeInsightPasses(flag);
     }
     finally {
       setUpdateByTimerEnabled(true);
     }
   }
+
 }

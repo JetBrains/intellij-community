@@ -33,7 +33,6 @@
  */
 package com.intellij.ui.layout.migLayout.patched
 
-import gnu.trove.THashMap
 import net.miginfocom.layout.*
 import java.awt.*
 import java.awt.event.ActionListener
@@ -46,7 +45,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   private var cacheParentW: ContainerWrapper? = null
 
   @Transient
-  private val componentWrapperToConstraints = THashMap<ComponentWrapper, CC>()
+  private val componentWrapperToConstraints = HashMap<ComponentWrapper, CC>()
   @Transient
   private var debugTimer: Timer? = null
 
@@ -136,7 +135,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
       grid = null
     }
 
-    componentWrapperToConstraints.retainEntries { wrapper, _ -> (wrapper as SwingComponentWrapper).component.parent === parent }
+    componentWrapperToConstraints.keys.removeIf { (it as SwingComponentWrapper).component.parent !== parent }
 
     if (parent.isValid) {
       lastWasInvalid = false
@@ -327,7 +326,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   }
 
   fun getComponentConstraints(): Map<Component, CC> {
-    val result = THashMap<Component, CC>()
+    val result = HashMap<Component, CC>()
     for (entry in componentWrapperToConstraints) {
       result.put((entry.key as SwingComponentWrapper).component, entry.value)
     }

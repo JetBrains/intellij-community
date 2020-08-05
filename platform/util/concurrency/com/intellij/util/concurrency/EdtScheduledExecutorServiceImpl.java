@@ -5,7 +5,10 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link ExecutorService} implementation which
@@ -65,5 +68,4 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   }
 
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
-
 }

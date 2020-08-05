@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -43,10 +42,10 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +193,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
   private static boolean isModulePointsSameRoot(ModuleData moduleData, Module ideModule) {
     for (VirtualFile root: ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (FileUtil.pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }
@@ -400,10 +399,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           Path savedPath = pair.second;
           if (orphanModulesList.isItemSelected(i) && savedPath.toFile().isFile()) {
             try {
-              FileUtil.copy(savedPath.toFile(), new File(originalPath));
-              ModuleManager.getInstance(project).loadModule(originalPath);
+              File file = new File(originalPath);
+              FileUtil.copy(savedPath.toFile(), file);
+              ModuleManager.getInstance(project).loadModule(file.toPath());
             }
-            catch (IOException | JDOMException | ModuleWithNameAlreadyExists e) {
+            catch (IOException | ModuleWithNameAlreadyExists e) {
               LOG.warn(e);
             }
           }

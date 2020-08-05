@@ -256,7 +256,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
       for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(this, resolveContext)) {
         for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(callExpression, resolveResult, resolveContext)) {
-          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context, 0);
+          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context);
           if (callableType == null) continue;
 
           callableTypes.add(callableType);

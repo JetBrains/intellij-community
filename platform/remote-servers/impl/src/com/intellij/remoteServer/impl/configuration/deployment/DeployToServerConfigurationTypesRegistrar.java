@@ -46,16 +46,17 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
 
   @Nullable
   private static DeployToServerConfigurationType findDeployConfigurationType(@NotNull ServerType<?> serverType) {
+    String serverTypeId = serverType.getId();
     return (DeployToServerConfigurationType)ConfigurationType.CONFIGURATION_TYPE_EP
-      .findFirstSafe(next -> isDeployForServerType(next, serverType));
+      .findFirstSafe(next -> isDeployForServerType(next, serverTypeId));
   }
 
   private static ExtensionPointImpl<ConfigurationType> getConfigurationTypesExtPoint() {
     return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
   }
 
-  private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull ServerType<?> serverType) {
+  private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull String serverTypeId) {
     return configurationType instanceof DeployToServerConfigurationType &&
-           ((DeployToServerConfigurationType)configurationType).isForServerType(serverType);
+           ((DeployToServerConfigurationType)configurationType).isForServerType(serverTypeId);
   }
 }

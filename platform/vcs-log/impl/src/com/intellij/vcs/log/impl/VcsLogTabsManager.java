@@ -2,6 +2,9 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +16,8 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +79,8 @@ public class VcsLogTabsManager {
 
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      ui = VcsLogEditorUtilKt.openLogTab(myProject, manager, getFullName(tabId), factory, focus);
-      ui.addFilterListener(() -> {
+      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus);
+      ui.getFilterUi().addFilterListener(() -> {
         VcsLogEditorUtilKt.updateTabName(myProject, ui);
       });
     }
@@ -83,11 +88,23 @@ public class VcsLogTabsManager {
       ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
                                         () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
                                         factory, focus);
-      ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
+      ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");
     }
+    return ui;
+  }
+
+  @NotNull
+  private static MainVcsLogUi openLogEditorTab(@NotNull Project project, @NotNull VcsLogManager manager,
+                                               @NotNull String name,
+                                               @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
+                                               boolean focus) {
+    MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR, true);
+    DefaultVcsLogFile file = new DefaultVcsLogFile(name, new VcsLogPanel(manager, ui));
+    ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(project).openFile(file, focus), ModalityState.NON_MODAL);
+    manager.scheduleInitialization();
     return ui;
   }
 
@@ -131,8 +148,7 @@ public class VcsLogTabsManager {
     }
 
     @Override
-    public MainVcsLogUi createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData) {
+    public MainVcsLogUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
       myUiProperties.addTab(ui.getId(), myLogWindowKind);
       Disposer.register(ui, () -> {

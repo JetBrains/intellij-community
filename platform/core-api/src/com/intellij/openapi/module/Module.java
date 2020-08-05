@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.*;
@@ -64,7 +65,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return the module name.
    */
-  @NotNull String getName();
+  @NotNull @NlsSafe String getName();
 
   /**
    * Checks if the module instance has been disposed and unloaded.

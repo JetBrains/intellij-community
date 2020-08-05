@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.newui.Tags
 
 /**
@@ -63,6 +64,9 @@ data class IntellijUpdateMetadata(
     for (dep in optionalDependencies) {
       pluginNode.addDepends(dep, true)
     }
+
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(pluginNode)
+
     return pluginNode
   }
 }
@@ -85,13 +89,13 @@ internal class MarketplaceSearchPluginData(
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode()
     pluginNode.setId(id)
-    pluginNode.setDate(cdate)
     pluginNode.name = name
     pluginNode.rating = String.format("%.2f", rating)
     pluginNode.downloads = downloads
     pluginNode.vendor = vendor
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
+    if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
   }

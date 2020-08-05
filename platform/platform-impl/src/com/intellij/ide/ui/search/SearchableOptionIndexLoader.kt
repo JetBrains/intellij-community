@@ -4,15 +4,13 @@ package com.intellij.ide.ui.search
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.text.ByteArrayCharSequence
-import com.intellij.util.text.CharSequenceHashingStrategy
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import java.net.URL
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
-  val storage = THashMap<CharSequence, LongArray>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE)
+  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap<LongArray>(20, 0.9f, true)
   val identifierTable = IndexedCharsInterner()
 
   override fun addOptions(text: String,
@@ -52,7 +50,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   }
 
   private fun loadSynonyms(): MutableMap<Pair<String, String>, MutableSet<String>> {
-    val result = THashMap<Pair<String, String>, MutableSet<String>>()
+    val result = HashMap<Pair<String, String>, MutableSet<String>>()
     val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
     val cache = HashSet<String>()
     for (configurable in root.getChildren("configurable")) {
@@ -78,7 +76,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
           for (word in cache) {
             putOptionWithHelpId(word, id, groupName, synonym, null)
           }
-          result.getOrPut(Pair(option, id)) { THashSet() }.add(synonym)
+          result.computeIfAbsent(Pair(option, id)) { HashSet() }.add(synonym)
         }
       }
     }
@@ -103,6 +101,6 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     else if (configs.indexOf(packed) == -1) {
       configs = ArrayUtil.append(configs, packed)
     }
-    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs)
+    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs!!)
   }
 }

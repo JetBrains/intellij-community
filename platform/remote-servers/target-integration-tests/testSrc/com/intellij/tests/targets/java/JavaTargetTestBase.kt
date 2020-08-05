@@ -4,7 +4,12 @@ package com.intellij.tests.targets.java
 import com.intellij.debugger.ExecutionWithDebuggerToolsTestCase
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.RunConfigurationExtension
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.ApplicationConfiguration
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
@@ -21,7 +26,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.*
@@ -79,23 +86,39 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test can read file at target`(): Unit = runBlocking {
-    val cwd = tempDir.createTempDir()
+    doTestCanReadFileAtTarget(ShortenCommandLine.NONE)
+  }
+
+  @Test
+  fun `test can read file at target with manifest shortener`(): Unit = runBlocking {
+    doTestCanReadFileAtTarget(ShortenCommandLine.MANIFEST)
+  }
+
+  @Test
+  fun `test can read file at target with args file shortener`(): Unit = runBlocking {
+    doTestCanReadFileAtTarget(ShortenCommandLine.ARGS_FILE)
+  }
+
+  private suspend fun doTestCanReadFileAtTarget(shortenCommandLine: ShortenCommandLine) {
+    val cwd = tempDir.createDir()
     val executor = DefaultRunExecutor.getRunExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
             conf.setModule(module)
-            conf.workingDirectory = cwd.absolutePath
+            conf.workingDirectory = cwd.toString()
             conf.mainClassName = "Cat"
             conf.programParameters = targetFilePath
             conf.defaultTargetName = targetName
+            conf.shortenCommandLine = shortenCommandLine
           }
         )
         .build()
     }
+    val textDeferred = processOutputReader { _, outputType -> outputType == ProcessOutputType.STDOUT }
     withDeletingExcessiveEditors {
-      val runContentDescriptor = withTimeout(30_000) {
+      withTimeout(30_000) {
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
@@ -105,24 +128,22 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
           }
           .await()
       }
-
-      // TODO I don't know why does it work and can this check be trusted.
-      //  Supposing that event dispatching of process handlers starts at some magic moment after listener registration.
-      val text = runContentDescriptor.processHandler!!.collectOutput { _, outputType -> outputType == ProcessOutputType.STDOUT }
-      assertThat(text).isEqualTo(targetFileContent)
     }
+    val text = withTimeout(30_000) { textDeferred.await() }
+    assertThat(text).isEqualTo(targetFileContent)
   }
 
   @Test
   fun `test java debugger`(): Unit = runBlocking {
-    val cwd = tempDir.createTempDir()
+    assertThat(SystemInfo.IS_AT_LEAST_JAVA9).describedAs("The test is intended to verifying Java 9 options.").isTrue()
+    val cwd = tempDir.createDir()
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
             conf.setModule(module)
-            conf.workingDirectory = cwd.absolutePath
+            conf.workingDirectory = cwd.toString()
             conf.mainClassName = "Cat"
             conf.programParameters = targetFilePath
             conf.defaultTargetName = targetName
@@ -137,8 +158,19 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
         .containingFile
     })
 
+    val textDeferred = processOutputReader filter@{ event, outputType ->
+      val text = event.text ?: return@filter false
+      when (outputType) {
+        ProcessOutputType.STDOUT ->
+          // For some reason this string appears in stdout. Don't know whether it should appear or not.
+          !text.startsWith("Listening for transport ")
+        ProcessOutputType.SYSTEM -> text.startsWith("Debugger")
+        else -> false
+      }
+    }
+
     withDeletingExcessiveEditors {
-      val debugContentDescriptor = withTimeout(30_000) {
+      withTimeout(30_000) {
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
@@ -148,21 +180,34 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
           }
           .await()
       }
-
-      // TODO I don't know why does it work and can this check be trusted.
-      //  Supposing that event dispatching of process handlers starts at some magic moment after listener registration.
-      val text = debugContentDescriptor.processHandler!!.collectOutput filter@{ event, outputType ->
-        val text = event.text ?: return@filter false
-        when (outputType) {
-          ProcessOutputType.STDOUT ->
-            // For some reason this string appears in stdout. Don't know whether it should appear or not.
-            !text.startsWith("Listening for transport ")
-          ProcessOutputType.SYSTEM -> text.startsWith("Debugger")
-          else -> false
-        }
-      }
-      assertThat(text).isEqualTo("Debugger: $targetFileContent\n$targetFileContent")
     }
+    val text = withTimeout(30_000) { textDeferred.await() }
+    assertThat(text).isEqualTo("Debugger: $targetFileContent\n$targetFileContent")
+    Unit
+  }
+
+  private fun processOutputReader(filter: (ProcessEvent, Key<*>) -> Boolean): CompletableDeferred<String> {
+    val textDeferred = CompletableDeferred<String>()
+    RunConfigurationExtension.EP_NAME.point.registerExtension(
+      object : RunConfigurationExtension() {
+        override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
+
+        override fun <T : RunConfigurationBase<*>?> updateJavaParameters(
+          configuration: T,
+          params: JavaParameters,
+          runnerSettings: RunnerSettings?
+        ): Unit = Unit
+
+        override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
+          GlobalScope.launch {
+            textDeferred.complete(handler.collectOutput(filter))
+          }
+        }
+      },
+      LoadingOrder.ANY,
+      testRootDisposable
+    )
+    return textDeferred
   }
 
   private suspend fun ProcessHandler.collectOutput(handler: (event: ProcessEvent, outputType: Key<*>) -> Boolean): String =
@@ -180,7 +225,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
             continuation.resume(stdout.toString())
           }
           else {
-            continuation.resumeWithException(IllegalStateException(wholeOutput.toString()))
+            continuation.resumeWithException(IllegalStateException("\n=== CONSOLE ===\n$wholeOutput\n=== CONSOLE END ==="))
           }
         }
 

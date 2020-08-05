@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -22,7 +21,7 @@ import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,7 +31,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FoldingModelImpl extends InlayModel.SimpleAdapter
+public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
@@ -656,13 +655,15 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         if (!r2.isExpanded() && r2s <= r1s && r2e >= r1e) invisibleRegions[i] = true;
       }
     }
-    Set<FoldRegion> visibleRegions = new THashSet<>(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY);
+    Set<FoldRegion> visibleRegions = new ObjectOpenCustomHashSet<>(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY);
     List<FoldRegion> topLevelRegions = new ArrayList<>();
     for (int i = 0; i < allFoldRegions.length; i++) {
       if (!invisibleRegions[i]) {
         FoldRegion region = allFoldRegions[i];
         LOG.assertTrue(visibleRegions.add(region), "Duplicate visible regions");
-        if (!region.isExpanded()) topLevelRegions.add(region);
+        if (!region.isExpanded()) {
+          topLevelRegions.add(region);
+        }
       }
     }
     topLevelRegions.sort(Comparator.comparingInt(r -> r.getStartOffset()));

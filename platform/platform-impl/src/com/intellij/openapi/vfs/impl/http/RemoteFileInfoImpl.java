@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -194,6 +195,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
+  @NonNls
   public String toString() {
     final String errorMessage = getErrorMessage();
     return "state=" + getState()

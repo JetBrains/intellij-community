@@ -101,10 +101,10 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
 
   private static boolean classTypeMatches(String className, PsiClassType classType, Set<PsiClass> visited) {
     PsiClass psiClass = PsiUtil.resolveClassInType(classType);
-    if (!visited.add(psiClass)) {
-      return true;
-    }
     if (psiClass instanceof PsiTypeParameter) {
+      if (!visited.add(psiClass)) {
+        return true;
+      }
       for (PsiClassType bound : ((PsiTypeParameter)psiClass).getExtendsList().getReferencedTypes()) {
         if (classTypeMatches(className, bound, visited)) return true;
       }

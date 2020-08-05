@@ -110,7 +110,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
 
-    assert LookupElementPresentation.renderElement(myItems[0]).tailText == '() on X'
+    assert renderElement(myItems[0]).tailText == '() on X'
   }
 
   @NeedsIndex.ForStandardLibrary

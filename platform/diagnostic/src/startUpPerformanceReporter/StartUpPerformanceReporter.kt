@@ -9,7 +9,7 @@ import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
@@ -242,7 +242,7 @@ private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
 
   for (plugin in PluginManagerCore.getLoadedPlugins()) {
     val id = plugin.pluginId.idString
-    val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
+    val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginAwareClassLoader ?: continue
     val costPerPhaseMap = result.getOrPut(id) {
       val m = Object2LongOpenHashMap<String>()
       m.defaultReturnValue(-1)

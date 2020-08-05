@@ -32,7 +32,7 @@ public class TemplateStateBase {
 
   public TemplateStateBase(Editor editor) {
     myEditor = editor;
-    myDocument = getEditor().getDocument();
+    myDocument = editor.getDocument();
   }
 
   protected void setEditor(Editor editor) {
@@ -65,7 +65,7 @@ public class TemplateStateBase {
 
   @Nullable
   protected String getSelectionBeforeTemplate() {
-    return (String)getProperties().get(ExpressionContext.SELECTION);
+    return (String)myProperties.get(ExpressionContext.SELECTION);
   }
 
   @Nullable
@@ -76,19 +76,19 @@ public class TemplateStateBase {
     if (variableName.equals(Template.END)) {
       return new TextResult("");
     }
-    if (getPredefinedVariableValues() != null) {
-      String text = getPredefinedVariableValues().get(variableName);
+    if (myPredefinedVariableValues != null) {
+      String text = myPredefinedVariableValues.get(variableName);
       if (text != null) {
         return new TextResult(text);
       }
     }
-    int segmentNumber = getTemplate().getVariableSegmentNumber(variableName);
-    if (segmentNumber < 0 || getSegments().getSegmentsCount() <= segmentNumber) {
+    int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+    if (segmentNumber < 0 || mySegments.getSegmentsCount() <= segmentNumber) {
       return null;
     }
-    CharSequence text = getDocument().getImmutableCharSequence();
-    int start = getSegments().getSegmentStart(segmentNumber);
-    int end = getSegments().getSegmentEnd(segmentNumber);
+    CharSequence text = myDocument.getImmutableCharSequence();
+    int start = mySegments.getSegmentStart(segmentNumber);
+    int end = mySegments.getSegmentEnd(segmentNumber);
     int length = text.length();
     if (start > length || end > length) {
       return null;
@@ -97,25 +97,25 @@ public class TemplateStateBase {
   }
 
   boolean isDisposed() {
-    return getDocument() == null;
+    return myDocument == null;
   }
 
   protected void restoreEmptyVariables(IntArrayList indices) {
     List<TextRange> rangesToRemove = new ArrayList<>();
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.getInt(i);
-      rangesToRemove.add(TextRange.create(getSegments().getSegmentStart(index), getSegments().getSegmentEnd(index)));
+      rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
     rangesToRemove.sort((o1, o2) -> {
       int startDiff = o2.getStartOffset() - o1.getStartOffset();
       return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
     });
-    DocumentUtil.executeInBulk(getDocument(), true, () -> {
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
       if (isDisposed()) {
         return;
       }
       for (TextRange range : rangesToRemove) {
-        getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+        myDocument.deleteString(range.getStartOffset(), range.getEndOffset());
       }
     });
   }

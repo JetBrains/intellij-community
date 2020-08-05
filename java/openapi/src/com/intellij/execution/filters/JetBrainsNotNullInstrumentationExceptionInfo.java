@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -95,8 +96,8 @@ public final class JetBrainsNotNullInstrumentationExceptionInfo extends Exceptio
   }
 
   static JetBrainsNotNullInstrumentationExceptionInfo tryCreate(int offset,
-                                                                @NotNull String exceptionClassName,
-                                                                @NotNull String exceptionMessage) {
+                                                                @NotNull @NonNls String exceptionClassName,
+                                                                @NotNull @NonNls String exceptionMessage) {
     if (!exceptionClassName.equals("java.lang.IllegalArgumentException")) return null;
     if (!exceptionMessage.startsWith("Argument ")) return null;
     Matcher matcher = INSTRUMENTATION_MESSAGE_PATTERN.matcher(exceptionMessage);

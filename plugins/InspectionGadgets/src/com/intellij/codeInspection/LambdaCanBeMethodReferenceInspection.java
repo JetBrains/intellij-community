@@ -86,7 +86,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
           element,
           getDisplayName(),
           type != ProblemHighlightType.INFORMATION,
-          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
+          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier)));
       }
     };
   }
@@ -579,17 +579,17 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
-    private final String mySuffix;
+    private final boolean mySafeQualifier;
 
-    ReplaceWithMethodRefFix(String suffix) {
-      mySuffix = suffix;
+    ReplaceWithMethodRefFix(boolean mayChangeSemantics) {
+      mySafeQualifier = mayChangeSemantics;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + mySuffix;
+      return mySafeQualifier ? getFamilyName() : InspectionGadgetsBundle.message("replace.with.method.ref.fix.name.may.change.semantics");
     }
 
     @NotNull

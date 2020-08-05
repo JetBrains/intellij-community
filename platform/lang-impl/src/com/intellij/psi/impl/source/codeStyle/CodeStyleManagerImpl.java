@@ -9,6 +9,7 @@ import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -965,7 +966,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
-    final Project project = file.getProject();
+    Project project = file.getProject();
+    if (ModelBranch.getPsiBranch(file) != null) {
+      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
+        () -> CodeStyleManager.getInstance(project).reformat(file));
+      return;
+    }
+
     CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
       file,
       () -> CommandProcessor.getInstance().executeCommand(

@@ -79,7 +79,7 @@ public final class VcsRootScanner implements AsyncVfsEventsListener {
   static void visitDirsRecursivelyWithoutExcluded(@NotNull Project project,
                                                   @NotNull ProjectRootManager projectRootManager,
                                                   @NotNull VirtualFile root,
-                                                  @NotNull Function<? super VirtualFile, ? extends Result> dirFound) {
+                                                  @NotNull Function<? super VirtualFile, Result> dirFound) {
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     Pattern ignorePattern = parseDirIgnorePattern();
@@ -130,7 +130,7 @@ public final class VcsRootScanner implements AsyncVfsEventsListener {
     return false;
   }
 
-  static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+  private static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
     if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
       LOG.debug("Skipping ignored dir: ", dir);
       return true;

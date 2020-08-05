@@ -39,6 +39,8 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +74,9 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
     if (!(element instanceof PsiClass)) return false;
     if (element instanceof PsiAnonymousClass) return false;
-    return findClassInheritors((PsiClass)element);
+    PsiClass psiClass = (PsiClass)element;
+    if (!findClassInheritors(psiClass)) return false;
+    return !isParentSealed(psiClass);
   }
 
   private static boolean findClassInheritors(final PsiClass element) {
@@ -89,6 +93,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }), JavaRefactoringBundle.message("inline.anonymous.conflict.progress", element.getQualifiedName()), true, element.getProject())) return false;
     return inheritors.isEmpty();
+  }
+
+  private static boolean isParentSealed(@NotNull PsiClass psiClass) {
+    if (PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) == null) return false;
+    return ClassUtils.hasSealedParent(psiClass);
   }
 
   @Override
@@ -117,8 +126,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<String> errorMessage = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), JavaRefactoringBundle.message(
+    final Ref<@Nls String> errorMessage = new Ref<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(
+        () -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), 
+      JavaRefactoringBundle.message(
       "inline.conflicts.progress"), true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), JavaRefactoringBundle.message("inline.to.anonymous.refactoring"), null);
@@ -189,7 +201,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  public static String getCannotInlineMessage(final PsiClass psiClass) {
+  public static @Nls String getCannotInlineMessage(final PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) {
       return "Type parameters cannot be inlined";
     }
@@ -308,7 +320,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  private static String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
+  private static @Nls String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
     boolean hasUsages = false;
     for(PsiReference reference : ReferencesSearch.search(aClass, GlobalSearchScope.projectScope(aClass.getProject()))) {
       final PsiElement element = reference.getElement();

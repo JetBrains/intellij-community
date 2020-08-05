@@ -348,7 +348,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                             int patternIndex,
                                             boolean isAsciiName) {
     return !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
-           ? indexOfWordStart(name, patternIndex, startAt)
+           ? indexOfWordStart(name, patternIndex, startAt, isAsciiName)
            : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
   }
 
@@ -502,7 +502,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                                      int patternIndex,
                                                      int nameIndex,
                                                      boolean isAsciiName) {
-    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
+    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex, isAsciiName);
     return matchWildcards(name, patternIndex, nextWordStart, isAsciiName);
   }
 
@@ -538,21 +538,21 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
   }
 
-  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom) {
+  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {
     final char p = myPattern[patternIndex];
     if (startFrom >= name.length() ||
         myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
       return -1;
     }
-    int nextWordStart = NameUtilCore.isWordStart(name, startFrom) ? startFrom : nextWord(name, startFrom);
+    int i = startFrom;
+    boolean isSpecialSymbol = !Character.isLetterOrDigit(p);
     while (true) {
-      if (nextWordStart >= name.length()) {
-        return -1;
-      }
-      if (charEquals(p, patternIndex, name.charAt(nextWordStart), true)) {
-        return nextWordStart;
-      }
-      nextWordStart = nextWord(name, nextWordStart);
+      i = indexOfIgnoreCase(name, i, p, patternIndex, isAsciiName);
+      if (i < 0) return -1;
+
+      if (isSpecialSymbol || NameUtilCore.isWordStart(name, i)) return i;
+
+      i++;
     }
   }
 

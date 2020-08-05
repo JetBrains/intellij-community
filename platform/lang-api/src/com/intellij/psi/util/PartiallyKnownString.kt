@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import com.intellij.util.containers.toHeadAndTail
+import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -120,7 +120,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                              pending: MutableList<StringEntry>,
                              segments: List<StringEntry>): MutableList<PartiallyKnownString> {
 
-      val (head, tail) = segments.toHeadAndTail() ?: return result.apply {
+      val (head, tail) = segments.headTailOrNull() ?: return result.apply {
         add(PartiallyKnownString(pending))
       }
 

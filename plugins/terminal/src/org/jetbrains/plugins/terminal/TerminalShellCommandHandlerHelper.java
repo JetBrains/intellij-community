@@ -214,12 +214,6 @@ public final class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    Executor executor = matchedExecutor(keyPressed);
-    if (executor == null) {
-      onShellCommandExecuted();
-      return false;
-    }
-
     Project project = myWidget.getProject();
     String workingDirectory = getWorkingDirectory();
     boolean localSession = !hasRunningCommands();
@@ -232,7 +226,15 @@ public final class TerminalShellCommandHandlerHelper {
       .filter(it -> it.matches(project, workingDirectory, localSession, command))
       .findFirst()
       .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
-    TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, workingDirectory, localSession, command, handler);
+
+    Executor executor = matchedExecutor(keyPressed);
+    if (executor == null) {
+      onShellCommandExecuted();
+      TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
+      return false;
+    }
+
+    TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
                                                                      !hasRunningCommands(), command, executor);
     clearTypedCommand(command);

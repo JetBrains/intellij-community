@@ -41,9 +41,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import gnu.trove.THashMap
-import gnu.trove.THashSet
-import gnu.trove.TObjectIntHashMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
@@ -95,7 +93,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
   private val confirmationDeletionFromPopup = JCheckBox(ExecutionBundle.message("popup.deletion.confirmation"), true)
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
-  private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
+  private val storedComponents = HashMap<ConfigurationFactory, Configurable>()
   protected var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating = false
   protected val toolbarAddAction = MyToolbarAddAction()
@@ -428,8 +426,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val panel = JPanel(BorderLayout())
-    createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
-      panel.add(it, BorderLayout.CENTER)
+    if (!(configurationType is UnknownConfigurationType)) {
+      createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
+        panel.add(it, BorderLayout.CENTER)
+      }
     }
 
     if (configurationType == null) {
@@ -565,9 +565,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val manager = runManager
     manager.fireBeginUpdate()
     try {
-      val settingsToOrder = TObjectIntHashMap<RunnerAndConfigurationSettings>()
+      val settingsToOrder = Object2IntOpenHashMap<RunnerAndConfigurationSettings>()
       var order = 0
-      val toDeleteSettings = THashSet(manager.allSettings)
+      val toDeleteSettings = HashSet(manager.allSettings)
       val selectedSettings = selectedSettings
       for (i in 0 until root.childCount) {
         val node = root.getChildAt(i) as DefaultMutableTreeNode
@@ -603,7 +603,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
       additionalSettings.forEach { it.first.apply() }
 
-      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }), isApplyAdditionalSortByTypeAndGroup = false)
+      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.getInt(it) }), isApplyAdditionalSortByTypeAndGroup = false)
     }
     finally {
       manager.fireEndUpdate()
@@ -627,7 +627,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     var indexToMove = -1
 
     val configurationBeans = ArrayList<RunConfigurationBean>()
-    val names = THashSet<String>()
+    val names = HashSet<String>()
     val configurationNodes = ArrayList<DefaultMutableTreeNode>()
     collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION)
     for (node in configurationNodes) {
@@ -649,7 +649,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val nameText = if (configurable != null) configurable.nameText else configurationBean.settings.name
         if (!names.add(nameText)) {
           TreeUtil.selectNode(tree, node)
-          throw ConfigurationException(type.displayName + " with name \'" + nameText + "\' already exists")
+          throw ConfigurationException("${type.displayName} with name \'$nameText\' already exists")
         }
         configurationBeans.add(configurationBean)
         if (settings === selectedSettings) {
@@ -906,6 +906,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val nodeToAdd = DefaultMutableTreeNode(configurationConfigurable)
     treeModel.insertNodeInto(nodeToAdd, node!!, if (selectedNode != null) node.getIndex(selectedNode) + 1 else node.childCount)
     TreeUtil.selectNode(tree, nodeToAdd)
+    IdeFocusManager.getInstance(project).requestFocus(configurationConfigurable.nameTextField, true)
+    configurationConfigurable.nameTextField.selectionStart = 0
+    configurationConfigurable.nameTextField.selectionEnd = settings.name.length
     return configurationConfigurable
   }
 
@@ -1138,7 +1141,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)
-        IdeFocusManager.getInstance(project).requestFocus(configurable.nameTextField, true)
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length
       }

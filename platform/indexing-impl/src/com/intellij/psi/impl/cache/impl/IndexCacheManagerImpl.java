@@ -12,12 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -72,12 +70,8 @@ public class IndexCacheManagerImpl implements CacheManager {
                                                  @NotNull GlobalSearchScope scope,
                                                  boolean caseSensitively,
                                                  @NotNull Processor<? super VirtualFile> processor) {
-    List<IdIndexEntry> entries = ContainerUtil.map(words, w -> new IdIndexEntry(w, caseSensitively));
-    return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME,
-                                                                      entries,
-                                                                      scope,
-                                                                      valueMask -> (occurenceMask & valueMask) != 0,
-                                                                      processor);
+    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
+    return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
   }
 
   // IMPORTANT!!!
@@ -92,17 +86,13 @@ public class IndexCacheManagerImpl implements CacheManager {
     if (myProject.isDefault()) {
       return true;
     }
+    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWord(word, caseSensitively, occurrenceMask);
 
     try {
-      return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
-          ProgressIndicatorProvider.checkCanceled();
-          int mask = value.intValue();
-          if ((mask & occurrenceMask) != 0) {
-            if (!fileProcessor.process(file)) return false;
-          }
-          return true;
-        }, scope));
+      return ReadAction.compute(() -> FileBasedIndex
+        .getInstance()
+        .processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, fileProcessor)
+      );
     }
     catch (IndexNotReadyException e) {
       throw new ProcessCanceledException();

@@ -645,7 +645,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return FileTypeManager.getInstance().getStdFileType(fileType.getName()) == fileType;
   }
 
-  // check if there is a conflict between new hasbang and exising ones
+  // check if there is a conflict between new hasbang and existing ones
   private HashBangConflict checkHashBangConflict(@NotNull String hashbang) {
     HashBangConflict conflict = new HashBangConflict();
     for (Map.Entry<String, FileType> entry : myTempPatternsTable.getInternalRawHashBangPatterns().entrySet()) {
@@ -658,8 +658,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         return conflict;
       }
     }
-    List<FileTypeRegistry.FileTypeDetector> detectors = FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList();
-    for (FileTypeRegistry.FileTypeDetector detector : detectors) {
+    for (FileTypeRegistry.FileTypeDetector detector : FileTypeRegistry.FileTypeDetector.EP_NAME.getIterable()) {
       if (detector instanceof HashBangFileTypeDetector) {
         String existingHashBang = ((HashBangFileTypeDetector)detector).getMarker();
         if (hashbang.contains(existingHashBang) || existingHashBang.contains(hashbang)) {

@@ -67,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CreateFromUsageUtils {
+public final class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
@@ -575,10 +575,10 @@ public class CreateFromUsageUtils {
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
                                                      ((PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(parent)).getRExpression() instanceof PsiFunctionalExpression;
+        PsiElement gParent = parent.getParent();
         PsiExpressionList expressionList = ObjectUtils
-          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? parent.getParent() : parent),
-                   PsiExpressionList.class);
-        boolean forCompletion = expressionList != null || parent.getParent() instanceof PsiPolyadicExpression;
+          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? gParent : parent), PsiExpressionList.class);
+        boolean forCompletion = expressionList != null || gParent instanceof PsiPolyadicExpression && !(gParent.getParent() instanceof PsiPolyadicExpression);
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, forCompletion);
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;

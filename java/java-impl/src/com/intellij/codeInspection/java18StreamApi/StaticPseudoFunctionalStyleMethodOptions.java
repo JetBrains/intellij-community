@@ -18,6 +18,7 @@ package com.intellij.codeInspection.java18StreamApi;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -114,7 +115,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   }
 
   public JComponent createPanel() {
-    final JBList list = new JBList(myElements);
+    final JBList<PipelineElement> list = new JBList<>(myElements);
     list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
@@ -145,7 +146,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
             return;
           }
           myElements.add(newElement);
-          ((DefaultListModel)list.getModel()).addElement(newElement);
+          ((DefaultListModel<PipelineElement>)list.getModel()).addElement(newElement);
         }
       }
     }).setRemoveAction(new AnActionButtonRunnable() {
@@ -179,7 +180,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       return myHandlerClass;
     }
 
-    public String getMethodName() {
+    public @NlsSafe String getMethodName() {
       return myMethodName;
     }
 

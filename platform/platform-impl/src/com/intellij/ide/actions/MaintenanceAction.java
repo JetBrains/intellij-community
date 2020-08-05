@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -25,7 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class MaintenanceAction extends AnAction implements DumbAware {
+public class MaintenanceAction extends AnAction implements DumbAware, LightEditCompatible {
   public MaintenanceAction() {
     super(ActionsBundle.messagePointer("action.MaintenanceAction.text"));
   }

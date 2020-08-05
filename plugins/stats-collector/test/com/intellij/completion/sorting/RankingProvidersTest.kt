@@ -69,7 +69,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
 
   private fun checkActiveProvider(expectedProvider: RankingModelProvider?) {
     val languageSupported = expectedProvider != null
-    TestCase.assertEquals(languageSupported, testLanguage.displayName in RankingSupport.availableLanguages())
+    TestCase.assertEquals(languageSupported, expectedProvider in RankingSupport.availableRankers())
     val actualProvider = WeakModelProvider.findProvider(testLanguage)
     TestCase.assertEquals(expectedProvider, actualProvider)
   }

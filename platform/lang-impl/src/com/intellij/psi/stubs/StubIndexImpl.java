@@ -285,7 +285,7 @@ public final class StubIndexImpl extends StubIndexEx {
     PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) ->
       myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass);
 
-    if (!ModelBranchImpl.processBranchedFilesInScope(scope != null ? scope : new EverythingGlobalScope(project),
+    if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : new EverythingGlobalScope(project),
                                                      file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
       return false;
     }
@@ -302,7 +302,12 @@ public final class StubIndexImpl extends StubIndexEx {
           continue;
         }
         VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-        if (file == null || (scope != null && !scope.contains(file))) {
+        if (file == null) {
+          continue;
+        }
+
+        List<VirtualFile> filesInScope = scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+        if (filesInScope.isEmpty()) {
           continue;
         }
 
@@ -313,8 +318,10 @@ public final class StubIndexImpl extends StubIndexEx {
           LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
           continue;
         }
-        if (!stubProcessor.process(file, list)) {
-          return false;
+        for (VirtualFile eachFile : filesInScope) {
+          if (!stubProcessor.process(eachFile, list)) {
+            return false;
+          }
         }
       }
     }
@@ -457,12 +464,16 @@ public final class StubIndexImpl extends StubIndexEx {
       IdFilter finalIdFilter = idFilter;
       myAccessValidator.validate(stubUpdatingIndexId, ()-> {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+        //noinspection Convert2Lambda (workaround for JBR crash, JBR-2349)
         return FileBasedIndexImpl.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () ->
-          index.getData(dataKey).forEach((id, value) -> {
-            if (finalIdFilter == null || finalIdFilter.containsFileId(id)) {
-              result.add(id);
+          index.getData(dataKey).forEach(new ValueContainer.ContainerAction<Void>() {
+            @Override
+            public boolean perform(int id, Void value) {
+              if (finalIdFilter == null || finalIdFilter.containsFileId(id)) {
+                result.add(id);
+              }
+              return true;
             }
-            return true;
           })
         ));
       });

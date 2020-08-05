@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,7 @@ public final class VariableNameGenerator {
    * @param names base names which could be used to generate variable name
    * @return this generator
    */
-  public VariableNameGenerator byName(String... names) {
+  public VariableNameGenerator byName(@NonNls String... names) {
     for (String name : names) {
       if (name != null) {
         SuggestedNameInfo info = myManager.suggestVariableName(myKind, name, null, null, true);

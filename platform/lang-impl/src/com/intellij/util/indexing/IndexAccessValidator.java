@@ -12,17 +12,21 @@ public final class IndexAccessValidator {
   private final ThreadLocal<ID<?, ?>> ourAlreadyProcessingIndices = new ThreadLocal<>();
 
   private void checkAccessingIndexDuringOtherIndexProcessing(@NotNull ID<?, ?> indexKey) {
-    final ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();
-    if (alreadyProcessingIndex != null && alreadyProcessingIndex != indexKey) {
-      final String message = MessageFormat.format("Accessing ''{0}'' during processing ''{1}''. Nested different indices processing may cause deadlock",
-                indexKey.getName(),
-                alreadyProcessingIndex.getName());
-      if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-      Logger.getInstance(FileBasedIndexImpl.class).error(message); // RuntimeException to skip rebuild
+    ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();
+    if (alreadyProcessingIndex == null || alreadyProcessingIndex == indexKey) {
+      return;
     }
+
+    String message = MessageFormat.format("Accessing ''{0}'' during processing ''{1}''. Nested different indices processing may cause deadlock",
+              indexKey.getName(),
+              alreadyProcessingIndex.getName());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(message);
+    }
+    Logger.getInstance(FileBasedIndexImpl.class).error(message); // RuntimeException to skip rebuild
   }
 
-  public <T,E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public <T, E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {
     checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     ourAlreadyProcessingIndices.set(indexKey);
     try {

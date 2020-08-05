@@ -53,7 +53,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public int getBraceTokenGroupId(IElementType tokenType) {
+  public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     final Language l = tokenType.getLanguage();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
     
@@ -76,7 +76,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
     if (matcher != null) {
@@ -91,7 +91,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
     if (matcher != null) {
@@ -130,7 +130,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isPairBraces(IElementType tokenType1, IElementType tokenType2) {
+  public boolean isPairBraces(@NotNull IElementType tokenType1, @NotNull IElementType tokenType2) {
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType1.getLanguage());
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
@@ -145,7 +145,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType) {
+  public boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType) {
     IElementType tokenType = iterator.getTokenType();
 
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
@@ -171,7 +171,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isStrictTagMatching(final FileType fileType, final int braceGroupId) {
+  public boolean isStrictTagMatching(final @NotNull FileType fileType, final int braceGroupId) {
     if (braceGroupId == XML_TAG_TOKEN_GROUP) {
       // Other xml languages may have nonbalanced tag names
       return isStrictTagMatchingForFileType(fileType);
@@ -185,7 +185,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean areTagsCaseSensitive(final FileType fileType, final int braceGroupId) {
+  public boolean areTagsCaseSensitive(final @NotNull FileType fileType, final int braceGroupId) {
     return braceGroupId == XML_TAG_TOKEN_GROUP && fileType == StdFileTypes.XML;
   }
 
@@ -210,7 +210,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public String getTagName(CharSequence fileText, HighlighterIterator iterator) {
+  public String getTagName(@NotNull CharSequence fileText, @NotNull HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     String name = null;
     if (tokenType == XmlTokenType.XML_START_TAG_START) {
@@ -277,7 +277,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(final @NotNull PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

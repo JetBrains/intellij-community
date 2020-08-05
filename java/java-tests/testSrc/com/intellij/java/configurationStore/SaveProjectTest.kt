@@ -5,10 +5,14 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
+import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
@@ -16,6 +20,11 @@ import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+/**
+ * This class actually doesn't depend on Java. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
+ * are added to iml file (e.g. 'exclude-output' tag) so if this test is located in a platform module it'll give different results depending
+ * on whether there is Java plugin in runtime classpath or not.
+ */
 class SaveProjectTest {
   companion object {
     @JvmField
@@ -28,10 +37,29 @@ class SaveProjectTest {
   val projectModel = ProjectModelRule()
 
   @Test
-  fun `save module`() = runBlocking {
+  fun `save single module`() = runBlocking {
     projectModel.createModule("foo")
     saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-module")))
+  }
+
+  @Test
+  fun `save detached module`() = runBlocking {
+    projectModel.createModule("foo")
+    val module = projectModel.createModule("bar")
+    saveProjectState()
+    projectModel.removeModule(module)
+    saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("detached-module")))
+  }
+
+  @Test
+  fun `save single library`() = runBlocking {
+    projectModel.addProjectLevelLibrary("foo") {
+      it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").systemIndependentPath), OrderRootType.CLASSES)
+    }
+    saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-library")))
   }
 
   @Test
@@ -49,5 +77,5 @@ class SaveProjectTest {
   }
 
   private val testDataRoot: Path
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore/saveProjectTest")
+    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
 }

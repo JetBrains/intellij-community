@@ -426,7 +426,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     synchronizer.replaceString(document, 3, 5, "bb");
     buffer.replace(3, 5, "bb");
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(2, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -448,7 +448,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       synchronizer.insertString(document, i, String.valueOf(i));
       buffer.insert(i, i);
     }
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(1, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -498,7 +498,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     synchronizer.insertString(document, 7, "d");
     buffer.insert(7, "d");
 
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(3, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -899,7 +899,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private RangeMarkerEx createMarker(PsiFile psiFile, final int start, final int end) {
-    document = PlatformTestUtil.notNull(documentManager.getDocument(psiFile));
+    document = Objects.requireNonNull(documentManager.getDocument(psiFile));
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
 

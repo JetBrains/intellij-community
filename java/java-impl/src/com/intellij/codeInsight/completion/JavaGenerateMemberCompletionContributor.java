@@ -39,7 +39,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author peter
  */
-public class JavaGenerateMemberCompletionContributor {
+public final class JavaGenerateMemberCompletionContributor {
   static final Key<Boolean> GENERATE_ELEMENT = Key.create("GENERATE_ELEMENT");
 
   public static void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {

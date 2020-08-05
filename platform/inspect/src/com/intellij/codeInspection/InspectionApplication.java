@@ -58,10 +58,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
@@ -229,25 +226,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     myInspectionProfile = loadInspectionProfile(project);
     if (myInspectionProfile == null) return;
 
-    final AnalysisScope scope;
     if (myAnalyzeChanges) {
-      ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-      changeListManager.invokeAfterUpdate(() -> {
-        List<VirtualFile> files = changeListManager.getAffectedFiles();
-        for (VirtualFile file : files) {
-          reportMessage(0, "modified file" + file.getPath());
-        }
-        try {
-          runAnalysisOnScope(projectPath,
-                             parentDisposable, project, myInspectionProfile,
-                             new AnalysisScope(project, files));
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, null, null);
+      List<VirtualFile> files = getChangedFiles(project);
+      runAnalysisOnScope(projectPath,
+                         parentDisposable, project, myInspectionProfile,
+                         new AnalysisScope(project, files));
     }
     else {
+      final AnalysisScope scope;
       if (myScopePattern != null) {
         try {
           PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
@@ -283,6 +269,25 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       LOG.info("Used scope: " + scope.toString());
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
     }
+  }
+
+  private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    CompletableFuture<List<VirtualFile>> future = new CompletableFuture<>();
+    changeListManager.invokeAfterUpdate(() -> {
+      try {
+        List<VirtualFile> files = changeListManager.getAffectedFiles();
+        for (VirtualFile file : files) {
+          reportMessage(0, "modified file" + file.getPath());
+        }
+        future.complete(files);
+      }
+      catch (Throwable e) {
+        future.completeExceptionally(e);
+      }
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, null, null);
+
+    return future.get();
   }
 
   private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {

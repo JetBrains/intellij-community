@@ -45,6 +45,8 @@ abstract class RunManager {
       val matcher = UNIQUE_NAME_PATTERN.matcher(uniqueName)
       return if (matcher.matches()) matcher.group(1) else uniqueName
     }
+
+    const val CONFIGURATION_TYPE_FEATURE_ID: String = "com.intellij.configurationType"
   }
 
   /**

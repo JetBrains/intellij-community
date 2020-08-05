@@ -87,7 +87,9 @@ public final class SystemInfo {
 
   public static final boolean is32Bit = SystemInfoRt.is32Bit;
   public static final boolean is64Bit = SystemInfoRt.is64Bit;
-  public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
+  public static final boolean isIntel64 = "x86_64".equals(OS_ARCH) || "amd64".equals(OS_ARCH);
+  public static final boolean isArm64 = "aarch64".equals(OS_ARCH) || "arm64".equals(OS_ARCH);
+  public static final boolean isMacIntel64 = isMac && isIntel64;
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
   public static boolean hasXdgOpen() {
@@ -99,15 +101,55 @@ public final class SystemInfo {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
+  /**
+   * @deprecated IJ Platform requires at least macOS 10.13.
+   */
+  @Deprecated
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
@@ -158,7 +200,7 @@ public final class SystemInfo {
   }
 
   public static String getOsNameAndVersion() {
-    return (isMacOSSierra ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
+    return (isMac ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {

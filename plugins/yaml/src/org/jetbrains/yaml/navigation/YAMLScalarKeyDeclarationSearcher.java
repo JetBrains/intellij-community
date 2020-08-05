@@ -13,7 +13,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 public class YAMLScalarKeyDeclarationSearcher extends PomDeclarationSearcher {
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
     final Language language = element.getLanguage();
     if (language == YAMLLanguage.INSTANCE) {
       final YAMLKeyValue kv = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class);

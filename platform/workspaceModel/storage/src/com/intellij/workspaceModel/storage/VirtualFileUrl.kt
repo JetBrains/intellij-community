@@ -1,16 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.Path
 
-// TODO Do we want to make it inline?
+/**
+ * Represent an URL (in VFS format) of a file or directory.
+ */
 class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlManager) {
   val url: String
     get() = manager.getUrlById(id)
 
   val parent: VirtualFileUrl?
     get() = manager.getParentVirtualUrlById(id)
+
+  val subTreeFileUrls: List<VirtualFileUrl>
+    get() = manager.getSubtreeVirtualUrlsById(id)
 
   val file: File?
     get() = filePath?.let { File(it) }
@@ -36,8 +42,6 @@ class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlMa
 
   fun isEqualOrParentOf(other: VirtualFileUrl): Boolean = manager.isEqualOrParentOf(this.id, other.id)
 
-  //override fun equals(other: Any?): Boolean = id == (other as? VirtualFileUrl)?.id
-  //override fun hashCode(): Int = id
   override fun toString(): String = url
 
   override fun equals(other: Any?): Boolean {
@@ -59,6 +63,11 @@ fun VirtualFileUrl.append(relativePath: String): VirtualFileUrl {
 }
 
 // TODO It's possible to write it without additional string allocations besides absolutePath
+
+/**
+ * Do not use io version in production code as FSD filesystems are incompatible with java.io
+ */
+@TestOnly
 fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
 
 fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())

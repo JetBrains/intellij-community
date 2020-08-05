@@ -52,7 +52,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   override fun setUpModule() {
     runWriteAction {
       myModule = createMainModule()
-      val moduleDir = myModule.moduleFile!!.parent
+      val moduleDir = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleDir)
       val outDir = moduleDir.findOrCreateDir(OUT).apply { findOrCreateChildData(this, "out.txt") }
       val excludedDir = moduleDir.findOrCreateDir(EXCLUDED).apply { findOrCreateChildData(this, "excl.txt") }

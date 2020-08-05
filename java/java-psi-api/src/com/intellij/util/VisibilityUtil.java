@@ -105,7 +105,7 @@ public final class VisibilityUtil  {
   }
 
   @NotNull
-  public static String toPresentableText(@PsiModifier.ModifierConstant @NotNull String modifier) {
+  public static @Nls String toPresentableText(@PsiModifier.ModifierConstant @NotNull String modifier) {
     return JavaPsiBundle.visibilityPresentation(modifier);
   }
 

@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.CompileScopeImpl;
@@ -68,7 +67,7 @@ public final class CompileScopeTestBuilder {
   public CompileScopeTestBuilder file(BuildTarget<?> target, String path) {
     Set<File> files = myFiles.get(target);
     if (files == null) {
-      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      files = FileCollectionFactory.createCanonicalFileSet();
       myFiles.put(target, files);
     }
     files.add(new File(path));

@@ -38,7 +38,11 @@ import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
 public class FxmlReferencesContributor extends PsiReferenceContributor {
-  public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+  public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+    {
+      setOption(ALLOW_DOLLAR_NAMES, false);
+    }
+  };
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

@@ -484,6 +484,18 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  //dbus-java is used only on linux for KWallet integration.
+  //It relies on native libraries, causing notarization issues on mac.
+  //So it is excluded from all distributions and manually re-included on linux.
+  static def addDbusJava(BuildContext buildContext, String distDir) {
+    def library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
+    library.getFiles(JpsOrderRootType.COMPILED).each { f ->
+      buildContext.ant.copy(todir: "$distDir/lib") {
+        fileset(file: f.absolutePath)
+      }
+    }
+  }
+
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }

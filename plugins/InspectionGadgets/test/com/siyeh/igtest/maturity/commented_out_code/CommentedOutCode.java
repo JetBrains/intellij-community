@@ -10,6 +10,12 @@ class CommentedOutCode /* extends Object */ {
   private String s;
 
   int x(int i) {
+    new Object() {
+
+      <warning descr="Commented out code (3 lines)">/*</warning>public String toString() {
+        return "";
+        }*/
+    };
     <warning descr="Commented out code (1 line)"><caret>//</warning> System.out.println(i);
     return i + 1 /*+ 2*/;
     // https://youtrack.jetbrains.com/issue/CPP-3936 Move members dialog choses arbitrary file by name, if there are several in project
@@ -23,6 +29,16 @@ class CommentedOutCode /* extends Object */ {
   //  highlight(parameter, OCHighlightingKeys.MACRO_PARAMETER);
   //}
   //
+
+  /*
+    List<String> tmp = map.get(s.length());
+    if(tmp == null) {
+        tmp = new ArrayList<>();
+        map.put(s.length(), tmp);
+    }
+    tmp.add(s);
+   */
+  void x(String s, String... ss) {}
 
   void k() {
     //noinspection unchecked
@@ -108,4 +124,13 @@ class CommentedOutCode /* extends Object */ {
   }
   */
 
+}
+enum E {
+  A {
+    <warning descr="Commented out code (3 lines)">/*</warning>
+    public String toString() {
+    return "";
+    }
+     */
+  }
 }

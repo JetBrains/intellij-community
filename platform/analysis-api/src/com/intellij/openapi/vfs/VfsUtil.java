@@ -329,9 +329,9 @@ public final class VfsUtil extends VfsUtilCore {
     return WriteAction.computeAndWait(() -> createDirectoryIfMissing(directoryPath));
   }
 
-  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, @NotNull String relativePath) throws IOException {
     if (parent == null) {
-      return createDirectoryIfMissing(relativePath);
+      return createDirectoryIfMissing(LocalFileSystem.getInstance(), relativePath);
     }
 
     for (String each : StringUtil.split(relativePath, "/")) {

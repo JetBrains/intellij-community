@@ -41,10 +41,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -449,13 +446,13 @@ public class GradleExecutionHelper {
   @Nullable
   public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class<?>> toolingExtensionClasses) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
-    try {
-      if (stream == null) {
-        LOG.warn("Can't get init script template");
-        return null;
-      }
-      final String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
+    if (stream == null) {
+      LOG.warn("Can't find init script template");
+      return null;
+    }
+    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+      String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -467,9 +464,6 @@ public class GradleExecutionHelper {
     catch (Exception e) {
       LOG.warn("Can't generate IJ gradle init script", e);
       return null;
-    }
-    finally {
-      StreamUtil.closeStream(stream);
     }
   }
 
@@ -496,16 +490,16 @@ public class GradleExecutionHelper {
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
-    try {
-      if (stream == null) return null;
-      return FileUtil.loadTextAndClose(stream);
+    if (stream == null) {
+      LOG.warn("Can't find default init script template");
+      return null;
+    }
+    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+      return StreamUtil.readText(reader);
     }
     catch (Exception e) {
       LOG.warn("Can't use IJ gradle init script", e);
       return null;
-    }
-    finally {
-      StreamUtil.closeStream(stream);
     }
   }
 
@@ -625,22 +619,18 @@ public class GradleExecutionHelper {
   @Nullable
   public static String renderInitScript(@NotNull String testArgs) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
-    try {
-      if (stream == null) {
-        LOG.error("Can't get test filter init script template");
-        return null;
-      }
-      String script =
-        FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
-      final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
+    if (stream == null) {
+      LOG.error("Can't find test filter init script template");
+      return null;
+    }
+    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
+      File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
       return tempFile.getAbsolutePath();
     }
     catch (Exception e) {
       LOG.warn("Can't generate IJ gradle test filter init script", e);
       return null;
-    }
-    finally {
-      StreamUtil.closeStream(stream);
     }
   }
 

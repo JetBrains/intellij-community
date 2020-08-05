@@ -14,22 +14,24 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.*
+import com.intellij.util.io.copy
+import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isDirectory
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = isImportExportActionApplicable()
+    e.presentation.isEnabled = true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -53,7 +55,9 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       }
   }
 
-  protected open fun getExportableComponents(relativePaths: Set<String>): Map<Path, List<ExportableItem>> = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+  protected open fun getExportableComponents(relativePaths: Set<String>): Map<FileSpec, List<ExportableItem>> {
+    return getExportableComponentsMap(true). filterKeys { relativePaths.contains(it.relativePath) }
+  }
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
@@ -81,7 +85,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       return
     }
 
-    val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
+    val configPath = Paths.get(PathManager.getConfigPath())
     val dialog = ChooseComponentsToExportDialog(
         getExportableComponents(relativePaths), false,
         ConfigurationStoreBundle.message("title.select.components.to.import"),
@@ -93,12 +97,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     val tempFile = Paths.get(PathManager.getPluginTempPath()).resolve(saveFile.fileName)
     saveFile.copy(tempFile)
     val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
-    StartupActionScriptManager.addActionCommands(
-      listOf(
-        StartupActionScriptManager.UnzipCommand(tempFile.toFile(), File(configPath), filenameFilter),
-        StartupActionScriptManager.DeleteCommand(tempFile.toFile())
-      )
-    )
+    StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.UnzipCommand(tempFile, configPath, filenameFilter),
+                                                        StartupActionScriptManager.DeleteCommand(tempFile)))
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
@@ -138,10 +138,9 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   }
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
-    val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
-    val root = PathManager.getConfigDir()
+    val result = HashSet<String>()
     for (item in chosenComponents) {
-      result.add(root.relativize(item.file).systemIndependentPath)
+      result.add(item.fileSpec.relativePath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)
@@ -152,16 +151,16 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 }
 
 fun getPaths(input: InputStream): Set<String> {
-  val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
+  val result = mutableSetOf<String>()
   val zipIn = ZipInputStream(input)
   zipIn.use {
     while (true) {
       val entry = zipIn.nextEntry ?: break
-      var path = entry.name
+      var path = entry.name.trimEnd('/')
       result.add(path)
       while (true) {
         path = getParentPath(path) ?: break
-        result.add("$path/")
+        result.add(path)
       }
     }
   }

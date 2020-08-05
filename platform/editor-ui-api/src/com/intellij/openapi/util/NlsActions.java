@@ -9,13 +9,13 @@ import java.lang.annotation.Target;
 public class NlsActions {
   @NlsContext(prefix = "action", suffix = "text")
   @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
   public @interface ActionText {
   }
 
   @NlsContext(prefix = "action", suffix = "description")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
   public @interface ActionDescription {
   }
 }

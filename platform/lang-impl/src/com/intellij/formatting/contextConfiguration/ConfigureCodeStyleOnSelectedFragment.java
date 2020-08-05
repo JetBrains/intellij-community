@@ -17,12 +17,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +59,14 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return editor.getSelectionModel().hasSelection() && file.isWritable() && hasSettingsToShow(editor, file);
+    return isFileSuitable(file) && editor.getSelectionModel().hasSelection() && hasSettingsToShow(editor, file);
+  }
+
+  private static boolean isFileSuitable(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    return file.isWritable() &&
+           file.isPhysical() &&
+           virtualFile != null && !(virtualFile instanceof LightVirtualFile);
   }
 
   private static boolean hasSettingsToShow(Editor editor, PsiFile file) {

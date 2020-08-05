@@ -21,7 +21,7 @@ import javax.swing.*
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
-  static final int SEARCH_TIMEOUT = 5000
+  static final int SEARCH_TIMEOUT = 10_000
 
   SearchEverywhereUIBase mySearchUI
 
@@ -145,7 +145,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
         abbreviationManager.register("imaginary", "ia2")
         future = ui.findElementsForPattern("imaginary")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction2, class1, matchedAction1, class2]
       }
       finally {
         actions.each {actionManager.unregisterAction(it.key)}
@@ -163,18 +163,20 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       abbreviationManager.register("cp", "CloseProject")
       def future = ui.findElementsForPattern("cp")
       def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
-      assert firstItem.value.action == actionManager.getAction("CloseProject")
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("CloseProject"), "cp")
+      assert firstItem == matchedAction
     }
     finally {
       abbreviationManager.remove("cp", "CloseProject")
     }
 
+    ui.clearResults()
     try {
       abbreviationManager.register("cp", "ScanSourceCommentsAction")
       def future = ui.findElementsForPattern("cp")
-      def res = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
-      def firstItem = res[0]
-      assert firstItem.value.action == actionManager.getAction("ScanSourceCommentsAction")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("ScanSourceCommentsAction"), "cp")
+      assert matchedAction == firstItem
     }
     finally {
       abbreviationManager.remove("cp", "ScanSourceCommentsAction")

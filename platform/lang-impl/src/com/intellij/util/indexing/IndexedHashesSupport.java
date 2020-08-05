@@ -36,6 +36,7 @@ public final class IndexedHashesSupport {
   }
 
   public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
+    //TODO: duplicate of com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash
     MessageDigest digest = FSRecords.getContentHashDigest();
     digest.update(String.valueOf(content.length).getBytes(StandardCharsets.UTF_8));
     digest.update("\u0000".getBytes(StandardCharsets.UTF_8));

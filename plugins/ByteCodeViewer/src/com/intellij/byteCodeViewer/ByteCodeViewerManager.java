@@ -23,6 +23,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -42,9 +43,9 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
 
   private static final Logger LOG = Logger.getInstance(ByteCodeViewerManager.class);
 
-  private static final String TOOLWINDOW_ID = "Byte Code Viewer";
-  private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
-  private static final String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
+  private static final @NonNls String TOOLWINDOW_ID = "Byte Code Viewer";
+  private static final @NonNls String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
+  private static final @NonNls String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
 
   public static ByteCodeViewerManager getInstance(Project project) {
     return ServiceManager.getService(project, ByteCodeViewerManager.class);
@@ -113,11 +114,12 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
           presentableElement = element;
         }
         if (presentableElement == null) {
-          component.setText("No bytecode found");
+          component.setText(JavaByteCodeViewerBundle.message("no.bytecode.found"));
           return;
         }
       }
-      component.setText("No bytecode found for " + SymbolPresentationUtil.getSymbolPresentableText(presentableElement));
+      component.setText(
+        JavaByteCodeViewerBundle.message("no.bytecode.found.for", SymbolPresentationUtil.getSymbolPresentableText(presentableElement)));
     }
     content.setDisplayName(getTitle(element));
   }

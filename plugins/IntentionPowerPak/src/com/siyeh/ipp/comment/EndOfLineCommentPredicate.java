@@ -45,6 +45,6 @@ class EndOfLineCommentPredicate implements PsiElementPredicate {
     }
     final String text = comment.getText();
     final Matcher matcher = NO_INSPECTION_PATTERN.matcher(text);
-    return !matcher.matches();
+    return !matcher.matches() && !text.startsWith("#!");
   }
 }

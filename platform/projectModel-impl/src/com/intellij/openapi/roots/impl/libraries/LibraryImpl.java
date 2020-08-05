@@ -331,7 +331,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
       if (!rootChild.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
         VirtualFilePointerContainer roots = getOrCreateContainer(rootType);
-        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, false);
+        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, true);
       }
     }
     Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);

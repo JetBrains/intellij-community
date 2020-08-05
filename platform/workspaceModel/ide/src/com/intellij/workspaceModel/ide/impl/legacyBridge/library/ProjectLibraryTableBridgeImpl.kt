@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -15,13 +16,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 
 internal class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
@@ -43,30 +44,30 @@ internal class ProjectLibraryTableBridgeImpl(
     val messageBusConnection = project.messageBus.connect(this)
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChanged) {
+      override fun beforeChanged(event: VersionedStorageChange) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
         if (changes.isEmpty()) return
 
         executeOrQueueOnDispatchThread {
-          LOG.bracket("ProjectLibraryTable.beforeChanged") {
-            for (change in changes) {
-              val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
-              if (library != null) {
-                dispatcher.multicaster.beforeLibraryRemoved(library)
-              }
+          for (change in changes) {
+            val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+            LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
+            if (library != null) {
+              dispatcher.multicaster.beforeLibraryRemoved(library)
             }
           }
         }
       }
 
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
         if (changes.isEmpty()) return
 
         executeOrQueueOnDispatchThread {
-          LOG.bracket("ProjectLibraryTable.EntityStoreChange") {
-            for (change in changes) when (change) {
+          for (change in changes) {
+            LOG.debug { "Process library change $change" }
+            when (change) {
               is EntityChange.Added -> {
                 val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as LibraryBridgeImpl?
                 val library = if (alreadyCreatedLibrary != null) {
@@ -134,6 +135,7 @@ internal class ProjectLibraryTableBridgeImpl(
           ))
         }
         .toList()
+      LOG.debug("Initial load of project-level libraries")
       if (libraries.isNotEmpty()) {
         runWriteAction {
           WorkspaceModel.getInstance(project).updateProjectModelSilent {

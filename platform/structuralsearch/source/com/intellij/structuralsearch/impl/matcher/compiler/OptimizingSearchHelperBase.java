@@ -4,23 +4,17 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author Maxim.Mossienko
 */
 abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
-  private final THashSet<String> scanned;
-  private final THashSet<String> scannedText;
-  private final THashSet<String> scannedComments;
-  private final THashSet<String> scannedLiterals;
+  private final Set<String> scanned = new THashSet<>();
+  private final Set<String> scannedText = new THashSet<>();
+  private final Set<String> scannedComments = new THashSet<>();
+  private final Set<String> scannedLiterals = new THashSet<>();
   protected int scanRequest;
-
-  OptimizingSearchHelperBase() {
-    scanRequest = 0;
-    scanned = new THashSet<>();
-    scannedText = new THashSet<>();
-    scannedComments = new THashSet<>();
-    scannedLiterals = new THashSet<>();
-  }
 
   @Override
   public void clear() {
@@ -31,29 +25,29 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   }
 
   @Override
-  public void addWordToSearchInCode(String word) {
-    if (word != null && doOptimizing() && scanned.add(word)) {
+  public void addWordToSearchInCode(@NotNull String word) {
+    if (doOptimizing() && scanned.add(word)) {
       doAddSearchWordInCode(word);
     }
   }
 
   @Override
-  public void addWordToSearchInText(String word) {
-    if (word != null && doOptimizing() && scannedText.add(word)) {
+  public void addWordToSearchInText(@NotNull String word) {
+    if (doOptimizing() && scannedText.add(word)) {
       doAddSearchWordInText(word);
     }
   }
 
   @Override
-  public void addWordToSearchInComments(String word) {
-    if (word != null && doOptimizing() && scannedComments.add(word)) {
+  public void addWordToSearchInComments(@NotNull String word) {
+    if (doOptimizing() && scannedComments.add(word)) {
       doAddSearchWordInComments(word);
     }
   }
 
   @Override
-  public void addWordToSearchInLiterals(String word) {
-    if (word != null && doOptimizing() && scannedLiterals.add(word)) {
+  public void addWordToSearchInLiterals(@NotNull String word) {
+    if (doOptimizing() && scannedLiterals.add(word)) {
       doAddSearchWordInLiterals(word);
     }
   }

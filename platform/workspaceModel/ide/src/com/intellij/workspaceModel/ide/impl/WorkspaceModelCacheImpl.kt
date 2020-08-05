@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -48,10 +49,11 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
     cacheFile = File(cacheDir, hasher.hash().toString().substring(0, 20) + ".data")
 
-    LOG.info("Project Model Cache at $cacheFile")
+    LOG.debug("Project Model Cache at $cacheFile")
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) = LOG.bracket("${javaClass.simpleName}.EntityStoreChange") {
+      override fun changed(event: VersionedStorageChange) {
+        LOG.debug("Schedule cache update")
         saveAlarm.request()
       }
     })
@@ -61,7 +63,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
 
     if (!cachesInvalidated.get()) {
-      LOG.info("Saving project model cache to $cacheFile")
+      LOG.debug("Saving project model cache to $cacheFile")
       saveCache(storage)
     }
 
@@ -82,11 +84,11 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
         return null
       }
 
-      LOG.info("Loading project model cache from $cacheFile")
+      LOG.debug("Loading project model cache from $cacheFile")
 
       val stopWatch = Stopwatch.createStarted()
       val builder = cacheFile.inputStream().use { serializer.deserializeCache(it) }
-      LOG.info("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
+      LOG.debug("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
 
       return builder
     } catch (t: Throwable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author peter
  */
-class SmartCastProvider {
+final class SmartCastProvider {
 
   static boolean shouldSuggestCast(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
@@ -103,7 +103,7 @@ class SmartCastProvider {
 
     List<PsiType> dfaTypes = GuessManager.getInstance(operand.getProject()).getControlFlowExpressionTypeConjuncts(operand);
     if (!dfaTypes.isEmpty()) {
-      return ContainerUtil.map(dfaTypes, dfaType -> 
+      return ContainerUtil.map(dfaTypes, dfaType ->
         new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailType.NONE, null, () -> null));
     }
 

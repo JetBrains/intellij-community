@@ -192,7 +192,9 @@ public final class StartUpMeasurer {
   }
 
   static void addActivity(@NotNull ActivityImpl activity) {
-    items.add(activity);
+    if (isEnabled) {
+      items.add(activity);
+    }
   }
 
   @ApiStatus.Internal

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -159,7 +160,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override suspend fun reloadChangedStorageFiles() {
     val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
-    withContext(storeEdtCoroutineDispatcher) {
+    withContext(AppUIExecutor.onUiThread().expireWith(this).coroutineDispatchingContext()) {
       unfinishedRequest.run()
       // just to be sure
       changedFilesAlarm.getUnfinishedRequest()?.run()

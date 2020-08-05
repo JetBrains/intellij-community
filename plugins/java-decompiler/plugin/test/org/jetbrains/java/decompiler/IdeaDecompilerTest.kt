@@ -13,6 +13,7 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -86,8 +87,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testHighlighting() {
     myFixture.setReadEditorMarkupModel(true)
-    myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
+      myFixture.openFileInEditor(getTestFile("Navigation.class"))
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
       assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
@@ -102,21 +103,23 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
       assertEquals(2, highlightUnderCaret().size)
-    }
+    })
   }
 
   fun testNameHighlightingInsideCompiledFile() {
     myFixture.setReadEditorMarkupModel(true)
     myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
       val infos = myFixture.doHighlighting()
       assertTrue(infos.toString(), infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY })
       assertEquals(68, infos.size)
-    }
+    })
   }
 
-  private fun highlightUnderCaret() =
-    myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
+  private fun highlightUnderCaret(): List<HighlightInfo> {
+    IdentifierHighlighterPassFactory.waitForIdentifierHighlighting()
+    return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
+  }
 
   fun testLineNumberMapping() {
     Registry.get("decompiler.use.line.mapping").withValue(true) {
@@ -195,6 +198,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         println(file.path)
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
+        // Records are not supported by decompiler now -- see IDEA-246839
+        if (file.name == "RecordTest.class") return true
         val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
         assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 

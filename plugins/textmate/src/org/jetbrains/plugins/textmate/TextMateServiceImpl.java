@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
@@ -48,13 +50,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TextMateServiceImpl extends TextMateService {
+public final class TextMateServiceImpl extends TextMateService {
   private boolean ourBuiltinBundlesDisabled;
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
-  private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
-  private final Map<String, CharSequence> myExtensionsMapping = new THashMap<>();
+  private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = CollectionFactory.createSmallMemoryFootprintMap();
+  private final Map<String, CharSequence> myExtensionsMapping = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
@@ -93,11 +95,21 @@ public class TextMateServiceImpl extends TextMateService {
     THashMap<String, CharSequence> newExtensionsMapping = new THashMap<>();
     for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
       if (bundleConfigBean.isEnabled()) {
-        boolean result = registerBundle(LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath()), newExtensionsMapping);
+        VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
+        boolean result = registerBundle(bundleFile, newExtensionsMapping);
         if (!result) {
-          Notifications.Bus.notify(new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error"),
-                                                    TextMateBundle.message("textmate.cant.register.bundle", bundleConfigBean.getName()),
-                                                    NotificationType.ERROR, null));
+          String bundleName = bundleConfigBean.getName();
+          String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
+                                                   : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
+          Notification notification = new Notification("TextMate Bundles",
+                                                  TextMateBundle.message("textmate.bundle.load.error", bundleName),
+                                                  errorMessage,
+                                                  NotificationType.ERROR, null);
+          notification.addAction(NotificationAction.createSimple(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> {
+            bundleConfigBean.setEnabled(false);
+            notification.expire();
+          }));
+          Notifications.Bus.notify(notification);
         }
       }
     }
@@ -105,7 +117,7 @@ public class TextMateServiceImpl extends TextMateService {
       Runnable update = () -> {
         myExtensionsMapping.clear();
         myExtensionsMapping.putAll(newExtensionsMapping);
-        ContainerUtil.trimMap(myExtensionsMapping);
+        CollectionFactory.trimMap(myExtensionsMapping);
       };
 
       if (fireEvents) {
@@ -116,7 +128,7 @@ public class TextMateServiceImpl extends TextMateService {
       }
     }
     mySyntaxTable.compact();
-    ContainerUtil.trimMap(myCustomHighlightingColors);
+    CollectionFactory.trimMap(myCustomHighlightingColors);
   }
 
   private static void fireFileTypesChangedEvent(@NotNull Runnable update) {

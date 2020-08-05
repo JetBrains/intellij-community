@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public class Attachment {
   private final @Nullable File myTemporaryFile;
   private boolean myIncluded;   // opt-out for traces, opt-in otherwise
 
-  public Attachment(@NotNull String name, @NotNull Throwable throwable) {
+  public Attachment(@NotNull @NonNls String name, @NotNull Throwable throwable) {
     this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
     myIncluded = true;
   }

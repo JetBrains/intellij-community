@@ -17,26 +17,24 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import java.util.concurrent.Future
+import kotlinx.coroutines.*
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   @Volatile
-  private var autoSyncFuture: Future<*>? = null
+  private var autoSyncFuture: Job? = null
 
   @Volatile var enabled = true
 
   fun waitAutoSync(indicator: ProgressIndicator) {
     val autoFuture = autoSyncFuture
     if (autoFuture != null) {
-      if (autoFuture.isDone) {
+      if (autoFuture.isCompleted) {
         autoSyncFuture = null
       }
       else if (autoSyncFuture != null) {
         LOG.info("Wait for auto sync future")
         indicator.text = "Wait for auto sync completion"
-        while (!autoFuture.isDone) {
+        while (!autoFuture.isCompleted) {
           if (indicator.isCanceled) {
             return
           }
@@ -77,7 +75,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
 
     autoSyncFuture?.let {
-      if (!it.isDone) {
+      if (!it.isCompleted) {
         return
       }
     }
@@ -95,13 +93,11 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    autoSyncFuture = app.executeOnPooledThread {
+    autoSyncFuture = GlobalScope.launch {
       try {
         // to ensure that repository will not be in uncompleted state and changes will be pushed
         ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
-        runBlocking {
-          sync(app, onAppExit)
-        }
+        sync(app, onAppExit)
       }
       finally {
         autoSyncFuture = null

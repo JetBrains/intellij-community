@@ -10,8 +10,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 
-class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
+class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
 
   private val projectEntities: WorkspaceEntityStorageBuilder
 
@@ -37,74 +39,36 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
       else -> projectEntities = WorkspaceEntityStorageBuilder.create()
     }
 
-    entityStorage = ProjectModelEntityStorage(project, projectEntities.toStorage())
+    entityStorage = VersionedEntityStorageImpl(projectEntities.toStorage())
   }
 
-  override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R = doUpdateProject(updater, true)
-
-  override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R = doUpdateProject(updater, false)
-
-  // TODO We need transaction semantics here, failed updates should not poison everything
-  private fun <R> doUpdateProject(updater: (WorkspaceEntityStorageBuilder) -> R, notify: Boolean): R {
+  override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
     val before = projectEntities.toStorage()
-
     val result = updater(projectEntities)
-
     val changes = projectEntities.collectChanges(before)
     projectEntities.resetChanges()
+    entityStorage.replace(projectEntities.toStorage(), changes, this::onBeforeChanged, this::onChanged)
+    return result
+  }
 
-    if (notify) {
-      entityStorage.replace(projectEntities.toStorage(), changes)
-    }
-    else {
-      (entityStorage as ProjectModelEntityStorage).replaceSilent(projectEntities.toStorage(), changes)
-    }
-
+  override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val result = updater(projectEntities)
+    projectEntities.resetChanges()
+    entityStorage.replaceSilently(projectEntities.toStorage())
     return result
   }
 
   override fun dispose() = Unit
 
-  private class ProjectModelEntityStorage(private val project: Project, initialStorage: WorkspaceEntityStorage) : VersionedEntityStorageImpl(initialStorage) {
-
-    private var notificationsEnabled = true
-
-    fun replaceSilent(newStorage: WorkspaceEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      notificationsEnabled = false
-      try {
-        replace(newStorage, changes)
-      } finally {
-        notificationsEnabled = true
-      }
-    }
-
-    override fun onBeforeChanged(before: WorkspaceEntityStorage, after: WorkspaceEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
-      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(
-        VersionedStorageChangedImpl(entityStorage = this, storageBefore = before, storageAfter = after, changes = changes)
-      )
-    }
-
-    override fun onChanged(before: WorkspaceEntityStorage, after: WorkspaceEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
-      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(
-        VersionedStorageChangedImpl(entityStorage = this, storageBefore = before, storageAfter = after, changes = changes)
-      )
-    }
+  private fun onBeforeChanged(change: VersionedStorageChange) {
+    if (project.isDisposed || Disposer.isDisposing(project)) return
+    WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
   }
 
-  private class VersionedStorageChangedImpl(
-    entityStorage: VersionedEntityStorage,
-    override val storageBefore: WorkspaceEntityStorage,
-    override val storageAfter: WorkspaceEntityStorage,
-    private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChanged(entityStorage) {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> =
-      (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
-
-    override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
+  private fun onChanged(change: VersionedStorageChange) {
+    if (project.isDisposed || Disposer.isDisposing(project)) return
+    WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
   }
 }

@@ -22,6 +22,7 @@ public class ReplaceOptions implements JDOMExternalizable {
   private boolean toShortenFQN;
   private boolean myToReformatAccordingToStyle;
   private boolean myToUseStaticImport;
+  @NotNull
   private final MatchOptions matchOptions;
 
   @NonNls private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
@@ -35,14 +36,14 @@ public class ReplaceOptions implements JDOMExternalizable {
     this(new MatchOptions());
   }
 
-  public ReplaceOptions(MatchOptions matchOptions) {
+  public ReplaceOptions(@NotNull MatchOptions matchOptions) {
     variableDefs = new LinkedHashMap<>();
     this.matchOptions = matchOptions;
     replacement = "";
     myToUseStaticImport = false;
   }
 
-  ReplaceOptions(ReplaceOptions options) {
+  private ReplaceOptions(@NotNull ReplaceOptions options) {
     variableDefs = new LinkedHashMap<>(options.variableDefs.size());
     options.variableDefs.forEach((key, value) -> variableDefs.put(key, value.copy())); // deep copy
     replacement = options.replacement;
@@ -52,10 +53,12 @@ public class ReplaceOptions implements JDOMExternalizable {
     matchOptions = options.matchOptions.copy(); // deep copy
   }
 
+  @NotNull
   public ReplaceOptions copy() {
     return new ReplaceOptions(this);
   }
 
+  @NotNull
   public String getReplacement() {
     return replacement;
   }
@@ -76,7 +79,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     return myToReformatAccordingToStyle;
   }
 
-  public MatchOptions getMatchOptions() {
+  public @NotNull MatchOptions getMatchOptions() {
     return matchOptions;
   }
 
@@ -92,6 +95,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     myToUseStaticImport = useStaticImport;
   }
 
+  @NotNull
   private Set<String> getUsedVariableNames() {
     return TemplateImplUtil.parseVariableNames(replacement);
   }
@@ -179,20 +183,22 @@ public class ReplaceOptions implements JDOMExternalizable {
     return result;
   }
 
-  public ReplacementVariableDefinition getVariableDefinition(String name) {
+  public ReplacementVariableDefinition getVariableDefinition(@NotNull String name) {
     return variableDefs != null ? variableDefs.get(name): null;
   }
 
-  public void addVariableDefinition(ReplacementVariableDefinition definition) {
+  public void addVariableDefinition(@NotNull ReplacementVariableDefinition definition) {
     variableDefs.put(definition.getName(), definition);
   }
 
-  public ReplacementVariableDefinition addNewVariableDefinition(String name) {
+  @NotNull
+  public ReplacementVariableDefinition addNewVariableDefinition(@NotNull String name) {
     final ReplacementVariableDefinition definition = new ReplacementVariableDefinition(name);
     variableDefs.put(name, definition);
     return definition;
   }
 
+  @NotNull
   public Collection<ReplacementVariableDefinition> getVariableDefinitions() {
     return variableDefs.values();
   }

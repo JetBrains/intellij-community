@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +132,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
   }
 
-  public String getDefaultTemplateBaseName() {
+  public @NlsSafe String getDefaultTemplateBaseName() {
     return getTemplateBaseName(getDefaultTemplate());
   }
 

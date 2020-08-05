@@ -9,6 +9,8 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +22,7 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,8 +47,6 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   private final boolean mySubExpressionValue;
 
-  // subExpressionValue == Boolean.TRUE or Boolean.FALSE if subExpression evaluates to boolean constant and needs to be replaced
-  //   otherwise subExpressionValue= null and we starting to simplify expression without any further knowledge
   public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, boolean subExpressionValue) {
     super(subExpression);
     mySubExpressionValue = subExpressionValue;
@@ -93,7 +94,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   @NotNull
-  public static String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
+  public static @IntentionName String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiIfStatement) {
       return constantValue ?
@@ -445,6 +446,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private static final class ExpressionVisitor extends JavaElementVisitor {
+    private static final TokenSet SIMPLIFIABLE_POLYADIC_TOKENS = TokenSet.create(
+      JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.EQEQ,
+      JavaTokenType.NE);
     private PsiExpression resultExpression;
     private final PsiExpression trueExpression;
     private final PsiExpression falseExpression;
@@ -477,6 +481,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       PsiExpression[] operands = expression.getOperands();
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
+      if (!SIMPLIFIABLE_POLYADIC_TOKENS.contains(tokenType)) return;
       if (JavaTokenType.XOR == tokenType) {
 
         boolean negate = false;
@@ -647,7 +652,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }
 
-  public static String getFamilyNameText() {
+  public static @IntentionFamilyName String getFamilyNameText() {
     return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 }

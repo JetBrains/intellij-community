@@ -50,8 +50,8 @@ import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +60,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -74,13 +75,14 @@ import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
-  private static final String PINNED = "pinned";
+  @NonNls private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
 
   private EditorWindow myCurrentWindow;
+  private long myLastFocusGainedTime = 0L;
   private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<>();
 
   private final FileEditorManagerImpl myManager;
@@ -357,7 +359,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public FileEditor @NotNull [] getSelectedEditors() {
-    Set<EditorWindow> windows = new THashSet<>(myWindows);
+    Set<EditorWindow> windows = new HashSet<>(myWindows);
     EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
       windows.add(currentWindow);
@@ -636,6 +638,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return myCurrentWindow;
   }
 
+  public long getLastFocusGainedTime() {
+    return myLastFocusGainedTime;
+  }
+
   @NotNull
   public EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
     List<EditorWindow> windows = findWindows(file);
@@ -813,6 +819,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(Component component, AWTEvent cause) {
+      if (cause instanceof FocusEvent && cause.getID() == FocusEvent.FOCUS_GAINED){
+        myLastFocusGainedTime = System.currentTimeMillis();
+      }
+
       EditorWindow newWindow = null;
 
       if (component != null) {

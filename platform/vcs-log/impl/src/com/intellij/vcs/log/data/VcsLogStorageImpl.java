@@ -26,6 +26,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
@@ -130,13 +131,13 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
+  public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
     checkDisposed();
     try {
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
         @Override
         protected boolean accept(CommitId commitId) {
-          return consumer.fun(commitId);
+          return !consumer.test(commitId);
         }
       });
     }
@@ -249,7 +250,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
+    public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
     }
 
     @Override
@@ -305,8 +306,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
   }
 
-  private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+  private static final class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
+    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) throws IOException {
       super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
     }
 

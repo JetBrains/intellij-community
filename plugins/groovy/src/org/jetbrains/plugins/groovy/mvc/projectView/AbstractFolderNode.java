@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -30,7 +31,7 @@ import java.util.List;
  * @author Dmitry Krasilschikov
  */
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
-  private final String myPresentableText;
+  private final @Nls String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,

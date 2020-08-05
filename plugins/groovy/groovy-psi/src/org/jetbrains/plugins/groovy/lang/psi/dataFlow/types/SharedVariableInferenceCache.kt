@@ -103,7 +103,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
     val flow = scope.controlFlow
     val foreignDescriptors: List<ResolvedVariableDescriptor> = flow
       .mapNotNull { (it?.element as? GrFunctionalExpression)?.getControlFlowOwner() }
-      .flatMap { ControlFlowUtils.getForeignVariableDescriptors(it) { true } }
+      .flatMap { ControlFlowUtils.getForeignVariableDescriptors(it) }
     val sharedVariables: Set<VariableDescriptor> = flow
       .asSequence()
       .filterIsInstance<ReadWriteVariableInstruction>()

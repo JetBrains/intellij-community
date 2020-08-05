@@ -6,7 +6,7 @@ import com.intellij.sh.codeInsight.ShFunctionResolverTest;
 import com.intellij.sh.completion.ShCompletionTest;
 import com.intellij.sh.completion.ShFileCompletionTest;
 import com.intellij.sh.completion.ShKeywordCompletionTest;
-import com.intellij.sh.editing.ShTypingTest;
+import com.intellij.sh.editor.ShTypingTest;
 import com.intellij.sh.formatter.ShLineIndentProviderTest;
 import com.intellij.sh.lexer.ShFileLexerTest;
 import com.intellij.sh.lexer.ShOldLexerVersion3Test;

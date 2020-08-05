@@ -21,7 +21,7 @@ import com.intellij.openapi.util.NlsContexts;
  * Thrown to indicate that a configurable component cannot {@link UnnamedConfigurable#apply() apply} entered values.
  */
 public class ConfigurationException extends Exception {
-  private String myTitle = getDefaultTitle();
+  private @NlsContexts.DialogTitle String myTitle = getDefaultTitle();
   private Runnable myQuickFix;
   private Configurable myOriginator;
 
@@ -49,10 +49,16 @@ public class ConfigurationException extends Exception {
     myTitle = title;
   }
 
+  @Override
+  public @NlsContexts.DialogMessage String getMessage() {
+    //noinspection HardCodedStringLiteral
+    return super.getMessage();
+  }
+
   /**
    * @return the title describing the problem in short
    */
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 

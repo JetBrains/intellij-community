@@ -41,6 +41,7 @@ public class JUnit5TestFrameworkSetupUtil {
                         "int[] ints() default {};\n" +
                         "long[] longs() default {};\n" +
                         "double[] doubles() default {};\n" +
+                        "boolean[] booleans() default {};\n" +
                         "}\n");
     fixture.addClass( "package org.junit.jupiter.api.extension;\n" +
                         "public @interface ExtendWith {\n" +

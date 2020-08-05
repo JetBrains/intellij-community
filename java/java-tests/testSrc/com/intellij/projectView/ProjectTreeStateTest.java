@@ -19,12 +19,7 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
     AbstractProjectViewPSIPane pane = myStructure.createPane();
 
     JTree tree = pane.getTree();
-    tree.expandRow(1);
-    tree.expandRow(5);
-    tree.expandRow(6);
-    tree.expandRow(9);
-    tree.expandRow(11);
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), myExpectedTree, true);
+    PlatformTestUtil.assertTreeEqual(tree, myExpectedTree, true);
 
     TreeState treeState = TreeState.createOn(tree);
 
@@ -50,7 +45,6 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
     super.setUp();
     myExpectedTree = "-Project\n" +
                      " +PsiDirectory: updateProjectView\n" +
-                     getRootFiles() +
                      " +External Libraries\n";
   }
 }

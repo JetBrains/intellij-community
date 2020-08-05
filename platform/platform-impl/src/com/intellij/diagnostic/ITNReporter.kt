@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
@@ -117,7 +117,7 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
       val title = "Report Exception"
       val icon = Messages.getWarningIcon()
       if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-                                else Messages.showMessageDialog(project, message, title, icon)
+      else Messages.showMessageDialog(project, message, title, icon)
       callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
     }
     else if (e is NoSuchEAPUserException) {
@@ -131,8 +131,8 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
     }
     else {
       val message = DiagnosticBundle.message("error.report.posting.failed", e.message)
-      val result = MessageDialogBuilder.yesNo(ReportMessages.getErrorReport(), message).project(project).show()
-      if (result != Messages.YES || !submit(errorBean, callback, parentComponent, project)) {
+      val result = MessageDialogBuilder.yesNo(ReportMessages.getErrorReport(), message).ask(project)
+      if (!result || !submit(errorBean, callback, parentComponent, project)) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
     }

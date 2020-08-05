@@ -26,6 +26,9 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     if (!settings.showInferredParameterTypes) {
       return false
     }
+    if (!element.isValid) {
+      return false
+    }
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
       val type: PsiType = getRepresentableType(element) ?: return true
       val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }

@@ -3,6 +3,7 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -355,5 +356,18 @@ public final class VcsLogUtil {
   @NotNull
   public static String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
+  }
+
+  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
+                                    @NotNull Condition<? super VcsLogDataPack> condition) {
+    ui.addLogListener(new VcsLogListener() {
+      @Override
+      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+        if (condition.value(dataPack)) {
+          runnable.run();
+          ui.removeLogListener(this);
+        }
+      }
+    });
   }
 }

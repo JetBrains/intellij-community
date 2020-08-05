@@ -22,6 +22,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
@@ -30,6 +32,11 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineSuperClass/";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
   }
 
   public void testInlineOneClass() { doTest(false, true); }
@@ -77,6 +84,12 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   public void testThisQualificationInsideAnonymous() { doTest(); }
   public void testOrderOfInnerClasses() { doTest(); }
   public void testSuperMethodWithoutBody() { doTest(); }
+  public void testSealedAbstractParentOneInheritor() { doTest(false, true); }
+  public void testSealedParentManyInheritors() { doTest(false, true); }
+  public void testSealedParentNonSealedInheritor() { doTest(false, true); }
+  public void testSealedGrandParentNonSealedInheritor() { doTest(false, true); }
+  public void testSealedParentInlineAll() { doTest(); }
+  public void testMultipleSealedParents() { doTest(false, true); }
 
   private void doTest() {
     doTest(false, false);

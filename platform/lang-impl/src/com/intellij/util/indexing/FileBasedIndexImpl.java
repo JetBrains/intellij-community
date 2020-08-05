@@ -37,10 +37,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -649,8 +646,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
-    boolean dumbModeAccessRestricted = getCurrentDumbModeAccessType() == null;
-    if (dumbModeAccessRestricted && ActionUtil.isDumbMode(project)) {
+    if (ActionUtil.isDumbMode(project) && getCurrentDumbModeAccessType_NoDumbChecks() == null) {
       handleDumbMode(project);
     }
 
@@ -664,12 +660,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (isUpToDateCheckEnabled()) {
         try {
           if (!RebuildStatus.isOk(indexId)) {
-            if (dumbModeAccessRestricted) {
+            if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
               throw new ServiceNotReadyException();
             }
             return false;
           }
-          if (dumbModeAccessRestricted || !ActionUtil.isDumbMode(project)) {
+          if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
             forceUpdate(project, filter, restrictedFile);
           }
           if (!areUnsavedDocumentsIndexed(indexId)) { // todo: check scope ?
@@ -870,8 +866,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     Collection<Document> documents = getUnsavedDocuments();
-    boolean psiBasedIndex = myRegisteredIndexes.isPsiDependentIndex(indexId);
-    if(psiBasedIndex) {
+    if(true) {
       Set<Document> transactedDocuments = getTransactedDocuments();
       if (documents.isEmpty()) {
         documents = transactedDocuments;
@@ -933,9 +928,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       content = new AuthenticContent(document);
     }
 
-    boolean psiBasedIndex = myRegisteredIndexes.isPsiDependentIndex(requestedIndexId);
-
-    final long currentDocStamp = psiBasedIndex ? PsiDocumentManager.getInstance(project).getLastCommittedStamp(document) : content.getModificationStamp();
+    final long currentDocStamp = PsiDocumentManager.getInstance(project).getLastCommittedStamp(document);
 
     final long previousDocStamp = myLastIndexedDocStamps.get(document, requestedIndexId);
     if (previousDocStamp == currentDocStamp) return;
@@ -999,17 +992,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @SuppressWarnings({"unchecked", "rawtypes"})
   @NotNull
   private <K, V> Map<K, V> getInMemoryData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    if (document != null && psiFile != null) {
-      boolean psiDependent = myRegisteredIndexes.isPsiDependentIndex(id);
-      UserDataHolder holder = psiDependent ? psiFile : document;
-      Map<ID, Map> indexValues = CachedValuesManager.getManager(project).getCachedValue(holder, () -> {
-        CharSequence text = psiDependent ? psiFile.getViewProvider().getContents() : document.getImmutableCharSequence();
-        FileContentImpl fc = new FileContentImpl(virtualFile, text, 0);
-        initFileContent(fc, project, psiFile);
-        Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
-        return CachedValueProvider.Result.createSingleDependency(result, holder);
+    if (psiFile != null) {
+      Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
+        try {
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile, null)
+                                                                : new FileContentImpl(virtualFile, psiFile.getViewProvider().getContents(), 0);
+          initFileContent(fc, project, psiFile);
+          Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
+          return CachedValueProvider.Result.createSingleDependency(result, psiFile);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       });
       return indexValues.get(id);
     }
@@ -1036,7 +1031,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myStorageBufferingHandler.runUpdate(true, updateComputable);
   }
 
-  void cleanupMemoryStorage(boolean skipPsiBasedIndices) {
+  void cleanupMemoryStorage(boolean skipContentDependentIndexes) {
     myLastIndexedDocStamps.clear();
     if (myRegisteredIndexes == null) {
       // unsaved doc is dropped while plugin load/unload-ing
@@ -1049,7 +1044,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return;
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
-      if (skipPsiBasedIndices && myRegisteredIndexes.isPsiDependentIndex(indexId)) continue;
+      if (skipContentDependentIndexes && myRegisteredIndexes.isContentDependentIndex(indexId)) continue;
       final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
       assert index != null;
       index.cleanupMemoryStorage();
@@ -1436,8 +1431,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
-    return !myRegisteredIndexes.isNotRequiringContentIndex(indexId);
+  public boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
+    return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
   @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
@@ -1504,7 +1499,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     else { // file was removed
       for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
-        if (myRegisteredIndexes.isNotRequiringContentIndex(indexId)) {
+        if (!myRegisteredIndexes.isContentDependentIndex(indexId)) {
           updateSingleIndex(indexId, null, fileId, null);
         }
       }
@@ -1581,6 +1576,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return isDirectory ? myRegisteredIndexes.getIndicesForDirectories() : myRegisteredIndexes.getNotRequiringContentIndices();
   }
 
+  @NotNull
+  public Collection<ID<?, ?>> getContentDependentIndexes() {
+    return myRegisteredIndexes.getRequiringContentIndices();
+  }
+
   static FileTypeManagerImpl getFileTypeManager() {
     return (FileTypeManagerImpl)FileTypeManager.getInstance();
   }
@@ -1597,7 +1597,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return true;
     }
 
-    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myRegisteredIndexes.getPsiDependentIndices()), getFileId(file), file);
+    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myRegisteredIndexes.getRequiringContentIndices()), getFileId(file), file);
     return false;
   }
 
@@ -1677,7 +1677,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       boolean wasIndexed = false;
       List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
       for (ID<?, ?> candidate : candidates) {
-        if (myRegisteredIndexes.isPsiDependentIndex(candidate)) {
+        if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
           if(getInputFilter(candidate).acceptInput(virtualFile)) {
             getIndex(candidate).resetIndexedStateForFile(fileId);
             wasIndexed = true;
@@ -1796,10 +1796,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
-    return extension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent();
-  }
   public static final boolean DO_TRACE_STUB_INDEX_UPDATE = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false);
 
   @ApiStatus.Internal

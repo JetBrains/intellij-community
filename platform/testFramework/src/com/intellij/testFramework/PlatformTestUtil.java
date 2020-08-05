@@ -53,7 +53,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -249,17 +252,16 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      String[] lines = treeStringPresentation.split("\n");
-      for (String line : lines) {
+      for (String line : treeStringPresentation.split("\n")) {
         if (!expected.contains(line + "\n")) {
           fail("Missing node: " + line);
         }
       }
-    } else {
+    }
+    else {
       assertEquals(expected.trim(), treeStringPresentation.trim());
     }
   }
-
 
   public static void expand(JTree tree, int... rows) {
     for (int row : rows) {
@@ -732,7 +734,7 @@ public final class PlatformTestUtil {
   private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
     if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
       String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
-      File[] io = notNull(new File(dir.getPath()).listFiles());
+      File[] io = Objects.requireNonNull(new File(dir.getPath()).listFiles());
       String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
       assertEquals(vfsPaths, ioPaths);
     }
@@ -814,11 +816,6 @@ public final class PlatformTestUtil {
       String displayText2 = o2.toTestString(printInfo);
       return Comparing.compare(displayText1, displayText2);
     };
-  }
-
-  public static @NotNull <T> T notNull(@Nullable T t) {
-    assertNotNull(t);
-    return t;
   }
 
   public static @NotNull String loadFileText(@NotNull String fileName) throws IOException {
@@ -1006,20 +1003,8 @@ public final class PlatformTestUtil {
    * 2. Be aware the method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs})
    *    (it is assumed that project is already created in a correct way).
    */
-  public static @NotNull VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {
-    try {
-      String path = Objects.requireNonNull(project.getBasePath());
-      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (result != null) {
-        return result;
-      }
-
-      // createDirectories executes in write action
-      return Objects.requireNonNull(VfsUtil.createDirectories(Objects.requireNonNull(project.getBasePath())));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static @NotNull VirtualFile getOrCreateProjectBaseDir(@NotNull Project project) {
+    return HeavyTestHelper.getOrCreateProjectBaseDir(project);
   }
 
   public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {

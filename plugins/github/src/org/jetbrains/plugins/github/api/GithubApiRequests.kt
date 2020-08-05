@@ -159,7 +159,7 @@ object GithubApiRequests {
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
+              it.reader().use { it.readText() }
             })
           }
         }.withOperationName("get diff for ref")
@@ -170,7 +170,7 @@ object GithubApiRequests {
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
-              StreamUtil.readText(it, Charsets.UTF_8)
+              it.reader().use { it.readText() }
             })
           }
         }.withOperationName("get diff between refs")

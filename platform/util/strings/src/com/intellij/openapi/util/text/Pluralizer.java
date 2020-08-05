@@ -52,8 +52,7 @@ import java.util.regex.Pattern;
  * @author gregsh
  * @noinspection SpellCheckingInspection
  */
-class Pluralizer {
-
+final class Pluralizer {
   static final Pluralizer PLURALIZER;
 
   private final Map<String, String> irregularSingles = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);

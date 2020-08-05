@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -237,7 +238,13 @@ public abstract class CodeBlockSurrounder {
     if (parent instanceof PsiResourceVariable) {
       PsiResourceList list = ObjectUtils.tryCast(parent.getParent(), PsiResourceList.class);
       if (list != null && list.getParent() instanceof PsiTryStatement) {
-        return new SplitTrySurrounder(expression, (PsiResourceVariable)parent, (PsiTryStatement)list.getParent());
+        Iterator<PsiResourceListElement> iterator = list.iterator();
+        PsiTryStatement tryStatement = (PsiTryStatement)list.getParent();
+        if (iterator.hasNext() && iterator.next() == parent && tryStatement.getCatchBlocks().length == 0 
+            && tryStatement.getFinallyBlock() == null) {
+          return forStatement(tryStatement, expression);
+        }
+        return new SplitTrySurrounder(expression, (PsiResourceVariable)parent, tryStatement);
       }
       return null;
     }

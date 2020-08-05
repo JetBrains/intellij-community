@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.storage.VersionedEntityStorageOnBuilder
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
 abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStorageBuilder) {

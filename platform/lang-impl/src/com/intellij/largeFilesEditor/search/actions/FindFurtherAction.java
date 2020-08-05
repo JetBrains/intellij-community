@@ -12,12 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class FindFurtherAction extends AnAction implements DumbAware {
-
-  private static class Holder {
-    private static final Icon ICON_FIND_ADD_NEXT = AllIcons.Actions.FindAndShowNextMatches;
-    private static final Icon ICON_FIND_ADD_PREV = AllIcons.Actions.FindAndShowPrevMatches;
-  }
-
   private final boolean directionForward;
   private final RangeSearch myRangeSearch;
 
@@ -32,12 +26,12 @@ public class FindFurtherAction extends AnAction implements DumbAware {
     if (directionForward) {
       text = EditorBundle.message("large.file.editor.find.further.forward.action.text");
       description = EditorBundle.message("large.file.editor.find.further.forward.action.description");
-      icon = Holder.ICON_FIND_ADD_NEXT;
+      icon = AllIcons.Actions.FindAndShowNextMatches;
     }
     else {
       text = EditorBundle.message("large.file.editor.find.further.backward.action.text");
       description = EditorBundle.message("large.file.editor.find.further.backward.action.description");
-      icon = Holder.ICON_FIND_ADD_PREV;
+      icon = AllIcons.Actions.FindAndShowPrevMatches;
     }
 
     getTemplatePresentation().setText(text);

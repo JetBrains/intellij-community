@@ -29,10 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -296,7 +293,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     };
   }
 
-  private static void showErrorMessage(Project project, String message, Editor editor) {
+  private static void showErrorMessage(Project project, @NlsContexts.DialogMessage String message, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_PARAMETER);
   }
 
@@ -801,7 +798,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
   }
 
-  static String getRefactoringName() {
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

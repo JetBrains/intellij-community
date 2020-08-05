@@ -7,6 +7,8 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
@@ -18,6 +20,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -56,10 +59,16 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
 
   @Override
   public void serialize(@NotNull PsiClassReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    String[] names = stub.getReferencedNames();
-    dataStream.writeVarInt(names.length);
-    for (String name : names) {
-      dataStream.writeName(name);
+    TypeInfo[] types = stub.getTypes();
+    boolean hasAnnotations = ContainerUtil.exists(types, info -> !info.getTypeAnnotations().isEmpty());
+    dataStream.writeVarInt(hasAnnotations ? -types.length : types.length);
+    for (TypeInfo info : types) {
+      dataStream.writeName(info.text);
+    }
+    if (hasAnnotations) {
+      for (TypeInfo info : types) {
+        TypeAnnotationContainer.writeTypeAnnotations(dataStream, info.getTypeAnnotations());
+      }
     }
   }
 
@@ -67,11 +76,18 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
-    String[] names = ArrayUtil.newStringArray(len);
-    for (int i = 0; i < names.length; i++) {
-      names[i] = dataStream.readNameString();
+    boolean hasAnnotations = len < 0;
+    len = Math.abs(len);
+    TypeInfo[] infos = new TypeInfo[len];
+    for (int i = 0; i < infos.length; i++) {
+      infos[i] = new TypeInfo(dataStream.readNameString());
     }
-    return new PsiClassReferenceListStubImpl(this, parentStub, names);
+    if (hasAnnotations) {
+      for (int i = 0; i < len; i++) {
+        infos[i].setTypeAnnotations(TypeAnnotationContainer.readTypeAnnotations(dataStream));
+      }
+    }
+    return new PsiClassReferenceListStubImpl(this, parentStub, infos);
   }
 
   @Override
@@ -87,9 +103,9 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
       }
 
       if (role == PsiReferenceList.Role.EXTENDS_LIST) {
-        StubElement parentStub = stub.getParentStub();
+        StubElement<?> parentStub = stub.getParentStub();
         if (parentStub instanceof PsiClassStub) {
-          PsiClassStub psiClassStub = (PsiClassStub)parentStub;
+          PsiClassStub<?> psiClassStub = (PsiClassStub<?>)parentStub;
           if (psiClassStub.isEnum()) {
             sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, "Enum");
           }

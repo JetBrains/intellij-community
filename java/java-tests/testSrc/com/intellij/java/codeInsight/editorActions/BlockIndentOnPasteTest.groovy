@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.editorActions
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.PasteHandler
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
@@ -640,7 +641,7 @@ line to paste #1
      line to paste #1
           line to paste #2\
 '''
-    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
+    doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT)
   }
   
   void "test plain text when pasted string ends by line feed"() {
@@ -663,7 +664,7 @@ line to paste #2
   line to paste #2
 
 '''
-    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
+    doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT)
   }
 
   void "test plain text when caret is after selection"() {
@@ -684,7 +685,7 @@ line to paste #2
 line to paste #1
 line to paste #2
 '''
-    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
+    doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT)
   }
 
   void testPlainTextThatStartsByLineFeed() {
@@ -703,7 +704,7 @@ line 1
   # item1
   # item2
 '''
-    doTest(before, toPaste1, expected1, StdFileTypes.PLAIN_TEXT)
+    doTest(before, toPaste1, expected1, FileTypes.PLAIN_TEXT)
 
     def toPaste2 =
       '''
@@ -719,7 +720,7 @@ line 1
 
   # item2
 '''
-    doTest(before, toPaste2, expected2, StdFileTypes.PLAIN_TEXT)
+    doTest(before, toPaste2, expected2, FileTypes.PLAIN_TEXT)
   }
   
   void "test formatter-based paste that starts with white space"() {

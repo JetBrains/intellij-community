@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -69,12 +70,13 @@ public class TestNGTestClass extends TestNGTestObject {
     final TestData data = myConfig.getPersistantData();
     final SourceScope scope = data.getScope().getSourceScope(myConfig);
     if (scope == null) {
-      throw new RuntimeConfigurationException("Invalid scope specified");
+      throw new RuntimeConfigurationException(TestngBundle.message("testng.test.class.dialog.message.invalid.scope.specified.exception"));
     }
     final PsiManager manager = PsiManager.getInstance(myConfig.getProject());
     String testClassName = data.getMainClassName();
     final PsiClass psiClass = ClassUtil.findPsiClass(manager, testClassName, null, true, scope.getGlobalSearchScope());
-    if (psiClass == null) throw new RuntimeConfigurationException("Class '" + testClassName + "' not found");
+    if (psiClass == null) throw new RuntimeConfigurationException(
+      TestngBundle.message("testng.dialog.message.class.not.found.exception", testClassName));
     if (!TestNGUtil.isTestNGClass(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
     }

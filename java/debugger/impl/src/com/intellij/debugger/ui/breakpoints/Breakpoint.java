@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
@@ -40,6 +41,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -61,14 +63,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
-  public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
+  public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
   final XBreakpoint<P> myXBreakpoint;
@@ -142,10 +143,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Override
   public boolean isObsolete() {
-    return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase)myXBreakpoint).isDisposed();
+    return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase<?, ?, ?>)myXBreakpoint).isDisposed();
   }
 
-  public abstract String getDisplayName ();
+  public abstract @NlsContexts.Label String getDisplayName();
 
   public String getShortName() {
     return getDisplayName();
@@ -161,12 +162,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public boolean isRemoveAfterHit() {
-    return myXBreakpoint instanceof XLineBreakpoint && ((XLineBreakpoint)myXBreakpoint).isTemporary();
+    return myXBreakpoint instanceof XLineBreakpoint && ((XLineBreakpoint<?>)myXBreakpoint).isTemporary();
   }
 
   public void setRemoveAfterHit(boolean value) {
     if (myXBreakpoint instanceof XLineBreakpoint) {
-      ((XLineBreakpoint)myXBreakpoint).setTemporary(value);
+      ((XLineBreakpoint<?>)myXBreakpoint).setTemporary(value);
     }
   }
 
@@ -355,7 +356,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    * @return true if the ID was added or false otherwise
    */
   private boolean hasObjectID(long id) {
-    return Arrays.stream(getInstanceFilters()).anyMatch(instanceFilter -> instanceFilter.getId() == id);
+    return ContainerUtil.exists(getInstanceFilters(), instanceFilter -> instanceFilter.getId() == id);
   }
 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
@@ -516,7 +517,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return className;
   }
 
-  protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {
+  protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] excludeFilters) {
     if (typeName == null) {
       return true;
     }
@@ -533,7 +534,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (hasEnabled && !matches) {
       return false;
     }
-    return Arrays.stream(exludeFilters).noneMatch(classFilter -> classFilter.isEnabled() && classFilter.matches(typeName));
+    return !ContainerUtil.exists(excludeFilters, classFilter -> classFilter.isEnabled() && classFilter.matches(typeName));
   }
 
   private void handleTemporaryBreakpointHit(final DebugProcessImpl debugProcess) {
@@ -708,7 +709,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  private static String getSuspendPolicy(XBreakpoint breakpoint) {
+  private static String getSuspendPolicy(XBreakpoint<?> breakpoint) {
     switch (breakpoint.getSuspendPolicy()) {
       case ALL:
         return DebuggerSettings.SUSPEND_ALL;

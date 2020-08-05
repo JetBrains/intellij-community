@@ -115,10 +115,10 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     final MyListModel model = new MyListModel();
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
-    button.addActionListener(e -> performEditMetaData(button));
+    button.addActionListener(__ -> performEditMetaData(button));
 
     final JList<Configuration> list = new JBList<>(model);
     list.setCellRenderer(new ConfigurationCellRenderer());
@@ -148,7 +148,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return panel;
   }
 
-  private void performEditMetaData(Component context) {
+  private void performEditMetaData(@NotNull Component context) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(context);
     if (profile == null) {
@@ -170,7 +170,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     InspectionProfileUtil.fireProfileChanged(profile);
   }
 
-  private void performMove(JList<Configuration> list, boolean up) {
+  private void performMove(@NotNull JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
     final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
@@ -195,7 +195,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     profile.setModified(true);
   }
 
-  private static Configuration moveMetaData(Configuration source, Configuration target) {
+  @NotNull
+  private static Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
     if (source == target) return source;
     target.setDescription(source.getDescription());
     target.setSuppressId(source.getSuppressId());
@@ -206,7 +207,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return target;
   }
 
-  private void performAdd(JList<Configuration> list, AnActionButton b) {
+  private void performAdd(@NotNull JList<Configuration> list, @NotNull AnActionButton b) {
     final AnAction[] children = new AnAction[]{new AddTemplateAction(list, false), new AddTemplateAction(list, true)};
     final RelativePoint point = b.getPreferredPopupPoint();
     if (point == null) return;
@@ -215,7 +216,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
                                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(point);
   }
 
-  private void performRemove(JList<Configuration> list) {
+  private void performRemove(@NotNull JList<Configuration> list) {
     boolean metaData = false;
     for (Configuration configuration : list.getSelectedValuesList()) {
       if (configuration.getOrder() == 0) {
@@ -250,7 +251,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     profile.setModified(true);
   }
 
-  private void performEdit(JList<Configuration> list) {
+  private void performEdit(@NotNull JList<Configuration> list) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
     if (project == null) return;
     final int index = list.getSelectedIndex();
@@ -278,11 +279,11 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private final class AddTemplateAction extends DumbAwareAction {
-
+    @NotNull
     private final JList<Configuration> myList;
     private final boolean myReplace;
 
-    private AddTemplateAction(JList<Configuration> list, boolean replace) {
+    private AddTemplateAction(@NotNull JList<Configuration> list, boolean replace) {
       super(replace
             ? SSRBundle.message("SSRInspection.add.replace.template.button")
             : SSRBundle.message("SSRInspection.add.search.template.button"));
@@ -326,7 +327,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private class MyListModel extends AbstractListModel<Configuration> {
-
     @Override
     public int getSize() {
       return myConfigurations.size();

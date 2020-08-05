@@ -2,17 +2,20 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -55,11 +58,13 @@ public final class ZipUtil {
       relativeName = relativeName.substring(1);
     }
 
-    if (isDir && !StringUtil.endsWithChar(relativeName, '/')) {
+    if (isDir && !Strings.endsWithChar(relativeName, '/')) {
       relativeName += "/";
     }
-    if (fileFilter != null && !FileUtil.isFilePathAcceptable(file, fileFilter)) return false;
-    if (writtenItemRelativePaths != null && !writtenItemRelativePaths.add(relativeName)) return false;
+    if ((fileFilter != null && !FileUtilRt.isFilePathAcceptable(file, fileFilter)) ||
+        (writtenItemRelativePaths != null && !writtenItemRelativePaths.add(relativeName))) {
+      return false;
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Add " + file + " as " + relativeName);
@@ -103,7 +108,7 @@ public final class ZipUtil {
                                                @NotNull String relativePath,
                                                @Nullable FileFilter fileFilter,
                                                @Nullable Set<String> writtenItemRelativePaths) throws IOException {
-    if (jarFile != null && FileUtil.isAncestor(dir, jarFile, false)) {
+    if (jarFile != null && FileUtil.isAncestor(dir.getPath(), jarFile.getPath(), false)) {
       return false;
     }
     if (!relativePath.isEmpty()) {
@@ -120,31 +125,47 @@ public final class ZipUtil {
     return true;
   }
 
-  /** @see Decompressor.Zip */
+  /**
+   * @deprecated {@link #extract(Path, Path, FilenameFilter)}
+   */
+  @Deprecated
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).extract(outputDir.toPath());
+  }
+
+  /** @see Decompressor.Zip */
+  public static void extract(@NotNull Path file, @NotNull Path outputDir, @Nullable FilenameFilter filter) throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
-  /** @see Decompressor.Zip */
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
+  public static void extract(@NotNull Path file, @NotNull Path outputDir, @Nullable FilenameFilter filter, boolean overwrite)
+    throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  private static final class FileFilterAdapter implements Condition<String> {
-    private static FileFilterAdapter wrap(File outputDir, @Nullable FilenameFilter filter) {
+  /**
+   * @deprecated {@link #extract(Path, Path, FilenameFilter, boolean)}
+   */
+  @Deprecated
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).overwrite(overwrite).extract(outputDir);
+  }
+
+  private static final class FileFilterAdapter implements Predicate<String> {
+    private static FileFilterAdapter wrap(@NotNull Path outputDir, @Nullable FilenameFilter filter) {
       return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
     private final File myOutputDir;
     private final FilenameFilter myFilter;
 
-    private FileFilterAdapter(File outputDir, FilenameFilter filter) {
-      myOutputDir = outputDir;
+    private FileFilterAdapter(@NotNull Path outputDir, FilenameFilter filter) {
+      myOutputDir = outputDir.toFile();
       myFilter = filter;
     }
 
     @Override
-    public boolean value(String entryName) {
+    public boolean test(String entryName) {
       File outputFile = new File(myOutputDir, entryName);
       return myFilter.accept(outputFile.getParentFile(), outputFile.getName());
     }
@@ -177,28 +198,35 @@ public final class ZipUtil {
     }
   }
 
+  public static void compressFile(@NotNull Path srcFile, @NotNull Path zipFile) throws IOException {
+    try (ZipOutputStream os = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+      os.putNextEntry(new ZipEntry(srcFile.getFileName().toString()));
+      Files.copy(srcFile, os);
+      os.closeEntry();
+    }
+  }
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link Decompressor.Zip} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
+    Path path = outputDir.toPath();
+    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(path, filter)).extract(path);
   }
 
   /** @deprecated use {@link Decompressor.Zip} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
-    File outputFile = Decompressor.entryFile(outputDir, entry.getName());
+    Path outputFile = Decompressor.entryFile(outputDir.toPath(), entry.getName());
     try {
       if (entry.isDirectory()) {
-        FileUtil.createDirectory(outputFile);
+        Files.createDirectories(outputFile);
       }
-      else if (!outputFile.exists() || overwrite) {
-        FileUtil.createParentDirs(outputFile);
-        try (FileOutputStream os = new FileOutputStream(outputFile)) {
-          FileUtilRt.copy(inputStream, os);
-        }
+      else if (!Files.exists(outputFile) || overwrite) {
+        Files.createDirectories(outputFile.getParent());
+        Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
       }
     }
     finally {

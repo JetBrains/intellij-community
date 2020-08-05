@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.util.Factory;
@@ -49,8 +49,8 @@ public abstract class UIPropertyBinding {
 
   public abstract void addAllPropertiesTo(Collection<? super AbstractProperty> properties);
 
-  public static class Composite extends UIPropertyBinding {
-    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
+  public static final class Composite extends UIPropertyBinding {
+    private final List<UIPropertyBinding> myBindings = new ArrayList<>();
 
     public void bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
@@ -356,7 +356,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
+  public static final class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
     private final ListProperty<T> myProperty;
     private final ListTableModel<T> myModel;
     private final Collection<JComponent> myComponents = new ArrayList<>();
@@ -402,11 +402,11 @@ public abstract class UIPropertyBinding {
     @Override
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
-        BaseTableView.restoreWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
+        BaseTableView.restoreWidth(s -> myColumnWidthProperty.get(container).get(s), getComponent().getColumnModel());
       }
       myModel.setItems(myProperty.getModifiableList(container));
       if (myModel.isSortable()) {
-        final ColumnInfo[] columnInfos = myModel.getColumnInfos();
+        ColumnInfo[] columnInfos = myModel.getColumnInfos();
         for (ColumnInfo columnInfo : columnInfos) {
           if (columnInfo.isSortable()) {
             break;
@@ -438,7 +438,7 @@ public abstract class UIPropertyBinding {
     @Override
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
       if (myColumnWidthProperty != null) {
-        BaseTableView.storeWidth(myColumnWidthProperty.get(container), getComponent().getColumnModel());
+        BaseTableView.storeWidth((s, s2) -> myColumnWidthProperty.get(container).put(s, s2), getComponent().getColumnModel());
       }
     }
 
@@ -453,7 +453,7 @@ public abstract class UIPropertyBinding {
   }
 
   private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
-    private final ArrayList<JComponent> myComponents = new ArrayList<>();
+    private final List<JComponent> myComponents = new ArrayList<>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
 
@@ -484,7 +484,7 @@ public abstract class UIPropertyBinding {
     @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       ListModel model = myList.getModel();
-      ArrayList<Item> list = new ArrayList<>();
+      List<Item> list = new ArrayList<>();
       for (int i = 0; i < model.getSize(); i++) {
         list.add((Item)model.getElementAt(i));
       }

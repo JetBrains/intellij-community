@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.completion.StaticallyImportable;
@@ -25,6 +26,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
@@ -668,31 +671,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewVararg() {
     configureByTestName();
     assertStringItems("Foo", "Foo", "Foo");
-    assertEquals("{...} (default package)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[] (default package)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
-    assertEquals("[]{...} (default package)", LookupElementPresentation.renderElement(myItems[2]).getTailText());
+    assertEquals("{...} (default package)", renderElement(myItems[0]).getTailText());
+    assertEquals("[] (default package)", renderElement(myItems[1]).getTailText());
+    assertEquals("[]{...} (default package)", renderElement(myItems[2]).getTailText());
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testNewVararg2() {
     configureByTestName();
     assertStringItems("String", "String", "String");
-    assertEquals(" (java.lang)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[] (java.lang)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
-    assertEquals("[]{...} (java.lang)", LookupElementPresentation.renderElement(myItems[2]).getTailText());
+    assertEquals(" (java.lang)", renderElement(myItems[0]).getTailText());
+    assertEquals("[] (java.lang)", renderElement(myItems[1]).getTailText());
+    assertEquals("[]{...} (java.lang)", renderElement(myItems[2]).getTailText());
   }
 
   public void testNewByteArray() {
     configureByTestName();
     assertStringItems("byte");
-    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[]", renderElement(myItems[0]).getTailText());
   }
 
   public void testNewByteArray2() {
     configureByTestName();
     assertStringItems("byte", "byte");
-    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
-    assertEquals("[]{...}", LookupElementPresentation.renderElement(myItems[1]).getTailText());
+    assertEquals("[]", renderElement(myItems[0]).getTailText());
+    assertEquals("[]{...}", renderElement(myItems[1]).getTailText());
   }
 
   public void testInsideStringLiteral() { doAntiTest(); }
@@ -896,7 +899,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("String.class");
 
     LookupElement item = myFixture.getLookupElements()[0];
-    LookupElementPresentation p = LookupElementPresentation.renderElement(item);
+    LookupElementPresentation p = renderElement(item);
     assertEquals("String.class", p.getItemText());
     assertEquals(" (java.lang)", p.getTailText());
     assertNull(p.getTypeText());
@@ -1206,16 +1209,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testAutoImportExpectedType() {
-    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    try {
-      configureByTestName();
-      performAction();
-      myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-    }
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
+  }
+
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  public void testExpectedTypeAutoImportHonorsExcludes() {
+    JavaProjectCodeInsightSettings.setExcludedNames(getProject(), getTestRootDisposable(), "java.awt");
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(1, "List", "ArrayList", "AbstractList");
   }
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
@@ -1424,7 +1426,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testStaticBuilderWithGenerics() {
     configureByTestName();
-    assertEquals("Map.builder().get(...)", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    assertEquals("Map.builder().get(...)", renderElement(myItems[0]).getItemText());
     myFixture.type('\t');
     checkResultByTestName();
   }
@@ -1474,4 +1476,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.complete(CompletionType.SMART);
     checkResultByFile("second/MethodAsQualifier-out.java");
   }
+
+  public void testNoSemicolonAfterNonLastVariableInitializer() { doTest(); }
+
 }

@@ -54,3 +54,13 @@ class F extends E {
     super(name, age);
   }
 }
+
+class G {
+  G(String name, int age) {}
+}
+
+class H extends G {
+  H(Object street, int <warning descr="Parameter name 'number' is different from parameter 'age' overridden">number</warning>) {
+    super(street.toString(), number);
+  }
+}

@@ -96,8 +96,7 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       String message = LangBundle.message("slice.analysis.title.filter", filterText);
       append(" " + message, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
-    if (filter instanceof JavaValueFilter && element != null &&
-        ((JavaValueFilter)filter).requiresAssertionViolation(element)) {
+    if (javaSliceUsage != null && javaSliceUsage.requiresAssertionViolation) {
       append(" " + JavaBundle.message("slice.usage.message.assertion.violated"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }

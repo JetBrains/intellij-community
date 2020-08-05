@@ -19,7 +19,8 @@ interface ConstrainedPresentation<Content : Any, Constraints: Any> {
 
 class HorizontalConstraints(
   val priority: Int,
-  val relatesToPrecedingText: Boolean // specific to placement, but not actually possible to handle in case of multiple hints
+  val relatesToPrecedingText: Boolean, // specific to placement, but not actually possible to handle in case of multiple hints
+  val placedAtTheEndOfLine: Boolean = false // used to prevent caret movement behind a hint
 )
 
 data class HorizontalConstrainedPresentation<Content : Any>(

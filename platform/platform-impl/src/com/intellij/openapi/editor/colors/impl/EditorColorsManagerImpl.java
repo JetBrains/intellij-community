@@ -182,22 +182,26 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        String activeScheme = mySchemeManager.getCurrentSchemeName();
-        mySchemeManager.reload();
-
-        if (StringUtil.isNotEmpty(activeScheme)) {
-          EditorColorsScheme scheme = getScheme(activeScheme);
-          if (scheme != null) {
-            setGlobalScheme(scheme);
-          }
-        }
+        reloadKeepingActiveScheme();
       }
 
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        mySchemeManager.reload();
+        reloadKeepingActiveScheme();
       }
     });
+  }
+
+  private void reloadKeepingActiveScheme() {
+    String activeScheme = mySchemeManager.getCurrentSchemeName();
+    mySchemeManager.reload();
+
+    if (StringUtil.isNotEmpty(activeScheme)) {
+      EditorColorsScheme scheme = getScheme(activeScheme);
+      if (scheme != null) {
+        setGlobalScheme(scheme);
+      }
+    }
   }
 
   private void initDefaultSchemes() {
@@ -514,7 +518,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   @Override
-  public EditorColorsScheme getScheme(@NotNull String schemeName) {
+  public EditorColorsScheme getScheme(@NonNls @NotNull String schemeName) {
     return mySchemeManager.findSchemeByName(schemeName);
   }
 
@@ -585,8 +589,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return mySchemeManager;
   }
 
-  private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
-  private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
+  @NonNls private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  @NonNls private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 

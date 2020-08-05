@@ -113,7 +113,7 @@ public final class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendedStatusChanged(this);
 
     // Give running NonBlockingReadActions a chance to suspend
-    ApplicationManager.getApplication().invokeLater(() -> { WriteAction.run(() -> {}); });
+    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {}));
   }
 
   public void resumeProcess() {

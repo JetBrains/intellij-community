@@ -6,6 +6,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -181,7 +182,7 @@ public final class GrRefactoringConflictsUtil {
                                                              RefactoringUIUtil.getDescription(resolved, true),
                                                              scopeDescription,
                                                              CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
-            conflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));
+            conflicts.putValue(resolved, StringUtil.capitalize(message));
             reported.add(resolved);
           }
         }
@@ -234,7 +235,7 @@ public final class GrRefactoringConflictsUtil {
                                                     scopeDescription,
                                                     CommonRefactoringUtil.htmlEmphasize(module.getName()));
               }
-              conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(referencedElement, StringUtil.capitalize(message));
             }
           }
         }

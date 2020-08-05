@@ -10,6 +10,7 @@ public class FakeVirtualFile extends StubVirtualFile {
   private final String myName;
 
   public FakeVirtualFile(@NotNull VirtualFile parent, @NotNull String name) {
+    super(parent.getFileSystem());
     myParent = parent;
     myName = name;
   }

@@ -236,7 +236,13 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       }
     }
     try {
-      return mySubIndexerRetriever.isIndexed(fileId, file) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+      if (mySubIndexerRetriever.isIndexed(fileId, file)) {
+        if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
+          setIndexConfigurationUpToDate(fileId, file);
+        }
+        return FileIndexingState.UP_TO_DATE;
+      }
+      return FileIndexingState.OUT_DATED;
     }
     catch (IOException e) {
       LOG.error(e);
@@ -247,6 +253,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   protected boolean isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
     return false;
   }
+
+  protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) { }
 
   @Override
   public void removeTransientDataForFile(int inputId) {

@@ -12,6 +12,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -24,10 +27,10 @@ import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -81,32 +84,27 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(aClass);
 
     List<PsiClass> inheritors = new ArrayList<>();
-    for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, false)) {
-      if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
-        showError(project, editor, "intention.error.make.sealed.class.has.anonymous.or.local.inheritors");
-        return;
-      }
-
-      if (module == null) {
-        PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
-        if (file == null) {
-          showError(project, editor, "intention.error.make.sealed.class.inheritors.not.in.java.file");
-          return;
-        }
-        if (!parentFile.getPackageName().equals(file.getPackageName())) {
-          showError(project, editor, "intention.error.make.sealed.class.different.packages");
-          return;
-        }
-      }
-      else {
-        if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
-          showError(project, editor, "intention.error.make.sealed.class.different.modules");
-          return;
-        }
+    Ref<String> message = new Ref<>();
+    ClassInheritorsSearch.search(aClass, false).forEach(inheritor -> {
+      String errorTitle = checkInheritor(parentFile, module, inheritor);
+      if (errorTitle != null) {
+        message.set(errorTitle);
+        return false;
       }
 
       inheritors.add(inheritor);
+      return true;
+    });
+    if (!message.isNull()) {
+      showError(project, editor, message.get());
+      return;
     }
+    Set<VirtualFile> filesWithInheritors = new HashSet<>();
+    filesWithInheritors.add(parentFile.getVirtualFile());
+    for (PsiClass inheritor : inheritors) {
+      filesWithInheritors.add(inheritor.getContainingFile().getVirtualFile());
+    }
+    FileModificationService.getInstance().prepareVirtualFilesForWrite(project, filesWithInheritors);
     List<String> names = ContainerUtil.map(inheritors, PsiClass::getQualifiedName);
     @PsiModifier.ModifierConstant String modifier;
     if (!names.isEmpty()) {
@@ -125,14 +123,33 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
         modifier = PsiModifier.FINAL;
       }
     }
-    FileModificationService.getInstance().prepareFileForWrite(parentFile);
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiModifierList modifierList = Objects.requireNonNull(aClass.getModifierList());
       modifierList.setModifierProperty(modifier, true);
     });
   }
 
-  public void showError(@NotNull Project project, Editor editor, String message) {
+  public static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
+    if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
+      return "intention.error.make.sealed.class.has.anonymous.or.local.inheritors";
+    }
+
+    if (module == null) {
+      PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
+      if (file == null) return "intention.error.make.sealed.class.inheritors.not.in.java.file";
+      if (!parentFile.getPackageName().equals(file.getPackageName())) {
+        return "intention.error.make.sealed.class.different.packages";
+      }
+    }
+    else {
+      if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
+        return "intention.error.make.sealed.class.different.modules";
+      }
+    }
+    return null;
+  }
+
+  private static void showError(@NotNull Project project, Editor editor, @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, JavaBundle.message(message), getErrorTitle(), null);
   }
 
@@ -154,7 +171,6 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     String title = JavaBundle.message("intention.make.sealed.class.task.title.set.inheritors.modifiers");
     SequentialModalProgressTask task = new SequentialModalProgressTask(project, title, true);
     task.setTask(new SequentialTask() {
-      private final FileModificationService myFileModificationService = FileModificationService.getInstance();
       private int current = 0;
       private final int size = inheritors.size();
 
@@ -175,7 +191,6 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
             modifierList.hasModifierProperty(PsiModifier.FINAL)) {
           return isDone();
         }
-        myFileModificationService.prepareFileForWrite(inheritor.getContainingFile());
         ApplicationManager.getApplication().runWriteAction(() -> {
           modifierList.setModifierProperty(PsiModifier.NON_SEALED, true);
         });
@@ -207,7 +222,7 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
     return false;
   }
 
-  private static String getErrorTitle() {
+  private static @NlsContexts.DialogTitle String getErrorTitle() {
     return JavaBundle.message("intention.make.sealed.class.hint.title");
   }
 }

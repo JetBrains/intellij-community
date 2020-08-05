@@ -6,15 +6,12 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -53,18 +50,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   }
 
   @Override
-  protected boolean isCreateProjectFileExplicitly() {
-    return false;
-  }
-
-  @Override
-  protected @NotNull Project doCreateAndOpenProject(@NotNull Path projectFile) {
-    OpenProjectTask options = new OpenProjectTaskBuilder()
-      // RecompileAfterVfsChangesTest fails runPostStartUpActivities is disabled
-      //.runPostStartUpActivities(false)
-      .componentStoreLoadingEnabled(false)
-      .build();
-    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, options));
+  protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
+    // RecompileAfterVfsChangesTest fails runPostStartUpActivities is disabled
+    return super.getOpenProjectOptions().componentStoreLoadingEnabled(false);
   }
 
   @Override
@@ -333,7 +321,6 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     //todo[nik] reuse code from PlatformTestCase
     VirtualFile baseDir = getOrCreateProjectBaseDir();
     Path moduleFile = baseDir.toNioPath().resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    myFilesToDelete.add(moduleFile);
     return WriteAction.computeAndWait(() -> {
       Module module = ModuleManager.getInstance(myProject)
         .newModule(FileUtil.toSystemIndependentName(moduleFile.toString()), getModuleType().getId());

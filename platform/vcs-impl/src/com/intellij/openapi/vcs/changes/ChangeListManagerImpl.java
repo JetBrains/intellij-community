@@ -93,6 +93,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
 
+  private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
   private volatile boolean myShowLocalChangesInvalidated;
@@ -439,24 +440,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  private void updateImmediately() {
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+  /**
+   * @return false if update was re-scheduled due to new 'markEverythingDirty' event, true otherwise.
+   */
+  private boolean updateImmediately() {
+    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      if (!vcsManager.hasActiveVcss()) return;
+      if (!vcsManager.hasActiveVcss()) return true;
 
       VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
       final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
       if (checkScopeIsEmpty(invalidated)) {
         LOG.debug("[update] - dirty scope is empty");
         dirtyScopeManager.changesProcessed();
-        return;
+        return true;
       }
 
       final boolean wasEverythingDirty = invalidated.isEverythingDirty();
       final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
       try {
-        if (myUpdater.isStopped()) return;
+        if (myUpdater.isStopped()) return true;
 
         // copy existing data to objects that would be updated.
         // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
@@ -483,7 +487,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         myChangesViewManager.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+        if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             iterateScopes(dataHolder, scopes, vcsIndicator);
@@ -492,10 +496,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         catch (ProcessCanceledException ignore) {
         }
 
+        boolean wasCancelled;
         boolean takeChanges;
         synchronized (myDataLock) {
-          takeChanges = myUpdateException == null && !vcsIndicator.isCanceled();
+          wasCancelled = vcsIndicator.isCanceled();
+          takeChanges = myUpdateException == null && !wasCancelled;
         }
+        myInitialUpdate = false;
 
         // for the case of project being closed we need a read action here -> to be more consistent
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -541,6 +548,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
             });
           }
         }
+
+        return !wasCancelled;
       }
       catch (ProcessCanceledException e) {
         // OK, we're finishing all the stuff now.
@@ -554,6 +563,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
+      return true;
     });
   }
 

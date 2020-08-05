@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -37,11 +41,8 @@ public class JavaHomeFinderBasic {
     }
   }
 
-  @NotNull
-  private Set<String> findInSpecifiedPaths(String[] paths) {
-    return scanAll(
-      Stream.of(paths).map(it -> new File(it)).collect(Collectors.toList()),
-      true);
+  private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
+    return scanAll(Stream.of(paths).map(it -> Paths.get(it)).collect(Collectors.toList()), true);
   }
 
   protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
@@ -64,19 +65,24 @@ public class JavaHomeFinderBasic {
     return result;
   }
 
-  @NotNull
-  private Set<String> findInPATH() {
+  private @NotNull Set<String> findInPATH() {
     try {
       String pathVarString = EnvironmentUtil.getValue("PATH");
-      if (pathVarString == null || pathVarString.isEmpty()) return Collections.emptySet();
+      if (pathVarString == null || pathVarString.isEmpty()) {
+        return Collections.emptySet();
+      }
 
-      Set<File> dirsToCheck = new HashSet<>();
+      Set<Path> dirsToCheck = new HashSet<>();
       for (String p : pathVarString.split(File.pathSeparator)) {
-        File dir = new File(p);
-        if (!StringUtilRt.equal(dir.getName(), "bin", SystemInfo.isFileSystemCaseSensitive)) continue;
+        Path dir = Paths.get(p);
+        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", SystemInfoRt.isFileSystemCaseSensitive)) {
+          continue;
+        }
 
-        File parentFile = dir.getParentFile();
-        if (parentFile == null) continue;
+        Path parentFile = dir.getParent();
+        if (parentFile == null) {
+          continue;
+        }
 
         dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
       }
@@ -91,34 +97,40 @@ public class JavaHomeFinderBasic {
 
   @NotNull
   private Set<String> checkDefaultLocations() {
-    if (ApplicationManager.getApplication() == null) return Collections.emptySet();
+    if (ApplicationManager.getApplication() == null) {
+      return Collections.emptySet();
+    }
 
-    Set<File> paths = new HashSet<>();
+    Set<Path> paths = new HashSet<>();
     paths.add(JdkInstaller.getInstance().defaultInstallDir());
 
     for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) continue;
+      if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
+        continue;
+      }
 
       String homePath = jdk.getHomePath();
-      if (homePath == null) continue;
+      if (homePath == null) {
+        continue;
+      }
 
-      paths.addAll(listPossibleJdkInstallRootsFromHomes(new File(homePath)));
+      paths.addAll(listPossibleJdkInstallRootsFromHomes(Paths.get(homePath)));
     }
 
     return scanAll(paths, true);
   }
 
-  @NotNull
-  protected Set<String> scanAll(@Nullable File file, boolean includeNestDirs) {
-    if (file == null) return Collections.emptySet();
+  protected @NotNull Set<String> scanAll(@Nullable Path file, boolean includeNestDirs) {
+    if (file == null) {
+      return Collections.emptySet();
+    }
     return scanAll(Collections.singleton(file), includeNestDirs);
   }
 
-  @NotNull
-  protected Set<String> scanAll(@NotNull Collection<File> files, boolean includeNestDirs) {
+  protected @NotNull Set<String> scanAll(@NotNull Collection<Path> files, boolean includeNestDirs) {
     Set<String> result = new HashSet<>();
-    for (File root : new HashSet<>(files)) {
-      scanFolder(root, includeNestDirs, result);
+    for (Path root : new HashSet<>(files)) {
+      scanFolder(root.toFile(), includeNestDirs, result);
     }
     return result;
   }
@@ -145,31 +157,30 @@ public class JavaHomeFinderBasic {
     return Collections.singletonList(file);
   }
 
-  @NotNull
-  protected List<File> listPossibleJdkInstallRootsFromHomes(@NotNull File file) {
+  protected @NotNull List<Path> listPossibleJdkInstallRootsFromHomes(@NotNull Path file) {
     return Collections.singletonList(file);
   }
 
-  @Nullable
-  protected static File getJavaHome() {
+  protected static @Nullable Path getJavaHome() {
     String property = SystemProperties.getJavaHome();
-    if (property == null) return null;
+    if (property == null || property.isEmpty()) {
+      return null;
+    }
 
-    File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
-    return javaHome == null || !javaHome.isDirectory() ? null : javaHome;
+    // actually java.home points to to jre home
+    Path javaHome = Paths.get(property).getParent();
+    return javaHome == null || !Files.isDirectory(javaHome) ? null : javaHome;
   }
 
 
   /**
    * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
    */
-  @NotNull
-  private Set<String> findJavaInstalledBySdkMan() {
+  private @NotNull Set<String> findJavaInstalledBySdkMan() {
     File candidatesDir = findSdkManCandidatesDir();
     if (candidatesDir == null) return Collections.emptySet();
     File javasDir = new File(candidatesDir, "java");
-    if (javasDir.isDirectory()) return scanAll(javasDir, true);
-    else return Collections.emptySet();
+    return javasDir.isDirectory() ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
   }
 
   @Nullable

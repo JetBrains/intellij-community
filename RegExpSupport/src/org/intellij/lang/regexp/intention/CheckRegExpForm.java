@@ -42,6 +42,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -101,7 +102,8 @@ public class CheckRegExpForm {
     };
     setupIcon(myRegExp, myRegExpIcon);
 
-    final String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, "Sample Text");
+    final String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP,
+                                                                                RegExpBundle.message("checker.sample.text"));
     mySampleText = new EditorTextField(sampleText, project, PlainTextFileType.INSTANCE) {
       @Override
       protected EditorEx createEditor() {
@@ -284,13 +286,23 @@ public class CheckRegExpForm {
     return myRootPanel;
   }
 
-  private List<RegExpMatch> getMatches(PsiFile regexpFile) {
+  @ApiStatus.Internal
+  public static List<RegExpMatch> getMatches(@NotNull PsiFile regexpFile) {
     return regexpFile.getUserData(LAST_MATCHES);
+  }
+
+  public static void setMatches(@NotNull PsiFile regexpFile, @NotNull List<RegExpMatch> matches) {
+    regexpFile.putUserData(LAST_MATCHES, matches);
   }
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, regexpFile.getText(), sampleText) == RegExpMatchResult.MATCHES;
+    return getMatchResult(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
+  }
+
+  @TestOnly
+  public static RegExpMatchResult getMatchResult(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
+    return isMatchingText(regexpFile, regexpFile.getText(), sampleText);
   }
 
   static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, String regexpText, @NotNull String sampleText) {
@@ -340,7 +352,7 @@ public class CheckRegExpForm {
           }
           matches.add(match);
         } while (matcher.find());
-        regexpFile.putUserData(LAST_MATCHES, matches);
+        setMatches(regexpFile, matches);
         return RegExpMatchResult.FOUND;
       }
       else {

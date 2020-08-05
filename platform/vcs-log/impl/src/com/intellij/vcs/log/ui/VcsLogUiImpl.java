@@ -5,10 +5,10 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -26,6 +26,7 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +44,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
   @NotNull private final History myHistory;
-  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher =
-    EventDispatcher.create(VcsLogFilterListener.class);
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -122,8 +121,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         public void run() {
           MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
-            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
-                              pack -> pack.getFilters().isEmpty());
+            VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
+                                      pack -> pack.getFilters().isEmpty());
           }
         }
       });
@@ -140,16 +139,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
 
   protected void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
-    myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
 
     JComponent toolbar = myMainFrame.getToolbar();
     toolbar.revalidate();
     toolbar.repaint();
-  }
-
-  @Override
-  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
-    myFilterListenerDispatcher.addListener(listener);
   }
 
   @NotNull
@@ -168,6 +161,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @Override
   public VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
+  }
+
+  @Override
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
+    return myMainFrame.getChangesBrowser();
   }
 
   @Override

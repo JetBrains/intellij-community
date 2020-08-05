@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -92,7 +93,7 @@ class FilteringProgressView extends BorderLayoutPanel {
     myProgressPanel.setVisible(value);
   }
 
-  private String getDescription() {
+  private @NlsContexts.ProgressText String getDescription() {
     int total = myProgressBar.getMaximum();
     String itemsInfo = String.format("Shown: %d / %d", myMatchedCount, total);
     if (myIsInProcess || myCompletionReason == null) {

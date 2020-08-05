@@ -14,11 +14,7 @@ val Project.stateStore: IProjectStore
 
 @ApiStatus.Internal
 interface ProjectStoreOwner {
-  /**
-   * Setter is temporary allowed to allow overriding project store class for a specific project. Overriding ProjectStoreFactory
-   * service won't work because a service may be overridden in a single plugin only.
-   */
-  var componentStore: IProjectStore
+  val componentStore: IProjectStore
 }
 
 val Project.isDirectoryBased: Boolean

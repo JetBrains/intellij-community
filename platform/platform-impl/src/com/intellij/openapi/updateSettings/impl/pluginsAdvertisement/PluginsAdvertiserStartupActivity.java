@@ -2,10 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -13,28 +10,20 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -77,7 +66,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       return;
     }
     MultiMap<PluginId, UnknownFeature> features = new MultiMap<>();
-    Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins = new THashMap<>();
+    Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins = new HashMap<>();
     List<IdeaPluginDescriptor> customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null);
     if (project.isDisposed()) {
       return;
@@ -90,12 +79,21 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     final Map<PluginId, PluginsAdvertiser.Plugin> ids = new HashMap<>();
     for (UnknownFeature feature : unknownFeatures) {
       ProgressManager.checkCanceled();
-      final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
-      if (!pluginId.isEmpty()) {
-        for (PluginsAdvertiser.Plugin plugin : pluginId) {
-          PluginId id = PluginId.getId(plugin.myPluginId);
-          ids.put(id, plugin);
-          features.putValue(id, feature);
+      PluginFeatureService.FeaturePluginData bundledPlugin = PluginFeatureService.getInstance().getPluginForFeature(feature.getFeatureType(),
+                                                                                                      feature.getImplementationName());
+      if (bundledPlugin != null) {
+        PluginId id = PluginId.getId(bundledPlugin.getPluginId());
+        ids.put(id, new PluginsAdvertiser.Plugin(bundledPlugin.getPluginId(), bundledPlugin.getPluginName(), true));
+        features.putValue(id, feature);
+      }
+      else {
+        final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
+        if (!pluginId.isEmpty()) {
+          for (PluginsAdvertiser.Plugin plugin : pluginId) {
+            PluginId id = PluginId.getId(plugin.myPluginId);
+            ids.put(id, plugin);
+            features.putValue(id, feature);
+          }
         }
       }
     }
@@ -112,7 +110,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }
 
     List<String> bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values());
-    Set<PluginDownloader> plugins = new THashSet<>();
+    Set<PluginDownloader> plugins = new HashSet<>();
 
     if (!ids.isEmpty()) {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance()
@@ -123,7 +121,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       for (IdeaPluginDescriptor loadedPlugin : compatibleUpdates) {
         IdeaPluginDescriptor existingPlugin = PluginManagerCore.getPlugin(loadedPlugin.getPluginId());
         if (existingPlugin != null &&
-            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.getVersion(), existingPlugin) < 0) {
+            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.getVersion(), existingPlugin) <= 0) {
           continue;
         }
         PluginId pluginId = loadedPlugin.getPluginId();
@@ -146,13 +144,22 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       if (!plugins.isEmpty() || !disabledPlugins.isEmpty()) {
         message = getAddressedMessagePresentation(plugins, disabledPlugins, features);
         if (!disabledPlugins.isEmpty()) {
+          String title;
+          if (disabledPlugins.size() == 1) {
+            IdeaPluginDescriptor descriptor = disabledPlugins.values().iterator().next();
+            title = IdeBundle.message("plugins.advertiser.action.enable.plugin", descriptor.getName());
+          }
+          else {
+            title = IdeBundle.message("plugins.advertiser.action.enable.plugins");
+          }
           notificationActions.add(NotificationAction.createSimpleExpiring(
-            IdeBundle.message("plugins.advertiser.action.enable.plugins"), () -> {
+            title, () -> {
+              List<PluginId> disabledPluginIds = ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId());
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
-                .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
+                .addData("plugins", ContainerUtil.map(disabledPluginIds, (id) -> id.getIdString()));
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-              PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
+              PluginsAdvertiser.enablePlugins(project, disabledPluginIds);
             }));
         }
         else {
@@ -222,6 +229,16 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
             entry -> entry.getKey() + ": " + StringUtil.join(entry.getValue(), ", "), "; ");
     final int addressedFeaturesNumber = addressedFeatures.keySet().size();
     final int pluginsNumber = ids.size();
+
+    if (addressedFeaturesNumber == 1) {
+      Map.Entry<String, Collection<String>> feature = addressedFeatures.entrySet().iterator().next();
+      String featureName = StringUtil.join(feature.getValue(), ", ");
+      if (plugins.isEmpty()) {
+        return IdeBundle.message("plugins.advertiser.notification.disabled", pluginsNumber, feature.getKey(), featureName);
+      }
+      return IdeBundle.message("plugins.advertiser.notification.not.installed", pluginsNumber, feature.getKey(), featureName);
+    }
+
     return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
            " (" + addressedFeaturesPresentation + ") " + (pluginsNumber == 1 ? "is" : "are") + " currently " + (plugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
   }

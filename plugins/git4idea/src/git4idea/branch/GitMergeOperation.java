@@ -8,11 +8,11 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.commands.*;
@@ -147,7 +147,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   @Override
-  protected void notifySuccess(@NotNull String message) {
+  protected void notifySuccess(@NotNull @Nls String message) {
     switch (myDeleteOnMerge) {
       case DELETE:
         super.notifySuccess(message);
@@ -155,7 +155,7 @@ class GitMergeOperation extends GitBranchOperation {
         break;
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = message + UIUtil.BR + "<a href='" + DELETE_HREF_ATTRIBUTE + "'>" + deleteBranch + "</a>";  //NON-NLS
+        String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
         VcsNotifier.getInstance(myProject).notifySuccess("", description, new DeleteMergedLocalBranchNotificationListener());
         break;
       case NOTHING:
@@ -327,11 +327,13 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return GitBundle.message("merge.operation.however.merge.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge");
+    return new HtmlBuilder()
+      .append(
+        GitBundle.message("merge.operation.however.merge.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();  
   }
 
   @NotNull

@@ -7,8 +7,9 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.CompletionStatsPolicy
-import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.sender.isCompletionLogsSendAllowed
+import com.intellij.stats.experiment.ExperimentInfo
+import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.storage.factors.MutableLookupStorage
 import kotlin.random.Random
 
@@ -26,7 +27,8 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
       "ecmascript 6" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
-      "c#" to 0.1
+      "c#" to 0.1,
+      "go" to 0.4
     )
   }
 
@@ -38,9 +40,9 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
                              storage: MutableLookupStorage) {
     if (ApplicationManager.getApplication().isUnitTestMode && !CompletionTrackerInitializer.isEnabledInTests) return
 
-    val experimentHelper = WebServiceStatus.getInstance()
-    if (sessionShouldBeLogged(experimentHelper, storage.language)) {
-      val tracker = actionsTracker(lookup, storage, experimentHelper)
+    val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
+    if (sessionShouldBeLogged(experimentInfo, storage.language)) {
+      val tracker = actionsTracker(lookup, storage, experimentInfo)
       actionListener.listener = tracker
       lookup.addLookupListener(tracker)
       lookup.setPrefixChangeListener(tracker)
@@ -53,16 +55,16 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
 
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
-                             experimentHelper: WebServiceStatus): CompletionActionsListener {
+                             experimentInfo: ExperimentInfo): CompletionActionsListener {
     val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-    val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentHelper)
+    val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
 
-  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language): Boolean {
+  private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language): Boolean {
     if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
+    if (application.isUnitTestMode || experimentInfo.inExperiment) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false

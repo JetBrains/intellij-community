@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -116,7 +115,7 @@ public final class Utils {
       if (action instanceof Separator) {
         final String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
-          component.add(new JPopupMenu.Separator() {
+          JPopupMenu.Separator separator = new JPopupMenu.Separator() {
             private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
 
             @Override
@@ -135,7 +134,8 @@ public final class Utils {
               }
               if (myMenu != null) {
                 myMenu.paint(g);
-              } else {
+              }
+              else {
                 super.paintComponent(g);
               }
             }
@@ -144,7 +144,9 @@ public final class Utils {
             public Dimension getPreferredSize() {
               return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
             }
-          });
+          };
+          component.add(separator);
+          children.add(separator);
         }
       }
       else if (action instanceof ActionGroup &&
@@ -180,14 +182,33 @@ public final class Utils {
         }
       });
     }
-    if (SystemInfo.isMacSystemMenu) {
-      Icon icon = hasIcons(children) ? EmptyIcon.ICON_16 : null;
-      children.forEach(child -> replaceIconIn(child, icon));
+    if (SystemInfo.isMacSystemMenu && isWindowMenu) {
+      if (ActionMenu.isAligned()) {
+        Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
+        children.forEach(child -> replaceIconIn(child, icon));
+      } else if (ActionMenu.isAlignedInGroup()) {
+        ArrayList<Component> currentGroup = new ArrayList<>();
+        for (int i = 0; i < children.size(); i++) {
+          Component child = children.get(i);
+          boolean isSeparator = child instanceof JPopupMenu.Separator;
+          boolean isLastElement = i == children.size() - 1;
+          if (isLastElement || isSeparator) {
+            if (isLastElement && !isSeparator) {
+              currentGroup.add(child);
+            }
+            Icon icon = hasIcons(currentGroup) ? ActionMenuItem.EMPTY_ICON : null;
+            currentGroup.forEach(menuItem -> replaceIconIn(menuItem, icon));
+            currentGroup.clear();
+          } else {
+            currentGroup.add(child);
+          }
+        }
+      }
     }
   }
 
   private static void replaceIconIn(Component menuItem, Icon icon) {
-    Icon from = icon == null ? EmptyIcon.ICON_16 : null;
+    Icon from = icon == null ? ActionMenuItem.EMPTY_ICON : null;
 
     if (menuItem instanceof ActionMenuItem && ((ActionMenuItem)menuItem).getIcon() == from) {
         ((ActionMenuItem)menuItem).setIcon(icon);
@@ -197,16 +218,23 @@ public final class Utils {
   }
 
   private static boolean hasIcons(List<Component> components) {
-    boolean hasIcon = false;
     for (Component comp : components) {
-      if (comp instanceof ActionMenuItem) {
-        Icon icon = ((ActionMenuItem)comp).getIcon();
-        if (icon != null && icon != EmptyIcon.ICON_16) {
-          hasIcon = true;
-        }
+      if (hasNotEmptyIcon(comp)) {
+        return true;
       }
     }
-    return hasIcon;
+    return false;
+  }
+
+  private static boolean hasNotEmptyIcon(Component comp) {
+    Icon icon = null;
+    if (comp instanceof ActionMenuItem) {
+      icon = ((ActionMenuItem)comp).getIcon();
+    } else if (comp instanceof ActionMenu) {
+      icon = ((ActionMenu)comp).getIcon();
+    }
+
+    return icon != null && icon != ActionMenuItem.EMPTY_ICON;
   }
 
   public interface ActionGroupVisitor {

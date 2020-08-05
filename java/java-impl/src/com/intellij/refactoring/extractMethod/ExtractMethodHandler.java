@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -313,7 +314,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return FileEditorManager.getInstance(project).openTextEditor(fileDescriptor, false);
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.Command String getRefactoringName() {
     return RefactoringBundle.message("extract.method.title");
   }
 }

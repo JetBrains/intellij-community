@@ -19,6 +19,7 @@ import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.util.containers.ContainerUtil;
 import icons.OpenapiIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -29,17 +30,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
-  @NotNull
+  @NotNull @NonNls
   public static final String LatestVersionId = "LATEST";
-  @NotNull
+  @NotNull @NonNls
   public static final String LatestVersionDisplayName = "Latest";
-  @NotNull
+  @NotNull @NonNls
   public static final String ReleaseVersionId = "RELEASE";
-  @NotNull
+  @NotNull @NonNls
   public static final String DefaultVersionId = ReleaseVersionId;
-  @NotNull
+  @NotNull @NonNls
   public static final String ReleaseVersionDisplayName = "Release";
-  @NotNull
+  @NotNull @NonNls
   public static final String SnapshotVersionSuffix = "-SNAPSHOT";
 
   public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;

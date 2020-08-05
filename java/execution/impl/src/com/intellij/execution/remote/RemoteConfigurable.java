@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -15,15 +15,17 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -195,7 +197,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     updateArgsText(vi);
 
-    DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
+    DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i));
     ddl.setToolTipText(ExecutionBundle.message("jvm.arguments.format"));
 
     gc.gridx = 0;
@@ -231,7 +233,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        updateArgsText(ddl.getChosenItem());
+        updateArgsText(ddl.getSelectedItem());
       }
     };
 
@@ -239,8 +241,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myHostName.getDocument().addDocumentListener(textUpdateListener);
     myPort.getDocument().addDocumentListener(textUpdateListener);
 
-    myModeCombo.addActionListener(l -> updateArgsText(ddl.getChosenItem()));
-    myTransportCombo.addActionListener(l -> updateArgsText(ddl.getChosenItem()));
+    myModeCombo.addActionListener(l -> updateArgsText(ddl.getSelectedItem()));
+    myTransportCombo.addActionListener(l -> updateArgsText(ddl.getSelectedItem()));
   }
 
   private void updateArgsText(@NotNull JDKVersionItem vi) {
@@ -310,7 +312,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     return mainPanel;
   }
 
-  private static JLabel createLabelFor(String labelText, JComponent forComponent) {
+  private static JLabel createLabelFor(@NlsContexts.Label String labelText, JComponent forComponent) {
     JLabel label = new JLabel();
     LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(labelText).setToLabel(label);
     label.setLabelFor(forComponent);

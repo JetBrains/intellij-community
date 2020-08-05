@@ -9,7 +9,6 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -228,15 +227,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event) {
       PsiFileImpl fileImpl = (PsiFileImpl)file;
-      final int oldLength = myOldNode.getTextLength();
-      PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, fileImpl, false);
+      event.addElementaryChange(myOldNode);
       if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
       final TreeElement firstChildNode = myNewNode.getFirstChildNode();
       if (firstChildNode != null) myOldNode.rawAddChildren(firstChildNode);
       fileImpl.calcTreeElement().setCharTable(myNewNode.getCharTable());
       myOldNode.subtreeChanged();
-      BlockSupportImpl.sendAfterChildrenChangedEvent(manager,fileImpl, oldLength, false);
     }
   }
 
@@ -271,10 +267,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         if (transaction == null) {
           final PomModel model = PomManager.getModel(file.getProject());
 
-          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+          model.runTransaction(new PomTransactionBase(file) {
             @Override
-            public PomModelEvent runInner() {
-              return new TreeAspectEvent(model, performActualPsiChange(file));
+            public @NotNull PomModelEvent runInner() {
+              return new PomModelEvent(model, performActualPsiChange(file));
             }
           });
         }

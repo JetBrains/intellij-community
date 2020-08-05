@@ -25,7 +25,9 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   protected abstract val dir: Path
 
-  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
+  public override fun loadData(): StateMap {
+    return StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
+  }
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 

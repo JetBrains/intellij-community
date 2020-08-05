@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class SortContentAction extends PsiElementBaseIntentionAction {
   public static final int MIN_ELEMENTS_COUNT = 3;
 
-  private static class Holder {
+  private static final class Holder {
     public static final SortingStrategy[] EXPRESSION_SORTING_STRATEGIES = {
       new StringLiteralSortingStrategy(),
       new IntLiteralSortingStrategy(),

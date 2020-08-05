@@ -34,10 +34,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +72,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private PluginUpdatesService myPluginUpdatesService;
 
   private Runnable myInvalidFixCallback;
+  private Consumer<IdeaPluginDescriptor> myCancelInstallCallback;
 
   private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
@@ -131,6 +132,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     Map<PluginId, Boolean> enabledMap = getEnabledMap();
     List<String> dependencies = new ArrayList<>();
 
+    updatePluginDependencies();
     for (Map.Entry<PluginId, Set<PluginId>> entry : getDependentToRequiredListMap().entrySet()) {
       PluginId id = entry.getKey();
 
@@ -228,7 +230,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
       boolean shouldEnable = isEnabled(pluginId);
-      if (shouldEnable != descriptor.isEnabled()) {
+      boolean isEnabled = !PluginManagerCore.isDisabled(pluginId);
+      if (shouldEnable != isEnabled) {
         if (shouldEnable) {
           pluginDescriptorsToEnable.add(descriptor);
         }
@@ -254,7 +257,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void addComponent(@NotNull ListPluginComponent component) {
     if (!component.isMarketplace()) {
-      if (myInstallingPlugins.contains(component.myPlugin)) {
+      if (myInstallingPlugins.contains(component.myPlugin) &&
+          (myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
         return;
       }
 
@@ -552,6 +556,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired);
         appendDependsAfterInstall();
+      }
+      else if (myCancelInstallCallback != null) {
+        myCancelInstallCallback.accept(descriptor);
       }
     }
     else if (success) {
@@ -867,6 +874,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
     myInvalidFixCallback = invalidFixCallback;
+  }
+
+  public void setCancelInstallCallback(@NotNull Consumer<IdeaPluginDescriptor> callback) {
+    myCancelInstallCallback = callback;
   }
 
   private void updateAfterEnableDisable() {

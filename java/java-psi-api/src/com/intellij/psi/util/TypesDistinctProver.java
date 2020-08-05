@@ -3,8 +3,8 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public final class TypesDistinctProver {
     return provablyDistinct(type1, type2, 0);
   }
 
-  protected static boolean provablyDistinct(PsiType type1, PsiType type2, int level) {
+  static boolean provablyDistinct(PsiType type1, PsiType type2, int level) {
     if (type1 instanceof PsiWildcardType) {
       if (type2 instanceof PsiWildcardType) {
         return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2, true, level);
@@ -140,7 +140,7 @@ public final class TypesDistinctProver {
                                                   PsiType type2) {
     final PsiClassType[] paramBounds = typeParam.getExtendsListTypes();
     if (paramBounds.length == 0) return !(type1 instanceof PsiClassType);
-    return Arrays.stream(paramBounds).anyMatch(paramBound -> !TypeConversionUtil.isAssignable(paramBound.rawType(), type2));
+    return ContainerUtil.exists(paramBounds, paramBound -> !TypeConversionUtil.isAssignable(paramBound.rawType(), type2));
   }
 
   public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2, boolean rejectInconsistentRaw, int level) {
@@ -196,10 +196,10 @@ public final class TypesDistinctProver {
     }
     if (boundClass1.isInterface() && boundClass2.isInterface()) return false;
     if (boundClass1.isInterface()) {
-      return !(boundClass2.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true) : true);
+      return boundClass2.hasModifierProperty(PsiModifier.FINAL) && !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true);
     }
     if (boundClass2.isInterface()) {
-      return !(boundClass1.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) : true);
+      return boundClass1.hasModifierProperty(PsiModifier.FINAL) && !InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true);
     }
 
     if (boundClass1 instanceof PsiTypeParameter) {

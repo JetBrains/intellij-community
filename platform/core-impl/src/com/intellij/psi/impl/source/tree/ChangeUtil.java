@@ -139,13 +139,11 @@ public final class ChangeUtil {
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
     final PomModel model = PomManager.getModel(manager.getProject());
-    final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
-    model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
+    model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
       @Override
-      public PomModelEvent runInner() {
-        final PomModelEvent event = new PomModelEvent(model);
-        final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
-        event.registerChangeSet(treeAspect, destinationTreeChange);
+      public @NotNull PomModelEvent runInner() {
+        TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(model.getModelAspect(TreeAspect.class), changedFile);
+        PomModelEvent event = new PomModelEvent(model, destinationTreeChange);
         action.makeChange(destinationTreeChange);
 
         changedElement.clearCaches();

@@ -5,24 +5,28 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.createFile
+import com.intellij.project.stateStore
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.nio.file.FileAlreadyExistsException
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 
 @ApiStatus.Internal
 internal object HeavyTestHelper {
@@ -42,58 +46,37 @@ internal object HeavyTestHelper {
 
   // not in HeavyIdeaTestFixtureImpl to avoid IOException in API
   @JvmStatic
-  fun createModuleAt(moduleName: String,
-                     project: Project,
-                     moduleType: ModuleType<*>,
-                     path: Path,
-                     isCreateProjectFileExplicitly: Boolean,
-                     filesToDelete: MutableCollection<Path>): Module {
-    if (isCreateProjectFileExplicitly) {
-      val moduleFile = path.resolve("$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-      try {
-        moduleFile.createFile()
-      }
-      catch (ignore: FileAlreadyExistsException) {
-      }
-
-      filesToDelete.add(moduleFile)
-      return runWriteActionAndWait {
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFile)!!
-        val module = ModuleManager.getInstance(project).newModule(virtualFile.toNioPath(), moduleType.id)
-        module.moduleFile
-        module
-      }
-    }
-    else {
-      val moduleManager = ModuleManager.getInstance(project)
-      return runWriteActionAndWait {
-        moduleManager.newModule(path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION), moduleType.id)
-      }
+  fun createModuleAt(moduleName: String, project: Project, moduleType: ModuleType<*>, path: Path): Module {
+    val moduleFile = path.resolve("$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    val moduleManager = ModuleManager.getInstance(project)
+    return WriteAction.computeAndWait<Module, Throwable> {
+      moduleManager.newModule(moduleFile, moduleType.id)
     }
   }
 
   @JvmStatic
-  fun createTestProjectStructure(tempName: String,
-                                 module: Module?,
+  fun createTestProjectStructure(module: Module?,
                                  rootPath: String?,
-                                 filesToDelete: MutableCollection<Path>,
+                                 dir: Path,
                                  addProjectRoots: Boolean): VirtualFile {
-    val dir = createTempDirectoryForTempDirTestFixture(null, tempName)
-    filesToDelete.add(dir)
-    val vDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
-    assert(vDir != null && vDir.isDirectory) { dir }
-    HeavyPlatformTestCase.synchronizeTempDirVfs(vDir!!)
-    WriteAction.runAndWait<RuntimeException> {
+    val virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+                     ?: throw IllegalStateException("Cannot find virtual directory by $dir")
+    virtualDir.getChildren()
+    virtualDir.refresh(false, true)
+    WriteAction.computeAndWait<Unit, IOException> {
       if (rootPath != null) {
         val vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'))
                     ?: throw Exception("$rootPath not found")
-        VfsUtil.copyDirectory(null, vDir1, vDir, null)
+        VfsUtil.copyDirectory(null, vDir1, virtualDir, null)
       }
       if (addProjectRoots) {
-        PsiTestUtil.addSourceContentToRoots(module!!, vDir)
+        ModuleRootModificationUtil.modifyModel(module!!) { model ->
+          model.addContentEntry(virtualDir).addSourceFolder(virtualDir, false)
+          true
+        }
       }
     }
-    return vDir
+    return virtualDir
   }
 
   @JvmStatic
@@ -101,5 +84,39 @@ internal object HeavyTestHelper {
     val parentDir = dir ?: Paths.get(FileUtil.getTempDirectory())
     Files.createDirectories(parentDir)
     return Files.createTempDirectory(parentDir, prefix)
+  }
+
+  @JvmStatic
+  fun getOrCreateProjectBaseDir(project: Project): VirtualFile {
+    val basePath = project.stateStore.getProjectBasePath()
+    val fs = LocalFileSystem.getInstance()
+    val baseDir = fs.findFileByNioFile(basePath)
+    if (baseDir == null) {
+      Files.createDirectories(basePath)
+      return fs.refreshAndFindFileByNioFile(basePath)!!
+    }
+    return baseDir
+  }
+
+  @JvmStatic
+  fun createChildDirectory(dir: VirtualFile, name: String): VirtualFile {
+    return WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildDirectory(null, name) }
+  }
+
+  @JvmStatic
+  fun createVirtualFileWithEncodingUsingNio(ext: String,
+                                            bom: ByteArray?,
+                                            content: String,
+                                            charset: Charset,
+                                            temporaryDirectory: TemporaryDirectory): VirtualFile {
+    val file = temporaryDirectory.newPath(".$ext")
+    Files.createDirectories(file.parent)
+    Files.newByteChannel(file, HashSet(listOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW))).use { channel ->
+      if (bom != null) {
+        channel.write(ByteBuffer.wrap(bom))
+      }
+      channel.write(charset.encode(CharBuffer.wrap(content)))
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)!!
   }
 }

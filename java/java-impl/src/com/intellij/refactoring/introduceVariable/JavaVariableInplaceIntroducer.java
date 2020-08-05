@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -83,7 +84,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
                                        final boolean cantChangeFinalModifier,
                                        final PsiExpression[] occurrences,
                                        final TypeSelectorManagerImpl selectorManager,
-                                       final String title) {
+                                       final @NlsContexts.Command String title) {
     super(project, editor, RefactoringUtil.outermostParenthesizedExpression(expr), null, occurrences, selectorManager, title);
     mySettings = settings;
     myChosenAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(chosenAnchor);

@@ -15,8 +15,8 @@ import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerExImpl
 import com.intellij.project.TestProjectManager.Companion.getCreationPlace
-import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.publishHeapDump
 import com.intellij.util.PairProcessor
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
@@ -209,21 +209,21 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   for (project in leakedProjects) {
     hashCodes.add(System.identityHashCode(project))
   }
-  val dumpPath = HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+  val dumpPath = publishHeapDump("leakedProjects")
   val leakers = StringBuilder()
-  leakers.append("Too many projects leaked: \n")
+  leakers.append("Too many projects leaked (hashCodes=$hashCodes): \n")
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           Predicate { hashCodes.contains(System.identityHashCode(it)) },
                           PairProcessor { leaked: ProjectImpl?, backLink: Any? ->
                             val hashCode = System.identityHashCode(leaked)
                             leakers.append("Leaked project found:").append(leaked)
-                              .append("; hash: ").append(hashCode)
-                              .append("; place: ").append(getCreationPlace(leaked!!)).append("\n")
-                              .append(backLink).append("\n")
-                              .append(";-----\n")
+                              .append(", hash=").append(hashCode)
+                              .append(", place=").append(getCreationPlace(leaked!!)).append('\n')
+                              .append(backLink).append('\n')
+                              .append("-----\n")
                             hashCodes.remove(hashCode)
                             !hashCodes.isEmpty()
                           })
-  leakers.append("\nPlease see '$dumpPath' for a memory dump")
+  leakers.append("\nPlease see `").append(dumpPath).append("` for a memory dump")
   throw AssertionError(leakers.toString())
 }

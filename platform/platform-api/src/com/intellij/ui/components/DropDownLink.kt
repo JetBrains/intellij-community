@@ -28,14 +28,12 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
       fireItemStateChanged(oldItem, ItemEvent.DESELECTED)
       field = newItem
       fireItemStateChanged(newItem, ItemEvent.SELECTED)
-      updateText(newItem)
     }
 
   init {
     text = item.toString()
     icon = AllIcons.General.LinkDropTriangle
     iconTextGap = scale(1)
-    horizontalAlignment = SwingConstants.LEADING
     horizontalTextPosition = SwingConstants.LEADING
     addActionListener {
       if (!popupState.isRecentlyHidden) {
@@ -55,11 +53,15 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
       .createPopup()
   })
 
-  constructor(item: T, items: List<T>, onSelect: Consumer<T>) : this(item, items) {
+  @JvmOverloads
+  constructor(item: T, items: List<T>, onSelect: Consumer<T>, updateText: Boolean = true) : this(item, items) {
     addItemListener { event ->
       if (event.stateChange == ItemEvent.SELECTED) {
         @Suppress("UNCHECKED_CAST")
-        (event.item as? T)?.let { onSelect.accept(it) }
+        (event.item as? T)?.let {
+          onSelect.accept(it)
+          if (updateText) text = it.toString()
+        }
       }
     }
   }
@@ -70,10 +72,6 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
 
   private fun fireItemStateChanged(item: T, state: Int) {
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
-  }
-
-  protected open fun updateText(item: T) {
-    text = item.toString()
   }
 }
 

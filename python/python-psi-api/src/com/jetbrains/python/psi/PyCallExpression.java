@@ -14,6 +14,7 @@ import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,6 +174,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * @apiNote This method will become abstract in 2021.1.
    */
   @NotNull
   default List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
@@ -185,8 +187,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @param implicitOffset implicit offset which is known from the context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * @deprecated {@code implicitOffset} is no longer processed, use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
    */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**
@@ -195,6 +200,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return objects which contains callable and mappings.
    * Returned list is empty if the callee couldn't be resolved.
+   * @apiNote This method will become abstract in 2021.1.
    */
   @NotNull
   default List<@NotNull PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
@@ -208,8 +214,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return objects which contains callable and mappings.
    * Returned list is empty if the callee couldn't be resolved.
+   * @deprecated {@code implicitOffset} is no longer processed, use {@link PyCallExpression#multiMapArguments(PyResolveContext)} instead.
    */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   List<@NotNull PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**

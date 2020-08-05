@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handler for statement search
@@ -10,7 +11,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 public class StatementHandler extends MatchingHandler {
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     if (!(matchedNode instanceof PsiStatement) && !(matchedNode instanceof PsiComment)) {
       // typed statement matches statements (including block statements) and comments
       return false;

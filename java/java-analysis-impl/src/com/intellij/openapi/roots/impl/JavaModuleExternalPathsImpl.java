@@ -10,20 +10,16 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
+public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
 
-  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new THashMap<>();
+  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<>();
   private final JavaModuleExternalPathsImpl mySource;
 
   @SuppressWarnings("unused")

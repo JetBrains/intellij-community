@@ -1406,9 +1406,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     private final VirtualFile myFile1;
     private final VirtualFile myFile2;
 
-    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector1;
-    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector2;
-
     private UnifiedBreadcrumbsPanel() {
       super(getEditor(), UnifiedDiffViewer.this);
 
@@ -1418,9 +1415,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     @Override
     protected boolean updateCollectors(boolean enabled) {
-      myBreadcrumbsCollector1 = enabled ? findCollector(myFile1) : null;
-      myBreadcrumbsCollector2 = enabled ? findCollector(myFile2) : null;
-      return myBreadcrumbsCollector1 != null || myBreadcrumbsCollector2 != null;
+      return enabled && (findCollector(myFile1) != null || findCollector(myFile2) != null);
     }
 
     @Nullable
@@ -1433,7 +1428,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       int twosideOffset = pair.first;
 
       VirtualFile file = side.select(myFile1, myFile2);
-      FileBreadcrumbsCollector collector = side.select(myBreadcrumbsCollector1, myBreadcrumbsCollector2);
+      FileBreadcrumbsCollector collector = side.select(findCollector(myFile1), findCollector(myFile2));
       if (file == null || collector == null) return null;
 
       Iterable<? extends Crumb> crumbs = collector.computeCrumbs(file, getDocument(side), twosideOffset, null);

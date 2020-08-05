@@ -31,8 +31,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
-import gnu.trove.Equality;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +40,7 @@ import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,14 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
-  private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
-    @Override
-    public boolean equals(Reference<Document> o1, Reference<Document> o2) {
-      Object v1 = o1 == null ? REFERENCE_EQUALITY : o1.get();
-      Object v2 = o2 == null ? REFERENCE_EQUALITY : o2.get();
-      return v1 == v2;
-    }
-  };
 
   static final class State {
     private @NotNull EncodingReference myDefaultEncoding = new EncodingReference(StandardCharsets.UTF_8);
@@ -146,13 +137,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   }
 
-  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
+  private static void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
     firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset, null);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
-  Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
+  static Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) {
       return null;
@@ -233,7 +224,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Collection<Charset> result = new THashSet<>();
+    Collection<Charset> result = new HashSet<>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());
@@ -354,11 +345,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myState.myDefaultConsoleEncoding = encodingReference;
   }
 
-  void firePropertyChange(@Nullable Document document,
-                          @NotNull String propertyName,
-                          final Object oldValue,
-                          final Object newValue,
-                          @Nullable Project project) {
+  static void firePropertyChange(@Nullable Document document,
+                                 @NotNull String propertyName,
+                                 final Object oldValue,
+                                 final Object newValue,
+                                 @Nullable Project project) {
     MessageBus messageBus = (project != null ? project : ApplicationManager.getApplication()).getMessageBus();
     EncodingManagerListener publisher = messageBus.syncPublisher(EncodingManagerListener.ENCODING_MANAGER_CHANGES);
     publisher.propertyChanged(document, propertyName, oldValue, newValue);

@@ -46,6 +46,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.Separator;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
+import org.jetbrains.uast.UExpression;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -256,7 +257,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     Collections.singletonList(propertiesFile),
                                                                     key,
                                                                     StringUtil.unescapeXmlEntities(displayName),
-                                                                    PsiExpression.EMPTY_ARRAY);
+                                                                    new UExpression[0]);
     }
   }
 
@@ -367,14 +368,14 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                         propertiesFiles,
                                                                         "action." + id + ".text",
                                                                         text,
-                                                                        PsiExpression.EMPTY_ARRAY);
+                                                                        new UExpression[0]);
         }
         if (description != null) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         propertiesFiles,
                                                                         "description." + id + ".description",
                                                                         description,
-                                                                        PsiExpression.EMPTY_ARRAY);
+                                                                        new UExpression[0]);
         }
 
         tag.processElements(element -> {
@@ -457,7 +458,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                     Collections.singletonList(propertiesFile),
                                                                     key,
                                                                     StringUtil.unescapeXmlEntities(text),
-                                                                    PsiExpression.EMPTY_ARRAY);
+                                                                    new UExpression[0]);
       separator.getText().undefine();
       separator.getKey().setValue(key);
     }

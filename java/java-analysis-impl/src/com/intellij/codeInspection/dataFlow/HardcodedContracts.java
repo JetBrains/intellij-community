@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -28,7 +28,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 /**
  * @author peter
  */
-public class HardcodedContracts {
+public final class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
@@ -465,7 +465,7 @@ public class HardcodedContracts {
 
   /**
    * Returns the mutation signature for the methods that have hardcoded contracts
-   * 
+   *
    * @param method method that has hardcoded contracts (that is, {@link #getHardcodedContracts(PsiMethod, PsiMethodCallExpression)}
    *               returned non-empty list for this method)
    * @return a mutation signature for the given method. Result is unspecified if method has no hardcoded contract.
@@ -493,7 +493,7 @@ public class HardcodedContracts {
     }
     if (JAVA_UTIL_ARRAYS.equals(className)) {
       return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream") ? MutationSignature.pure() :
-      // else: fill, parallelPrefix, parallelSort, sort       
+      // else: fill, parallelPrefix, parallelSort, sort
              MutationSignature.pure().alsoMutatesArg(0);
     }
     if (QUEUE_POLL.methodMatches(method)) {

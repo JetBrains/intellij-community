@@ -106,7 +106,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @see #getNameSequence()
    */
-  public abstract @NotNull String getName();
+  public abstract @NotNull @NlsSafe String getName();
 
   public @NotNull CharSequence getNameSequence() {
     return getName();
@@ -128,7 +128,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    * @see #toNioPath()
    */
-  public abstract @NotNull String getPath();
+  public abstract @NotNull @NlsSafe String getPath();
 
   /**
    * @return a related {@link Path} for a given virtual file where possible otherwise an
@@ -172,7 +172,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final @NotNull String getPresentableUrl() {
+  public final @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -543,10 +543,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
-      outputStream.flush();
     }
   }
 
@@ -730,7 +728,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
-    return null;
+    return computable.get();
   }
 
   /**
@@ -753,5 +751,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       }
     }
     return false;
+  }
+
+  /**
+   * @return if this directory (or, if this is a file, its parent directory) supports case-sensitive file names
+   * (i.e. treats README.txt and readme.txt as different files).
+   * Examples of these directories include regular directories on Linux, directories in case-sensitive volumes on Mac and
+   * NTFS directories configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.
+   */
+  @ApiStatus.Experimental
+  public boolean isCaseSensitive() {
+    return getFileSystem().isCaseSensitive();
   }
 }

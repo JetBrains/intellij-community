@@ -17,7 +17,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.internal.statistic.eventLog.EventFields;
 import com.intellij.internal.statistic.eventLog.EventPair;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -39,9 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
-             RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile, FusAwareRunConfiguration {
+public class ApplicationConfiguration extends JavaRunConfigurationBase
+  implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
+             FusAwareRunConfiguration {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -157,7 +156,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+    final PsiClass psiClass =
+      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }

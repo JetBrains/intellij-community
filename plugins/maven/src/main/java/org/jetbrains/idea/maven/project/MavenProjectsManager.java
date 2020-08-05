@@ -658,6 +658,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.findProject(f);
   }
 
+
+  public MavenProject findSingleProjectInReactor(@NotNull MavenId id) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findSingleProjectInReactor(id);
+  }
+
+
   @Nullable
   public MavenProject findProject(@NotNull MavenId id) {
     if (!isInitialized()) return null;
@@ -1274,7 +1281,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       fm.asyncRefresh(null);
     }
     else {
-      fm.syncRefresh();
+      ApplicationManager.getApplication().invokeAndWait(()->fm.syncRefresh());
     }
 
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {

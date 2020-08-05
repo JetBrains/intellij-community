@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -28,6 +29,38 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
 
   fun testChangeClassHierarchy() = doClassTest { psiClass, factory ->
     psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+  }
+
+  fun testSealedClassPermittedInheritors() {
+    val targetClass = myFixture.addClass("""
+        package foo;
+        public sealed class A {
+        }
+      """.trimIndent())
+    val refClass = myFixture.addClass("""
+        package foo;
+        
+        public class B extends A {
+        }
+      """.trimIndent())
+
+    doTest(targetClass) {
+      changeClass(targetClass) { psiClass, _ ->
+        val factory = PsiFileFactory.getInstance(project)
+        val javaFile = factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy permits B {}") as PsiJavaFile
+        val dummyClass = javaFile.classes[0]
+        val permitsList = dummyClass.permitsList
+        psiClass.addAfter(permitsList!!, psiClass.implementsList)
+      }
+      assertTrue(hasReportedProblems<PsiClass>(refClass))
+      myFixture.openFileInEditor(refClass.containingFile.virtualFile)
+      changeClass(refClass) { psiClass, _ ->
+        psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+      }
+      myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
+      myFixture.doHighlighting()
+      assertFalse(hasReportedProblems<PsiClass>(refClass))
+    }
   }
 
   fun testMakeClassInterface() {

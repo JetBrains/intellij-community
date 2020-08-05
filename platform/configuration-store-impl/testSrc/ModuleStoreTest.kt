@@ -9,7 +9,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -17,14 +16,16 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.util.io.Ksuid
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
-import org.assertj.core.internal.bytebuddy.utility.RandomString
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -51,11 +52,9 @@ class ModuleStoreTest {
 
   @Test
   fun `set option`() = runBlocking {
-    val moduleFile = runWriteAction {
-      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", """
+    val moduleFile = tempDirManager.createVirtualFile("test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
         <module type="JAVA_MODULE" foo="bar" version="4" />""".trimIndent())
-    }
 
     projectRule.loadModule(moduleFile).useAndDispose {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
@@ -74,32 +73,33 @@ class ModuleStoreTest {
   }
 
   @Test fun `newModule should always create a new module from scratch`() {
-    val moduleFile = runWriteAction {
-      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
-    }
-
-    projectRule.createModule(Paths.get(moduleFile.path)).useAndDispose {
+    val moduleFile = tempDirManager.createVirtualFile("test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+    projectRule.createModule(moduleFile.toNioPath()).useAndDispose {
       assertThat(getOptionValue("foo")).isNull()
     }
   }
 
   @Test
-  fun `must be empty if classpath storage`() = runBlocking<Unit> {
-    // we must not use VFS here, file must not be created
-    val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
-    projectRule.createModule(moduleFile).useAndDispose {
-      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
-      project.stateStore.save()
-      assertThat(moduleFile).isRegularFile
-      assertThat(moduleFile.readText()).startsWith("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <module type="JAVA_MODULE" version="4">""".trimIndent())
+  fun `must be empty if classpath storage`() {
+    //todo saving in eclipse format isn't supported in workspace model (WM-T-46)
+    ProjectModelRule.ignoreTestUnderWorkspaceModel()
+    runBlocking<Unit> {
+      // we must not use VFS here, file must not be created
+      val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
+      projectRule.createModule(moduleFile).useAndDispose {
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
+        project.stateStore.save()
+        assertThat(moduleFile).isRegularFile
+        assertThat(moduleFile.readText()).startsWith("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="JAVA_MODULE" version="4">""".trimIndent())
 
-      ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
-      project.stateStore.save()
-      assertThat(moduleFile).isEqualTo("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+        ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
+        project.stateStore.save()
+        assertThat(moduleFile).isEqualTo("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+      }
     }
   }
 
@@ -188,11 +188,11 @@ class ModuleStoreTest {
       project.stateStore.save()
 
       assertThat(project.isDirectoryBased).isTrue()
-      val modulesFilePath = Paths.get(project.basePath!!, Project.DIRECTORY_STORE_FOLDER, "modules.xml")
+      val modulesFilePath = project.stateStore.directoryStorePath!!.resolve("modules.xml")
       val modulesFileAtStart = modulesFilePath.readText()
 
-      val moduleName = "tmp-module-${RandomString.make()}"
-      val contentRoot = tempDirManager.newVirtualDirectory("content-root-${RandomString.make()}")
+      val moduleName = "tmp-module-${Ksuid.generate()}"
+      val contentRoot = tempDirManager.createVirtualDir()
 
       val module = runWriteAction {
         ModuleManager.getInstance(project).newNonPersistentModule(moduleName, ModuleTypeId.JAVA_MODULE)
@@ -248,7 +248,7 @@ inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
 
 fun ProjectRule.loadModule(file: VirtualFile): Module {
   val project = project
-  return runWriteAction { ModuleManager.getInstance(project).loadModule(file.path) }
+  return runWriteAction { ModuleManager.getInstance(project).loadModule(file.toNioPath()) }
 }
 
 val Module.contentRootUrls: Array<String>

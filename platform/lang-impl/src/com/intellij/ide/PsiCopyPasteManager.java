@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
@@ -25,6 +25,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.InvalidDnDOperationException;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -306,5 +308,20 @@ public final class PsiCopyPasteManager {
       }
     }
     return result.isEmpty() ? null : result;
+  }
+
+  public static final class EscapeHandler extends KeyAdapter {
+    @Override
+    public void keyPressed(KeyEvent event) {
+      if (event.isConsumed()) return; // already processed
+      if (0 != event.getModifiers()) return; // modifier pressed
+      if (KeyEvent.VK_ESCAPE != event.getKeyCode()) return; // not ESC
+      boolean[] copied = new boolean[1];
+      PsiCopyPasteManager manager = getInstance();
+      if (manager.getElements(copied) == null) return; // no copied element
+      if (copied[0]) return; // nothing is copied
+      manager.clear();
+      event.consume();
+    }
   }
 }

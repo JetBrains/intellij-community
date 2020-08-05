@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -21,10 +21,10 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigFilePerformance() throws IOException {
-    configureByFiles(null, 
-                     getVirtualFile(getTestName(false) + ".xml"),
-                     getVirtualFile("buildserver.xml"), 
-                     getVirtualFile("buildserver.properties"));
+    configureByFiles(null,
+                     findVirtualFile(getTestName(false) + ".xml"),
+                     findVirtualFile("buildserver.xml"),
+                     findVirtualFile("buildserver.properties"));
     PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> doDoTest(true, false))
       .setup(getPsiManager()::dropPsiCaches)
       .assertTiming();

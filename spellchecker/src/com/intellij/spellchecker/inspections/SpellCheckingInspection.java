@@ -122,36 +122,28 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   private static void addBatchDescriptor(PsiElement element,
-                                         int offset,
                                          @NotNull TextRange textRange,
                                          @NotNull ProblemsHolder holder) {
     SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes();
-    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, fixes, false);
+    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
 
-  private static void addRegularDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
+  private static void addRegularDescriptor(PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
 
-    SpellCheckerQuickFix[] fixes = strategy != null
-                                   ? strategy.getRegularFixes(element, offset, textRange, useRename, wordWithTypo)
-                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element);
+    LocalQuickFix[] fixes = strategy != null
+                                   ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo)
+                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange);
 
-    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, fixes, true);
+    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, true);
     holder.registerProblem(problemDescriptor);
   }
 
-  private static ProblemDescriptor createProblemDescriptor(PsiElement element, int offset, TextRange textRange,
-                                                           SpellCheckerQuickFix[] fixes,
+  private static ProblemDescriptor createProblemDescriptor(PsiElement element, TextRange textRange,
+                                                           LocalQuickFix[] fixes,
                                                            boolean onTheFly) {
-    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
-    final Tokenizer tokenizer = strategy != null ? strategy.getTokenizer(element) : null;
-    if (tokenizer != null) {
-      textRange = tokenizer.getHighlightingRange(element, offset, textRange);
-    }
-    assert textRange.getStartOffset() >= 0;
-
     final String description = SpellCheckerBundle.message("typo.in.word.ref");
     return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      false, textRange, onTheFly, onTheFly);
@@ -204,8 +196,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void consume(TextRange textRange) {
-      String word = textRange.substring(myText);
+    public void consume(TextRange range) {
+      String word = range.substring(myText);
       if (!myHolder.isOnTheFly() && myAlreadyChecked.contains(word)) {
         return;
       }
@@ -216,12 +208,21 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       }
 
       if (myManager.hasProblem(word)) {
+        //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
+        SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, myElement.getLanguage());
+
+        final Tokenizer tokenizer = strategy != null ? strategy.getTokenizer(myElement) : null;
+        if (tokenizer != null) {
+          range = tokenizer.getHighlightingRange(myElement, myOffset, range);
+        }
+        assert range.getStartOffset() >= 0;
+
         if (myHolder.isOnTheFly()) {
-          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
+          addRegularDescriptor(myElement, range, myHolder, myUseRename, word);
         }
         else {
           myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
+          addBatchDescriptor(myElement, range, myHolder);
         }
       }
     }

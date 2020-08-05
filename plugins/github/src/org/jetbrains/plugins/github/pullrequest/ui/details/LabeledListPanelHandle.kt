@@ -97,9 +97,10 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
     editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
     progressLabel.isVisible = isBusy
     errorIcon.isVisible = adjustmentError != null
+    val title = GithubBundle.message("pull.request.adjustment.failed")
+    val errorMessage = adjustmentError?.message.orEmpty()
     //language=html
-    errorIcon.toolTipText = "<html><body>${GithubBundle.message(
-      "pull.request.adjustment.failed")}<br/>${adjustmentError?.message.orEmpty()}</body></html> "
+    errorIcon.toolTipText = "<html><body>$title<br/>$errorMessage</body></html>"
   }
 
   private fun getListItemComponent(item: T, last: Boolean = false) =

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +39,7 @@ import java.util.stream.Stream;
  * Implementation note: UserDefinedFileAttributeView is not supported on macOS (https://bugs.openjdk.java.net/browse/JDK-8030048),
  * so the class resorts to JNA.
  */
-public class JavadocQuarantineStatusCleaner {
+public final class JavadocQuarantineStatusCleaner {
   private static final Logger LOG = Logger.getInstance(JavadocQuarantineStatusCleaner.class);
 
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";
@@ -54,7 +55,7 @@ public class JavadocQuarantineStatusCleaner {
           ApplicationManager.getApplication().invokeLater(() -> {
             String title = JavaUiBundle.message("quarantine.cleaner");
             String message = JavaUiBundle.message("quarantine.dialog.message", StringUtil.join(quarantined, "\n"));
-            if (Messages.showYesNoDialog(message, title, null) == Messages.YES) {
+            if (MessageDialogBuilder.yesNo(title, message).show() == Messages.YES) {
               cleanQuarantineStatusInBackground(quarantined);
             }
           }, ModalityState.any());

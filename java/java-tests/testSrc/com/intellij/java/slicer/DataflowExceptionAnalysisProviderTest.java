@@ -26,6 +26,12 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
+  public void testClassCastUnresolvedTarget() {
+    doTest("java.lang.ClassCastException: class X cannot be cast to class foo.Bar",
+           "Find why 'obj' could be X (not-null)",
+           "class X {static void test(Object obj) {System.out.println(((Bar) obj).intValue());}}");
+  }
+  
   public void testClassCastUnknownClass() {
     doTest("java.lang.ClassCastException: class XYZ cannot be cast to class java.lang.Number",
            "Find why 'obj' could be not instanceof java.lang.Number (not-null)",

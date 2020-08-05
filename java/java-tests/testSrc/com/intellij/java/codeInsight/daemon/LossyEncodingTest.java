@@ -118,7 +118,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDetectWrongEncoding() {
-    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/Win1251.txt");
+    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/Win1251.txt");
     virtualFile.setCharset(StandardCharsets.UTF_8);
     configureByExistingFile(virtualFile);
     Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
@@ -133,7 +133,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSurrogateUTF8() {
-    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
+    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/" + "surrogate.txt");
     virtualFile.setCharset(StandardCharsets.UTF_8);
     configureByExistingFile(virtualFile);
     final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
@@ -145,7 +145,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testInconsistentLineSeparators() {
-    VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
+    VirtualFile virtualFile = findVirtualFile(BASE_PATH + "/" + getTestName(false) + ".txt");
     configureByExistingFile(virtualFile);
     FileDocumentManager.getInstance().saveAllDocuments();
     final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));

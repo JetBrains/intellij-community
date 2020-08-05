@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -85,22 +82,28 @@ class InferenceCache {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
-    if (definitionMaps == null) {
+    if (definitionMaps == null || !isDescriptorAvailable(descriptor)) {
       return null;
     }
 
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, initialState, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
+      DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, initialState);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
       }
       else {
-        Set<Instruction> stored = flowInfo.getInterestingInstructions();
-        stored.add(instruction);
-        cacheDfaResult(dfaResult, stored);
+        if (TypeInferenceHelper.getCurrentContext().isInferenceResultsCachingAllowed()) {
+          Set<Instruction> stored = flowInfo.getInterestingInstructions();
+          stored.add(instruction);
+          cacheDfaResult(dfaResult, stored);
+        }
+        else {
+          DFAType dfaType = dfaResult.get(instruction.num()).getVariableType(descriptor);
+          return dfaType == null ? null : dfaType.getResultType(myScope.getManager());
+        }
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
@@ -110,11 +113,27 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull DFAFlowInfo flowInfo) {
-    final TypeDfaInstance dfaInstance =
-      new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, flowInfo.getInitialTypes()));
-    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
+                                            @NotNull DFAFlowInfo flowInfo,
+                                            @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
+    final TypeDfaState initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState);
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+  }
+
+  private TypeDfaState computeInitialState(@NotNull DFAFlowInfo flowInfo, @NotNull InitialTypeProvider provider) {
+    TypeDfaState state = new TypeDfaState();
+    Set<VariableDescriptor> descriptors = ControlFlowBuilderUtil.getDescriptorsWithoutWrites(myFlow);
+    for (VariableDescriptor descriptor : descriptors) {
+      if (!flowInfo.getInterestingDescriptors().contains(descriptor)) {
+        continue;
+      }
+      DFAType initialType = provider.initialType(descriptor);
+      if (initialType != null) {
+        state.putType(descriptor, initialType);
+      }
+    }
+    return state;
   }
 
   @Nullable
@@ -125,7 +144,6 @@ class InferenceCache {
   private DFAFlowInfo collectFlowInfo(@NotNull List<DefinitionMap> definitionMaps,
                                       @NotNull Instruction instruction,
                                       @NotNull VariableDescriptor descriptor,
-                                      @NotNull Map<VariableDescriptor, DFAType> initialState,
                                       @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
@@ -155,8 +173,7 @@ class InferenceCache {
     Set<VariableDescriptor> interestingDescriptors = interesting.keySet().stream()
       .map(it -> it.getSecond())
       .collect(Collectors.toSet());
-    return new DFAFlowInfo(initialState,
-                           interestingInstructions,
+    return new DFAFlowInfo(interestingInstructions,
                            acyclicInstructions,
                            interestingDescriptors,
                            dependentOnSharedVariables);
@@ -196,6 +213,9 @@ class InferenceCache {
       if (closureInstruction.first.num() > latestDefinition) break;
       if (closureInstruction.second.contains(descriptor)) {
         pairs.add(Pair.create(closureInstruction.first, descriptor));
+        if (closureInstruction.first instanceof ReadWriteVariableInstruction) {
+          pairs.add(Pair.create(closureInstruction.first, ((ReadWriteVariableInstruction)closureInstruction.first).getDescriptor()));
+        }
       }
     }
 
@@ -234,5 +254,12 @@ class InferenceCache {
       }
     }
     return newTypes;
+  }
+
+  private boolean isDescriptorAvailable(@NotNull VariableDescriptor descriptor) {
+    if (myVarIndexes.getValue().containsKey(descriptor)) {
+      return true;
+    }
+    return ControlFlowUtils.getForeignVariableDescriptors(myScope).contains(descriptor);
   }
 }

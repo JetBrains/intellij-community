@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
@@ -545,7 +548,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private void addModuleNode(final Module module) {
+  private void addModuleNode(@NotNull Module module) {
     final TreePath selectionPath = myTree.getSelectionPath();
     MyNode parent = null;
     if (selectionPath != null) {
@@ -911,70 +914,71 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final NamedConfigurable<?> namedConfigurable = getSelectedConfigurable();
-      if (namedConfigurable instanceof ModuleConfigurable) {
-        try {
-          final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
-          final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
-          final NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"), JavaUiBundle
-            .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), JavaUiBundle
-                                                                      .message("title.select.project.file.directory", modulePresentation),
-                                                                    JavaUiBundle.message("description.select.project.file.directory",
-                                                                                      StringUtil.capitalize(modulePresentation)), true,
-                                                                    false);
-          final Module originalModule = moduleEditor.getModule();
-          if (originalModule != null) {
-            component.setPath(FileUtil.toSystemDependentName(originalModule.getModuleNioFile().getParent().toString()));
-          }
+      NamedConfigurable<?> namedConfigurable = getSelectedConfigurable();
+      if (!(namedConfigurable instanceof ModuleConfigurable)) {
+        copyByExtension(namedConfigurable);
+      }
 
-          final DialogBuilder dialogBuilder = new DialogBuilder(myTree);
-          dialogBuilder.setTitle(JavaUiBundle.message("copy.module.dialog.title"));
-          dialogBuilder.setCenterPanel(component);
-          dialogBuilder.setPreferredFocusComponent(component.getNameComponent());
-          dialogBuilder.setOkOperation(() -> {
-            final String name = component.getNameValue();
-            if (name.isEmpty()) {
-              Messages.showErrorDialog(JavaUiBundle.message("enter.module.copy.name.error.message"), CommonBundle.getErrorTitle());
-              return;
-            }
-            if (getModule(name) != null) {
-              Messages
-                .showErrorDialog(JavaUiBundle.message("module.0.already.exists.error.message", name), CommonBundle.getErrorTitle());
-              return;
-            }
-
-            if (component.getPath().isEmpty()) {
-              Messages.showErrorDialog(JavaUiBundle.message("prompt.enter.project.file.location", modulePresentation),
-                                       CommonBundle.getErrorTitle());
-              return;
-            }
-            if (!ProjectWizardUtil
-              .createDirectoryIfNotExists(JavaUiBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
-                                          true)) {
-              Messages.showErrorDialog(JavaUiBundle.message("path.0.is.invalid.error.message", component.getPath()),
-                                       CommonBundle.getErrorTitle());
-              return;
-            }
-            dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-          });
-          if (dialogBuilder.show() != DialogWrapper.OK_EXIT_CODE) return;
-
-          final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
-          final String path = component.getPath();
-          final ModuleBuilder builder = new CopiedModuleBuilder(rootModel, path, myProject);
-          builder.setName(component.getNameValue());
-          builder.setModuleFilePath(path + "/" + builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-          final Module module = myContext.myModulesConfigurator.addModule(builder);
-          if (module != null) {
-            addModuleNode(module);
-          }
+      try {
+        ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
+        String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
+        NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"), JavaUiBundle
+          .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), JavaUiBundle
+                                                                    .message("title.select.project.file.directory", modulePresentation),
+                                                                  JavaUiBundle.message("description.select.project.file.directory",
+                                                                                    StringUtil.capitalize(modulePresentation)), true,
+                                                                  false);
+        Module originalModule = moduleEditor.getModule();
+        if (originalModule != null) {
+          component.setPath(FileUtil.toSystemDependentName(originalModule.getModuleNioFile().getParent().toString()));
         }
-        catch (Exception e1) {
-          LOG.error(e1);
+
+        DialogBuilder dialogBuilder = new DialogBuilder(myTree);
+        dialogBuilder.setTitle(JavaUiBundle.message("copy.module.dialog.title"));
+        dialogBuilder.setCenterPanel(component);
+        dialogBuilder.setPreferredFocusComponent(component.getNameComponent());
+        dialogBuilder.setOkOperation(() -> {
+          final String name = component.getNameValue();
+          if (name.isEmpty()) {
+            Messages.showErrorDialog(JavaUiBundle.message("enter.module.copy.name.error.message"), CommonBundle.getErrorTitle());
+            return;
+          }
+          if (getModule(name) != null) {
+            Messages
+              .showErrorDialog(JavaUiBundle.message("module.0.already.exists.error.message", name), CommonBundle.getErrorTitle());
+            return;
+          }
+
+          if (component.getPath().isEmpty()) {
+            Messages.showErrorDialog(JavaUiBundle.message("prompt.enter.project.file.location", modulePresentation),
+                                     CommonBundle.getErrorTitle());
+            return;
+          }
+          if (!ProjectWizardUtil
+            .createDirectoryIfNotExists(JavaUiBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
+                                        true)) {
+            Messages.showErrorDialog(JavaUiBundle.message("path.0.is.invalid.error.message", component.getPath()),
+                                     CommonBundle.getErrorTitle());
+            return;
+          }
+          dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+        });
+        if (dialogBuilder.show() != DialogWrapper.OK_EXIT_CODE) {
+          return;
+        }
+
+        ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
+        Path path = Paths.get(component.getPath());
+        ModuleBuilder builder = new CopiedModuleBuilder(rootModel, path, myProject);
+        builder.setName(component.getNameValue());
+        builder.setModuleFilePath(path.resolve(builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION).toString());
+        Module module = myContext.myModulesConfigurator.addModule(builder);
+        if (module != null) {
+          addModuleNode(module);
         }
       }
-      else {
-        copyByExtension(namedConfigurable);
+      catch (Exception e1) {
+        LOG.error(e1);
       }
     }
 
@@ -991,20 +995,19 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  static class CopiedModuleBuilder extends ModuleBuilder {
-
+  static final class CopiedModuleBuilder extends ModuleBuilder {
     @NotNull ModifiableRootModel myRootModel;
-    @NotNull String myComponentPath;
+    @NotNull Path myComponentPath;
     @NotNull Project myProject;
 
-    CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull String componentPath, @NotNull Project project) {
+    CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;
       this.myComponentPath = componentPath;
       this.myProject = project;
     }
 
     @Override
-    public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) {
+    public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) {
       if (myRootModel.isSdkInherited()) {
         modifiableRootModel.inheritSdk();
       }
@@ -1014,8 +1017,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
-      modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(
-        LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
+      modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class)
+        .setLanguageLevel(LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
 
       for (OrderEntry entry : myRootModel.getOrderEntries()) {
         if (entry instanceof JdkOrderEntry) continue;
@@ -1027,9 +1030,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         }
       }
 
-      VirtualFile content = LocalFileSystem.getInstance().findFileByPath(myComponentPath);
+      VirtualFile content = LocalFileSystem.getInstance().findFileByNioFile(myComponentPath);
       if (content == null) {
-        content = LocalFileSystem.getInstance().refreshAndFindFileByPath(myComponentPath);
+        PathKt.createFile(myComponentPath);
+        content = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(myComponentPath);
       }
       modifiableRootModel.addContentEntry(content);
     }
@@ -1040,7 +1044,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private class AddModuleAction extends AnAction implements DumbAware {
+  private final class AddModuleAction extends AnAction implements DumbAware {
     private final boolean myImport;
 
     AddModuleAction(boolean anImport) {

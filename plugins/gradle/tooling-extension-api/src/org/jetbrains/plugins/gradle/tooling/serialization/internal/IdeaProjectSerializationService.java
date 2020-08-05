@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal;
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.intellij.openapi.util.Getter;
 import gnu.trove.TObjectHashingStrategy;
@@ -38,7 +37,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
+public final class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
   private final GradleVersionComparator myGradleVersionComparator;
   private final WriteContext myWriteContext;
   private final ReadContext myReadContext;
@@ -52,7 +51,7 @@ public class IdeaProjectSerializationService implements SerializationService<Ide
   @Override
   public byte[] write(IdeaProject ideaProject, Class<? extends IdeaProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = IonBinaryWriterBuilder.standard().build(out);
+    IonWriter writer = createIonWriter().build(out);
     try {
       writeProject(writer, myWriteContext, ideaProject);
     }

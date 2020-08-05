@@ -8,6 +8,89 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
+
+/**
+ * For creating a new entity, you should perform the following steps:
+ *
+ * - Choose the name of the entity, e.g. MyModuleEntity
+ * - Create [WorkspaceEntity] representation:
+ *   - The entity should inherit [WorkspaceEntityBase]
+ *   - Properties (not references to other entities) should be listed in a primary constructor as val's
+ *   - If the entity has PersistentId, the entity should extend [WorkspaceEntityWithPersistentId]
+ *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [references] package.
+ *       E.g. [OneToMany] or [ManyToOne.NotNull]
+ *
+ *   Example:
+ *
+ *   ```kotlin
+ *   class MyModuleEntity(val name: String) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
+ *
+ *      val childModule: MyModuleEntity? by OneToOneParent.Nullable(MyModuleEntity::class.java, true)
+ *
+ *      fun persistentId() = NameId(name)
+ *   }
+ *   ```
+ *
+ *   The above entity describes an entity with `name` property, persistent id and the reference to "ChildModule"
+ *
+ *   This object will be used by users and it's returned by methods like `resolve`, `entities` and so on.
+ *
+ *   -------------------------------------------------------------------------------------------------------------------------------
+ *
+ * - Create EntityData representation:
+ *   - Entity data should have the name ${entityName}Data. E.g. MyModuleEntityData.
+ *   - Entity data should inherit [WorkspaceEntityData]
+ *   - Properties (not references to other entities) should be listed in the body as lateinit var's or with default value (null, 0, false).
+ *   - If the entity has PersistentId, the Entity data should extend [WorkspaceEntityData.WithCalculablePersistentId]
+ *   - References to other entities should not be listed in entity data.
+ *
+ *   - If the entity contains soft references to other entities (persistent id to other entities), entity data should extend SoftLinkable
+ *        interface and implement the required methods. Check out the [FacetEntityData] implementation, but keep in mind the this might
+ *        be more complicated like in [ModuleEntityData].
+ *   - Entity data should implement the methods from [WorkspaceEntityData]: [createEntity]. This methods should return an instance of
+ *        [WorkspaceEntity]. This instance should be passed to [addMetaData] after creation!
+ *        E.g.:
+ *
+ *        override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
+ *            addMetaData(it, snapshot)
+ *        }
+ *
+ *   Example:
+ *
+ *   ```kotlin
+ *   class MyModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<MyModuleEntity>() {
+ *       lateinit var name: String
+ *
+ *       override fun persistentId(): NameId = NameId(name)
+ *
+*        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
+*            addMetaData(it, snapshot)
+*        }
+ *   }
+ *   ```
+ *
+ *   This is an internal representation of WorkspaceEntity. It's not passed to users.
+ *
+ *   -------------------------------------------------------------------------------------------------------------------------------
+ *
+ *  - Create [ModifiableWorkspaceEntity] representation:
+ *   - The name should be: Modifiable${entityName}. E.g. ModifiableMyModuleEntity
+ *   - This should be inherited from [ModifiableWorkspaceEntityBase]
+ *   - Properties (not references to other entities) should be listed in the body as delegation to [EntityDataDelegation()]
+ *   - References to other entities should be listed as in [WorkspaceEntity], but with corresponding modifiable delegates
+ *
+ *   Example:
+ *
+ *   ```kotlin
+ *   class ModifiableMyModuleEntity : ModifiableWorkspaceEntityBase<MyModuleEntity>() {
+ *      var name: String by EntityDataDelegation()
+ *
+ *      var childModule: MyModuleEntity? by MutableOneToOneParent.NotNull(MyModuleEntity::class.java, MyModuleEntity::class.java, true)
+ *   }
+ *   ```
+ */
+
+
 abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set

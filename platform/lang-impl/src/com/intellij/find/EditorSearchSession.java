@@ -545,8 +545,14 @@ public class EditorSearchSession implements SearchSession,
   private void restoreInitialCaretPositionAndSelection() {
     int originalSelectionStart = Math.min(myStartSessionSelectionMarker.getStartOffset(), myEditor.getDocument().getTextLength());
     int originalSelectionEnd = Math.min(myStartSessionSelectionMarker.getEndOffset(), myEditor.getDocument().getTextLength());
-
-    myEditor.getSelectionModel().setSelection(originalSelectionStart, originalSelectionEnd);
+    try {
+      if (myFindModel.isGlobal()) {
+        mySelectionUpdatedFromSearchResults = true;
+      }
+      myEditor.getSelectionModel().setSelection(originalSelectionStart, originalSelectionEnd);
+    } finally {
+      mySelectionUpdatedFromSearchResults = false;
+    }
     myEditor.getCaretModel().moveToOffset(Math.min(myStartSessionCaretMarker.getEndOffset(), myEditor.getDocument().getTextLength()));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }

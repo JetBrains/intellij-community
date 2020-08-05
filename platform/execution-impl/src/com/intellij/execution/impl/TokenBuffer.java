@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo})
@@ -32,12 +16,12 @@ import java.util.List;
  * Add token via {@link #print(String, ConsoleViewContentType, HyperlinkInfo)}
  * Get all tokens via {@link #drain()}
  */
-class TokenBuffer {
+final class TokenBuffer {
   // special token which means that the deferred text starts with "\r" so it shouldn't be appended to the document end.
   // Instead, the last line of the document should be removed
   static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
   private final int maxCapacity;  // if size becomes > maxCapacity we should trim tokens from the beginning
-  private final Queue<TokenInfo> tokens = new Queue<>(10); // each call to print() is stored here
+  private final Deque<TokenInfo> tokens = new ArrayDeque<>(10); // each call to print() is stored here
   private int size; // total lengths of all tokens
   private int startIndex; // index of text start in the first TokeInfo. This TokenInfo can become sliced after total size overflows maxCapacity
 
@@ -119,15 +103,15 @@ class TokenBuffer {
   private void trim() {
     // toss tokens from the beginning until size became < maxCapacity
     while (size - startIndex > maxCapacity) {
-      TokenInfo info = tokens.peekFirst();
-      int length = info.length() - startIndex;
+      TokenInfo info = tokens.getFirst();
+      int length = info.length();
       if (length > size - maxCapacity) {
         // slice a part of this info
-        startIndex += size - maxCapacity;
+        startIndex = size - maxCapacity;
         break;
       }
       startIndex = 0;
-      tokens.pullFirst();
+      tokens.removeFirst();
       size -= info.length();
     }
 
@@ -172,9 +156,8 @@ class TokenBuffer {
     }
   }
 
-  @NotNull
-  private List<TokenInfo> getInfos() {
-    List<TokenInfo> list = tokens.toList();
+  private @NotNull List<TokenInfo> getInfos() {
+    List<TokenInfo> list = tokens.isEmpty() ? Collections.emptyList() : new ArrayList<>(tokens);
     if (startIndex != 0) {
       // slice the first token
       TokenInfo first = list.get(0);

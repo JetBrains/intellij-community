@@ -164,21 +164,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiArrayAccessExpression arrayExpression = instruction.getExpression();
     DfaValue index = memState.pop();
     DfaValue array = memState.pop();
-    boolean alwaysOutOfBounds = false;
-    DfaValueFactory factory = runner.getFactory();
-    if (!DfaTypeValue.isUnknown(index)) {
-      DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.getInt(0));
-      if (!memState.applyCondition(indexNonNegative)) {
-        alwaysOutOfBounds = true;
-      }
-      DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-      DfaCondition indexLessThanLength = index.cond(RelationType.LT, dfaLength);
-      if (!memState.applyCondition(indexLessThanLength)) {
-        alwaysOutOfBounds = true;
-      }
-    }
+    boolean alwaysOutOfBounds = !applyBoundsCheck(memState, array, index);
     processArrayAccess(arrayExpression, alwaysOutOfBounds);
     if (alwaysOutOfBounds) {
+      DfaControlTransferValue transfer = instruction.getOutOfBoundsExceptionTransfer();
+      if (transfer != null) {
+        List<DfaInstructionState> states = transfer.dispatch(memState, runner);
+        for (DfaInstructionState state : states) {
+          state.getMemoryState().markEphemeral();
+        }
+        return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
       return DfaInstructionState.EMPTY_ARRAY;
     }
 
@@ -197,6 +193,20 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     pushExpressionResult(result, instruction, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  private static boolean applyBoundsCheck(@NotNull DfaMemoryState memState,
+                                          @NotNull DfaValue array,
+                                          @NotNull DfaValue index) {
+    DfaValueFactory factory = index.getFactory();
+    DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
+    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, factory.getInt(0));
+    if (!memState.applyCondition(lengthMoreThanZero)) return false;
+    DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.getInt(0));
+    if (!memState.applyCondition(indexNonNegative)) return false;
+    DfaCondition indexLessThanLength = index.cond(RelationType.LT, length);
+    if (!memState.applyCondition(indexLessThanLength)) return false;
+    return true;
   }
 
   protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
@@ -940,6 +950,28 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
+  public DfaInstructionState[] visitIsAssignableFromInstruction(IsAssignableInstruction instruction,
+                                                                DataFlowRunner runner,
+                                                                DfaMemoryState memState) {
+    PsiType superClass = DfConstantType.getConstantOfType(memState.getDfType(memState.pop()), PsiType.class);
+    PsiType subClass = DfConstantType.getConstantOfType(memState.getDfType(memState.pop()), PsiType.class);
+    ThreeState result = ThreeState.UNSURE;
+    if (superClass != null && subClass != null) {
+      TypeConstraint superType = TypeConstraints.instanceOf(superClass);
+      TypeConstraint subType = TypeConstraints.instanceOf(subClass);
+      if (subType.meet(superType) == TypeConstraints.BOTTOM) {
+        result = ThreeState.NO;
+      } else {
+        TypeConstraint negated = subType.tryNegate();
+        if (negated != null && negated.meet(superType) == TypeConstraints.BOTTOM) {
+          result = ThreeState.YES;
+        }
+      }
+    }
+    return new DfaInstructionState[]{makeBooleanResult(instruction, runner, memState, result)};
+  }
+
+  @Override
   public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     myReachable.add(instruction);
 
@@ -998,7 +1030,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private DfaInstructionState makeBooleanResult(BinopInstruction instruction,
+  private DfaInstructionState makeBooleanResult(ExpressionPushingInstruction<?> instruction,
                                                 DataFlowRunner runner,
                                                 DfaMemoryState memState,
                                                 @NotNull ThreeState result) {

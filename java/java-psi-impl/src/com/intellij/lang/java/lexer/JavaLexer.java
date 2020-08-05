@@ -7,7 +7,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
@@ -21,15 +20,15 @@ import java.util.Set;
 import static com.intellij.psi.PsiKeyword.*;
 
 public class JavaLexer extends LexerBase {
-  private static final Set<String> KEYWORDS = ContainerUtil.newTroveSet(
+  private static final Set<String> KEYWORDS = new THashSet<>(Arrays.asList(
     ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
     FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
-    TRUE, FALSE, NULL, NON_SEALED);
+    TRUE, FALSE, NULL, NON_SEALED));
 
-  private static final Set<CharSequence> JAVA9_KEYWORDS =
-    new THashSet<>(Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH),
-                   CharSequenceHashingStrategy.CASE_SENSITIVE);
+  private static final Set<CharSequence> JAVA9_KEYWORDS = new THashSet<>(
+    Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH),
+    CharSequenceHashingStrategy.CASE_SENSITIVE);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
@@ -43,8 +42,7 @@ public class JavaLexer extends LexerBase {
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14_PREVIEW) && RECORD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
-            (level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id)))
-           );
+            (level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
   }
 
   private final _JavaLexer myFlexLexer;
@@ -148,7 +146,16 @@ public class JavaLexer extends LexerBase {
           }
         }
         break;
-
+      
+      case '#' : 
+        if (myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!') {
+          myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
+          myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
+        }
+        else {
+          flexLocateToken();
+        }
+        break;
       case '\'':
         myTokenType = JavaTokenType.CHARACTER_LITERAL;
         myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);

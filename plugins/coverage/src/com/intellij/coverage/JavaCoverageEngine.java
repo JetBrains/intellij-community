@@ -456,7 +456,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                     @Nullable LineData lineData) {
 
     final StringBuilder buf = new StringBuilder();
-    buf.append("Hits: ");
+    buf.append(CoverageBundle.message("hits.title", ""));
     if (lineData == null) {
       buf.append(0);
       return buf.toString();
@@ -525,8 +525,8 @@ public class JavaCoverageEngine extends CoverageEngine {
             boolean reverse = parentExpression instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parentExpression).getOperationTokenType() == JavaTokenType.OROR
                               || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
             buf.append(indent).append(expression.getText()).append("\n");
-            buf.append(indent).append(indent).append("true hits: ").append(reverse ? jumpData.getFalseHits() : jumpData.getTrueHits()).append("\n");
-            buf.append(indent).append(indent).append("false hits: ").append(reverse ? jumpData.getTrueHits() : jumpData.getFalseHits()).append("\n");
+            buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getFalseHits() : jumpData.getTrueHits())).append("\n");
+            buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getTrueHits() : jumpData.getFalseHits())).append("\n");
             hits += jumpData.getTrueHits() + jumpData.getFalseHits();
           }
         }
@@ -558,12 +558,12 @@ public class JavaCoverageEngine extends CoverageEngine {
         }
       }
       if (lineData.getHits() > hits && hits > 0) {
-        buf.append("Unknown outcome: ").append(lineData.getHits() - hits);
+        buf.append(JavaCoverageBundle.message("report.unknown.outcome",lineData.getHits() - hits));
       }
     }
     catch (Exception e) {
       LOG.info(e);
-      return "Hits: " + lineData.getHits();
+      return CoverageBundle.message("hits.title", lineData.getHits());
     }
     return buf.toString();
   }
@@ -696,7 +696,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public String getPresentableText() {
-    return "Java Coverage";
+    return JavaCoverageBundle.message("java.coverage.engine.presentable.text");
   }
 
   @Override

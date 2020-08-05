@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,7 +83,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     return null;
   }
 
-  protected String getChooserTitle() {
+  protected @NlsContexts.DialogTitle String getChooserTitle() {
     String text = getTemplatePresentation().getText();
     if (text.endsWith("...")) {
       text = StringUtil.trimEnd(text, "...");

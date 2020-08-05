@@ -76,6 +76,8 @@ public interface ModifiableModuleModel {
   @NotNull
   Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException, ModuleWithNameAlreadyExists;
 
+  Module loadModule(@NotNull Path file) throws IOException;
+
   /**
    * Disposes of the specified module and removes it from the project. {@link #commit()}
    * must be called to bring the changes in effect.

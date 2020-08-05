@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -16,7 +16,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -43,17 +45,15 @@ import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class VariableInlineHandler extends InlineActionHandler {
-  private static final String NAME = "Inline";
-  private static final String TITLE = "XSLT - " + NAME;
+public final class VariableInlineHandler extends InlineActionHandler {
 
   @Override
   public boolean isEnabledForLanguage(Language l) {
@@ -97,9 +97,8 @@ public class VariableInlineHandler extends InlineActionHandler {
     final String expression = tag.getAttributeValue("select");
     if (expression == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          MessageFormat
-                                            .format("{0} ''{1}'' has no value.", StringUtil.capitalize(type), variable.getName()),
-                                          TITLE, null);
+                                          XPathBundle.message("dialog.message.x.has.no.value", StringUtil.capitalize(type), variable.getName()),
+                                          XPathBundle.message("dialog.title.xslt.inline"), null);
       return;
     }
 
@@ -107,8 +106,8 @@ public class VariableInlineHandler extends InlineActionHandler {
       ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
     if (references.size() == 0) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          MessageFormat.format("{0} ''{1}'' is never used.", variable.getName()),
-                                          TITLE, null);
+                                          XPathBundle.message("dialog.message.never.used", StringUtil.capitalize(type),variable.getName()),
+                                          XPathBundle.message("dialog.title.xslt.inline"), null);
       return;
     }
 
@@ -154,31 +153,24 @@ public class VariableInlineHandler extends InlineActionHandler {
                                         EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, false, highlighters);
 
     if (!hasExternalRefs) {
+      @NlsContexts.DialogMessage String message =
+        XPathBundle.message("dialog.message.inline.variable", type, variable.getName(), references.size());
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} occurrence{3})",
-                                                        type,
-                                                        variable.getName(),
-                                                        String.valueOf(references.size()),
-                                                        references.size() > 1 ? "s" : ""),
-                                   TITLE, Messages.getQuestionIcon()) != Messages.YES) {
+          !MessageDialogBuilder.yesNo(XPathBundle.message("dialog.title.xslt.inline"), message).ask(project)) {
         return;
       }
     }
     else {
+      @NlsContexts.DialogMessage String message =
+        XPathBundle.message("dialog.message.inline.local.variable", type, variable.getName(), references.size());
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} local occurrence{3})\n" +
-                                                        "\nWarning: It is being used in external files. Its declaration will not be removed.",
-                                                        type,
-                                                        variable.getName(),
-                                                        String.valueOf(references.size()),
-                                                        references.size() > 1 ? "s" : ""),
-                                   TITLE, Messages.getWarningIcon()) != Messages.YES) {
+          !MessageDialogBuilder.yesNo(XPathBundle.message("dialog.title.xslt.inline"), message).icon(Messages.getWarningIcon()).ask(project)) {
         return;
       }
     }
 
     final boolean hasRefs = hasExternalRefs;
-    WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName("XSLT.Inline").run(() -> {
+    WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName(XPathBundle.message("dialog.title.xslt.inline")).run(() -> {
       try {
         for (PsiReference psiReference : references) {
           final PsiElement element = psiReference.getElement();

@@ -9,9 +9,5 @@ import com.intellij.openapi.components.StoragePathMacros
 /**
  * @author Vitaliy.Bibaev
  */
-@State(name = "ProjectUserFactors", storages = [
-  Storage(StoragePathMacros.CACHE_FILE),
-  Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-],
-reportStatistic = false)
+@State(name = "ProjectUserFactors", storages = [Storage(StoragePathMacros.CACHE_FILE)], reportStatistic = false)
 class ProjectUserFactorStorage : UserFactorStorageBase()

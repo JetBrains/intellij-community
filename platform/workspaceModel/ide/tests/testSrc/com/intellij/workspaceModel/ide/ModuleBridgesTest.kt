@@ -28,6 +28,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
@@ -312,7 +313,7 @@ class ModuleBridgesTest {
     }
 
   @Test
-  fun `test content roots provided implicitly`() =
+  fun `test content roots provided`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
@@ -321,23 +322,26 @@ class ModuleBridgesTest {
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = project.configLocation!!
-
+      val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(virtualFileManager), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity,
+                                                        moduleEntity.entitySource)
+        it.addSourceRootEntity(contentRootEntity, virtualFileUrl, false, "",
+                               JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
       val module = moduleManager.findModuleByName("name")
       assertNotNull(module)
 
       assertArrayEquals(
-        arrayOf(dir.toVirtualFileUrl(virtualFileManager).url),
+        arrayOf(virtualFileUrl.url),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      assertEquals(dir.toVirtualFileUrl(virtualFileManager).url, sourceRootUrl)
+      assertEquals(virtualFileUrl.url, sourceRootUrl)
     }
 
   @Test
@@ -469,11 +473,11 @@ class ModuleBridgesTest {
   fun `test custom source root loading`() {
     TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(),
                                                                             disposableRule.disposable)
-    val tempDir = temporaryDirectoryRule.newPath().toFile()
-    val moduleImlFile = File(tempDir, "my.iml")
-    Files.createDirectories(moduleImlFile.parentFile.toPath())
-    val url = VfsUtilCore.pathToUrl(moduleImlFile.parentFile.path)
-    moduleImlFile.writeText("""
+    val tempDir = temporaryDirectoryRule.newPath()
+    val moduleImlFile = tempDir.resolve("my.iml")
+    Files.createDirectories(moduleImlFile.parent)
+    val url = VfsUtilCore.pathToUrl(moduleImlFile.parent.toString())
+    moduleImlFile.write("""
       <module type="JAVA_MODULE" version="4">
         <component name="NewModuleRootManager">
           <content url="file://${'$'}MODULE_DIR${'$'}">
@@ -486,7 +490,7 @@ class ModuleBridgesTest {
 
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
-      val module = moduleManager.loadModule(moduleImlFile.path)
+      val module = moduleManager.loadModule(moduleImlFile)
       val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
 
       assertEquals(2, contentEntry.sourceFolders.size)
@@ -514,10 +518,10 @@ class ModuleBridgesTest {
 
   @Test
   fun `test unknown custom source root type`() {
-    val tempDir = temporaryDirectoryRule.newPath().toFile()
-    val moduleImlFile = File(tempDir, "my.iml")
-    Files.createDirectories(moduleImlFile.parentFile.toPath())
-    moduleImlFile.writeText("""
+    val tempDir = temporaryDirectoryRule.newPath()
+    val moduleImlFile = tempDir.resolve("my.iml")
+    Files.createDirectories(moduleImlFile.parent)
+    moduleImlFile.write("""
       <module type="JAVA_MODULE" version="4">
         <component name="NewModuleRootManager">
           <content url="file://${'$'}MODULE_DIR${'$'}">
@@ -529,7 +533,7 @@ class ModuleBridgesTest {
 
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
-      val module = moduleManager.loadModule(moduleImlFile.path)
+      val module = moduleManager.loadModule(moduleImlFile)
       val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
       val sourceFolder = contentEntry.sourceFolders.single()
 

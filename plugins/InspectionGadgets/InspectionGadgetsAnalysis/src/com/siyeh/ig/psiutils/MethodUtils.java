@@ -9,18 +9,13 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +25,10 @@ import java.util.regex.Pattern;
 public final class MethodUtils {
 
   private MethodUtils() {}
+
+  public static boolean isInsideMethodBody(@NotNull PsiElement element, @Nullable PsiMethod method) {
+    return method != null && PsiTreeUtil.isAncestor(method.getBody(), element, true);
+  }
 
   public static boolean isCopyConstructor(@Nullable PsiMethod constructor) {
     if (constructor == null || !constructor.isConstructor()) {

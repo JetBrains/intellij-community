@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PsiPrecedenceUtil {
+public final class PsiPrecedenceUtil {
   public static final int PARENTHESIZED_PRECEDENCE = 0;
   public static final int LITERAL_PRECEDENCE = 0;
   public static final int METHOD_CALL_PRECEDENCE = 1;
@@ -170,7 +170,7 @@ public class PsiPrecedenceUtil {
     return child == null || areParenthesesNeeded(child, (PsiExpression)parent, ignoreClarifyingParentheses);
   }
 
-  public static boolean areParenthesesNeeded(PsiExpression expression, 
+  public static boolean areParenthesesNeeded(PsiExpression expression,
                                              PsiExpression parentExpression,
                                              boolean ignoreClarifyingParentheses) {
     if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayInitializerExpression) {

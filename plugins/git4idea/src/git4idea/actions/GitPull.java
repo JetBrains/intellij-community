@@ -32,7 +32,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.pull.GitPullDialog;
-import git4idea.pull.PullOption;
+import git4idea.pull.GitPullOption;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -78,7 +78,7 @@ public class GitPull extends GitMergeAction {
 
   @Override
   protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
-    if (!dialogState.selectedOptions.contains(PullOption.REBASE.getOption())) {
+    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE.getOption())) {
       super.perform(dialogState, project);
     }
     else {
@@ -120,7 +120,7 @@ public class GitPull extends GitMergeAction {
     String remoteName = remote.getName();
 
     VirtualFile root = dialog.gitRoot();
-    Set<PullOption> selectedOptions = dialog.getSelectedOptions();
+    Set<GitPullOption> selectedOptions = dialog.getSelectedOptions();
     List<String> selectedBranches = dialog.getSelectedBranches();
 
     return () -> {
@@ -130,7 +130,7 @@ public class GitPull extends GitMergeAction {
       h.setUrls(urls);
       h.addParameters("--no-stat");
 
-      for (PullOption option : selectedOptions) {
+      for (GitPullOption option : selectedOptions) {
         h.addParameters(option.getOption());
       }
 

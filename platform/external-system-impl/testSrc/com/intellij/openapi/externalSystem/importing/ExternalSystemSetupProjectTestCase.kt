@@ -23,7 +23,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.replaceService
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.awt.Component
 import com.intellij.openapi.externalSystem.util.use as utilUse
 
@@ -73,10 +73,19 @@ interface ExternalSystemSetupProjectTestCase {
   }
 
   fun assertModules(project: Project, vararg projectInfo: ProjectInfo) {
-    val expectedNames = projectInfo.flatMap { it.modules }
+    val expectedNames = projectInfo.flatMap { it.modules }.toSet()
     val actual = ModuleManager.getInstance(project).modules
-    val actualNames = actual.map { it.name }
-    assertEquals(HashSet(expectedNames), HashSet(actualNames))
+    val actualNames = actual.map { it.name }.toSet()
+    val truePositive = expectedNames.intersect(actualNames)
+    val falseNegative = expectedNames.minus(actualNames)
+    val falsePositive = actualNames.minus(expectedNames)
+    val hasErrors = falseNegative.isEmpty() && falsePositive.isEmpty()
+    assertTrue("""
+        Found unexpected or not found expected modules
+        TP: $truePositive
+        FN: $falseNegative
+        FP: $falsePositive
+      """.trimIndent(), hasErrors)
   }
 
   fun AnAction.perform(project: Project? = null, selectedFile: VirtualFile? = null) {

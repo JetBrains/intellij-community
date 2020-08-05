@@ -15,7 +15,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public class FileChooserDescriptor implements Cloneable {
   private Condition<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
-  private final Map<String, Object> myUserData = new THashMap<>();
+  private final Map<String, Object> myUserData = new HashMap<>();
 
   /**
    * Use {@link FileChooserDescriptorFactory} for most used descriptors.

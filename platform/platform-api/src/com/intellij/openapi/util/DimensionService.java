@@ -30,10 +30,7 @@ import java.util.Map;
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
-@State(name = "DimensionService", storages = {
-  @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
-  @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED, deprecated = true),
-})
+@State(name = "DimensionService", storages = @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED))
 public final class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 

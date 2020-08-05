@@ -13,6 +13,6 @@ public class JpsForceUpdateCachesAction extends DumbAwareAction {
     Project project = actionEvent.getProject();
     if (project == null) return;
     JpsOutputLoaderManager outputLoaderManager = JpsOutputLoaderManager.getInstance(project);
-    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, () -> outputLoaderManager.load(true));
+    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, project, () -> outputLoaderManager.load(true));
   }
 }

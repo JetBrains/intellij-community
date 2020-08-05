@@ -15,10 +15,10 @@
  */
 package com.intellij.diagnostic.hprof.parser
 
+import com.google.common.base.Stopwatch
 import com.intellij.diagnostic.hprof.util.HProfReadBuffer
 import com.intellij.diagnostic.hprof.util.HProfReadBufferSlidingWindow
-import com.google.common.base.Stopwatch
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import java.io.EOFException
 import java.io.IOException
 import java.nio.channels.FileChannel
@@ -27,7 +27,7 @@ import java.util.function.LongUnaryOperator
 
 class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
   companion object {
-    private val LOG = Logger.getInstance(HProfEventBasedParser::class.java)
+    private val LOG = logger<HProfEventBasedParser>()
   }
 
   var idSize: Int = 0

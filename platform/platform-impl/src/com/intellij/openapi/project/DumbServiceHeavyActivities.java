@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ class DumbServiceHeavyActivities {
     }
   }
 
-  @NotNull AccessToken heavyActivityStarted(@NotNull String activityName) {
+  @NotNull AccessToken heavyActivityStarted(@NotNull @Nls String activityName) {
     String reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName);
     synchronized (myRequestedSuspensions) {
       myRequestedSuspensions.add(reason);
@@ -68,11 +69,12 @@ class DumbServiceHeavyActivities {
   }
 
   private void suspendIfRequested(ProgressSuspender suspender) {
+    String suspendedReason;
     synchronized (myRequestedSuspensions) {
-      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
-      if (suspendedReason != null) {
-        suspender.suspendProcess(suspendedReason);
-      }
+      suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+    }
+    if (suspendedReason != null) {
+      suspender.suspendProcess(suspendedReason);
     }
   }
 

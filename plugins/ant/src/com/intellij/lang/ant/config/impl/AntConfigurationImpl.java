@@ -259,8 +259,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 try {
                   myInitThread = Thread.currentThread();
                   // first, remove existing files
-                  for (AntBuildFile file : myBuildFiles) {
-                    myBuildFiles.remove(file);
+                  Iterator<AntBuildFileBase> it = myBuildFiles.iterator();
+                  while (it.hasNext()) {
+                    AntBuildFile file = it.next();
+                    it.remove();
                     removeBuildFileImpl(file);
                   }
 
@@ -644,7 +646,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
       throw new AntNoFileException("the file is not recognized as an Ant file", file);
     }
-    final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
+    final AntBuildFileImpl buildFile = new AntBuildFileImpl(xmlFile, this);
     myBuildFiles.add(buildFile);
     return buildFile;
   }

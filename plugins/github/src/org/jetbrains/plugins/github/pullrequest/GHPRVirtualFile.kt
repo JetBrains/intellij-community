@@ -15,12 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
  * [fileManagerId] is a [org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl.id] which is required to differentiate files
  * between launches of a PR toolwindow.
  * This is necessary to make the files appear in "Recent Files" correctly.
- * Without this field files are saved in [com.intellij.openapi.fileEditor.impl.EditorHistoryManager] via pointers and urls are saved to disk
- * After reopening the project manager will try to restore the files and will not find them since data context is not available at that time
- * and despite this history entry will still be created using a url-only [com.intellij.openapi.vfs.impl.IdentityVirtualFilePointer] via
- * [com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.getOrCreateIdentity] where pointers are cached.
- * As a result all previously opened files will be seen by history manager as non-existent.
- * Including this arbitrary [fileManagerId] helps distinguish files between launches.
+ * See [com.intellij.vcs.editor.ComplexPathVirtualFileSystem.Path.sessionId] for details.
  */
 abstract class GHPRVirtualFile(protected val fileManagerId: String,
                                val project: Project,

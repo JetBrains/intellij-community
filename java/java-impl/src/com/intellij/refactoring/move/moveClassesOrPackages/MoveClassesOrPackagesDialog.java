@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -162,9 +163,9 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
         initialTargetDirectory = null;
       }
     }
-    Pass<String> updater = new Pass<String>() {
+    Pass<String> updater = new Pass<@NlsContexts.DialogMessage String>() {
       @Override
-      public void pass(String s) {
+      public void pass(@NlsContexts.DialogMessage String s) {
         setErrorText(s, myDestinationFolderCB);
       }
     };

@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -446,8 +447,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
-    private final String myText;
-    private final String myTextUnavailable;
+    private final @NlsActions.ActionText String myText;
+    private final @NlsActions.ActionText String myTextUnavailable;
 
     WatchLastMethodReturnValueAction() {
       super("", JavaDebuggerBundle.message("action.watch.method.return.value.description"), null);

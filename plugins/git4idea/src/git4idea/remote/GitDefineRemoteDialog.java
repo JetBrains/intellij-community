@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.remote;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +26,7 @@ import java.awt.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static git4idea.GitUtil.mention;
+import static git4idea.i18n.GitBundle.message;
 
 public class GitDefineRemoteDialog extends DialogWrapper {
 
@@ -66,7 +53,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     myRemoteName = new JTextField(initialRemoteName, 30);
     myInitialRemoteName = initialRemoteName;
     myRemoteUrl = new JTextField(initialRemoteUrl, 30);
-    setTitle("Define Remote" + mention(myRepository));
+    setTitle(message("remotes.define.remote") + mention(myRepository));
     init();
   }
 
@@ -84,9 +71,11 @@ public class GitDefineRemoteDialog extends DialogWrapper {
       setDefaultAnchor(GridBagConstraints.LINE_START).
       setDefaultInsets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0).
       setDefaultFill(GridBagConstraints.HORIZONTAL);
-    defineRemoteComponent.add(new JBLabel("Name: ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
+    defineRemoteComponent
+      .add(new JBLabel(message("remotes.define.remote.name") + " ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
     defineRemoteComponent.add(myRemoteName, gb.next().weightx(1.0));
-    defineRemoteComponent.add(new JBLabel("URL: ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
+    defineRemoteComponent
+      .add(new JBLabel(message("remotes.define.remote.url") + " ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
     defineRemoteComponent.add(myRemoteUrl, gb.next().weightx(1.0));
     return defineRemoteComponent;
   }
@@ -113,7 +102,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     String error = validateRemoteUnderModal(url);
     if (error != null) {
       LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", getRemoteName(), url, error));
-      Messages.showErrorDialog(myRepository.getProject(), XmlStringUtil.wrapInHtml(error), "Invalid Remote");
+      Messages.showErrorDialog(myRepository.getProject(), XmlStringUtil.wrapInHtml(error), message("remotes.define.invalid.remote"));
     }
     else {
       super.doOKAction();
@@ -125,16 +114,16 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     String name = getRemoteName();
     if (name.isEmpty()) {
-      return new ValidationInfo("Remote name can't be empty", myRemoteName);
+      return new ValidationInfo(message("remotes.define.empty.remote.name.validation.message"), myRemoteName);
     }
     if (getRemoteUrl().isEmpty()) {
-      return new ValidationInfo("Remote URL can't be empty", myRemoteUrl);
+      return new ValidationInfo(message("remotes.define.empty.remote.url.validation.message"), myRemoteUrl);
     }
     if (!GitRefNameValidator.getInstance().checkInput(name)) {
-      return new ValidationInfo("Remote name contains illegal characters", myRemoteName);
+      return new ValidationInfo(message("remotes.define.invalid.remote.name.validation.message"), myRemoteName);
     }
     if (!name.equals(myInitialRemoteName) && exists(myRepository.getRemotes(), remote -> remote.getName().equals(name))) {
-      return new ValidationInfo("Remote name '" + name + "' is already in use", myRemoteName);
+      return new ValidationInfo(message("remotes.define.duplicate.remote.name.validation.message", name), myRemoteName);
     }
     return null;
   }
@@ -143,8 +132,10 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   private String validateRemoteUnderModal(@NotNull final String url) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       GitCommandResult result = myGit.lsRemote(myRepository.getProject(), virtualToIoFile(myRepository.getRoot()), url);
-      return !result.success() ? "Remote URL test failed: " + result.getErrorOutputAsHtmlString() : null;
-    }, "Checking URL...", true, myRepository.getProject());
+      return !result.success()
+             ? message("remotes.define.remote.url.validation.fail.message") + " " + result.getErrorOutputAsHtmlString()
+             : null;
+    }, message("remotes.define.checking.url.progress.message"), true, myRepository.getProject());
   }
 
 }

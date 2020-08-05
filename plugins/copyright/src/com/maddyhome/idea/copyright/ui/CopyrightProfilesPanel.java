@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -39,12 +25,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.StatusText;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -57,7 +43,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
+final class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
   private final Project myProject;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
@@ -71,8 +57,10 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, treePath ->
-      ObjectUtils.doIfNotNull((MyNode)treePath.getLastPathComponent(), c -> c.getDisplayName()), true);
+    new TreeSpeedSearch(myTree, treePath -> {
+      MasterDetailsComponent.MyNode obj = (MyNode)treePath.getLastPathComponent();
+      return obj == null ? null : obj.getDisplayName();
+    }, true);
 
     StatusText emptyText = myTree.getEmptyText();
     emptyText.setText(CopyrightBundle.message("copyright.profiles.empty"));
@@ -125,7 +113,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
     return "copyright.profiles";
   }
 
-  protected void reloadAvailableProfiles() {
+  private void reloadAvailableProfiles() {
     if (myUpdate != null) {
       myUpdate.run();
     }
@@ -170,15 +158,14 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   }
 
   private void doAddProfile() {
-    String name = askForProfileName("Create Copyright Profile", "");
+    String name = askForProfileName(CopyrightBundle.message("create.copyright.profile"), "");
     if (name != null) {
       addProfileNode(new CopyrightProfile(name));
     }
   }
 
   @Override
-  @Nullable
-  protected ArrayList<AnAction> createActions(boolean fromPopup) {
+  protected @NotNull ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.add"),
                                    CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.add"),
@@ -203,7 +190,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        String profileName = askForProfileName("Copy Copyright Profile", "");
+        String profileName = askForProfileName(CopyrightBundle.message("copy.copyright.profile"), "");
         if (profileName == null) {
           return;
         }
@@ -264,7 +251,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       }
 
       private void importProfile(CopyrightProfile copyrightProfile) {
-        final String profileName = askForProfileName("Import copyright profile", copyrightProfile.getName());
+        final String profileName = askForProfileName(CopyrightBundle.message("import.copyright.profile"), copyrightProfile.getName());
         if (profileName == null) return;
         copyrightProfile.setName(profileName);
         addProfileNode(copyrightProfile);
@@ -278,7 +265,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
 
   @Nullable
-  private String askForProfileName(String title, String initialName) {
+  private String askForProfileName(@NlsContexts.DialogTitle String title, String initialName) {
     return Messages.showInputDialog(CopyrightBundle.message("dialog.message.new.copyright.profile.name"), title, Messages.getQuestionIcon(), initialName, new InputValidator() {
       @Override
       public boolean checkInput(String s) {

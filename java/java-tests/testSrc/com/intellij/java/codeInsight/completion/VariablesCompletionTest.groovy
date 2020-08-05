@@ -371,4 +371,22 @@ class C {
     myFixture.assertPreferredCompletionItems 0, 'e', 'ioException', 'exception'
   }
 
+  void "test no shadowed static field suggestions"() {
+    myFixture.configureByText 'a.java', '''
+class C extends Super {
+    static final String FOO = "c";
+    { 
+      C.FO<caret>x
+    }
+}
+
+class Super {
+  static final String FOO = "super";
+}
+'''
+    def items = myFixture.completeBasic()
+    assertStringItems('FOO')
+    assert NormalCompletionTest.renderElement(items[0]).tailText == ' ( = "c")'
+  }
+
 }

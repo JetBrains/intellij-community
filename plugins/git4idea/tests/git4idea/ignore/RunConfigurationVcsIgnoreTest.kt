@@ -2,30 +2,25 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveComponentManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.VfsTestUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
-import java.io.File
+import org.assertj.core.api.Assertions.assertThat
 
 class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
-  private lateinit var vcsIgnoreManager: VcsIgnoreManager
-  private lateinit var gitIgnore: File
-
   private val configurationName = "Unnamed"
 
   override fun isCreateDirectoryBasedProject() = true
 
-  override fun setUp() {
-    super.setUp()
-    vcsIgnoreManager = project.service()
-    gitIgnore = File("$projectPath/$GITIGNORE")
-  }
-
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+    // create .idea directory
+    ApplicationManager.getApplication().invokeAndWait { saveComponentManager(project) }
   }
 
   override fun setUpModule() {
@@ -33,58 +28,74 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   }
 
   fun `test run configuration not ignored`() {
-    gitIgnore.writeText("!$configurationName")
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
+    gitIgnore.write("!$configurationName")
 
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
+    val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
+    ApplicationManager.getApplication().invokeAndWait {
+      assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+      assertFalse(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations"))
+    }
 
-    gitIgnore.writeText("!$configurationName*")
+    gitIgnore.write("!$configurationName*")
 
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
   }
 
   fun `test run configuration ignored`() {
-    gitIgnore.writeText("$configurationName*")
-
-    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
+    gitIgnore.write("$configurationName*")
+    ApplicationManager.getApplication().invokeAndWait {
+      assertThat(VcsIgnoreManager.getInstance(project).isRunConfigurationVcsIgnored(configurationName)).isTrue()
+    }
   }
 
   fun `test remove run configuration from ignore`() {
-    gitIgnore.writeText(".idea")
-    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
+    val gitIgnore = VfsTestUtil.createFile(projectRoot, GITIGNORE)
+    gitIgnore.write(".idea")
+    val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
+    ApplicationManager.getApplication().invokeAndWait {
+      assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isTrue()
+      assertThat(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations")).isTrue()
+
+      vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
+      assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isFalse()
+    }
+
+    gitIgnore.write(".idea/")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
-    gitIgnore.writeText(".idea/")
+    gitIgnore.write(".id*")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
-    gitIgnore.writeText(".id*")
+    gitIgnore.write(".id*/")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
-    gitIgnore.writeText(".id*/")
+    gitIgnore.write("*.xml")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
-    gitIgnore.writeText("*.xml")
+    gitIgnore.write(".idea/*.xml")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
 
-    gitIgnore.writeText(".idea/*.xml")
+    gitIgnore.write("$configurationName.xml")
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+  }
+}
 
-    gitIgnore.writeText("$configurationName.xml")
-
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+private fun VirtualFile.write(data: String) {
+  runWriteActionAndWait {
+    setBinaryContent(data.toByteArray())
   }
 }

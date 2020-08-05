@@ -43,6 +43,7 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
+  static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
@@ -139,6 +140,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private void init() {
+    AnAction action = myAction.getAction();
+    updateIcon(action);
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
@@ -149,8 +152,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       setDisplayedMnemonicIndex(mnemonicIndex);
     }
 
-    AnAction action = myAction.getAction();
-    updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
       setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
@@ -240,8 +241,14 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private Icon wrapNullIcon(Icon icon) {
+    if (ActionMenu.isShowIcons()) {
+      return null;
+    }
+    if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {
+      return icon;
+    }
     if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      return EmptyIcon.ICON_16;
+      return EMPTY_ICON;
     }
     return icon;
   }

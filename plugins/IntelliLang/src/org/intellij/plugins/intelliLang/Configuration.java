@@ -73,7 +73,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     o -> Language.findLanguageByID(o.getInjectedLanguageId()) != null;
 
   @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
-  public static class App extends Configuration {
+  public static final class App extends Configuration {
     private final List<BaseInjection> myDefaultInjections;
     private final AdvancedConfiguration myAdvancedConfiguration;
 
@@ -339,7 +339,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public static Configuration getProjectInstance(Project project) {
-    return ServiceManager.getService(project, Configuration.class);
+    return project.getService(Configuration.class);
   }
 
   public List<BaseInjection> getDefaultInjections() {

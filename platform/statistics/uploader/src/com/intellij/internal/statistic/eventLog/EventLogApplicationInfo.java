@@ -16,7 +16,7 @@ public interface EventLogApplicationInfo {
   String getProductVersion();
 
   @NotNull
-  String getUserAgent();
+  EventLogConnectionSettings getConnectionSettings();
 
   boolean isInternal();
 

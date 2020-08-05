@@ -26,6 +26,8 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,20 +40,19 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
-  private static final String IS_ACTIVE = "Is Active";
-  protected JBTable myTable = null;
-  protected FilterTableModel myTableModel = null;
+  protected JBTable myTable;
+  protected FilterTableModel myTableModel;
   protected final Project myProject;
   private final ClassFilter myChooserFilter;
   @Nullable
@@ -136,11 +137,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     return myTable.getEmptyText();
   }
 
-  protected String getAddButtonText() {
+  protected @Nls String getAddButtonText() {
     return JavaBundle.message("button.add.class");
   }
 
-  protected String getAddPatternButtonText() {
+  protected @Nls String getAddPatternButtonText() {
     return JavaBundle.message("button.add.pattern");
   }
 
@@ -179,6 +180,10 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
+  public void setupEasyFocusTraversing() {
+    myTable.setupEasyFocusTraversing();
+  }
+
   protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable {
     private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<>();
     public static final int CHECK_MARK = 0;
@@ -193,13 +198,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
 
     public com.intellij.ui.classFilter.ClassFilter[] getFilters() {
-      for (Iterator<com.intellij.ui.classFilter.ClassFilter> it = myFilters.iterator(); it.hasNext(); ) {
-        com.intellij.ui.classFilter.ClassFilter filter = it.next();
-        String pattern = filter.getPattern();
-        if (pattern == null || "".equals(pattern)) {
-          it.remove();
-        }
-      }
+      myFilters.removeIf(filter -> StringUtil.isEmpty(filter.getPattern()));
       return myFilters.toArray(com.intellij.ui.classFilter.ClassFilter.EMPTY_ARRAY);
     }
 
@@ -228,11 +227,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
 
     @Override
-    public String getColumnName(int column) {
+    public @NlsContexts.ColumnName String getColumnName(int column) {
       if (column == FILTER) {
         return "Pattern";
       }
-      return IS_ACTIVE;
+      return "Is Active";
     }
 
     @Override

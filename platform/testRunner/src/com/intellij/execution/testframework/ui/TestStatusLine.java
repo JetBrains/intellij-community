@@ -98,6 +98,7 @@ public class TestStatusLine extends NonOpaquePanel {
     myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
     boolean something = false;
     if (failuresCount > 0) {
@@ -125,7 +126,7 @@ public class TestStatusLine extends NonOpaquePanel {
     }
 
     if (testsTotal > 0) {
-      myState.append(TestRunnerBundle.message("tests.result.total.count", getTestsTotalMessage(testsTotal)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      myState.append(TestRunnerBundle.message("tests.result.total.count", testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
@@ -142,10 +143,6 @@ public class TestStatusLine extends NonOpaquePanel {
       }
     });
     
-  }
-
-  private static String getTestsTotalMessage(int testsTotal) {
-    return testsTotal + " test" + (testsTotal > 1 ? "s" : "");
   }
 
   public void setStatusColor(Color color) {

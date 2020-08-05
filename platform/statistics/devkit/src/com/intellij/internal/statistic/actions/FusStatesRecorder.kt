@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,8 +32,10 @@ internal object FusStatesRecorder {
       try {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
+        val settingsFuture = CompletableFuture.allOf(
+          *FeatureUsageStateEventTracker.EP_NAME.extensions.map { it.reportNow() }.toTypedArray())
 
-        CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture)
+        CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
           .thenCompose { FeatureUsageLogger.flush() }
           .get(10, TimeUnit.SECONDS)
       }

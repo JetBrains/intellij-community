@@ -6,6 +6,7 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ObjectUtils
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.adFailed
@@ -13,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -29,13 +31,16 @@ internal class WorkspaceEntityStorageImpl constructor(
 ) : AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
-  private val persistentIdCache = HashMap<PersistentEntityId<*>, WorkspaceEntity?>()
+  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
 
+  @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return persistentIdCache.getOrPut(id) { super.resolve(id) } as E?
+    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULl_ENTITY }
+    return if (entity !== NULl_ENTITY) entity as E else null
   }
 
   companion object {
+    private val NULl_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
   }
 }
@@ -104,7 +109,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Check for persistent id uniqueness
     pEntityData.persistentId(this)?.let { persistentId ->
-      if (indexes.persistentIdIndex.getIdsByEntry(persistentId) != null) {
+      val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
+      if (ids != null && ids.isNotEmpty()) {
         entitiesByType.remove(pEntityData.id, unmodifiableEntityClassId)
         throw PersistentIdAlreadyExistsException(persistentId)
       }
@@ -143,7 +149,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Check for persistent id uniqueness
     if (beforePersistentId != null) {
       val newPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
-      if (beforePersistentId != newPersistentId && indexes.persistentIdIndex.getIdsByEntry(newPersistentId) != null ) {
+      val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+      if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
           // Restore previous value
         (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
           throw PersistentIdAlreadyExistsException(newPersistentId)
@@ -367,21 +374,24 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected")
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected for $matchedEntityData")
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
-            val parents = this.refs.getParentRefsOfChild(pid)
-            val children = this.refs.getChildrenRefsOfParentBy(pid)
 
             updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
-              this.indexes.virtualFileIndex.index(pid, it.second, listOf(it.first))
-            }
+            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+              .groupBy({ it.propertyName }, { it.vfu })
+              .forEach { (property, vfus) ->
+                this.indexes.virtualFileIndex.index(pid, property, vfus)
+              }
             replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
+            this.indexes.updateExternalMappingForEntityId(oldPid, pid, replaceWith.indexes)
 
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
           }
+
+          if (localNode == matchedEntityData) this.indexes.updateExternalMappingForEntityId(oldPid, originStorageIndexes = replaceWith.indexes)
           // Remove added entity
           localMatchedEntities.remove(localNode.identificator(this), localNode)
         }
@@ -392,11 +402,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
 
-          replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
-            this.indexes.virtualFileIndex.index(newPid, it.second, listOf(it.first))
-          }
+          replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+            .groupBy({ it.propertyName }, { it.vfu })
+            .forEach { (property, vfus) ->
+              this.indexes.virtualFileIndex.index(newPid, property, vfus)
+            }
           replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
           replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
+          this.indexes.updateExternalMappingForEntityId(oldPid, newPid, replaceWith.indexes)
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
 
           createAddEvent(newEntity)
@@ -434,7 +447,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
-            else rbsFailed("Cannot link old entity to the new one")
+            else rbsFailed("Cannot remove link to parent entity. $connectionId")
           }
         }
         for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
@@ -444,7 +457,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailed("Cannot link old entity to the new one")
+              else rbsFailed("Cannot remove link to child entity. $connectionId")
             }
           }
         }
@@ -472,7 +485,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // TODO: 05.06.2020 The similar logic should exist for children references
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
-          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId")
+          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId; $connectionId")
         }
 
         // ----------------- Update children references -----------------------
@@ -503,7 +516,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
           if (!connectionId.isParentNullable) {
             val localParent = this.entityDataById(parentId)
-            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation")
+            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation; $connectionId")
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -735,7 +748,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies")
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies; $connectionId")
       refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
@@ -744,7 +757,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parent) != null) {
         refs.updateParentOfChild(connection, entityId, parent)
       }
-      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies")
+      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies; $connection")
     }
   }
 
@@ -784,7 +797,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       for (addedChild in addedChildrenSet) {
         if (addedChild !in mutableChildren) {
           val addedEntityData = this.entityDataById(addedChild)
-          if (addedEntityData == null && !connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+          if (addedEntityData == null && !connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
           mutableChildren.add(addedChild)
         }
       }
@@ -822,7 +835,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else if (parent == null || this.entityDataById(parent) != null) {
           // This child doesn't have a pareny anymore
-          if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+          if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
           else refs.removeParentToChildRef(connectionId, existingParent, id)
         }
         modifiedParentsMap.remove(connectionId)
@@ -834,7 +847,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parentId) != null) {
         refs.updateParentOfChild(connectionId, id, parentId)
       }
-      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
+      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
     }
   }
 
@@ -913,7 +926,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
     if (pids.isEmpty()) return null
-    if (pids.size > 1) error("Cannot resolve persistent id $id. The store contains more than one associated entities")
+    if (pids.size > 1) {
+      val entities = pids.associateWith { this.entityDataById(it) }.entries.joinToString("\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
+      error("""Cannot resolve persistent id $id. The store contains ${pids.size} associated entities:
+        |$entities
+      """.trimMargin())
+    }
     val pid = pids.single()
     return entityDataById(pid)?.createEntity(this) as E?
   }
@@ -934,6 +952,11 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
     return index
+  }
+
+  override fun getVirtualFileUrlIndex(): VirtualFileUrlIndex {
+    indexes.virtualFileIndex.setTypedEntityStorage(this)
+    return indexes.virtualFileIndex
   }
 
   internal fun assertConsistency() {

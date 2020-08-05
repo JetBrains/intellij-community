@@ -151,7 +151,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final String srcUUID = getRepositoryUUID(srcDir);
     final String dstUUID = getRepositoryUUID(dstDir);
 
-    return srcUUID != null && dstUUID != null && srcUUID.equals(dstUUID);
+    return srcUUID != null && srcUUID.equals(dstUUID);
   }
 
   /**
@@ -754,9 +754,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     else {
       final String singleFilePrompt;
       if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
+        //noinspection UnresolvedPropertyKey
         singleFilePrompt = SvnBundle.message("confirmation.text.add.dir");
       }
       else {
+        //noinspection UnresolvedPropertyKey
         singleFilePrompt = SvnBundle.message("confirmation.text.add.file");
       }
       filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
@@ -869,11 +871,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
       final String singleFilePrompt;
       if (deletedFiles.size() == 1 && deletedFiles.get(0).getFirst().isDirectory()) {
+        //noinspection UnresolvedPropertyKey
         singleFilePrompt = deletedFiles.get(0).getSecond().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ?
                            SvnBundle.message("confirmation.text.delete.dir.17") :
                            SvnBundle.message("confirmation.text.delete.dir");
       }
       else {
+        //noinspection UnresolvedPropertyKey
         singleFilePrompt = SvnBundle.message("confirmation.text.delete.file");
       }
       Collection<FilePath> files = vcsHelper

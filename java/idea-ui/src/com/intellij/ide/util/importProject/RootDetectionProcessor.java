@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
@@ -18,8 +18,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -80,7 +80,7 @@ public class RootDetectionProcessor {
       myDetectedRoots[i] = new ArrayList<>();
     }
 
-    Set<File> parentDirectories = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> parentDirectories = FileCollectionFactory.createCanonicalFileSet();
     File parent = myBaseDir.getParentFile();
     while (parent != null) {
       parentDirectories.add(parent);

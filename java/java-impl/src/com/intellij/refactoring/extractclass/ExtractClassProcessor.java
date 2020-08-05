@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -56,6 +57,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,8 +65,6 @@ import java.util.*;
 
 public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ExtractClassProcessor.class);
-
-  @NonNls public static final String REFACTORING_NAME = "Extract Delegate";
 
   private final PsiClass sourceClass;
   private final List<PsiField> fields;
@@ -151,7 +151,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
     myExtractEnumProcessor.findEnumConstantConflicts(refUsages);
     if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
@@ -194,7 +194,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
 
-  private void calculateInitializersConflicts(MultiMap<PsiElement, String> conflicts) {
+  private void calculateInitializersConflicts(MultiMap<PsiElement, @Nls String> conflicts) {
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       if (initializerDependsOnMoved(initializer)) {
@@ -255,7 +255,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   @NotNull
-  protected String getCommandName() {
+  protected @NlsContexts.Command String getCommandName() {
     return RefactorJBundle.message("extracted.class.command.name", newClassName);
   }
 

@@ -1,8 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.SyncDateFormat;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
-
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.util.containers.ContainerUtil.packNullables;
-import static com.intellij.util.containers.ContainerUtil.retainAll;
 
 public class ChangeBrowserSettings {
   public interface Filter {
@@ -46,7 +44,7 @@ public class ChangeBrowserSettings {
   @Nullable
   private static Date parseDate(@Nullable String dateValue) {
     try {
-      return !isEmpty(dateValue) ? DATE_FORMAT.parse(dateValue) : null;
+      return !Strings.isEmpty(dateValue) ? DATE_FORMAT.parse(dateValue) : null;
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -57,7 +55,7 @@ public class ChangeBrowserSettings {
   @Nullable
   private static Long parseLong(@Nullable String longValue) {
     try {
-      return !isEmpty(longValue) ? Long.parseLong(longValue) : null;
+      return !Strings.isEmpty(longValue) ? Long.parseLong(longValue) : null;
     }
     catch (NumberFormatException e) {
       LOG.warn(e);
@@ -105,9 +103,9 @@ public class ChangeBrowserSettings {
     return USE_DATE_AFTER_FILTER ? parseDate(DATE_AFTER) : null;
   }
 
-  @NotNull
-  protected List<Filter> createFilters() {
-    return packNullables(
+  // used externally
+  protected @NotNull List<Filter> createFilters() {
+    return ContainerUtil.packNullables(
       createDateFilter(getDateBeforeFilter(), true),
       createDateFilter(getDateAfterFilter(), false),
       createChangeFilter(getChangeBeforeFilter(), true),
@@ -120,15 +118,15 @@ public class ChangeBrowserSettings {
   private static Filter createDateFilter(@Nullable Date date, boolean before) {
     return date == null ? null : changeList -> {
       Date commitDate = changeList.getCommitDate();
-
       return commitDate != null && (before ? commitDate.before(date) : commitDate.after(date));
     };
   }
 
   @Nullable
   private static Filter createChangeFilter(@Nullable Long number, boolean before) {
-    return number == null ? null : changeList ->
-      before ? changeList.getNumber() <= number : changeList.getNumber() >= number;
+    return number == null ? null : changeList -> {
+      return before ? changeList.getNumber() <= number : changeList.getNumber() >= number;
+    };
   }
 
   @NotNull
@@ -139,7 +137,7 @@ public class ChangeBrowserSettings {
 
   public void filterChanges(@NotNull List<? extends CommittedChangeList> changeLists) {
     Filter filter = createFilter();
-    retainAll(changeLists, filter::accepts);
+    ContainerUtil.retainAll(changeLists, filter::accepts);
   }
 
   @Nullable

@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@SuppressWarnings("IncorrectParentDisposable")
 @ApiStatus.Internal
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
@@ -262,7 +263,13 @@ public class StartupManagerImpl extends StartupManagerEx {
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
         StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
         if (DumbService.isDumbAware(extension)) {
-          startupManager.runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          AppExecutorUtil.getAppExecutorService().execute(() -> {
+            if (!project.isDisposed()) {
+              BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, () -> {
+                startupManager.runActivity(null, extension, pluginDescriptor, ProgressManager.getInstance().getProgressIndicator());
+              });
+            }
+          });
         }
         else {
           DumbService.getInstance(project).unsafeRunWhenSmart(() -> {

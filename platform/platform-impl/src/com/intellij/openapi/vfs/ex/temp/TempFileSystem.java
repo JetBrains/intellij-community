@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem {
-  private static final String TEMP_PROTOCOL = "temp";
+  @NonNls private static final String TEMP_PROTOCOL = "temp";
   private final FSItem myRoot = new FSDir(null, "/");
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -336,7 +337,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     final FSItem item = convert(file);
     if (item == null) return null;
     final long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
-    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable);
+    // let's make TempFileSystem is case-sensitive
+    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable, item.isDirectory() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.UNSPECIFIED);
   }
 
   @NotNull

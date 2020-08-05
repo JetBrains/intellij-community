@@ -8,21 +8,25 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.PatternContextInfo;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
 public final class MatcherImplUtil {
 
-  public static PsiElement[] createTreeFromText(String text, PatternTreeContext context, LanguageFileType fileType, Project project) {
-    return createTreeFromText(text, new PatternContextInfo(context), fileType, null, project, false);
+  public static PsiElement @NotNull [] createTreeFromText(@NotNull String text,
+                                                          @NotNull PatternTreeContext context,
+                                                          @NotNull LanguageFileType fileType,
+                                                          @NotNull Project project) {
+    return createTreeFromText(text, new PatternContextInfo(context), fileType, fileType.getLanguage(), project, false);
   }
 
-  public static PsiElement[] createSourceTreeFromText(String text,
-                                                      PatternTreeContext context,
-                                                      LanguageFileType fileType,
-                                                      Project project,
-                                                      boolean physical) {
+  public static PsiElement @NotNull [] createSourceTreeFromText(@NotNull String text,
+                                                                @NotNull PatternTreeContext context,
+                                                                @NotNull LanguageFileType fileType,
+                                                                @NotNull Project project,
+                                                                boolean physical) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(fileType.getLanguage());
     if (profile != null) {
       return profile.createPatternTree(text, context, fileType, fileType.getLanguage(), null, project, physical);
@@ -30,15 +34,12 @@ public final class MatcherImplUtil {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public static PsiElement[] createTreeFromText(String text,
-                                                PatternContextInfo contextInfo,
-                                                LanguageFileType fileType,
-                                                Language language,
-                                                Project project,
-                                                boolean physical) {
-    if (language == null) {
-      language = fileType.getLanguage();
-    }
+  public static PsiElement @NotNull [] createTreeFromText(@NotNull String text,
+                                                          @NotNull PatternContextInfo contextInfo,
+                                                          @NotNull LanguageFileType fileType,
+                                                          @NotNull Language language,
+                                                          @NotNull Project project,
+                                                          boolean physical) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
       return profile.createPatternTree(text, contextInfo, fileType, language, project, physical);

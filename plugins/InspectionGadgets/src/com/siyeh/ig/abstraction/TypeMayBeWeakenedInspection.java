@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -528,7 +529,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
 
     @NotNull
-    private String getDescription(@NotNull PsiElement element, @NotNull Collection<PsiClass> weakerClasses) {
+    private @InspectionMessage String getDescription(@NotNull PsiElement element, @NotNull Collection<PsiClass> weakerClasses) {
       @NonNls final StringBuilder builder = new StringBuilder();
       final Iterator<PsiClass> iterator = weakerClasses.iterator();
       if (iterator.hasNext()) {

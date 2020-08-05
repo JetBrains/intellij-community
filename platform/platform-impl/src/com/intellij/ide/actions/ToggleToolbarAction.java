@@ -17,6 +17,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,9 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   public static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-    setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
+      if (toolWindow.getContentManagerIfCreated() != null) {
+        setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
+      }
   }
 
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
@@ -161,7 +164,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   @NotNull
-  static String getShowToolbarProperty(@NotNull String s) {
+  static String getShowToolbarProperty(@NotNull @NonNls String s) {
     return s + ".ShowToolbar";
   }
 

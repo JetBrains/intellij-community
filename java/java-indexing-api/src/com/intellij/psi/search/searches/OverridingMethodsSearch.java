@@ -45,6 +45,9 @@ public final class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMet
     super(EP_NAME);
   }
 
+  /**
+   * @param checkDeep false means that processing would be stopped after the first found item
+   */
   @NotNull
   public static Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
     if (ReadAction.compute(() -> !PsiUtil.canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization

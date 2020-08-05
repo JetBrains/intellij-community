@@ -26,10 +26,11 @@ public class LinkConstant extends PooledConstant {
     if (type == CONSTANT_Methodref ||
         type == CONSTANT_InterfaceMethodref ||
         type == CONSTANT_InvokeDynamic ||
-        type == CONSTANT_MethodHandle) {
+        (type == CONSTANT_MethodHandle && index1 != CONSTANT_MethodHandle_REF_getField && index1 != CONSTANT_MethodHandle_REF_putField)) {
       int parenth = descriptor.indexOf(')');
       if (descriptor.length() < 2 || parenth < 0 || descriptor.charAt(0) != '(') {
-        throw new IllegalArgumentException("Invalid descriptor: " + descriptor);
+        throw new IllegalArgumentException("Invalid descriptor: " + descriptor +
+                                           "; type = " + type + "; classname = " + classname + "; elementname = " + elementname);
       }
     }
   }

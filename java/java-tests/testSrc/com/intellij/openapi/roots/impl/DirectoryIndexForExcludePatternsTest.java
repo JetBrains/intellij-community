@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
@@ -128,7 +128,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         a.txt    <- excluded by pattern
         A.java
      */
-    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
     VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
@@ -155,7 +155,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         a.txt
         A.java
      */
-    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
     VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
@@ -206,7 +206,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         a.txt
         A.java
      */
-    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
     VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
     registerLibrary(myLibraryRoot, file -> file.equals(myLibraryRoot));
@@ -241,7 +241,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
         subdir/
           dir  (file that is named as directory)
      */
-    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile myLibraryRoot = getTempDir().createVirtualDir();
     VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
     VirtualFile txt = createChildData(createChildDirectory(myLibraryRoot, "subdir"), "dir");
     registerLibrary(myLibraryRoot, file -> !file.isDirectory() && "dir".contentEquals(file.getNameSequence()));

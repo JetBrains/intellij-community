@@ -277,11 +277,11 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {
     object Allow : ProhibitRebaseDuringRebasePolicy()
-    class Prohibit(val operation: @Nls String) : ProhibitRebaseDuringRebasePolicy()
+    class Prohibit(@Nls val operation: String) : ProhibitRebaseDuringRebasePolicy()
   }
 
   protected sealed class CommitEditingDataCreationResult<T : MultipleCommitEditingData> {
     class Created<T : MultipleCommitEditingData>(val data: T) : CommitEditingDataCreationResult<T>()
-    class Prohibited<T : MultipleCommitEditingData>(val description: @Nls String? = null) : CommitEditingDataCreationResult<T>()
+    class Prohibited<T : MultipleCommitEditingData>(@Nls val description: String? = null) : CommitEditingDataCreationResult<T>()
   }
 }

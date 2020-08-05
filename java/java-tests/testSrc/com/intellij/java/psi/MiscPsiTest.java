@@ -406,4 +406,8 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertTrue(getPsiManager().areElementsEquivalent(createMethod.create(), createMethod.create()));
   }
+
+  public void testFoundPackageIsValid() {
+    assertTrue(myFixture.findPackage("org.apache").isValid());
+  }
 }

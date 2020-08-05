@@ -22,12 +22,16 @@ import git4idea.commands.Git
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
+import org.jetbrains.annotations.CalledInAwt
 import java.nio.file.Paths
 
-class GitCloneDialogComponent(project: Project, private val modalityState: ModalityState) :
+class GitCloneDialogComponent(project: Project,
+                              private val modalityState: ModalityState,
+                              dialogStateListener: VcsCloneDialogComponentStateListener) :
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
-                           GitRememberedInputs.getInstance()) {
+                           GitRememberedInputs.getInstance(),
+                           dialogStateListener) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -36,7 +40,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
   private val checkVersionAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-  private var listenerInstalled = false
+  private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
 
   override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent
@@ -69,24 +73,27 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     rememberedInputs.cloneParentDir = parentDirectory
   }
 
+  @CalledInAwt
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
-    dialogStateListener.onOkActionEnabled(false)
+    updateOkActionState(dialogStateListener)
 
-    val scheduleCheckVersion = {
-      if (!errorNotifier.isTaskInProgress) {
-        checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
-      }
-    }
-
-    if (!listenerInstalled) {
-      listenerInstalled = true
-      scheduleCheckVersion()
+    if (versionCheckState == VersionCheckState.NOT_CHECKED) {
+      versionCheckState = VersionCheckState.IN_PROGRESS
+      scheduleCheckVersion(dialogStateListener)
 
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
-          scheduleCheckVersion()
+          if (versionCheckState == VersionCheckState.FAILED) {
+            scheduleCheckVersion(dialogStateListener)
+          }
         }
       })
+    }
+  }
+
+  private fun scheduleCheckVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
+    if (!errorNotifier.isTaskInProgress) {
+      checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
     }
   }
 
@@ -103,21 +110,35 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
       invokeAndWaitIfNeeded(modalityState) {
         if (!gitVersion.isSupported) {
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
-          dialogStateListener.onOkActionEnabled(false)
+          versionCheckState = VersionCheckState.FAILED
+          updateOkActionState(dialogStateListener)
         }
         else {
           inlineComponent.hideProgress()
-          dialogStateListener.onOkActionEnabled(true)
+          versionCheckState = VersionCheckState.SUCCESS
+          updateOkActionState(dialogStateListener)
         }
       }
     }
     catch (t: Throwable) {
       invokeAndWaitIfNeeded(modalityState) {
         executableProblemHandler.showError(t, errorNotifier, onErrorResolved = {
-          dialogStateListener.onOkActionEnabled(true)
+          versionCheckState = VersionCheckState.SUCCESS
+          updateOkActionState(dialogStateListener)
         })
-        dialogStateListener.onOkActionEnabled(false)
+        versionCheckState = VersionCheckState.FAILED
+        updateOkActionState(dialogStateListener)
       }
     }
+  }
+
+  @CalledInAwt
+  override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
+
+  private enum class VersionCheckState {
+    NOT_CHECKED,
+    SUCCESS,
+    IN_PROGRESS,
+    FAILED
   }
 }

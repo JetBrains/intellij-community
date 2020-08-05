@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -70,7 +71,7 @@ public final class ElementToWorkOn {
     return myExpression == null;
   }
 
-  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final String refactoringName, final String helpId, final Project project, final ElementsProcessor<? super ElementToWorkOn> processor) {
+  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final @NlsContexts.DialogTitle String refactoringName, final String helpId, final Project project, final ElementsProcessor<? super ElementToWorkOn> processor) {
     PsiLocalVariable localVar = null;
     PsiExpression expr = null;
 
@@ -145,7 +146,7 @@ public final class ElementToWorkOn {
   }
 
   private static ElementToWorkOn getElementToWorkOn(final Editor editor, final PsiFile file,
-                                                    final String refactoringName,
+                                                    final @NlsContexts.DialogTitle String refactoringName,
                                                     final String helpId,
                                                     final Project project, PsiLocalVariable localVar, PsiExpression expr) {
     int startOffset = 0;
@@ -193,7 +194,7 @@ public final class ElementToWorkOn {
   }
 
   public static void showNothingSelectedErrorMessage(final Editor editor,
-                                                     final String refactoringName,
+                                                     final @NlsContexts.DialogTitle String refactoringName,
                                                      final String helpId,
                                                      final Project project) {
     String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));

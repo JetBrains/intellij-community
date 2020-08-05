@@ -4,7 +4,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,16 +94,6 @@ public final class PatchApplier {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
   }
 
-  @Deprecated
-  public PatchApplier(@NotNull Project project,
-                      @NotNull VirtualFile baseDirectory,
-                      @NotNull List<? extends FilePatch> patches,
-                      @Nullable LocalChangeList targetChangeList,
-                      @Nullable CustomBinaryPatchApplier ignored,
-                      @Nullable CommitContext commitContext) {
-    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
-  }
-
   @NotNull
   public List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
@@ -156,12 +145,23 @@ public final class PatchApplier {
     return executePatchGroup(group, localChangeList, true, false);
   }
 
-  static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
-                                            boolean showSuccessNotification, boolean silentAddDelete) {
-    if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
-    final Project project = group.iterator().next().myProject;
+  /**
+   * Pass 'null' {@code targetChangeList} if changelist doesn't matter, changes will be applied as-it into default changelist.
+   * If default changelist is changed before refresh, a race is possible that will put some of applied changes into the new default changelist.
+   * <p>
+   * If {@code targetChangeList} is specified, method will need to synchronously await for CLM refresh.
+   * In this case, current thread MUST NOT be EDT or hold ReadLock, to prevent deadlock with VFS refresh.
+   */
+  private static ApplyPatchStatus executePatchGroup(@NotNull Collection<PatchApplier> group,
+                                                    @Nullable LocalChangeList targetChangeList,
+                                                    boolean showSuccessNotification,
+                                                    boolean silentAddDelete) {
+    if (group.isEmpty()) {
+      return ApplyPatchStatus.SUCCESS; //?
+    }
 
-    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, VcsBundle.getString("patch.apply.progress.title"), () -> {
+    Project project = group.iterator().next().myProject;
+    return PartialChangesUtil.computeUnderChangeListSync(project, targetChangeList, () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -173,21 +173,25 @@ public final class PatchApplier {
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       ApplicationManager.getApplication().invokeAndWait(() -> {
         try {
-          runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-              applier.addSkippedItems(trigger);
-            }
-            trigger.prepare();
-            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-              refStatus.set(null);
-            }
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-            }
-          }, VcsBundle.message("patch.apply.command"), null));
+          runWithDefaultConfirmations(project, silentAddDelete, () -> {
+            CommandProcessor.getInstance().executeCommand(project, () -> {
+              for (PatchApplier applier : group) {
+                refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+                applier.addSkippedItems(trigger);
+              }
+              trigger.prepare();
+              if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+                // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+                refStatus.set(null);
+              }
+              for (PatchApplier applier : group) {
+                refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+                if (refStatus.get() == ApplyPatchStatus.ABORT) {
+                  break;
+                }
+              }
+            }, VcsBundle.message("patch.apply.command"), null);
+          });
         }
         finally {
           VcsFileListenerContextHelper.getInstance(project).clearContext();
@@ -202,7 +206,7 @@ public final class PatchApplier {
       AtomicBoolean doRollback = new AtomicBoolean();
       if (result == ApplyPatchStatus.FAILURE) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-         doRollback.set(askToRollback(project, group));
+          doRollback.set(askToRollback(project, group));
         });
       }
       if (result == ApplyPatchStatus.ABORT || doRollback.get()) {
@@ -213,8 +217,8 @@ public final class PatchApplier {
         showApplyStatus(project, result);
       }
 
-      final Set<FilePath> directlyAffected = new HashSet<>();
-      final Set<VirtualFile> indirectlyAffected = new HashSet<>();
+      Set<FilePath> directlyAffected = new HashSet<>();
+      Set<VirtualFile> indirectlyAffected = new HashSet<>();
       for (PatchApplier applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
@@ -223,7 +227,7 @@ public final class PatchApplier {
       refreshPassedFiles(project, directlyAffected, indirectlyAffected);
 
       return result;
-    }, true);
+    });
   }
 
   @CalledInAwt
@@ -291,15 +295,16 @@ public final class PatchApplier {
 
   @Nullable
   private ApplyPatchStatus executeWritable() {
-    final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
+    ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
       ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myVerifier.getWritableFiles());
     if (readOnlyFilesStatus.hasReadonlyFiles()) {
       showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage());
       return ApplyPatchStatus.ABORT;
     }
+
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
     ApplyPatchStatus result = myFailedPatches.isEmpty() ? null : ApplyPatchStatus.FAILURE;
-    final List<PatchAndFile> textPatches = myVerifier.getTextPatches();
+    List<PatchAndFile> textPatches = myVerifier.getTextPatches();
     try {
       markInternalOperation(textPatches, true);
       return ApplyPatchStatus.and(result, actualApply(textPatches, myVerifier.getBinaryPatches(), myCommitContext));
@@ -309,11 +314,9 @@ public final class PatchApplier {
     }
   }
 
-  @NotNull
-  private ApplyPatchStatus createFiles() {
-    final Application application = ApplicationManager.getApplication();
-    Boolean isSuccess = application.runWriteAction((Computable<Boolean>)() -> {
-      final List<FilePatch> filePatches = myVerifier.execute();
+  private @NotNull ApplyPatchStatus createFiles() {
+    Boolean isSuccess = ApplicationManager.getApplication().runWriteAction((Computable<Boolean>)() -> {
+      List<FilePatch> filePatches = myVerifier.execute();
       myFailedPatches.addAll(filePatches);
       myPatches.removeAll(filePatches);
       return myFailedPatches.isEmpty();
@@ -321,7 +324,7 @@ public final class PatchApplier {
     return isSuccess ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
   }
 
-  private static void markInternalOperation(List<? extends PatchAndFile> textPatches, boolean set) {
+  private static void markInternalOperation(List<PatchAndFile> textPatches, boolean set) {
     for (PatchAndFile patch : textPatches) {
       ChangesUtil.markInternalOperation(patch.getFile(), set);
     }
@@ -335,8 +338,7 @@ public final class PatchApplier {
     return myVerifier.getAllAffected();
   }
 
-  @CalledInAwt
-  private static void refreshPassedFiles(@NotNull final Project project,
+  private static void refreshPassedFiles(@NotNull Project project,
                                          @NotNull Collection<? extends FilePath> directlyAffected,
                                          @NotNull Collection<? extends VirtualFile> indirectlyAffected) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -350,39 +352,35 @@ public final class PatchApplier {
     vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
 
-  @Nullable
-  private ApplyPatchStatus actualApply(final List<? extends PatchAndFile> textPatches,
-                                       final List<? extends PatchAndFile> binaryPatches,
-                                       final CommitContext commitContext) {
-    final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
-    ApplyPatchStatus status;
-
+  private @Nullable ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> textPatches,
+                                                @NotNull List<PatchAndFile> binaryPatches,
+                                                @Nullable CommitContext commitContext) {
+    ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     try {
-      status = applyList(textPatches, context, null, commitContext);
-
-      if (status == ApplyPatchStatus.ABORT) return status;
-
-      status = applyList(binaryPatches, context, status, commitContext);
+      ApplyPatchStatus status = applyList(textPatches, context, null, commitContext);
+      return status == ApplyPatchStatus.ABORT ? status : applyList(binaryPatches, context, status, commitContext);
     }
     catch (IOException e) {
       showError(myProject, e.getMessage());
       return ApplyPatchStatus.ABORT;
     }
-    return status;
   }
 
-  private ApplyPatchStatus applyList(final List<? extends PatchAndFile> patches,
-                                     final ApplyPatchContext context,
-                                     ApplyPatchStatus status,
-                                     CommitContext commiContext) throws IOException {
+  private @Nullable ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
+                                              @NotNull ApplyPatchContext context,
+                                              @Nullable ApplyPatchStatus status,
+                                              @Nullable CommitContext commitContext) throws IOException {
     for (PatchAndFile patch : patches) {
       ApplyFilePatchBase<?> applyFilePatch = patch.getApplyPatch();
-      ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commiContext,
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commitContext,
                                                                    myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
       if (patchStatus == ApplyPatchStatus.SUCCESS || patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
         applyAdditionalPatchData(patch.getFile(), applyFilePatch.getPatch());
       }
-      if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
+      if (patchStatus == ApplyPatchStatus.ABORT) {
+        return patchStatus;
+      }
+
       status = ApplyPatchStatus.and(status, patchStatus);
       if (patchStatus == ApplyPatchStatus.FAILURE) {
         myFailedPatches.add(applyFilePatch.getPatch());

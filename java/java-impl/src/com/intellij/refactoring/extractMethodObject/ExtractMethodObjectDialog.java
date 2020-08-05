@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
@@ -90,7 +91,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
     myVariableData = inputVariables;
 
-    setTitle(ExtractMethodObjectProcessor.REFACTORING_NAME);
+    setTitle(JavaRefactoringBundle.message("extract.method.object"));
 
     // Create UI components
     myCbMakeVarargs.setVisible(canBeVarargs);

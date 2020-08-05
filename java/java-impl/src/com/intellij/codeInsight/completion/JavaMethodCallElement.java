@@ -55,6 +55,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
+  private final boolean myNegatable;
   private PsiSubstitutor myQualifierSubstitutor = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myNeedExplicitTypeParameters;
@@ -62,21 +63,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   @Nullable private String myPresentableTypeArgs;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
-    this(method, method.getName());
+    this(method, null);
   }
 
-  public JavaMethodCallElement(@NotNull PsiMethod method, String methodName) {
-    super(method, methodName);
-    myMethod = method;
-    myHelper = null;
-    myContainingClass = method.getContainingClass();
-  }
-
-  public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
+  private JavaMethodCallElement(PsiMethod method, @Nullable MemberLookupHelper helper) {
     super(method, method.getName());
     myMethod = method;
     myContainingClass = method.getContainingClass();
-    myHelper = new MemberLookupHelper(method, myContainingClass, shouldImportStatic, mergedOverloads);
+    myHelper = helper;
+    PsiType type = method.getReturnType();
+    myNegatable = type != null && PsiType.BOOLEAN.isAssignableFrom(type);
+  }
+
+  public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
+    this(method, new MemberLookupHelper(method, method.getContainingClass(), shouldImportStatic, mergedOverloads));
     if (!shouldImportStatic) {
       if (myContainingClass != null) {
         String className = myContainingClass.getName();
@@ -85,6 +85,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         }
       }
     }
+  }
+
+  boolean isNegatable() {
+    return myNegatable;
   }
 
   void setForcedQualifier(@NotNull String forcedQualifier) {
@@ -187,7 +191,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
     if (methodCall != null) {
       CompletionMemory.registerChosenMethod(method, methodCall);
-      handleNegation(context, document, method, methodCall);
+      handleNegation(context, document, methodCall);
     }
 
     startArgumentLiveTemplate(context, method);
@@ -199,9 +203,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCallExpression.class, false);
   }
 
-  private static void handleNegation(InsertionContext context, Document document, PsiMethod method, PsiCallExpression methodCall) {
-    PsiType type = method.getReturnType();
-    if (context.getCompletionChar() == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
+  private void handleNegation(InsertionContext context, Document document, PsiCallExpression methodCall) {
+    if (context.getCompletionChar() == '!' && myNegatable) {
       context.setAddCompletionChar(false);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
       document.insertString(methodCall.getTextRange().getStartOffset(), "!");

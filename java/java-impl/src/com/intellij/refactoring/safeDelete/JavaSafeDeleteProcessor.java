@@ -415,7 +415,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       else {
         final PsiMember member = calleesSafeToDelete.get(0).getCallerMember();
         final ArrayList<UsageInfo> list = new ArrayList<>();
-        AbstractJavaMemberCallerChooser<?> chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
+        SafeDeleteJavaCalleeChooser chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
           @Override
           protected ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems() {
             return calleesSafeToDelete;
@@ -572,11 +572,16 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (parent instanceof PsiReferenceList) {
           final PsiElement pparent = parent.getParent();
           if (pparent instanceof PsiClass && element instanceof PsiJavaCodeReferenceElement) {
+            PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement) element;
             final PsiClass inheritor = (PsiClass) pparent;
+            if (parent.equals(inheritor.getPermitsList())) {
+              usages.add(new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true));
+              return true;
+            }
             //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly
             if (justPrivates) {
               if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
-                usages.add(new SafeDeleteExtendsClassUsageInfo((PsiJavaCodeReferenceElement)element, psiClass, inheritor));
+                usages.add(new SafeDeleteExtendsClassUsageInfo(classRef, psiClass, inheritor));
                 return true;
               }
             }
@@ -702,9 +707,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    final List<PsiMember> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeCalleesSafeToDelete(method);
+    final List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeReferencedCodeSafeToDelete(method);
     if (calleesSafeToDelete != null) {
-      for (PsiMember callee : calleesSafeToDelete) {
+      for (PsiElement callee : calleesSafeToDelete) {
         usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
       }
     }

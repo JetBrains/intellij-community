@@ -54,7 +54,7 @@ internal class TestManager(private val projectRule: ProjectRule, private val tem
     runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
-        val root = PlatformTestUtil.getOrCreateProjectTestBaseDir(projectRule.project)
+        val root = PlatformTestUtil.getOrCreateProjectBaseDir(projectRule.project)
         runWriteAction {
           root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }

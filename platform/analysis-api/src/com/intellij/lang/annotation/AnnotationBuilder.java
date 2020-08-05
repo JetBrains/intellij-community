@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -25,7 +25,8 @@ interface AnnotationBuilder {
   /**
    * Specify annotation range. When not called, the current element range is used,
    * i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
-   * The passed {@code range} must be inside the range of the current element being annotated.
+   * The passed {@code range} must be inside the range of the current element being annotated. An empty range will be highlighted as
+   * {@code endOffset = startOffset + 1}.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)

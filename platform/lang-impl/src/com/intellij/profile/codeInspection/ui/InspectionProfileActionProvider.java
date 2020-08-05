@@ -15,5 +15,5 @@ public abstract class InspectionProfileActionProvider {
     ExtensionPointName.create("com.intellij.inspectionProfileActionProvider");
 
   @NotNull
-  public abstract List<AnAction> getActions(SingleInspectionProfilePanel panel);
+  public abstract List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel);
 }

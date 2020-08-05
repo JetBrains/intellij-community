@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.siyeh.ig.BaseInspection;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.util.NlsContexts;
+import com.siyeh.ig.BaseInspection;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public abstract class MethodMetricInspection extends BaseInspection {
 
@@ -27,7 +28,7 @@ public abstract class MethodMetricInspection extends BaseInspection {
 
   protected abstract int getDefaultLimit();
 
-  protected abstract String getConfigurationLabel();
+  protected abstract @NlsContexts.Label String getConfigurationLabel();
 
   protected final int getLimit() {
     return m_limit;

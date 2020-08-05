@@ -91,7 +91,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private final Project myProject;
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-  private VcsUser myNextCommitAuthor = null; // The author for the next commit
+  private VcsUser myNextCommitAuthor; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
@@ -188,10 +188,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   @NotNull
   @Override
-  public List<VcsException> commit(@NotNull List<Change> changes,
+  public List<VcsException> commit(@NotNull List<? extends Change> changes,
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
-                                   @NotNull Set<String> feedback) {
+                                   @NotNull Set<? super String> feedback) {
     updateState(commitContext);
 
     List<VcsException> exceptions = new ArrayList<>();
@@ -516,8 +516,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                                        @NotNull List<? super VcsException> exceptions) {
     if (SystemInfo.isFileSystemCaseSensitive) return Collections.emptyList();
 
-    List<CommitChange> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
-    if (caseOnlyRenames.isEmpty()) return caseOnlyRenames;
+    List<CommitChange> caseOnlyRenames = filter(changes, change -> !alreadyProcessed.contains(change) && isCaseOnlyRename(change));
+    if (caseOnlyRenames.isEmpty()) return Collections.emptyList();
 
     LOG.info("Committing case only rename: " + getLogString(repository.getRoot().getPath(), caseOnlyRenames) +
              " in " + getShortRepositoryName(repository));
@@ -1006,7 +1006,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -1063,7 +1063,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {

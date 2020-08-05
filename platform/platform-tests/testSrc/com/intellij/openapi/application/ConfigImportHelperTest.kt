@@ -255,7 +255,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -285,7 +285,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -322,7 +322,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildZip(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.UnzipCommand(tempPath.toFile(), oldPluginsDir.toFile()))
+    commands.add(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()

@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class DefaultLogger extends Logger {
   private static boolean ourMirrorToStderr = true;
 
@@ -73,9 +77,13 @@ public class DefaultLogger extends Logger {
   public void setLevel(Level level) { }
 
   public static String attachmentsToString(@Nullable Throwable t) {
-    Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
-    if (rootCause instanceof ExceptionWithAttachments) {
-      return "\n\nAttachments:\n" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING::apply, "\n----\n");
+    List<Attachment> attachments = ExceptionUtil
+      .findCauseAndSuppressed(t, ExceptionWithAttachments.class)
+      .stream()
+      .flatMap(e -> Stream.of(e.getAttachments()))
+      .collect(Collectors.toList());
+    if (!attachments.isEmpty()) {
+      return "\n\nAttachments:\n" + StringUtil.join(attachments, ATTACHMENT_TO_STRING::apply, "\n----\n");
     }
     return "";
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +22,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 /**
  * @author peter
  */
-class SlowerTypeConversions {
+final class SlowerTypeConversions {
   static void addChainedSuggestions(CompletionParameters parameters,
                                     CompletionResultSet result,
                                     Set<ExpectedTypeInfo> expectedInfos,
@@ -66,7 +67,7 @@ class SlowerTypeConversions {
         itemType = ((PsiWildcardType)itemType).getExtendsBound();
       }
       if (itemType == null) return;
-      assert itemType.isValid() : baseItem + "; " + baseItem.getClass();
+      PsiUtil.ensureValidType(itemType, baseItem + "; " + baseItem.getClass());
 
       final PsiElement element1 = reference.getElement();
       final PsiElement qualifier =

@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>
+  Reports wrong number of quotes around parameter in property value.
+<br/>
+  If parameters are present in the property value, then the value would be passed as pattern to `java.text.MessageFormat`. 
+  This means that single quotes would be used for escaping and in order to keep a quote visible one need to double it.
+  <ul>
+  <li><code>'{0}'</code> &rarr; <code>{0}</code></li>
+  <li><code>''{0}''</code> &rarr; <code>'$value$'</code></li>
+</ul>
+<br/>
+When choice format is used, nested formats are evaluated as formats themselves and second dbl quotes are required. 
+If <code>1</code> is passed:
+<ul>
+  <li><code>{0, choice, 0#no|#1''{0}'' file}</code> &rarr;<code>{0} files</code></li>
+  <li><code>{0, choice, 0#no|#1''''{0}'''' file}</code> &rarr;<code>'$number_of_files$' files</code></li>
+</ul>
+</p>
+<!-- tooltip end -->
+</body>
+</html>

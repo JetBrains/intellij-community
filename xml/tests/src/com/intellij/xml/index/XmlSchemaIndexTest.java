@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,13 +22,17 @@ import java.util.*;
  */
 @SuppressWarnings({"ConstantConditions"})
 public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
-
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
 
-  public void testBuilder() throws IOException {
+  private static @NotNull Collection<String> computeTagNames(@NotNull VirtualFile file) throws IOException {
+    List<String> tags = new ArrayList<>();
+    XmlTagNamesIndex.computeTagNames(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8), s -> tags.add(s));
+    return tags;
+  }
 
+  public void testBuilder() throws IOException {
     VirtualFile file = myFixture.copyFileToProject("spring-beans-2.0.xsd");
-    final Collection<String> tags = XsdTagNameBuilder.computeTagNames(file.getInputStream());
+    final Collection<String> tags = computeTagNames(file);
     assertEquals(22, tags.size());
 
     final String ns = XsdNamespaceBuilder.computeNamespace(file.getInputStream());
@@ -37,7 +42,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     final String namespace = XsdNamespaceBuilder.computeNamespace(xsd.getInputStream());
     assertEquals("http://www.w3.org/2001/XMLSchema", namespace);
 
-    final Collection<String> xstags = XsdTagNameBuilder.computeTagNames(xsd.getInputStream());
+    final Collection<String> xstags = computeTagNames(xsd);
     assertEquals(69, xstags.size());
     assertTrue(xstags.contains("schema"));
   }
@@ -62,13 +67,12 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testTagNameIndex() {
-
     myFixture.copyDirectoryToProject("", "");
 
-    final Project project = getProject();
-    final Collection<String> tags = XmlTagNamesIndex.getAllTagNames(project);
+    Project project = getProject();
+    Collection<String> tags = XmlTagNamesIndex.getAllTagNames(project);
     assertTrue(tags.size() > 26);
-    final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
+    Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
     assertEquals(1, files.size());
     Module module = ModuleUtilCore.findModuleForFile(files.iterator().next(), project);
     assert module != null;

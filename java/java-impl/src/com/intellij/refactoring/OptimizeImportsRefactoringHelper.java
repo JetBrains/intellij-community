@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
-  private static final String REMOVING_REDUNDANT_IMPORTS_TITLE = "Removing redundant imports";
 
   @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {
@@ -85,10 +84,11 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     });
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, REMOVING_REDUNDANT_IMPORTS_TITLE, false, project)) return;
+    String removingRedundantImportsTitle = "Removing redundant imports";
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, removingRedundantImportsTitle, false, project)) return;
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, REMOVING_REDUNDANT_IMPORTS_TITLE, false);
+      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, removingRedundantImportsTitle, false);
       progressTask.setMinIterationTime(200);
       progressTask.setTask(new OptimizeImportsTask(progressTask, redundants));
       ProgressManager.getInstance().run(progressTask);

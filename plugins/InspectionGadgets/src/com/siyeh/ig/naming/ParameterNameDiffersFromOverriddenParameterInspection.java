@@ -126,6 +126,11 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         if (superParameterName.equals(parameterName)) {
           continue;
         }
+        final PsiType parameterType = parameter.getType();
+        final PsiType superParameterType = superParameters[i].getType();
+        if (!parameterType.equalsToText(superParameterType.getCanonicalText())) {
+          continue;
+        }
         if (m_ignoreSingleCharacterNames &&
             superParameterName.length() == 1) {
           continue;

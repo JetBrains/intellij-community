@@ -13,7 +13,7 @@ import com.intellij.refactoring.util.VariableData;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class MakeStaticUtil {
+public final class MakeStaticUtil {
   public static InternalUsageInfo[] findClassRefsInMember(PsiTypeParameterListOwner member, boolean includeSelf) {
     PsiClass containingClass = member.getContainingClass();
     ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();

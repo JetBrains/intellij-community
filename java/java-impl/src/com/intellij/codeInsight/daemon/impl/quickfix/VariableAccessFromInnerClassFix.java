@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -66,22 +66,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    @NonNls String message;
-    switch (myFixType) {
-      case MAKE_FINAL:
-        message = "make.final.text";
-        break;
-      case MAKE_ARRAY:
-        message = "make.final.transform.to.one.element.array";
-        break;
-      case COPY_TO_FINAL:
-        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName(), (!PsiUtil.isLanguageLevel8OrHigher(myContext) ? "" : "effectively ") + "final");
-      default:
-        return "";
-    }
     Collection<PsiVariable> vars = getVariablesToFix();
-    String varNames = vars.size() == 1 ? "'"+myVariable.getName()+"'" : "variables";
-    return QuickFixBundle.message(message, varNames);
+    if (myFixType == MAKE_FINAL) {
+      return JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+    }
+    else if (myFixType == MAKE_ARRAY) {
+      return JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+    }
+    else if (myFixType == COPY_TO_FINAL) {
+      return JavaBundle
+        .message("intention.name.copy.to.final.temp.variable", myVariable.getName(), !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+    }
+    else {
+      return "";
+    }
   }
 
   @Override

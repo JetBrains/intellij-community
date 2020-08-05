@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -19,8 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -57,13 +57,13 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldTestDialogValue = Messages.setTestDialog(this);
+    myOldTestDialogValue = TestDialogManager.setTestDialog(this);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Messages.setTestDialog(myOldTestDialogValue);
+      TestDialogManager.setTestDialog(myOldTestDialogValue);
       myContainingFile = null;
       myClass = null;
     }
@@ -984,8 +984,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   public void testUndoRedoFileWithChangedDocument() throws Exception {
-    File directory = createTempDirectory(true);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
+    VirtualFile file = getTempDir().createVirtualDir();
     assertNotNull(file);
     final String[] path = new String[1];
     executeCommand(() -> {

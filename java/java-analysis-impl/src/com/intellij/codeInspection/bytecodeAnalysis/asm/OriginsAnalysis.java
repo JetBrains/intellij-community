@@ -15,7 +15,7 @@ import java.util.LinkedList;
 /**
  * @author lambdamix
  */
-public class OriginsAnalysis {
+public final class OriginsAnalysis {
   private static final SourceInterpreter ourInterpreter = new SourceInterpreter(Opcodes.API_VERSION) {
     @Override
     public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {

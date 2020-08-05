@@ -77,6 +77,10 @@ open class MarketplaceRequests {
     "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
+  private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
   private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
   private val objectMapper by lazy { ObjectMapper() }
@@ -234,7 +238,12 @@ open class MarketplaceRequests {
     val externalUpdateId = pluginNode.externalUpdateId
     if (externalPluginId == null || externalUpdateId == null) return pluginNode
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate)
+    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate).apply {
+      // These three fields are not present in `IntellijUpdateMetadata`, but present in `MarketplaceSearchPluginData`
+      rating = pluginNode.rating
+      downloads = pluginNode.downloads
+      date = pluginNode.date
+    }
   }
 
   @Throws(IOException::class)
@@ -251,24 +260,30 @@ open class MarketplaceRequests {
       .tuner { connection -> connection.setUpETag(eTag) }
       .productNameAsUserAgent()
       .connect { request ->
-        indicator?.checkCanceled()
-        val connection = request.connection
-        if (file != null && connection.isNotModified(file)) {
-          return@connect file.bufferedReader().use(parser)
-        }
-        if (indicator != null) {
-          indicator.checkCanceled()
-          indicator.text2 = indicatorMessage
-        }
-        if (file != null) {
-          synchronized(INSTANCE) {
-            request.saveToFile(file, indicator)
-            connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+        try {
+          indicator?.checkCanceled()
+          val connection = request.connection
+          if (file != null && connection.isNotModified(file)) {
+            return@connect file.bufferedReader().use(parser)
           }
-          return@connect file.bufferedReader().use(parser)
-        }
-        else {
-          return@connect request.reader.use(parser)
+          if (indicator != null) {
+            indicator.checkCanceled()
+            indicator.text2 = indicatorMessage
+          }
+          if (file != null) {
+            synchronized(INSTANCE) {
+              request.saveToFile(file, indicator)
+              connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+            }
+            return@connect file.bufferedReader().use(parser)
+          }
+          else {
+            return@connect request.reader.use(parser)
+          }
+        } catch (e: Exception) {
+          val fileText = file?.readText()
+          LOG.warn("Error reading Marketplace file: url=$url file=${file?.name}. File content:\n$fileText")
+          throw e
         }
       }
   }
@@ -326,6 +341,29 @@ open class MarketplaceRequests {
     logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
+
+  var jetBrainsPluginsIds: Set<String>? = null
+    private set
+
+  fun loadJetBrainsPluginsIds() =
+    if (jetBrainsPluginsIds == null) {
+      jetBrainsPluginsIds = try {
+        HttpRequests
+          .request(JETBRAINS_PLUGINS_URL)
+          .productNameAsUserAgent()
+          .throwStatusCodeException(false)
+          .connect {
+            objectMapper.readValue(
+              it.inputStream,
+              object : TypeReference<List<MarketplaceSearchPluginData>>() {}
+            ).map { searchPluginData -> searchPluginData.id }.toSet()
+          }
+      }
+      catch (e: Exception) {
+        logWarnOrPrintIfDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
+        null
+      }
+    } else {}
 
   private fun parseBrokenPlugins(reader: Reader) = objectMapper.readValue(
     reader,

@@ -3,7 +3,6 @@ package com.intellij.openapi.roots
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule

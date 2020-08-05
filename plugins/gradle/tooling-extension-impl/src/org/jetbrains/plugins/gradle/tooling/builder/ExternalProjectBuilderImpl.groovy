@@ -584,13 +584,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
         if (copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            def filterClass = findPropertyWithType(action, Class, 'val$filterType', 'arg$2', 'arg$1')
+            def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
             if (filterClass != null) {
               //noinspection GrUnresolvedAccess
               def filterType = filterClass.name
               def filter = [filterType: filterType] as DefaultExternalFilter
 
-              def props = findPropertyWithType(action, Map, 'val$properties', 'arg$1')
+              def props = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
               if (props != null) {
                   if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
                     if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties)
@@ -605,7 +605,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
               //noinspection GrUnresolvedAccess
               if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
                 //noinspection GrUnresolvedAccess
-                String pattern = action?.transformer?.matcher?.pattern()?.pattern
+                String pattern = action?.transformer?.matcher?.pattern()?.pattern ?: action?.transformer?.pattern?.pattern
                 //noinspection GrUnresolvedAccess
                 String replacement = action?.transformer?.replacement
                 def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
@@ -636,12 +636,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
     for (String name in propertyNames) {
-      def property = self.hasProperty(name)
-      if (property != null) {
-        def value = property.getProperty(self)
-        if (type.isAssignableFrom(value.class)) {
-          return (value as T)
+      try {
+        def field = self.class.getDeclaredField(name)
+        if (field != null && type.isAssignableFrom(field.type)) {
+          field.setAccessible(true)
+          return field.get(self) as T
         }
+      } catch (NoSuchFieldException ignored) {
       }
     }
     return null

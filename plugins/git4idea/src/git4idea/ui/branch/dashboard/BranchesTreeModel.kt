@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import java.util.*
@@ -13,9 +14,9 @@ internal val GIT_BRANCHES = DataKey.create<Set<BranchInfo>>("GitBranchKey")
 internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
+                               var isFavorite: Boolean,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
-  var isFavorite = false
   override fun toString() = branchName
 }
 
@@ -32,7 +33,7 @@ internal data class BranchNodeDescriptor(val type: NodeType,
 }
 
 internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE
+  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE, HEAD_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
@@ -75,7 +76,8 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
     branches.forEach { branch -> populateFrom(branch, useGrouping) }
   }
 
-  private fun populateFrom(branch: BranchInfo, useGrouping: Boolean) {
+  private fun populateFrom(br: BranchInfo, useGrouping: Boolean) {
+    val branch = with(br) { BranchInfo(branchName, isLocal, isCurrent, isFavorite, repositories) }
     var curParent: BranchNodeDescriptor = if (branch.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
 
     if (!useGrouping) {

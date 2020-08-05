@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,7 +25,7 @@ import java.util.List;
 public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final SmartPsiElementPointer<PsiMethod> myMethodPrototype;
   private final List<String> myExceptions = new ArrayList<>();
-  private String myText;
+  private @IntentionName String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
     super(implClass);
@@ -63,7 +64,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return myText;
   }
 
-  protected void setText(@NotNull String text) {
+  protected void setText(@NotNull @IntentionName String text) {
     myText = text;
   }
 

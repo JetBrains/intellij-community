@@ -84,11 +84,13 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
     Collection<FilePath> filesToBeRemoved = filesToFilePaths(files);
     if (showDialog) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
+      // {0} substitution will be done later
+      @SuppressWarnings("UnresolvedPropertyKey") String promptTemplate = CvsBundle.message("confirmation.text.delete.file.from.cvs");
       filesToBeRemoved = vcsHelper.selectFilePathsToProcess(filesToFilePaths(files),
                                                             CvsBundle.message("dialog.title.delete.files.from.cvs"),
                                                             null,
                                                             CvsBundle.message("dialog.title.delete.file.from.cvs"),
-                                                            CvsBundle.message("confirmation.text.delete.file.from.cvs"),
+                                                            promptTemplate,
                                                             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
                                                             CvsBundle.message("button.text.delete.from.cvs"),
                                                             CommonBundle.getCancelButtonText());

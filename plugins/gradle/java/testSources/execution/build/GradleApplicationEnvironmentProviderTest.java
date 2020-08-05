@@ -37,7 +37,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
-    PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
     String appClass = "package my;\n" +
                       "import java.util.Arrays;\n" +

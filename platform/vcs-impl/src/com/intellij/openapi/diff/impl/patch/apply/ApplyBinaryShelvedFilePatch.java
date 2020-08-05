@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.project.Project;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
   }
 
   @Override
-  protected void applyCreate(Project project, final VirtualFile newFile, CommitContext commitContext) throws IOException {
+  protected void applyCreate(Project project, final VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
     applyChange(project, newFile, null, null);
   }
 

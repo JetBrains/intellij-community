@@ -5,6 +5,7 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -250,7 +251,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getQuickFixName() {
+  private static @IntentionFamilyName String getQuickFixName() {
     return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
   }
 }

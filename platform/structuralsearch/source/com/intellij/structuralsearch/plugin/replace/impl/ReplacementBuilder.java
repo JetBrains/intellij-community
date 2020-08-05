@@ -27,13 +27,14 @@ import java.util.*;
  * @author maxim
  */
 public final class ReplacementBuilder {
+  @NotNull
   private final String replacement;
   private final MultiMap<String, ParameterInfo> parameterizations = MultiMap.createLinked();
   private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
   private final Project myProject;
 
-  ReplacementBuilder(Project project, ReplaceOptions options) {
+  ReplacementBuilder(@NotNull Project project, @NotNull ReplaceOptions options) {
     myProject = project;
     this.options = options;
 
@@ -121,7 +122,8 @@ public final class ReplacementBuilder {
     }
   }
 
-  String process(MatchResult match, ReplacementInfo replacementInfo, LanguageFileType type) {
+  @NotNull
+  String process(@NotNull MatchResult match, @NotNull ReplacementInfo replacementInfo, @NotNull LanguageFileType type) {
     if (parameterizations.isEmpty()) {
       return replacement;
     }
@@ -156,7 +158,7 @@ public final class ReplacementBuilder {
   }
 
   @Nullable
-  private Object generateReplacement(ParameterInfo info, MatchResult match) {
+  private Object generateReplacement(@NotNull ParameterInfo info, @NotNull MatchResult match) {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {

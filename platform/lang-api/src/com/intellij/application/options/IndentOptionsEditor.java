@@ -33,22 +33,13 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
-@SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
-  @Deprecated
-  protected JTextField myIndentField;
 
-  @Deprecated
-  protected JCheckBox myCbUseTab;
-
-  @Deprecated
-  protected JTextField myTabSizeField;
-
-  @Deprecated
-  protected JLabel myTabSizeLabel;
-
-  @Deprecated
-  protected JLabel myIndentLabel;
+  private JTextField myIndentField;
+  private JCheckBox myCbUseTab;
+  private JTextField myTabSizeField;
+  private JLabel myTabSizeLabel;
+  private JLabel myIndentLabel;
 
   private final @Nullable LanguageCodeStyleSettingsProvider myProvider;
 
@@ -225,5 +216,9 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
 
   private static String getTabSizeLabel() {
     return ApplicationBundle.message("editbox.indent.tab.size");
+  }
+
+  protected final boolean isUseTabsSelected() {
+    return myCbUseTab.isSelected();
   }
 }

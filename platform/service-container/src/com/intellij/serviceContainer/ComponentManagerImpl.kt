@@ -5,7 +5,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
 internal val LOG = logger<ComponentManagerImpl>()
 
@@ -132,6 +133,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
+      ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus!!
@@ -160,7 +162,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   )
 
   @Internal
-  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
+  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()
@@ -523,7 +525,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
+    val pluginId = if (loader is PluginAwareClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
@@ -594,7 +596,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       Disposer.register(serviceParentDisposable, result)
     }
 
-    val pluginId = (serviceClass.classLoader as? PluginClassLoader)?.pluginId
+    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId
     initializeComponent(result, null, pluginId)
     StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginId?.idString)
     return result
@@ -752,7 +754,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val iterator = lightServices.iterator()
       while (iterator.hasNext()) {
         val entry = iterator.next()
-        if ((entry.key.classLoader as? PluginClassLoader)?.pluginId == pluginId) {
+        if ((entry.key.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           val instance = entry.value
           if (instance is Disposable) {
             Disposer.dispose(instance)
@@ -947,6 +949,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   override fun getDisposed(): Condition<*> {
     return Condition<Any?> { isDisposed }
+  }
+
+  @Internal
+  fun processServices(processor: Consumer<Any>) {
+    lightServices?.values?.forEach(processor)
+    for (adapter in picoContainer.componentAdapters) {
+      if (adapter is BaseComponentAdapter) {
+        processor.accept(adapter.getInitializedInstance() ?: continue)
+      }
+    }
   }
 }
 

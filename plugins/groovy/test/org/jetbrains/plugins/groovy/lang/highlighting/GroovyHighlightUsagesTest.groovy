@@ -32,15 +32,15 @@ class GroovyHighlightUsagesTest extends LightGroovyTestCase {
 
   private void doTest(boolean directoryTest = false) {
     SeveritiesProvider.EP_NAME.getPoint().registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
-    def name = getTestName()
-    if (directoryTest) {
-      fixture.copyDirectoryToProject(name, "")
-      fixture.configureByFile("$name/test.groovy")
-    }
-    else {
-      fixture.configureByFile("${name}.groovy")
-    }
-    doWithHighlightingEnabled {
+    doWithHighlightingEnabled(getProject(), getTestRootDisposable()) {
+      def name = getTestName()
+      if (directoryTest) {
+        fixture.copyDirectoryToProject(name, "")
+        fixture.configureByFile("$name/test.groovy")
+      }
+      else {
+        fixture.configureByFile("${name}.groovy")
+      }
       fixture.checkHighlighting()
     }
   }

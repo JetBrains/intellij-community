@@ -27,6 +27,7 @@ public class JpsCachesProjectStateListener implements GitRepositoryChangeListene
     previousCommitId = currentRevision;
     LOG.info("Remote repository commit changed to " + currentRevision);
     JpsOutputLoaderManager outputLoaderManager = JpsOutputLoaderManager.getInstance(repository.getProject());
-    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, () -> outputLoaderManager.notifyAboutNearestCache());
+    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, repository.getProject(),
+                                                                () -> outputLoaderManager.notifyAboutNearestCache());
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -15,7 +16,8 @@ public final class JavaMatchUtil {
 
   private JavaMatchUtil() {}
 
-  public static String getCommentText(PsiComment comment) {
+  @NotNull
+  public static String getCommentText(@NotNull PsiComment comment) {
     if (comment instanceof PsiDocComment) {
       final PsiDocComment docComment = (PsiDocComment)comment;
       final StringBuilder result = new StringBuilder();

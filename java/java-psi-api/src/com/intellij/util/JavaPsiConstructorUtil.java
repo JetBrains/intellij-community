@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.psi.*;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaPsiConstructorUtil {
+public final class JavaPsiConstructorUtil {
   /**
    * Finds call to another constructor within this constructor (either chained or super)
    * @param constructor constructor to search in

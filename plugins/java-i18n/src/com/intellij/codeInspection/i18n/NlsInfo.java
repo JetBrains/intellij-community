@@ -21,10 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
@@ -35,25 +32,29 @@ import java.util.stream.IntStream;
 public abstract class NlsInfo {
   private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
+  static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
 
   /**
    * Describes a string that should be localized
    */
   public static final class Localized extends NlsInfo {
-    private static final Localized NLS = new Localized(Capitalization.NotSpecified, "", "");
-    private static final Localized NLS_TITLE = new Localized(Capitalization.Title, "", "");
-    private static final Localized NLS_SENTENCE = new Localized(Capitalization.Sentence, "", "");
+    private static final Localized NLS = new Localized(Capitalization.NotSpecified, "", "", null);
+    private static final Localized NLS_TITLE = new Localized(Capitalization.Title, "", "", null);
+    private static final Localized NLS_SENTENCE = new Localized(Capitalization.Sentence, "", "", null);
     private final @NotNull Capitalization myCapitalization;
     private final @NotNull @NonNls String myPrefix;
     private final @NotNull @NonNls String mySuffix;
+    private final String myAnnotationName;
 
     private Localized(@NotNull Capitalization capitalization,
                       @NotNull @NonNls String prefix,
-                      @NotNull @NonNls String suffix) {
+                      @NotNull @NonNls String suffix,
+                      @Nullable @NonNls String annotationName) {
       super(ThreeState.YES);
       myCapitalization = capitalization;
       myPrefix = prefix;
       mySuffix = suffix;
+      myAnnotationName = annotationName;
     }
 
     /**
@@ -62,6 +63,14 @@ public abstract class NlsInfo {
      */
     public @NotNull Capitalization getCapitalization() {
       return myCapitalization;
+    }
+    
+    public @NotNull String suggestAnnotation(PsiElement context) {
+      if (myAnnotationName != null &&
+          JavaPsiFacade.getInstance(context.getProject()).findClass(myAnnotationName, context.getResolveScope()) != null) {
+        return myAnnotationName;
+      }
+      return AnnotationUtil.NLS;
     }
 
     /**
@@ -80,12 +89,30 @@ public abstract class NlsInfo {
       return mySuffix;
     }
 
-    private @NotNull NlsInfo withPrefixAndSuffix(@NotNull String prefix, @NotNull String suffix) {
+    private @NotNull Localized withPrefixAndSuffix(@NotNull String prefix, @NotNull String suffix) {
       if (prefix.equals(myPrefix) && suffix.equals(mySuffix)) {
         return this;
       }
-      return new Localized(myCapitalization, prefix, suffix);
+      return new Localized(myCapitalization, prefix, suffix, myAnnotationName);
     }
+
+    private @NotNull Localized withAnnotation(@NotNull PsiAnnotation annotation) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (Objects.equals(qualifiedName, myAnnotationName)) {
+        return this;
+      }
+      return new Localized(myCapitalization, myPrefix, mySuffix, qualifiedName);
+    }
+  }
+
+  /**
+   * Describes a string that should not be localized but it's still safe to be displayed in UI
+   * (e.g. file name).
+   */
+  public static final class NlsSafe extends NlsInfo {
+    private static final NlsSafe INSTANCE = new NlsSafe();
+
+    private NlsSafe() {super(ThreeState.NO);}
   }
 
   /**
@@ -136,6 +163,13 @@ public abstract class NlsInfo {
   }
 
   /**
+   * @return true if the element with given localization status can be used in localized context.
+   */
+  public boolean canBeUsedInLocalizedContext() {
+    return this instanceof Localized || this instanceof NlsSafe;
+  }
+  
+  /**
    * @return "localized" info object without specified capitalization, prefix and suffix
    */
   public static @NotNull Localized localized() {
@@ -159,6 +193,10 @@ public abstract class NlsInfo {
     info = fromInitializer(expression);
     if (info != Unspecified.UNKNOWN) return info;
     return fromArgument(expression);
+  }
+
+  public static @NotNull NlsInfo forType(@NotNull PsiType type) {
+    return fromAnnotationOwner(type);
   }
 
   public static @NotNull NlsInfo forModifierListOwner(@NotNull PsiModifierListOwner owner) {
@@ -225,10 +263,15 @@ public abstract class NlsInfo {
 
   private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UPolyadicExpression) {
-      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+    while (true) {
+      if (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS ||
+          parent instanceof UParenthesizedExpression || parent instanceof UIfExpression) {
+        parent = parent.getUastParent();
+      } else {
+        break;
+      }
     }
-    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
+    UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return Unspecified.UNKNOWN;
 
     List<UExpression> arguments = callExpression.getValueArguments();
@@ -399,7 +442,7 @@ public abstract class NlsInfo {
       }
     }
     if (baseInfo instanceof Localized) {
-      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix);
+      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix).withAnnotation(annotation);
     }
     return baseInfo;
   }
@@ -408,6 +451,10 @@ public abstract class NlsInfo {
     if (annotation.hasQualifiedName(AnnotationUtil.NON_NLS) ||
         annotation.hasQualifiedName(AnnotationUtil.PROPERTY_KEY)) {
       return NonLocalized.INSTANCE;
+    }
+    if (annotation.hasQualifiedName(NLS_SAFE) ||
+        annotation.hasQualifiedName("org.intellij.lang.annotations.RegExp")) {
+      return NlsSafe.INSTANCE;
     }
     if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
       PsiAnnotationMemberValue value = annotation.findAttributeValue("capitalization");

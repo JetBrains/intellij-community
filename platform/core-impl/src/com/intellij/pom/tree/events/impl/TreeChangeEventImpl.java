@@ -14,11 +14,13 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private final Map<CompositeElement, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
   private final MultiMap<CompositeElement, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
@@ -127,10 +129,15 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void fireEvents() {
-    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values());
+    Collection<TreeChangeImpl> changes = getSortedChanges();
     for (TreeChangeImpl change : changes) {
       change.fireEvents((PsiFile)myFileElement.getPsi());
     }
+  }
+
+  @NotNull
+  public List<TreeChangeImpl> getSortedChanges() {
+    return ContainerUtil.sorted(myChangedElements.values());
   }
 
   @Override

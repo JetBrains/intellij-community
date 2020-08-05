@@ -20,6 +20,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
@@ -73,21 +74,21 @@ public abstract class AbstractParsing {
     return false;
   }
 
-  protected final void match(IElementType token, @NotNull String msg) {
+  protected final void match(IElementType token, @NotNull @Nls String msg) {
     if (!matches(token)) {
       error(msg);
       advance();
     }
   }
 
-  protected final void match(TokenSet set, @NotNull String msg) {
+  protected final void match(TokenSet set, @NotNull @Nls String msg) {
     if (!matches(set)) {
       error(msg);
       advance();
     }
   }
 
-  protected final void error(@NotNull String s) {
+  protected final void error(@NotNull @Nls String s) {
     myBuilder.error(s);
   }
 

@@ -60,7 +60,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
 
       if (initializing) {
-        componentManager.logError(new IllegalStateException("Cyclic extension initialization: " + toString()), getPluginDescriptor().getPluginId());
+        componentManager.logError(new IllegalStateException("Cyclic extension initialization: " + this), getPluginDescriptor().getPluginId());
       }
 
       try {
@@ -83,7 +83,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(@NotNull List<Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
+  boolean isLoadedFromAnyElement(@NotNull List<? extends Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
     SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
     if (myExtensionElement == null && extensionInstance == null) {
       // dummy extension with no data; unload based on PluginDescriptor check in calling method

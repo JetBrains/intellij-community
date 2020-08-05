@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UI;
@@ -148,7 +147,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
 
       for (CreateClassKind kind : CreateClassKind.values()) {
-        myKindCombo.addItem(CommonRefactoringUtil.capitalize(kind.getDescription()), kind.getKindIcon(), kind.name());
+        myKindCombo.addItem(StringUtil.capitalize(kind.getDescription()), kind.getKindIcon(), kind.name());
       }
 
       init();

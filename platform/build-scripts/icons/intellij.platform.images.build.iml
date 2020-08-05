@@ -19,5 +19,6 @@
     <orderEntry type="library" scope="RUNTIME" name="commons-imaging" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>

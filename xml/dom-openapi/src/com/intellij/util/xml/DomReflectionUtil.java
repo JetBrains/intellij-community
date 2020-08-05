@@ -38,7 +38,7 @@ public final class DomReflectionUtil {
            || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
   }
 
-  public static JavaMethod[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
+  public static JavaMethod[] getGetterMethods(String[] path, Class<? extends DomElement> startClass) {
     final JavaMethod[] methods = new JavaMethod[path.length];
     Class<?> aClass = startClass;
     for (int i = 0; i < path.length; i++) {

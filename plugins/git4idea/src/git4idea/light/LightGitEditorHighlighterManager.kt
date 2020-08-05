@@ -11,21 +11,17 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
-import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.index.isTracked
 import git4idea.index.repositoryPath
-import org.jetbrains.annotations.NotNull
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
 
 class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
   private val singleTaskController = MySingleTaskController()
-  private var lst: LineStatusTrackerBase<Range>? = null
+  private var lst: SimpleLocalLineStatusTracker? = null
 
   private val lightEditService
     get() = LightEditService.getInstance()
@@ -87,8 +83,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }
 
     if (lst == null) {
-      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file,
-                                                       LocalLineStatusTracker.Mode(true, true, false))
+      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file)
     }
     readBaseVersion(file, status.repositoryPath)
   }

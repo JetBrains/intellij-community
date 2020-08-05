@@ -80,6 +80,7 @@ class InlayHintsPass(
       val inlayModel = editor.inlayModel
 
       val existingInlineInlays = inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineInlayRenderer::class.java)
+      val existingAfterLineEndInlays = inlayModel.getAfterLineEndElementsInRange(startOffset, endOffset, InlineInlayRenderer::class.java)
       val existingBlockInlays: List<Inlay<out BlockInlayRenderer>> = inlayModel.getBlockElementsInRange(startOffset, endOffset,
                                                                                                         BlockInlayRenderer::class.java)
       val existingBlockAboveInlays = mutableListOf<Inlay<out PresentationContainerRenderer<*>>>()
@@ -96,6 +97,7 @@ class InlayHintsPass(
       val factory = PresentationFactory(editor as EditorImpl)
       inlayModel.execute(isBulk) {
         updateOrDispose(existingInlineInlays, hints, Inlay.Placement.INLINE, factory, editor)
+        updateOrDispose(existingAfterLineEndInlays, hints, Inlay.Placement.INLINE /* 'hints' consider them as INLINE*/, factory, editor)
         updateOrDispose(existingBlockAboveInlays, hints, Inlay.Placement.ABOVE_LINE, factory, editor)
         updateOrDispose(existingBlockBelowInlays, hints, Inlay.Placement.BELOW_LINE, factory, editor)
         if (hints != null) {
@@ -116,8 +118,15 @@ class InlayHintsPass(
     private fun addInlineHints(hints: HintsBuffer, inlayModel: InlayModel) {
       for (entry in Int2ObjectMaps.fastIterable(hints.inlineHints)) {
         val renderer = InlineInlayRenderer(entry.value)
-        val inlay = inlayModel.addInlineElement(entry.intKey, renderer) ?: break
-        postprocessInlay(inlay)
+
+        val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
+        val inlay = if (toBePlacedAtTheEndOfLine) {
+          inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
+        } else {
+          inlayModel.addInlineElement(entry.intKey, renderer) ?: break
+        }
+
+        inlay?.let { postprocessInlay(it) }
       }
     }
 

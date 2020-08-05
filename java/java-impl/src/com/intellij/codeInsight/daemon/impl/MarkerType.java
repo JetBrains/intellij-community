@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,7 +208,6 @@ public class MarkerType {
     return interfaceMethod != null ? interfaceMethod : parent;
   }
 
-  public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
   public static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return null;
@@ -268,7 +269,7 @@ public class MarkerType {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
         }
       }
-    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
+    }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
@@ -352,7 +353,8 @@ public class MarkerType {
     if (inheritors.isEmpty()) return;
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     inheritors.sort(renderer.getComparator());
-    PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
+    PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), 
+                                        subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
   private static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
@@ -382,7 +384,7 @@ public class MarkerType {
     }
 
     @Override
-    public String getCaption(int size) {
+    public @Nls String getCaption(int size) {
       String suffix = isFinished() ? "" : " so far";
       return myClass.isInterface()
              ? CodeInsightBundle.message("goto.implementation.chooserTitle", myClass.getName(), size, suffix)
@@ -421,12 +423,12 @@ public class MarkerType {
     private final PsiMethod myMethod;
 
     private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, renderer);
+      super(method.getProject(), JavaAnalysisBundle.message("searching.for.overriding.methods"), renderer);
       myMethod = method;
     }
 
     @Override
-    public String getCaption(int size) {
+    public @Nls String getCaption(int size) {
       return DaemonBundle.message(myMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
                                   "navigation.title.implementation.method" :
                                   "navigation.title.overrider.method", myMethod.getName(), size);

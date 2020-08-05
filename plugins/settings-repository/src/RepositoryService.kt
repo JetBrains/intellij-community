@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.project.Project
@@ -38,8 +38,7 @@ interface RepositoryService {
     if (MessageDialogBuilder
         .yesNo(icsMessage("init.dialog.title"), icsMessage("init.dialog.message", file))
         .yesText("Create")
-        .project(project)
-        .isYes) {
+        .ask(project)) {
       return try {
         createBareRepository(file)
         null

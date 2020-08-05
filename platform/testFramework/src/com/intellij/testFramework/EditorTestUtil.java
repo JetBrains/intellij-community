@@ -569,20 +569,21 @@ public final class EditorTestUtil {
     CharSequence documentSequence = editor.getDocument().getCharsSequence();
 
 
-    for (Integer caretsOffset : caretsOffsets) {
-      if (caretsOffset != -1) {
-        caretModel.moveToOffset(caretsOffset);
-      }
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), fixture.getProjectDisposable(), () -> {
+      for (Integer caretsOffset : caretsOffsets) {
+        if (caretsOffset != -1) {
+          caretModel.moveToOffset(caretsOffset);
+        }
 
-      IdentifierHighlighterPassFactory.doWithHighlightingEnabled(() -> UsefulTestCase.assertSameLinesWithFile(
-        answersFilePath,
-        renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
-        () -> "Failed at:\n " +
-              documentSequence.subSequence(0, caretsOffset) +
-              "<caret>" +
-              documentSequence.subSequence(caretsOffset, documentSequence.length()) +
-              "\n"));
-    }
+        UsefulTestCase.assertSameLinesWithFile(
+          answersFilePath,
+          renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          () -> "Failed at:\n " +
+                documentSequence.subSequence(0, caretsOffset) +
+                "<caret>" +
+                documentSequence.subSequence(caretsOffset, documentSequence.length()) +
+                "\n");
+      }});
   }
 
   private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,

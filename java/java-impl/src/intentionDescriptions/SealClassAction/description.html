@@ -1,7 +1,8 @@
 <html>
 <body>
-This intention makes the class sealed if it has inheritors or final otherwise,
-lists all direct inheritors in permits clause if inheritors are not in the same file and
-adds 'non-sealed' modifier if none of 'sealed'/'non-sealed'/'final' modifiers were specified for inheritors.
+Makes the class final if it doesn’t have subclasses.
+If there are subclasses, the intention converts the class to sealed and provides the list of the subclasses in the permits clause
+(for subclasses in other compilation units).
+If the subclasses are not marked as 'sealed'/'non-sealed'/'final', the 'non-sealed' modifier is automatically applied to them.
 </body>
 </html>

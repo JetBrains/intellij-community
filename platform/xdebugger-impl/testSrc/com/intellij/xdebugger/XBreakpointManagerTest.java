@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -135,7 +135,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   }
 
   public void testRemoveFile() {
-    final VirtualFile file = getTempDir().createVFile("breakpoint", ".txt");
+    VirtualFile file = getTempDir().createVirtualFile("breakpoint.txt");
     addLineBreakpoint(myBreakpointManager, file.getUrl(), 0, null);
     assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
     delete(file);

@@ -40,10 +40,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
+
+  @Nls
   @VisibleForTesting
-  static final String ADD_NOTE_FIX_NAME = "Add 'ordering inconsistent with equals' JavaDoc note";
+  static String getAddNoteFixName() {
+    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name");
+  }
+
+  @Nls
   @VisibleForTesting
-  static final String GENERATE_EQUALS_FIX_NAME = "Generate 'equals()' method";
+  static String getGenerateEqualsFixName() {
+    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.generate.equals.name");
+  }
 
   @Override
   @NotNull
@@ -68,7 +76,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return GENERATE_EQUALS_FIX_NAME;
+      return getGenerateEqualsFixName();
     }
 
     @Override
@@ -99,7 +107,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return ADD_NOTE_FIX_NAME;
+      return getAddNoteFixName();
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,6 +106,7 @@ public class AddReturnFix implements IntentionAction {
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
+  @NonNls
   private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type, boolean preciseTypeReqired) {
     PsiType varType = variable.getType();
     if (type instanceof PsiArrayType) {

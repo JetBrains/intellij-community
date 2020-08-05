@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +28,11 @@ import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PluginModuleConvertToGradleStartupActivity implements StartupActivity.Background {
-
+final class PluginModuleConvertToGradleStartupActivity implements StartupActivity.Background {
   @NonNls
   private static final String ID = "Migrate DevKit plugin to Gradle";
 
@@ -55,11 +54,13 @@ public class PluginModuleConvertToGradleStartupActivity implements StartupActivi
       return;
     }
 
-    Set<Module> devkitModules = new SmartHashSet<>();
+    Set<Module> devkitModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (PluginModuleType.isOfType(module)) {
         devkitModules.add(module);
-        if (devkitModules.size() > 1) break;
+        if (devkitModules.size() > 1) {
+          break;
+        }
       }
     }
     if (!isSimpleSingleModulePlugin(project, devkitModules)) return;

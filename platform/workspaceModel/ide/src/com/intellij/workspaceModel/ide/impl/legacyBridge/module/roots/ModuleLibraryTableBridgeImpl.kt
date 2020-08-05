@@ -26,7 +26,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
-  private fun libraryEntities(): Sequence<LibraryEntity> {
+  internal fun libraryEntities(): Sequence<LibraryEntity> {
     val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(moduleBridge.moduleEntityId)
 
     return moduleBridge.entityStorage.current
@@ -76,7 +76,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
 
   override fun dispose() {
     for (library in libraryIterator) {
-      Disposer.dispose(library)
+      if (!Disposer.isDisposed(library)) Disposer.dispose(library)
     }
   }
 

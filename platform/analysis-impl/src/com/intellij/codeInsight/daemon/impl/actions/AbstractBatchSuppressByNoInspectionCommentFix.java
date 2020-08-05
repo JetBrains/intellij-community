@@ -72,7 +72,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     return AllIcons.Ide.HectorOff;
   }
 
-  private String myText = "";
+  private @IntentionName String myText = "";
 
   @IntentionName
   @NotNull

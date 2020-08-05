@@ -10,20 +10,14 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class StopRangeSearchAction extends AnAction implements DumbAware {
-
-  private static class Holder {
-    private static final Icon ICON = AllIcons.Actions.Suspend;
-  }
 
   private final RangeSearch myRangeSearch;
 
   public StopRangeSearchAction(@NotNull RangeSearch rangeSearch) {
     this.myRangeSearch = rangeSearch;
     getTemplatePresentation().setText(EditorBundle.message("large.file.editor.stop.searching.action.text"));
-    getTemplatePresentation().setIcon(Holder.ICON);
+    getTemplatePresentation().setIcon(AllIcons.Actions.Suspend);
   }
 
   @Override

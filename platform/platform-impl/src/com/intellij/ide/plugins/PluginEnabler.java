@@ -39,6 +39,10 @@ public final class PluginEnabler {
       disabledIds.remove(descriptor.getPluginId());
     }
     for (PluginDescriptor descriptor : pluginsToDisable) {
+      if (!PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
+        // don't try to unload plugin which wasn't loaded
+        pluginDescriptorsToDisable.removeIf(plugin -> plugin.getPluginId().equals(descriptor.getPluginId()));
+      }
       descriptor.setEnabled(false);
       disabledIds.add(descriptor.getPluginId());
     }

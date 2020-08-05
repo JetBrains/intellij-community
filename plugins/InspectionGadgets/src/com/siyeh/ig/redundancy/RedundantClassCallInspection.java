@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -57,7 +56,6 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       myReplacement = replacement;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
@@ -87,7 +85,6 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       super("instanceof "+typeElement.getType().getPresentableText());
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
@@ -106,7 +103,6 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       super("("+typeElement.getType().getPresentableText()+")");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {

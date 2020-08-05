@@ -10,15 +10,20 @@ import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.MetalLabelUI;
 import java.awt.*;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class DropDownLink<T> extends LinkLabel<Object> {
   private final PopupState myPopupState = new PopupState();
   private T chosenItem;

@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
@@ -27,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,14 +36,12 @@ import java.util.List;
 public final class TaskResponseUtil {
   public static final Logger LOG = Logger.getInstance(TaskResponseUtil.class);
 
-  public static final String DEFAULT_CHARSET_NAME = CharsetToolkit.UTF8;
-  public final static Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
+  public final static Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * Utility class
    */
-  private TaskResponseUtil() {
-  }
+  private TaskResponseUtil() { }
 
   public static Reader getResponseContentAsReader(@NotNull HttpResponse response) throws IOException {
     Header header = response.getEntity().getContentEncoding();
@@ -69,7 +67,10 @@ public final class TaskResponseUtil {
     }
     else {
       InputStream stream = response.getResponseBodyAsStream();
-      return stream == null ? "" : StreamUtil.readText(stream, DEFAULT_CHARSET);
+      if (stream == null) return "";
+      try (Reader reader = new InputStreamReader(stream, DEFAULT_CHARSET)) {
+        return StreamUtil.readText(reader);
+      }
     }
   }
 
@@ -89,7 +90,7 @@ public final class TaskResponseUtil {
         }
       }
     }
-    return new InputStreamReader(stream, charsetName == null ? DEFAULT_CHARSET_NAME : charsetName);
+    return charsetName != null ? new InputStreamReader(stream, charsetName) : new InputStreamReader(stream, DEFAULT_CHARSET);
   }
 
   @NotNull

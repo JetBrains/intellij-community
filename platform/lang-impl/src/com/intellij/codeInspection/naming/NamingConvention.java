@@ -4,6 +4,7 @@
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiNameIdentifierOwner;
 
 public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
@@ -37,7 +38,7 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
     return false;
   }
 
-  public String createErrorMessage(String name, NamingConventionBean bean) {
+  public @InspectionMessage String createErrorMessage(String name, NamingConventionBean bean) {
     final int length = name.length();
     if (length < bean.m_minLength) {
       return InspectionsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),

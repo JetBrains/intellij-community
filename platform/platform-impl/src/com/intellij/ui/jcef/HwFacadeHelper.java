@@ -128,10 +128,12 @@ public class HwFacadeHelper {
 
     Rectangle targetBounds = new Rectangle(myTarget.getLocationOnScreen(), myTarget.getSize());
     boolean overlaps = false;
+    // [tav] todo: still won't work for JCEF component in a popup above another popup, need a smarter and faster way to check z-order
     for (CefBrowser browser : browsers) {
-      Component comp = browser.getUIComponent();
-      if (comp != null && comp.isVisible() && comp.isShowing() &&
-          new Rectangle(comp.getLocationOnScreen(), comp.getSize()).intersects(targetBounds))
+      Component browserComp = browser.getUIComponent();
+      if (browserComp != null && browserComp.isVisible() && browserComp.isShowing() &&
+          !SwingUtilities.isDescendingFrom(browserComp, myTarget) &&
+          new Rectangle(browserComp.getLocationOnScreen(), browserComp.getSize()).intersects(targetBounds))
       {
         overlaps = true;
         break;

@@ -3,11 +3,13 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
@@ -23,16 +25,44 @@ data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginsAdvertiser.Plugin>
 )
 
-class PluginAdvertiserExtensionsStateService {
+@State(name = "PluginAdvertiserExtensions", storages = [Storage("pluginAdvertiser.xml")])
+class PluginAdvertiserExtensionsStateService : PersistentStateComponent<PluginAdvertiserExtensionsStateService.State> {
   companion object {
+    @JvmStatic
     fun getInstance(): PluginAdvertiserExtensionsStateService = service()
   }
+
+  class State {
+    var localState = mutableMapOf<String, PluginsAdvertiser.Plugin>()
+  }
+
+  private var state = State()
 
   internal val cache: Cache<String, Optional<PluginAdvertiserExtensionsData>> =
     CacheBuilder
       .newBuilder()
       .expireAfterWrite(1, TimeUnit.HOURS)
       .build()
+
+  override fun getState(): State = state
+
+  override fun loadState(state: State) {
+    this.state = state
+  }
+
+  fun registerLocalPlugin(extensionOrFileName: String, plugin: PluginDescriptor) {
+    state.localState[extensionOrFileName] = PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled, false)
+  }
+
+  fun getLocalPlugin(fileName: String, fullExtension: String?): PluginAdvertiserExtensionsData? {
+    state.localState[fileName]?.let { plugin ->
+      return PluginAdvertiserExtensionsData(fileName, setOf(plugin))
+    }
+    fullExtension?.let { state.localState[it] }?.let { plugin ->
+      return PluginAdvertiserExtensionsData(fullExtension, setOf(plugin))
+    }
+    return null
+  }
 }
 
 class PluginAdvertiserExtensionsState(private val project: Project, private val service: PluginAdvertiserExtensionsStateService) {
@@ -101,6 +131,8 @@ class PluginAdvertiserExtensionsState(private val project: Project, private val 
     if (fullExtension == null && fileType is FakeFileType) {
       return null
     }
+
+    service.getLocalPlugin(fileName, fullExtension)?.let { return it }
 
     val knownExtensions = PluginsAdvertiser.loadExtensions()
     if (knownExtensions != null) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -23,6 +24,24 @@ class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   protected String getBasePath() {
     JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"
   }
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15
+  }
+  
+  private void addRecordClass() {
+    myFixture.addClass("package java.lang;public abstract class Record {" +
+                       "public abstract boolean equals(Object obj);" +
+                       "public abstract int hashCode();" +
+                       "public abstract String toString();}")
+  }
+
+  void testImplementRecordMethods() { addRecordClass();doTest(true) }
+
+  void testImplementInterfaceMethodsInRecord() { addRecordClass();doTest(true) }
+
+  void testOverrideRecordMethods() { addRecordClass();doTest(false) }
 
   void testImplementExtensionMethods() { doTest(true) }
 

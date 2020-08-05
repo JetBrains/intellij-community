@@ -28,7 +28,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,7 +91,7 @@ public class DataManagerImpl extends DataManager {
       if (data != null) return validated(data, dataId, provider);
 
       if (dataRule != null) {
-        final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
+        final Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
         ids.add(dataId);
         data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 

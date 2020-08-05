@@ -30,6 +30,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -60,9 +61,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC )
+@State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC)
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element> {
-  static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
+  static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -82,7 +83,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
-  private final Map<FileNameMatcher, String> myUnresolvedMappings = CollectionFactory.createSmallMemoryFootprintMap();
+  private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
@@ -447,6 +448,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
       registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
 
+      for (FileNameMatcher matcher : standardFileType.matchers) {
+        PluginAdvertiserExtensionsStateService.getInstance().registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
+      }
+
       myPendingAssociations.removeAllAssociations(bean);
       myPendingFileTypes.remove(bean.name);
 
@@ -463,7 +468,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   static void log(@NonNls String message) {
-    LOG.debug(message + " - "+Thread.currentThread());
+    LOG.debug(message + " - " + Thread.currentThread());
   }
 
   @TestOnly
@@ -546,7 +551,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
     FileType fileType = file.getFileType();
     Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
-    FILE_TYPE_FIXED_TEMPORARILY.set(Pair.create(file, fileType));
+    FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
     if (toLog()) {
       log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType.getName()+" in "+Thread.currentThread());
     }

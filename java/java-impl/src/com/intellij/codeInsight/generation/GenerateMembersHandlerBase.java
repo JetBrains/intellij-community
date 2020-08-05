@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -49,10 +50,10 @@ import java.util.Objects;
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(GenerateMembersHandlerBase.class);
 
-  private final String myChooserTitle;
+  private final @NlsContexts.DialogTitle String myChooserTitle;
   protected boolean myToCopyJavaDoc;
 
-  public GenerateMembersHandlerBase(String chooserTitle) {
+  public GenerateMembersHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     myChooserTitle = chooserTitle;
   }
 
@@ -170,7 +171,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     generatedMembers.get(0).positionCaret(editor, false);
   }
 
-  protected String getNothingFoundMessage() {
+  protected @NlsContexts.HintText String getNothingFoundMessage() {
     return "Nothing found to insert";
   }
 

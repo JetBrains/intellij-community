@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SuspiciousMethodCallUtil {
+public final class SuspiciousMethodCallUtil {
 
   // List.of/Set.of are unnecessary here as they don't accept nulls
   private static final CallMatcher.Simple SINGLETON_COLLECTION =
@@ -338,7 +338,7 @@ public class SuspiciousMethodCallUtil {
     if (InheritanceUtil.isInheritor(patternClass, CommonClassNames.JAVA_UTIL_MAP)) {
       return index == 0 ? "keys" : "values";
     }
-    
+
     return "objects";
   }
 
@@ -353,7 +353,7 @@ public class SuspiciousMethodCallUtil {
     }
     return false;
   }
-  
+
   static class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;

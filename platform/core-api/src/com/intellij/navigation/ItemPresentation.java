@@ -15,6 +15,7 @@
  */
 package com.intellij.navigation;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public interface ItemPresentation {
    *
    * @return the object name.
    */
-  @Nullable
+  @Nullable @Nls
   String getPresentableText();
 
   /**

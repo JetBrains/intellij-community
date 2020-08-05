@@ -130,7 +130,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull final String name) throws NoSuchFieldException {
+  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull @NonNls final String name) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> name.equals(field.getName()) && (type == null || field.getType().equals(type)));
     if (result != null) return result;
 
@@ -203,7 +203,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static void resetField(@NotNull Object object, @NotNull String name) {
+  public static void resetField(@NotNull Object object, @NotNull @NonNls String name) {
     try {
       resetField(object, findField(object.getClass(), null, name));
     }

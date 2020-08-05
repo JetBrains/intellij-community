@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal val index: BidirectionalMap<EntityId, T>)
@@ -24,6 +25,9 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal v
     entity as WorkspaceEntityBase
     return index[entity.id]
   }
+
+  @TestOnly
+  fun size(): Int = index.size
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage

@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,11 +35,11 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     super.init();
   }
 
-  protected String getOkButtonText() {
+  protected @NlsContexts.Button String getOkButtonText() {
     return CommonBundle.getOkButtonText();
   }
 
-  protected String getCancelButtonText() {
+  protected @NlsContexts.Button String getCancelButtonText() {
     return CommonBundle.getCancelButtonText();
   }
 

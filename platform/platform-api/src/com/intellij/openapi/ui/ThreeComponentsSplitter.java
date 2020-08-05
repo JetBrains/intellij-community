@@ -667,7 +667,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myIsFirst = isFirst;
       setOrientation(myVerticalSplit);
 
-      new UiNotifyConnector(this, new Activatable() {
+      Disposer.register(parentDisposable, new UiNotifyConnector(this, new Activatable() {
         @Override
         public void showNotify() {
           initGlassPane(parentDisposable);
@@ -677,7 +677,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         public void hideNotify() {
           releaseGlassPane();
         }
-      });
+      }));
     }
 
     private boolean isInside(Point p) {

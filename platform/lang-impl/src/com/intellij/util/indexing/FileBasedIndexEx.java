@@ -10,11 +10,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -26,11 +30,12 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.IntIterable;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +45,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
 
+import static com.intellij.util.indexing.FileBasedIndexImpl.LOG;
 import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildIndex;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack = ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
+  private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @ApiStatus.Internal
@@ -106,13 +113,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
-    Set<K> allKeys = new THashSet<>();
+    Set<K> allKeys = new HashSet<>();
     processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
   }
 
   @Override
-  public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
     return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
   }
 
@@ -155,7 +162,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
-    // TODO revise behaviour later
+    if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
+        !((FileBasedIndexExtension<K, V>)getIndex(id).getExtension()).needsForwardIndexWhenSharing()) {
+      LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+    }
+
     if (getAccessibleFileIdFilter(project).test(fileId)) {
       Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
       return ContainerUtil.notNullize(map);
@@ -165,10 +176,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull final ID<K, V> indexId,
+  public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
-                                                           @NotNull final GlobalSearchScope filter) {
-    final Set<VirtualFile> files = new THashSet<>();
+                                                           @NotNull GlobalSearchScope filter) {
+    Set<VirtualFile> files = new HashSet<>();
     processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
       files.add(file);
       return true;
@@ -283,7 +294,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (project != null &&
-        !ModelBranchImpl.processBranchedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
+        !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {
       return false;
     }
 
@@ -298,13 +309,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
           final int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
           VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-          if (file != null && scope.accept(file)) {
-            if (!processor.process(file, value)) {
-              return false;
-            }
-            if (ensureValueProcessedOnce) {
-              ProgressManager.checkCanceled();
-              break; // continue with the next value
+          if (file != null) {
+            for (VirtualFile eachFile : filesInScopeWithBranches(scope, file)) {
+              if (!processor.process(eachFile, value)) {
+                return false;
+              }
+              if (ensureValueProcessedOnce) {
+                ProgressManager.checkCanceled();
+                break; // continue with the next value
+              }
             }
           }
 
@@ -334,6 +347,29 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     IntSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet);
     return set != null && processVirtualFiles(set, filter, processor);
+  }
+
+
+  @Override
+  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+                                               @NotNull GlobalSearchScope filter,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
+    IntSet set = null;
+    //noinspection rawtypes
+    for (AllKeysQuery query : queries) {
+      @SuppressWarnings("unchecked")
+      IntSet queryResult = collectFileIdsContainingAllKeys(query.indexId, query.dataKeys, filter, query.valueChecker, filesSet);
+      if (queryResult == null) return false;
+      if (queryResult.isEmpty()) return true;
+      if (set == null) {
+        set = new IntOpenHashSet(queryResult);
+      }
+      else {
+        set.retainAll(queryResult);
+      }
+    }
+    return set == null || processVirtualFiles(set, filter, processor);
   }
 
   @Override
@@ -485,8 +521,32 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
+    DumbModeAccessType result = getCurrentDumbModeAccessType_NoDumbChecks();
+    if (result != null) {
+      LOG.assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)), "getCurrentDumbModeAccessType may only be called during indexing");
+    }
+    return result;
+  }
+
+  @Nullable DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-    return dumbModeAccessTypeStack.isEmpty() ? null : dumbModeAccessTypeStack.peek();
+    if (dumbModeAccessTypeStack.isEmpty()) {
+      return null;
+    }
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ourIgnoranceGuard.prohibitResultCaching(dumbModeAccessTypeStack.get(0));
+    return dumbModeAccessTypeStack.peek();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public <T> @NotNull Processor<? super T> inheritCurrentDumbAccessType(@NotNull Processor<? super T> processor) {
+    Stack<DumbModeAccessType> stack = ourDumbModeAccessTypeStack.get();
+    if (stack.isEmpty()) return processor;
+
+    DumbModeAccessType access = stack.peek();
+    return t -> ignoreDumbMode(access, () -> processor.process(t));
   }
 
   @ApiStatus.Internal
@@ -494,12 +554,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
-    assert ApplicationManager.getApplication().isReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+      boolean preventCaching = dumbModeAccessTypeStack.empty();
       dumbModeAccessTypeStack.push(dumbModeAccessType);
       try {
-        return computable.compute();
+        return preventCaching
+               ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
+               : computable.compute();
       }
       finally {
         DumbModeAccessType type = dumbModeAccessTypeStack.pop();
@@ -508,5 +571,20 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     } else {
       return computable.compute();
     }
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope, @NotNull VirtualFile file) {
+    List<VirtualFile> filesInScope;
+    filesInScope = new SmartList<>();
+    if (scope.contains(file)) filesInScope.add(file);
+    for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
+      VirtualFile copy = branch.findFileCopy(file);
+      if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
+        filesInScope.add(copy);
+      }
+    }
+    return filesInScope;
   }
 }

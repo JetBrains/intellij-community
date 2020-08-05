@@ -35,9 +35,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
-  val isStreamProviderPreventExportAction: Boolean
-    get() = compoundStreamProvider.providers.any { it.isDisableExportAction }
-
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     if (first) {
       compoundStreamProvider.providers.add(0, provider)
@@ -114,7 +111,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   // storageCustomizer - to ensure that other threads will use fully constructed and configured storage (invoked under the same lock as created)
   fun getOrCreateStorage(collapsedPath: String,
-                         roamingType: RoamingType = RoamingType.DEFAULT,
+                         roamingType: RoamingType,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
                          @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
                          exclusive: Boolean = false,
@@ -153,8 +150,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,
-                            pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> = storageLock.read {
-    Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+                            pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
+    return storageLock.read {
+      Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+    }
   }
 
   fun updatePath(spec: String, newPath: Path) {
@@ -378,5 +377,3 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
 }
 
 data class Macro(val key: String, var value: Path)
-
-class UnknownMacroException(message: String) : RuntimeException(message)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -8,8 +8,8 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.isEmpty
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jdom.Element
 import java.util.*
 
@@ -17,7 +17,11 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   // template configurations are not included here
   val idToSettings = LinkedHashMap<String, RunnerAndConfigurationSettings>()
 
-  private val customOrder = ObjectIntHashMap<String>()
+  private val customOrder = Object2IntOpenHashMap<String>()
+
+  init {
+    customOrder.defaultReturnValue(-1)
+  }
 
   private var isSorted = false
     set(value) {
@@ -42,7 +46,6 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       sorted.sortWith(comparator)
     }
     customOrder.clear()
-    customOrder.ensureCapacity(sorted.size)
     sorted.mapIndexed { index, settings -> customOrder.put(settings.uniqueID, index) }
     immutableSortedSettingsList = null
     isSorted = true
@@ -86,7 +89,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   }
 
   fun writeOrder(parent: Element) {
-    if (customOrder.isEmpty) {
+    if (customOrder.isEmpty()) {
       return
     }
 
@@ -102,10 +105,13 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   fun readCustomOrder(element: Element) {
     element.getChild("list")?.let { listElement ->
-      val order = listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") }
+      var order = 0
       customOrder.clear()
-      customOrder.ensureCapacity(order.size)
-      order.mapIndexed { index, id -> customOrder.put(id, index) }
+      for (child in listElement.getChildren("item")) {
+        child.getAttributeValue("itemvalue")?.let {
+          customOrder.put(it, order++)
+        }
+      }
     }
 
     requestSort()
@@ -136,7 +142,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
     // IDEA-63663 Sort run configurations alphabetically if clean checkout
     if (!isSorted) {
-      if (customOrder.isEmpty) {
+      if (customOrder.isEmpty()) {
         sortAlphabetically()
       }
       else {
@@ -154,8 +160,8 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     val folderNames = getSortedFolderNames(idToSettings.values)
     // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied)
     list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames, Comparator { o1, o2 ->
-      val index1 = customOrder.get(o1.uniqueID)
-      val index2 = customOrder.get(o2.uniqueID)
+      val index1 = customOrder.getInt(o1.uniqueID)
+      val index2 = customOrder.getInt(o2.uniqueID)
       if (index1 == -1 && index2 == -1) {
         o1.name.compareTo(o2.name)
       }
@@ -173,7 +179,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   fun afterMakeStable() {
     immutableSortedSettingsList = null
-    if (!customOrder.isEmpty) {
+    if (!customOrder.isEmpty()) {
       isSorted = false
     }
   }

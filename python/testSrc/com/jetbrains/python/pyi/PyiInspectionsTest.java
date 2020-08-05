@@ -146,4 +146,9 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testPropertyDefinition() {
     doPyiTest(PyPropertyDefinitionInspection.class);
   }
+
+  // PY-33486
+  public void testMissedSuperInitCall() {
+    doPyiTest(PyMissingConstructorInspection.class);
+  }
 }

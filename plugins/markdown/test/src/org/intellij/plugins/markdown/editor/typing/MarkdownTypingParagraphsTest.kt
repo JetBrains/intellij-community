@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.typing
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
 class MarkdownTypingParagraphsTest : LightPlatformCodeInsightTestCase() {

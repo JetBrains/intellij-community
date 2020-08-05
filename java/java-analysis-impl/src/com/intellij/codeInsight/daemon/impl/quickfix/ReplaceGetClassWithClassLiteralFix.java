@@ -6,6 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private String myText;
+  private @IntentionName String myText;
 
   public ReplaceGetClassWithClassLiteralFix(PsiMethodCallExpression expression) {
     super(expression);
@@ -45,7 +46,7 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
     if (aClass == null) return false;
     String className = aClass.getName();
     if (className == null) return false;
-    myText = "Replace with " + className + ".class";
+    myText = "Replace with " + className + "." + PsiKeyword.CLASS;
     return super.isAvailable(project, file, startElement, endElement);
   }
 

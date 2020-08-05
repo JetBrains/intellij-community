@@ -3,7 +3,6 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
 import javax.tools.JavaFileManager;
 import javax.tools.SimpleJavaFileObject;
@@ -52,11 +51,6 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
     if (content == null) {
       throw new UnsupportedOperationException();
     }
-    // optimizations: avoid chars copying if possible
-    if (content instanceof CharArrayCharSequence) {
-      final CharArrayCharSequence _content = (CharArrayCharSequence)content;
-      return new CharArrayReader(_content.getBackendArray(), _content.getStart(), _content.length());
-    }
     if (content instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)content;
       if (buffer.hasArray()) {
@@ -70,7 +64,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   @NotNull
   protected static CharSequence loadCharContent(@NotNull File file, @Nullable String encoding) throws IOException {
     // FileUtil.loadText clones char array if length mismatch
-    final FileInputStream stream = new FileInputStream(file);
+    FileInputStream stream = new FileInputStream(file);
     try {
       final Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
       try {
@@ -84,7 +78,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
           }
           count += n;
         }
-        return new CharArrayCharSequence(chars, 0, count);
+        return CharBuffer.wrap(chars, 0, count);
       }
       finally {
         reader.close();

@@ -165,6 +165,8 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
+    if (myDisposeStarted) return;
+
     myRecreatedLogCount++;
     String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
     if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {

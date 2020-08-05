@@ -20,7 +20,7 @@ private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("Co
 @Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
                                          private val executor: Executor,
-                                         private val order: Int) : ActionGroup() {
+                                         private val order: Int) : ActionGroup(), ActionWithDelegate<AnAction> {
   init {
     copyFrom(origin)
   }
@@ -62,6 +62,10 @@ class ExecutorAction private constructor(val origin: AnAction,
       val originalContext = ConfigurationContext.getFromContext(dataContext)
       return originalContext.configurationsFromContext ?: return emptyList()
     }
+  }
+
+  override fun getDelegate(): AnAction {
+    return origin
   }
 
   override fun update(e: AnActionEvent) {

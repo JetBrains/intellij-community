@@ -27,7 +27,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -80,10 +79,10 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       final Project project = rb.getProject();
 
       final StructureViewModel model = myEditor.getStructureViewComponent().getTreeModel();
-      final Queue<TreeElement> queue = new Queue<>(1);
+      final Deque<TreeElement> queue = new ArrayDeque<>(1);
       queue.addLast(model.getRoot());
       while (!queue.isEmpty()) {
-        final TreeElement treeElement = queue.pullFirst();
+        final TreeElement treeElement = queue.removeFirst();
         if (treeElement instanceof PropertyBundleEditorStructureViewElement) {
           IProperty property = ((PropertyBundleEditorStructureViewElement)treeElement).getProperty();
           if (property == null) continue;

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -89,7 +90,11 @@ public class TextMateBundlesListPanel implements Disposable {
           return;
         }
         String message = StringUtil.join(bundlesToDelete, JCheckBox::getText, "\n");
-        if (Messages.showYesNoDialog(message, TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), null) != Messages.YES) {
+        if (MessageDialogBuilder.yesNo(TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), message)
+              .yesText(CommonBundle.message("button.remove"))
+              .noText(CommonBundle.getCancelButtonText())
+              .icon(null)
+              .show() != Messages.YES) {
           return;
         }
         ListUtil.removeSelectedItems(myBundlesList);

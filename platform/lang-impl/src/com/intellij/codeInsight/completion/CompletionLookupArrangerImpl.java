@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.AsyncRendering;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   @Override
   protected List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
     String selectedText =
-      InjectedLanguageUtil.getTopLevelEditor(myProcess.getParameters().getEditor()).getSelectionModel().getSelectedText();
+      InjectedLanguageEditorUtil.getTopLevelEditor(myProcess.getParameters().getEditor()).getSelectionModel().getSelectedText();
     List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);

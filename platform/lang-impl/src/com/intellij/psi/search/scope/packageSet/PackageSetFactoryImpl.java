@@ -4,7 +4,13 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
@@ -16,6 +22,42 @@ import java.util.List;
 
 public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
+
+  public PackageSetFactoryImpl() {
+    PackageSetParserExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<PackageSetParserExtension>() {
+      @Override
+      public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+            ServiceKt.getStateStore(project).reloadState(holder.getClass());
+            holder.fireScopeListeners();
+          }
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+            boolean changed = false;
+            NamedScope[] scopes = holder.getScopes();
+            for (int i = 0; i < scopes.length; i++) {
+              NamedScope scope = scopes[i];
+              PackageSet value = scope.getValue();
+              if (value != null && value.getClass().getClassLoader() == pluginClassLoader) {
+                scopes[i] = new NamedScope(scope.getName(), new InvalidPackageSet(value.getText()));
+                changed = true;
+              }
+            }
+            if (changed) {
+              holder.setScopes(scopes);
+            }
+          }
+        }
+      }
+    }, ApplicationManager.getApplication());
+  }
 
   @Override
   public PackageSet compile(String text) throws ParsingException {

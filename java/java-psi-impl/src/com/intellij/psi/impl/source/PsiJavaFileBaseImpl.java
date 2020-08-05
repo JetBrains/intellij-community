@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -26,16 +27,21 @@ import com.intellij.psi.scope.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
@@ -522,6 +528,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
+  private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
+  
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
@@ -532,6 +540,31 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     VirtualFile virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
     if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
+
+    String sourceLevel = null;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream(), StandardCharsets.UTF_8))) {
+      String line = reader.readLine();
+      if (line != null && line.startsWith("#!")) {
+        List<String> params = ParametersListUtil.parse(line);
+        int srcIdx = params.indexOf("--source");
+        if (srcIdx > 0 && srcIdx + 1 < params.size()) {
+          sourceLevel = params.get(srcIdx + 1);
+          LanguageLevel sheBangLevel = LanguageLevel.parse(sourceLevel);
+          if (sheBangLevel != null) {
+            return sheBangLevel;
+          }
+        }
+      }
+    }
+    catch (Throwable ignored) { }
+    finally {
+      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL))) {
+        virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
+        VirtualFile file = virtualFile;
+        ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file), 
+                                                        ApplicationManager.getApplication().getDisposed());
+      }
+    }
 
     return JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(virtualFile);
   }

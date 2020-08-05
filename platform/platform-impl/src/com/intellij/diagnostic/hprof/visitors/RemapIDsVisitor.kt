@@ -17,12 +17,12 @@ package com.intellij.diagnostic.hprof.visitors
 
 import com.intellij.diagnostic.hprof.parser.*
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
-import gnu.trove.TLongIntHashMap
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.util.function.LongUnaryOperator
 
-abstract class RemapIDsVisitor : HProfVisitor() {
+internal abstract class RemapIDsVisitor : HProfVisitor() {
   private var currentID = 0
 
   override fun preVisit() {
@@ -64,7 +64,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
 
   companion object {
     fun createMemoryBased(): RemapIDsVisitor {
-      val map = TLongIntHashMap()
+      val map = Long2IntOpenHashMap()
       map.put(0, 0)
       return object : RemapIDsVisitor() {
         override fun addMapping(oldId: Long, newId: Int) {
@@ -72,7 +72,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
         }
 
         override fun getRemappingFunction(): LongUnaryOperator {
-          return LongUnaryOperator { map[it].toLong() }
+          return LongUnaryOperator { map.get(it).toLong() }
         }
       }
     }

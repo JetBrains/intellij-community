@@ -64,8 +64,6 @@ class CompilationOutputsUploader {
     executor.prestartAllCoreThreads()
     try {
       def start = System.nanoTime()
-      // No need to upload JPS caches archive if only hot compile outputs are required
-      // without any incremental compilation (for tests execution as an example)
       if (!uploadCompilationOutputsOnly) {
         executor.submit {
           // Upload jps caches started first because of the significant size of the output
@@ -116,7 +114,7 @@ class CompilationOutputsUploader {
     move(sourceStateFile, sourceStateFileCopy)
   }
 
-  void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
+  private void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
                                 JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
       uploadCompilationOutput(it, uploader, executor)
@@ -127,7 +125,7 @@ class CompilationOutputsUploader {
                                        JpsCompilationPartsUploader uploader,
                                        NamedThreadPoolExecutor executor) {
     executor.submit {
-      def sourcePath = compilationOutput.sourcePath
+      def sourcePath = compilationOutput.remotePath
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
@@ -196,18 +194,6 @@ class CompilationOutputsUploader {
     if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
-  void delete(CommitsHistory commitsHistory) {
-    commitsHistory.commitsForRemote(remoteGitUrl).each { commitHash ->
-      uploader.delete("caches/$commitHash")
-      def metadataJson = uploader.getAsString("metadata/$commitHash")
-      def metadata = sourcesStateProcessor.parseSourcesStateFile(metadataJson)
-      sourcesStateProcessor.getAllCompilationOutputs(metadata).each {
-        uploader.delete(it.sourcePath)
-      }
-      uploader.delete("metadata/$commitHash")
-    }
-  }
-
   @CompileStatic
   private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
     private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
@@ -250,11 +236,6 @@ class CompilationOutputsUploader {
     boolean upload(@NotNull final String path, @NotNull final File file) {
       log("Uploading '$path'.")
       return super.upload(path, file, false)
-    }
-
-    void delete(@NotNull String path) {
-      log("Deleting '$path'.")
-      super.doDelete(path)
     }
   }
 }

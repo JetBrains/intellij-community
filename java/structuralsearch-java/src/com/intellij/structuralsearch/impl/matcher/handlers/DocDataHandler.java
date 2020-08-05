@@ -7,6 +7,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +23,7 @@ public class DocDataHandler extends MatchingHandler {
   );
 
   @Override
-  public boolean match(PsiElement node, PsiElement match, MatchContext context) {
+  public boolean match(PsiElement node, PsiElement match, @NotNull MatchContext context) {
     String text1 = node.getText();
 
     text1 = getTextFromNode(node, text1);

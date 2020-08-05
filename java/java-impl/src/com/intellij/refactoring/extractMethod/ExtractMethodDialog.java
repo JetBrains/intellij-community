@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -38,6 +39,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +49,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -96,10 +95,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private Map<PsiVariable, ParameterInfo> myInitialParameterInfos;
 
   public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
-                                PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
-                                boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
-                                String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
-                                @Nullable Supplier<Integer> duplicatesCountSupplier) {
+                             PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
+                             boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
+                             @NlsContexts.DialogTitle String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
+                             @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
     myTargetClass = targetClass;
@@ -391,7 +390,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return optionsPanel;
   }
 
-  protected void createStaticOptions(JPanel optionsPanel, String passFieldsAsParamsLabel) {
+  protected void createStaticOptions(JPanel optionsPanel, @Nls String passFieldsAsParamsLabel) {
     if (myStaticFlag || myCanBeStatic) {
       myMakeStatic.setEnabled(!myStaticFlag);
       myMakeStatic.setSelected(myStaticFlag);
@@ -501,7 +500,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
               ModalityState.any());
           }
 
-          private void showCount(Icon icon, String message, Border border) {
+          private void showCount(Icon icon, @NlsContexts.Label String message, Border border) {
             duplicatesCount.setIcon(icon);
             duplicatesCount.setText(message);
             duplicatesCount.setBorder(border);

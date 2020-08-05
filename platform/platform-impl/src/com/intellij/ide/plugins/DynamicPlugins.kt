@@ -65,8 +65,10 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import org.jetbrains.annotations.NonNls
 import java.awt.Window
 import java.io.File
+import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
@@ -137,6 +139,7 @@ object DynamicPlugins {
    */
   @JvmStatic
   @JvmOverloads
+  @NonNls
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
@@ -301,16 +304,31 @@ object DynamicPlugins {
                                                   processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl?) -> Boolean) {
     for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
       for (dependency in (descriptor.pluginDependencies ?: continue)) {
-        if (!dependency.isOptional || dependency.id != dependencyPluginId) {
-          continue
-        }
-
-        val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) }
-        if (!processor(descriptor, subDescriptor)) {
-          break
-        }
+        if (!processOptionalDependencyDescriptor(dependencyPluginId, descriptor, dependency, processor)) break
       }
     }
+  }
+
+  private fun processOptionalDependencyDescriptor(
+    dependencyPluginId: PluginId,
+    descriptor: IdeaPluginDescriptorImpl,
+    dependency: PluginDependency,
+    processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl?) -> Boolean
+  ): Boolean {
+    if (!dependency.isOptional) {
+      return true
+    }
+
+    val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) } ?: return true
+    if (dependency.id == dependencyPluginId) {
+      if (!processor(descriptor, subDescriptor)) {
+        return false
+      }
+    }
+    subDescriptor.pluginDependencies?.forEach { subDependency ->
+      if (!processOptionalDependencyDescriptor(dependencyPluginId, descriptor, subDependency, processor)) return false
+    }
+    return true
   }
 
   private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
@@ -328,8 +346,7 @@ object DynamicPlugins {
 
   private fun loadOptionalDependencyDescriptor(descriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
     val pluginXmlFactory = PluginXmlFactory()
-    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(
-      DisabledPluginsState.disabledPlugins())
+    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins())
     val context = DescriptorLoadingContext(listContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)
     val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(descriptor, context)
     try {
@@ -343,13 +360,13 @@ object DynamicPlugins {
       val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
       val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, newBasePath, false)
       if (!subDescriptor.readExternal(element, pathResolver, context.parentContext, descriptor)) {
-        LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
+        LOG.info("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
         return null
       }
       return subDescriptor
     }
     catch (e: Exception) {
-      LOG.error("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
+      LOG.info("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
       return null
     }
     finally {

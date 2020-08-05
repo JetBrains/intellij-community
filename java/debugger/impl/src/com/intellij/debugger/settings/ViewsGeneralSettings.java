@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -8,11 +8,8 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "ViewsSettings", storages = {
-  @Storage("debugger.xml"),
-  @Storage(value = "debugger.frameview.xml", deprecated = true),
-})
-public class ViewsGeneralSettings implements PersistentStateComponent<ViewsGeneralSettings> {
+@State(name = "ViewsSettings", storages = @Storage("debugger.xml"))
+public final class ViewsGeneralSettings implements PersistentStateComponent<ViewsGeneralSettings> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;

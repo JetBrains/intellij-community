@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +87,7 @@ public final class JavaVfsSourceRootDetectionUtil {
         int index1 = packageName.lastIndexOf('.', index - 1);
         String token = packageName.substring(index1 + 1, index);
         String dirName = root.getName();
-        final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
+        final boolean equalsToToken = javaFile.isCaseSensitive() ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
         if (!equalsToToken) {
           return null;
         }

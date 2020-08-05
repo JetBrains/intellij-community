@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsNotifier {
-
   public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
     "Vcs Messages", ChangesViewContentManager.TOOLWINDOW_ID);
   public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
@@ -27,7 +25,7 @@ public class VcsNotifier {
   private final @NotNull Project myProject;
 
   public static VcsNotifier getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsNotifier.class);
+    return project.getService(VcsNotifier.class);
   }
 
   public VcsNotifier(@NotNull Project project) {

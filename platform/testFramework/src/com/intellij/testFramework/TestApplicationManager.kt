@@ -51,6 +51,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.UiInterceptors
+import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -63,6 +64,8 @@ import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAutoShutdown
 import java.awt.EventQueue
 import java.awt.Toolkit
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.DelayQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -277,11 +280,11 @@ fun disposeApplicationAndCheckForLeaks() {
         LeakHunter.checkNonDefaultProjectLeak()
       }
       catch (e: AssertionError) {
-        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+        publishHeapDump("leakedProjects")
         throw e
       }
       catch (e: Exception) {
-        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
+        publishHeapDump("leakedProjects")
         throw e
       }
     }
@@ -295,11 +298,11 @@ fun disposeApplicationAndCheckForLeaks() {
       Disposer.assertIsEmpty(true)
     }
     catch (e: AssertionError) {
-      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
+      publishHeapDump("disposerNonEmpty")
       throw e
     }
     catch (e: Exception) {
-      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
+      publishHeapDump("disposerNonEmpty")
       throw e
     }
   }
@@ -339,5 +342,22 @@ fun waitForProjectLeakingThreads(project: Project, timeout: Long = 10, timeUnit:
     project.stopServicePreloading()
   }
 
-  (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout, timeUnit)
+  (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout,
+                                                                                                                            timeUnit)
+}
+
+fun publishHeapDump(fileNamePrefix: String): String {
+  val fileName = "$fileNamePrefix.hprof.zip"
+  val dumpFile = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName)
+  try {
+    Files.deleteIfExists(dumpFile)
+    MemoryDumpHelper.captureMemoryDumpZipped(dumpFile)
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+  }
+
+  val dumpPath = dumpFile.toAbsolutePath().toString()
+  println("##teamcity[publishArtifacts '$dumpPath']")
+  return dumpPath
 }

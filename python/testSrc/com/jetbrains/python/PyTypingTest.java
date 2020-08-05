@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -1526,6 +1527,16 @@ public class PyTypingTest extends PyTestCase {
     );
   }
 
+  // PY-35370
+  public void testAnyArgumentsCallableInTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestInjectedText("from typing import Callable\n" +
+                               "a = b  # type: Call<caret>able[..., int]",
+                               "Callable[..., int]")
+    );
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -1543,6 +1554,7 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(files.isEmpty());
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
+    assertFalse(PsiTreeUtil.hasErrorElements(injected));
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +182,7 @@ public class WSLDistribution {
                                                            @Nullable String remoteWorkingDir,
                                                            boolean askForSudo
   ) {
-    Map<String, String> additionalEnvs = new THashMap<>(commandLine.getEnvironment());
+    Map<String, String> additionalEnvs = new HashMap<>(commandLine.getEnvironment());
     commandLine.getEnvironment().clear();
 
     LOG.debug("[" + getId() + "] " +
@@ -320,7 +319,7 @@ public class WSLDistribution {
   public Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput = executeOnWsl(5000, "env");
-      Map<String, String> result = new THashMap<>();
+      Map<String, String> result = new HashMap<>();
       for (String string : processOutput.getStdoutLines()) {
         int assignIndex = string.indexOf('=');
         if (assignIndex == -1) {

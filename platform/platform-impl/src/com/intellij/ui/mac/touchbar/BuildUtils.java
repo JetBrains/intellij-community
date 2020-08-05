@@ -25,6 +25,7 @@ import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,7 @@ final class BuildUtils {
     return result;
   }
 
-  static @NotNull TouchBar buildFromGroup(@NotNull String touchbarName,
+  static @NotNull TouchBar buildFromGroup(@NotNull @NonNls String touchbarName,
                                           @NotNull ActionGroup actions,
                                           boolean replaceEsc,
                                           boolean emulateESC) {

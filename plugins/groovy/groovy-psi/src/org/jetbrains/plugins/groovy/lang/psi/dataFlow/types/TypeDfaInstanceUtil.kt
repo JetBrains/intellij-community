@@ -18,7 +18,7 @@ fun getLeastUpperBoundByAllWrites(block: GrControlFlowOwner,
   var resultType: PsiType = PsiType.NULL
   val cache = TypeInferenceHelper.getInferenceCache(block)
   for (instruction: Instruction in flow) {
-    val inferred: PsiType = if (instruction is ReadWriteVariableInstruction && instruction.descriptor == descriptor) {
+    val inferred: PsiType = if (instruction is ReadWriteVariableInstruction && instruction.isWrite && instruction.descriptor == descriptor) {
       cache.getInferredType(instruction.descriptor, instruction, false, initialTypes) ?: PsiType.NULL
     }
     else if (instruction.element is GrFunctionalExpression) {

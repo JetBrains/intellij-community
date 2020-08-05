@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
+import com.intellij.configurationStore.ProjectStoreBase
+import com.intellij.configurationStore.ProjectStoreImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -13,7 +15,9 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.ProjectStoreOwner
+import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.pico.DefaultPicoContainer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -58,7 +62,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
 
     val container = project as ComponentManagerImpl
 
-    (project as ProjectStoreOwner).componentStore = ProjectStoreBridge(project)
+    (project.stateStore as ProjectStoreImpl).moduleSavingCustomizer = ProjectStoreBridge(project)
     container.registerComponent(JpsProjectModelSynchronizer::class.java, JpsProjectModelSynchronizer::class.java, pluginDescriptor, false)
     container.registerComponent(RootsChangeWatcher::class.java, RootsChangeWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
@@ -68,7 +72,12 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
-    container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java, pluginDescriptor, true)
+
+    if ((container.picoContainer as DefaultPicoContainer).getServiceAdapter(ExternalStorageConfigurationManager::class.java.name) != null) {
+      container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java,
+                                pluginDescriptor, true)
+    }
+
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
     container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)

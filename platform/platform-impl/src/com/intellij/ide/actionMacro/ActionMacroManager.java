@@ -16,6 +16,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
@@ -236,7 +237,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       myBalloon.show(new PositionTracker<Balloon>(myIcon) {
         @Override
-        public RelativePoint recalculateLocation(Balloon object) {
+        public RelativePoint recalculateLocation(@NotNull Balloon object) {
           return new RelativePoint(myIcon, new Point(myIcon.getSize().width / 2, 4));
         }
       }, Balloon.Position.above);
@@ -443,9 +444,8 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     final ActionManagerEx actionManager = (ActionManagerEx)ActionManager.getInstance();
     final String actionId = ActionMacro.MACRO_ACTION_PREFIX + name;
     if (actionManager.getAction(actionId) != null) {
-      if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
-                                   IdeBundle.message("title.macro.name.already.used"),
-                                   Messages.getWarningIcon()) != Messages.YES) {
+      if (!MessageDialogBuilder.yesNo(IdeBundle.message("title.macro.name.already.used"), IdeBundle.message("message.macro.exists", name))
+            .icon(Messages.getWarningIcon()).ask(myWidget.getComponent())) {
         return false;
       }
       actionManager.unregisterAction(actionId);

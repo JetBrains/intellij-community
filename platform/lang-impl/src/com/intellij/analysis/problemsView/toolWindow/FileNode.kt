@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtilCore.findFileSystemItem
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
+import java.util.Objects.hash
 
 internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
 
@@ -29,7 +30,7 @@ internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
       presentation.addText("  ${getLocationRelativeToUserHome(url)}", GRAYED_ATTRIBUTES)
     }
     val root = findAncestor(Root::class.java)
-    val count = root?.getProblemsCount(file) ?: 0
+    val count = root?.getFileProblemCount(file) ?: 0
     if (count > 0) {
       val text = ProblemsViewBundle.message("problems.view.file.problems", count)
       presentation.addText("  $text", GRAYED_ATTRIBUTES)
@@ -39,5 +40,14 @@ internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
   override fun getChildren(): Collection<Node> {
     val root = findAncestor(Root::class.java)
     return root?.getChildren(file) ?: super.getChildren()
+  }
+
+  override fun hashCode() = hash(project, file)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (this.javaClass != other?.javaClass) return false
+    val that = other as? FileNode ?: return false
+    return that.project == project && that.file == file
   }
 }

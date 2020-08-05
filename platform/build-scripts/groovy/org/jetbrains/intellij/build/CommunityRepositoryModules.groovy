@@ -254,7 +254,16 @@ class CommunityRepositoryModules {
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
-    }
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        File generateResources(BuildContext context) {
+          def gradleRunner = context.getGradle()
+          gradleRunner.run("Download Space Automation definitions", "setupSpaceAutomationDefinitions")
+          return new File("${context.paths.communityHome}/build/dependencies/build/space")
+        }
+      }, "lib")
+    },
+    plugin("intellij.gauge")
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {

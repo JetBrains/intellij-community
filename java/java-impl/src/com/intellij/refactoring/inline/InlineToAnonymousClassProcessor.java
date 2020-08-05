@@ -20,10 +20,13 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author yole
@@ -215,6 +218,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
       else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
+      }
+      else if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiReferenceList) {
+        PsiReferenceList refList = (PsiReferenceList) element.getParent();
+        PsiClass parentClass = tryCast(refList.getParent(), PsiClass.class);
+        if (parentClass != null && refList == parentClass.getPermitsList()) {
+          ClassUtils.removeFromPermitsList(parentClass, myClass);
+        }
       }
       else {
         PsiImportStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);

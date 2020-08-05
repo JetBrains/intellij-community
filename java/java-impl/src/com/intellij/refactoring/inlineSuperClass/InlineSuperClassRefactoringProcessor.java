@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -118,9 +119,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
               if (parent instanceof PsiReferenceList) {
                 final PsiElement pparent = parent.getParent();
                 if (pparent instanceof PsiClass) {
+                  final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)element;
                   final PsiClass inheritor = (PsiClass)pparent;
                   if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
-                    usages.add(new ReplaceExtendsListUsageInfo((PsiJavaCodeReferenceElement)element, mySuperClass, inheritor));
+                    usages.add(new ReplaceExtendsListUsageInfo(classRef, mySuperClass, inheritor));
+                  }
+                  else if (parent.equals(inheritor.getPermitsList())) {
+                    usages.add(new RemovePermitsListUsageInfo(classRef, mySuperClass, inheritor));
                   }
                 }
               } else {
@@ -445,6 +450,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   @Override
   @NotNull
   protected String getCommandName() {
-    return InlineSuperClassRefactoringHandler.REFACTORING_NAME;
+    return JavaRefactoringBundle.message("inline.super.class");
   }
 }

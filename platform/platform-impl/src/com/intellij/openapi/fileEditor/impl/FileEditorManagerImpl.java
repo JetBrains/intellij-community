@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -99,10 +100,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-@State(name = "FileEditorManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "FileEditorManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
   protected static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -280,7 +278,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private EditorsSplitters getActiveSplittersSync() {
     assertDispatchThread();
-
+    if (Registry.is("ide.navigate.to.recently.focused.editor", false)) {
+      ArrayList<EditorsSplitters> splitters = new ArrayList<>(getAllSplitters());
+      if (!splitters.isEmpty()) {
+        splitters.sort((o1, o2) -> Long.compare(o2.getLastFocusGainedTime(), o1.getLastFocusGainedTime()));
+        return splitters.get(0);
+      }
+    }
     IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
     Component focusOwner = fm.getFocusOwner();
     if (focusOwner == null) {

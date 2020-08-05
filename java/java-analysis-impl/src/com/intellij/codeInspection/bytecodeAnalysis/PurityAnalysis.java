@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  * Scala source at https://github.com/ilya-klyuchnikov/faba
  * Algorithm: https://github.com/ilya-klyuchnikov/faba/blob/ef1c15b4758517652e939f67099bbec0260e9e68/notes/purity.md
  */
-public class PurityAnalysis {
+public final class PurityAnalysis {
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
   /**

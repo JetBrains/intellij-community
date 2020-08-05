@@ -49,7 +49,7 @@ public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
 
   public static final PairedBraceMatcherAdapter INSTANCE = new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
     @Override
-    public int getBraceTokenGroupId(IElementType tokenType) {
+    public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
       int id = super.getBraceTokenGroupId(tokenType);
       return id == -1 ? -1 : 777;
     }

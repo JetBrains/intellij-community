@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -481,7 +482,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  public String getShortenName(){
+  public @Nls String getShortenName(){
     switch (myType) {
       case CUSTOM:
         return myScope.getDisplayName();

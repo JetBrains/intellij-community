@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -262,9 +263,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                                     expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
-  private File saveTmpImage(BufferedImage image, String nameSuffix) throws IOException {
+  private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
-    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }

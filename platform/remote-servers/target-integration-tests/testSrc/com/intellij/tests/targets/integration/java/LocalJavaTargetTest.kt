@@ -2,7 +2,8 @@
 package com.intellij.tests.targets.integration.java
 
 import com.intellij.tests.targets.java.JavaTargetTestBase
-import org.assertj.core.internal.bytebuddy.utility.RandomString
+import com.intellij.util.io.write
+import java.util.*
 
 class LocalJavaTargetTest : JavaTargetTestBase() {
   override val targetName: String? = null
@@ -13,9 +14,9 @@ class LocalJavaTargetTest : JavaTargetTestBase() {
 
   override fun setUp() {
     super.setUp()
-    val file = tempDir.createTempFile("localJavaTargetTest-${RandomString.make()}")
-    targetFilePath = file.absolutePath
-    targetFileContent = RandomString.make()
-    file.writeText(targetFileContent)
+    val file = tempDir.newPath("localJavaTargetTest")
+    targetFilePath = file.toString()
+    targetFileContent = UUID.randomUUID().toString()
+    file.write(targetFileContent)
   }
 }

@@ -36,7 +36,7 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
 
   @Override
   protected String getQualifierText() {
-    return "this";
+    return PsiKeyword.THIS;
   }
 
   @Override

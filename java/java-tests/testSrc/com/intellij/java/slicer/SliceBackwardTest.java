@@ -114,6 +114,8 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testFilterPropagateBoolean2() throws Exception { doTest("false");}
   public void testFilterAssertionViolation() throws Exception { doTest("-1");}
   public void testReturnParameter() throws Exception { doTest(); }
+  public void testFilterLongByInt() throws Exception { doTest("<=0"); }
+  public void testFilterDoubleByInt() throws Exception { doTest("0.0"); }
   
   public void testStackFilterSimple() throws Exception { 
     doTest("null", "MainTest:test", "MainTest:foo", "MainTest:main");

@@ -50,7 +50,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final JComponent panel = new JPanel(new BorderLayout());
     final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.classes.table")));
+      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("options.title.ignored.classes")));
     JPanel tablePanel =
       UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class.type.to.ignore"));
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
@@ -69,7 +69,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
       if (name != null) {
-        result.add(new IgnoreClassFix(name, ignoredTypes, "Ignore '." + methodName + "()' calls on type '" + name + "'"));
+        result.add(new IgnoreClassFix(name, ignoredTypes,
+                                      InspectionGadgetsBundle.message("size.replaceable.by.isempty.fix.ignore.calls", methodName, name)));
       }
     }
     result.add(new SizeReplaceableByIsEmptyFix());

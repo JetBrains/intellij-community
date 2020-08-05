@@ -58,6 +58,7 @@ import com.jetbrains.reflection.getProperties
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
+import org.jetbrains.annotations.PropertyKey
 import java.util.regex.Matcher
 
 /**
@@ -83,7 +84,7 @@ fun processTCMessage(text: String): String {
   }
 }
 
-internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
+internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::additionalArguments
 
 /**
  * If runner name is here that means test runner only can run inheritors for TestCase
@@ -101,7 +102,7 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
     it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
   }
   is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
-                                                                                                                         testCaseClassRequired, typeEvalContext)
+                                                                         testCaseClassRequired, typeEvalContext)
   is com.jetbrains.python.psi.PyClass -> {
     PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
@@ -272,8 +273,8 @@ private const val DEFAULT_PATH = ""
 /**
  * Target depends on target type. It could be path to file/folder or python target
  */
-data class ConfigurationTarget(@ConfigField override var target: String,
-                               @ConfigField override var targetType: PyRunTargetVariant) : TargetWithVariant {
+data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
+                               @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -401,6 +402,7 @@ internal interface PyTestConfigurationWithCustomSymbol {
    * Separates file part and symbol
    */
   val fileSymbolSeparator: String
+
   /**
    * Separates parts of symbol name
    */
@@ -429,7 +431,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   @DelegationProperty
   val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
-  @ConfigField
+
+  @ConfigField("runcfg.python_tests.config.additionalArguments")
   var additionalArguments: String = ""
 
   val testFrameworkName: String = configurationFactory.name
@@ -862,6 +865,6 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.PROPERTY)
 /**
- * Mark run configuration field with it to enable saving, resotring and form iteraction
+ * Mark run configuration field with it to enable saving, restoring and form iteraction
  */
-annotation class ConfigField
+annotation class ConfigField(@param:PropertyKey(resourceBundle = PyBundle.BUNDLE) val localizedName: String)

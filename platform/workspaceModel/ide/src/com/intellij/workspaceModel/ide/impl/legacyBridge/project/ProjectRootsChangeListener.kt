@@ -8,11 +8,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
-  fun beforeChanged(event: VersionedStorageChanged) {
+  fun beforeChanged(event: VersionedStorageChange) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
@@ -20,7 +20,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     if (performUpdate) projectRootManager.fireRootsChanged(true)
   }
 
-  fun changed(event: VersionedStorageChanged) {
+  fun changed(event: VersionedStorageChange) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
@@ -28,7 +28,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     if (performUpdate) projectRootManager.fireRootsChanged(false)
   }
 
-  private fun shouldFireRootsChanged(events: VersionedStorageChanged, project: Project): Boolean {
+  private fun shouldFireRootsChanged(events: VersionedStorageChange, project: Project): Boolean {
     return events.getAllChanges().any {
       val entity = when (it) {
         is EntityChange.Added -> it.entity
@@ -40,8 +40,8 @@ internal class ProjectRootsChangeListener(private val project: Project) {
         is LibraryEntity -> libraryHasOrderEntry(entity, project)
         is LibraryPropertiesEntity -> libraryHasOrderEntry(entity.library, project)
         is ModuleEntity, is JavaModuleSettingsEntity, is ModuleCustomImlDataEntity, is ModuleGroupPathEntity,
-          is SourceRootEntity, is JavaSourceRootEntity, is JavaResourceRootEntity, is CustomSourceRootPropertiesEntity,
-          is ContentRootEntity -> true
+        is SourceRootEntity, is JavaSourceRootEntity, is JavaResourceRootEntity, is CustomSourceRootPropertiesEntity,
+        is ContentRootEntity -> true
         else -> false
       }
     }

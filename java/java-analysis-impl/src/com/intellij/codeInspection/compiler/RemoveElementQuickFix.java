@@ -3,6 +3,7 @@ package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class RemoveElementQuickFix implements LocalQuickFix {
-  private final String myName;
+  private final @IntentionFamilyName String myName;
 
   public RemoveElementQuickFix(@NotNull @Nls final String name) {
     myName = name;

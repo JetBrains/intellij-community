@@ -4,13 +4,7 @@ package com.intellij.tasks.youtrack;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.CustomTaskState;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -20,14 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.Icon;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -41,6 +27,17 @@ import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import javax.swing.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -81,11 +78,9 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     }
     String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&updatedAfter" + since;
     HttpMethod method = doREST(requestUrl, false);
-    try {
-      InputStream stream = method.getResponseBodyAsStream();
-
+    try (Reader reader = new InputStreamReader(method.getResponseBodyAsStream(), StandardCharsets.UTF_8)) {
       // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
-      String s = StreamUtil.readText(stream, StandardCharsets.UTF_8);
+      String s = StreamUtil.readText(reader);
       for (int i = 0; i < s.length(); i++) {
         if (!XMLChar.isValid(s.charAt(i))) {
           s = s.replace(s.charAt(i), ' ');

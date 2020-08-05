@@ -40,6 +40,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -373,7 +376,10 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
       assert file != null;
-      String newText = "  " + StreamUtil.readText(file.getInputStream(), "UTF-8") + "      ";
+      String newText;
+      try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
+        newText = "  " + StreamUtil.readText(reader) + "      ";
+      }
       FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), newText);
       file.refresh(false, false);
     });

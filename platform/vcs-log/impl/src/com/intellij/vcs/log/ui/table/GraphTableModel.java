@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,13 +30,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Columns correspond exactly to {@link VcsLogColumn} enum
  */
-public class GraphTableModel extends AbstractTableModel {
+public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
@@ -87,16 +89,15 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
+    Predicate<CommitId> hashByString = new CommitIdByStringCondition(partialHash);
     Ref<Boolean> commitExists = new Ref<>(false);
-    CommitId commitId = myLogData.getStorage().findCommitId(
-      commitId1 -> {
-        if (hashByString.value(commitId1)) {
-          commitExists.set(true);
-          return getRowOfCommitWithoutCheck(commitId1.getHash(), commitId1.getRoot()) >= 0;
-        }
-        return false;
-      });
+    CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
+      if (hashByString.test(commitId1)) {
+        commitExists.set(true);
+        return getRowOfCommitWithoutCheck(commitId1.getHash(), commitId1.getRoot()) >= 0;
+      }
+      return false;
+    });
     return commitId != null
            ? getRowOfCommitWithoutCheck(commitId.getHash(), commitId.getRoot())
            : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);

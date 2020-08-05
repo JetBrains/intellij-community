@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -77,7 +74,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected final PsiElement[] myElements;
   private final PsiBlockStatement myEnclosingBlockStatement;
   private final PsiType myForcedReturnType;
-  protected final String myRefactoringName;
+  protected final @NlsContexts.DialogTitle String myRefactoringName;
   protected final String myInitialMethodName;
   private final String myHelpId;
 
@@ -136,7 +133,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                 Editor editor,
                                 PsiElement[] elements,
                                 PsiType forcedReturnType,
-                                String refactoringName,
+                                @NlsContexts.DialogTitle String refactoringName,
                                 String initialMethodName,
                                 String helpId) {
     myProject = project;
@@ -2146,7 +2143,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected String buildMultipleOutputMessageError(PsiType expressionType) {
+  protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(PsiType expressionType) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
       JavaRefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));

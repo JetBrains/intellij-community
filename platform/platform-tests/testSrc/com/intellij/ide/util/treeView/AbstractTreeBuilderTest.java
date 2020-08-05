@@ -18,8 +18,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-import static com.intellij.testFramework.PlatformTestUtil.notNull;
-
 abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase.NodeElement> {
   protected MyStructure myStructure;
 
@@ -570,6 +568,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   TreePath getPath(String s) {
-    return new TreePath(notNull(findNode(s, false)).getPath());
+    return new TreePath(Objects.requireNonNull(findNode(s, false)).getPath());
   }
 }

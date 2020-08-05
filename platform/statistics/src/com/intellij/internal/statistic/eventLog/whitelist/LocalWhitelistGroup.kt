@@ -4,8 +4,12 @@ package com.intellij.internal.statistic.eventLog.whitelist
 class LocalWhitelistGroup @JvmOverloads constructor(
   var groupId: String,
   var useCustomRules: Boolean,
-  var customRules: String = """{
-  "event_id": [],
-  "event_data": {}
-}"""
-)
+  var customRules: String = EMPTY_RULES
+) {
+  companion object {
+    const val EMPTY_RULES = """{
+    "event_id": [],
+    "event_data": {}
+  }"""
+  }
+}

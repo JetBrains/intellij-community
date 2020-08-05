@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -32,7 +33,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,20 +318,18 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
-    private final String myMessage;
+    private final @IntentionName String myMessage;
 
-    ReplaceWithCollectionFactoryFix(String message) {
+    ReplaceWithCollectionFactoryFix(@IntentionName String message) {
       myMessage = message;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myMessage;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {

@@ -27,6 +27,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -1195,16 +1196,18 @@ public final class RefactoringUtil {
   @NotNull
   public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
     throws IncorrectOperationException {
-    final PsiDirectory[] directories = aPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
-        return directory;
-      }
+    PsiDirectory[] existing = aPackage.getDirectories(
+        GlobalSearchScopes.directoryScope(aPackage.getManager().getProject(), sourceRoot, true));
+    if (existing.length > 0) {
+      return existing[0];
     }
     String qNameToCreate = qNameToCreateInSourceRoot(aPackage, sourceRoot);
-    final String[] shortNames = qNameToCreate.split("\\.");
     PsiDirectory current = aPackage.getManager().findDirectory(sourceRoot);
     LOG.assertTrue(current != null);
+    if (qNameToCreate.isEmpty()) {
+      return current;
+    }
+    final String[] shortNames = qNameToCreate.split("\\.");
     for (String shortName : shortNames) {
       PsiDirectory subdirectory = current.findSubdirectory(shortName);
       if (subdirectory == null) {

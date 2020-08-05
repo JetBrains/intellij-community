@@ -5,11 +5,13 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.network.status.WebServiceStatusManager
 import com.intellij.util.Alarm
 import com.intellij.util.Time
+import com.intellij.util.containers.forEachLoggingErrors
 
 private fun isSendAllowed(): Boolean {
   return isCompletionLogsSendAllowed() && StatisticsUploadAssistant.isSendAllowed()
@@ -20,6 +22,9 @@ internal fun isCompletionLogsSendAllowed(): Boolean {
 }
 
 internal class SenderPreloadingActivity : PreloadingActivity() {
+  companion object {
+    private val LOG = logger<SenderPreloadingActivity>()
+  }
   private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication())
   private val sendInterval = 5 * Time.MINUTE
 
@@ -40,10 +45,11 @@ internal class SenderPreloadingActivity : PreloadingActivity() {
     }
 
     try {
-      val statusHelper = WebServiceStatus.getInstance()
-      statusHelper.updateStatus()
-      if (statusHelper.isServerOk()) {
-        service<StatisticSender>().sendStatsData(statusHelper.dataServerUrl())
+      WebServiceStatusManager.getAllStatuses().forEachLoggingErrors(LOG) { status ->
+        status.update()
+        if (status.isServerOk()) {
+          service<StatisticSender>().sendStatsData(status.dataServerUrl())
+        }
       }
     }
     finally {

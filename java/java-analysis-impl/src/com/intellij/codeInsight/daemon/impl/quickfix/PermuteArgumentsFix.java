@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class PermuteArgumentsFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(PermuteArgumentsFix.class);
@@ -44,6 +47,10 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     return QuickFixBundle.message("permute.arguments");
   }
 
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new PermuteArgumentsFix(PsiTreeUtil.findSameElementInCopy(myCall, target), myPermutation);
+  }
 
   @Override
   @NotNull
@@ -58,11 +65,11 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myCall.getArgumentList().replace(myPermutation.getArgumentList());
+    Objects.requireNonNull(myCall.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
   }
 
   public static boolean registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
-    PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+    PsiExpression[] expressions = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
     if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
 
@@ -73,7 +80,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
         PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
 
         PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (expressions.length != parameters.length || parameters.length ==0) continue;
+        if (expressions.length != parameters.length) continue;
         int minIncompatibleIndex = parameters.length;
         int maxIncompatibleIndex = 0;
         int incompatibilitiesCount = 0;

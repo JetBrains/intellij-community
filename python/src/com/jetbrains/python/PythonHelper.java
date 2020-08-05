@@ -52,7 +52,6 @@ public enum PythonHelper implements HelperPackage {
   NOSE("pycharm", "_jb_nosetest_runner"),
 
   BEHAVE("pycharm", "behave_runner"),
-  LETTUCE("pycharm", "lettuce_runner"),
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),

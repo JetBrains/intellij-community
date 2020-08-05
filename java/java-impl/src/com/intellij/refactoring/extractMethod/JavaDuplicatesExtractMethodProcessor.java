@@ -5,6 +5,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -37,11 +38,11 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
   };
 
-  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @NotNull String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @NotNull @NlsContexts.DialogTitle String refactoringName) {
     this(elements, null, refactoringName);
   }
 
-  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @Nullable Editor editor, @Nullable String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @Nullable Editor editor, @Nullable @NlsContexts.DialogTitle String refactoringName) {
     super(elements[0].getProject(), editor, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
   }
 

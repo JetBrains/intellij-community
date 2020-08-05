@@ -3,6 +3,7 @@ package com.siyeh.ipp.types;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionAction {
 
-  private String text = "Make method default";
+  private @IntentionName String text = "Make method default";
 
   @NotNull
   @Override

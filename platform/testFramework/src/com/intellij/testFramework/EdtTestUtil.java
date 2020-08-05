@@ -12,7 +12,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
-public class EdtTestUtil {
+public final class EdtTestUtil {
   @kotlin.Deprecated(message = "Use Kotlin runInEdtAndGet { ... } instead")  // this warning is only visible in Kotlin files
   @TestOnly
   public static <V, T extends Throwable> V runInEdtAndGet(@NotNull ThrowableComputable<V, T> computable) throws T {

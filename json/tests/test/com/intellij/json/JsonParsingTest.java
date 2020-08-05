@@ -77,6 +77,10 @@ public class JsonParsingTest extends ParsingTestCase {
 
   // Moved from JavaScript
 
+  public void testSimple() {
+    doTest();
+  }
+
   public void testSimple1() {
     doTest();
   }
@@ -86,6 +90,10 @@ public class JsonParsingTest extends ParsingTestCase {
   }
 
   public void testSimple4() {
+    doTest();
+  }
+
+  public void testReal() {
     doTest();
   }
 

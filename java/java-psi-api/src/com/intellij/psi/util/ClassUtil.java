@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,7 +26,7 @@ public final class ClassUtil {
   }
 
   @NotNull
-  public static String extractClassName(@NotNull String fqName) {
+  public static @NlsSafe String extractClassName(@NotNull String fqName) {
     int i = fqName.lastIndexOf('.');
     return i == -1 ? fqName : fqName.substring(i + 1);
   }

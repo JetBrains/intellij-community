@@ -70,7 +70,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     if (cannotRefactorMessage != null)  {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
-                                          ExtractClassProcessor.REFACTORING_NAME, getHelpID());
+                                          "Extract Delegate", getHelpID());
       return;
     }
     new ExtractClassDialog(containingClass, selectedMember).show();

@@ -134,6 +134,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
     for (Runnable runnable : myRunnables) {
       dumbService.withAlternativeResolveEnabled(runnable);
     }
+    myRunnables.clear();
   }
 
 }

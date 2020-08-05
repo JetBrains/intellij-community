@@ -32,8 +32,7 @@ import com.intellij.testFramework.PsiTestUtil;
 @HeavyPlatformTestCase.WrapInCommand
 public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
   public void testOptimizeImportInPackageIgnoresFilesOutsideSourceRootsForExampleTestData() throws Exception {
-    VirtualFile root =
-      PsiTestUtil.createTestProjectStructure(myProject, myModule, OptimizeImportsTest.BASE_PATH + "/testData", myFilesToDelete, false);
+    VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/testData", false);
     ModuleRootModificationUtil.addContentRoot(getModule(), root);
     VirtualFile x = root.findChild("X.java");
     String textBefore = VfsUtilCore.loadText(x);
@@ -53,7 +52,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
     boolean importsOnTheFly = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     try {
-      VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, OptimizeImportsTest.BASE_PATH + "/src1", myFilesToDelete, false);
+      VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/src1", false);
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);
@@ -76,7 +75,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
     boolean importsOnTheFly = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     try {
-      VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, OptimizeImportsTest.BASE_PATH + "/src1", myFilesToDelete, false);
+      VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/src1", false);
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);

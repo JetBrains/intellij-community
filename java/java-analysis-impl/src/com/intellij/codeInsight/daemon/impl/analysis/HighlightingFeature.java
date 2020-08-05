@@ -7,10 +7,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -67,7 +64,7 @@ public enum HighlightingFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
 
-  public static final String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
+  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
 
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
@@ -121,7 +118,7 @@ public enum HighlightingFeature {
 
   @Nullable
   @Contract(pure = true)
-  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull final String feature) {
+  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls final String feature) {
     switch (feature) {
       case "PATTERN_MATCHING_IN_INSTANCEOF":
         return PATTERNS;

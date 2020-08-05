@@ -72,7 +72,7 @@ public class DeclarationParser {
         return null;
       }
       final IElementType afterIdent = builder.lookAhead(2);
-      // No parser recovery for local records without < or ( to support for light stubs
+      // No parser recovery for local records without < or ( to support light stubs
       // (look at com.intellij.psi.impl.source.JavaLightStubBuilder.CodeBlockVisitor.visit)
       if (context == Context.CODE_BLOCK && afterIdent != JavaTokenType.LPARENTH && afterIdent != JavaTokenType.LT) {
         // skipping record kw and identifier

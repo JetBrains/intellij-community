@@ -53,6 +53,11 @@ public final class LightEditMenuBar extends IdeMenuBar {
       )
     );
     topGroup.add(
+      createActionGroup(ActionsBundle.message("group.WindowMenu.text"),
+                        standardAction("NextProjectWindow"),
+                        standardAction("PreviousProjectWindow"))
+    );
+    topGroup.add(
       createActionGroup(ActionsBundle.message("group.HelpMenu.text"),
                         standardAction("HelpTopics"),
                         standardAction("About"))

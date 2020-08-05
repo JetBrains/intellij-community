@@ -1,6 +1,6 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,11 +24,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
@@ -41,18 +37,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Collections;
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, MarkdownPreviewSettings.Holder, Disposable {
   private static final String JAVA_FX_HTML_PANEL_PROVIDER = "JavaFxHtmlPanelProvider";
   private JPanel myMainPanel;
-  private JBCheckBox myCssFromURIEnabled;
-  private TextFieldWithBrowseButton myCssURI;
+  private JBCheckBox myCustomCssFromPathEnabled;
+  private TextFieldWithBrowseButton myCustomCssPath;
   private JBCheckBox myApplyCustomCssText;
   private JPanel myEditorPanel;
   private JPanel myCssTitledSeparator;
@@ -62,21 +57,20 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private JPanel myPreviewTitledSeparator;
   private JBCheckBox myAutoScrollCheckBox;
   private JPanel myMultipleProvidersPreviewPanel;
-  private LinkLabel myPlantUMLDownload;
-  private JBLabel myPlantUMLStatusLabel;
   private JBRadioButton myVerticalLayout;
   private JBRadioButton myHorizontalLayout;
   private JBLabel myVerticalSplitLabel;
   private JBCheckBox myDisableInjections;
   private JBCheckBox myHideErrorsCheckbox;
-  private JBLabel myPlantUMLLocationHelp;
+  private MarkdownScriptsTable myScriptsTable;
+  private JBLabel myExtensionsHelpMessage;
 
   private static final Color SUCCESS_COLOR = new JBColor(0x008000, 0x6A8759);
 
   @Nullable
   private EditorEx myEditor;
   @NotNull
-  private final ActionListener myCssURIListener;
+  private final ActionListener myCustomCssPathListener;
   @NotNull
   private final ActionListener myCustomCssTextListener;
 
@@ -85,10 +79,10 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private CollectionComboBoxModel<MarkdownHtmlPanelProvider.ProviderInfo> myPreviewPanelModel;
 
   public MarkdownSettingsForm() {
-    myCssURIListener = new ActionListener() {
+    myCustomCssPathListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myCssURI.setEnabled(myCssFromURIEnabled.isSelected());
+        myCustomCssPath.setEnabled(myCustomCssFromPathEnabled.isSelected());
       }
     };
 
@@ -101,13 +95,13 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
 
     adjustCSSRulesAvailability();
 
-    myCssFromURIEnabled.addActionListener(myCssURIListener);
+    myCustomCssFromPathEnabled.addActionListener(myCustomCssPathListener);
     myApplyCustomCssText.addActionListener(myCustomCssTextListener);
-    myCssURI.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("css")) {
+    myCustomCssPath.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("css")) {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-        return chosenFile.getUrl();
+        return chosenFile.getPath();
       }
     });
 
@@ -123,20 +117,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     });
 
     adjustAutoScroll();
-
-    updatePlantUMLLabel(false);
-    myPlantUMLStatusLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
-
-    myPlantUMLDownload.setListener((source, data) -> {
-      DownloadableFileService downloader = DownloadableFileService.getInstance();
-      DownloadableFileDescription description =
-        downloader.createFileDescription(MarkdownSettingsConfigurable.PLANTUML_JAR_URL, MarkdownSettingsConfigurable.PLANTUML_JAR);
-
-      downloader.createDownloader(Collections.singletonList(description), MarkdownSettingsConfigurable.PLANT_UML_DIRECTORY + ".jar")
-        .downloadFilesWithProgress(MarkdownSettingsConfigurable.getDirectoryToDownload().getAbsolutePath(), null, myMainPanel);
-
-      updatePlantUMLLabel(true);
-    }, null);
   }
 
   private void adjustSplitOption() {
@@ -144,35 +124,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     myVerticalLayout.setEnabled(isSplitted);
     myHorizontalLayout.setEnabled(isSplitted);
     myVerticalSplitLabel.setEnabled(isSplitted);
-  }
-
-  public void updatePlantUMLLabel(boolean isJustInstalled) {
-    myPlantUMLStatusLabel.setForeground(JBColor.foreground());
-    myPlantUMLStatusLabel.setIcon(null);
-
-    if (MarkdownSettingsConfigurable.isPlantUMLAvailable()) {
-      if (isJustInstalled) {
-        myPlantUMLStatusLabel.setForeground(SUCCESS_COLOR);
-        myPlantUMLStatusLabel.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.download.success"));
-      }
-      else {
-        myPlantUMLStatusLabel.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.installed"));
-      }
-      myPlantUMLDownload.setVisible(false);
-    }
-    else {
-      if (isJustInstalled) {
-        myPlantUMLStatusLabel.setForeground(JBColor.RED);
-        myPlantUMLStatusLabel.setIcon(AllIcons.General.Warning);
-        myPlantUMLStatusLabel.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.download.failed"));
-        myPlantUMLDownload.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.download.retry"));
-      }
-      else {
-        myPlantUMLStatusLabel.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.download.isnt.installed"));
-        myPlantUMLDownload.setText(MarkdownBundle.message("markdown.settings.preview.plantUML.download"));
-      }
-      myPlantUMLDownload.setVisible(true);
-    }
   }
 
   private void adjustAutoScroll() {
@@ -200,12 +151,11 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
 
     myCssTitledSeparator = new TitledSeparator(MarkdownBundle.message("markdown.settings.css.title.name"));
 
-    myPlantUMLLocationHelp = ContextHelpLabel.create(
-      MarkdownBundle.message(
-        "markdown.settings.preview.plantUML.jar.location.description",
-        MarkdownSettingsConfigurable.getExpectedJarPath().getAbsolutePath()
-      )
+    myExtensionsHelpMessage = ContextHelpLabel.create(
+      MarkdownBundle.message("markdown.settings.download.extension.download.notice")
     );
+
+    myScriptsTable = new MarkdownScriptsTable();
 
     createPreviewUIComponents();
   }
@@ -215,14 +165,9 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   }
 
   public void validate() throws ConfigurationException {
-    if (!myCssFromURIEnabled.isSelected()) return;
-
-    try {
-      new URL(myCssURI.getText()).toURI();
-    }
-    catch (URISyntaxException | MalformedURLException e) {
-      throw new ConfigurationException(
-        MarkdownBundle.message("dialog.message.uri.parsing.reports.error", myCssURI.getText(), e.getMessage()));
+    if (!myCustomCssFromPathEnabled.isSelected()) return;
+    if (!new File(myCustomCssPath.getText()).exists()) {
+      throw new ConfigurationException(MarkdownBundle.message("dialog.message.path.error", myCustomCssPath.getText()));
     }
   }
 
@@ -259,12 +204,12 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
 
   @Override
   public void setMarkdownCssSettings(@NotNull MarkdownCssSettings settings) {
-    myCssFromURIEnabled.setSelected(settings.isUriEnabled());
-    myCssURI.setText(settings.getStylesheetUri());
+    myCustomCssFromPathEnabled.setSelected(settings.isCustomStylesheetEnabled());
+    myCustomCssPath.setText(settings.getCustomStylesheetPath());
     myApplyCustomCssText.setSelected(settings.isTextEnabled());
-    resetEditor(settings.getStylesheetText());
+    resetEditor(settings.getCustomStylesheetText());
 
-    myCssURIListener.actionPerformed(null);
+    myCustomCssPathListener.actionPerformed(null);
     myCustomCssTextListener.actionPerformed(null);
   }
 
@@ -282,11 +227,20 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   @NotNull
   @Override
   public MarkdownCssSettings getMarkdownCssSettings() {
-    return new MarkdownCssSettings(myCssFromURIEnabled.isSelected(),
-                                   myCssURI.getText(),
+    return new MarkdownCssSettings(myCustomCssFromPathEnabled.isSelected(),
+                                   myCustomCssPath.getText(),
                                    myApplyCustomCssText.isSelected(),
                                    myEditor != null && !myEditor.isDisposed() ?
                                    ReadAction.compute(() -> myEditor.getDocument().getText()) : "");
+  }
+
+  @NotNull
+  public Map<String, Boolean> getExtensionsEnabledState() {
+    return new HashMap<>(myScriptsTable.getState());
+  }
+
+  public void setExtensionsEnabledState(@NotNull Map<String, Boolean> state) {
+    myScriptsTable.setState(state, (MarkdownHtmlPanelProvider.ProviderInfo)myPreviewProvider.getSelectedItem());
   }
 
   @Override
@@ -335,10 +289,15 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
         }
         else {
           myLastItem = item;
+          myScriptsTable.setState(MarkdownApplicationSettings.getInstance().getExtensionsEnabledState(), provider.getProviderInfo());
           updateUseGrayscaleEnabled();
         }
       }
     });
+    myScriptsTable.setState(
+      MarkdownApplicationSettings.getInstance().getExtensionsEnabledState(),
+      (MarkdownHtmlPanelProvider.ProviderInfo)myPreviewProvider.getSelectedItem()
+    );
   }
 
   private void updateUseGrayscaleEnabled() {

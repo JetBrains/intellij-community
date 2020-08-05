@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -50,7 +50,7 @@ public abstract class AbstractVcs extends StartedActivated {
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
 
-  public AbstractVcs(@NotNull Project project, final String name) {
+  public AbstractVcs(@NotNull Project project, String name) {
     myProject = project;
     myName = name;
     myKey = new VcsKey(myName);
@@ -62,7 +62,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @Override
-  protected void shutdown() throws VcsException {
+  protected void shutdown() {
   }
 
   @Override
@@ -229,9 +229,9 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return true if the corresponding file exists in the repository, false otherwise.
    */
   public boolean fileExistsInVcs(FilePath path) {
-    final VirtualFile virtualFile = path.getVirtualFile();
+    VirtualFile virtualFile = path.getVirtualFile();
     if (virtualFile != null) {
-      final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+      FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
       return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED;
     }
     return true;
@@ -270,13 +270,11 @@ public abstract class AbstractVcs extends StartedActivated {
 
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
-
     return file == null || fileInVcsByFileStatus(project, file);
   }
 
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
-
     return status != FileStatus.UNKNOWN && status != FileStatus.ADDED && status != FileStatus.IGNORED;
   }
 
@@ -338,16 +336,15 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
-  @Nullable
-  public CommittedChangesProvider getCommittedChangesProvider() {
+  public @Nullable CommittedChangesProvider<? extends CommittedChangeList, ?> getCommittedChangesProvider() {
     return null;
   }
 
   @Nullable
-  public final CachingCommittedChangesProvider getCachingCommittedChangesProvider() {
-    CommittedChangesProvider provider = getCommittedChangesProvider();
+  public final CachingCommittedChangesProvider<? extends CommittedChangeList, ?> getCachingCommittedChangesProvider() {
+    CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
     if (provider instanceof CachingCommittedChangesProvider) {
-      return (CachingCommittedChangesProvider)provider;
+      return (CachingCommittedChangesProvider<? extends CommittedChangeList, ?>)provider;
     }
     return null;
   }
@@ -565,8 +562,9 @@ public abstract class AbstractVcs extends StartedActivated {
   @Nullable
   public CommittedChangeList loadRevisions(VirtualFile vf, @NotNull VcsRevisionNumber number) {
     return VcsSynchronousProgressWrapper.compute(() -> {
-      final Pair<CommittedChangeList, FilePath> pair = getCommittedChangesProvider().getOneList(vf, number);
-      return pair != null ? pair.getFirst() : null;
+      CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
+      Pair<? extends CommittedChangeList, FilePath> pair = provider == null ? null : provider.getOneList(vf, number);
+      return pair == null ? null : pair.getFirst();
     }, getProject(), VcsBundle.message("title.load.revision.contents"));
   }
 

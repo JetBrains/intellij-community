@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
@@ -387,7 +388,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static final class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
-    private final String myName;
+    private final @IntentionName String myName;
 
     private ConvertFieldToLocalQuickFix(@NotNull Map<PsiCodeBlock, Collection<PsiReference>> refs) {
       final Set<PsiCodeBlock> blocks = refs.keySet();
@@ -404,7 +405,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @NotNull
-    private String determineName(@Nullable PsiElement block) {
+    private @IntentionName String determineName(@Nullable PsiElement block) {
       if (block instanceof PsiClassInitializer) return JavaBundle.message("inspection.field.can.be.local.quickfix.initializer");
 
       if (block instanceof PsiMethod) {

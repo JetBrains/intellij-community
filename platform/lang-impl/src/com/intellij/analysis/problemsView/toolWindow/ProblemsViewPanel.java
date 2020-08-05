@@ -23,7 +23,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
@@ -47,10 +47,11 @@ import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
-abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(ProblemsViewPanel.class);
   private final Project myProject;
   private final ProblemsViewState myState;
+  private final Supplier<String> myName;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
   private final ProblemsViewPreview myPreview = new ProblemsViewPreview(this);
   private final JPanel myPanel;
@@ -72,8 +73,8 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     if (content == null) return;
 
     Root root = myTreeModel.getRoot();
-    int count = root == null ? 0 : root.getProblemsCount();
-    content.setDisplayName(getContentDisplayName(count));
+    int count = root == null ? 0 : root.getProblemCount();
+    content.setDisplayName(getName(count));
     Icon icon = getToolWindowIcon(count);
     if (icon != null) window.setIcon(icon);
   }, 50, stateForComponent(this), this);
@@ -113,6 +114,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
       updatePreview(getSelectedDescriptor());
     }
   };
+  @SuppressWarnings("unused")
   private final Option mySortFoldersFirst = new Option() {
     @Override
     public boolean isSelected() {
@@ -150,10 +152,11 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     }
   };
 
-  ProblemsViewPanel(@NotNull Project project, @NotNull ProblemsViewState state) {
+  ProblemsViewPanel(@NotNull Project project, @NotNull ProblemsViewState state, @NotNull Supplier<String> name) {
     super(false, .5f, .1f, .9f);
     myProject = project;
     myState = state;
+    myName = name;
 
     myTreeModel.setComparator(createComparator());
     myTree = new Tree(new AsyncTreeModel(myTreeModel, this));
@@ -205,8 +208,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return null;
   }
 
-  abstract @NotNull String getDisplayName();
-
   final void updateToolWindowContent() {
     myUpdateAlarm.cancelAndRequest();
   }
@@ -215,8 +216,8 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return null;
   }
 
-  @NotNull String getContentDisplayName(int count) {
-    String name = getDisplayName();
+  @NotNull String getName(int count) {
+    String name = myName.get();
     if (count <= 0) return name;
     return "<html><body>" + name + " <font color='" + toHtmlColor(UIUtil.getInactiveTextColor()) + "'>" + count + "</font></body></html>";
   }
@@ -324,14 +325,6 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     getApplication().invokeLater(runnable, stateForComponent(this));
   }
 
-  void select(@NotNull Node node) {
-    TreeUtil.promiseSelect(getTree(), createVisitor(node));
-  }
-
-  @NotNull TreeVisitor createVisitor(@NotNull Node node) {
-    return new TreeVisitor.ByTreePath<>(node.getPath(), o -> o);
-  }
-
   @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
@@ -348,11 +341,11 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   @Nullable Option getSortFoldersFirst() {
-    return mySortFoldersFirst;
+    return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
   @Nullable Option getSortBySeverity() {
-    return mySortBySeverity;
+    return this instanceof HighlightingPanel ? mySortBySeverity : null;
   }
 
   @Nullable Option getSortByName() {

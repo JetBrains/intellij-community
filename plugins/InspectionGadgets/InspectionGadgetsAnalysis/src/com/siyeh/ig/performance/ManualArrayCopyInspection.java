@@ -302,7 +302,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
           return maxText + '+' + -minValue;
         }
       }
-      final String minText = commentTracker.text(min, ParenthesesUtils.ADDITIVE_PRECEDENCE);
+      // - 1 because of the increment inside the com.siyeh.ig.psiutils.CommentTracker.text(com.intellij.psi.PsiExpression, int)
+      final String minText = commentTracker.text(min, ParenthesesUtils.ADDITIVE_PRECEDENCE - 1);
       final String maxText = buildExpressionText(max, plusOne, commentTracker);
       return maxText + '-' + minText;
     }

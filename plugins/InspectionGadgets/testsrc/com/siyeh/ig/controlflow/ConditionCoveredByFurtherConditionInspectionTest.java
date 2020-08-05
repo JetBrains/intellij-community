@@ -11,6 +11,9 @@ public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaI
   public void testConditionCoveredByFurtherCondition() {
     ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTest);
   }
+  public void testMultiCatch() {
+    doTest();
+  }
 
   @Nullable
   @Override

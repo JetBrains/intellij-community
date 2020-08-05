@@ -4,8 +4,14 @@ package com.intellij.usages.impl.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.usages.rules.UsageFilteringRuleProvider.RULES_CHANGED;
+
+/**
+ * Groups by package
+ */
 class GroupByDirectoryAction extends RuleAction {
   GroupByDirectoryAction() {
     super(IdeBundle.message("action.title.group.by.directory"), AllIcons.Actions.GroupByPackage);

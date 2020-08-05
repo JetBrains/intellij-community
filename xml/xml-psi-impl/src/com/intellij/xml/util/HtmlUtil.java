@@ -39,8 +39,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
@@ -107,7 +105,7 @@ public final class HtmlUtil {
   private static final Set<String> BLOCK_TAGS_MAP = new HashSet<>();
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new HashSet<>();
 
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new HashSet<>();
 
@@ -117,13 +115,13 @@ public final class HtmlUtil {
     "main"
   };
   private static final Set<String> HTML5_TAGS_SET = new HashSet<>();
-  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<>();
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new HashMap<>();
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
       final String tagName = StringUtil.toLowerCase(control.name);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<>(control.autoClosedBy));
+      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
     }
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
@@ -503,7 +501,7 @@ public final class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls final Set<String> inTag = new THashSet<>();
+        @NonNls final Set<String> inTag = new HashSet<>();
         boolean metHttpEquiv;
         boolean metHtml5Charset;
 

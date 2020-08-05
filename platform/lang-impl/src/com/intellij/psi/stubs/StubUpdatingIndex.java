@@ -200,10 +200,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   private static void assertStubsAreSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
-    assert stub.getStubType() == stub2.getStubType();
+    assert stub.getStubType() == stub2.getStubType() : stub.getStubType() + "!=" + stub2.getStubType();
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();
-    assert stubs.size() == stubs2.size();
+    assert stubs.size() == stubs2.size() : stub.getStubType() + ": " + stubs.size() + "!=" + stubs2.size();
     for (int i = 0, len = stubs.size(); i < len; ++i) {
       assertStubsAreSimilar(stubs.get(i), stubs2.get(i));
     }
@@ -465,15 +465,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     @Override
     public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
       super.setIndexedStateForFile(fileId, file);
-
-      if (myCompositeBinaryBuilderMap != null) {
-        try {
-          myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      setBinaryBuilderConfiguration(fileId, file);
     }
 
     @Override
@@ -484,6 +476,22 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       } catch (IOException e) {
         LOG.error(e);
         return false;
+      }
+    }
+
+    @Override
+    protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+      setBinaryBuilderConfiguration(fileId, file);
+    }
+
+    private void setBinaryBuilderConfiguration(int fileId, @NotNull IndexedFile file) {
+      if (myCompositeBinaryBuilderMap != null) {
+        try {
+          myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     }
   }

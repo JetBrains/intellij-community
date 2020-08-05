@@ -20,28 +20,28 @@ public abstract class TemplateBase extends Template {
   private boolean toParseSegments = true;
 
   public void parseSegments() {
-    if(!isToParseSegments()) {
+    if(!toParseSegments) {
       return;
     }
-    if(getSegments() != null) {
+    if(mySegments != null) {
       return;
     }
 
-    setSegments(new SmartList<>());
-    StringBuilder buffer = new StringBuilder(getString().length());
+    mySegments = new SmartList<>();
+    StringBuilder buffer = new StringBuilder(myString.length());
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(getString());
+    lexer.start(myString);
 
     while(true){
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
       int start = lexer.getTokenStart();
       int end = lexer.getTokenEnd();
-      String token = getString().substring(start, end);
+      String token = myString.substring(start, end);
       if (tokenType == TemplateTokenType.VARIABLE){
         String name = token.substring(1, token.length() - 1);
         Segment segment = new Segment(name, buffer.length());
-        getSegments().add(segment);
+        mySegments.add(segment);
       }
       else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
         buffer.append("$");
@@ -51,7 +51,7 @@ public abstract class TemplateBase extends Template {
       }
       lexer.advance();
     }
-    setTemplateText(buffer.toString());
+    myTemplateText = buffer.toString();
   }
 
   protected List<Segment> getSegments() {
@@ -77,6 +77,10 @@ public abstract class TemplateBase extends Template {
     return myString;
   }
 
+  protected String string() {
+    return myString;
+  }
+
   /**
    * Set template text as it appears in Live Template settings, including variables surrounded with '$'.
    * The text will be reparsed when needed.
@@ -84,9 +88,9 @@ public abstract class TemplateBase extends Template {
    */
   public void setString(@NotNull String string) {
     myString = StringUtil.convertLineSeparators(string);
-    setSegments(null);
-    setToParseSegments(true);
-    setBuildingTemplateTrace(new Throwable());
+    mySegments = null;
+    toParseSegments = true;
+    myBuildingTemplateTrace = new Throwable();
   }
 
   @NotNull
@@ -96,6 +100,9 @@ public abstract class TemplateBase extends Template {
     return myTemplateText;
   }
 
+  protected String templateText() {
+    return myTemplateText;
+  }
 
   protected void setTemplateText(String templateText) {
     myTemplateText = templateText;
@@ -112,8 +119,8 @@ public abstract class TemplateBase extends Template {
 
   int getVariableSegmentNumber(String variableName) {
     parseSegments();
-    for (int i = 0; i < getSegments().size(); i++) {
-      Segment segment = getSegments().get(i);
+    for (int i = 0; i < mySegments.size(); i++) {
+      Segment segment = mySegments.get(i);
       if (segment.name.equals(variableName)) {
         return i;
       }
@@ -124,31 +131,31 @@ public abstract class TemplateBase extends Template {
   @Override
   public void addTextSegment(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
-    setTemplateText(getTemplateText() + text);
+    myTemplateText += text;
   }
 
   @Override
   public void addVariableSegment(@NotNull String name) {
-    getSegments().add(new Segment(name, getTemplateText().length()));
+    mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
   @NotNull
   @Override
   public String getSegmentName(int i) {
     parseSegments();
-    return getSegments().get(i).name;
+    return mySegments.get(i).name;
   }
 
   @Override
   public int getSegmentOffset(int i) {
     parseSegments();
-    return getSegments().get(i).offset;
+    return mySegments.get(i).offset;
   }
 
   @Override
   public int getSegmentsCount() {
     parseSegments();
-    return getSegments().size();
+    return mySegments.size();
   }
 
   protected static final class Segment {

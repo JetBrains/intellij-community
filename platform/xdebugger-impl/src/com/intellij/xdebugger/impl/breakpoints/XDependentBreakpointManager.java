@@ -7,7 +7,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +73,7 @@ public final class XDependentBreakpointManager {
   }
 
   public void saveState() {
-    Map<XBreakpointBase<?,?,?>, String> breakpointToId = new THashMap<>();
+    Map<XBreakpointBase<?,?,?>, String> breakpointToId = new HashMap<>();
     int id = 0;
     for (XBreakpointBase breakpoint : myMaster2Info.keySet()) {
       breakpointToId.put(breakpoint, String.valueOf(id++));

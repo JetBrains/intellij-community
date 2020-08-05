@@ -19,21 +19,20 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ChainCompletionContext {
+public final class ChainCompletionContext {
   private static final String[] WIDELY_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
                                                                   CommonClassNames.JAVA_LANG_OBJECT,
                                                                   CommonClassNames.JAVA_LANG_CLASS};
@@ -52,7 +51,7 @@ public class ChainCompletionContext {
   @NotNull
   private final PsiResolveHelper myResolveHelper;
   @NotNull
-  private final TIntObjectHashMap<PsiClass> myQualifierClassResolver;
+  private final Int2ObjectOpenHashMap<PsiClass> myQualifierClassResolver;
   @NotNull
   private final Map<MethodCall, PsiMethod[]> myResolver;
   @NotNull
@@ -62,19 +61,24 @@ public class ChainCompletionContext {
     @NotNull
     @Override
     protected Set<CompilerRef> compute() {
-      return getContextTypes()
-        .stream()
-        .map(PsiUtil::resolveClassInType)
-        .filter(Objects::nonNull)
-        .map(c -> ClassUtil.getJVMClassName(c))
-        .filter(Objects::nonNull)
-        .mapToInt(c -> myRefServiceEx.getNameId(c))
-        .filter(n -> n != 0)
-        .mapToObj(n -> new CompilerRef.JavaCompilerClassRef(n)).collect(Collectors.toSet());
+      Set<CompilerRef> set = new HashSet<>();
+      for (PsiType type : getContextTypes()) {
+        PsiClass c = PsiUtil.resolveClassInType(type);
+        if (c != null) {
+          String name = ClassUtil.getJVMClassName(c);
+          if (name != null) {
+            int n = myRefServiceEx.getNameId(name);
+            if (n != 0) {
+              set.add(new CompilerRef.JavaCompilerClassRef(n));
+            }
+          }
+        }
+      }
+      return set;
     }
   };
 
-  public ChainCompletionContext(@NotNull ChainSearchTarget target,
+  private ChainCompletionContext(@NotNull ChainSearchTarget target,
                                 @NotNull List<PsiNamedElement> contextElements,
                                 @NotNull PsiElement context) {
     myTarget = target;
@@ -83,7 +87,7 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = new TIntObjectHashMap<>();
+    myQualifierClassResolver = new Int2ObjectOpenHashMap<>();
     myResolver = FactoryMap.create(sign -> sign.resolve());
     myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
   }
@@ -155,12 +159,13 @@ public class ChainCompletionContext {
     });
   }
 
-  @Nullable
-  public PsiClass resolvePsiClass(CompilerRef.CompilerClassHierarchyElementDef aClass) {
+  public @Nullable PsiClass resolvePsiClass(@NotNull CompilerRef.NamedCompilerRef aClass) {
     int nameId = aClass.getName();
-    if (myQualifierClassResolver.contains(nameId)) {
+
+    if (myQualifierClassResolver.containsKey(nameId)) {
       return myQualifierClassResolver.get(nameId);
-    } else {
+    }
+    else {
       PsiClass psiClass = null;
       String name = myRefServiceEx.getName(nameId);
       PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
@@ -180,12 +185,14 @@ public class ChainCompletionContext {
     return m -> myResolveHelper.isAccessible(m, myContext, null);
   }
 
-  @Nullable
-  public static ChainCompletionContext createContext(@Nullable PsiType targetType,
-                                                     @Nullable PsiElement containingElement, boolean suggestIterators) {
-    if (containingElement == null) return null;
-    ChainSearchTarget target = ChainSearchTarget.create(targetType);
-    if (target == null) return null;
+  public static @Nullable ChainCompletionContext createContext(@Nullable PsiType targetType,
+                                                               @Nullable PsiElement containingElement,
+                                                               boolean suggestIterators) {
+    ChainSearchTarget target = containingElement == null ? null : ChainSearchTarget.create(targetType);
+    if (target == null) {
+      return null;
+    }
+
     if (suggestIterators) {
       target = target.toIterators();
     }
@@ -194,13 +201,12 @@ public class ChainCompletionContext {
     ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement, excludedVariables);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
     List<PsiNamedElement> contextElements = processor.getContextElements();
-
     return new ChainCompletionContext(target, contextElements, containingElement);
   }
 
   @NotNull
   private static Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
-    Set<PsiLocalVariable> result = new THashSet<>();
+    Set<PsiLocalVariable> result = new HashSet<>();
     if (place instanceof PsiLocalVariable) result.add((PsiLocalVariable)place);
     PsiElement parent = place.getParent();
     while (parent != null) {

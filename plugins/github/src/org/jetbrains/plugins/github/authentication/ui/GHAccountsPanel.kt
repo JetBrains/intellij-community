@@ -231,7 +231,7 @@ internal class GHAccountsPanel(
     private val fullName = JLabel()
 
     private val loadingError = JLabel()
-    private val reloginLink = LinkLabel<Any?>(GithubBundle.message("accounts.relogin"), null)
+    private val reloginLink = LinkLabel<Any?>(GithubBundle.message("login.action"), null)
 
     /**
      * UPDATE [createLinkActivationListener] IF YOU CHANGE LAYOUT

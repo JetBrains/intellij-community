@@ -75,6 +75,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
@@ -317,7 +318,7 @@ public final class PsiImplUtil {
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
 
-    if (node.getElementType() == GroovyTokenTypes.mIDENT) {
+    if (node.getElementType() == GroovyTokenTypes.mIDENT || node.getElementType() == kVAR) {
       return nameElement.getText();
     }
 

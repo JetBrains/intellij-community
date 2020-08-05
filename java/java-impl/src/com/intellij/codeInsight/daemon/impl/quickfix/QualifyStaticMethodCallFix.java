@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   @NotNull
   @Override
   protected String getBaseText() {
-    return "Qualify static call";
+    return JavaBundle.message("qualify.static.call.fix.text");
   }
 
   @NotNull
@@ -61,7 +62,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
     PsiClass containingClass = toImport.getContainingClass();
     if (containingClass == null) return;
     PsiReferenceExpression qualifier = JavaPsiFacade.getElementFactory(project).createReferenceExpression(containingClass);
-    WriteCommandAction.runWriteCommandAction(project, "Qualify Static Access", null, () -> {
+    WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null, () -> {
                                                qualifiedExpression.setQualifierExpression(qualifier);
                                                JavaCodeStyleManager.getInstance(project).shortenClassReferences(qualifiedExpression);
                                              }

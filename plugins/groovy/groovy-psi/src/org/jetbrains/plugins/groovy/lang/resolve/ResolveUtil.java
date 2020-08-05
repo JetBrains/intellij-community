@@ -65,7 +65,6 @@ import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
@@ -77,7 +76,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialSta
  * @author ven
  */
 public final class ResolveUtil {
-
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
 
@@ -825,8 +823,9 @@ public final class ResolveUtil {
         if (candidate != null) {
           ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
           if (mapping != null) {
-            ExpressionArgument argument = new ExpressionArgument(arg);
-            PsiParameter targetParameter = doIfNotNull(mapping.targetParameter(argument), PsiCallParameter::getPsi);
+            Argument argument = new ExpressionArgument(arg);
+            PsiCallParameter obj = mapping.targetParameter(argument);
+            PsiParameter targetParameter = obj == null ? null : obj.getPsi();
             PsiType expectedType = mapping.expectedType(argument);
             ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
           }

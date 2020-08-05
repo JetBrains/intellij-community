@@ -217,7 +217,7 @@ public final class EncodingUtil {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return FailReason.IS_BINARY;
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     Charset existing = virtualFile.getCharset();
     LoadTextUtil.AutoDetectionReason autoDetectedFrom = LoadTextUtil.getCharsetAutoDetectionReason(virtualFile);
     FailReason result;
@@ -250,7 +250,7 @@ public final class EncodingUtil {
       return FailReason.IS_DIRECTORY;
     }
 
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 

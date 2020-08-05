@@ -5,25 +5,25 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.io.PathKt;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class ClassFileUnderSourceRootTest extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    File dir = createTempDirectory();
-    final VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(dir);
-    assertNotNull(root);
+    VirtualFile root = getTempDir().createVirtualDir();
+    Path dir = root.toNioPath();
 
-    FileUtil.writeToFile(new File(dir, "p/A.java"), "package p;\npublic class A { }");
-    FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), new File(dir, "pack/MyClass.class"));
+    PathKt.write(dir.resolve("p/A.java"), "package p;\npublic class A { }");
+    FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), dir.resolve("pack/MyClass.class").toFile());
 
     root.refresh(false, true);
     assertSize(2, root.getChildren());

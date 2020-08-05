@@ -46,11 +46,11 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  public static void processProjectConfigurables(@NotNull Project project, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -223,7 +223,8 @@ public final class SearchUtil {
       renderer = new DefaultListCellRenderer();
     }
 
-    JList<?> jList = new BasicComboPopup(comboBox).getList();
+    @SuppressWarnings({"RedundantCast", "unchecked"})
+    JList<?> jList = new BasicComboPopup((JComboBox<Object>)comboBox).getList();
 
     List<String> result = new ArrayList<>();
 

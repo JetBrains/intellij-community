@@ -8,6 +8,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
@@ -424,7 +425,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, null, fontStyle));
+    String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+    text.setText(textContent);
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -666,6 +668,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       balloon.setActionProvider(
         new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
+
+    ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
+      HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
+      newKit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
+      text.setEditorKit(newKit);
+      text.setText(textContent);
+      text.revalidate();
+      text.repaint();
+    });
 
     Disposer.register(parentDisposable, balloon);
     return balloon;

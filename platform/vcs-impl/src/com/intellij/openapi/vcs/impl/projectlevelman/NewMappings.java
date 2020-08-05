@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -39,10 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.*;
-import static java.util.Collections.unmodifiableList;
-
-public class NewMappings implements Disposable {
+public final class NewMappings implements Disposable {
   private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparing(it -> it.root.getPath());
   private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
@@ -51,7 +49,6 @@ public class NewMappings implements Disposable {
 
   private FileWatchRequestsManager myFileWatchRequestsManager;
 
-  private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final ProjectLevelVcsManager myVcsManager;
   private final Project myProject;
 
@@ -69,7 +66,6 @@ public class NewMappings implements Disposable {
     myProject = project;
     myVcsManager = vcsManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
-    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
       .usePassThroughInUnitTestMode();
@@ -170,7 +166,8 @@ public class NewMappings implements Disposable {
   private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
     myRootUpdateQueue.cancelAllUpdates();
 
-    List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
+    List<VcsDirectoryMapping> newMappings = Collections
+      .unmodifiableList(ContainerUtil.sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
     synchronized (myUpdateLock) {
       boolean mappingsChanged = !myMappings.equals(newMappings);
       if (!mappingsChanged) return; // mappings are up-to-date
@@ -232,7 +229,7 @@ public class NewMappings implements Disposable {
     List<VcsDirectoryMapping> newMapping = new ArrayList<>();
     Set<String> paths = new HashSet<>();
 
-    for (VcsDirectoryMapping mapping : reverse(new ArrayList<>(mappings))) {
+    for (VcsDirectoryMapping mapping : ContainerUtil.reverse(new ArrayList<>(mappings))) {
       // take last mapping in collection in case of duplicates
       if (paths.add(mapping.getDirectory())) {
         newMapping.add(mapping);
@@ -251,7 +248,10 @@ public class NewMappings implements Disposable {
     try {
       // direct mappings have priority over <Project> mappings
       for (VcsDirectoryMapping mapping : mappings) {
-        if (mapping.isDefaultMapping()) continue;
+        if (mapping.isDefaultMapping()) {
+          continue;
+        }
+
         AbstractVcs vcs = getMappingsVcs(mapping);
         String rootPath = mapping.getDirectory();
 
@@ -272,26 +272,29 @@ public class NewMappings implements Disposable {
       }
 
       for (VcsDirectoryMapping mapping : mappings) {
-        if (!mapping.isDefaultMapping()) continue;
+        if (!mapping.isDefaultMapping()) {
+          continue;
+        }
         AbstractVcs vcs = getMappingsVcs(mapping);
-        if (vcs == null) continue;
+        if (vcs == null) {
+          continue;
+        }
 
         Collection<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs,
-                                                                     myDefaultVcsRootPolicy.getDefaultVcsRoots(),
-                                                                     map2Set(mappedRoots.values(), it -> it.root));
+                                                                     DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
+                                                                     ContainerUtil.map2Set(mappedRoots.values(), it -> it.root));
 
         ReadAction.run(() -> {
           for (VirtualFile vcsRoot : defaultRoots) {
             if (vcsRoot != null && vcsRoot.isDirectory()) {
               mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-
               pointerManager.create(vcsRoot, pointerDisposable, myFilePointerListener);
             }
           }
         });
       }
 
-      return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
+      return new Mappings(Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
     }
     catch (Throwable e) {
       Disposer.dispose(pointerDisposable);
@@ -418,7 +421,6 @@ public class NewMappings implements Disposable {
     updateVcsMappings(items);
   }
 
-
   @Nullable
   public MappedRoot getMappedRootFor(@Nullable VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return null;
@@ -439,7 +441,7 @@ public class NewMappings implements Disposable {
 
   @NotNull
   public List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
-    return mapNotNull(myMappedRoots, root -> {
+    return ContainerUtil.mapNotNull(myMappedRoots, root -> {
       return vcs.equals(root.vcs) ? root.root : null;
     });
   }
@@ -464,17 +466,17 @@ public class NewMappings implements Disposable {
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings(String vcsName) {
-    return filter(myMappings, mapping -> Objects.equals(mapping.getVcs(), vcsName));
+    return ContainerUtil.filter(myMappings, mapping -> Objects.equals(mapping.getVcs(), vcsName));
   }
 
   @Nullable
   public String haveDefaultMapping() {
-    VcsDirectoryMapping defaultMapping = find(myMappings, mapping -> mapping.isDefaultMapping());
+    VcsDirectoryMapping defaultMapping = ContainerUtil.find(myMappings, mapping -> mapping.isDefaultMapping());
     return defaultMapping != null ? defaultMapping.getVcs() : null;
   }
 
   public boolean isEmpty() {
-    return all(myMappings, mapping -> mapping.isNoneMapping());
+    return ContainerUtil.all(myMappings, mapping -> mapping.isNoneMapping());
   }
 
   public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
@@ -493,7 +495,7 @@ public class NewMappings implements Disposable {
 
     List<VcsDirectoryMapping> filteredMappings = new ArrayList<>();
 
-    VcsDirectoryMapping defaultMapping = find(oldMappings, it -> it.isDefaultMapping());
+    VcsDirectoryMapping defaultMapping = ContainerUtil.find(oldMappings, it -> it.isDefaultMapping());
     if (defaultMapping != null) {
       oldMappings.remove(defaultMapping);
       filteredMappings.add(defaultMapping);
@@ -508,13 +510,13 @@ public class NewMappings implements Disposable {
       String vcsName = entry.getKey();
       Collection<VcsDirectoryMapping> mappings = entry.getValue();
 
-      List<Pair<VirtualFile, VcsDirectoryMapping>> objects = mapNotNull(mappings, dm -> {
+      List<Pair<VirtualFile, VcsDirectoryMapping>> objects = ContainerUtil.mapNotNull(mappings, dm -> {
         VirtualFile vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
         return vf == null ? null : Pair.create(vf, dm);
       });
 
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
-        filteredMappings.addAll(map(objects, Functions.pairSecond()));
+        filteredMappings.addAll(ContainerUtil.map(objects, Functions.pairSecond()));
       }
       else {
         AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
@@ -524,7 +526,7 @@ public class NewMappings implements Disposable {
           filteredMappings.addAll(mappings);
         }
         else {
-          filteredMappings.addAll(map(vcs.filterUniqueRoots(objects, pair -> pair.getFirst()), Functions.pairSecond()));
+          filteredMappings.addAll(ContainerUtil.map(vcs.filterUniqueRoots(objects, pair -> pair.getFirst()), Functions.pairSecond()));
         }
       }
     }
@@ -534,15 +536,15 @@ public class NewMappings implements Disposable {
 
   @NotNull
   private MyVcsActivator createVcsActivator() {
-    Set<AbstractVcs> newVcses = map2SetNotNull(myMappings, mapping -> getMappingsVcs(mapping));
+    Set<AbstractVcs> newVcses = ContainerUtil.map2SetNotNull(myMappings, mapping -> getMappingsVcs(mapping));
 
     List<AbstractVcs> oldVcses = myActiveVcses;
-    myActiveVcses = unmodifiableList(new ArrayList<>(newVcses));
+    myActiveVcses = Collections.unmodifiableList(new ArrayList<>(newVcses));
 
     refreshMainMenu();
 
-    Collection<AbstractVcs> toAdd = subtract(myActiveVcses, oldVcses);
-    Collection<AbstractVcs> toRemove = subtract(oldVcses, myActiveVcses);
+    Collection<AbstractVcs> toAdd = ContainerUtil.subtract(myActiveVcses, oldVcses);
+    Collection<AbstractVcs> toRemove = ContainerUtil.subtract(oldVcses, myActiveVcses);
 
     return new MyVcsActivator(toAdd, toRemove);
   }
@@ -578,7 +580,7 @@ public class NewMappings implements Disposable {
   }
 
   public boolean haveActiveVcs(final String name) {
-    return exists(myActiveVcses, vcs -> Objects.equals(vcs.getName(), name));
+    return ContainerUtil.exists(myActiveVcses, vcs -> Objects.equals(vcs.getName(), name));
   }
 
   public void beingUnregistered(final String name) {

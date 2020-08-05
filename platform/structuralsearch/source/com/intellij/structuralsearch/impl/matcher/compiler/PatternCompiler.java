@@ -50,13 +50,16 @@ public final class PatternCompiler {
   private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
+  /**
+   * @return the compiled pattern, or null when there is no structural search profile found for the file type in the match options.
+   */
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
     return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
   @Nullable
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options,
+  private static CompiledPattern doCompilePattern(@NotNull Project project, @NotNull MatchOptions options,
                                                   boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
@@ -84,7 +87,8 @@ public final class PatternCompiler {
         optimizeScope(options, checkForErrors, context, result);
       }
       return result;
-    } finally {
+    }
+    finally {
       context.clear();
     }
   }
@@ -176,10 +180,10 @@ public final class PatternCompiler {
   }
 
   @NotNull
-  private static List<PsiElement> compileByAllPrefixes(Project project,
-                                                       MatchOptions options,
-                                                       CompiledPattern pattern,
-                                                       CompileContext context,
+  private static List<PsiElement> compileByAllPrefixes(@NotNull Project project,
+                                                       @NotNull MatchOptions options,
+                                                       @NotNull CompiledPattern pattern,
+                                                       @NotNull CompileContext context,
                                                        String @NotNull [] applicablePrefixes,
                                                        boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
@@ -396,11 +400,12 @@ public final class PatternCompiler {
     }
   }
 
-  private static List<PsiElement> doCompile(Project project,
-                                            MatchOptions options,
-                                            CompiledPattern result,
-                                            PrefixProvider prefixProvider,
-                                            CompileContext context,
+  @NotNull
+  private static List<PsiElement> doCompile(@NotNull Project project,
+                                            @NotNull MatchOptions options,
+                                            @NotNull CompiledPattern result,
+                                            @NotNull PrefixProvider prefixProvider,
+                                            @NotNull CompileContext context,
                                             boolean checkForErrors) throws MalformedPatternException {
     result.clearHandlers();
 
@@ -524,7 +529,8 @@ public final class PatternCompiler {
 
         addExtensionPredicates(options, constraint, handler);
         addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options, checkForErrors);
-      } catch (MalformedPatternException e) {
+      }
+      catch (MalformedPatternException e) {
         if (checkForErrors) throw e;
       }
     }
@@ -564,7 +570,7 @@ public final class PatternCompiler {
     return elements;
   }
 
-  private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+  private static void addExtensionPredicates(@NotNull MatchOptions options, @NotNull MatchVariableConstraint constraint, @NotNull SubstitutionHandler handler) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
     for (MatchPredicate matchPredicate : profile.getCustomPredicates(constraint, handler.getName(), options)) {
@@ -582,7 +588,7 @@ public final class PatternCompiler {
       final String problem = ScriptSupport.checkValidScript(script, matchOptions);
       if (problem != null) {
         if (checkForErrors) {
-          throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
+          throw new MalformedPatternException(SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), problem));
         }
         else {
           return;

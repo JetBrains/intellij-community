@@ -20,15 +20,15 @@ import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.classstore.InstanceField
 import com.intellij.diagnostic.hprof.classstore.StaticField
 import com.intellij.diagnostic.hprof.parser.*
-import gnu.trove.TLongArrayList
-import gnu.trove.TLongLongHashMap
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongArrayList
 
-class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String>) : HProfVisitor() {
+internal class CreateClassStoreVisitor(private val stringIdMap: Long2ObjectMap<String>) : HProfVisitor() {
+  private val classIDToNameStringID = Long2LongOpenHashMap()
 
-  private val classIDToNameStringID = TLongLongHashMap()
-
-  private val result = TLongObjectHashMap<ClassDefinition>()
+  private val result = Long2ObjectOpenHashMap<ClassDefinition>()
   private var completed = false
 
   override fun preVisit() {
@@ -70,29 +70,31 @@ class CreateClassStoreVisitor(private val stringIdMap: TLongObjectHashMap<String
         currentOffset += visitorContext.idSize
       }
     }
-    val constantsArray = TLongArrayList(constants.size)
-    constants.filter { it.type == Type.OBJECT }.forEach { constantsArray.add(it.value) }
-    val objectStaticFieldList = staticFields
+    val constantsArray = LongArrayList(constants.size)
+    constants.asSequence()
+      .filter { it.type == Type.OBJECT }
+      .forEach { constantsArray.add(it.value) }
+    val objectStaticFieldList = staticFields.asSequence()
       .filter { it.type == Type.OBJECT }
       .map { StaticField(stringIdMap[it.fieldNameStringId], it.value) }
-    val primitiveStaticFieldList = staticFields
+    val primitiveStaticFieldList = staticFields.asSequence()
       .filter { it.type != Type.OBJECT }
       .map { StaticField(stringIdMap[it.fieldNameStringId], it.value) }
 
-    result.put(classId,
-               ClassDefinition(
-                 stringIdMap[classIDToNameStringID[classId]].replace('/', '.'),
-                 classId,
-                 superClassId,
-                 classloaderClassId,
-                 instanceSize.toInt(),
-                 currentOffset,
-                 refInstanceFields.toTypedArray(),
-                 primitiveInstanceFields.toTypedArray(),
-                 constantsArray.toNativeArray(),
-                 objectStaticFieldList.toTypedArray(),
-                 primitiveStaticFieldList.toTypedArray()
-               ))
+    val classDefinition = ClassDefinition(
+      name = stringIdMap.get(classIDToNameStringID.get(classId)).replace('/', '.'),
+      id = classId,
+      superClassId = superClassId,
+      classLoaderId = classloaderClassId,
+      instanceSize = instanceSize.toInt(),
+      superClassOffset = currentOffset,
+      refInstanceFields = refInstanceFields.toTypedArray(),
+      primitiveInstanceFields = primitiveInstanceFields.toTypedArray(),
+      constantFields = constantsArray.toLongArray(),
+      objectStaticFields = objectStaticFieldList.toList().toTypedArray(),
+      primitiveStaticFields = primitiveStaticFieldList.toList().toTypedArray()
+    )
+    result.put(classId, classDefinition)
   }
 
   fun getClassStore(): ClassStore {

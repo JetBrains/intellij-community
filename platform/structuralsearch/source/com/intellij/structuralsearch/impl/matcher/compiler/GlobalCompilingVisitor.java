@@ -16,6 +16,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,11 +35,12 @@ public class GlobalCompilingVisitor {
   private final List<PsiElement> myLexicalNodes = new SmartList<>();
   private int myCodeBlockLevel;
 
+  @NotNull
   public static NodeFilter getFilter() {
     return ourFilter;
   }
 
-  public void setHandler(PsiElement element, MatchingHandler handler) {
+  public void setHandler(@NotNull PsiElement element, @NotNull MatchingHandler handler) {
     MatchingHandler realHandler = context.getPattern().getHandlerSimple(element);
 
     if (realHandler instanceof SubstitutionHandler) {
@@ -50,7 +52,7 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public final void handle(PsiElement element) {
+  public final void handle(@NotNull PsiElement element) {
     if ((!ourFilter.accepts(element) ||
          StructuralSearchUtil.isIdentifier(element)) &&
         context.getPattern().isRealTypedVar(element) &&
@@ -83,7 +85,7 @@ public class GlobalCompilingVisitor {
     this.myCodeBlockLevel = codeBlockLevel;
   }
 
-  public static void setFilter(MatchingHandler handler, NodeFilter filter) {
+  public static void setFilter(@NotNull MatchingHandler handler, @NotNull NodeFilter filter) {
     if (handler.getFilter() != null && handler.getFilter().getClass() != filter.getClass()) {
       // for constructor we will have the same handler for class and method and tokens itself
       handler.setFilter(new CompositeNodeFilter(filter, handler.getFilter()));
@@ -93,19 +95,20 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public void setFilterSimple(PsiElement element, NodeFilter filter) {
+  public void setFilterSimple(@NotNull PsiElement element, @NotNull NodeFilter filter) {
     context.getPattern().getHandler(element).setFilter(filter);
   }
 
+  @NotNull
   public List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }
 
-  public void addLexicalNode(PsiElement node) {
+  public void addLexicalNode(@NotNull PsiElement node) {
     myLexicalNodes.add(node);
   }
 
-  void compile(PsiElement[] elements, CompileContext context) {
+  void compile(PsiElement @NotNull [] elements, @NotNull CompileContext context) {
     if (elements.length == 0) {
       throw new MalformedPatternException();
     }
@@ -119,17 +122,17 @@ public class GlobalCompilingVisitor {
     assert context.getPattern().getStrategy() != null;
   }
 
-  public boolean hasFragments(String pattern) {
+  public boolean hasFragments(@NotNull String pattern) {
     return ourSubstitutionPattern.matcher(pattern).find();
   }
 
   @Nullable
-  public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
     return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
   }
 
   @Nullable
-  public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind, Pattern substitutionPattern) {
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind, @NotNull Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {
@@ -157,7 +160,7 @@ public class GlobalCompilingVisitor {
         hasLiteralContent = true;
         buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
-        processTokenizedName(word, false, kind);
+        processTokenizedName(word, kind);
       }
 
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
@@ -174,7 +177,7 @@ public class GlobalCompilingVisitor {
       }
 
       if (isSuitablePredicate(predicate, handler)) {
-        processTokenizedName(predicate.getRegExp(), false, kind);
+        processTokenizedName(predicate.getRegExp(), kind);
       }
 
       start = matcher.end();
@@ -186,7 +189,7 @@ public class GlobalCompilingVisitor {
       hasLiteralContent = true;
       buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
-      processTokenizedName(word, false, kind);
+      processTokenizedName(word, kind);
     }
 
     if (hasLiteralContent) {
@@ -206,14 +209,14 @@ public class GlobalCompilingVisitor {
   }
 
   @Contract("null,_ -> false")
-  public static boolean isSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
+  public static boolean isSuitablePredicate(RegExpPredicate predicate, @NotNull SubstitutionHandler handler) {
     return predicate != null && handler.getMinOccurs() != 0 && predicate.couldBeOptimized();
   }
 
-  public static void addFilesToSearchForGivenWord(String word,
+  public static void addFilesToSearchForGivenWord(@NotNull String word,
                                                   boolean endTransaction,
-                                                  GlobalCompilingVisitor.OccurenceKind kind,
-                                                  CompileContext compileContext) {
+                                                  @NotNull GlobalCompilingVisitor.OccurenceKind kind,
+                                                  @NotNull CompileContext compileContext) {
     if (!compileContext.getSearchHelper().doOptimizing()) {
       return;
     }
@@ -240,7 +243,7 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public void processTokenizedName(String name, boolean skipComments, GlobalCompilingVisitor.OccurenceKind kind) {
+  public void processTokenizedName(@NotNull String name, @NotNull GlobalCompilingVisitor.OccurenceKind kind) {
     if (kind == OccurenceKind.LITERAL) name = StringUtil.unescapeStringCharacters(name);
     for (String word : StringUtil.getWordsInStringLongestFirst(name)) {
       addFilesToSearchForGivenWord(word, true, kind, getContext());

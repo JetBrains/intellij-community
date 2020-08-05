@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcs.test.VcsPlatformTest
@@ -27,7 +27,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
   protected lateinit var rootModule: Module
 
   private val extensionPoint: ExtensionPoint<VcsRootChecker>
-    get() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
+    get() = VcsRootChecker.EXTENSION_POINT_NAME.point
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -78,7 +78,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
 
   private fun createProjectStructure(project: Project, paths: Collection<String>) {
     for (path in paths) {
-      cd(project.baseDir.path)
+      cd(PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
       val f = File(project.basePath, path)
       f.mkdirs()
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)
@@ -91,7 +91,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
       return
     }
 
-    val baseDir = VfsUtilCore.virtualToIoFile(myProject.baseDir)
+    val baseDir = VfsUtilCore.virtualToIoFile(PlatformTestUtil.getOrCreateProjectBaseDir(getProject()))
     val maxDepth = findMaxDepthAboveProject(mockRoots)
     val projectDir = createChild(baseDir, maxDepth - 1)
     cd(projectDir.path)

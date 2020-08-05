@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
@@ -169,7 +170,7 @@ public class SelectionManagerTest extends HeavyPlatformTestCase {
     private final Map<VirtualFile, DefaultMutableTreeNode> myMap;
 
     private FileStructure(Project project) throws IOException {
-      final VirtualFile baseDir = project.getBaseDir();
+      final VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(project);
 
       myParent = baseDir.createChildDirectory(this, "parent");
       myMiddle1 = myParent.createChildDirectory(this, "middle1");

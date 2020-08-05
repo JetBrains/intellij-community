@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
@@ -165,16 +165,15 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          InlineIconButton(GithubIcons.Delete, GithubIcons.DeleteHovered,
-                           tooltip = GithubBundle.message("pull.request.discard.pending.comments")).apply {
-            actionListener = ActionListener {
-              if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.discard.pending.comments.dialog.msg"),
-                                                  GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
-                                                  Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-                reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
-              }
+          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon = GithubIcons.DeleteHovered,
+                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
+          button.actionListener = ActionListener {
+            if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
+                                           GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {
+              reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
             }
           }
+          button
         }
       }
 

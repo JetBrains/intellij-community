@@ -21,7 +21,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
   private VcsLogUserFilterTest myVcsLogUserFilterTest;
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     myVcsLogUserFilterTest = new VcsLogUserFilterTest(GitTestUtil.findGitLogProvider(myProject), myProject) {
       @Override

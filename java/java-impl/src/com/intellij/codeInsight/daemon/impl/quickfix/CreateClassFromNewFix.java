@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -228,7 +229,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return qualifier != null;
   }
 
-  protected String getText(final String varName) {
+  protected @IntentionName String getText(final String varName) {
     return CommonQuickFixBundle.message("fix.create.title.x", getKind().getDescriptionAccusative(), varName);
   }
 

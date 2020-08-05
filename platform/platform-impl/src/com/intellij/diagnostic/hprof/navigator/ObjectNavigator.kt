@@ -20,7 +20,7 @@ import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.visitors.CreateAuxiliaryFilesVisitor
-import gnu.trove.TLongArrayList
+import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.NonNls
 import java.nio.channels.FileChannel
 
@@ -42,8 +42,8 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
 
   abstract fun getClass(): ClassDefinition
 
-  abstract fun getReferencesCopy(): TLongArrayList
-  abstract fun copyReferencesTo(outReferences: TLongArrayList)
+  abstract fun getReferencesCopy(): LongList
+  abstract fun copyReferencesTo(outReferences: LongList)
 
   abstract fun getClassForObjectId(id: Long): ClassDefinition
   abstract fun getRootReasonForObjectId(id: Long): RootReason?
@@ -65,7 +65,7 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
       assert(className == getClass().name.substringBeforeLast('!')) { "Expected $className, got ${getClass().name}" }
     }
     val indexOfField = getClass().allRefFieldNames(classStore).indexOfFirst { it == name }
-    return refs[indexOfField]
+    return refs.getLong(indexOfField)
   }
 
   fun goToStaticField(@NonNls className: String, @NonNls fieldName: String) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -280,7 +281,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final HashMap<PsiFile, String> map,
                                       final Object targetDirectory,
                                       final PsiDirectory defaultTargetDirectory,
-                                      final String commandName,
+                                      final @NlsContexts.Command String commandName,
                                       final boolean selectInActivePanel,
                                       final boolean openInEditor) {
     Runnable command = () -> {

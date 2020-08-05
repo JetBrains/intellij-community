@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
@@ -22,6 +23,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -128,22 +130,18 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val storageManager = ApplicationManager.getApplication().stateStore.storageManager
-    val optionsPath = storageManager.expandMacro(APP_CONFIG)
-    val rootConfigPath = storageManager.expandMacro(ROOT_CONFIG)
-    val map = getExportableComponentsMap(false, true, storageManager)
+    val map = getExportableComponentsMap(true, storageManager)
     assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
-      val file = item.file
-      assertThat(map.get(file)).containsExactly(item)
-      assertThat(file).doesNotExist()
+      assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map[item.fileSpec])
     }
 
-    test(ExportableItem(optionsPath.resolve("filetypes.xml"), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(rootConfigPath.resolve("filetypes"), "File types (schemes)", RoamingType.DEFAULT))
-    test(ExportableItem(optionsPath.resolve("customization.xml"), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(optionsPath.resolve("templates.xml"), "Live templates", RoamingType.DEFAULT))
-    test(ExportableItem(rootConfigPath.resolve("templates"), "Live templates (schemes)", RoamingType.DEFAULT))
+    test(ExportableItem(FileSpec("filetypes", true), "File types (schemes)"))
+    test(ExportableItem(FileSpec("options/filetypes.xml", false), "File types"))
+    test(ExportableItem(FileSpec("options/customization.xml", false), "Menus and toolbars customization"))
+    test(ExportableItem(FileSpec("options/templates.xml", false), "Live templates"))
+    test(ExportableItem(FileSpec("templates", true), "Live templates (schemes)"))
   }
 
   @Test
@@ -168,10 +166,10 @@ internal class ApplicationStoreTest {
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
     val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(componentPath, additionalPath), exportedData, configDir)
+    exportSettings(setOf(ExportableItem(FileSpec("a.xml", false), ""), ExportableItem(FileSpec("foo", true), "")), exportedData, storageManager)
 
     val relativePaths = getPaths(exportedData.toInputStream())
-    assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
+    assertThat(relativePaths).containsOnly("a.xml", "foo", "foo/bar.icls", "IntelliJ IDEA Global Settings")
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
@@ -179,8 +177,9 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(DefaultPicoContainer.InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(isOnlyExisting = false, isComputePresentableNames = false, storageManager = storageManager, onlyPaths = relativePaths))
-        .containsOnly(componentPath.to(listOf(ExportableItem(componentPath, ""))), additionalPath.to(listOf(ExportableItem(additionalPath, " (schemes)"))))
+      assertThat(getExportableItemsFromLocalStorage(getExportableComponentsMap(false, storageManager), storageManager)).containsOnly(
+        componentPath.to(listOf(LocalExportableItem(componentPath, ""))),
+        additionalPath.to(listOf(LocalExportableItem(additionalPath, " (schemes)"))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)
@@ -405,6 +404,9 @@ internal class ApplicationStoreTest {
   }
 
   private class MyComponentStore(testAppConfigPath: Path) : ComponentStoreWithExtraComponents() {
+    override val serviceContainer: ComponentManagerImpl
+      get() = ApplicationManager.getApplication() as ComponentManagerImpl
+
     override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {

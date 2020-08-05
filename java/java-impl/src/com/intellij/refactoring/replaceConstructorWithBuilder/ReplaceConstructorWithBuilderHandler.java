@@ -16,9 +16,11 @@
 
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -68,7 +70,7 @@ public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHa
     throw new UnsupportedOperationException();
   }
 
-  private static void showErrorMessage(String message, Project project, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME,  HelpID.REPLACE_CONSTRUCTOR_WITH_BUILDER);
+  private static void showErrorMessage(@NlsContexts.DialogMessage String message, Project project, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, JavaRefactoringBundle.message("replace.constructor.with.builder"), HelpID.REPLACE_CONSTRUCTOR_WITH_BUILDER);
   }
 }

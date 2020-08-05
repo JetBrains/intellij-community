@@ -55,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
+public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
   private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
@@ -380,7 +380,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(@NotNull GlobalSearchScope searchScope) {
-      Set<VirtualFile> files = new LinkedHashSet<>();
+      Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
       dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 
@@ -396,10 +396,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
             return true;
           });
 
-        PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
+        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
-          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
+          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, true, word, processor);
         }
       });
       return files;
@@ -410,8 +410,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                            @NotNull GlobalSearchScope searchScope,
                                                            @NotNull Project project,
                                                            @NotNull Processor<? super PsiFunctionalExpression> consumer) {
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-    if (compilerReferenceService == null) return true;
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
+    if (compilerReferenceService == null) {
+      return true;
+    }
     for (SamDescriptor descriptor : descriptors) {
       CompilerDirectHierarchyInfo info = compilerReferenceService.getFunExpressions(descriptor.samClass, searchScope, JavaFileType.INSTANCE);
       if (info != null && !processFunctionalExpressions(info, descriptor, consumer)) {

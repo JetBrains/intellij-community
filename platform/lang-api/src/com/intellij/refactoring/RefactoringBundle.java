@@ -14,17 +14,17 @@ public final class RefactoringBundle extends DynamicBundle {
   private RefactoringBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return INSTANCE.getMessage(key);
   }
 
@@ -36,31 +36,31 @@ public final class RefactoringBundle extends DynamicBundle {
     return message("search.for.text.occurrences");
   }
 
-  public static String getVisibilityPackageLocal() {
+  public static @Nls String getVisibilityPackageLocal() {
     return message("visibility.package.local");
   }
 
-  public static String getVisibilityPrivate() {
+  public static @Nls String getVisibilityPrivate() {
     return message("visibility.private");
   }
 
-  public static String getVisibilityProtected() {
+  public static @Nls String getVisibilityProtected() {
     return message("visibility.protected");
   }
 
-  public static String getVisibilityPublic() {
+  public static @Nls String getVisibilityPublic() {
     return message("visibility.public");
   }
 
-  public static String getVisibilityAsIs() {
+  public static @Nls String getVisibilityAsIs() {
     return message("visibility.as.is");
   }
 
-  public static String getEscalateVisibility() {
+  public static @Nls String getEscalateVisibility() {
     return message("visibility.escalate");
   }
 
-  public static String getCannotRefactorMessage(@NlsContexts.DialogMessage @Nullable final String message) {
+  public static @NlsContexts.DialogMessage String getCannotRefactorMessage(@NlsContexts.DialogMessage @Nullable final String message) {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 }

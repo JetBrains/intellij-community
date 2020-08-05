@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import org.jetbrains.annotations.NotNull;
@@ -13,16 +13,15 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 public final class MacUIUtil {
-
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
-  public static final int MAC_COMBO_BORDER_V_OFFSET = SystemInfo.isMacOSLion ? 1 : 0;
+  public static final int MAC_COMBO_BORDER_V_OFFSET = 1;
   private static Cursor INVERTED_TEXT_CURSOR;
 
   private MacUIUtil() {}
 
   public static void hideCursor() {
-    if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing", true)) {
+    if (SystemInfoRt.isMac && Registry.is("ide.mac.hide.cursor.when.typing", true)) {
       Foundation.executeOnMainThread(false, false, () -> {
         Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
       });

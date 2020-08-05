@@ -15,8 +15,8 @@ import com.intellij.util.xmlb.annotations.Property
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
 @State(name = "GraziConfig", storages = [
-  Storage(value = "grazi_global.xml", deprecated = true),
-  Storage("grazie_global.xml")
+  Storage("grazie_global.xml"),
+  Storage(value = "grazi_global.xml", deprecated = true)
 ])
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   @Suppress("unused")

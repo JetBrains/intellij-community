@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.openapi.roots.*
@@ -6,16 +6,16 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.JavaModuleTestCase
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
 
 class CloneOrderEntriesTest : JavaModuleTestCase() {
-
   override fun isRunInWriteAction(): Boolean = true
 
   fun `test copied jdk and module source`() {
     val copyToModifiableModel = ModuleRootManager.getInstance(createModule("Copy To Module")).modifiableModel
     val originalModifiableModel = ModuleRootManager.getInstance(module).modifiableModel
 
-    val path = originalModifiableModel.module.moduleFilePath
+    val path = originalModifiableModel.module.moduleNioFile
 
     // Tested methods
     val builder = ModuleStructureConfigurable.CopiedModuleBuilder(originalModifiableModel, path, project)
@@ -27,7 +27,7 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
     val originalOrderEntries = originalModifiableModel.orderEntries
     val copiedOrderEntries = copyToModifiableModel.orderEntries
 
-    TestCase.assertEquals(2, copiedOrderEntries.size)
+    assertThat(copiedOrderEntries).hasSize(2)
 
     val originalSdk = originalOrderEntries.filterIsInstance<JdkOrderEntry>().first()
     val copiedSdk = copiedOrderEntries.filterIsInstance<JdkOrderEntry>().first()
@@ -45,7 +45,7 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
 
     val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
     val library = modifiableRootModel.moduleLibraryTable.createLibrary("My Library") as LibraryEx
-    val path = modifiableRootModel.module.moduleFilePath
+    val path = modifiableRootModel.module.moduleNioFile
 
     // Tested methods
     val builder = ModuleStructureConfigurable.CopiedModuleBuilder(modifiableRootModel, path, project)
@@ -70,7 +70,7 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
     }
 
     val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
-    val path = modifiableRootModel.module.moduleFilePath
+    val path = modifiableRootModel.module.moduleNioFile
 
     // Tested methods
     val builder = ModuleStructureConfigurable.CopiedModuleBuilder(modifiableRootModel, path, project)
@@ -99,7 +99,7 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
     }
 
     val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
-    val path = modifiableRootModel.module.moduleFilePath
+    val path = modifiableRootModel.module.moduleNioFile
 
     // Tested methods
     val builder = ModuleStructureConfigurable.CopiedModuleBuilder(modifiableRootModel, path, project)
@@ -127,7 +127,7 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
     }
 
     val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
-    val path = modifiableRootModel.module.moduleFilePath
+    val path = modifiableRootModel.module.moduleNioFile
 
     // Tested methods
     val builder = ModuleStructureConfigurable.CopiedModuleBuilder(modifiableRootModel, path, project)

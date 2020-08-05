@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class PackageGroupingRule extends DirectoryGroupingRule {
-  public PackageGroupingRule(Project project) {
+  public PackageGroupingRule(@NotNull Project project) {
     super(project);
   }
 

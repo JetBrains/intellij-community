@@ -12,6 +12,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
+import org.intellij.plugins.markdown.util.hasType
 
 /**
  * Injector for Markdown code-fences
@@ -35,7 +36,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
   override fun elementsToInjectIn(): List<Class<out PsiElement>?> = toInject
 
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, host: PsiElement) {
-    if (host !is MarkdownCodeFenceImpl || host.children.all { it.node.elementType != MarkdownTokenTypes.CODE_FENCE_CONTENT }) {
+    if (host !is MarkdownCodeFenceImpl || !host.isValidHost || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) }) {
       return
     }
 

@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.externalAnnotation.location
 
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.LightPlatformTestCase
@@ -62,6 +63,12 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
 
   private fun createLibrary(): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    return WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("test-library") }
+    val library = runWriteActionAndWait { libraryTable.createLibrary("test-library") }
+    disposeOnTearDown(object : Disposable {
+      override fun dispose() {
+        runWriteActionAndWait { libraryTable.removeLibrary(library) }
+      }
+    })
+    return library
   }
 }

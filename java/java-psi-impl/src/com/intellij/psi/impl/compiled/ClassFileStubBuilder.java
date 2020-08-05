@@ -4,6 +4,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.compiled.ClassFileDecompilers;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.Stub;
@@ -19,7 +20,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<ClassFileDecompilers.Decompiler> {
   private static final Logger LOG = Logger.getInstance(ClassFileStubBuilder.class);
 
-  public static final int STUB_VERSION = 23;
+  public static final int STUB_VERSION = 25 + JavaFileElementType.STUB_VERSION;
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {

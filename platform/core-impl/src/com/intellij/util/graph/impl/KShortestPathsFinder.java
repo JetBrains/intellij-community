@@ -8,7 +8,7 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,7 +17,7 @@ import java.util.*;
  * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
  */
-public class KShortestPathsFinder<Node> {
+public final class KShortestPathsFinder<Node> {
   private static final Logger LOG = Logger.getInstance(KShortestPathsFinder.class);
   private final InboundSemiGraph<Node> myGraph;
   private final Node myStart;
@@ -47,7 +47,7 @@ public class KShortestPathsFinder<Node> {
     myNonTreeEdges = new MultiMap<>();
     mySortedNodes = new ArrayList<>();
     myNextNodes = new HashMap<>();
-    TObjectIntHashMap<Node> distances = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<Node> distances = new Object2IntOpenHashMap<>();
     Deque<Node> nodes = new ArrayDeque<>();
     nodes.addLast(myFinish);
     distances.put(myFinish, 0);
@@ -55,12 +55,12 @@ public class KShortestPathsFinder<Node> {
       myProgressIndicator.checkCanceled();
       Node node = nodes.removeFirst();
       mySortedNodes.add(node);
-      int d = distances.get(node) + 1;
+      int d = distances.getInt(node) + 1;
       Iterator<Node> iterator = myGraph.getIn(node);
       while (iterator.hasNext()) {
         Node prev = iterator.next();
         if (distances.containsKey(prev)) {
-          int dPrev = distances.get(prev);
+          int dPrev = distances.getInt(prev);
           myNonTreeEdges.putValue(prev, new GraphEdge<>(prev, node, d - dPrev));
           continue;
         }

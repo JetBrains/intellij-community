@@ -254,7 +254,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
-    final String name = config.getName() + " Coverage Results";
+    final String name = CoverageBundle.message("coverage.results.suite.name", config.getName());
     final String covFilePath = config.getCoverageFilePath();
     assert covFilePath != null; // Shouldn't be null here!
 
@@ -716,9 +716,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       final Editor editor = event.getEditor();
       Project project = editor.getProject();
       if (project == null) return;
+      CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
       try {
-        
-        CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
+        if (manager == null) return;
         final SrcFileAnnotator fileAnnotator;
         synchronized (manager.ANNOTATORS_LOCK) {
           fileAnnotator = manager.myAnnotators.remove(editor);
@@ -729,8 +729,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
       finally {
         final Runnable request = myCurrentEditors.remove(editor);
-        if (request != null) {
-          getRequestsAlarm((CoverageDataManagerImpl)getInstance(project)).cancelRequest(request);
+        if (request != null && manager != null) {
+          getRequestsAlarm(manager).cancelRequest(request);
         }
       }
     }

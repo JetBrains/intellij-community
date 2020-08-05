@@ -74,7 +74,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myPsiManager = PsiManager.getInstance(project);
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
-    myPsiManager.addPsiTreeChangeListener(mySynchronizer, this);
   }
 
   @Override
@@ -236,9 +235,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
       AppUIExecutor.onWriteThread().later().submit(() -> {
-        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-          semaphore.up();
-        });
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> semaphore.up());
       });
       while (!semaphore.waitFor(semaphoreTimeoutInMs)) {
         ProgressManager.checkCanceled();

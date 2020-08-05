@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -82,7 +83,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     public static final JavaReplaceChoice NO_WRITE = new JavaReplaceChoice(ReplaceChoice.NO_WRITE, null, false);
     public static final JavaReplaceChoice ALL = new JavaReplaceChoice(ReplaceChoice.ALL, null, false);
 
-    private final String myDescription;
+    private final @Nls String myDescription;
     private final boolean myChain;
     private final ReplaceChoice myChoice;
 
@@ -1150,7 +1151,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static boolean checkAnchorBeforeThisOrSuper(final Project project,
                                                      final Editor editor,
                                                      final PsiElement tempAnchorElement,
-                                                     final String refactoringName,
+                                                     final @NlsContexts.DialogTitle String refactoringName,
                                                      final String helpID) {
     if (tempAnchorElement instanceof PsiExpressionStatement) {
       PsiExpression enclosingExpr = ((PsiExpressionStatement)tempAnchorElement).getExpression();
@@ -1185,7 +1186,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
         final String message = JavaRefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
-        conflicts.putValue(variable, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(variable, StringUtil.capitalize(message));
       }
       conflicts.putValue(occurence, JavaRefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
@@ -1346,7 +1347,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  protected static String getRefactoringName() {
+  protected static @NlsContexts.Command String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

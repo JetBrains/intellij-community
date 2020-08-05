@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ExceptionUtilRt;
-import gnu.trove.THashSet;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -39,10 +38,10 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<Class<?>> myTargetTypes = new THashSet<Class<?>>();
+public final class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
+  private final Set<Class<?>> myTargetTypes = new HashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private final boolean myUseCustomSerialization;
@@ -186,7 +185,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     try {
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new THashSet<String>();
+        final Set<String> obtainedModels = new HashSet<String>();
         long startTime = System.currentTimeMillis();
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override

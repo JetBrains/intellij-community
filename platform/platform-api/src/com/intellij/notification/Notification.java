@@ -291,13 +291,19 @@ public class Notification {
   /**
    * @see NotificationAction
    */
-  @NotNull
-  public Notification addAction(@NotNull AnAction action) {
+  public @NotNull Notification addAction(@NotNull AnAction action) {
     if (myActions == null) {
       myActions = new ArrayList<>();
     }
     myActions.add(action);
     return this;
+  }
+
+  public final void addActions(@NotNull List<? extends AnAction> actions) {
+    if (myActions == null) {
+      myActions = new ArrayList<>();
+    }
+    myActions.addAll(actions);
   }
 
   public Notification setContextHelpAction(AnAction action) {

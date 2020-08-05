@@ -19,7 +19,6 @@ import com.intellij.diagnostic.hprof.parser.*
 import java.nio.ByteBuffer
 
 class CompositeVisitor(private vararg val visitors: HProfVisitor) : HProfVisitor() {
-
   override fun preVisit() {
     visitors.forEach {
       it.visitorContext = visitorContext

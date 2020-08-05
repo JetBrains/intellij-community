@@ -31,9 +31,12 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -289,9 +292,10 @@ final class UpdateCheckerComponent {
     }
 
     String title = IdeBundle.message("update.installed.notification.title");
-    String message = "<html>" + StringUtil.join(descriptors, descriptor -> {
-      return "<a href='" + descriptor.getPluginId().getIdString() + "'>" + descriptor.getName() + "</a>";
-    }, ", ") + "</html>";
+    String message = new HtmlBuilder()
+      .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(
+        descriptors, descriptor -> HtmlChunk.link(descriptor.getPluginId().getIdString(), descriptor.getName())))
+      .wrapWith("html").toString();
 
     UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, (notification, event) -> {
       String id = event.getDescription();

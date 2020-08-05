@@ -93,6 +93,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
@@ -648,7 +649,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private Editor getHostEditor() {
-    return InjectedLanguageUtil.getTopLevelEditor(getEditor());
+    return InjectedLanguageEditorUtil.getTopLevelEditor(getEditor());
   }
 
   private PsiFile getHostFileAtCaret() {
@@ -1998,7 +1999,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
+  public String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
     Disposer.register(getTestRootDisposable(), usageView);
     usageView.expandAll();
     return TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();

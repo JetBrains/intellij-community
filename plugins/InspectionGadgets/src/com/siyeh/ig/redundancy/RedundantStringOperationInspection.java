@@ -823,7 +823,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   }
 
   private static final class StringConstructorFix extends InspectionGadgetsFix {
-    private final String myName;
+    private final @IntentionName String myName;
 
     private StringConstructorFix(boolean noArguments) {
       if (noArguments) {

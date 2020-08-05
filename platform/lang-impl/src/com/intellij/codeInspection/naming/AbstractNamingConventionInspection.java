@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -114,7 +115,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   @NotNull
-  protected String createErrorMessage(String name, String shortName) {
+  protected @InspectionMessage String createErrorMessage(String name, String shortName) {
     return myNamingConventions.get(shortName).createErrorMessage(name, myNamingConventionBeans.get(shortName));
   }
 

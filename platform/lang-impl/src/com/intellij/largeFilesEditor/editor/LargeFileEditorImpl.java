@@ -3,9 +3,7 @@ package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
-import com.intellij.largeFilesEditor.encoding.EncodingWidget;
 import com.intellij.largeFilesEditor.encoding.LargeFileEditorAccess;
-import com.intellij.largeFilesEditor.encoding.LargeFileEditorAccessorImpl;
 import com.intellij.largeFilesEditor.file.LargeFileManager;
 import com.intellij.largeFilesEditor.file.LargeFileManagerImpl;
 import com.intellij.largeFilesEditor.file.ReadingPageResultHandler;
@@ -33,9 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +48,6 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   private final Project project;
   private LargeFileManager fileManager;
   private final EditorModel editorModel;
-  private final DocumentEx document;
   private final VirtualFile vFile;
   private LfeSearchManager searchManager;
 
@@ -64,7 +58,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     int customPageSize = PropertiesGetter.getPageSize();
     int customBorderShift = PropertiesGetter.getMaxPageBorderShiftBytes();
 
-    document = createSpecialDocument(vFile);
+    DocumentEx document = createSpecialDocument();
 
     editorModel = new EditorModel(document, project, implementDataProviderForEditorModel());
     editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_MARK_KEY, new Object());
@@ -85,7 +79,6 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     searchManager = new LfeSearchManagerImpl(
       this, fileManager.getFileDataProviderForSearch(), new RangeSearchCreatorImpl());
 
-    createAndAddSpecialWidgetIfNeed(project);
     PlatformActionsReplacer.makeAdaptingOfPlatformActionsIfNeed();
 
     editorModel.addCaretListener(new MyCaretListener());
@@ -100,25 +93,6 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   private void requestClosingEditorTab() {
     ApplicationManager.getApplication().invokeLater(
       () -> FileEditorManager.getInstance(project).closeFile(vFile));
-  }
-
-  private void createAndAddSpecialWidgetIfNeed(Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final StatusBarWidget existedWidget = statusBar.getWidget(EncodingWidget.WIDGET_ID);
-    boolean needToAddNewWidget = false;
-    if (existedWidget == null) {
-      needToAddNewWidget = true;
-    }
-    else {
-      if (existedWidget instanceof EncodingWidget &&
-          ((EncodingWidget)existedWidget)._getProject() != project) {
-        statusBar.removeWidget(existedWidget.ID());
-        needToAddNewWidget = true;
-      }
-    }
-    if (needToAddNewWidget) {
-      statusBar.addWidget(new EncodingWidget(project, new LargeFileEditorAccessorImpl()));
-    }
   }
 
   @Override
@@ -303,9 +277,10 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return fileManager.getPageSize();
   }
 
-  private static DocumentEx createSpecialDocument(VirtualFile vFile) {
+  private static DocumentEx createSpecialDocument() {
     DocumentEx doc = new DocumentImpl("", false, false); // restrict "\r\n" line separators
-    doc.putUserData(FileDocumentManagerImpl.NOT_RELOADABLE_DOCUMENT_KEY, new Object());  // to protect document from illegal content changes (see usages of the key)
+    doc.putUserData(FileDocumentManagerImpl.NOT_RELOADABLE_DOCUMENT_KEY,
+                    new Object());  // to protect document from illegal content changes (see usages of the key)
     UndoUtil.disableUndoFor(doc); // disabling Undo-functionality, provided by IDEA
     return doc;
   }

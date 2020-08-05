@@ -10,12 +10,13 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {
-  fun beforeChanged(event: VersionedStorageChanged) {}
-  fun changed(event: VersionedStorageChanged) {}
+  fun beforeChanged(event: VersionedStorageChange) {}
+  fun changed(event: VersionedStorageChange) {}
 }
 
 /**
@@ -25,6 +26,7 @@ interface WorkspaceModelChangeListener : EventListener {
  */
 class WorkspaceModelTopics : Disposable {
   companion object {
+    /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
     private val CHANGED = Topic("Workspace Model Changed", WorkspaceModelChangeListener::class.java)
 
     fun getInstance(project: Project): WorkspaceModelTopics = ServiceManager.getService(project, WorkspaceModelTopics::class.java)
@@ -81,14 +83,15 @@ class WorkspaceModelTopics : Disposable {
     allEvents.clear()
     modulesAreLoaded = true
     activity.end()
+    moduleLoadingActivity.end()
   }
 
   private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {
 
-    internal val events = mutableListOf<Pair<Boolean, VersionedStorageChanged>>()
+    internal val events = mutableListOf<Pair<Boolean, VersionedStorageChange>>()
     internal var collectToQueue = true
 
-    override fun beforeChanged(event: VersionedStorageChanged) {
+    override fun beforeChanged(event: VersionedStorageChange) {
       if (collectToQueue) {
         events += true to event
       }
@@ -97,7 +100,7 @@ class WorkspaceModelTopics : Disposable {
       }
     }
 
-    override fun changed(event: VersionedStorageChanged) {
+    override fun changed(event: VersionedStorageChange) {
       if (collectToQueue) {
         events += false to event
       }

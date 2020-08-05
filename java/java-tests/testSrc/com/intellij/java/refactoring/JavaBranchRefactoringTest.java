@@ -5,6 +5,7 @@ import com.intellij.java.refactoring.convertToInstanceMethod.ConvertToInstance8M
 import com.intellij.java.refactoring.convertToInstanceMethod.ConvertToInstanceMethodTest;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.roots.RenameModuleTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
@@ -19,13 +20,19 @@ public class JavaBranchRefactoringTest {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     List<Class<? extends TestCase>> testsToWrap = Arrays.asList(
-      //RenameClassTest.class,
-      //RenameCollisionsTest.class,
-      //RenameDirectoryTest.class,
+      RenameClassTest.class,
+      RenameCollisionsTest.class,
+      RenameDirectoryTest.class,
       RenameFieldMultiTest.class,
       RenameFieldTest.class,
       RenameLocalTest.class,
       RenameMethodMultiTest.class,
+      RenameModuleTest.class,
+
+      MoveClassTest.class,
+      MultipleJdksMoveClassTest.class,
+      MovePackageTest.class,
+      MovePackageMultirootTest.class,
 
       MoveMembersTest.class,
       ConvertToInstanceMethodTest.class,

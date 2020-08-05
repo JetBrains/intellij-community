@@ -45,6 +45,18 @@ public class ChangeInfoImpl implements ChangeInfo {
     return myOldChild;
   }
 
+  public int getOffsetInParent() {
+    return myOffset;
+  }
+
+  public int getOldLength() {
+    return myOldLength;
+  }
+
+  public int getNewLength() {
+    return myNewLength;
+  }
+
   @Nullable
   public TreeElement getNewChild() {
     return myNewChild;

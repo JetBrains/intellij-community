@@ -11,9 +11,11 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -40,6 +41,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -74,7 +76,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null &&
+                                             (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection()));
     e.getPresentation().setText(getActionName());
   }
 
@@ -134,7 +138,15 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * (note that not all platforms support highlighting).
    */
   public static void openFile(@NotNull File file) {
-    File parent = file.getAbsoluteFile().getParentFile();
+    openFile(file.toPath());
+  }
+
+  /**
+   * Opens a system file manager with given file's parent directory open and the file highlighted in it
+   * (note that not all platforms support highlighting).
+   */
+  public static void openFile(@NotNull Path file) {
+    Path parent = file.toAbsolutePath().getParent();
     if (parent != null) {
       doOpen(parent, file);
     }
@@ -147,12 +159,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * Opens a system file manager with given directory open in it.
    */
   public static void openDirectory(@NotNull File directory) {
-    doOpen(directory.getAbsoluteFile(), null);
+    doOpen(directory.toPath(), null);
   }
 
-  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) {
-    String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
-    String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
+  private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
+    String dir = _dir.toAbsolutePath().normalize().toString();
+    String toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
     String fmApp;
 
     if (SystemInfo.isWindows) {
@@ -231,7 +243,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static class Holder {
-    private static final String fileManagerApp =
+    @NonNls private static final String fileManagerApp =
       readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
@@ -257,6 +269,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return Optional.empty();
     }
 
+    @NonNls
     private static String getXdgDataDirectories() {
       return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
              StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");

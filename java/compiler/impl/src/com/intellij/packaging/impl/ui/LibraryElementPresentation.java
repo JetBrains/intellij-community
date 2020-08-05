@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class LibraryElementPresentation extends PackagingElementPresentation {
   private final String myLevel;
-  private final String myModuleName;
+  private final @NlsSafe String myModuleName;
   private final Library myLibrary;
   private final String myLibraryName;
   private final ArtifactEditorContext myContext;
@@ -64,11 +66,11 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcon(PlatformIcons.LIBRARY_ICON);
-      presentationData.addText(myLibraryName, mainAttributes);
+      presentationData.addText(getPresentableName(), mainAttributes);
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(myLibraryName + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")",
+      presentationData.addText(getPresentableName() + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")",
                                SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
@@ -84,7 +86,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     return presentation.getDisplayName(false);
   }
 
-  public static String getLibraryTableComment(final Library library) {
+  public static @NlsContexts.Label String getLibraryTableComment(final Library library) {
     LibraryTable libraryTable = library.getTable();
     String displayName;
     if (libraryTable != null) {

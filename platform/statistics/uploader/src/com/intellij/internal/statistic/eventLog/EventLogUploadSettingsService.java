@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 @ApiStatus.Internal
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final String SEND = "send";
@@ -22,7 +24,11 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
-    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo);
+    this(recorderId, appInfo, TimeUnit.HOURS.toMillis(1));
+  }
+
+  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
+    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo, settingsCacheTimeoutMs);
     myApplicationInfo = appInfo;
   }
 
@@ -91,8 +97,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   protected StatisticsWhitelistConditions getWhitelistedGroups() {
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
-    String userAgent = myApplicationInfo.getUserAgent();
-    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, userAgent);
+    EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
+    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, settings);
   }
 
   @NonNls

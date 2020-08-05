@@ -18,7 +18,6 @@ import org.junit.Test;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -115,7 +114,7 @@ public class JBCefJSQueryTest {
       frame.setVisible(true);
     });
 
-    wait(LATCH_LOAD);
+    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_LOAD));
 
     JBCefJSQuery jsQuery_after = JBCefJSQuery.create(browser);
     jsQuery_after.addHandler(result -> {
@@ -128,23 +127,12 @@ public class JBCefJSQueryTest {
       browser.getCefBrowser().executeJavaScript(jsQuery_before.inject("'query_before'"), "about:blank", 0);
     });
 
-    wait(LATCH_JS_BEFORE);
+    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_JS_BEFORE));
 
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().executeJavaScript(jsQuery_after.inject("'query_after'"), "about:blank", 0);
     });
 
-    wait(LATCH_JS_AFTER);
-  }
-
-  private static void wait(@NotNull CountDownLatch latch) {
-    boolean success = false;
-    try {
-      success = latch.await(20, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    TestCase.assertTrue(success);
+    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_JS_AFTER));
   }
 }

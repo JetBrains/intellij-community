@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
@@ -74,7 +75,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     myHelpArea.setText(text);
   }
 
-  public void setLabelText(final String text) {
+  public void setLabelText(final @NlsContexts.Label String text) {
     myLabel.setText(text);
   }
 

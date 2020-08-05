@@ -37,7 +37,6 @@ class ModuleRootComponentBridge(
       RootModelBridgeImpl(
         moduleEntity = storage.findModuleEntity(moduleBridge),
         storage = storage,
-        moduleLibraryTable = moduleLibraryTable,
         itemUpdater = null,
         // TODO
         rootModel = this,

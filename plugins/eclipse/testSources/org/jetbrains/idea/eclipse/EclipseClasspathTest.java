@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse;
 
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     final VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
+    copyDirContentsTo(vTestRoot, getOrCreateProjectBaseDir());
   }
 
   private void doTest() throws Exception {
@@ -56,7 +57,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
 
   static Module setUpModule(final String path, @NotNull final Project project) throws Exception {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", PlatformTestUtil.getOrCreateProjectBaseDir(project).getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
@@ -84,7 +85,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
   static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
     final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     if (!classpathFile1.exists()) return;
-    String fileText1 = FileUtil.loadFile(classpathFile1).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());
+    String fileText1 = FileUtil.loadFile(classpathFile1).replaceAll("\\$ROOT\\$", PlatformTestUtil.getOrCreateProjectBaseDir(module.getProject()).getPath());
     if (!SystemInfo.isWindows) {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }

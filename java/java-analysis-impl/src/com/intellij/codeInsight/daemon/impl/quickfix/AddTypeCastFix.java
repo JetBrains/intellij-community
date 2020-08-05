@@ -8,6 +8,7 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +27,7 @@ import java.util.Objects;
 public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   @SafeFieldForPreview
   private final PsiType myType;
-  private final String myName;
+  private final @IntentionName String myName;
 
   public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
     this(type, expression, "add.typecast.text");

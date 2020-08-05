@@ -474,4 +474,17 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateFieldFromParameterFix();
   @NotNull
   public abstract IntentionAction createAssignFieldFromParameterFix();
+
+  @NotNull
+  public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
+
+  /**
+   * @param subClass class that should be added to parents permits list
+   * @param superClass sealed parent class from subclasses' extends / implements clause
+   * @return
+   */
+  @NotNull
+  public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass);
+
+  public abstract IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName);
 }

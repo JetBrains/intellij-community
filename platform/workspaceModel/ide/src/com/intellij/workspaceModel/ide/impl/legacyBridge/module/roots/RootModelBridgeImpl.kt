@@ -7,30 +7,25 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootModelBase
-import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FakeContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.HashMap
 
 internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
                                    val storage: WorkspaceEntityStorage,
-                                   private val moduleLibraryTable: LibraryTable,
                                    private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
                                    private val rootModel: ModuleRootModelBridge,
                                    internal val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
@@ -56,22 +51,9 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.toMutableList()
 
-    val contentUrlToSourceRoots = moduleEntity.sourceRoots.groupByTo(HashMap()) { sourceRoot ->
-
-      // Order contentEntries so most nested will be selected
-      // TODO It's very slow. Probably it's better to sort by number of components in VirtualFileUrl or something
-      val existingContentEntry = contentEntries
-        .sortedByDescending { it.url.url.length }
-        .find { it.url.isEqualOrParentOf(sourceRoot.url) }
-
-      val contentEntry = existingContentEntry ?: FakeContentRootEntity(sourceRoot.url, moduleEntity).also { contentEntries.add(it) }
-
-      contentEntry.url
-    }
-
     contentEntries.sortBy { it.url.url }
     contentEntries.map { contentRoot ->
-      ContentEntryBridge(rootModel, contentUrlToSourceRoots[contentRoot.url] ?: emptyList(), contentRoot, updater)
+      ContentEntryBridge(rootModel, contentRoot.sourceRoots.toList(), contentRoot, updater)
     }
   }
 

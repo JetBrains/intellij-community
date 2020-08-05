@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ final class ItemsContainer {
 
   private long myCounter = 0; // for unique id generation
 
-  ItemsContainer(@NotNull String name) { myName = name; }
+  ItemsContainer(@NotNull @NonNls String name) { myName = name; }
 
   boolean isEmpty() { return myItems.isEmpty(); }
 

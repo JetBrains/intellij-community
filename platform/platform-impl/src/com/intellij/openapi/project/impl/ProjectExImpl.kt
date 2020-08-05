@@ -53,7 +53,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   private val isLight: Boolean
 
-  private var name: String? = null
+  private var cachedName: String? = null
 
   private var componentStoreValue = SynchronizedClearableLazy {
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
@@ -66,7 +66,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
-    name = projectName
+    cachedName = projectName
     // light project may be changed later during test, so we need to remember its initial state
     //noinspection TestOnlyProblems
     // light project may be changed later during test, so we need to remember its initial state
@@ -88,22 +88,22 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   }
 
   override fun getName(): String {
-    var result = name
+    var result = cachedName
     if (result == null) {
       // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, project name is required on each load of configuration file.
       // So, anyway name is computed very early.
       result = componentStore.projectName
-      name = result
+      cachedName = result
     }
     return result
   }
 
   override fun setProjectName(value: String) {
-    if (name == value) {
+    if (cachedName == value) {
       return
     }
 
-    name = value
+    cachedName = value
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       StartupManager.getInstance(this).runAfterOpened {
         ApplicationManager.getApplication().invokeLater(Runnable {
@@ -138,14 +138,24 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun getBasePath() = componentStore.projectBasePath.systemIndependentPath
 
-  override fun getPresentableUrl(): String? {
+  final override fun getPresentableUrl(): String {
     val store = componentStore
     return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath.systemIndependentPath
   }
 
   override fun getLocationHash(): String {
-    val prefix = if (componentStore.storageScheme == StorageScheme.DIRECTORY_BASED) "" else name
-    return "$prefix${Integer.toHexString((presentableUrl ?: name).hashCode())}"
+    val store = componentStore
+    val prefix: String
+    val path: Path
+    if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
+      path = store.projectBasePath
+      prefix = ""
+    }
+    else {
+      path = store.projectFilePath
+      prefix = getName()
+    }
+    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
   }
 
   final override fun getWorkspaceFile(): VirtualFile? {
@@ -266,7 +276,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun toString(): String {
     val store = componentStoreValue.valueIfInitialized
-    return "Project(name=$name, containerState=${if (isTemporarilyDisposed) "disposed temporarily" else containerStateName}" +
+    return "Project(name=$cachedName, containerState=${if (isTemporarilyDisposed) "disposed temporarily" else containerStateName}" +
            ", componentStore=" + (if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath) + ")"
   }
 }

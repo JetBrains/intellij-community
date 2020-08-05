@@ -10,11 +10,11 @@
         <li>Supports over 15 languages, including English, German, Russian, Chinese, and others.</li>
         <li>Recognizes natural language constructs in programming languages (Python, Java and others),
             markup languages (Latex, Markdown, XML, HTML), comments, commits messages, and more.</li>
-        <li>Uses LanguageTool as its proofreading engine.</li>
+      <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
 
     <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
-       and select <strong>Tools</strong> > <strong>Grazie</strong> (or <strong>Editor</strong> > <strong>Proofreading</strong> for 2020.1 EAP).</p>
+       and select <strong>Editor</strong> > <strong>Proofreading</strong>.</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>

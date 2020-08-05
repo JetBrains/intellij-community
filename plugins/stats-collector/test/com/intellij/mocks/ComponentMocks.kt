@@ -2,6 +2,9 @@
 
 package com.intellij.mocks
 
+import com.intellij.lang.Language
+import com.intellij.stats.experiment.ExperimentInfo
+import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.sender.StatisticSender
 import com.intellij.stats.storage.UniqueFilesProvider
@@ -23,6 +26,26 @@ internal class TestRequestService : RequestService() {
 
 internal class TestStatisticSender : StatisticSender {
     override fun sendStatsData(url: String) {
+    }
+}
+
+
+internal class TestExperimentStatus : ExperimentStatus {
+    private var inExperiment = false
+    private var shouldRank = false
+    private var shouldShowArrows = false
+    private var shouldCalculateFeatures = false
+
+    override fun forLanguage(language: Language): ExperimentInfo =
+      ExperimentInfo(inExperiment, 0, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+
+    override fun experimentChanged(language: Language): Boolean = false
+
+    fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
+        this.inExperiment = inExperiment
+        this.shouldRank = shouldRank
+        this.shouldShowArrows = shouldShowArrows
+        this.shouldCalculateFeatures = shouldCalculateFeatures
     }
 }
 

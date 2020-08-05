@@ -6,7 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import git4idea.rebase.RebaseOption;
+import git4idea.rebase.GitRebaseOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +16,12 @@ import java.util.Set;
 @State(name = "Git.Rebase.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSettings.State> {
 
-  private final static Set<RebaseOption> NO_OPTIONS = EnumSet.noneOf(RebaseOption.class);
+  private final static Set<GitRebaseOption> NO_OPTIONS = EnumSet.noneOf(GitRebaseOption.class);
 
   private State myState = new State();
 
   public static class State {
-    public Set<RebaseOption> OPTIONS = NO_OPTIONS;
+    public Set<GitRebaseOption> OPTIONS = NO_OPTIONS;
     public String NEW_BASE = null;
   }
 
@@ -37,11 +37,11 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
   }
 
   @NotNull
-  public Set<RebaseOption> getOptions() {
+  public Set<GitRebaseOption> getOptions() {
     return ImmutableSet.copyOf(myState.OPTIONS);
   }
 
-  public void setOptions(@NotNull Set<RebaseOption> options) {
+  public void setOptions(@NotNull Set<GitRebaseOption> options) {
     myState.OPTIONS = !options.isEmpty()
                       ? EnumSet.copyOf(options)
                       : NO_OPTIONS;

@@ -44,7 +44,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   private static String showSubCoverageNotification() {
-    return "Active per test coverage: no cumulative data is available";
+    return JavaCoverageBundle.message("sub.coverage.notification");
   }
 
   @Override

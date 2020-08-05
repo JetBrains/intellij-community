@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
@@ -483,11 +482,13 @@ public final class HttpRequests {
     }
 
     @Override
-    public void close() {
-      StreamUtil.closeStream(myInputStream);
-      StreamUtil.closeStream(myReader);
-      if (myConnection instanceof HttpURLConnection) {
-        ((HttpURLConnection)myConnection).disconnect();
+    public void close() throws IOException {
+      //noinspection EmptyTryBlock
+      try (@SuppressWarnings("unused") InputStream s = myInputStream; @SuppressWarnings("unused") Reader r = myReader) { }
+      finally {
+        if (myConnection instanceof HttpURLConnection) {
+          ((HttpURLConnection)myConnection).disconnect();
+        }
       }
     }
   }

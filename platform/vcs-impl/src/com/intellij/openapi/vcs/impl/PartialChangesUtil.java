@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -110,41 +109,60 @@ public final class PartialChangesUtil {
   public static void runUnderChangeList(@NotNull Project project,
                                         @Nullable LocalChangeList targetChangeList,
                                         @NotNull Runnable task) {
-    computeUnderChangeList(project, targetChangeList, null, () -> {
+    computeUnderChangeList(project, targetChangeList, () -> {
       task.run();
       return null;
-    }, false);
+    });
   }
 
   public static <T> T computeUnderChangeList(@NotNull Project project,
-                                                        @Nullable LocalChangeList targetChangeList,
-                                                        @Nullable String title,
-                                                        @NotNull Computable<T> task,
-                                                        boolean shouldAwaitCLMRefresh) {
-    ChangeListManagerImpl clm = ChangeListManagerImpl.getInstanceImpl(project);
-    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
+                                             @Nullable LocalChangeList targetChangeList,
+                                             @NotNull Computable<T> task) {
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
       return task.compute();
     }
 
-    switchChangeList(clm, targetChangeList, oldDefaultList);
-    ChangelistConflictTracker clmConflictTracker = clm.getConflictTracker();
+    switchChangeList(changeListManager, targetChangeList, oldDefaultList);
+    ChangelistConflictTracker clmConflictTracker = changeListManager.getConflictTracker();
     try {
       clmConflictTracker.setIgnoreModifications(true);
       return task.compute();
     }
     finally {
       clmConflictTracker.setIgnoreModifications(false);
-      if (shouldAwaitCLMRefresh) {
-        InvokeAfterUpdateMode mode = title != null
-                                     ? InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
-                                     : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
-        clm.invokeAfterUpdate(() -> restoreChangeList(clm, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
+      restoreChangeList(changeListManager, targetChangeList, oldDefaultList);
+    }
+  }
+
+  public static <T> T computeUnderChangeListSync(@NotNull Project project,
+                                                 @Nullable LocalChangeList targetChangeList,
+                                                 @NotNull Computable<T> task) {
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
+
+    if (targetChangeList == null) {
+      return task.compute();
+    }
+
+    switchChangeList(changeListManager, targetChangeList, oldDefaultList);
+    ChangelistConflictTracker clmConflictTracker = changeListManager.getConflictTracker();
+    try {
+      clmConflictTracker.setIgnoreModifications(true);
+      return task.compute();
+    }
+    finally {
+      clmConflictTracker.setIgnoreModifications(false);
+
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        LOG.warn("Can't wait till changes are applied while holding read lock", new Throwable());
       }
       else {
-        restoreChangeList(clm, targetChangeList, oldDefaultList);
+        ((ChangeListManagerEx)ChangeListManager.getInstance(project)).waitForUpdate(null);
       }
+      restoreChangeList(changeListManager, targetChangeList, oldDefaultList);
     }
   }
 

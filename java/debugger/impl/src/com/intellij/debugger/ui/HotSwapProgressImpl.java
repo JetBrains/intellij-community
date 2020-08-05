@@ -18,6 +18,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.reference.SoftReference;
@@ -43,7 +45,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
 
   private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
   private final ProgressWindow myProgressWindow;
-  private String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
+  private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
   private final List<HotSwapProgressListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -102,7 +104,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
   }
 
-  private void notifyUser(String title, String message, NotificationType type) {
+  private void notifyUser(@NlsContexts.NotificationTitle String title, @NlsContexts.NotificationContent String message, NotificationType type) {
     NotificationListener notificationListener = null;
     if (SoftReference.dereference(mySessionRef) != null) {
       notificationListener = new HotSwapNotificationListener(mySessionRef);
@@ -146,7 +148,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
 
-  private String buildMessage(List<String> messages, boolean withRestart) {
+  private @NlsSafe String buildMessage(List<String> messages, boolean withRestart) {
     StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
     if (SoftReference.dereference(mySessionRef) != null) {
       res.append("\n").append(JavaDebuggerBundle.message("status.hot.swap.completed.stop"));
@@ -168,7 +170,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   @Override
-  public void setText(final String text) {
+  public void setText(final @NlsContexts.ProgressText String text) {
     myUpdateQueue.queue(new Update("Text") {
       @Override
       public void run() {
@@ -182,7 +184,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   @Override
-  public void setTitle(final String text) {
+  public void setTitle(final @NlsContexts.ProgressTitle String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
       myProgressWindow.setTitle(text);

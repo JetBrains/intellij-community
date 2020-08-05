@@ -7,13 +7,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import java.io.File
+import com.intellij.util.io.exists
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
 class JavaHomeFinderWindows : JavaHomeFinderBasic {
-
   companion object {
     const val defaultJavaLocation = "C:\\Program Files"
 
@@ -67,12 +69,16 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     try {
       val registryLines: CharSequence = WindowsRegistryUtil.readRegistry(cmd)
       val registeredPaths = gatherHomePaths(registryLines)
-      val folders: MutableSet<File> = TreeSet()
+      val folders: MutableSet<Path> = TreeSet()
       for (rp in registeredPaths) {
-        val r = File(rp)
-        val parent: File? = r.parentFile
-        if (parent != null && parent.exists()) folders.add(parent)
-        else if (r.exists()) folders.add(r)
+        val r = Paths.get(rp)
+        val parent = r.parent
+        if (parent != null && parent.exists()) {
+          folders.add(parent)
+        }
+        else if (r.exists()) {
+          folders.add(r)
+        }
       }
       return scanAll(folders, true)
     }
@@ -86,15 +92,17 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   }
 
   private fun guessPossibleLocations(): Set<String> {
-    val fsRoots = File.listRoots() ?: return emptySet()
-    val roots: MutableSet<File> = HashSet()
+    val fsRoots = FileSystems.getDefault().rootDirectories ?: return emptySet()
+    val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
-      if (!root.exists()) continue
-      roots.add(File(File(root, "Program Files"), "Java"))
-      roots.add(File(File(root, "Program Files (x86)"), "Java"))
-      roots.add(File(root, "Java"))
+      if (!root.exists()) {
+        continue
+      }
+
+      roots.add(root.resolve("Program Files/Java"))
+      roots.add(root.resolve("Program Files (x86)/Java"))
+      roots.add(root.resolve("Java"))
     }
     return scanAll(roots, true)
   }
-
 }

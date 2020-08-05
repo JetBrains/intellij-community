@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -34,13 +34,12 @@ import java.io.File
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  */
 abstract class GitChangeProviderTest : GitSingleRepoTest() {
-
   private lateinit var changeProvider: GitChangeProvider
   protected lateinit var dirtyScope: VcsModifiableDirtyScope
   private lateinit var subDir: VirtualFile
 
   protected lateinit var atxt: VirtualFile
-  protected lateinit var btxt: VirtualFile
+  private lateinit var btxt: VirtualFile
   protected lateinit var dir_ctxt: VirtualFile
   protected lateinit var subdir_dtxt: VirtualFile
 
@@ -134,7 +133,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   protected fun dirty(file: VirtualFile?) {
-    dirtyScope.addDirtyFile(VcsUtil.getFilePath(file!!))
+    dirtyScope.addDirtyFile(VcsUtil.getFilePath(file ?: return))
   }
 
   private fun tos(fp: FilePath) = FileUtil.getRelativePath(File(projectPath), fp.ioFile)

@@ -18,7 +18,7 @@ import java.util.jar.Manifest;
  * @author anna
  * @noinspection SSBasedInspection, UseOfSystemOutOrSystemErr
  */
-public class CommandLineWrapper {
+public final class CommandLineWrapper {
   private static final class AppData {
     private final List<String> properties;
     private final Class<?> mainClass;

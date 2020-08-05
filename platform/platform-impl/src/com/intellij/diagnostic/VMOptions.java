@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public final class VMOptions {
     public final String option;
     private final Pattern pattern;
 
-    MemoryKind(String name, String separator) {
+    MemoryKind(@NonNls String name, String separator) {
       optionName = name;
       option = "-" + name + separator;
       pattern = Pattern.compile(option + "(\\d*)([a-zA-Z]*)");

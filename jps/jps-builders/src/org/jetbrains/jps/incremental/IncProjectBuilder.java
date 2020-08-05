@@ -12,6 +12,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
 import gnu.trove.THashMap;
@@ -74,7 +75,7 @@ public final class IncProjectBuilder {
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
-    int maxThreads = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
+    int maxThreads = Math.min(10, (75 * Runtime.getRuntime().availableProcessors()) / 100); // 75% of available logical cores, but not more than 10 threads
     try {
       maxThreads = Math.max(1, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
     }
@@ -408,7 +409,7 @@ public final class IncProjectBuilder {
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        final Set<File> outputs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+        final Set<File> outputs = FileCollectionFactory.createCanonicalFileSet();
         for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
@@ -621,8 +622,7 @@ public final class IncProjectBuilder {
                                        SourceToOutputMapping mapping,
                                        BuildTargetType<?> targetType,
                                        int targetId) throws IOException {
-    final THashSet<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?>
-                                        ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
     OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
     for (String srcPath : mapping.getSources()) {
       final Collection<String> outs = mapping.getOutputs(srcPath);
@@ -694,7 +694,7 @@ public final class IncProjectBuilder {
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final long cleanStart = System.nanoTime();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
-    final Set<File> allSourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> allSourceRoots = FileCollectionFactory.createCanonicalFileSet();
 
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
@@ -1297,9 +1297,8 @@ public final class IncProjectBuilder {
       // cleanup outputs
       final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
 
-      final THashSet<File> dirsToDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
       for (BuildTarget<?> target : targets) {
-
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;

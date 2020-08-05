@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -355,6 +356,11 @@ public final class StandardMethodContract extends MethodContract {
     ParseException(@InspectionMessage String message, @Nullable TextRange range) {
       super(message);
       myRange = range != null && range.isEmpty() ? null : range;
+    }
+
+    @Override
+    public @NlsSafe String getMessage() {
+      return super.getMessage();
     }
 
     public @Nullable TextRange getRange() {

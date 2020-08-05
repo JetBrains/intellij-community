@@ -98,6 +98,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
@@ -660,8 +661,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (process.exitValue() != 0) {
         String error;
         try {
-          error = PyBundle
-            .message("pydev.console.console.process.terminated.with.error", StreamUtil.readText(process.getErrorStream()), sb.toString());
+          error = PyBundle.message("pydev.console.console.process.terminated.with.error",
+                                   StreamUtil.readText(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)), sb.toString());
         }
         catch (Exception ignored) {
           error = PyBundle.message("pydev.console.console.process.terminated.with.exit.code", process.exitValue(), sb.toString());

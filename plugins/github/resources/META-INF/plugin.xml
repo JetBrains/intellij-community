@@ -47,6 +47,10 @@
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
       implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+    <statistics.projectUsagesCollector
+      implementation="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$ProjectState"/>
+    <statistics.counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
@@ -61,6 +65,9 @@
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
                 anchor="left" canCloseContents="true" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
   </extensions>
 
   <applicationListeners>
@@ -68,20 +75,14 @@
               topic="com.intellij.credentialStore.PasswordSafeSettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
-    <listener class="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
     <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider$AccountTokenListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
 
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforeProjectCloseListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"
@@ -97,11 +98,9 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
-              topic="git4idea.repo.GitRepositoryChangeListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="git4idea.repo.GitRepositoryChangeListener"/>
 
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforePluginUnloadListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"
@@ -172,6 +171,22 @@
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadChangesAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+
+    <action id="Github.PullRequest.Review.Submit"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction"/>
+
+    <group id="Github.PullRequest.Changes.Toolbar">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Review.Submit"/>
+      <separator/>
+      <reference id="ChangesView.GroupBy"/>
+    </group>
+
+    <group id="Github.PullRequest.Changes.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Changes.Reload"/>
+    </group>
+
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>

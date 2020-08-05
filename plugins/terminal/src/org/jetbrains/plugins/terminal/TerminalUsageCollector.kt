@@ -24,16 +24,23 @@ class TerminalUsageTriggerCollector {
     }
 
     @JvmStatic
-    fun triggerSmartCommandExecuted(project: Project,
-                                    workingDirectory: String?,
-                                    localSession: Boolean,
-                                    command: String,
-                                    handler: TerminalShellCommandHandler) {
+    fun triggerSmartCommand(project: Project,
+                            workingDirectory: String?,
+                            localSession: Boolean,
+                            command: String,
+                            handler: TerminalShellCommandHandler,
+                            executed: Boolean) {
       val data = FeatureUsageData().addData("terminalCommandHandler", handler::class.java.name)
       if (handler is TerminalFusAwareHandler) {
         handler.fillData(project, workingDirectory, localSession, command, data)
       }
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.smart.command.executed", data)
+      val eventId = if (executed) {
+        "terminal.smart.command.executed"
+      }
+      else {
+        "terminal.smart.command.not.executed"
+      }
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, eventId, data)
     }
 
     @JvmStatic

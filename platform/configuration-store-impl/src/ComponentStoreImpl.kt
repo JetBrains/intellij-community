@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -29,7 +30,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -138,7 +138,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  final override fun unloadComponent(component: Any) {
+  override fun unloadComponent(component: Any) {
     @Suppress("DEPRECATION")
     val name = when (component) {
       is PersistentStateComponent<*> -> getStateSpec(component.javaClass)?.name ?: return
@@ -632,6 +632,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 
   val macros = LinkedHashSet(immutableMacros)
+  @Suppress("IncorrectParentDisposable")
   AppUIExecutor.onUiThread().expireWith(project).submit {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
@@ -669,12 +670,11 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
 }
 
 internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {
-  return withContext(storeEdtCoroutineDispatcher) {
-    @Suppress("NullableBooleanElvis")
-    if (disposable?.isDisposed ?: false) {
-      throw CancellationException()
-    }
-
+  var t = AppUIExecutor.onUiThread()
+  disposable?.let {
+    t = t.expireWith(it)
+  }
+  return withContext(t.coroutineDispatchingContext()) {
     task()
   }
 }

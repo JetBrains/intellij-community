@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorTextField;
@@ -54,13 +55,13 @@ public class PackageChooserDialog extends PackageChooser {
   private Tree myTree;
   private DefaultTreeModel myModel;
   private final Project myProject;
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private Module myModule;
   private EditorTextField myPathEditor;
 
   private final Alarm myAlarm = new Alarm(getDisposable());
 
-  public PackageChooserDialog(String title, @NotNull Module module) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle String title, @NotNull Module module) {
     super(module.getProject(), true);
     setTitle(title);
     myTitle = title;
@@ -69,7 +70,7 @@ public class PackageChooserDialog extends PackageChooser {
     init();
   }
 
-  public PackageChooserDialog(String title, Project project) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle String title, Project project) {
     super(project, true);
     setTitle(title);
     myTitle = title;
@@ -134,7 +135,7 @@ public class PackageChooserDialog extends PackageChooser {
         PsiPackage selection = getTreeSelection();
         if (selection != null) {
           String name = selection.getQualifiedName();
-          setTitle(myTitle + " - " + ("".equals(name) ? IdeBundle.message("node.default.package") : name));
+          setTitle(myTitle + " - " + (name.isEmpty() ? IdeBundle.message("node.default.package") : name));
         }
         else {
           setTitle(myTitle);

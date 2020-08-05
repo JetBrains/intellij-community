@@ -48,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -106,7 +107,7 @@ public abstract class InplaceRefactoring {
 
 
   protected Balloon myBalloon;
-  protected String myTitle;
+  protected @NlsContexts.Command String myTitle;
   protected RelativePoint myTarget;
 
   public InplaceRefactoring(@NotNull Editor editor,
@@ -290,7 +291,7 @@ public abstract class InplaceRefactoring {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
     PsiElement nameIdentifier = getNameIdentifier();
-    int offset = InjectedLanguageUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
+    int offset = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
@@ -345,7 +346,7 @@ public abstract class InplaceRefactoring {
         }
 
         revertState();
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor));
         if (templateState != null) {
           templateState.gotoEnd(true);
         }
@@ -394,7 +395,7 @@ public abstract class InplaceRefactoring {
 
     final int offset = myEditor.getCaretModel().getOffset();
 
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
     TextRange range = myScope.getTextRange();
     assert range != null;
     RangeMarker rangeMarker = topLevelEditor.getDocument().createRangeMarker(range);
@@ -642,7 +643,7 @@ public abstract class InplaceRefactoring {
   protected void revertState() {
     if (myOldName == null) return;
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+      final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
       ApplicationManager.getApplication().runWriteAction(() -> {
         final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
         if (state != null) {
@@ -888,7 +889,7 @@ public abstract class InplaceRefactoring {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
-      public RelativePoint recalculateLocation(Balloon object) {
+      public RelativePoint recalculateLocation(@NotNull Balloon object) {
         if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
           return myTarget;
         }
@@ -960,7 +961,7 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+            ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);

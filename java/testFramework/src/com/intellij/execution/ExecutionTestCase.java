@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.OutputChecker;
@@ -26,14 +26,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
   private int myTimeout;
-  private static File ourOutputRoot;
-  private File myModuleOutputDir;
+  private static Path ourOutputRoot;
+  private Path myModuleOutputDir;
 
   public ExecutionTestCase() {
     setTimeout(300000); //30 seconds
@@ -49,17 +51,19 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    setupTempDir();
+
     if (ourOutputRoot == null) {
-      ourOutputRoot = FileUtil.createTempDirectory("ExecutionTestCase", null, true);
+      ourOutputRoot = getTempDir().newPath();
     }
-    myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
+
+    myModuleOutputDir = ourOutputRoot.resolve(PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
     EdtTestUtil.runInEdtAndWait(() -> super.setUp());
-    if (!myModuleOutputDir.exists()) {
-      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
-      assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
-      //we need this to load children to VFS to fire VFileCreatedEvent for the output directory
-      vDir.getChildren();
+    if (!Files.exists(myModuleOutputDir)) {
+      Files.createDirectories(myModuleOutputDir);
+      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ourOutputRoot);
+      assertNotNull(ourOutputRoot.toString(), vDir);
 
       // JDK added by compilerTester is used after compilation, so, we don't dispose compilerTester after rebuild
       CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), getTestRootDisposable());
@@ -87,7 +91,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       PsiTestUtil.addContentRoot(myModule, moduleDir);
       PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(myModuleOutputDir.getAbsolutePath()), false);
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(myModuleOutputDir.toString()), false);
     });
   }
 
@@ -149,7 +153,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   }
 
   protected String getAppOutputPath() {
-    return myModuleOutputDir.getAbsolutePath();
+    return myModuleOutputDir.toString();
   }
 
   public void waitProcess(@NotNull final ProcessHandler processHandler) {

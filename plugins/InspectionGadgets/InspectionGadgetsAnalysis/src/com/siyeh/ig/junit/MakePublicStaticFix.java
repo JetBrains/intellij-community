@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 class MakePublicStaticFix extends InspectionGadgetsFix {
 
-  private final String myName;
+  private final @IntentionName String myName;
   private final boolean myMakeStatic;
 
-  MakePublicStaticFix(final String name, final boolean makeStatic) {
+  MakePublicStaticFix(final @IntentionName String name, final boolean makeStatic) {
     myName = name;
     myMakeStatic = makeStatic;
   }

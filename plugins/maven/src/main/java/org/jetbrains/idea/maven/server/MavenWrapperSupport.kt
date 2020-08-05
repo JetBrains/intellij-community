@@ -127,7 +127,7 @@ class MavenWrapperSupport {
           else {
             destFile.parentFile.mkdirs()
             BufferedOutputStream(FileOutputStream(destFile)).use {
-              StreamUtil.copyStreamContent(zipFile.getInputStream(entry), it)
+              StreamUtil.copy(zipFile.getInputStream(entry), it)
             }
           }
         }

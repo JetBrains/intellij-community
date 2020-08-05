@@ -82,7 +82,7 @@ abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
-    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
+    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT, storageCustomizer = {
       if (this !is FileBasedStorage) {
         // upsource
         return@getOrCreateStorage

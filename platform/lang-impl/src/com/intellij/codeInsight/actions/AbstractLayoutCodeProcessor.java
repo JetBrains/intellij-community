@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -38,6 +39,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +61,8 @@ public abstract class AbstractLayoutCodeProcessor {
   private List<PsiFile> myFiles;
   private boolean myIncludeSubdirs;
 
-  private final String myProgressText;
-  private final String myCommandName;
+  private final @NlsContexts.ProgressText String myProgressText;
+  private final @Nls String myCommandName;
   private Runnable myPostRunnable;
   private boolean myProcessChangedTextOnly;
 
@@ -436,7 +438,7 @@ public abstract class AbstractLayoutCodeProcessor {
       }
     }
 
-    private void updateIndicatorText(@NotNull String upperLabel, @NotNull String downLabel) {
+    private void updateIndicatorText(@NotNull @NlsContexts.ProgressText String upperLabel, @NotNull @NlsContexts.ProgressDetails String downLabel) {
       myProgressIndicator.setText(upperLabel);
       myProgressIndicator.setText2(downLabel);
     }

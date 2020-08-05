@@ -61,12 +61,12 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();
@@ -100,7 +100,7 @@ public interface UsageView extends Disposable {
    */
   void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
-  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
 
   @FunctionalInterface
   interface ExcludeListener {

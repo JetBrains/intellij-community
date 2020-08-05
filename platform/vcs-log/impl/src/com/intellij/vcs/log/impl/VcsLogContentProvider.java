@@ -94,7 +94,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       DataManager.registerDataProvider(myContainer, panel);
 
       updateDisplayName();
-      myUi.addFilterListener(this::updateDisplayName);
+      myUi.getFilterUi().addFilterListener(this::updateDisplayName);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;

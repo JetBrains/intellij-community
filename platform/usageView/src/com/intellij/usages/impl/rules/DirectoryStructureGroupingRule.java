@@ -21,10 +21,12 @@ import java.util.List;
 class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
   protected final Project myProject;
   private final DirectoryGroupingRule myDirectoryGroupingRule;
+  private final boolean compactMiddleDirectories;
 
-  DirectoryStructureGroupingRule(@NotNull Project project) {
+  DirectoryStructureGroupingRule(@NotNull Project project, boolean compactMiddleDirectories) {
     myProject = project;
-    myDirectoryGroupingRule = new DirectoryGroupingRule(project, false);
+    this.compactMiddleDirectories = compactMiddleDirectories;
+    myDirectoryGroupingRule = new DirectoryGroupingRule(project, false, compactMiddleDirectories);
   }
 
   @Override
@@ -43,11 +45,17 @@ class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
     }
     VirtualFile dir = file.getParent();
 
-    VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
-    while (dir != null && !dir.equals(baseDir)) {
+    if (compactMiddleDirectories) {
       UsageGroup group = myDirectoryGroupingRule.getGroupForFile(dir);
       result.add(group);
-      dir = dir.getParent();
+    }
+    else {
+      VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+      while (dir != null && !dir.equals(baseDir)) {
+        UsageGroup group = myDirectoryGroupingRule.getGroupForFile(dir);
+        result.add(group);
+        dir = dir.getParent();
+      }
     }
     Collections.reverse(result);
     return result;

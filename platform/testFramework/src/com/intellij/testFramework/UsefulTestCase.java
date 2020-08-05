@@ -43,10 +43,14 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.AssumptionViolatedException;
+import org.junit.ComparisonFailure;
+import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -60,9 +64,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -114,7 +116,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   private @Nullable Disposable myTestRootDisposable;
 
-  private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
@@ -217,19 +218,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    if (shouldContainTempFiles()) {
-      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-      String testName = null;
-      if (policy != null) {
-        testName = policy.getPerTestTempDirName();
-      }
-      if (testName == null) {
-        testName = FileUtil.sanitizeFileName(getTestName(true));
-      }
-      myTempDir = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
-      Files.createDirectories(myTempDir);
-      FileUtil.resetCanonicalTempPathCache(myTempDir.toString());
-    }
+    setupTempDir();
 
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
@@ -245,6 +234,36 @@ public abstract class UsefulTestCase extends TestCase {
       IconLoader.deactivate();
       //IconManager.activate();
     }
+  }
+
+  // some brilliant tests overrides setup and change setup flow in an alien way - quite unsafe and error prone to fix for now,
+  // so, expose method for such a brilliant test classes
+  protected final void setupTempDir() throws IOException {
+    if (myTempDir == null && shouldContainTempFiles()) {
+      myTempDir = createGlobalTempDirectory();
+    }
+  }
+
+  @ApiStatus.Internal
+  @NotNull Path createGlobalTempDirectory() throws IOException {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    String testName = null;
+    if (policy != null) {
+      testName = policy.getPerTestTempDirName();
+    }
+    if (testName == null) {
+      testName = FileUtil.sanitizeFileName(getTestName(true));
+    }
+
+    Path result = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
+    Files.createDirectories(result);
+    FileUtil.resetCanonicalTempPathCache(result.toString());
+    return result;
+  }
+
+  @ApiStatus.Internal
+  void removeGlobalTempDirectory(@NotNull Path dir) {
+    PathKt.delete(dir);
   }
 
   protected boolean isIconRequired() {
@@ -263,20 +282,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-            PathKt.delete(myTempDir);
-          }
-          else {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(myTempDir)) {
-              for (Path file : directoryStream) {
-                if (!shouldKeepTmpFile(file)) {
-                  FileUtil.delete(file);
-                }
-              }
-            }
-            catch (NoSuchFileException ignore) {
-            }
-          }
+          removeGlobalTempDirectory(myTempDir);
         }
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
@@ -286,25 +292,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected final void disposeRootDisposable() {
     Disposer.dispose(getTestRootDisposable());
-  }
-
-  protected void addTmpFileToKeep(@NotNull Path file) {
-    if (myPathsToKeep == null) {
-      myPathsToKeep = new ArrayList<>();
-    }
-    myPathsToKeep.add(file.toAbsolutePath());
-  }
-
-  private boolean shouldKeepTmpFile(@NotNull Path file) {
-    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-      return false;
-    }
-    for (Path pathToKeep : myPathsToKeep) {
-      if (file.equals(pathToKeep)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;

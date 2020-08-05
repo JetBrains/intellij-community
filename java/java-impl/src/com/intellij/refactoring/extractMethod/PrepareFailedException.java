@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,10 +27,16 @@ public class PrepareFailedException extends Exception {
   private final PsiFile myContainingFile;
   private final TextRange myTextRange;
 
-  public PrepareFailedException(String message, PsiElement errorElement) {
+  public PrepareFailedException(@NlsContexts.DialogMessage String message, PsiElement errorElement) {
     super(message);
     myContainingFile = errorElement.getContainingFile();
     myTextRange = errorElement.getTextRange();
+  }
+
+  @Override
+  public @NlsContexts.DialogMessage String getMessage() {
+    //noinspection HardCodedStringLiteral
+    return super.getMessage();
   }
 
   PsiFile getFile() {

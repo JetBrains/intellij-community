@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -137,7 +138,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
                                  InspectionGadgetsBundle.message(result.requireAnnotation
                                                                  ? "missing.override.annotation.problem.descriptor"
                                                                  : "missing.override.annotation.in.overriding.problem.descriptor"),
-                                 createAnnotateFix(result.requireAnnotation, result.hierarchyAnnotated));
+                                 createAnnotateFix(method, result.requireAnnotation, result.hierarchyAnnotated));
         }
       }
 
@@ -242,7 +243,12 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
   }
 
   @NotNull
-  private static AnnotateMethodFix createAnnotateFix(final boolean requireAnnotation, final ThreeState hierarchyAnnotated) {
+  private static LocalQuickFix createAnnotateFix(@NotNull PsiMethod method,
+                                                 final boolean requireAnnotation,
+                                                 final ThreeState hierarchyAnnotated) {
+    if (hierarchyAnnotated != ThreeState.NO) {
+      return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_OVERRIDE, method);
+    }
     return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
       @Override
       protected boolean annotateSelf() {
@@ -251,7 +257,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
 
       @Override
       protected boolean annotateOverriddenMethods() {
-        return hierarchyAnnotated == ThreeState.NO;
+        return true;
       }
     };
   }

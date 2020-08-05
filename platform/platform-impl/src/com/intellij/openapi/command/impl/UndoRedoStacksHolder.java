@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -173,7 +172,8 @@ final class UndoRedoStacksHolder {
     }
 
     myDocumentStacks.entrySet().removeIf(each -> each.getValue().isEmpty());
-    ContainerUtil.trimMap(myDocumentStacks); // make sure the following entrySet iteration will not go over empty buckets.
+    // make sure the following entrySet iteration will not go over empty buckets.
+    CollectionFactory.trimMap(myDocumentStacks);
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);

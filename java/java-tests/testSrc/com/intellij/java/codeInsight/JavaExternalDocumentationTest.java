@@ -89,30 +89,30 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
 
   // We're guessing style of references in javadoc by bytecode version of library class file
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
-  public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
+  public void testReferenceStyleDoesntMatchBytecodeVersion() {
     doTest("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
   }
 
-  public void testLinkWithReference() throws Exception {
+  public void testLinkWithReference() {
     doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
   }
 
-  public void testLinkToPackageSummaryWithReference() throws Exception {
+  public void testLinkToPackageSummaryWithReference() {
     doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
   }
 
-  public void testLinkBetweenMethods() throws Exception {
+  public void testLinkBetweenMethods() {
     doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
   }
 
-  public void testEscapingLink() throws Exception {
+  public void testEscapingLink() {
     doTest("class Foo {{ new com.jetbrains.GenericClass().<caret>genericMethod(null); }}");
   }
 
-  private void doTest(String text) throws Exception {
+  private void doTest(String text) {
     String actualText = getDocumentationText(text);
-    String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
-    assertEquals(expectedText, replaceLocalHostUrlsWithPlaceholder(actualText));
+    assertSameLinesWithFile(getDataFile(getTestName(false) + ".html").toString(), 
+                            replaceLocalHostUrlsWithPlaceholder(actualText));
   }
 
   private static String replaceLocalHostUrlsWithPlaceholder(String actualText) {

@@ -91,6 +91,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
         createdMessageExpr = methodArgs.add(newMessageExpr);
       }
 
+      if (!createdMessageExpr.isPhysical()) return;
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       if (editor == null) return;
       editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);

@@ -54,18 +54,19 @@ final class ObjectTree {
     return myExecutedNodes;
   }
 
-  final void register(@NotNull Disposable parent, @NotNull Disposable child) {
-    if (parent == child) throw new IllegalArgumentException("Cannot register to itself: "+parent);
+  @Nullable
+  final RuntimeException register(@NotNull Disposable parent, @NotNull Disposable child) {
+    if (parent == child) return new IllegalArgumentException("Cannot register to itself: "+parent);
     synchronized (treeLock) {
       Object wasDisposed = getDisposalInfo(parent);
       if (wasDisposed != null) {
-        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+        return new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
                                               "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
                                               wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
       }
 
       if (isDisposing(parent)) {
-        throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+        return new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
       }
 
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
@@ -84,10 +85,12 @@ final class ObjectTree {
       }
       myRootObjects.remove(child);
 
-      checkWasNotAddedAlready(parentNode, childNode);
+      RuntimeException e = checkWasNotAddedAlready(parentNode, childNode);
+      if (e != null) return e;
 
       parentNode.addChild(childNode);
     }
+    return null;
   }
 
   Object getDisposalInfo(@NotNull Disposable object) {
@@ -96,12 +99,13 @@ final class ObjectTree {
     }
   }
 
-  private static void checkWasNotAddedAlready(@NotNull ObjectNode childNode, @NotNull ObjectNode parentNode) {
+  private static RuntimeException checkWasNotAddedAlready(@NotNull ObjectNode childNode, @NotNull ObjectNode parentNode) {
     for (ObjectNode node = childNode; node != null; node = node.getParent()) {
       if (node == parentNode) {
-        throw new IncorrectOperationException("'"+childNode.getObject() + "' was already added as a child of '" + parentNode.getObject()+"'");
+        return new IncorrectOperationException("'"+childNode.getObject() + "' was already added as a child of '" + parentNode.getObject()+"'");
       }
     }
+    return null;
   }
 
   @NotNull
@@ -252,8 +256,8 @@ final class ObjectTree {
   }
 
   void clearDisposedObjectTraces() {
-    myDisposedObjects.clear();
     synchronized (treeLock) {
+      myDisposedObjects.clear();
       for (ObjectNode value : myObject2NodeMap.values()) {
         value.clearTrace();
       }

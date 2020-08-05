@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MatchUtil {
+public final class MatchUtil {
   @Nullable
   public static String getChangedSignature(Match match, final PsiMethod method, final boolean shouldBeStatic, String visibility) {
     final PsiType returnType = match.getChangedReturnType(method);

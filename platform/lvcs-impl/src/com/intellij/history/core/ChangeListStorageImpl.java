@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
@@ -26,29 +25,31 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 
-public class ChangeListStorageImpl implements ChangeListStorage {
+public final class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 6;
   private static final String STORAGE_FILE = "changes";
 
-  private final File myStorageDir;
+  private final Path myStorageDir;
   private LocalHistoryStorage myStorage;
   private long myLastId;
 
   private boolean isCompletelyBroken;
 
-  public ChangeListStorageImpl(File storageDir) throws IOException {
+  public ChangeListStorageImpl(@NotNull Path storageDir) throws IOException {
     myStorageDir = storageDir;
     initStorage(myStorageDir);
   }
 
-  private synchronized void initStorage(File storageDir) throws IOException {
-    String path = storageDir.getPath() + "/" + STORAGE_FILE;
+  private synchronized void initStorage(@NotNull Path storageDir) throws IOException {
+    Path path = storageDir.resolve(STORAGE_FILE);
 
-    boolean fromScratch = ApplicationManager.getApplication().isUnitTestMode() && !new File(path).exists();
-    
+    boolean fromScratch = ApplicationManager.getApplication().isUnitTestMode() && !Files.exists(path);
+
     LocalHistoryStorage result = new LocalHistoryStorage(path);
 
     long fsTimestamp = getVFSTimestamp();
@@ -64,9 +65,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
         }
         if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...");
         Disposer.dispose(result);
-        if (!FileUtil.delete(storageDir)) {
-          throw new IOException("cannot clear storage dir: " + storageDir);
-        }
+        FileUtil.delete(storageDir);
         result = new LocalHistoryStorage(path);
       }
       result.setVersion(VERSION);

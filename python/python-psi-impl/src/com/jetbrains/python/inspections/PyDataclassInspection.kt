@@ -14,6 +14,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
@@ -582,6 +583,8 @@ class PyDataclassInspection : PyInspection() {
 
         return
       }
+
+      if (ParamHelper.isSelfArgsKwargsCallable(postInit, myTypeEvalContext)) return
 
       val allInitVars = mutableListOf<PyTargetExpression>()
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext).asReversed()) {

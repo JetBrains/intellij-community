@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -110,6 +110,7 @@ public class SingleClassesTest {
   @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
   @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
   @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
+  @Test public void testInvertedFloatComparison() { doTest("pkg/TestInvertedFloatComparison"); }
   @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
   @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }

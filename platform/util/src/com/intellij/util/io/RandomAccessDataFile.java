@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -11,13 +11,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RandomAccessDataFile implements Forceable, Closeable {
-  protected static final Logger LOG = Logger.getInstance(RandomAccessDataFile.class);
+public final class RandomAccessDataFile implements Forceable, Closeable {
+  private static final Logger LOG = Logger.getInstance(RandomAccessDataFile.class);
 
   private static final OpenChannelsCache ourCache = new OpenChannelsCache(150,
                                                                           EnumSet.of(StandardOpenOption.READ,
@@ -31,7 +33,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
 
   private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
-  private final FileWriter log;
+  private final OutputStreamWriter log;
 
   private volatile long mySize;
   private volatile boolean myIsDirty;
@@ -39,16 +41,13 @@ public class RandomAccessDataFile implements Forceable, Closeable {
 
   private static final boolean DEBUG = false;
 
-  public RandomAccessDataFile(@NotNull File file, @NotNull PagePool pool) throws IOException {
+  public RandomAccessDataFile(@NotNull Path file, @NotNull PagePool pool) throws IOException {
     myPool = pool;
-    myFile = file.toPath();
-    if (!file.exists()) {
-      throw new FileNotFoundException(file.getPath() + " does not exist");
-    }
+    myFile = file;
 
-    mySize = file.length();
+    mySize = Files.size(file);
     if (DEBUG) {
-      log = new FileWriter(file.getPath() + ".log");
+      log = new OutputStreamWriter(Files.newOutputStream(file.getParent().resolve(file.getFileName() + ".log")), StandardCharsets.UTF_8);
     }
     else {
       log = null;

@@ -342,11 +342,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
-      myActiveRequest = request;
-      myActiveRequest.onAssigned(true);
-
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        onAssigned(myActiveRequest, false);
+        myActiveRequest = request;
+        onAssigned(myActiveRequest, true);
+
         try {
           myState = createState();
           try {
@@ -459,7 +459,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
+      onAssigned(myActiveRequest, false);
 
       myState = EmptyState.INSTANCE;
       myActiveRequest = NoDiffRequest.INSTANCE;
@@ -1127,6 +1127,15 @@ public abstract class DiffRequestProcessor implements Disposable {
       this.request = request;
       this.force = force;
       this.scrollToChangePolicy = scrollToChangePolicy;
+    }
+  }
+
+  private static void onAssigned(@NotNull DiffRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 

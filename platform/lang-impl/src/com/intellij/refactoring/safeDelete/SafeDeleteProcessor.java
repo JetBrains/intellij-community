@@ -250,7 +250,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
     final UsageView usageView = showUsages(conflictUsages, presentation, manager);
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
-                                        RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
+                                        RefactoringBundle.message("retry.command"), RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(() -> {
       UsageInfo[] preprocessedUsages = usages;
       for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {

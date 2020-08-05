@@ -66,6 +66,12 @@ public class EditorConfigTrailingSpacesOptionsProvider implements TrailingSpaces
 
     @Nullable
     @Override
+    public Boolean getRemoveTrailingBlankLines() {
+      return null;
+    }
+
+    @Nullable
+    @Override
     public Boolean getChangedLinesOnly() {
       return myTrimTrailingSpaces != null ? !myTrimTrailingSpaces : null;
     }

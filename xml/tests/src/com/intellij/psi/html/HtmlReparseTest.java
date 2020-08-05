@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.html;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.psi.AbstractReparseTestCase;
 import com.intellij.util.IncorrectOperationException;
 
@@ -9,7 +9,7 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setFileType(StdFileTypes.HTML);
+    setFileType(HtmlFileType.INSTANCE);
   }
 
   public void testReparseOnCompletion() throws IncorrectOperationException {

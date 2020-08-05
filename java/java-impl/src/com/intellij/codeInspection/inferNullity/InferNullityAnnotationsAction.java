@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +71,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
-  @NonNls private static final String INFER_NULLITY_ANNOTATIONS = "Infer Nullity Annotations";
   @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
   private JCheckBox myAnnotateLocalVariablesCb;
 
@@ -117,11 +117,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     if (!modulesWithLL.isEmpty()) {
       Messages.showErrorDialog(project, JavaBundle
                                  .message("dialog.message.infer.nullity.annotations.requires.the.project.language.level"),
-                               INFER_NULLITY_ANNOTATIONS);
+                               JavaBundle.message("action.description.infer.nullity.annotations"));
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      if (addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable, INFER_NULLITY_ANNOTATIONS)) {
+      if (addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
+                                   JavaBundle.message("action.description.infer.nullity.annotations"))) {
         restartAnalysis(project, scope);
       }
       return;
@@ -144,7 +145,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   public static boolean addAnnotationsDependency(@NotNull final Project project,
                                                  @NotNull final Set<? extends Module> modulesWithoutAnnotations,
-                                                 @NotNull String annoFQN, final String title) {
+                                                 @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
       String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
@@ -213,7 +214,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       inferrer.collect(usages);
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(searchForUsages, INFER_NULLITY_ANNOTATIONS, true, project)) {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(searchForUsages, JavaBundle
+        .message("action.description.infer.nullity.annotations"), true, project)) {
         return null;
       }
     } else {
@@ -229,9 +231,10 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
     return () -> {
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(
+        JavaBundle.message("action.description.infer.nullity.annotations"));
       try {
-        WriteCommandAction.writeCommandAction(project).withName(INFER_NULLITY_ANNOTATIONS).run(() -> {
+        WriteCommandAction.writeCommandAction(project).withName(JavaBundle.message("action.description.infer.nullity.annotations")).run(() -> {
           final UsageInfo[] infos = computable.compute();
           if (infos.length > 0) {
 
@@ -244,7 +247,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             }
             if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
 
-            final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+            final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, JavaBundle
+              .message("action.description.infer.nullity.annotations"), false);
             progressTask.setMinIterationTime(200);
             progressTask.setTask(new AnnotateTask(project, progressTask, infos));
             ProgressManager.getInstance().run(progressTask);
@@ -288,7 +292,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
     String canNotMakeString = "Cannot perform operation.\nThere were changes in code after usages have been found.\nPlease perform operation search again.";
 
-    usageView.addPerformOperationAction(refactoringRunnable, INFER_NULLITY_ANNOTATIONS, canNotMakeString, INFER_NULLITY_ANNOTATIONS, false);
+    usageView.addPerformOperationAction(refactoringRunnable, JavaBundle.message("action.description.infer.nullity.annotations"), canNotMakeString,
+                                        JavaBundle.message("action.description.infer.nullity.annotations"), false);
   }
 
   @NotNull

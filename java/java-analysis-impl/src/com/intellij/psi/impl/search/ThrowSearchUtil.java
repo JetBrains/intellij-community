@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -143,7 +144,7 @@ public final class ThrowSearchUtil {
     return getSearchRoots(element) != null;
   }
 
-  public static String getSearchableTypeName(final PsiElement e) {
+  public static @NlsSafe String getSearchableTypeName(final PsiElement e) {
     if (e instanceof PsiThrowStatement) {
       final PsiThrowStatement aThrow = (PsiThrowStatement)e;
       final PsiType type = aThrow.getException().getType();

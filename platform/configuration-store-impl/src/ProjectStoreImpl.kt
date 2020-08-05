@@ -15,6 +15,7 @@ import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
@@ -34,9 +35,18 @@ internal val IProjectStore.nameFile: Path
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
 
+  /**
+   * This property is temporary added to support saving of modules for workspace model; it can be removed when we move workspaceModel module
+   * near projectModel in the dependency graph and will be able to use it directly from this class
+   */
+  var moduleSavingCustomizer: ModuleSavingCustomizer? = null
+
   init {
     assert(!project.isDefault)
   }
+
+  override val serviceContainer: ComponentManagerImpl
+    get() = project as ComponentManagerImpl
 
   final override fun getPathMacroManagerForDefaults() = PathMacroManager.getInstance(project)
 
@@ -135,7 +145,9 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     return emptyList()
   }
 
-  override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
+  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
+    return moduleSavingCustomizer?.createSaveSessionProducerManager() ?: ProjectSaveSessionProducerManager(project)
+  }
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {
@@ -145,10 +157,20 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
 }
 
 @ApiStatus.Internal
+interface ModuleSavingCustomizer {
+  fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager
+  fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore)
+  fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,
+                             moduleStore: ComponentStoreImpl,
+                             moduleSaveSessionManager: SaveSessionProducerManager)
+}
+
+@ApiStatus.Internal
 open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project) {
-  override suspend fun saveModules(errors: MutableList<Throwable>,
-                                   isForceSavingAllSettings: Boolean,
-                                   projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+  final override suspend fun saveModules(errors: MutableList<Throwable>,
+                                         isForceSavingAllSettings: Boolean,
+                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+    moduleSavingCustomizer?.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (modules.isEmpty()) {
       return emptyList()
@@ -169,10 +191,11 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
     }
   }
 
-  protected open fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
-                                            projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
-                                            errors: MutableList<Throwable>) {
+  private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
+                                     projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
+                                     errors: MutableList<Throwable>) {
     moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
+    moduleSavingCustomizer?.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
   }
 }
 

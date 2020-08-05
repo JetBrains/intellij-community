@@ -34,7 +34,7 @@ fun install(filterable: Filterable<ExecutionNode>) {
 }
 
 @ApiStatus.Experimental
-open class FilterToggleAction constructor(text: @NlsContexts.Command String,
+open class FilterToggleAction constructor(@NlsContexts.Command text: String,
                                           private val stateKey: String?,
                                           private val filterable: Filterable<ExecutionNode>,
                                           private val filter: Predicate<ExecutionNode>,

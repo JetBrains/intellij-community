@@ -451,13 +451,9 @@ public class ExpectedHighlightingData {
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     String infoTooltip = info.getLineMarkerTooltip();
     for (LineMarkerInfo markerInfo : where) {
-      String markerInfoTooltip;
-      String arg2 = markerInfoTooltip = markerInfo.getLineMarkerTooltip();
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          (Objects.equals(infoTooltip, arg2) ||
-           ANY_TEXT.equals(markerInfoTooltip) ||
-           ANY_TEXT.equals(infoTooltip))) {
+          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip())) {
         return true;
       }
     }
@@ -768,8 +764,22 @@ public class ExpectedHighlightingData {
     return info1.startOffset == info2.startOffset &&
            info1.endOffset == info2.endOffset &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
-           (Comparing.strEqual(info1.getDescription(), info2.getDescription()) ||
-            !strictMatch && (Comparing.strEqual(ANY_TEXT, info2.getDescription()) || Comparing.strEqual(ANY_TEXT, info1.getDescription())));
+           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription());
+  }
+
+  private static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
+    if (Comparing.strEqual(d1, d2)) return true;
+    if (strictMatch) return false;
+    if (Comparing.strEqual(ANY_TEXT, d1) || Comparing.strEqual(ANY_TEXT, d2)) return true;
+    if (d1 != null && d2 != null) {
+      if (d1.endsWith(StringUtil.ELLIPSIS) && d1.regionMatches(0, d2, 0, d1.length() - 1)) {
+        return true;
+      }
+      if (d2.endsWith(StringUtil.ELLIPSIS) && d2.regionMatches(0, d1, 0, d2.length() - 1)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {

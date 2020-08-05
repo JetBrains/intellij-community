@@ -182,18 +182,23 @@ public class ConditionalExpressionInspection extends BaseInspection {
       PsiExpression copyToReplace = (PsiExpression)PsiTreeUtil.releaseMark(copy, marker);
       assert copyToReplace != null;
       replacementExpression = PsiUtil.skipParenthesizedExprDown(replacementExpression);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       if (replacementExpression == null) {
-        replacementExpression = JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("()", null);
+        replacementExpression = factory.createExpressionFromText("()", null);
       } else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression) ||
           isExplicitBoxingNecessary(expressionToReplace, replacementExpression)) {
         PsiType type = expressionToReplace.getType();
         if (type != null) {
-          replacementExpression = JavaPsiFacade.getElementFactory(element.getProject())
+          replacementExpression = factory
             .createExpressionFromText("(" + type.getCanonicalText() + ")" + tracker.text(replacementExpression), null);
         }
       }
       PsiTreeUtil.findChildrenOfType(copy, PsiComment.class).forEach(PsiElement::delete);
       PsiElement result = copyToReplace.replace(tracker.markUnchanged(replacementExpression));
+      if (result instanceof PsiPolyadicExpression && result.getParent() instanceof PsiBinaryExpression) {
+        // Convert parent binary expression to polyadic (like when replacing a+(x?b+c:..) with a+b+c)
+        result.getParent().replace(factory.createExpressionFromText(result.getParent().getText(), result));
+      }
       return copy == copyToReplace ? result : copy;
     }
 

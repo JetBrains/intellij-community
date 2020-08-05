@@ -315,6 +315,9 @@
     <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
+    <lang.parserDefinition language="PyTypeHint"
+                           implementationClass="com.jetbrains.python.codeInsight.typeHints.PyTypeHintParserDefinition"/>
+
     <!-- Packaging -->
     <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
@@ -386,7 +389,6 @@
     <extensionPoint qualifiedName="Pythonid.remoteSdkValidator" interface="com.jetbrains.python.sdk.PyRemoteSdkValidator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension" interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral"
                     interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"
@@ -437,9 +439,12 @@
     <extensionPoint qualifiedName="Pythonid.condaSdkCustomizer"
                     interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory" interface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory"/>
+    <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory"
+                    interface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationTargetEnvironmentAdjuster"
-                    interface="com.jetbrains.python.run.PythonRunConfigurationTargetEnvironmentAdjuster"/>
+                    interface="com.jetbrains.python.run.PythonRunConfigurationTargetEnvironmentAdjuster"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

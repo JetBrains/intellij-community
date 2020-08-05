@@ -1,14 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.processAllImplementationClasses
-import com.intellij.serviceContainer.processComponentInstancesOfType
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
@@ -104,17 +101,11 @@ internal fun moveComponentConfiguration(defaultProject: Project,
 
     when (storagePath) {
       StoragePathMacros.WORKSPACE_FILE -> workspaceComponentNames.add(stateAnnotation.name)
-      StoragePathMacros.PRODUCT_WORKSPACE_FILE -> {
+      StoragePathMacros.PRODUCT_WORKSPACE_FILE, StoragePathMacros.CACHE_FILE -> {
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
       else -> storageNameToComponentNames.computeIfAbsent(storagePathResolver(storagePath)) { HashSet() }.add(stateAnnotation.name)
-    }
-  }
-
-  processComponentInstancesOfType(defaultProject.picoContainer, PersistentStateComponent::class.java) {
-    LOG.runAndLogException {
-      processComponents(it.javaClass)
     }
   }
 

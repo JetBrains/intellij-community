@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     return null;
   }
 
-  private static UnaryOperator<PsiElement> getJep358Extractor(String message) {
+  private static UnaryOperator<PsiElement> getJep358Extractor(@NonNls String message) {
     if (!message.startsWith("Cannot ")) return null;
     Matcher matcher = NPE_MESSAGE.matcher(message);
     if (!matcher.matches()) return null;
@@ -166,7 +167,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     if (method != null) {
       int dotPos = method.lastIndexOf('.');
       if (dotPos != -1) {
-        String methodName = method.substring(dotPos + 1);
+        @NonNls String methodName = method.substring(dotPos + 1);
         PsiPrimitiveType type = UNBOXING_METHODS.get(methodName);
         return e -> {
           if (methodName.equals("getClass") || methodName.equals("ordinal")) {

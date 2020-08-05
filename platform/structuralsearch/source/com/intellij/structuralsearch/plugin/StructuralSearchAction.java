@@ -22,7 +22,7 @@ public class StructuralSearchAction extends DumbAwareAction {
     triggerAction(null, new SearchContext(event.getDataContext()), false);
   }
 
-  public static void triggerAction(Configuration config, SearchContext searchContext, boolean replace) {
+  public static void triggerAction(Configuration config, @NotNull SearchContext searchContext, boolean replace) {
     final Project project = searchContext.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

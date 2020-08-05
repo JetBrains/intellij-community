@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 // Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
 // stored data is VfsTimeStamp Version T*
 public final class VfsDependentEnum<T> {
-  private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
+  @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
   private final File myFile;
   private final DataExternalizer<T> myKeyDescriptor;
   private final int myVersion;

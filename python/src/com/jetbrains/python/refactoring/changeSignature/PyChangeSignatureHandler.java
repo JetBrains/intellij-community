@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -126,9 +127,9 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     dialog.show();
   }
 
-  private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull String details) {
+  private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull @NlsContexts.DialogMessage String details) {
     final String message = RefactoringBundle.getCannotRefactorMessage(details);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.renameRefactorings");
+    CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), "refactoring.renameRefactorings");
   }
 
   @Nullable
@@ -155,7 +156,8 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                               function.getName(),
                                               containingClass.getName(),
                                               baseClassName);
-      final int choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
+      final int choice = Messages.showYesNoCancelDialog(function.getProject(), message, 
+                                                        RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon());
       switch (choice) {
         case Messages.YES:
           return deepestSuperMethod;

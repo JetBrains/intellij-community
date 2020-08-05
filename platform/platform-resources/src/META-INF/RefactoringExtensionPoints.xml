@@ -31,9 +31,9 @@
     <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.RefactoringActionHandler"/>
     </extensionPoint>
-    
+
     <extensionPoint name="refactoring.changeSignatureUsageProcessor" interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor" dynamic="true"/>
-    
+
     <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler" dynamic="true"/>
     <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor" dynamic="true"/>
     <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor" dynamic="true"/>

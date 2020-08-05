@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -87,9 +88,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
   private static final class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
-    private UnnecessaryTemporaryObjectFix(String name) {
+    private UnnecessaryTemporaryObjectFix(@IntentionName String name) {
       m_name = name;
     }
 

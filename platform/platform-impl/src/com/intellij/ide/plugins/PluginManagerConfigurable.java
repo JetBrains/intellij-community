@@ -923,6 +923,7 @@ public class PluginManagerConfigurable
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
+          @NonNls
           protected List<String> getAttributes() {
             return Arrays
               .asList(
@@ -1110,6 +1111,7 @@ public class PluginManagerConfigurable
 
                   if (group.descriptors.isEmpty()) {
                     myPluginModel.setInvalidFixCallback(null);
+                    myInstalledSearchPanel.removeGroup();
                   }
                 });
               }
@@ -1138,6 +1140,20 @@ public class PluginManagerConfigurable
         return myInstalledSearchPanel;
       }
     };
+
+    myPluginModel.setCancelInstallCallback(descriptor -> {
+      PluginsGroup group = myInstalledSearchPanel.getGroup();
+
+      if (group.ui != null && group.ui.findComponent(descriptor) != null) {
+        myInstalledSearchPanel.getPanel().removeFromGroup(group, descriptor);
+        group.titleWithCount();
+        myInstalledSearchPanel.fullRepaint();
+
+        if (group.descriptors.isEmpty()) {
+          myInstalledSearchPanel.removeGroup();
+        }
+      }
+    });
   }
 
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
@@ -1359,14 +1375,6 @@ public class PluginManagerConfigurable
     if (showRestartDialog(title, message) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
-  }
-
-  public static void showPluginConfigurableAndEnable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.getPluginModel().changeEnableDisable(descriptors, true);
-      configurable.select(descriptors);
-    });
   }
 
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {

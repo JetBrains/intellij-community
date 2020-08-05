@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -51,10 +52,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
@@ -797,8 +795,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
 
-    Window frame = SwingUtilities.getWindowAncestor(myEditor.getComponent());
-    if (frame == null) return;
+    Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorComposite.isEditorComposite(c));
+    if (outerContainer == null) return;
 
     EditorSettings settings = myEditor.getSettings();
     int rightMargin = settings.getRightMargin(myEditor.getProject());
@@ -806,7 +804,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     JComponent editorComponent = myEditor.getComponent();
     RelativePoint point = new RelativePoint(editorComponent, new Point(0, 0));
-    Point editorLocationInWindow = point.getPoint(frame);
+    Point editorLocationInWindow = point.getPoint(outerContainer);
 
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;

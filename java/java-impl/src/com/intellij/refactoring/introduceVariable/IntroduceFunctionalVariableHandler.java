@@ -14,6 +14,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -183,7 +184,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
 
   @Override
-  protected void showErrorMessage(Project project, Editor editor, String message) {
+  protected void showErrorMessage(Project project, Editor editor, @NlsContexts.DialogMessage String message) {
     CommonRefactoringUtil
       .showErrorHint(project, editor, message, IntroduceFunctionalVariableAction.getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }
@@ -203,10 +204,10 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
   private class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     MyExtractMethodProcessor(Project project,
-                                    Editor editor,
-                                    PsiElement[] elements,
-                                    PsiType forcedReturnType,
-                                    String refactoringName, String initialMethodName, String helpId) {
+                             Editor editor,
+                             PsiElement[] elements,
+                             PsiType forcedReturnType,
+                             @NlsContexts.DialogTitle String refactoringName, String initialMethodName, String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
     }
 
@@ -317,10 +318,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         String variableName = data.variable.getName();
         assert variableName != null;
         VariableData dataByVName =
-          myInputVariables.getInputVariables()
-            .stream()
-            .filter(vData -> variableName.equals(vData.variable.getName())).findFirst()
-            .orElse(null);
+          ContainerUtil.find(myInputVariables.getInputVariables(), vData -> variableName.equals(vData.variable.getName()));
         if (dataByVName != null) {
           dataByVName.passAsParameter = data.passAsParameter;
           dataByVName.name = data.name;

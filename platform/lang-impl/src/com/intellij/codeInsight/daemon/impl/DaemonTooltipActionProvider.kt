@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
@@ -25,7 +26,12 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
 
 }
 
-class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
+/**
+ * Tooltip link-action that proxies its execution to intention action with text [myActionText]
+ * @param myFixText is a text to show in tooltip
+ * @param myActionText is a text to search for in intentions' actions
+ */
+class DaemonTooltipAction(private val myFixText: String, private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
 
   override fun getText(): String {
     return myFixText
@@ -40,10 +46,10 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 
     for (descriptor in intentions) {
       val action = descriptor.action
-      if (action.text == myFixText) {
+      if (action.text == myActionText) {
         //unfortunately it is very common case when quick fixes/refactorings use caret position
         editor.caretModel.moveToOffset(myActualOffset)
-        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myFixText)
+        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myActionText)
         return
       }
     }
@@ -116,11 +122,13 @@ fun wrapIntentionToTooltipAction(intention: IntentionAction,
                                  info: HighlightInfo,
                                  editor: Editor): TooltipAction {
   val editorOffset = editor.caretModel.offset
+  val text = (intention as? CustomizableIntentionAction)?.tooltipText ?: intention.text
+
   if ((info.actualStartOffset .. info.actualEndOffset).contains(editorOffset)) {
     //try to avoid caret movements
-    return DaemonTooltipAction(intention.text, editorOffset)
+    return DaemonTooltipAction(text, intention.text, editorOffset)
   }
   val pair = info.quickFixActionMarkers?.find { it.first?.action == intention }
   val offset = if (pair?.second?.isValid == true) pair.second.startOffset else info.actualStartOffset
-  return DaemonTooltipAction(intention.text, offset)
+  return DaemonTooltipAction(text, intention.text, offset)
 }

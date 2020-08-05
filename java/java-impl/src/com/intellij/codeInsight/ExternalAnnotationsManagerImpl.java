@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -65,10 +66,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -578,8 +576,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           String nameValue = tag.getAttributeValue("name");
           String className = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
           if (Comparing.strEqual(className, oldExternalName)) {
-            WriteCommandAction
-              .runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
+            WriteCommandAction.runWriteCommandAction(
+              myPsiManager.getProject(), JavaBundle.message("update.external.annotations"), null, () -> {
                 PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
                 try {
                   String name = getExternalName(element);
@@ -659,7 +657,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           continue;
         }
 
-        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
+        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(), 
+                                                 JavaBundle.message("update.external.annotations"), null, () -> {
           PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
           try {
             for (XmlTag annotationTag : tagsToProcess) {
@@ -1022,11 +1021,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       return true;
     }
 
-    private static String getAddInCode() {
+    private static @NlsActions.ActionText String getAddInCode() {
       return JavaBundle.message("external.annotations.in.code.option");
     }
 
-    private static String getMessage() {
+    private static @Nls String getMessage() {
       return JavaBundle.message("external.annotations.suggestion.message");
     }
   }

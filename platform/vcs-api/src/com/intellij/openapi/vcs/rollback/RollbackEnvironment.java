@@ -37,32 +37,30 @@ public interface RollbackEnvironment {
    * @param listener
    * @return list of errors occurred, or an empty list if no errors occurred.
    */
-  void rollbackChanges(List<Change> changes, final List<VcsException> vcsExceptions, @NotNull final RollbackProgressListener listener);
+  void rollbackChanges(List<? extends Change> changes, final List<VcsException> vcsExceptions, @NotNull final RollbackProgressListener listener);
 
   /**
    * Rolls back the deletion of files which have been deleted locally but not scheduled for deletion
    * from VCS. The implementation of this method should get the current version of the listed files from VCS.
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processLocallyDeletedFile}.
-   *
    * @param files the files to rollback deletion of.
    * @param exceptions
    * @param listener @return list of errors occurred, or an empty list if no errors occurred.
    */
-  void rollbackMissingFileDeletion(List<FilePath> files, final List<VcsException> exceptions,
-                                                 final RollbackProgressListener listener);
+  void rollbackMissingFileDeletion(List<? extends FilePath> files, final List<? super VcsException> exceptions,
+                                   final RollbackProgressListener listener);
 
   /**
    * Rolls back the modifications of files which have been made writable but not properly checked out from VCS.
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processModifiedWithoutCheckout}.
-   *
    * @param files the files to rollback.
    * @param exceptions
    * @param listener @return list of errors occurred, or an empty list if no errors occurred.
    */
-  void rollbackModifiedWithoutCheckout(List<VirtualFile> files, final List<VcsException> exceptions,
-                                                     final RollbackProgressListener listener);
+  void rollbackModifiedWithoutCheckout(List<? extends VirtualFile> files, final List<? super VcsException> exceptions,
+                                       final RollbackProgressListener listener);
 
   /**
    * This is called when the user performs an undo that returns a file to a state in which it was

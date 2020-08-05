@@ -7,14 +7,17 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.theoryinpractice.testng.configuration.*;
+import com.theoryinpractice.testng.configuration.AbstractTestNGPackageConfigurationProducer;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import jetbrains.buildServer.messages.serviceMessages.TestStarted;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
@@ -28,6 +31,11 @@ public class TestNGModuleInfoIntegrationTest extends AbstractTestFrameworkCompil
   }
 
   @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_11;
+  }
+
+  @Override
   protected void setupModule() throws Exception {
     super.setupModule();
     final ArtifactRepositoryManager repoManager = getRepoManager();
@@ -35,9 +43,8 @@ public class TestNGModuleInfoIntegrationTest extends AbstractTestFrameworkCompil
     ModuleRootModificationUtil.updateModel(myModule, model -> {
       String contentUrl = getTestContentRoot();
       ContentEntry contentEntry = model.addContentEntry(contentUrl);
-      String contentUrlSrc = contentUrl + "/source";
-      contentEntry.addSourceFolder(contentUrlSrc, false);
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_11);
+      contentEntry.addSourceFolder(contentUrl + "/source", false);
+      model.getModuleExtension(LanguageLevelModuleExtension.class);
     });
 
     JpsMavenRepositoryLibraryDescriptor testNGLib =

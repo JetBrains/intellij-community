@@ -76,7 +76,7 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   override fun getBorderInsets(c: Component?) = outerInsets
 
   override fun createPopup(): ComboPopup {
-    val popup = if (useJBPopup())
+    val popup: ComboPopup = if (useJBPopup())
       MyComboBoxPopup(comboBox, popupComponentProvider)
     else
       CustomComboPopup(comboBox)

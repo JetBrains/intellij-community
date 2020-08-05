@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,10 +35,10 @@ import java.awt.event.ActionEvent;
  * @author Jeka
  */
 public class FailedConversionsDialog extends DialogWrapper {
-  private final String[] myConflictDescriptions;
+  private final @Nls String[] myConflictDescriptions;
   public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
-  public FailedConversionsDialog(String[] conflictDescriptions, Project project) {
+  public FailedConversionsDialog(@Nls String[] conflictDescriptions, Project project) {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;
     setTitle(JavaRefactoringBundle.message("usages.detected.title"));

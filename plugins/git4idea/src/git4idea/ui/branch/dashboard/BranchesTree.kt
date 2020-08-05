@@ -26,6 +26,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
@@ -46,6 +47,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   var searchField: SearchTextField? = null
 
   init {
+    putClientProperty(AUTO_SELECT_ON_MOUSE_PRESSED, false)
     setCellRenderer(BranchTreeCellRenderer(project))
     isRootVisible = false
     setShowsRootHandles(true)
@@ -125,12 +127,16 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 
   fun getSelectedBranches(): Set<BranchInfo> {
-    val paths = selectionPaths ?: return emptySet()
+    return getSelectedNodes()
+      .mapNotNull { it.getNodeDescriptor().branchInfo }
+      .toSet()
+  }
+
+  fun getSelectedNodes(): Sequence<BranchTreeNode> {
+    val paths = selectionPaths ?: return emptySequence()
     return paths.asSequence()
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
-      .mapNotNull { it.getNodeDescriptor().branchInfo }
-      .toSet()
   }
 }
 
@@ -144,6 +150,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
+  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.HEAD_NODE, displayName = VcsLogUtil.HEAD))
   private val branchFilter: (BranchInfo) -> Boolean =
     { branch -> !uiController.showOnlyMy || branch.isMy == ThreeState.YES }
   private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
@@ -226,6 +233,12 @@ internal class FilteringBranchesTree(project: Project,
 
   fun getSelectedBranches() = component.getSelectedBranches()
 
+  fun getSelectedBranchFilters(): List<String> {
+    return component.getSelectedNodes()
+      .mapNotNull { with(it.getNodeDescriptor()) { if (type == NodeType.HEAD_NODE) displayName else branchInfo?.branchName } }
+      .toList()
+  }
+
   private fun restorePreviouslyExpandedPaths() {
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
   }
@@ -261,6 +274,7 @@ internal class FilteringBranchesTree(project: Project,
     when (nodeDescriptor.type) {
       NodeType.LOCAL_ROOT -> localBranchesNode
       NodeType.REMOTE_ROOT -> remoteBranchesNode
+      NodeType.HEAD_NODE -> headBranchesNode
       else -> BranchTreeNode(nodeDescriptor)
     }
 
@@ -302,6 +316,7 @@ internal class FilteringBranchesTree(project: Project,
   fun refreshTree() {
     val treeState = project.service<BranchesTreeStateHolder>()
     treeState.createNewState()
+    tree.selectionModel.clearSelection()
     refreshNodeDescriptorsModel()
     searchModel.updateStructure()
     treeState.applyStateToTree()
@@ -333,6 +348,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
+      add(headBranchesNode.getNodeDescriptor())
       if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
       if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
     }

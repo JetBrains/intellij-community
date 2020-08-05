@@ -3,7 +3,7 @@ package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.util.Url
@@ -100,7 +100,7 @@ private fun doConnect(bootstrap: Bootstrap,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): ConnectToChannelResult {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    logger("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
+    Logger.getInstance("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
   }
 
   var attemptCount = 0

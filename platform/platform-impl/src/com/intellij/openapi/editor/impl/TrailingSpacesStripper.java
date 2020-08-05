@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -58,24 +59,26 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       }
     }
 
+    if (options.isRemoveTrailingBlankLines()) {
+      removeTrailngBlankLines(document, options.isEnsureNewLineAtEOF());
+    }
+
     final int lines = document.getLineCount();
     if (options.isEnsureNewLineAtEOF() && lines > 0) {
       final int start = document.getLineStartOffset(lines - 1);
       final int end = document.getLineEndOffset(lines - 1);
       if (start != end) {
         final CharSequence content = document.getCharsSequence();
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
+        performUndoableWrite(new DocumentRunnable(document, null) {
           @Override
           public void run() {
-            CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-              if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && options.isStripTrailingSpaces() &&
-                  !(options.isKeepTrailingSpacesOnCaretLine() && hasCaretIn(start, end))) {
-                document.deleteString(start, end);
-              }
-              else {
-                document.insertString(end, "\n");
-              }
-            });
+            if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && options.isStripTrailingSpaces() &&
+                !(options.isKeepTrailingSpacesOnCaretLine() && hasCaretIn(start, end))) {
+              document.deleteString(start, end);
+            }
+            else {
+              document.insertString(end, "\n");
+            }
           }
 
           private boolean hasCaretIn(int start, int end) {
@@ -90,6 +93,38 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
         });
       }
     }
+  }
+
+  private static void removeTrailngBlankLines(@NotNull Document document, boolean keepLast) {
+    if (document.getLineCount() > 0) {
+      int endOffset = document.getTextLength() - 1;
+      Ref<Integer> deleteToExclusive = Ref.create(endOffset + 1);
+      CharSequence content = document.getCharsSequence();
+      int blankAreaOffset = CharArrayUtil.shiftBackward(content, endOffset, " \t\r\n" );
+      if (blankAreaOffset < endOffset) {
+        final int firstNewLineOffset = CharArrayUtil.indexOf(content, "\n", blankAreaOffset);
+        if (firstNewLineOffset > 0) {
+          if (keepLast) {
+            int lastLNewLineOffset = CharArrayUtil.lastIndexOf(content, "\n", endOffset);
+            if (lastLNewLineOffset >= firstNewLineOffset) {
+              deleteToExclusive.set(lastLNewLineOffset);
+            }
+          }
+          performUndoableWrite(new DocumentRunnable(document, null) {
+            @Override
+            public void run() {
+              document.deleteString(firstNewLineOffset, deleteToExclusive.get());
+            }
+          });
+        }
+      }
+    }
+  }
+
+  private static void performUndoableWrite(@NotNull DocumentRunnable documentRunnable) {
+    ApplicationManager.getApplication().runWriteAction(
+      () -> CommandProcessor.getInstance().runUndoTransparentAction(documentRunnable)
+    );
   }
 
   // clears line modification flags except lines which was not stripped because the caret was in the way
@@ -214,6 +249,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
               if (providerOptions != null) {
                 currOptions.setStripTrailingSpaces(providerOptions.getStripTrailingSpaces());
                 currOptions.setEnsureNewLineAtEOF(providerOptions.getEnsureNewLineAtEOF());
+                currOptions.setRemoveTrailingBlankLines(providerOptions.getRemoveTrailingBlankLines());
                 currOptions.setChangedLinesOnly(providerOptions.getChangedLinesOnly());
                 currOptions.setKeepTrailingSpacesOnCaretLine(providerOptions.getKeepTrailingSpacesOnCaretLine());
               }
@@ -229,6 +265,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   private static final class MyTrailingSpacesOptions implements TrailingSpacesOptions {
     private @Nullable Boolean myStripTrailingSpaces;
     private @Nullable Boolean myEnsureNewLineAtEOF;
+    private @Nullable Boolean myRemoveTrailingBlankLines;
     private @Nullable Boolean myChangedLinesOnly;
     private @Nullable Boolean myKeepTrailingSpacesOnCaretLine;
 
@@ -241,6 +278,12 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     private void setStripTrailingSpaces(@Nullable Boolean stripTrailingSpaces) {
       if (stripTrailingSpaces != null && myStripTrailingSpaces == null) {
         myStripTrailingSpaces = stripTrailingSpaces;
+      }
+    }
+
+    private void setRemoveTrailingBlankLines(@Nullable Boolean removeTrailingBlankLines) {
+      if (removeTrailingBlankLines != null && myRemoveTrailingBlankLines == null) {
+        myRemoveTrailingBlankLines = removeTrailingBlankLines;
       }
     }
 
@@ -267,6 +310,11 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       return myStripTrailingSpaces != null
              ? myStripTrailingSpaces.booleanValue()
              : !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(myEditorSettings.getStripTrailingSpaces());
+    }
+
+    @Override
+    public boolean isRemoveTrailingBlankLines() {
+      return myRemoveTrailingBlankLines != null ? myRemoveTrailingBlankLines.booleanValue() : myEditorSettings.isRemoveTrailingBlankLines();
     }
 
     @Override

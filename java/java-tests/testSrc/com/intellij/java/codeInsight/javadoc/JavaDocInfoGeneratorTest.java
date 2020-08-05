@@ -321,7 +321,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   private VirtualFile createProjectStructure(String rootPath) {
     try {
-      return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+      return createTestProjectStructure(rootPath);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

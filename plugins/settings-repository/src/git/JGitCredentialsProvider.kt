@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.google.common.cache.CacheBuilder
@@ -7,7 +7,6 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.runBlocking
@@ -63,7 +62,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
       else if (item is CredentialItem.YesNoType) {
         UIUtil.invokeAndWaitIfNeeded(Runnable {
-          item.value = MessageDialogBuilder.yesNo("", item.promptText!!).show() == Messages.YES
+          item.value = MessageDialogBuilder.yesNo("", item.promptText!!).guessWindowAndAsk()
         })
         return true
       }

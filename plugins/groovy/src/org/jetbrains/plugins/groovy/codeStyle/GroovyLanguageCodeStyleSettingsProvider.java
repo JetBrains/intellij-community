@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -21,6 +21,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Field;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
@@ -308,12 +310,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   private static String loadSample(@NotNull SettingsType settingsType) {
     String name = "/samples/" + settingsType.name() + ".txt";
     try {
-      return readText(
-        GroovyLanguageCodeStyleSettingsProvider.class.getResourceAsStream(name), UTF_8
-      );
+      try (Reader reader = new InputStreamReader(GroovyLanguageCodeStyleSettingsProvider.class.getResourceAsStream(name), UTF_8)) {
+        return readText(reader);
+      }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return "";
   }
 

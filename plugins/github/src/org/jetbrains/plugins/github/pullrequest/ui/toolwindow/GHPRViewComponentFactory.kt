@@ -4,11 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -36,8 +35,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
-import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -96,10 +93,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")
   private val reloadChangesAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
-  private val diffAction = GHPRShowDiffAction().apply {
-    ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
-  }
-  private val reviewSubmitAction = GHPRReviewSubmitAction()
 
   private val detailsLoadingErrorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
     dataProvider.detailsData.reloadDetails()
@@ -310,10 +303,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         ComponentUtil.putClientProperty(splitter, CHANGES_TREE_KEY, changesTree)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        val reviewUnsupportedWarning = createReviewUnsupportedPlaque()
-        model.addValueChangedListener {
-          reviewUnsupportedWarning.isVisible = !model.value.linearHistory
-        }
+        val reviewUnsupportedWarning = createReviewUnsupportedPlaque(model)
         JBUI.Panels.simplePanel(createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
                                                   GithubBundle.message("pull.request.commit.does.not.contain.changes")))
           .addToTop(reviewUnsupportedWarning)
@@ -332,10 +322,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createReviewUnsupportedPlaque(): JComponent {
-    return HtmlInfoPanel().apply {
-      setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+  private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
+    setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
+    border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+
+    model.addAndInvokeValueChangedListener {
+      isVisible = !model.value.linearHistory
     }
   }
 
@@ -385,9 +377,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
     model.addAndInvokeValueChangedListener(tree::rebuildTree)
 
-    diffAction.registerCustomShortcutSet(diffAction.shortcutSet, tree)
     reloadChangesAction.registerCustomShortcutSet(tree, null)
-    tree.installPopupHandler(DefaultActionGroup(diffAction, reloadChangesAction))
+    tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) {
       if (tree.isShowing) tree.getData(it) else null
@@ -408,8 +399,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private fun createChangesBrowserToolbar(target: JComponent)
     : TreeActionsToolbarPanel {
 
-    val changesToolbarActionGroup = DefaultActionGroup(diffAction, reviewSubmitAction, Separator(),
-                                                       actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
+    val changesToolbarActionGroup = actionManager.getAction("Github.PullRequest.Changes.Toolbar") as ActionGroup
     val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
     val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
                                               actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))

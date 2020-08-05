@@ -46,10 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -555,10 +552,10 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         vTemp.refresh(false, true);
 
         // ptr is now null, cached as map
-        VirtualFile v = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
+        VirtualFile v = Objects.requireNonNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
         WriteAction.runAndWait(() -> {
           v.delete(this); //inc FS modCount
-          VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr.getParentFile()));
+          VirtualFile file = Objects.requireNonNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr.getParentFile()));
           file.createChildData(this, ioSandPtr.getName());
         });
 
@@ -711,7 +708,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot);
+            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {
@@ -756,7 +753,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         }
       }));
       TimeoutUtil.sleep(100);
-      VirtualFile vFile = PlatformTestUtil.notNull(getVirtualFile(file));
+      VirtualFile vFile = Objects.requireNonNull(getVirtualFile(file));
       assertTrue(vFile.isValid());
       assertTrue(pointer.isValid());
       assertTrue(file.delete());
@@ -1058,9 +1055,27 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.getFile().isValid());
 
     PlatformTestUtil.startPerformanceTest("get()", 3000, () -> {
-      for (int i=0; i<800_000_000; i++) {
+      for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }
     }).assertTiming();
+  }
+
+  @Test
+  public void testMoveJars() throws IOException {
+    File jarParent = new File(tempDir.getRoot(), "a/b/c");
+
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+
+    File newJarParent = new File(tempDir.getRoot(), "new_a");
+    assertTrue(newJarParent.mkdir());
+    doMove(jarParent, newJarParent);
+    assertTrue(jarPointer.getFile() != null && jarPointer.getFile().isValid());
   }
 }

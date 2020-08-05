@@ -38,11 +38,15 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -126,7 +130,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     setResizable(true);
 
     myProject = project;
-    myEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+    myEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
     myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
@@ -276,6 +280,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
     return true;
+  }
+
+  public void scheduleItemUpdate(@NotNull LookupElement item) {
+    LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
+    myCellRenderer.updateItemPresentation(item);
   }
 
   private void addDummyItems(int count) {

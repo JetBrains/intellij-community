@@ -62,12 +62,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -266,7 +262,7 @@ public final class HighlightUtil {
         }
 
         final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
-        final Ref<String> differentArgumentsMessage = new Ref<>();
+        final Ref<@Nls String> differentArgumentsMessage = new Ref<>();
         final PsiClass sameGenericParameterization =
           InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
             if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
@@ -598,12 +594,12 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  public static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled) {
+  public static String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled) {
     return getUnhandledExceptionsDescriptor(unhandled, null);
   }
 
   @NotNull
-  private static String getUnhandledExceptionsDescriptor(@NotNull final Collection<? extends PsiClassType> unhandled, @Nullable final String source) {
+  private static String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled, @Nullable @Nls String source) {
     final String exceptions = formatTypes(unhandled);
     return source == null
            ? JavaErrorBundle.message("unhandled.exceptions", exceptions, unhandled.size())
@@ -655,6 +651,8 @@ public final class HighlightUtil {
       PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
       if (fieldByName != null && fieldByName != field) {
         oldVariable = fieldByName;
+      } else {
+        oldVariable = ContainerUtil.find(aClass.getRecordComponents(), c -> c.getName().equals(field.getName()));
       }
     }
     else {
@@ -766,7 +764,7 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  public static String formatClass(@NotNull PsiClass aClass) {
+  public static @NlsSafe String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
   }
 
@@ -982,7 +980,7 @@ public final class HighlightUtil {
         }
 
         if (aClass.isEnum()) {
-          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier));
+          isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier) || PsiModifier.SEALED.equals(modifier));
         }
 
         if (aClass.isRecord()) {
@@ -1627,8 +1625,9 @@ public final class HighlightUtil {
     final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
     if (annotation != null) return annotation;
 
-    if (!(owner instanceof PsiClass) || !owner.hasModifier(JvmModifier.STATIC)) {
-      final PsiAnnotation result = getPreviewFeatureAnnotation(PsiTreeUtil.getParentOfType(owner, PsiClass.class));
+    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
+      final PsiMember member = (PsiMember)owner;
+      final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
       if (result != null) return result;
     }
 
@@ -1836,9 +1835,9 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  static Pair<String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
-                                                                              @NotNull PsiElement resolved,
-                                                                              @NotNull JavaResolveResult result) {
+  static Pair<@Nls String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
+                                                                                   @NotNull PsiElement resolved,
+                                                                                   @NotNull JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
@@ -2288,15 +2287,13 @@ public final class HighlightUtil {
     PsiExpression qualifierExpr = expression.getQualifierExpression();
     // simple reference can be illegal (JLS 8.3.3)
     if (qualifierExpr == null) return false;
-    if (Objects.equals(qualifierExpr.getText(), containingClass.getName())) {
-      PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, referencedField);
+    if (!(qualifierExpr instanceof PsiReferenceExpression)) return true;
+
+    PsiElement qualifiedReference = ((PsiReferenceExpression)qualifierExpr).resolve();
+    if (containingClass.equals(qualifiedReference)) {
       // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
       // so a qualified reference to the constant variable is possible.
-      // And we have to ignore a reference to the enum constant which is not a constant variable (4.12.4, 15.29).
-      if (!enumType.isAssignableFrom(referencedField.getType()) && referencedField.computeConstantValue() != null) {
-        return true;
-      }
-      return false;
+      return PsiUtil.isCompileTimeConstant(referencedField);
     }
     return true;
   }
@@ -2478,10 +2475,10 @@ public final class HighlightUtil {
       if (thisExpression.getQualifier() != null) {
         resolvedName = referencedClass == null
                        ? null
-                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + ".this";
+                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + "." + PsiKeyword.THIS;
       }
       else {
-        resolvedName = "this";
+        resolvedName = PsiKeyword.THIS;
       }
     }
     else {
@@ -3110,7 +3107,7 @@ public final class HighlightUtil {
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
     if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
-        Pair<String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
+        Pair<@Nls String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
         boolean moduleAccessProblem = problem.second != null;
         PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first).create();

@@ -14,8 +14,8 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
-import com.intellij.grazie.utils.isInjectedFragment
 import com.intellij.grazie.utils.lazyConfig
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiElement
@@ -52,10 +52,9 @@ class GrazieInspection : LocalInspectionTool() {
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (element.isInjectedFragment()) return
-
         val typos = CollectionFactory.createSmallMemoryFootprintSet<Typo>()
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)

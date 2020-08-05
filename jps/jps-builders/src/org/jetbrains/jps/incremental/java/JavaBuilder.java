@@ -11,15 +11,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -92,17 +90,17 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target", "--release",
-    "--boot-class-path", "-bootclasspath",
-    "--class-path", "-classpath", "-cp",
-    "-processorpath", "-sourcepath",
-    "-d",
-    "--module-path", "-p", "--module-source-path"
+    "-target", "--release", "-d"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   );
-
+  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
+    "--boot-class-path", "-bootclasspath",
+    "--class-path", "-classpath", "-cp",
+    "-processorpath", "-sourcepath",
+    "--module-path", "-p", "--module-source-path"
+  );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
@@ -227,8 +225,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
                           @NotNull OutputConsumer outputConsumer,
                           @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
-      final Set<File> filesToCompile = CollectionFactory.createFileLinkedSet();
-
+      Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
         if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
@@ -825,6 +822,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         }
         else {
           if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
+            if (POSSIBLY_CONFLICTING_OPTIONS.contains(userOption)) {
+              notifyOptionPossibleConflicts(context, userOption, chunk);
+            }
             if (userOption.startsWith("-J-")) {
               vmOptions.add(userOption.substring("-J".length()));
             }
@@ -846,6 +846,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
 
     return pair(vmOptions, compilationOptions);
+  }
+
+  private static void notifyOptionPossibleConflicts(CompileContext context, String option, ModuleChunk chunk) {
+    context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
+      "User-specified option \"" + option + "\" for \"" + chunk.getPresentableShortName() + "\" may conflict with the corresponding option calculated automatically according to project settings."
+    ));
   }
 
   private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
@@ -1106,13 +1112,13 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Set<File>> map = FileCollectionFactory.createCanonicalFileMap();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
-      final Set<File> roots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> roots = FileCollectionFactory.createCanonicalFileSet();
       for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
@@ -1125,7 +1131,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     private final CompileContext myContext;
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
-    private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    private final Set<File> myFilesWithErrors = FileCollectionFactory.createCanonicalFileSet();
     @NotNull
     private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
 

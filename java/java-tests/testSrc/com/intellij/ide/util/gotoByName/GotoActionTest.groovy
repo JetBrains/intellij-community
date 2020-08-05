@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.codeStyle.WordPrefixMatcher
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.util.List
 import java.util.concurrent.TimeUnit
-
 /**
  * @author peter
  */
@@ -138,6 +138,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test TopHit CamelCase actions found in lower case"() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
     def action1 = createAction("CamelCase Name", "none")
     def action2 = createAction("Simple Name", "CamelCase description")
     def action3 = createAction("Prefix-CamelCase Name", "none")

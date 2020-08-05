@@ -19,17 +19,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
-  private final ServerType<?> myServerType;
+  private final String myServerTypeId;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
-  private final Map<SingletonDeploymentSourceType, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
+  private final Map<String, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
           CloudBundle.message("deploy.to.server.configuration.type.description", serverType.getPresentableName()),
           serverType.getIcon());
 
-    myServerType = serverType;
-    if (myServerType.mayHaveProjectSpecificDeploymentSources()) {
+    myServerTypeId = serverType.getId();
+    if (serverType.mayHaveProjectSpecificDeploymentSources()) {
       myMultiSourcesFactory = new MultiSourcesConfigurationFactory();
       addFactory(myMultiSourcesFactory);
     }
@@ -40,12 +40,12 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     for (SingletonDeploymentSourceType next : serverType.getSingletonDeploymentSourceTypes()) {
       SingletonTypeConfigurationFactory nextFactory = new SingletonTypeConfigurationFactory(next);
       addFactory(nextFactory);
-      myPerTypeFactories.put(next, nextFactory);
+      myPerTypeFactories.put(next.getId(), nextFactory);
     }
   }
 
-  boolean isForServerType(@NotNull ServerType<?> serverType) {
-    return serverType.equals(myServerType);
+  boolean isForServerType(String serverTypeId) {
+    return serverTypeId.equals(myServerTypeId);
   }
 
   /**
@@ -54,13 +54,13 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   @NotNull
   public ConfigurationFactory getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
     ConfigurationFactory result = null;
-    if (sourceType instanceof SingletonDeploymentSourceType && myServerType.getSingletonDeploymentSourceTypes().contains(sourceType)) {
-      result = myPerTypeFactories.get(sourceType);
+    if (sourceType instanceof SingletonDeploymentSourceType && getServerType().getSingletonDeploymentSourceTypes().contains(sourceType)) {
+      result = myPerTypeFactories.get(sourceType.getId());
     }
     if (result == null) {
       result = myMultiSourcesFactory;
     }
-    assert result != null : "server type: " + myServerType + ", requested source type: " + sourceType;
+    assert result != null : "server type: " + myServerTypeId + ", requested source type: " + sourceType;
     return result;
   }
 
@@ -76,12 +76,14 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
 
   @NotNull
   public ServerType<?> getServerType() {
-    return myServerType;
+    ServerType<?> result = ServerType.EP_NAME.findFirstSafe(next -> myServerTypeId.equals(next.getId()));
+    assert result != null : "Sever type " + myServerTypeId + " had been unloaded already";
+    return result;
   }
 
   @Override
   public String getHelpTopic() {
-    return "reference.dialogs.rundebug." + myServerType.getId() + "-deploy";
+    return "reference.dialogs.rundebug." + myServerTypeId + "-deploy";
   }
 
   // todo do not extends ConfigurationFactoryEx once Google Cloud Tools plugin will get rid of getFactory() usage
@@ -92,15 +94,17 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
 
     @Override
     public boolean isApplicable(@NotNull Project project) {
-      return myServerType.canAutoDetectConfiguration() || !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
+      ServerType<?> serverType = getServerType();
+      return serverType.canAutoDetectConfiguration() || !RemoteServersManager.getInstance().getServers(serverType).isEmpty();
     }
 
     @Override
     @NotNull
     public DeployToServerRunConfiguration createTemplateConfiguration(@NotNull Project project) {
-      DeploymentConfigurator<?, ?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
+      ServerType<?> serverType = getServerType();
+      DeploymentConfigurator<?, ?> deploymentConfigurator = serverType.createDeploymentConfigurator(project);
       //noinspection unchecked
-      return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
+      return new DeployToServerRunConfiguration(project, this, "", serverType, deploymentConfigurator);
     }
   }
 
@@ -114,31 +118,41 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   }
 
   public final class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
-    private final SingletonDeploymentSourceType mySourceType;
+    private final String mySourceTypeId;
+    private final String myPresentableName;
 
     public SingletonTypeConfigurationFactory(@NotNull SingletonDeploymentSourceType sourceType) {
-      mySourceType = sourceType;
+      mySourceTypeId = sourceType.getId();
+      myPresentableName = sourceType.getPresentableName();
     }
 
     @NotNull
     @Override
     public String getId() {
-      return mySourceType.getId();
+      return mySourceTypeId;
     }
 
     @NotNull
     @Nls
     @Override
     public String getName() {
-      return mySourceType.getPresentableName();
+      return myPresentableName;
     }
 
     @NotNull
     @Override
     public DeployToServerRunConfiguration createTemplateConfiguration(@NotNull Project project) {
       DeployToServerRunConfiguration result = super.createTemplateConfiguration(project);
-      result.lockDeploymentSource(mySourceType);
+      DeploymentSourceType<?> type = getSourceTypeImpl();
+      if (type instanceof SingletonDeploymentSourceType) {
+        result.lockDeploymentSource((SingletonDeploymentSourceType)type);
+      }
       return result;
+    }
+
+    @Nullable
+    private DeploymentSourceType<?> getSourceTypeImpl() {
+      return DeploymentSourceType.EP_NAME.findFirstSafe(next -> mySourceTypeId.equals(next.getId()));
     }
   }
 }

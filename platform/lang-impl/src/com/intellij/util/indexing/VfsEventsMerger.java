@@ -1,36 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 final class VfsEventsMerger {
-  private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE;
-  private static final Logger LOG = Logger.getInstance(VfsEventsMerger.class);
+  private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE || SystemProperties.is("log.index.vfs.events");
+  @Nullable
+  private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
-    if (DEBUG) LOG.info("Request build indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChange);
+    if (LOG != null) LOG.info("Request build indices for file:" + file.getPath() + ", contentChange:" + contentChange);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
   void recordBeforeFileEvent(@NotNull VirtualFile file, boolean contentChanged) {
-    if (DEBUG) LOG.info("Request invalidate indices for file:" + getFileIdOrPath(file) + ", contentChange:" + contentChanged);
+    if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", contentChange:" + contentChanged);
     updateChange(file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
   void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
-    if (DEBUG) LOG.info("Transient state changed for file:" + getFileIdOrPath(file));
+    if (LOG != null) LOG.info("Transient state changed for file:" + file.getPath());
     updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
 
@@ -83,7 +92,9 @@ final class VfsEventsMerger {
         if (info == null) continue;
 
         try {
-          if (DEBUG) System.out.println("Processing " + info);
+          if (LOG != null) {
+            LOG.info("Processing " + info);
+          }
           if (!eventProcessor.process(info)) return false;
         }
         catch (ProcessCanceledException pce) { // todo remove
@@ -141,7 +152,7 @@ final class VfsEventsMerger {
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append("file: ").append(file.getPath()).append("\n")
+      builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
       if ((eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE-REMOVE ");
@@ -183,7 +194,45 @@ final class VfsEventsMerger {
     }
   }
 
-  private static String getFileIdOrPath(@NotNull VirtualFile file) {
-    return file instanceof VirtualFileWithId ? String.valueOf(((VirtualFileWithId)file).getId()) : file.getPath();
+  private static class MyLoggerFactory implements Logger.Factory {
+    @Nullable
+    private static final MyLoggerFactory ourFactory;
+
+    static {
+      MyLoggerFactory factory = null;
+      try {
+        if (DEBUG) {
+          factory = new MyLoggerFactory();
+        }
+      }
+      catch (IOException e) {
+        FileBasedIndexImpl.LOG.error(e);
+      }
+      ourFactory = factory;
+    }
+
+    @NotNull
+    private final RollingFileAppender myAppender;
+
+    MyLoggerFactory() throws IOException {
+      Path logPath = IndexDiagnosticDumper.INSTANCE.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
+      PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %m\n");
+      myAppender = new RollingFileAppender(pattern, logPath.toFile().getAbsolutePath());
+      myAppender.setMaxFileSize("20MB");
+      myAppender.setMaxBackupIndex(10);
+    }
+
+
+    @Override
+    public @NotNull Logger getLoggerInstance(@NotNull String category) {
+      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+      logger.addAppender(myAppender);
+      logger.setLevel(Level.INFO);
+      return new Log4jBasedLogger(logger);
+    }
+
+    public static @Nullable Logger getLoggerInstance() {
+      return ourFactory == null ? null : ourFactory.getLoggerInstance("#" + VfsEventsMerger.class.getName());
+    }
   }
 }

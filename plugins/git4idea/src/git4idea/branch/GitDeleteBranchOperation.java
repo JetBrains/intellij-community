@@ -136,7 +136,10 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
 
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> restoreInBackground(notification)));
+    notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
+      notification.expire();
+      restoreInBackground(notification);
+    }));
     if (unmergedCommits) {
       notification.addAction(NotificationAction.createSimple(() -> getViewCommits(), () -> viewUnmergedCommitsInBackground(notification)));
     }
@@ -144,7 +147,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
       notification.addAction(NotificationAction.createSimple(() -> getDeleteTrackedBranch(), () -> {
-        notification.hideBalloon();
+        notification.expire();
         deleteTrackedBranchInBackground();
       }));
     }

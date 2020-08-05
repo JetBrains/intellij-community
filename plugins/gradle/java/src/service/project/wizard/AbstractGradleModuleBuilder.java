@@ -26,7 +26,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +80,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  * @author Denis Zhdanov
  */
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
-
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
 
   private static final String TEMPLATE_GRADLE_SETTINGS = "Gradle Settings.gradle";
@@ -320,7 +317,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return StdModuleTypes.JAVA;
   }
 
@@ -568,8 +565,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myUseKotlinDSL = useKotlinDSL;
   }
 
-  private class ConfigureGradleModuleCallback implements ExternalProjectRefreshCallback {
-
+  private final class ConfigureGradleModuleCallback implements ExternalProjectRefreshCallback {
     private final @Nullable String externalConfigPath;
     private final @Nullable String sdkName;
 
@@ -577,7 +573,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     ConfigureGradleModuleCallback(@NotNull ImportSpecBuilder importSpecBuilder) {
       this.defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(importSpecBuilder.build());
-      this.sdkName = ObjectUtils.doIfNotNull(myJdk, it -> it.getName());
+      this.sdkName = myJdk == null ? null : myJdk.getName();
       this.externalConfigPath = FileUtil.toCanonicalPath(getContentEntryPath());
     }
 

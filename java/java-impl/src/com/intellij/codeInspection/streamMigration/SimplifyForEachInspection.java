@@ -199,9 +199,9 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   public static class SimplifyForEachFix implements LocalQuickFix {
-    @NotNull private final String myCustomName;
+    @NotNull private final @Nls String myCustomName;
 
-    protected SimplifyForEachFix(@NotNull String customName) {
+    protected SimplifyForEachFix(@NotNull @Nls String customName) {
       myCustomName = customName;
     }
 

@@ -9,8 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Used to track bounds of build system's life cycle
- * And used to find and link build system project into Idea project
+ * Allows to show and hide notification about unlinked projects with [systemId].
  */
 @ApiStatus.Experimental
 interface ExternalSystemUnlinkedProjectAware {
@@ -23,7 +22,7 @@ interface ExternalSystemUnlinkedProjectAware {
 
   fun linkAndLoadProject(project: Project, externalProjectPath: String)
 
-  fun subscribe(project: Project, listener: ExternalSystemProjectListener, parentDisposable: Disposable)
+  fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
 
   companion object {
     val EP_NAME = ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,15 +48,15 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     STRING_CONCAT("object.allocation.in.loop.problem.string.concat"),
     ARRAY_INITIALIZER("object.allocation.in.loop.problem.array.initializer.descriptor");
 
-    private final String myMessage;
+    private final @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String myMessage;
 
     Kind(@PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String message) {
-      myMessage = InspectionGadgetsBundle.message(message);
+      myMessage = message;
     }
 
     @Override
-    public String toString() {
-      return myMessage;
+    public @InspectionMessage String toString() {
+      return InspectionGadgetsBundle.message(myMessage);
     }
   }
 

@@ -9,13 +9,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +38,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batkovich
  */
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-  private static final String SORT_METHODS_BY_PERCENT_DESCRIPTION = "Sort by Percent of Classes which Overrides a Method";
 
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
@@ -90,7 +93,15 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
       if (onlyPrimary.length == 0) {
         javaOverrideImplementMemberChooser.selectElements(new ClassMember[] {all[0]});
       } else {
-        javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        PsiClass currClass = ObjectUtils.tryCast(aClass, PsiClass.class);
+        if (currClass != null && currClass.isRecord()) {
+          PsiMethodMember[] toImplementMembers = ContainerUtil
+            .filter(onlyPrimary, m -> !OverrideImplementExploreUtil.belongsToRecord(m.getElement()))
+            .toArray(new PsiMethodMember[0]);
+          javaOverrideImplementMemberChooser.selectElements(ArrayUtil.isEmpty(toImplementMembers) ? onlyPrimary : toImplementMembers);
+        } else {
+          javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        }
       }
     }
 
@@ -167,7 +178,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     group.add(myMergeAction);
   }
 
-  private static String getChooserTitle(final boolean toImplement, final boolean merge) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -186,7 +197,8 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
 
   private class MySortByOverridingAction extends ToggleAction {
     MySortByOverridingAction() {
-      super(SORT_METHODS_BY_PERCENT_DESCRIPTION, SORT_METHODS_BY_PERCENT_DESCRIPTION, AllIcons.ObjectBrowser.SortedByUsage);
+      super("Sort by Percent of Classes which Overrides a Method", 
+            "Sort by Percent of Classes which Overrides a Method", AllIcons.ObjectBrowser.SortedByUsage);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_MASK)), myTree);
     }
 

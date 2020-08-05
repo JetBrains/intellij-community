@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,17 +164,22 @@ public class ExceptionWorker {
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
-  private static int findFirstRParenAfterDigit(@NotNull String line) {
-    int rParenIdx = -1;
+  private static int findRParenAfterLocation(@NotNull String line) {
+    int afterDigit = -1;
     int rParenCandidate = line.lastIndexOf(')');
-    //Looking for minimal position for ')' after a digit
+    boolean singleOccurrence = true;
     while (rParenCandidate > 0) {
       if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
-        rParenIdx = rParenCandidate;
+        afterDigit = rParenCandidate;
       }
-      rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
+      int prev = line.lastIndexOf(')', rParenCandidate - 1);
+      if (prev < 0 && singleOccurrence) {
+        return rParenCandidate;
+      }
+      rParenCandidate = prev;
+      singleOccurrence = false;
     }
-    return rParenIdx;
+    return afterDigit;
   }
 
   @Nullable
@@ -186,7 +193,7 @@ public class ExceptionWorker {
   @Nullable
   private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findFirstRParenAfterDigit(line);
+    int rParenIdx = findRParenAfterLocation(line);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
@@ -310,6 +317,10 @@ public class ExceptionWorker {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 
+      if ("Native Method".equals(fileAndLine)) {
+        return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, null, -1);
+      }
+
       int colonIndex = fileAndLine.lastIndexOf(':');
       if (colonIndex < 0) return null;
 
@@ -321,8 +332,8 @@ public class ExceptionWorker {
   }
 
   private static final class StackFrameMatcher implements ExceptionLineRefiner {
-    private final String myMethodName;
-    private final String myClassName;
+    private final @NonNls String myMethodName;
+    private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
@@ -460,8 +471,7 @@ public class ExceptionWorker {
       String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
       Ref<Balloon> ref = Ref.create();
       Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName)),
-                                      null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+        .createHtmlTextBalloonBuilder(getActionLink(actionName), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(HyperlinkEvent e) {
               if (e.getDescription().equals("analyze")) {
@@ -480,6 +490,13 @@ public class ExceptionWorker {
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       balloon.show(point, Balloon.Position.below);
+      editor.getScrollingModel().addVisibleAreaListener(e -> {
+        Disposer.dispose(balloon);
+      }, balloon);
+    }
+
+    private static @NlsSafe String getActionLink(@Nls String actionName) {
+      return String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName));
     }
   }
 

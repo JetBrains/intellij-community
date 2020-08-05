@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,7 +28,9 @@ public abstract class FeatureUsagesCollector {
   }
 
   protected static <T extends FeatureUsagesCollector> Set<T> getExtensions(@NotNull UsagesCollectorConsumer invoker, ExtensionPointName<T> ep) {
-    if (invoker.getClass().getClassLoader() instanceof PluginClassLoader) return Collections.emptySet();
+    if (invoker.getClass().getClassLoader() instanceof PluginAwareClassLoader) {
+      return Collections.emptySet();
+    }
     return ep.extensions().filter(u -> u.isValid()).collect(Collectors.toSet());
   }
 

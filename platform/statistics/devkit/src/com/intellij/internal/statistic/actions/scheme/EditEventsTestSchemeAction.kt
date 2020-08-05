@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.notification.NotificationType
@@ -44,10 +45,9 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
       return
     }
-    val scheme = loadEventsScheme(project, testSchemeStorage)
-    if (scheme == null) return
+    val scheme = loadEventsScheme(project, testSchemeStorage) ?: return
 
-    val editTestSchemePanel = EditEventsTestSchemePanel(project, scheme.localGroups, scheme.productionGroups)
+    val editTestSchemePanel = EditEventsTestSchemePanel(project, scheme.testScheme, scheme.productionGroups, scheme.generatedScheme)
     val dialog = dialog(
       StatisticsBundle.message("stats.edit.test.scheme"),
       panel = editTestSchemePanel,
@@ -79,7 +79,8 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        return EventsTestScheme(localGroups, productionGroups)
+        val eventsScheme = WhitelistBuilder.buildWhitelist()
+        return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })
   }
@@ -103,7 +104,8 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   }
 
   class EventsTestScheme(
-    val localGroups: List<LocalWhitelistGroup>,
-    val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups
+    val testScheme: List<LocalWhitelistGroup>,
+    val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
+    val generatedScheme: List<WhitelistBuilder.WhitelistGroup>
   )
 }

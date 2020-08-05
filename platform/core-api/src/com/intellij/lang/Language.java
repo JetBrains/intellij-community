@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -169,11 +170,11 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   /**
-   * Returns a user-readable name of the language.
+   * Returns a user-readable name of the language (language names are not localized).
    *
    * @return the name of the language.
    */
-  public @NotNull String getID() {
+  public @NotNull @NlsSafe String getID() {
     return myID;
   }
 
@@ -207,7 +208,7 @@ public abstract class Language extends UserDataHolderBase {
     return myBaseLanguage;
   }
 
-  public @NotNull String getDisplayName() {
+  public @NotNull @NlsSafe String getDisplayName() {
     return getID();
   }
 
@@ -232,7 +233,7 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  public final boolean isKindOf(@NotNull String anotherLanguageId) {
+  public final boolean isKindOf(@NotNull @NonNls String anotherLanguageId) {
     Language l = this;
     while (l != null) {
       if (l.getID().equals(anotherLanguageId)) return true;

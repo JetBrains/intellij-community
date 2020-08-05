@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InvertBooleanFix extends RefactoringInspectionGadgetsFix {
 
-  private final String myName;
+  private final @IntentionName String myName;
 
-  public InvertBooleanFix(String name) {
+  public InvertBooleanFix(@IntentionName String name) {
     myName = name;
   }
 

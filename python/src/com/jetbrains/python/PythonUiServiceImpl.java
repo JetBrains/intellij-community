@@ -17,10 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -56,7 +53,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class PythonUiServiceImpl extends PythonUiService {
+public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonInfo(Project project, @PopupContent String message) {
     PyUiUtil.showBalloon(project, message, MessageType.INFO);
@@ -87,7 +84,7 @@ public class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public boolean showYesDialog(Project project, String message, String title) {
-    return Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return MessageDialogBuilder.yesNo(title, message).ask(project);
   }
 
   @Override

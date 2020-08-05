@@ -30,6 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -139,12 +140,13 @@ public final class Presentation implements Cloneable {
 
   private static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
   
-  public String getText() {
+  public @ActionText String getText() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     String text = textWithMnemonic == null ? null : textWithMnemonic.getText();
 
     if (text != null && Boolean.TRUE.equals(getClientProperty(STRIP_MNEMONIC))) {
       Matcher matcher = MNEMONIC.matcher(text);
+      //noinspection HardCodedStringLiteral
       return matcher.replaceAll("");
     }
     return text;
@@ -176,21 +178,21 @@ public final class Presentation implements Cloneable {
   @NotNull
   public Supplier<TextWithMnemonic> getTextWithMnemonic(@Nls(capitalization = Nls.Capitalization.Title) @NotNull Supplier<String> text,
                                                         boolean mayContainMnemonic) {
-    Supplier<TextWithMnemonic> textWithMnemonic = () -> null;
-    String txt = text.get();
-    if (txt != null) {
-      if (mayContainMnemonic) {
-        textWithMnemonic = () -> TextWithMnemonic.parse(txt);
+    Supplier<TextWithMnemonic> textWithMnemonic;
+    if (mayContainMnemonic) {
+      textWithMnemonic = () -> Optional.ofNullable(text.get()).map(TextWithMnemonic::parse).orElse(null);
 
-        UISettings uiSettings = UISettings.getInstanceOrNull();
-        if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-          Supplier<TextWithMnemonic> finalTextWithMnemonic = textWithMnemonic;
-          textWithMnemonic = () -> finalTextWithMnemonic.get().dropMnemonic();
-        }
+      UISettings uiSettings = UISettings.getInstanceOrNull();
+      if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
+        Supplier<TextWithMnemonic> finalTextWithMnemonic = textWithMnemonic;
+        textWithMnemonic = () -> {
+          TextWithMnemonic mnemonicText = finalTextWithMnemonic.get();
+          return mnemonicText != null ? mnemonicText.dropMnemonic() : null;
+        };
       }
-      else {
-        textWithMnemonic = () -> TextWithMnemonic.fromPlainText(txt);
-      }
+    }
+    else {
+      textWithMnemonic = () -> Optional.ofNullable(text.get()).map(TextWithMnemonic::fromPlainText).orElse(null);
     }
     return textWithMnemonic;
   }
@@ -254,7 +256,7 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic.toString();
   }
 
-  public String getDescription() {
+  public @ActionDescription String getDescription() {
     return myDescriptionSupplier.get();
   }
 

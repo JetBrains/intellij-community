@@ -10,5 +10,9 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"/>
+    <localInspection language="Properties" displayName="Quotes validation in properties files"
+                     groupPath="Plugin DevKit"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.DevKitPropertiesQuotesValidationInspection"/>
   </extensions>
 </idea-plugin>

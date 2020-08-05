@@ -282,6 +282,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   public void off() {
     if (myDisposed) return;
 
+    mySearchResults.clear();
     setTrackingDocument(false);
     setLivePreview(null);
     setTrackingSelection(false);

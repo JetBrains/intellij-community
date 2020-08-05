@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -10,7 +8,6 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -27,9 +24,8 @@ import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -42,10 +38,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
@@ -142,35 +137,14 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
     new MySpeedSearch(myTree);
 
-    myTree.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-          TreePath path = getSelectedPath();
-          if (path != null && !myTree.getModel().isLeaf(path.getLastPathComponent())) {
-            return;
-          }
-
-          DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-          OpenSourceUtil.openSourcesFrom(dataContext, ScreenReader.isActive());
-        }
-        else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
-          if (e.isConsumed()) return;
-          PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
-          boolean[] isCopied = new boolean[1];
-          if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
-            copyPasteManager.clear();
-            e.consume();
-          }
-        }
-      }
-    });
+    myTree.addKeyListener(new PsiCopyPasteManager.EscapeHandler());
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
@@ -181,8 +155,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ActionCallback cb = new ActionCallback();
     AbstractTreeBuilder builder = getTreeBuilder();
     if (restoreExpandedPaths && builder != null) {
-      final ArrayList<Object> pathsToExpand = new ArrayList<>();
-      final ArrayList<Object> selectionPaths = new ArrayList<>();
+      List<Object> pathsToExpand = new ArrayList<>();
+      List<Object> selectionPaths = new ArrayList<>();
       TreeBuilderUtil.storePaths(builder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
       afterUpdate = () -> {
         if (myTree != null && !builder.isDisposed()) {

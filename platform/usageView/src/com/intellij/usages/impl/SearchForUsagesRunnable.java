@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -67,7 +69,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
-  private final Factory<UsageSearcher> mySearcherFactory;
+  private final Factory<? extends UsageSearcher> mySearcherFactory;
   private final FindUsagesProcessPresentation myProcessPresentation;
   @NotNull private final SearchScope mySearchScopeToWarnOfFallingOutOf;
   private final UsageViewManager.UsageViewStateListener myListener;
@@ -79,7 +81,7 @@ final class SearchForUsagesRunnable implements Runnable {
                           @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           UsageTarget @NotNull [] searchFor,
-                          @NotNull Factory<UsageSearcher> searcherFactory,
+                          @NotNull Factory<? extends UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
                           @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
                           @Nullable UsageViewManager.UsageViewStateListener listener) {
@@ -97,16 +99,17 @@ final class SearchForUsagesRunnable implements Runnable {
   @NotNull
   private static String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
-    String shortcutText = "";
+    HtmlBuilder builder = new HtmlBuilder()
+      .appendLink(FIND_OPTIONS_HREF_TARGET, "Find Options...");
     if (shortcut != null) {
-      shortcutText = "&nbsp;(" + KeymapUtil.getShortcutText(shortcut) + ")";
+      builder.nbsp(1).append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
     }
-    return "<a href='" + FIND_OPTIONS_HREF_TARGET + "'>Find Options...</a>" + shortcutText;
+    return builder.toString();
   }
 
   @NotNull
   private static String createSearchInProjectHtml() {
-    return "<a href='" + SEARCH_IN_PROJECT_HREF_TARGET + "'>Search in Project</a>";
+    return HtmlChunk.link(SEARCH_IN_PROJECT_HREF_TARGET, "Search in Project").toString();
   }
 
   private void notifyByFindBalloon(@Nullable final HyperlinkListener listener,

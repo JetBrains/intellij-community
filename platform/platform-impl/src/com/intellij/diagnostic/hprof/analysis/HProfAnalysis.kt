@@ -28,13 +28,12 @@ import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-class HProfAnalysis(private val hprofFileChannel: FileChannel,
+internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
                     private val tempFilenameSupplier: TempFilenameSupplier,
                     private val analysisCallback: (AnalysisContext, ProgressIndicator) -> String) {
 

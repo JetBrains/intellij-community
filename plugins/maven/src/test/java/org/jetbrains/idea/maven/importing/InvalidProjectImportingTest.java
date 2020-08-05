@@ -30,14 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
-  public void testUnknownProblem() {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
-    importProjectWithErrors("");
-    assertModules("project");
-
-    MavenProject root = getRootProjects().get(0);
-    assertProblems(root, "For artifact {null:null:null:jar}: The groupId cannot be empty.");
-  }
 
   public void testUnknownProblemWithEmptyFile() throws IOException {
     createProjectPom("");

@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class RemoteRepositoryDescription {
   private final String myUrl;
   private final boolean myAllowSnapshots;
 
-  public RemoteRepositoryDescription(@NotNull String id, @NotNull String name, @NotNull String url) {
+  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NotNull String url) {
     this(id, name, url, true);
   }
 

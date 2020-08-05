@@ -51,7 +51,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
     else {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_SIGNATURE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE);
     }
   }
 
@@ -94,7 +94,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     LOG.assertTrue(nameIdentifier != null);
     if (isInplace) {
-      CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier), REFACTORING_NAME, null);
+      CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier),
+                                                    RefactoringBundle.message("changeSignature.refactoring.name"), null);
     }
     else {
       JavaMethodDescriptor methodDescriptor = new JavaMethodDescriptor(method);
@@ -142,7 +143,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     Project project = aClass.getProject();
     if (typeParameterList == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("changeClassSignature.no.type.parameters"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_CLASS_SIGNATURE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_CLASS_SIGNATURE);
       return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;

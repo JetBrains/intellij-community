@@ -19,8 +19,8 @@ import com.intellij.openapi.projectRoots.impl.JavaHomeFinder;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -190,7 +190,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         });
       },
       () -> {
-        Messages.setTestDialog(TestDialog.DEFAULT);
+        TestDialogManager.setTestDialog(TestDialog.DEFAULT);
         deleteBuildSystemDirectory();
       },
       super::tearDown
@@ -343,7 +343,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
-    if (isGradleOlderThen("3.4") || isGradleNewerThen("4.5")) {
+    if (isGradleOlderThan("3.4") || isGradleNewerThan("4.5")) {
       assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
     }
     else {
@@ -352,7 +352,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected void assertMergedModuleCompileModuleDepScope(String moduleName, String depName) {
-    if (isGradleOlderThen("3.4") || isGradleNewerThen("4.5")) {
+    if (isGradleOlderThan("3.4") || isGradleNewerThan("4.5")) {
       assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
     }
     else {
@@ -360,28 +360,28 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     }
   }
 
-  protected boolean isGradleOlderThen(@NotNull String ver) {
+  protected boolean isGradleOlderThan(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) < 0;
   }
 
-  protected boolean isGradleOlderOrSameThen(@NotNull String ver) {
+  protected boolean isGradleOlderOrSameAs(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) <= 0;
   }
 
-  protected boolean isGradleNewerOrSameThen(@NotNull String ver) {
+  protected boolean isGradleNewerOrSameAs(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) >= 0;
   }
 
-  protected boolean isGradleNewerThen(@NotNull String ver) {
+  protected boolean isGradleNewerThan(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) > 0;
   }
 
   protected boolean isNewDependencyResolutionApplicable() {
-    return isGradleNewerOrSameThen("4.5") && getCurrentExternalProjectSettings().isResolveModulePerSourceSet();
+    return isGradleNewerOrSameAs("4.5") && getCurrentExternalProjectSettings().isResolveModulePerSourceSet();
   }
 
   protected String getExtraPropertiesExtensionFqn() {
-    return isGradleOlderThen("5.2") ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
+    return isGradleOlderThan("5.2") ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
                                     : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
   }
 

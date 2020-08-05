@@ -118,7 +118,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
   @Override
   protected boolean isEnabled() {
-    return LafManager.getInstance().getInstalledLookAndFeels().length > 1;
+    LafManager lafManager = LafManager.getInstance();
+    return lafManager.getInstalledLookAndFeels().length > 1 && !lafManager.isAutoDetect();
   }
 
   private static final class LafChangeAction extends DumbAwareAction {

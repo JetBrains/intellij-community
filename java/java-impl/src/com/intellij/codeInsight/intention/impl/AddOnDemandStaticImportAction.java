@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -29,10 +15,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +58,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     if (gParent instanceof PsiMethodReferenceExpression) return null;
     if (!(gParent instanceof PsiJavaCodeReferenceElement) ||
         isParameterizedReference((PsiJavaCodeReferenceElement)gParent)) return null;
+
+    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW) {
+      return null;
+    }
 
     PsiElement resolved = refExpr.resolve();
     if (!(resolved instanceof PsiClass)) {
@@ -138,7 +129,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       return false;
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
-    if (aClass != containingClass || !ImportUtils.isInsideClassBody(element, aClass)) {
+    if (aClass != containingClass || !ClassUtils.isInsideClassBody(element, aClass)) {
       PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList == null) {
         return false;

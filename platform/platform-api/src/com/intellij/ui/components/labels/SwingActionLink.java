@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -8,6 +9,11 @@ import java.awt.event.ActionEvent;
 import java.beans.EventHandler;
 import java.beans.PropertyChangeListener;
 
+/**
+ * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class SwingActionLink extends LinkLabel<Action> implements LinkListener<Action> {
   private final ActionEvent myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, Action.ACTION_COMMAND_KEY);
 

@@ -54,6 +54,10 @@ public class PyStatementEffectInspection extends PyInspection {
 
     @Override
     public void visitPyExpressionStatement(final PyExpressionStatement node) {
+      if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
+                               extension -> extension.ignoreNoEffectStatement(node))) {
+        return;
+      }
       final PyExpression expression = node.getExpression();
       if (PsiTreeUtil.hasErrorElements(expression))
         return;
@@ -70,10 +74,6 @@ public class PyStatementEffectInspection extends PyInspection {
         if (statementList.getStatements().length == 1 && statementList.getStatements()[0] == node) {
           return;
         }
-      }
-      if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
-                               extension -> extension.ignoreNoEffectStatement(node))) {
-        return;
       }
       if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
         registerProblem(expression, PyPsiBundle.message("INSP.NAME.statement.message"));

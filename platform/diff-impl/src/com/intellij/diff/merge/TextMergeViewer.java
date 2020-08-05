@@ -51,6 +51,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -332,11 +333,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
           if (result == MergeResult.RESOLVED &&
               (getChangesCount() > 0 || getConflictsCount() > 0) &&
-              Messages.showConfirmationDialog(myPanel.getRootPane(),
-                                              DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                              DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                              DiffBundle.message("apply.changes.and.mark.resolved"),
-                                              DiffBundle.message("continue.merge")) != Messages.YES) {
+              !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
+                .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+                .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+                .noText(DiffBundle.message("continue.merge"))
+                .ask(myPanel.getRootPane())) {
             return;
           }
           if (result == MergeResult.CANCEL &&
@@ -1340,15 +1341,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected int getFramingBorderSize() {
-        return JBUIScale.scale(2);
-      }
-
-      @Override
       public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
         if (!myTracker.isValid()) return;
         final Document document = myTracker.getDocument();
-        int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
+        int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
         int[] startLines = new int[]{
           transferPosition(ThreeSide.BASE, ThreeSide.LEFT, new LogicalPosition(line, 0)).line,
@@ -1392,6 +1388,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
           myTracker.rollbackChanges(range);
         }
+      }
+
+      @Override
+      protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+        paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
       }
     }
 

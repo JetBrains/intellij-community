@@ -30,11 +30,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.text.DateFormatUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,10 +44,6 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Dmitry Avdeev
- */
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   private static final String FOO_BAR_JAVA = "foo/Bar.java";
 
@@ -94,10 +90,9 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   private void doTest(boolean shouldEscape, boolean replaceParameters, String initialText, String expected) throws IOException {
     assertThat(ProjectKt.getStateStore(getProject()).getStorageScheme()).isEqualTo(StorageScheme.DIRECTORY_BASED);
     VirtualFile root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0];
-    File rootFile = new File(VfsUtilCore.virtualToIoFile(root), FOO_BAR_JAVA);
-    rootFile.getParentFile().mkdirs();
-    rootFile.createNewFile();
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile);
+    Path rootFile = root.toNioPath().resolve(FOO_BAR_JAVA);
+    PathKt.createFile(rootFile);
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile);
     assertNotNull(file);
     setFileText(file, initialText);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -151,7 +146,8 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
 
   @NotNull
   @Override
-  protected Project doCreateAndOpenProject(@NotNull Path projectFile) {
+  protected Project doCreateAndOpenProject() {
+    Path projectFile = getProjectDirOrFile(true);
     try {
       Files.createDirectories(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER));
     }
@@ -167,7 +163,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     final Module module = super.createMainModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(module.getProject());
+      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(module.getProject());
       ContentEntry entry = model.addContentEntry(baseDir);
       entry.addSourceFolder(baseDir, false);
       model.commit();

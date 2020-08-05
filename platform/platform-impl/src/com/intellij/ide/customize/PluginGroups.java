@@ -315,6 +315,10 @@ public class PluginGroups {
                         "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:JetBrains TeamCity Plugin");
   }
 
+  public static void addBigDataToolsPlugin(@NotNull Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Big Data Tools", "Tools Integration:Zeppelin notebooks and Spark applications support:com.intellij.bigdatatools");
+  }
+
   private void initIfNeeded() {
     if (myInitialized) return;
     myInitialized = true;

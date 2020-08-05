@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -9,10 +9,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "RefactoringSettings", storages = {
-  @Storage("baseRefactoring.xml"),
-  @Storage(value = "other.xml", deprecated = true),
-})
+@State(name = "RefactoringSettings", storages = @Storage("baseRefactoring.xml"))
 public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
@@ -35,7 +32,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   /**
    * @deprecated no read usages
    */
-  @Deprecated 
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public boolean MOVE_PREVIEW_USAGES = true;
 
@@ -52,7 +49,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public int INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
   public int EXTRACT_INTERFACE_JAVADOC;
   public int EXTRACT_SUPERCLASS_JAVADOC;
-  
+
   public boolean INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE;
   public boolean INTRODUCE_PARAMETER_USE_INITIALIZER;
 

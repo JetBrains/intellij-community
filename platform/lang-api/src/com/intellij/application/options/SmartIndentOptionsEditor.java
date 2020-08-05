@@ -155,8 +155,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public void setEnabled(final boolean enabled) {
     super.setEnabled(enabled);
 
-    @SuppressWarnings("deprecation")
-    boolean smartTabsChecked = enabled && myCbUseTab.isSelected();
+    boolean smartTabsChecked = enabled && isUseTabsSelected();
     boolean smartTabsValid = smartTabsChecked && isSmartTabValid(getUIIndent(), getUITabSize());
     myCbSmartTabs.setEnabled(smartTabsValid);
     myCbSmartTabs.setToolTipText(

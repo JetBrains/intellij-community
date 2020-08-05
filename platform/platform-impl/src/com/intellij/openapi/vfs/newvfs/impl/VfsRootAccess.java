@@ -25,6 +25,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +48,7 @@ public final class VfsRootAccess {
   private static boolean insideGettingRoots;
 
   @TestOnly
-  static void assertAccessInTests(@NotNull VirtualFileSystemEntry child, @NotNull NewVirtualFileSystem delegate) {
+  static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
     Application application = ApplicationManager.getApplication();
     if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
@@ -68,20 +69,19 @@ public final class VfsRootAccess {
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
-        String childPath = child.getPath();
+        VirtualFile local = child;
         if (delegate == JarFileSystem.getInstance()) {
-          VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+          local = JarFileSystem.getInstance().getVirtualFileForJar(child);
           assert local != null : child;
-          childPath = local.getPath();
         }
         for (String root : allowed) {
-          if (FileUtil.startsWith(childPath, root)) {
+          if (PathUtil.isAncestorOrSelf(root, local)) {
             isUnder = true;
             break;
           }
           if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
             String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
-            isUnder = FileUtil.startsWith(childPath, rootLocalPath);
+            isUnder = PathUtil.isAncestorOrSelf(rootLocalPath, local);
             if (isUnder) break;
           }
         }
@@ -98,7 +98,7 @@ public final class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = CollectionFactory.createFilePathSet();
+    @NonNls Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
@@ -199,7 +199,6 @@ public final class VfsRootAccess {
   /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
   @Deprecated
   @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void allowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
       ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
@@ -209,7 +208,6 @@ public final class VfsRootAccess {
   /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
   @Deprecated
   @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void disallowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
       ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));

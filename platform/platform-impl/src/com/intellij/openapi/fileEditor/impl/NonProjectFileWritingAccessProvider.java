@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.FilePathHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -147,7 +148,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
       String filePath = file.getPath();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        if (FileUtil.namesEqual(filePath, module.getModuleFilePath())) {
+        if (FilePathHashingStrategy.create(file.isCaseSensitive()).equals(filePath, module.getModuleFilePath())) {
           return true;
         }
       }

@@ -15,12 +15,13 @@
  */
 package com.intellij.refactoring.util.classMembers;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberDependencyGraph;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import java.util.HashMap;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -72,7 +73,7 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
     return null;
   }
 
-  public String getElementTooltip(PsiMember member) {
+  public @NlsContexts.Tooltip String getElementTooltip(PsiMember member) {
     final Set<? extends PsiMember> dependencies = getDependenciesOf(member);
     if(dependencies == null || dependencies.size() == 0) return null;
     StringBuilder buffer = new StringBuilder();

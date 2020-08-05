@@ -20,7 +20,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +88,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       if (stream == null) {
         throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
       }
-      return new THashSet<>(Arrays.asList(ResourceUtil.loadText(stream).split("[\\W]")));
+      return new HashSet<>(Arrays.asList(ResourceUtil.loadText(stream).split("[\\W]")));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -140,8 +139,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   private static @NotNull Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
-    Set<URL> urls = new THashSet<>();
-    Set<ClassLoader> visited = new THashSet<>();
+    Set<URL> urls = new HashSet<>();
+    Set<ClassLoader> visited = new HashSet<>();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();
       if (!visited.add(classLoader)) {
@@ -275,7 +274,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
 
-    Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(effectiveConfigurables) : null;
+    Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new HashSet<>(effectiveConfigurables) : null;
     // operate with substring
     if (options.isEmpty()) {
       String[] components = REG_EXP.split(optionToCheck);
@@ -365,7 +364,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
         }
       }
       if (result == null) {
-        result = new THashSet<>();
+        result = new HashSet<>();
       }
       for (long description : descriptions) {
         OptionDescription desc = unpack(description);
@@ -402,7 +401,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     final Set<String> words = getProcessedWordsWithoutStemming(option);
     final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
 
-    HashSet<String> resultSet = new HashSet<>();
+    Set<String> resultSet = new HashSet<>();
     if (path != null && !path.isEmpty()) {
       OptionDescription theOnlyResult = null;
       for (OptionDescription description : path) {
@@ -436,7 +435,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     collectProcessedWordsWithoutStemming(text, result, stopWords);
     return result;
   }
@@ -458,7 +457,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @Override
   public Set<String> getProcessedWords(@NotNull String text) {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     collectProcessedWords(text, result, stopWords);
     return result;
   }
@@ -484,7 +483,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       return options;
     }
 
-    Set<String> result = new THashSet<>(options);
+    Set<String> result = new HashSet<>(options);
     initialize();
     for (String option : options) {
       Set<String> synonyms = highlightOptionToSynonym.get(new kotlin.Pair<>(option, configurable.getId()));

@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +37,7 @@ import static java.awt.GridBagConstraints.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class NamePathComponent extends JPanel {
+public final class NamePathComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance(NamePathComponent.class);
 
   private final JTextField myTfName;
@@ -159,8 +160,7 @@ public class NamePathComponent extends JPanel {
       File projectFile = new File(projectDirectory, fileName);
       if (projectFile.exists()) {
         message = JavaUiBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
-        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-        shouldContinue = (answer == Messages.YES);
+        shouldContinue = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"), message).show() == Messages.YES;
       }
     }
     return shouldContinue;

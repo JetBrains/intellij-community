@@ -5,6 +5,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.application.WriteAction;
@@ -20,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   @NotNull
   private final PsiArrayType myTargetType;
-  private final String myName;
-  private final String myFamilyName;
+  private final @IntentionName String myName;
+  private final @IntentionFamilyName String myFamilyName;
 
   private VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer,
                                @NotNull PsiArrayType arrayType,
@@ -56,15 +58,6 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     }
 
     return TypePresentationService.getService().getTypePresentableName(variable.getClass());
-  }
-
-  private static PsiArrayInitializerExpression getInitializer(PsiArrayInitializerExpression initializer) {
-    PsiArrayInitializerExpression arrayInitializer = initializer;
-    while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
-      arrayInitializer = (PsiArrayInitializerExpression)arrayInitializer.getParent();
-    }
-
-    return arrayInitializer;
   }
 
   private static PsiVariable getVariableLocal(@NotNull PsiArrayInitializerExpression initializer) {

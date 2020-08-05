@@ -3,7 +3,6 @@ package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
 import com.intellij.reference.SoftReference;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -52,10 +51,10 @@ public final class SyntaxTable implements Cloneable {
   @Override
   protected Object clone() throws CloneNotSupportedException {
     SyntaxTable cl = (SyntaxTable)super.clone();
-    cl.myKeywords1 = new THashSet<>(myKeywords1);
-    cl.myKeywords2 = new THashSet<>(myKeywords2);
-    cl.myKeywords3 = new THashSet<>(myKeywords3);
-    cl.myKeywords4 = new THashSet<>(myKeywords4);
+    cl.myKeywords1 = new HashSet<>(myKeywords1);
+    cl.myKeywords2 = new HashSet<>(myKeywords2);
+    cl.myKeywords3 = new HashSet<>(myKeywords3);
+    cl.myKeywords4 = new HashSet<>(myKeywords4);
     cl.myKeywordParser = null;
     return cl;
   }

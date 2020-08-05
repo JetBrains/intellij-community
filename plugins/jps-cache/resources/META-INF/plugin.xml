@@ -38,7 +38,7 @@
     <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true">
+    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>

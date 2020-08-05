@@ -8,15 +8,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -32,7 +34,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   @NonNls private static final String ATTRIBUTE_DELETED_CHANGELIST = "deleted";
   @NonNls private static final String ELEMENT_BINARY = "binary";
 
-  public String PATH;
+  public Path path;
   public String DESCRIPTION;
   public Date DATE;
   private volatile List<ShelvedChange> myChanges;
@@ -45,19 +47,19 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   ShelvedChangeList() {
   }
 
-  public ShelvedChangeList(final String path,
-                           final String description,
-                           final List<ShelvedBinaryFile> binaryFiles,
+  public ShelvedChangeList(@NotNull Path path,
+                           String description,
+                           List<ShelvedBinaryFile> binaryFiles,
                            @NotNull List<ShelvedChange> shelvedChanges) {
     this(path, description, binaryFiles, shelvedChanges, System.currentTimeMillis());
   }
 
-  ShelvedChangeList(final String path,
-                    final String description,
-                    final List<ShelvedBinaryFile> binaryFiles,
+  ShelvedChangeList(@NotNull Path path,
+                    String description,
+                    List<ShelvedBinaryFile> binaryFiles,
                     @NotNull List<ShelvedChange> shelvedChanges,
-                    final long time) {
-    PATH = FileUtil.toSystemIndependentName(path);
+                    long time) {
+    this.path = path;
     DESCRIPTION = description;
     DATE = new Date(time);
     myBinaryFiles = binaryFiles;
@@ -74,9 +76,18 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    PATH = FileUtil.toSystemIndependentName(PATH);
+    path = null;
+    for (Element child : element.getChildren()) {
+      if (child.getName().equals(Constants.OPTION) && "PATH".equals(child.getAttributeValue(Constants.NAME))) {
+        String value = child.getAttributeValue(Constants.VALUE, "");
+        if (!value.isEmpty()) {
+          path = Paths.get(value);
+        }
+      }
+    }
+
     mySchemeName = element.getAttributeValue(NAME_ATTRIBUTE);
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
     myRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
@@ -92,11 +103,16 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     writeExternal(element, this);
   }
 
-  private static void writeExternal(@NotNull Element element, @NotNull ShelvedChangeList shelvedChangeList) throws WriteExternalException {
+  private static void writeExternal(@NotNull Element element, @NotNull ShelvedChangeList shelvedChangeList) {
+    if (shelvedChangeList.path != null) {
+      element.addContent(new Element(Constants.OPTION)
+                           .setAttribute(Constants.NAME, "PATH")
+                           .setAttribute(Constants.VALUE, shelvedChangeList.path.toString().replace(File.separatorChar, '/')));
+    }
     DefaultJDOMExternalizer.writeExternal(shelvedChangeList, element);
     element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.DATE.getTime()));
@@ -122,11 +138,11 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   public void loadChangesIfNeeded(@NotNull Project project) {
     if (myChanges == null) {
       try {
-        List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, PATH, null);
-        myChanges = createShelvedChangesFromFilePatches(project, PATH, list);
+        List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
+        myChanges = createShelvedChangesFromFilePatches(project, path, list);
       }
       catch (Exception e) {
-        LOG.error("Failed to parse the file patch: [" + PATH + "]", e);
+        LOG.error("Failed to parse the file patch: [" + path + "]", e);
       }
     }
   }
@@ -148,7 +164,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
 
   @NotNull
   static List<ShelvedChange> createShelvedChangesFromFilePatches(@NotNull Project project,
-                                                                 @NotNull String patchPath,
+                                                                 @NotNull Path patchPath,
                                                                  @NotNull Collection<? extends FilePatch> filePatches) {
     List<ShelvedChange> changes = new ArrayList<>();
     for (FilePatch patch : filePatches) {
@@ -183,7 +199,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   public boolean isValid() {
-    return new File(PATH).exists();
+    return Files.exists(path);
   }
 
   public void markToDelete(boolean toDeleted) {

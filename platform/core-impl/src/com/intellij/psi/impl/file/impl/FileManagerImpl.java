@@ -30,7 +30,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -192,9 +191,20 @@ public final class FileManagerImpl implements FileManager {
 
     viewProvider = createFileViewProvider(file, ModelBranch.getFileBranch(file) == null);
     if (file instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(file);
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return ConcurrencyUtil.cacheOrGet(getVFileToViewProviderMap(), file, viewProvider);
+  }
+
+  private void checkHasNoOtherPsi(@NotNull VirtualFile file) {
+    FileViewProvider vp = FileDocumentManager.getInstance().findCachedPsiInAnyProject(file);
+    if (vp != null) {
+      Project project = vp.getManager().getProject();
+      if (project != myManager.getProject()) {
+        LOG.error("Light files should have PSI only in one project, existing=" + vp + " in " + project + ", requested in " + myManager.getProject());
+      }
+    }
   }
 
   @Override
@@ -233,6 +243,7 @@ public final class FileManagerImpl implements FileManager {
       getVFileToViewProviderMap().remove(virtualFile);
     }
     else if (virtualFile instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(virtualFile);
       virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
     }
     else {
@@ -484,8 +495,8 @@ public final class FileManagerImpl implements FileManager {
     removeInvalidDirs();
 
     // note: important to update directories map first - findFile uses findDirectory!
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());
-    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
     if (useFind) {
       myVFileToViewProviderMap.set(null);
     }

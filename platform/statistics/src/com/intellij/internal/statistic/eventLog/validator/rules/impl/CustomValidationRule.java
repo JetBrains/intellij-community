@@ -12,6 +12,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
   public static final ExtensionPointName<CustomValidationRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customValidationRule");
 
-  public abstract boolean acceptRuleId(@Nullable String ruleId);
+  public abstract boolean acceptRuleId(@Nullable @NonNls String ruleId);
 
   @NotNull
   protected static ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {

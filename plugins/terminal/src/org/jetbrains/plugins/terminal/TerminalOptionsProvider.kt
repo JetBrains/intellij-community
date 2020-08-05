@@ -55,6 +55,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
+    var myShellPath: String? = null
     var myTabName: String = "Local"
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -112,6 +113,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
+  // replace with property delegate when Kotlin 1.4 arrives (KT-8658)
+  var shellPath: String?
+    get() = myState.myShellPath
+    set(value) {
+      myState.myShellPath = value
+    }
 
   companion object {
     val instance: TerminalOptionsProvider

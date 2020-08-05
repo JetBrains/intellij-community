@@ -7,8 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.javafx.JavaFxHtmlPanel;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import javafx.beans.value.ChangeListener;
@@ -20,30 +18,69 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.MarkdownBundle;
+import org.intellij.plugins.markdown.extensions.javafx.MarkdownJavaFXPreviewExtension;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel;
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer;
+import org.intellij.plugins.markdown.ui.preview.ResourceProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements MarkdownHtmlPanel {
+import java.util.List;
+import java.util.stream.Collectors;
 
-  private static final NotNullLazyValue<String> MY_SCRIPTING_LINES = new NotNullLazyValue<String>() {
+public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements MarkdownHtmlPanel {
+  private static final List<String> BASE_SCRIPTS = ContainerUtil.immutableList(
+    "scrollToElement.js",
+    "processLinks.js"
+  );
+
+  private static final List<MarkdownJavaFXPreviewExtension> EXTENSIONS =
+    MarkdownJavaFXPreviewExtension.getAllSorted();
+
+  private static final List<String> SCRIPTS = ContainerUtil.concat(
+    BASE_SCRIPTS,
+    EXTENSIONS.stream()
+      .flatMap(extension -> extension.getScripts().stream())
+      .collect(Collectors.toList())
+  );
+
+  private static final List<String> STYLES = EXTENSIONS.stream()
+    .flatMap(extension -> extension.getStyles().stream())
+    .collect(Collectors.toList());
+
+  private static final NotNullLazyValue<String> SCRIPTING_LINES = new NotNullLazyValue<String>() {
     @NotNull
     @Override
     protected String compute() {
       return SCRIPTS.stream()
-        .map(s -> "<script src=\"" + PreviewStaticServer.getScriptUrl(s) + "\"></script>")
+        .map(s -> "<script src=\"" + PreviewStaticServer.getStaticUrl(s) + "\"></script>")
         .reduce((s, s2) -> s + "\n" + s2)
         .orElseGet(String::new);
     }
   };
 
-  private String @NotNull [] myCssUris = ArrayUtilRt.EMPTY_STRING_ARRAY;
-  @NotNull
-  private String myCSP = "";
-  @NotNull
-  private String myLastRawHtml = "";
+  private static final NotNullLazyValue<String> STYLES_LINES = new NotNullLazyValue<String>() {
+    @NotNull
+    @Override
+    protected String compute() {
+      return STYLES.stream()
+        .map(s -> "<link rel=\"stylesheet\" href=\"" + PreviewStaticServer.getStaticUrl(s) + "\"/>")
+        .reduce((s, s2) -> s + "\n" + s2)
+        .orElseGet(String::new);
+    }
+  };
+
+  private static final NotNullLazyValue<String> CSP = new NotNullLazyValue<String>() {
+    @NotNull
+    @Override
+    protected String compute() {
+      return PreviewStaticServer.createCSP(
+        ContainerUtil.map(SCRIPTS, s -> PreviewStaticServer.getStaticUrl(s)),
+        ContainerUtil.map(STYLES, s -> PreviewStaticServer.getStaticUrl(s)));
+    }
+  };
+
   @NotNull
   private final ScrollPreservingListener myScrollPreservingListener = new ScrollPreservingListener();
   @NotNull
@@ -53,10 +90,12 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
     super();
     runInPlatformWhenAvailable(() -> {
       if (myWebView != null) {
-        updateFontSmoothingType(myWebView, MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isUseGrayscaleRendering());
+        updateFontSmoothingType(
+          myWebView, MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isUseGrayscaleRendering()
+        );
       }
     });
-
+    PreviewStaticServer.getInstance().setResourceProvider(resourceProvider);
     subscribeForGrayscaleSetting();
   }
 
@@ -93,33 +132,20 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
     view.fontSmoothingTypeProperty().setValue(typeToSet);
   }
 
-  @Override
-  public void setHtml(@NotNull String html) {
-    myLastRawHtml = html;
-    super.setHtml(html);
-  }
+
+  private static final MyResourceProvider resourceProvider = new MyResourceProvider();
 
   @NotNull
   @Override
   protected String prepareHtml(@NotNull String html) {
-    return ImageRefreshFix.setStamps(html
-                                       .replace("<head>", "<head>"
-                                                          + "<meta http-equiv=\"Content-Security-Policy\" content=\"" + myCSP + "\"/>"
-                                                          + MarkdownHtmlPanel.getCssLines(null, myCssUris) + "\n" + getScriptingLines()));
-  }
-
-  @Override
-  public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
-    PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
-    myCssUris = inlineCss == null ? fileUris
-                                  : ArrayUtil
-                  .mergeArrays(fileUris, PreviewStaticServer.getStyleUrl(PreviewStaticServer.INLINE_CSS_FILENAME));
-    myCSP = PreviewStaticServer.createCSP(ContainerUtil.map(SCRIPTS, s -> PreviewStaticServer.getScriptUrl(s)),
-                                          ContainerUtil.concat(
-                                            ContainerUtil.map(STYLES, s -> PreviewStaticServer.getStyleUrl(s)),
-                                            ContainerUtil.filter(fileUris, s -> s.startsWith("http://") || s.startsWith("https://"))
-                                          ));
-    setHtml(myLastRawHtml);
+    return ImageRefreshFix.setStamps(
+      html.replace(
+        "<head>",
+        "<head>" +
+        "<meta http-equiv=\"Content-Security-Policy\" content=\"" + CSP + "\"/>" +
+        STYLES_LINES.getValue() + "\n" + SCRIPTING_LINES.getValue()
+      )
+    );
   }
 
   @Override
@@ -145,9 +171,30 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
     });
   }
 
-  @NotNull
-  private static String getScriptingLines() {
-    return MY_SCRIPTING_LINES.getValue();
+  private static class MyResourceProvider implements ResourceProvider {
+    @Override
+    public boolean canProvide(@NotNull String resourceName) {
+      return BASE_SCRIPTS.contains(resourceName) ||
+             EXTENSIONS.stream()
+               .anyMatch(extension -> extension.getResourceProvider().canProvide(resourceName));
+    }
+
+    @Nullable
+    @Override
+    public Resource loadResource(@NotNull String resourceName) {
+      if (BASE_SCRIPTS.contains(resourceName)) {
+        return ResourceProvider.loadInternalResource(MarkdownJavaFxHtmlPanel.class, resourceName, null);
+      }
+      ResourceProvider provider = EXTENSIONS.stream()
+        .filter(extension -> extension.getResourceProvider().canProvide(resourceName))
+        .map(extension -> extension.getResourceProvider())
+        .findFirst()
+        .orElse(null);
+      if (provider == null) {
+        return null;
+      }
+      return provider.loadResource(resourceName);
+    }
   }
 
   @SuppressWarnings("unused")
@@ -169,9 +216,9 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
   private class BridgeSettingListener implements ChangeListener<State> {
     @Override
     public void changed(ObservableValue<? extends State> observable, State oldValue, State newValue) {
-        JSObject win
-          = (JSObject)getWebViewGuaranteed().getEngine().executeScript("window");
-        win.setMember("JavaPanelBridge", JavaPanelBridge.INSTANCE);
+      JSObject win
+        = (JSObject)getWebViewGuaranteed().getEngine().executeScript("window");
+      win.setMember("JavaPanelBridge", JavaPanelBridge.INSTANCE);
     }
   }
 

@@ -17,70 +17,73 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
   override fun getConfigurableDisplayName() = "Markdown"
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
-    if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
-      consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING")
-    }
-    else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name, "Around header",
-        CodeStyleSettingsCustomizable.BLANK_LINES
-      )
+    when (settingsType) {
+      SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
+        consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING")
+      }
+      SettingsType.BLANK_LINES_SETTINGS -> {
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name, "Around header",
+          CodeStyleSettingsCustomizable.BLANK_LINES
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-        CodeStyleSettingsCustomizable.BLANK_LINES
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
+          CodeStyleSettingsCustomizable.BLANK_LINES
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-        CodeStyleSettingsCustomizable.BLANK_LINES
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
+          CodeStyleSettingsCustomizable.BLANK_LINES
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name, "Around header",
-        CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name, "Around header",
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-        CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-        CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
-      )
-    }
-    else if (settingsType == SettingsType.SPACING_SETTINGS) {
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_BETWEEN_WORDS.name, "Between words",
-        "Force One Space"
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+        )
+      }
+      SettingsType.SPACING_SETTINGS -> {
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_BETWEEN_WORDS.name, "Between words",
+          "Force One Space"
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL.name, "After header symbol",
-        "Force One Space"
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL.name, "After header symbol",
+          "Force One Space"
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_LIST_BULLET.name, "After list marker",
-        "Force One Space"
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_LIST_BULLET.name, "After list marker",
+          "Force One Space"
+        )
 
-      consumer.showCustomOption(
-        MarkdownCustomCodeStyleSettings::class.java,
-        MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL.name, "After blockquote marker",
-        "Force One Space"
-      )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL.name, "After blockquote marker",
+          "Force One Space"
+        )
+      }
+      else -> {}
     }
   }
 

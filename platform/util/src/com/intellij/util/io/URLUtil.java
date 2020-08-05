@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,12 +185,12 @@ public final class URLUtil {
     StringBuilder decoded = new StringBuilder();
     decoded.append(s, from, i);
 
-    TIntArrayList bytes = null;
+    IntArrayList bytes = null;
     while (i < end) {
       char c = s.charAt(i);
       if (c == '%') {
         if (bytes == null) {
-          bytes = new TIntArrayList();
+          bytes = new IntArrayList();
         }
         else {
           bytes.clear();
@@ -209,7 +209,7 @@ public final class URLUtil {
         if (!bytes.isEmpty()) {
           final byte[] bytesArray = new byte[bytes.size()];
           for (int j = 0; j < bytes.size(); j++) {
-            bytesArray[j] = (byte)bytes.getQuick(j);
+            bytesArray[j] = (byte)bytes.getInt(j);
           }
           decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
           continue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -11,8 +11,7 @@ import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -41,7 +40,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class FormsInstrumenter extends FormsBuilder {
+public final class FormsInstrumenter extends FormsBuilder {
   public static final String BUILDER_NAME = "forms";
 
   public FormsInstrumenter() {
@@ -63,7 +62,7 @@ public class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Set<File> formsToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> formsToCompile = FileCollectionFactory.createCanonicalFileSet();
     for (Collection<File> files : srcToForms.values()) {
       formsToCompile.addAll(files);
     }
@@ -132,7 +131,7 @@ public class FormsInstrumenter extends FormsBuilder {
     OutputConsumer outConsumer,
     boolean useDynamicBundles) throws ProjectBuildException {
 
-    final Map<File, Collection<File>> instrumented = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Collection<File>> instrumented = FileCollectionFactory.createCanonicalFileMap();
     final Map<String, File> class2form = new HashMap<>();
 
     final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk), finder);

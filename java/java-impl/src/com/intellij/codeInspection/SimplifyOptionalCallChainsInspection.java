@@ -5,8 +5,8 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.util.LambdaGenerationUtil;
-import com.intellij.codeInspection.util.OptionalRefactoringUtil;
+import com.intellij.codeInspection.util.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -22,7 +22,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,9 +251,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     @NotNull
+    @IntentionName
     String getName(@NotNull C context);
 
     @NotNull
+    @InspectionMessage
     String getDescription(@NotNull C context);
 
     /**
@@ -350,9 +352,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
             PsiExpressionTrimRenderer
               .render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(proposed, call));
         }
-        String message = displayCode.isEmpty() ? "Remove redundant steps from optional chain" :
-                         "Simplify optional chain to '" + displayCode + "'";
-        String description = "Optional chain can be simplified";
+        String message = displayCode.isEmpty()
+                         ? JavaBundle.message("simplify.optional.chain.inspection.remove.redundant.steps.from.optional.chain")
+                         : JavaBundle.message("simplify.optional.chain.inspection.to.x", displayCode);
+        String description = JavaBundle.message("simplify.optional.chain.inspection.map.or.else.description");
         return new StringReplacement(proposed, message, description);
       }
       return null;
@@ -367,17 +370,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
   static class OptionalSimplificationFix implements LocalQuickFix {
     @SafeFieldForPreview
-    private final ChainSimplificationCase<?> myInspection;
-    private final String myName;
-    private final String myDescription;
+    private final @NotNull ChainSimplificationCase<?> myInspection;
+    private final @IntentionFamilyName String myName;
+    private final @InspectionMessage String myDescription;
 
-    OptionalSimplificationFix(ChainSimplificationCase<?> inspection, String name, String description) {
+    OptionalSimplificationFix(@NotNull ChainSimplificationCase<?> inspection,
+                              @IntentionFamilyName String name,
+                              @InspectionMessage String description) {
       myInspection = inspection;
-      this.myName = name;
+      myName = name;
       myDescription = description;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
@@ -391,7 +395,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       handleSimplification(myInspection, project, call);
     }
 
-    String getDescription() {
+    @InspectionMessage String getDescription() {
       return myDescription;
     }
   }
@@ -420,11 +424,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     protected static class StringReplacement {
-      private final String myReplacement;
-      private final String myMessage;
-      private final String myDescription;
+      private final @NonNls String myReplacement;
+      private final @IntentionName String myMessage;
+      private final @InspectionMessage String myDescription;
 
-      StringReplacement(String replacement, String message, String description) {
+      StringReplacement(@NonNls String replacement, @IntentionName String message, @InspectionMessage String description) {
         myReplacement = replacement;
         myMessage = message;
         myDescription = description;
@@ -448,13 +452,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Unwrap";
+      return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Unnecessary Optional rewrapping";
+      return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.description");
     }
 
     @Nullable
@@ -512,6 +516,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   private static final class OrElseReturnCase implements ChainSimplificationCase<OrElseReturnCase.Context> {
+    public static final String OR_ELSE = "orElse";
+    public static final String OR_ELSE_GET = "orElseGet";
     private final OrElseType myType;
 
     private OrElseReturnCase(OrElseType type) {myType = type;}
@@ -519,14 +525,14 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      String method = context.myIsSimple ? "orElse" : "orElseGet";
-      return "Replace null check with " + method + "(" + PsiExpressionTrimRenderer.render(context.myDefaultExpression) + ")";
+      String method = context.myIsSimple ? OR_ELSE : OR_ELSE_GET;
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.name", method, PsiExpressionTrimRenderer.render(context.myDefaultExpression));
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Null check can be eliminated";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.description");
     }
 
     @Nullable
@@ -607,7 +613,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "'" + context.myReplacement + "()' can be used instead";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", context.myReplacement + "()");
     }
 
     @Nullable
@@ -659,13 +665,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Replace null check with ifPresent()";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Null check can be eliminated with 'ifPresent'";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.description");
     }
 
     @Nullable
@@ -885,9 +891,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiMethodCallExpression mapBefore = context.myMapBefore;
       CommentTracker ct = new CommentTracker();
       StringBuilder sb = new StringBuilder();
-      PsiExpression qualifer = call.getMethodExpression().getQualifierExpression();
-      assert qualifer != null;
-      sb.append(ct.text(qualifer)).append(".");
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      assert qualifier != null;
+      sb.append(ct.text(qualifier)).append(".");
       if (mapBefore != null) {
         PsiExpression mapArgument = mapBefore.getArgumentList().getExpressions()[0];
         sb.append("flatMap(").append(ct.text(mapArgument)).append(").");

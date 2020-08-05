@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -91,13 +92,13 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     return psiClass;
   }
 
-  public PsiClass checkModuleAndClassName(final String className, final String expectedClassMessage) throws RuntimeConfigurationException {
+  public PsiClass checkModuleAndClassName(final String className, final @NlsContexts.DialogMessage String expectedClassMessage) throws RuntimeConfigurationException {
     checkForWarning();
     return checkClassName(className, expectedClassMessage);
   }
 
 
-  public PsiClass checkClassName(final String className, final String errorMessage) throws RuntimeConfigurationException {
+  public PsiClass checkClassName(final String className, final @NlsContexts.DialogMessage String errorMessage) throws RuntimeConfigurationException {
     if (className == null || className.length() == 0) {
       throw new RuntimeConfigurationError(errorMessage);
     }

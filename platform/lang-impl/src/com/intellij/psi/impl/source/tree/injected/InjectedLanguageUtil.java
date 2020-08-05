@@ -614,7 +614,7 @@ public final class InjectedLanguageUtil {
 
   @NotNull
   public static Editor getTopLevelEditor(@NotNull Editor editor) {
-    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    return InjectedLanguageEditorUtil.getTopLevelEditor(editor);
   }
 
   public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {

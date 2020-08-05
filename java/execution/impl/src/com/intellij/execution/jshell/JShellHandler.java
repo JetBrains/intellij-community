@@ -146,7 +146,7 @@ public final class JShellHandler {
                                      @Nullable Sdk alternateSdk) throws Exception{
     final OSProcessHandler processHandler = launchProcess(project, module, alternateSdk);
 
-    final String title = "JShell " + contentFile.getNameWithoutExtension();
+    final String title = JShellDiagnostic.TITLE + " " + contentFile.getNameWithoutExtension();
 
     final ConsoleViewImpl consoleView = new MyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);

@@ -108,6 +108,8 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
+      //The format substitution is performed at the call site
+      //noinspection UnresolvedPropertyKey
       return RelaxngBundle.message("undefined.namespace.prefix.0");
     }
   }

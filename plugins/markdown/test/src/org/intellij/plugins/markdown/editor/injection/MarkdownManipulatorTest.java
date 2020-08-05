@@ -76,7 +76,8 @@ public class  MarkdownManipulatorTest extends BasePlatformTestCase {
   }
 
   public void testCodeFenceInNestedList() {
-    doTest("* A\n" +
+    doTest(
+      "* A\n" +
            "  * ```text\n" +
            "    <caret>setup\n" +
            "    ```\n" +

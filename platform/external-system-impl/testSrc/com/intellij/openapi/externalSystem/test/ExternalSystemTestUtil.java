@@ -3,10 +3,9 @@ package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.util.messages.Topic;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -23,21 +22,9 @@ public final class ExternalSystemTestUtil {
   private ExternalSystemTestUtil() {
   }
 
-  public static void assertMapsEqual(@NotNull Map<?, ?> expected, @NotNull Map<?, ?> actual) {
-    Map<?, ?> local = new HashMap<Object, Object>(expected);
-    for (Map.Entry<?, ?> entry : actual.entrySet()) {
-      Object expectedValue = local.remove(entry.getKey());
-      if (expectedValue == null) {
-        Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", entry.getKey(), entry.getValue()));
-      }
-      if (!expectedValue.equals(entry.getValue())) {
-        Assert.fail(
-          String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, entry.getKey(), entry.getValue())
-        );
-      }
-    }
-    if (!local.isEmpty()) {
-      Assert.fail("No mappings found for the following keys: " + local.keySet());
-    }
+  @SuppressWarnings("rawtypes")
+  public static void assertMapsEqual(@NotNull Map expected, @NotNull Map actual) {
+    //noinspection unchecked
+    Assertions.assertThat(actual).containsExactlyInAnyOrderEntriesOf(expected);
   }
 }

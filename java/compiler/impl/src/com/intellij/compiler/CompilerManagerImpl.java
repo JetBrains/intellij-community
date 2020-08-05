@@ -22,6 +22,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,10 +33,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -333,7 +334,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, String contentName, Runnable onTaskFinished) {
+  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, @NlsContexts.TabTitle String contentName, Runnable onTaskFinished) {
     final CompileDriver compileDriver = new CompileDriver(myProject);
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }
@@ -451,7 +452,7 @@ public class CompilerManagerImpl extends CompilerManager {
     final OutputCollector outputCollector = new OutputCollector();
     DiagnosticCollector diagnostic = new DiagnosticCollector();
 
-    final Set<File> sourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> sourceRoots = FileCollectionFactory.createCanonicalFileSet();
     if (!sourcePath.isEmpty()) {
       sourceRoots.addAll(sourcePath);
     }

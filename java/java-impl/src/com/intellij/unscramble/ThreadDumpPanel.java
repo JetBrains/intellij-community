@@ -308,10 +308,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     private final Comparator<ThreadState> BY_NAME = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
-    private static final String TYPE_LABEL = "Sort threads by type";
-    private static final String NAME_LABEL = "Sort threads by name";
+
     private SortThreadsAction() {
-      super(TYPE_LABEL);
+      super(JavaBundle.message("sort.threads.by.type"));
     }
 
     @Override
@@ -326,7 +325,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
-      e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
+      e.getPresentation().setText(COMPARATOR == BY_TYPE ? JavaBundle.message("sort.threads.by.type") : 
+                                  JavaBundle.message("sort.threads.by.name"));
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {

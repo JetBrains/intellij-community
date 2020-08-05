@@ -27,7 +27,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -188,21 +187,15 @@ public final class PyiUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = findSimilarElement(owner, file);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
-        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
-          final PyClassLikeType instanceType = classType.toInstance();
-          final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                               PyResolveContext.defaultContext(), false);
-          final PsiElement result = takeTopPriorityElement(resolveResults);
+      if (originalOwner instanceof PyTypedElement) {
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
+        final PyType type = context.getType((PyTypedElement)originalOwner);
+
+        if (type != null) {
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PsiElement result = takeTopPriorityElement(type.resolveMember(name, null, AccessDirection.READ, resolveContext));
           return result == element ? null : result;
         }
-      }
-      else if (originalOwner instanceof PyFile) {
-        final PsiElement result = takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
-        return result == element ? null : result;
       }
     }
     return null;

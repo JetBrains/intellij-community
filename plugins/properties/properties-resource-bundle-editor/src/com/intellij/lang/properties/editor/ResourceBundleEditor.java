@@ -603,9 +603,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       .toList();
   }
 
+  @NotNull
+  public Collection<Object> getSelectedObjects() {
+    return getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .toList();
+  }
+  
   @Nullable
-  public ResourceBundleEditorViewElement getSelectedElementIfOnlyOne() {
-    final Collection<ResourceBundleEditorViewElement> selectedElements = getSelectedElements();
+  public Object getSelectedElementIfOnlyOne() {
+    final Collection<Object> selectedElements = getSelectedObjects();
     return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
   }
 

@@ -27,10 +27,12 @@ abstract class FilesProcessorWithNotificationImpl(
 
   abstract fun notificationTitle(): String
   abstract fun notificationMessage(): String
-
-  protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
-  protected open val viewFilesDialogOkActionName: @NlsContexts.Button String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: @NlsContexts.Button String = CommonBundle.getCancelButtonText()
+  @NlsContexts.DialogTitle
+  protected open val viewFilesDialogTitle: String? = null
+  @NlsContexts.Button
+  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
+  @NlsContexts.Button
+  protected open val  viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
   override fun doProcess(): Boolean {
     val processed = super.doProcess()

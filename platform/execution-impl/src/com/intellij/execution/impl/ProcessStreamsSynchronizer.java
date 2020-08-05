@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +26,10 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Please note that ordering of data is guaranteed only in a stream (stdout/stderr/system),
  * no ordering guarantees are provided for data read from different streams. To order stdout/stderr messages,
- * stdout and stderr streams should be merged, see `run.processes.with.redirectedErrorStream` registry key.
+ * stdout and stderr streams should be merged, this should be done on a client side when starting a process,
+ * see {@link #redirectErrorStreamIfNeeded(GeneralCommandLine)}.
  */
-class ProcessStreamsSynchronizer {
+public class ProcessStreamsSynchronizer {
 
   /**
    * Timeout to wait for the same stream data.<p>
@@ -185,6 +188,15 @@ class ProcessStreamsSynchronizer {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  /**
+   * Merges processes standard streams (error and output).
+   * This makes it easier to correlate error messages with the corresponding output. However, as a result,
+   * it won't be possible to distinguish between stdout and stderr.
+   */
+  public static void redirectErrorStreamIfNeeded(@NotNull GeneralCommandLine commandLine) {
+    commandLine.withRedirectErrorStream(Registry.is("run.processes.with.redirectedErrorStream", false));
   }
 
   private static final class Chunk {

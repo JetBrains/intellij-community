@@ -7,12 +7,13 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
 public class ReplaceConfiguration extends Configuration {
-
+  @NotNull
   private final ReplaceOptions myReplaceOptions;
   public static final String REPLACEMENT_VARIABLE_SUFFIX = "$replacement";
 
@@ -20,35 +21,35 @@ public class ReplaceConfiguration extends Configuration {
     myReplaceOptions = new ReplaceOptions();
   }
 
-  public ReplaceConfiguration(Configuration configuration) {
+  public ReplaceConfiguration(@NotNull Configuration configuration) {
     super(configuration);
     myReplaceOptions = configuration instanceof ReplaceConfiguration
                        ? ((ReplaceConfiguration)configuration).myReplaceOptions.copy()
                        : new ReplaceOptions(configuration.getMatchOptions().copy());
   }
 
-  public ReplaceConfiguration(String name, String category) {
+  public ReplaceConfiguration(@NotNull String name, @NotNull String category) {
     super(name, category);
     myReplaceOptions = new ReplaceOptions();
   }
 
   @Override
-  public ReplaceConfiguration copy() {
+  public @NotNull ReplaceConfiguration copy() {
     return new ReplaceConfiguration(this);
   }
 
   @Override
-  public ReplaceOptions getReplaceOptions() {
+  public @NotNull ReplaceOptions getReplaceOptions() {
     return myReplaceOptions;
   }
 
   @Override
-  public MatchOptions getMatchOptions() {
+  public @NotNull MatchOptions getMatchOptions() {
     return myReplaceOptions.getMatchOptions();
   }
 
   @Override
-  public NamedScriptableDefinition findVariable(String name) {
+  public NamedScriptableDefinition findVariable(@NotNull String name) {
     return ObjectUtils.chooseNotNull(myReplaceOptions.getVariableDefinition(name), getMatchOptions().getVariableConstraint(name));
   }
 

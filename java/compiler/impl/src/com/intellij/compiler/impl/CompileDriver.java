@@ -30,9 +30,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -67,7 +69,6 @@ public final class CompileDriver {
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
-  public static final String CLASSES_UP_TO_DATE_CHECK = "Classes up-to-date check";
 
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
@@ -103,7 +104,7 @@ public final class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, CLASSES_UP_TO_DATE_CHECK, true, false, false, isCompilationStartedAutomatically(scope));
+    final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<>();
@@ -519,7 +520,8 @@ public final class CompileDriver {
           ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
-        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE?
+                                      HtmlChunk.link("#", statusMessage).toString() : statusMessage;
         final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
           "", wrappedMessage,
           messageType.toNotificationType(),
@@ -566,7 +568,7 @@ public final class CompileDriver {
     return map.computeIfAbsent(module, k -> CompilerPaths.getModuleOutputPath(module, inTestSourceContent));
   }
 
-  public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
+  public void executeCompileTask(final CompileTask task, final CompileScope scope, final @NlsContexts.TabTitle String contentName, final Runnable onTaskFinished) {
     final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
 

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -170,6 +171,27 @@ public class PythonDataViewerTest extends PyEnvTestCase {
           final List<ArrayChunk.ColHeader> labels = chunk.getColHeaders();
           assertEquals(1, labels.size());
           assertEquals("foo_%", labels.get(0).getLabel());
+        });
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testTuples() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", ImmutableSet.of(5)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("df1", 3, 3, chunk -> {
+          final Object[][] data = chunk.getData();
+
+          assertEquals("'{1: (1, 2)}'", data[0][1].toString());
+          assertEquals("'{2: (3,)}'", data[1][1].toString());
+          assertEquals("'{4: 5}'", data[2][1].toString());
+
+          assertEquals("'(1, 2, 3)'", data[0][2].toString());
+          assertEquals("'()'", data[1][2].toString());
+          assertEquals("'(4,)'", data[2][2].toString());
         });
       }
     });

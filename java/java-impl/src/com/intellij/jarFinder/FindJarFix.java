@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -146,7 +147,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
           HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
         }
         else {
-          JBList<String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
+          JBList<@NlsSafe String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
           libNames.installCellRenderer(o -> new JLabel(o, PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
             final String jarName = libs.keySet().iterator().next();

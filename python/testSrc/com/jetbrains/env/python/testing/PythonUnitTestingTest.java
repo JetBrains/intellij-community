@@ -46,6 +46,7 @@ import java.util.List;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
@@ -93,11 +94,18 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    */
   @Test
   public void testCantRerun() {
-    startMessagesCapture();
-
     runPythonTest(
       new PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/testRunner/env/unit", "test_with_skips_and_errors.py",
-                                                                            this::createTestRunner) {
+                                                                            config -> {
+                                                                              // Second rerun should lead to exception
+                                                                              return createTestRunner(config.increaseRerunCount(2));
+                                                                            }) {
+        @Override
+        protected void exceptionThrown(@NotNull Throwable e, @NotNull PyUnitTestProcessRunner runner) {
+          assertEquals("Wrong type of exception", e.getClass(), ExecutionException.class);
+          assertTrue("Exception should be thrown on the first or second rerun", runner.getCurrentRerunStep() > 0);
+          assertEquals(e.getMessage(), PyBundle.message("runcfg.tests.cant_rerun"));
+        }
 
         @Override
         protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -105,26 +113,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                         @NotNull final String stderr,
                                         @NotNull final String all, int exitCode) {
           assert runner.getFailedTestsCount() > 0 : "We need failed tests to test broken rerun";
-
-          startMessagesCapture();
-
+          assertEquals("No exception thrown or rerun, but it should", 0, runner.getCurrentRerunStep());
           EdtTestUtil.runInEdtAndWait(() -> {
+            // Delete files, so next rerun should lead to exception
             deleteAllTestFiles(myFixture);
-            runner.rerunFailedTests();
           });
-
-          final List<Throwable> throwables = getCapturesMessages().first;
-          assertThat(throwables)
-            .describedAs("Exception shall be thrown")
-            .isNotEmpty();
-          final Throwable exception = throwables.get(0);
-          assertThat(exception).isInstanceOf(ExecutionException.class);
-          assertThat(exception.getMessage()).isEqualTo(PyBundle.message("runcfg.tests.cant_rerun"));
-          assertThat(getCapturesMessages().second)
-            .describedAs("No messages displayed for exception")
-            .isNotEmpty();
-
-          stopMessageCapture();
         }
       });
   }
@@ -153,7 +146,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
           console.flushDeferredText();
           try {
             assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
-          }finally {
+          }
+          finally {
             Disposer.dispose(console);
           }
         });
@@ -834,7 +828,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @Test
   public void testConfigurationProducer() {
-    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(), PyUnitTestConfiguration.class));
+    runPythonTest(
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(), PyUnitTestConfiguration.class));
   }
 
   /**

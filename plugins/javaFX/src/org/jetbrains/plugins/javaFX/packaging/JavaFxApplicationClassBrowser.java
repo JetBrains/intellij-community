@@ -7,6 +7,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.psi.PsiClass;
@@ -21,7 +22,7 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
   private final String myApplicationClass;
   private final Artifact myArtifact;
 
-  public JavaFxApplicationClassBrowser(Project project, String title, String applicationClass, Artifact artifact) {
+  public JavaFxApplicationClassBrowser(Project project, @NlsContexts.DialogTitle String title, String applicationClass, Artifact artifact) {
     super(project, title);
     myArtifact = artifact;
     myApplicationClass = applicationClass;

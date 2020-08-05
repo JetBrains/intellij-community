@@ -130,13 +130,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     final PsiFile file = myElement.getContainingFile();
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
-      if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
-      String qName = aClass.getQualifiedName();
-      if (qName != null) { //filter local classes
-        if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
-        if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
-          classList.add(aClass);
-        }
+      if (qualifiedNameAllowsAutoImport(file, aClass)) {
+        classList.add(aClass);
       }
     }
 
@@ -156,6 +151,20 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     filerByPackageName(classList, file);
 
     return removeDuplicates(classList);
+  }
+
+  public static boolean qualifiedNameAllowsAutoImport(@NotNull PsiFile placeFile, @NotNull PsiClass aClass) {
+    if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) {
+      return false;
+    }
+    String qName = aClass.getQualifiedName();
+    if (qName != null) { //filter local classes
+      if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(placeFile.getProject()).isQualifiedName(qName)) return false;
+      if (ImportFilter.shouldImport(placeFile, qName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

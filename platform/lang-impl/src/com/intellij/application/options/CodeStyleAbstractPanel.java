@@ -89,8 +89,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage,
                                    @Nullable CodeStyleSettings currentSettings,
-                                   @NotNull CodeStyleSettings settings)
-  {
+                                   @NotNull CodeStyleSettings settings) {
     myCurrentSettings = currentSettings;
     mySettings = settings;
     myDefaultLanguage = defaultLanguage;
@@ -106,7 +105,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     updatePreview(true);
   }
 
-  @SuppressWarnings("SameParameterValue")
   protected void setShouldUpdatePreview(boolean shouldUpdatePreview) {
     myShouldUpdatePreview = shouldUpdatePreview;
   }
@@ -211,7 +209,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         }
 
         //important not mark as generated not to get the classes before setting language level
-        @SuppressWarnings("deprecation")
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
@@ -259,7 +256,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    */
   @Nullable
   private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
-    @SuppressWarnings("deprecation")
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyle.doWithTemporarySettings(
@@ -413,14 +409,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
   @SuppressWarnings("unchecked")
-  protected static void fillWrappingCombo(final JComboBox wrapCombo) {
+  protected static void fillWrappingCombo(@NotNull JComboBox wrapCombo) {
     wrapCombo.addItem(ApplicationBundle.message("wrapping.do.not.wrap"));
     wrapCombo.addItem(ApplicationBundle.message("wrapping.wrap.if.long"));
     wrapCombo.addItem(ApplicationBundle.message("wrapping.chop.down.if.long"));
     wrapCombo.addItem(ApplicationBundle.message("wrapping.wrap.always"));
   }
 
-  public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
+  public static String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {
     try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
          LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream,
                                                                                                                 StandardCharsets.UTF_8))) {
@@ -466,8 +462,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   }
 
   @NonNls
-  protected
-  String getFileTypeExtension(FileType fileType) {
+  @NotNull
+  protected String getFileTypeExtension(@NotNull FileType fileType) {
     return fileType.getDefaultExtension();
   }
 
@@ -496,6 +492,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
       public void run() {
         try {
           myUpdateAlarm.cancelAllRequests();
+          Project project = myEditor.getProject();
+          if (myEditor.isDisposed() || project != null && project.isDisposed()) {
+            return;
+          }
           if (isSomethingChanged()) {
             updateEditor(false);
           }
@@ -595,13 +595,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   @NotNull
   public OptionsContainingConfigurable getOptionIndexer() {
-    return new OptionsContainingConfigurable() {
-      @NotNull
-      @Override
-      public Set<String> processListOptions() {
-        return CodeStyleAbstractPanel.this.processListOptions();
-      }
-    };
+    return () -> CodeStyleAbstractPanel.this.processListOptions();
   }
 
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {

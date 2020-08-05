@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -33,6 +34,8 @@ import git4idea.config.GitMergeSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
+import git4idea.rebase.ComboBoxPrototypeRenderer
+import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRepository
 import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
@@ -43,6 +46,7 @@ import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.Collections.synchronizedMap
 import java.util.regex.Pattern
 import javax.swing.JComponent
@@ -52,13 +56,12 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
-import kotlin.collections.HashMap
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
                      private val roots: List<VirtualFile>) : DialogWrapper(project) {
 
-  val selectedOptions = mutableSetOf<MergeOption>()
+  val selectedOptions = mutableSetOf<GitMergeOption>()
 
   private val repositoryManager = GitUtil.getRepositoryManager(project)
 
@@ -68,7 +71,7 @@ class GitMergeDialog(private val project: Project,
 
   private val unmergedBranches = synchronizedMap(HashMap<GitRepository, List<String>?>())
 
-  private val optionInfos = mutableMapOf<MergeOption, OptionInfo<MergeOption>>()
+  private val optionInfos = mutableMapOf<GitMergeOption, OptionInfo<GitMergeOption>>()
 
   private val rootField = createRootField()
   private val branchField = createBranchField()
@@ -136,14 +139,14 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedBranches() = listOf(branchField.item)
 
-  fun shouldCommitAfterMerge() = MergeOption.NO_COMMIT !in selectedOptions
+  fun shouldCommitAfterMerge() = GitMergeOption.NO_COMMIT !in selectedOptions
 
   private fun saveSettings() {
     mergeSettings.options = selectedOptions
   }
 
   private fun loadSettings() = mergeSettings.options
-    .filter { option -> option != MergeOption.NO_VERIFY || isNoVerifySupported }
+    .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
     .forEach { option -> selectedOptions += option }
 
   private fun collectAllBranches(): Map<GitRepository, List<String>?> {
@@ -218,7 +221,7 @@ class GitMergeDialog(private val project: Project,
     }
 
     val items = (branchField.model as CollectionComboBoxModel).items
-    if (value !in items) {
+    if (items.none { equalBranches(it, value) }) {
       return ValidationInfo(GitBundle.message("merge.no.matching.branch.error"), branchField)
     }
 
@@ -344,7 +347,8 @@ class GitMergeDialog(private val project: Project,
           })
         }
       }
-
+      prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
+      renderer = ComboBoxPrototypeRenderer.create(this) { it }
       ui = FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
         popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
@@ -369,7 +373,9 @@ class GitMergeDialog(private val project: Project,
           .minHeight("${JBUI.scale(75)}px"))
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+    mnemonic = KeyEvent.VK_M
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
@@ -378,27 +384,27 @@ class GitMergeDialog(private val project: Project,
       { option -> isOptionEnabled(option) })
   }
 
-  private fun getOptionInfo(option: MergeOption) = optionInfos.computeIfAbsent(option) {
-    OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
+  private fun getOptionInfo(option: GitMergeOption) = optionInfos.computeIfAbsent(option) {
+    OptionInfo(option, option.option, option.description)
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify.popup.title"),
-                                                                                getOptions()) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<GitMergeOption>(GitBundle.message("merge.options.modify.popup.title"),
+                                                                                   getOptions()) {
 
-    override fun isSelectable(value: MergeOption?) = isOptionEnabled(value!!)
+    override fun isSelectable(value: GitMergeOption?) = isOptionEnabled(value!!)
 
-    override fun onChosen(selectedValue: MergeOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
+    override fun onChosen(selectedValue: GitMergeOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
   }
 
-  private fun getOptions() = MergeOption.values().toMutableList().apply {
+  private fun getOptions() = GitMergeOption.values().toMutableList().apply {
     if (!isNoVerifySupported) {
-      remove(MergeOption.NO_VERIFY)
+      remove(GitMergeOption.NO_VERIFY)
     }
   }
 
-  private fun isOptionEnabled(option: MergeOption) = selectedOptions.all { it.isOptionSuitable(option) }
+  private fun isOptionEnabled(option: GitMergeOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
-  private fun optionChosen(option: MergeOption?) {
+  private fun optionChosen(option: GitMergeOption?) {
     if (option !in selectedOptions) {
       selectedOptions += option!!
     }
@@ -431,11 +437,11 @@ class GitMergeDialog(private val project: Project,
       optionsPanel.isVisible = true
     }
 
-    val shownOptions = mutableSetOf<MergeOption>()
+    val shownOptions = mutableSetOf<GitMergeOption>()
 
     listOf(*optionsPanel.components).forEach { c ->
       @Suppress("UNCHECKED_CAST")
-      val optionButton = c as OptionButton<MergeOption>
+      val optionButton = c as OptionButton<GitMergeOption>
       val mergeOption = optionButton.option
 
       if (mergeOption !in selectedOptions) {
@@ -454,14 +460,14 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateCommitMessagePanel() {
-    val useCommitMsg = MergeOption.COMMIT_MESSAGE in selectedOptions
+    val useCommitMsg = GitMergeOption.COMMIT_MESSAGE in selectedOptions
     commitMsgPanel.isVisible = useCommitMsg
     if (!useCommitMsg) {
       commitMsgField.text = ""
     }
   }
 
-  private fun createOptionButton(option: MergeOption) = OptionButton(option, option.option) { optionChosen(option) }
+  private fun createOptionButton(option: GitMergeOption) = OptionButton(option, option.option) { optionChosen(option) }
 
   companion object {
     private val LOG = logger<GitMergeDialog>()

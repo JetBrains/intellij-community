@@ -2,10 +2,11 @@
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import java.util.concurrent.CompletableFuture
 
 interface FeatureUsageStateEventTracker {
   fun initialize()
-  fun reportNow()
+  fun reportNow(): CompletableFuture<Void>
 
   companion object {
     val EP_NAME = ExtensionPointName<FeatureUsageStateEventTracker>("com.intellij.statistic.eventLog.fusStateEventTracker")

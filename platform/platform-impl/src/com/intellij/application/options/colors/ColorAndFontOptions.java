@@ -37,9 +37,8 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -520,7 +519,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
    }
 
   private void initAll() {
-    mySchemes = new THashMap<>();
+    mySchemes = new HashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
       initScheme(schemeDelegate);
@@ -591,15 +590,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
 
   private static void initScopesDescriptors(@NotNull List<? super EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<>(new TObjectHashingStrategy<Pair<NamedScope, NamedScopesHolder>>() {
+    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
-      public int computeHashCode(@NotNull final Pair<NamedScope, NamedScopesHolder> object) {
-        return object.getFirst().getName().hashCode();
+      public int hashCode(@Nullable Pair<NamedScope, NamedScopesHolder> object) {
+        return object == null ? 0 : object.getFirst().getName().hashCode();
       }
 
       @Override
-      public boolean equals(@NotNull final Pair<NamedScope, NamedScopesHolder> o1, @NotNull final Pair<NamedScope, NamedScopesHolder> o2) {
-        return o1.getFirst().getName().equals(o2.getFirst().getName());
+      public boolean equals(@Nullable Pair<NamedScope, NamedScopesHolder> o1, @Nullable Pair<NamedScope, NamedScopesHolder> o2) {
+        return o1 == o2 || (o1 != null && o2 != null && o1.getFirst().getName().equals(o2.getFirst().getName()));
       }
     });
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

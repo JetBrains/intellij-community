@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsRememberedInputs
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.layout.*
@@ -18,13 +19,15 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
 abstract class DvcsCloneDialogComponent(var project: Project,
                                         private var vcsDirectoryName: String,
-                                        protected val rememberedInputs: DvcsRememberedInputs) : VcsCloneComponent {
+                                        protected val rememberedInputs: DvcsRememberedInputs,
+                                        private val dialogStateListener: VcsCloneDialogComponentStateListener) : VcsCloneComponent {
   protected val mainPanel: JPanel
   private val urlEditor = TextFieldWithHistory()
   private val directoryField = SelectChildTextFieldWithBrowseButton(
@@ -57,6 +60,7 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     urlEditor.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         directoryField.trySetChildPath(defaultDirectoryPath(urlEditor.text.trim()))
+        updateOkActionState(dialogStateListener)
       }
     })
   }
@@ -88,4 +92,11 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   override fun dispose() {}
 
+  @CalledInAwt
+  protected open fun isOkActionEnabled(): Boolean = getUrl().isNotBlank()
+
+  @CalledInAwt
+  protected fun updateOkActionState(dialogStateListener: VcsCloneDialogComponentStateListener) {
+    dialogStateListener.onOkActionEnabled(isOkActionEnabled())
+  }
 }

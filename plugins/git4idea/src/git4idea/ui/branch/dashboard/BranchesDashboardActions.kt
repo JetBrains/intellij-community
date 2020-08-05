@@ -13,8 +13,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsLogProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchType
@@ -326,6 +328,10 @@ internal object BranchesDashboardActions {
     }
   }
 
+  class ChangeBranchFilterAction : BooleanPropertyToggleAction() {
+    override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
+  }
+
   class GroupBranchByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
                                                                                                      AllIcons.Actions.GroupByPackage) {
     override fun setSelected(key: GroupingKey, state: Boolean) {
@@ -387,6 +393,20 @@ internal object BranchesDashboardActions {
         GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
           .checkoutRemoteBranch(project, branch.repositories, branch.branchName)
       }
+    }
+  }
+
+  class UpdateBranchFilterInLogAction : DumbAwareAction() {
+
+    override fun update(e: AnActionEvent) {
+      val uiController = e.getData(BRANCHES_UI_CONTROLLER)
+      val project = e.project
+      val enabled = project != null && uiController != null && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
+      e.presentation.isEnabled = enabled
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getRequiredData(BRANCHES_UI_CONTROLLER).updateLogBranchFilter()
     }
   }
 

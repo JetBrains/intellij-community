@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -221,6 +222,8 @@ public class EditorComposite implements Disposable {
    */
   void setPinned(final boolean pinned){
     myPinned = pinned;
+    ObjectUtils.consumeIfCast(getComponent().getParent(), JComponent.class,
+                              component -> component.putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
   }
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
@@ -462,6 +465,10 @@ public class EditorComposite implements Disposable {
       mySelectedEditor = myEditors[selectedIndex];
       fireSelectedEditorChanged(oldSelectedEditor, mySelectedEditor);
     }
+  }
+
+  public static boolean isEditorComposite(@Nullable Component component) {
+    return component instanceof MyComponent;
   }
 
   private class MyComponent extends JPanel implements DataProvider{

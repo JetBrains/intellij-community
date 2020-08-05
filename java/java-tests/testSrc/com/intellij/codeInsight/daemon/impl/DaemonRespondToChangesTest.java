@@ -32,6 +32,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -70,7 +71,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1311,7 +1311,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testErrorInTheEndOutsideVisibleArea() {
     String text = "<xml> \n" + StringUtil.repeatSymbol('\n', 1000) + "</xml>\nxxxxx<caret>";
-    configureByText(StdFileTypes.XML, text);
+    configureByText(XmlFileType.INSTANCE, text);
 
     ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000), myEditor);
     assertTrue(visibleRange.getStartOffset() > 0);
@@ -1459,7 +1459,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
-      final VirtualFile alienRoot = PsiTestUtil.createTestProjectStructure(alienProject, alienModule, myFilesToDelete);
+      VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
+      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
       OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
         VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
         setFileText(alienFile, "class Alien { }");
@@ -2121,7 +2122,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyIncorrectlyRecursiveAnnotator()}, () -> {
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyIncorrectlyRecursiveAnnotator(), () -> {
       @Language("JAVA")
       String text1 = "class X {\n" +
                      "  int foo(Object param) {\n" +
@@ -2147,28 +2148,59 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
                                      MyRecordingAnnotator @NotNull [] annotators,
                                      @NotNull Runnable runnable) {
+    useAnnotatorsIn(Collections.singletonMap(language, annotators), runnable);
+  }
+
+  public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
+                                     @NotNull MyRecordingAnnotator annotator,
+                                     @NotNull Runnable runnable) {
+    useAnnotatorsIn(Collections.singletonMap(language, new MyRecordingAnnotator[]{annotator}), runnable);
+  }
+
+  public static void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
+                                     @NotNull Runnable runnable) {
     MyRecordingAnnotator.clearAll();
-    for (Annotator annotator : annotators) {
-      LanguageAnnotators.INSTANCE.addExplicitExtension(language, annotator);
-    }
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
-      assertTrue(list.toString(), list.containsAll(Arrays.asList(annotators)));
-      runnable.run();
-      for (MyRecordingAnnotator annotator : annotators) {
-        assertTrue(annotator +" must have done something but didn't", annotator.didIDoIt());
-      }
-    }
-    finally {
-      for (int i = annotators.length - 1; i >= 0; i--) {
-        Annotator annotator = annotators[i];
-        LanguageAnnotators.INSTANCE.removeExplicitExtension(language, annotator);
+    for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
+      com.intellij.lang.Language language = entry.getKey();
+      MyRecordingAnnotator[] annotators = entry.getValue();
+      for (Annotator annotator : annotators) {
+        LanguageAnnotators.INSTANCE.addExplicitExtension(language, annotator);
       }
     }
 
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
-    for (Annotator annotator : annotators) {
-      assertFalse(list.toString(), list.contains(annotator));
+    try {
+      for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
+        com.intellij.lang.Language language = entry.getKey();
+        MyRecordingAnnotator[] annotators = entry.getValue();
+        List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
+        assertTrue(list.toString(), list.containsAll(Arrays.asList(annotators)));
+      }
+      runnable.run();
+      for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
+        MyRecordingAnnotator[] annotators = entry.getValue();
+        for (MyRecordingAnnotator annotator : annotators) {
+          assertTrue(annotator + " must have done something but didn't", annotator.didIDoIt());
+        }
+      }
+    }
+    finally {
+      for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
+        com.intellij.lang.Language language = entry.getKey();
+        MyRecordingAnnotator[] annotators = entry.getValue();
+        for (int i = annotators.length - 1; i >= 0; i--) {
+          Annotator annotator = annotators[i];
+          LanguageAnnotators.INSTANCE.removeExplicitExtension(language, annotator);
+        }
+      }
+    }
+
+    for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
+      com.intellij.lang.Language language = entry.getKey();
+      MyRecordingAnnotator[] annotators = entry.getValue();
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
+      for (Annotator annotator : annotators) {
+        assertFalse(list.toString(), list.contains(annotator));
+      }
     }
   }
 
@@ -2508,36 +2540,47 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyNewBuilderAnnotator(), this::checkSwearingAnnotationIsVisibleImmediately);
   }
 
   private static final AtomicBoolean annotated = new AtomicBoolean();
+  private static final AtomicBoolean injectedAnnotated = new AtomicBoolean();
   private static final AtomicBoolean inspected = new AtomicBoolean();
+
   public static class MySlowAnnotator extends MyRecordingAnnotator {
+
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiFile) {
+        assertFalse("For this moment file has not to process injected fragments", injectedAnnotated.get());
+        assertFalse("For this moment file has not to run inspections", inspected.get());
         annotated.set(true);
         iDidIt();
       }
-      assertFalse(inspected.get());
     }
   }
-  public void test_RunInspectionsAfterCompletionOfGeneralHighlightPass_SecretSettingDoesWork() {
+
+  public static class MyInjectedSlowAnnotator extends MyRecordingAnnotator {
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      assertTrue("File already has to be annotated", annotated.get());
+      injectedAnnotated.set(true);
+      iDidIt();
+    }
+  }
+
+  public void test_SerializeCodeInsightPasses_SecretSettingDoesWork() {
     if (!ensureEnoughParallelism()) return;
+
     TextEditorHighlightingPassRegistrarImpl registrar =
       (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-    assertFalse("Somebody (rogue plugin?) has left the dangerous setting on", registrar.isRunInspectionsAfterCompletionOfGeneralHighlightPass());
+    assertFalse("Somebody (rogue plugin?) has left the dangerous setting on", registrar.isSerializeCodeInsightPasses());
+
     registerInspection(new LocalInspectionTool() {
       @Override
       public @NotNull String getID() {
         return getTestName(false)+"MySlowInspectionTool";
-      }
-
-      @Override
-      public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-        inspected.set(true);
-        return null;
       }
 
       @Override
@@ -2547,21 +2590,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return new PsiElementVisitor() {
           @Override
           public void visitElement(@NotNull PsiElement element) {
-            assertTrue(annotated.get());
+            assertTrue("File has to be already annotated", annotated.get());
+            inspected.set(true);
           }
         };
       }
     });
     try {
-      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(true);
+      myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
 
-      useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MySlowAnnotator(), }, () -> {
-        configureByText(JavaFileType.INSTANCE, "class X{}");
+      Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage = new HashMap<>();
+      annotatorsByLanguage.put(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{new MySlowAnnotator()});
+      annotatorsByLanguage.put(XMLLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyInjectedSlowAnnotator()});
+
+      useAnnotatorsIn(annotatorsByLanguage, () -> {
+        configureByText(JavaFileType.INSTANCE,
+                        "class X{\n" +
+                        "// language=XML\n" +
+                        "String ql = \"<value>1</value>\";" +
+                        "\n}");
+
         doHighlighting();
+        assertTrue("File already has to be java annotated", annotated.get());
+        assertTrue("File already has to annotate xml injection", injectedAnnotated.get());
+        assertTrue("File already has to run inspections", inspected.get());
       });
     }
     finally {
-      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(false);
+      myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
     }
   }
 
@@ -2574,7 +2630,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
     EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
     executeWithReparseDelay(2000, () ->
-      useAnnotatorsIn(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{emptyAnnotator}, () -> {
+      useAnnotatorsIn(JavaLanguage.INSTANCE, emptyAnnotator, () -> {
         @Language("JAVA")
         String text = "class X {\n}";
         configureByText(JavaFileType.INSTANCE, text);
@@ -2605,7 +2661,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonDoesReportTheFirstProducedAnnotation() {
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator()}, () -> checkFirstAnnotation());
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyInfoAnnotator(), () -> checkFirstAnnotation());
   }
 
   private void checkFirstAnnotation() {

@@ -6,7 +6,10 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerAdapter;
@@ -14,7 +17,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -28,10 +31,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -60,6 +60,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -367,6 +368,7 @@ public final class DaemonListeners implements Disposable {
         stopDaemon(false, "Plugin will be uninstalled");
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
+        myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
         IntentionsUI.getInstance(project).invalidate();
       }
 
@@ -597,11 +599,29 @@ public final class DaemonListeners implements Disposable {
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
       if (!(highlighter instanceof RangeHighlighterEx && ((RangeHighlighterEx)highlighter).isPersistent())) {
         model.removeHighlighter(highlighter);
+        return;
       }
-      else if (pluginDescriptor.getPluginClassLoader() instanceof PluginClassLoader) {
-        CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
-        if (renderer != null && renderer.getClass().getClassLoader() == pluginDescriptor.getPluginClassLoader()) {
-          model.removeHighlighter(highlighter);
+
+      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+      if (!(pluginClassLoader instanceof PluginAwareClassLoader)) {
+        return;
+      }
+
+      CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
+      if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
+        model.removeHighlighter(highlighter);
+      }
+      else {
+        Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
+        if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
+            IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
+            if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
+                intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() == pluginClassLoader) {
+              model.removeHighlighter(highlighter);
+              break;
+            }
+          }
         }
       }
     }

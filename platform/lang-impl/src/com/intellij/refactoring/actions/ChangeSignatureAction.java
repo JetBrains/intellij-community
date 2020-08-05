@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +112,8 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
           if (handler != null) {
             final String notFoundMessage = handler.getTargetNotFoundMessage();
             if (notFoundMessage != null) {
-              CommonRefactoringUtil.showErrorHint(project, editor, notFoundMessage, ChangeSignatureHandler.REFACTORING_NAME, null);
+              CommonRefactoringUtil.showErrorHint(project, editor, notFoundMessage, RefactoringBundle
+                .message("changeSignature.refactoring.name"), null);
             }
           }
           return;

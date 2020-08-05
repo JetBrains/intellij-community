@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -12,10 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
@@ -31,14 +27,13 @@ import java.util.List;
 /**
  * @author ven
  */
-public class JavaCoverageSuite extends BaseCoverageSuite {
-  private static final Logger LOG = Logger.getInstance(JavaCoverageSuite.class.getName());
-
+public final class JavaCoverageSuite extends BaseCoverageSuite {
   private String[] myFilters;
   private String mySuiteToMerge;
 
   @NonNls
   private static final String FILTER = "FILTER";
+  @NonNls
   private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
   @NonNls
   private static final String MERGE_SUITE = "MERGE_SUITE";
@@ -218,7 +213,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     }
     final String[] filteredPackageNames = getFilteredPackageNames();
     for (final String packName : filteredPackageNames) {
-      if (packName.equals(packageFQName) || packageFQName.startsWith(packName) && packageFQName.charAt(packName.length()) == '.') {
+      if (PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
         return true;
       }
     }

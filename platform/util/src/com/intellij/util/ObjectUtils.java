@@ -128,7 +128,7 @@ public final class ObjectUtils {
     return Objects.requireNonNull(value);
   }
 
-  @Contract(pure = true)
+  @Contract(value = "null, _ -> param2; !null, _ -> param1", pure = true)
   public static @NotNull <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value == null ? defaultValue : value;
   }

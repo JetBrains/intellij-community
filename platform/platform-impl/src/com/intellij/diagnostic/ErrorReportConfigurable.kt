@@ -1,71 +1,74 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
-import com.intellij.util.io.decodeBase64
-import com.intellij.util.xmlb.XmlSerializer
-import org.jdom.Element
+import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.XCollection
 
-@State(
-  name = "ErrorReportConfigurable",
-  storages = [Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED), Storage(value = "errorReporting.xml")])
-internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
+@State(name = "ErrorReportConfigurable", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>, SimpleModificationTracker() {
   companion object {
     @JvmStatic
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     @JvmStatic
-    val instance: ErrorReportConfigurable
-      get() = ServiceManager.getService(ErrorReportConfigurable::class.java)
+    fun getInstance() = service<ErrorReportConfigurable>()
 
     @JvmStatic
     fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
   }
 
-  private var myState: State? = null
-
-  var developer: Developers?
-    get() = myState?.let { Developers(it.developers.toList(), it.timestamp) }
+  var developerList = DeveloperList()
     set(value) {
-      myState = value?.let { State(it.developers.toList(), it.timestamp) }
+      field = value
+      incModificationCount()
     }
 
-  override fun getState(): Element? = myState?.let { XmlSerializer.serialize(it) }
+  override fun getState() = developerList
 
-  override fun loadState(element: Element) {
-    loadOldState(element)
-    myState = XmlSerializer.deserialize(element, State::class.java)
-  }
-
-  private fun loadOldState(element: Element) {
-    val state = XmlSerializer.deserialize(element, OldState::class.java)
-
-    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
-      PasswordSafe.instance.set(
-        CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
-    }
-  }
-
-  private data class State(var developers: List<Developer>, var timestamp: Long) {
-    @Suppress("unused")
-    private constructor(): this(emptyList(), 0)  // needed for XML serialization
-  }
-
-  @Suppress("PropertyName")
-  private class OldState {
-    var ITN_LOGIN: String? = null
-    var ITN_PASSWORD_CRYPT: String? = null
+  override fun loadState(value: DeveloperList) {
+    developerList = value
   }
 }
 
-internal data class Developers(val developers: List<Developer>, val timestamp: Long) {
-  companion object {
-    private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000 // 24 hours
+// 24 hours
+private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000
+
+internal class DeveloperList {
+  constructor() {
+    developers = mutableListOf()
+    timestamp = 0
   }
 
-  fun isUpToDateAt(timestamp: Long): Boolean = developers.isEmpty() || (timestamp - this.timestamp < UPDATE_INTERVAL)
+  constructor(list: MutableList<Developer>) {
+    developers = list
+    timestamp = System.currentTimeMillis()
+  }
+
+  @field:XCollection(style = XCollection.Style.v2)
+  val developers: List<Developer>
+
+  @field:Attribute
+  var timestamp: Long
+    private set
+
+  fun isUpToDateAt() = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DeveloperList
+    return developers == other.developers || timestamp == other.timestamp
+  }
+
+  override fun hashCode(): Int {
+    var result = developers.hashCode()
+    result = 31 * result + timestamp.hashCode()
+    return result
+  }
 }

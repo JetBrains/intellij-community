@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,6 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-/**
- * @author: db
- */
 public class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
@@ -49,7 +47,7 @@ public class Mappings {
   private boolean myIsRebuild = false;
 
   private final TIntHashSet myChangedClasses;
-  private final THashSet<File> myChangedFiles;
+  private final Set<File> myChangedFiles;
   private final Set<Pair<ClassFileRepr, File>> myDeletedClasses;
   private final Set<ClassRepr> myAddedClasses;
   private final Object myLock;
@@ -91,7 +89,7 @@ public class Mappings {
     myLock = base.myLock;
     myIsDelta = true;
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myChangedFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    myChangedFiles = FileCollectionFactory.createCanonicalFileSet();
     myDeletedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "myDelta");
@@ -956,7 +954,7 @@ public class Mappings {
       return false;
     }
 
-    final THashSet<File> toRecompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> toRecompile = FileCollectionFactory.createCanonicalFileSet();
 
     // Protected branch
     if (member.isProtected()) {
@@ -2081,7 +2079,7 @@ public class Mappings {
 
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
-            final Set<File> candidates = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+            final Set<File> candidates = FileCollectionFactory.createCanonicalFileSet();
             final Collection<File> currentlyMapped = classToSourceFileGet(c.name);
             if (currentlyMapped != null) {
               candidates.addAll(currentlyMapped);
@@ -2091,7 +2089,7 @@ public class Mappings {
             if (newSources != null) {
               candidates.removeAll(newSources);
             }
-            final Set<File> nonExistentOrOutOfScope = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+            final Set<File> nonExistentOrOutOfScope = FileCollectionFactory.createCanonicalFileSet();
             for (final File candidate : candidates) {
               if (!candidate.exists() || !myFilter.belongsToCurrentTargetChunk(candidate)) {
                 nonExistentOrOutOfScope.add(candidate);
@@ -2645,15 +2643,14 @@ public class Mappings {
 
           delta.getChangedFiles().forEach(fileName -> {
             String relative = toRelative(fileName);
-            final Collection<ClassFileRepr> classes = delta.myRelativeSourceFilePathToClasses.get(relative);
+            Collection<ClassFileRepr> classes = delta.myRelativeSourceFilePathToClasses.get(relative);
             myRelativeSourceFilePathToClasses.replace(relative, classes);
-            return true;
           });
 
           // some classes may be associated with multiple sources.
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
-          final THashSet<File> unchangedSources = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+          Set<File> unchangedSources = FileCollectionFactory.createCanonicalFileSet();
           delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
             @Override
             public boolean execute(String source, Collection<ClassFileRepr> b) {
@@ -2687,7 +2684,6 @@ public class Mappings {
                 }
                 myRelativeSourceFilePathToClasses.replace(toRelative(unchangedSource), classesToPut);
               }
-              return true;
             });
           }
         }
@@ -3040,7 +3036,7 @@ public class Mappings {
     return myChangedClasses;
   }
 
-  private THashSet<File> getChangedFiles() {
+  private Set<File> getChangedFiles() {
     return myChangedFiles;
   }
 

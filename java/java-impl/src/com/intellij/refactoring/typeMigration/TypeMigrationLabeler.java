@@ -36,6 +36,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -103,8 +104,8 @@ public class TypeMigrationLabeler {
     return myMigrationRootTypeFunction;
   }
 
-  public String[] getFailedConversionsReport() {
-    final String[] report = new String[myFailedConversions.size()];
+  public @Nls String[] getFailedConversionsReport() {
+    final @Nls String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
     for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions.keySet()) {

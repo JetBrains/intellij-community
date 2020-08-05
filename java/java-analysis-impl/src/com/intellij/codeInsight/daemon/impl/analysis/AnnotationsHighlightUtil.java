@@ -13,6 +13,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -37,7 +38,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author ven
  */
-public class AnnotationsHighlightUtil {
+public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
@@ -394,7 +395,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
+  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
     LocalQuickFixAndIntentionActionOnPsiElement fix =
       QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
     return annotationError(annotation, message, fix);
@@ -402,7 +403,7 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   private static HighlightInfo annotationError(@NotNull final PsiAnnotation annotation,
-                                               @NotNull final String message,
+                                               @NotNull final @NlsContexts.DetailedDescription String message,
                                                @NotNull final IntentionAction fix) {
     final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(annotation)
@@ -569,7 +570,7 @@ public class AnnotationsHighlightUtil {
           if (errorMessage != null) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
           }
-          
+
           if (((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(annotation)
@@ -668,7 +669,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesBackward(parameter);
+    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
     if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();

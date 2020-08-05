@@ -3,9 +3,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +48,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     myText = action.getText();
     // needed for checking errors in user written actions
     //noinspection ConstantConditions
-    LOG.assertTrue(myText != null, "action "+action.getClass()+" text returned null");
+    LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
   }
@@ -139,8 +137,33 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getAction();
   }
 
+  public boolean isShowSubmenu() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)myAction).isShowSubmenu();
+    }
+    return true;
+  }
+
+  public boolean isSelectable() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)myAction).isSelectable();
+    }
+    return true;
+  }
+
+  public boolean isShowIcon() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)action).isShowIcon();
+    }
+    return true;
+  }
+
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider, PossiblyDumbAware {
+  private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
+                                             ShortcutProvider, PossiblyDumbAware {
     private final IntentionAction myAction;
     @NotNull
     private final BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
@@ -164,7 +187,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public String toString() {
-      return getDelegate().getClass()+": "+getDelegate();
+      return getDelegate().getClass() + ": " + getDelegate();
     }
 
     @Nls

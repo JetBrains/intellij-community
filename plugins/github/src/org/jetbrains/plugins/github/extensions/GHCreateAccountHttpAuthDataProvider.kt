@@ -9,8 +9,10 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.util.GithubUtil
+import org.jetbrains.plugins.github.util.GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import java.awt.Component
+
+private val authenticationManager get() = GithubAuthenticationManager.getInstance()
 
 internal class GHCreateAccountHttpAuthDataProvider(
   private val project: Project,
@@ -18,24 +20,20 @@ internal class GHCreateAccountHttpAuthDataProvider(
   private val login: String? = null
 ) : InteractiveGitHttpAuthDataProvider {
 
-  private val authenticationManager get() = GithubAuthenticationManager.getInstance()
-
   @CalledInAwt
   override fun getAuthData(parentComponent: Component?): AuthData? {
-    if (login == null) {
-      val account = authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
-                    ?: return null
-      val token = getToken(account, parentComponent) ?: return null
-      return GHAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
-    }
-    else {
-      val account = authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
-                    ?: return null
-      val token = getToken(account, parentComponent) ?: return null
-      return GHAccountAuthData(account, login, token)
-    }
+    val account = requestNewAccount(parentComponent) ?: return null
+    val token = getOrRequestToken(account, project, parentComponent) ?: return null
+
+    return GHAccountAuthData(account, login ?: GIT_AUTH_PASSWORD_SUBSTITUTE, token)
   }
 
-  private fun getToken(account: GithubAccount, parentComponent: Component?) =
-    authenticationManager.getTokenForAccount(account) ?: authenticationManager.requestNewToken(account, project, parentComponent)
+  private fun requestNewAccount(parentComponent: Component?): GithubAccount? =
+    if (login != null) authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
+    else authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
+
+  companion object {
+    fun getOrRequestToken(account: GithubAccount, project: Project, parentComponent: Component?): String? =
+      authenticationManager.getTokenForAccount(account) ?: authenticationManager.requestNewToken(account, project, parentComponent)
+  }
 }

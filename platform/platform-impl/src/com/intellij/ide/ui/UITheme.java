@@ -150,7 +150,7 @@ public final class UITheme {
 
         @Nullable
         @Override
-        public ClassLoader getContextClassLoader(@NotNull String path, ClassLoader originalClassLoader) {
+        public ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
           return theme.providerClassLoader;
         }
       };

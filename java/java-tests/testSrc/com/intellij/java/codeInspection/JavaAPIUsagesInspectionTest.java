@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -104,7 +103,6 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   private void doCollectSinceApiUsages() {
-    VfsRootAccess.allowRootAccess("/");
     final Set<String> previews = new HashSet<>();
     final ContentIterator previewContentIterator = new ContentIterator() {
       @Override

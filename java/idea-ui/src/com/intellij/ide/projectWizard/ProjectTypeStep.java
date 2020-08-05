@@ -51,7 +51,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -81,7 +80,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
   private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
-  private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<>();
+  private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -399,7 +398,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     myHeaderPanel.setVisible(myHeaderPanel.getComponentCount() > 0);
     // align header labels
-    List<JLabel> labels = UIUtil.findComponentsOfType(myHeaderPanel, JLabel.class);
+    List<JLabel> labels = ContainerUtil.filter(UIUtil.findComponentsOfType(myHeaderPanel, JLabel.class), label ->
+      label.isVisible() && label.getLabelFor() != null
+    );
     int width = 0;
     for (JLabel label : labels) {
       int width1 = label.getPreferredSize().width;

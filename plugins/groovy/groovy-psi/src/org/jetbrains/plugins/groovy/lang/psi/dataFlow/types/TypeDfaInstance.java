@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -23,7 +24,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -31,20 +35,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final Instruction[] myFlow;
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
-  private final InitialTypeProvider myInitialTypeProvider;
   private final PsiManager myManager;
   private final int lastInterestingInstructionIndex;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
-                  @NotNull PsiManager manager,
-                  @NotNull InitialTypeProvider initialTypeProvider) {
+                  @NotNull PsiManager manager) {
     myFlow = flow;
     myManager = manager;
     myFlowInfo = flowInfo;
     myCache = cache;
-    myInitialTypeProvider = initialTypeProvider;
     lastInterestingInstructionIndex = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
   }
 
@@ -101,17 +102,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         }
       );
     }
-    else {
-      DFAType type = state.getVariableType(descriptor);
-      if (type == null &&
-          myFlowInfo.getInterestingInstructions().contains(instruction) &&
-          myFlowInfo.getInterestingDescriptors().contains(descriptor)) {
-        PsiType initialType = myInitialTypeProvider.initialType(descriptor);
-        if (initialType != null) {
-          updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
-        }
-      }
-    }
   }
 
   private void handleArguments(TypeDfaState state, ArgumentsInstruction instruction) {
@@ -150,10 +140,13 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private void updateVariableType(@NotNull TypeDfaState state,
                                   @NotNull Instruction instruction,
                                   @NotNull VariableDescriptor descriptor,
-                                  @NotNull Computable<? extends DFAType> computation) {
+                                  @NotNull Computable<DFAType> computation) {
     if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
       state.removeBinding(descriptor);
       return;
+    }
+    else {
+      state.restoreBinding(descriptor);
     }
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
@@ -162,7 +155,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.compute();
       }
       else {
-        type = TypeInferenceHelper.doInference(state.getBindings(), computation);
+        type = TypeInferenceHelper.doInference(state.getBindings(), true, computation);
       }
     }
 
@@ -183,12 +176,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
       return;
     }
-    if (instruction.num() > lastInterestingInstructionIndex) {
-      return;
-    }
-    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      return;
-    }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
     if (PsiUtil.isCompileStatic(block)) {
       return;
@@ -197,9 +184,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (blockFlowOwner == null) {
       return;
     }
+    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
+      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::removeBinding);
+      return;
+    }
+    if (instruction.num() > lastInterestingInstructionIndex) {
+      return;
+    }
+    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::restoreBinding);
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    Map<VariableDescriptor, DFAType> initialTypes = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
-    initialTypes.putAll(state.getVarTypes());
+    Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
     switch (kind) {
       case IN_PLACE_ONCE:
         handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
@@ -207,10 +201,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case IN_PLACE_UNKNOWN:
         handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
-          if (existingType == null) {
-            PsiType initialType = myInitialTypeProvider.initialType(descriptor);
-            if (initialType != null) existingType = DFAType.create(initialType);
-          }
           if (existingType != null) {
             DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
             state.putType(descriptor, mergedType);
@@ -243,7 +233,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     runWithCycleCheck(instruction, () -> {
       for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
         PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
-        typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
+        if (descriptorType != null) {
+          typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
+        }
       }
       return null;
     });
@@ -254,8 +246,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       action.get();
     }
     else {
-      // todo: IDEA-242437
-      TypeInferenceHelper.doInference(Collections.emptyMap(), action);
+      TypeInferenceHelper.doInference(Collections.emptyMap(), false, action);
     }
   }
 }

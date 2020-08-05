@@ -86,9 +86,9 @@ public final class ClassLoadingUtils {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
           // need to define
           ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          try (InputStream stream = cls.getResourceAsStream("/" + name.replaceAll("[.]", "/") + ".class")) {
+          try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
             if (stream == null) return null;
-            defineClass(name, StreamUtil.loadFromStream(stream), evaluationContext, process, classLoader);
+            defineClass(name, StreamUtil.readBytes(stream), evaluationContext, process, classLoader);
             ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
             return (ClassType)process.findClass(evaluationContext, name, classLoader);
           }
@@ -121,8 +121,16 @@ public final class ClassLoadingUtils {
       }
       catch (VMMismatchException e) {
         LOG.error("Class vm: " + arrayClass.virtualMachine() +
+                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
                   "\nReference vm: " + reference.virtualMachine() +
-                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct().joining(", ")
+                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
+                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
+                    .map(vm -> {
+                      return vm +
+                             " loaded by " + vm.getClass().getClassLoader() +
+                             " same as ref vm = " + (vm == reference.virtualMachine());
+                    })
+                    .joining(", ")
           , e);
       }
     }

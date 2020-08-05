@@ -4,7 +4,7 @@ package com.intellij.rt.debugger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class DefaultMethodInvoker {
+public final class DefaultMethodInvoker {
 
   // only methods without arguments for now
   public static Object invoke(Object obj, String name)

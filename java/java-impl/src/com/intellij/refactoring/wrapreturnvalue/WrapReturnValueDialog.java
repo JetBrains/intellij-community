@@ -96,29 +96,30 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
-      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("'" + innerClassName + "' is invalid inner class name");
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException(
+        RefactorJBundle.message("dialog.message.invalid.inner.class.name", innerClassName));
       final PsiClass containingClass = sourceMethod.getContainingClass();
       if (containingClass != null && containingClass.findInnerClassByName(innerClassName, false) != null) {
-        throw new ConfigurationException("Inner class with name '" + innerClassName + "' already exist");
+        throw new ConfigurationException(RefactorJBundle.message("dialog.message.inner.class.with.name.already.exist", innerClassName));
       }
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
-        throw new ConfigurationException("'" + className + "' is invalid qualified wrapper class name");
+        throw new ConfigurationException(RefactorJBundle.message("dialog.message.invalid.qualified.wrapper.class.name", className));
       }
       final Object item = myFieldsCombo.getSelectedItem();
       if (item == null) {
-        throw new ConfigurationException("Wrapper field not found");
+        throw new ConfigurationException(RefactorJBundle.message("dialog.message.wrapper.field.not.found"));
       }
     } else {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-        throw new ConfigurationException("'" + className + "' is invalid wrapper class name");
+        throw new ConfigurationException(RefactorJBundle.message("dialog.message.invalid.wrapper.class.name", className));
       }
       final String packageName = getPackageName();
 
       if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
-        throw new ConfigurationException("'" + packageName + "' is invalid wrapper class package name");
+        throw new ConfigurationException(RefactorJBundle.message("dialog.message.invalid.wrapper.class.package.name", packageName));
       }
     }
   }

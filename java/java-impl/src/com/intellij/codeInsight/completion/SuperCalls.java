@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-class SuperCalls {
+final class SuperCalls {
   static Set<LookupElement> suggestQualifyingSuperCalls(PsiElement element,
                                                         PsiJavaReference javaReference,
                                                         ElementFilter elementFilter,

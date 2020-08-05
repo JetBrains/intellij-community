@@ -3,6 +3,8 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -13,7 +15,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   interface RedundantCollectionOperationHandler {
-    default String getProblemName() {
+    default @InspectionMessage String getProblemName() {
       return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", getReplacement());
     }
 
@@ -111,7 +112,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
 
     @NotNull
-    default String getFixName() {
+    default @IntentionName String getFixName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
   }
@@ -461,13 +462,13 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class RedundantAsListForIterationHandler implements RedundantCollectionOperationHandler {
     @Override
     public String getProblemName() {
-      return "Unnecessary 'Arrays.asList' call";
+      return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.problem");
     }
 
     @NotNull
     @Override
     public String getFixName() {
-      return "Unwrap";
+      return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.fix.name");
     }
 
     @Override
@@ -616,14 +617,12 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       myHandler = handler;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myHandler.getFixName();
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {

@@ -64,7 +64,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   private final PsiTreeUpdater myUpdater;
 
   @NotNull
-  private volatile Map<ASTNode, StubElement> myNodeToStubs = new BidirectionalMap<>();
+  private volatile Map<ASTNode, StubElement<?>> myNodeToStubs = new BidirectionalMap<>();
   private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
 
@@ -135,11 +135,11 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     if (stub instanceof PsiFileStub) {
       PsiFileWithStubSupport file = (PsiFileWithStubSupport)rootElement;
-      final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
-      StructureTreeModel treeModel = new StructureTreeModel<>(new StubTreeStructure(rootNode), myTreeModelDisposable);
+      final StubTreeNode rootNode = new StubTreeNode((StubElement<?>)stub, null);
+      StructureTreeModel<?> treeModel = new StructureTreeModel<>(new StubTreeStructure(rootNode), myTreeModelDisposable);
       myTreeModel = new AsyncTreeModel(treeModel, myTreeModelDisposable);
       myStubTree.setModel(myTreeModel);
-      fillPsiToStubCache(file, (PsiFileStub)stub);
+      fillPsiToStubCache(file, (PsiFileStub<?>)stub);
       myStubTree.setRootVisible(true);
       myStubTree.expandRow(0);
 
@@ -174,7 +174,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       LightVirtualFile file = new LightVirtualFile("stub", rootElement.getLanguage(), textToParse);
       final FileContentImpl fc;
       try {
-        fc = (FileContentImpl)FileContentImpl.createByFile(file, project);
+        fc = FileContentImpl.createByFile(file, project);
         fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
         stub = StubTreeBuilder.buildStubTree(fc);
       }
@@ -187,7 +187,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Nullable
   private static StubBuilder getStubBuilder(@NotNull PsiFileImpl rootElement) {
-    IStubFileElementType builder = rootElement.getElementTypeForStubBuilder();
+    IStubFileElementType<?> builder = rootElement.getElementTypeForStubBuilder();
     return builder == null ? null : builder.getBuilder();
   }
 
@@ -200,7 +200,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     final DefaultMutableTreeNode rootNode = getRoot();
     if (rootNode == null) return;
 
-    StubElement stubElement = myNodeToStubs.get(element.getNode());
+    StubElement<?> stubElement = myNodeToStubs.get(element.getNode());
     if (stubElement != null) {
       selectStubElement(stubElement);
     }
@@ -261,7 +261,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     return result.get();
   }
 
-  private void fillPsiToStubCache(@NotNull PsiFileWithStubSupport rootElement, @NotNull PsiFileStub rootStub) {
+  private void fillPsiToStubCache(@NotNull PsiFileWithStubSupport rootElement, @NotNull PsiFileStub<?> rootStub) {
     fillTreeForStub(rootElement, new StubTree(rootStub));
   }
 
@@ -285,11 +285,11 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void findTreeForStub(StubBuilder builder, ASTNode tree, final Iterator<StubElement<?>> stubs) {
     final IElementType type = tree.getElementType();
 
-    if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
+    if (type instanceof IStubElementType && ((IStubElementType<?, ?>)type).shouldCreateStub(tree)) {
       if (!stubs.hasNext()) {
         LOG.error("Stub mismatch, " + type);
       }
-      final StubElement curStub = stubs.next();
+      final StubElement<?> curStub = stubs.next();
       myNodeToStubs.put(tree, curStub);
     }
 

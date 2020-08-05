@@ -8,6 +8,7 @@ import com.intellij.openapi.util.BuildRange
 import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.NonNls
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -27,8 +28,8 @@ class Product internal constructor(node: Element) {
 
 class UpdateChannel internal constructor(node: Element) {
   companion object {
-    const val LICENSING_EAP: String = "eap"
-    const val LICENSING_RELEASE: String = "release"
+    @NonNls const val LICENSING_EAP: String = "eap"
+    @NonNls const val LICENSING_RELEASE: String = "release"
   }
 
   val id: String = node.getMandatoryAttributeValue("id")

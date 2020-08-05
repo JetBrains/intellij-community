@@ -374,9 +374,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
     NodeDescriptor<?> descriptor = node.getDescriptor();
-    if (descriptor == null) {
-      return null;
-    }
+    if (descriptor == null) return null;
 
     Object parent = descriptor.getElement();
     if (!isValid(structure, parent)) return null;
@@ -405,10 +403,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
+      ProgressManager.checkCanceled();
       Object element = child.getElement();
       if (element != null) map.put(element, child);
     });
     for (int i = 0; i < list.size(); i++) {
+      ProgressManager.checkCanceled();
       Node newNode = list.get(i);
       Node oldNode = map.get(newNode.getElement());
       if (oldNode != null && oldNode.canReuse(newNode, null)) {

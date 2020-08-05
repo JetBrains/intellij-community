@@ -55,7 +55,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -564,7 +563,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
-      final Set<RangeHighlighter> highlighters = new THashSet<>();
+      final Set<RangeHighlighter> highlighters = new HashSet<>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
       if (highlighters.isEmpty()) return false;
@@ -1373,7 +1372,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         if (text == null) continue;
 
         if (tooltips == null) {
-          tooltips = new THashSet<>();
+          tooltips = new HashSet<>();
         }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
@@ -1584,6 +1583,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       mouseListener = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent me) {
+          if (SwingUtilities.isLeftMouseButton(me)) showInspectionsHint(me);
+        }
+
+        private void showInspectionsHint(MouseEvent me) {
           DataContext context = getDataContext();
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
           if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
@@ -1606,14 +1609,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           }
         }
 
+        private void showContextMenu(MouseEvent me) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          /*
+          TODO: show context menu by right click
+          group.addAll(analyzerStatus.getController().getActions());
+          group.add(new CompactViewAction());
+          */
+          if (0 < group.getChildrenCount()) {
+            ActionManager.getInstance()
+              .createActionPopupMenu(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
+              .getComponent()
+              .show(me.getComponent(), me.getX(), me.getY());
+          }
+        }
+
         @Override
         public void mousePressed(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = true;
           repaint();
         }
 
         @Override
         public void mouseReleased(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = false;
           repaint();
         }

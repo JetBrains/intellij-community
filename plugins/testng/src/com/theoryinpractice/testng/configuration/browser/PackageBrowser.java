@@ -19,6 +19,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.openapi.project.Project;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.PackageChooserDialog;
+import com.theoryinpractice.testng.TestngBundle;
 
 /**
  * @author Hani Suleiman
@@ -31,7 +32,7 @@ public class PackageBrowser extends BrowseModuleValueActionListener
 
     @Override
     protected String showDialog() {
-        PackageChooserDialog chooser = new PackageChooserDialog("Choose Package", getProject());
+        PackageChooserDialog chooser = new PackageChooserDialog(TestngBundle.message("package.browser.dialog.title.choose.package"), getProject());
         chooser.show();
         PsiPackage psiPackage = chooser.getSelectedPackage();
         String packageName = psiPackage == null ? null : psiPackage.getQualifiedName();

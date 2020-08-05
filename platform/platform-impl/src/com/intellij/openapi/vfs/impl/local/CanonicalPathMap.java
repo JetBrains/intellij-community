@@ -99,7 +99,8 @@ final class CanonicalPathMap {
 
   void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (Pair<String, String> pair : mapping) {
-      String from = pair.first, to = pair.second;
+      String from = pair.first;
+      String to = pair.second;
 
       // See if we are adding a mapping that itself should be mapped to a different path
       // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
@@ -155,7 +156,7 @@ final class CanonicalPathMap {
     return changedPaths;
   }
 
-  private Collection<String> applyMapping(String reportedPath) {
+  private @NotNull Collection<String> applyMapping(@NotNull String reportedPath) {
     if (myPathMappings.isEmpty()) {
       return Collections.singletonList(reportedPath);
     }
@@ -170,7 +171,7 @@ final class CanonicalPathMap {
     return results;
   }
 
-  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<String> result) {
+  private static void addPrefixedPaths(@NotNull NavigableSet<String> paths, @NotNull String prefix, @NotNull Collection<? super String> result) {
     String possibleRoot = paths.ceiling(prefix);
     if (possibleRoot != null && FileUtil.startsWith(possibleRoot, prefix)) {
       // It's worth going for the set and iterator

@@ -26,11 +26,11 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
   return emptyList()
 }
 
-private val declarationProviderEP = ExtensionPointName.create<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
+private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
-  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.extensions) {
+  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
     ProgressManager.checkCanceled()
     extension.getDeclarations(element, offsetInElement).filterTo(result) {
       element === it.declaringElement && offsetInElement in it.declarationRange

@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -175,11 +176,11 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       setImlFileLocation(namePathComponent.getPath());
     }
     else {
-      final Project project = myWizardContext.getProject();
+      Project project = myWizardContext.getProject();
       assert project != null;
-      VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) { //e.g. was deleted
-        final String baseDirPath = baseDir.getPath();
+      String baseDirPath = project.getBasePath();
+      //e.g. was deleted
+      if (baseDirPath != null) {
         String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, myWizardContext.getDefaultModuleName(), "");
         String contentRoot = baseDirPath + "/" + moduleName;
         if (!Comparing.strEqual(project.getName(), myWizardContext.getProjectName()) &&
@@ -217,8 +218,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   }
 
   private boolean validateModulePaths() throws ConfigurationException {
-    final String moduleName = getModuleName();
-    final String moduleFileDirectory = myModuleFileLocation.getText();
+    String moduleName = getModuleName();
+    String moduleFileDirectory = myModuleFileLocation.getText();
     if (moduleFileDirectory.isEmpty()) {
       throw new ConfigurationException("Enter module file location");
     }
@@ -237,9 +238,9 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
 
     File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     if (moduleFile.exists()) {
-      int answer = Messages.showYesNoDialog(JavaUiBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
-                                                              IdeBundle.message("project.new.wizard.module.identification")),
-                                            IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      int answer = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
+                                              JavaUiBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
+                                                                   IdeBundle.message("project.new.wizard.module.identification"))).show();
       if (answer != Messages.YES) {
         return false;
       }

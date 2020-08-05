@@ -38,7 +38,7 @@ import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSe
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
-  public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
+  public void compile(PsiElement @NotNull [] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     new XmlCompilingVisitor(globalVisitor).compile(elements);
   }
 
@@ -55,7 +55,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public String getTypedVarString(PsiElement element) {
+  public String getTypedVarString(@NotNull PsiElement element) {
     return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
@@ -102,7 +102,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public PsiElement extendMatchedByDownUp(PsiElement node) {
+  public @NotNull PsiElement extendMatchedByDownUp(@NotNull PsiElement node) {
     if (XmlUtil.isXmlToken(node, XmlTokenType.XML_DATA_CHARACTERS)) {
       final PsiElement parent = node.getParent();
       if (parent.getTextRange().equals(node.getTextRange())) {
@@ -130,7 +130,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void checkSearchPattern(CompiledPattern pattern) {
+  public void checkSearchPattern(@NotNull CompiledPattern pattern) {
     final ValidatingVisitor visitor = new ValidatingVisitor();
     final NodeIterator nodes = pattern.getNodes();
     while (nodes.hasNext()) {
@@ -159,7 +159,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void checkReplacementPattern(Project project, ReplaceOptions options) {
+  public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
   }
 
   @Override
@@ -178,7 +178,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     @Override
-    public void replace(ReplacementInfo info, ReplaceOptions options) {
+    public void replace(@NotNull ReplacementInfo info, @NotNull ReplaceOptions options) {
       final PsiElement elementToReplace = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
       assert elementToReplace != null;
       final String replacementToMake = info.getReplacement();
@@ -240,7 +240,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public Configuration[] getPredefinedTemplates() {
+  public Configuration @NotNull [] getPredefinedTemplates() {
     return XmlPredefinedConfigurations.createPredefinedTemplates();
   }
 

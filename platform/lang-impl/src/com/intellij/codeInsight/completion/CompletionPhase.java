@@ -22,6 +22,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
@@ -104,7 +105,7 @@ public abstract class CompletionPhase implements Disposable {
                                                @Nullable Condition<? super PsiFile> condition,
                                                @NotNull Project project,
                                                @Nullable CompletionProgressIndicator prevIndicator) {
-      Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(_editor);
+      Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
       CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor);
@@ -146,11 +147,13 @@ public abstract class CompletionPhase implements Disposable {
         .submit(ourExecutor);
     }
 
-    private static void loadContributorsOutsideEdt(Editor editor, PsiFile file) {
+    @ApiStatus.Internal
+    public static void loadContributorsOutsideEdt(Editor editor, PsiFile file) {
       CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset()));
     }
 
-    private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+    @ApiStatus.Internal
+    public static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
       int offset = editor.getCaretModel().getOffset();
       int psiOffset = Math.max(0, offset - 1);
 

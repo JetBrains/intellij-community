@@ -33,7 +33,6 @@ import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 
 public class InlineStaticImportHandler extends JavaInlineActionHandler {
 
-  private static final String REFACTORING_NAME = "Expand static import";
   public static final String REFACTORING_ID = "refactoring.inline.import";
 
   @Override
@@ -53,13 +52,13 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
 
 
-    WriteCommandAction.writeCommandAction(project).withName(REFACTORING_NAME).run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
+    WriteCommandAction.writeCommandAction(project).withName("Expand static import").run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME;
+    return "Expand static import";
   }
 }

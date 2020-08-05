@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,6 +136,35 @@ public abstract class PsiNameHelper {
     return buffer.toString();
   }
 
+  /**
+   * @param referenceText text of the inner class reference (without annotations), e.g. {@code A.B<C>.D<E, F.G>}
+   * @return outer class reference (e.g. {@code A.B<C>}); empty string if the original reference is unqualified  
+   */
+  @Contract(pure = true)
+  public static @NotNull String getOuterClassReference(String referenceText) {
+    int stack = 0;
+    for (int i = referenceText.length() - 1; i >= 0; i--) {
+      char c = referenceText.charAt(i);
+      switch (c) {
+        case '<':
+          stack--;
+          break;
+        case '>':
+          stack++;
+          break;
+        case '.':
+          if (stack == 0) return referenceText.substring(0, i);
+      }
+    }
+
+    return "";
+  }
+
+  /**
+   * @param referenceText text of the class reference (without annotations), e.g. {@code A.B<C>.D<E, F.G>}
+   * @return qualified class name (e.g. {@code A.B.D}).  
+   */
+  @Contract(pure = true)
   public static @NotNull String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {
       referenceText = removeWhitespace(referenceText);

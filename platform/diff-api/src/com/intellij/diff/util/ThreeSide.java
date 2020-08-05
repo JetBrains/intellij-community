@@ -53,6 +53,13 @@ public enum ThreeSide {
     throw new IllegalStateException();
   }
 
+  public int select(int left, int base, int right) {
+    if (myIndex == 0) return left;
+    if (myIndex == 1) return base;
+    if (myIndex == 2) return right;
+    throw new IllegalStateException();
+  }
+
   public int select(int @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];

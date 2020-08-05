@@ -12,19 +12,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.configLocation
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 
 internal class ModifiableModuleModelBridge(
   private val project: Project,
@@ -47,8 +54,7 @@ internal class ModifiableModuleModelBridge(
     return modules.toTypedArray()
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String): Module =
-    newModule(filePath, moduleTypeId, null)
+  override fun newModule(filePath: String, moduleTypeId: String): Module = newModule(filePath, moduleTypeId, null)
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
     val moduleEntity = diff.addModuleEntity(
@@ -92,10 +98,13 @@ internal class ModifiableModuleModelBridge(
       source = entitySource
     )
 
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = true)
-    diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
-    myModulesToAdd[moduleName] = moduleInstance
+    return createModuleInstance(moduleEntity, true)
+  }
 
+  private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = isNew)
+    diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
+    myModulesToAdd[moduleEntity.name] = moduleInstance
     return moduleInstance
   }
 
@@ -125,9 +134,28 @@ internal class ModifiableModuleModelBridge(
     }
   }
 
-  // TODO Actually load module content
-  override fun loadModule(filePath: String): Module =
-    newModule(filePath, "")
+  override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
+
+  override fun loadModule(filePath: String): Module {
+    val moduleName = getModuleNameByFilePath(filePath)
+    if (findModuleByName(moduleName) != null) {
+      error("Module name '$moduleName' already exists. Trying to load module: $filePath")
+    }
+
+    removeUnloadedModule(moduleName)
+
+    val builder = WorkspaceEntityStorageBuilder.create()
+    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, virtualFileManager)
+    diff.addDiff(builder)
+    val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
+    if (moduleEntity == null) {
+      throw IOException("Failed to load module from $filePath")
+    }
+
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+      ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity))
+    return createModuleInstance(moduleEntity, false)
+  }
 
   override fun disposeModule(module: Module) {
     if (Disposer.isDisposing(module.project)) {
@@ -149,6 +177,16 @@ internal class ModifiableModuleModelBridge(
     myNewNameToModule.inverse().remove(module)
 
     myModulesToDispose[module.name] = module
+    val moduleEntity = diff.findModuleEntity(module) ?: error("Could not find module entity to remove by $module")
+    moduleEntity.dependencies
+      .asSequence()
+      .filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+      .filter { (it.library.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId == module.moduleEntityId }
+      .mapNotNull { it.library.resolve(diff) }
+      .forEach {
+        diff.removeEntity(it)
+      }
+    diff.removeEntity(moduleEntity)
   }
 
   override fun findModuleByName(name: String): Module? {
@@ -196,14 +234,6 @@ internal class ModifiableModuleModelBridge(
 
   fun collectChanges(): WorkspaceEntityStorageBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val storage = entityStorageOnDiff.current
-
-    for (moduleToDispose in myModulesToDispose.values) {
-      val moduleEntity = storage.findModuleEntity(moduleToDispose)
-                         ?: error("Could not find module to remove by $moduleToDispose")
-      diff.removeEntity(moduleEntity)
-    }
 
     for (module in myUncommittedModulesToDispose) {
       Disposer.dispose(module)

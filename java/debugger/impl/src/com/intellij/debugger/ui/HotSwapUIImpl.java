@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
@@ -22,16 +22,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -40,7 +39,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class HotSwapUIImpl extends HotSwapUI {
+public final class HotSwapUIImpl extends HotSwapUI {
   /**
    * There are cases when the hotswap of the changed classes is not needed.
    * E.g. for a tomcat application redeploy there's no need to even try reloading classes and it's only can cause hotswap failure UX issue.
@@ -320,13 +319,12 @@ public class HotSwapUIImpl extends HotSwapUI {
   }
 
   private static final class MyCompilationStatusListener implements ProjectTaskListener {
-
-    private final THashSet<File> myOutputRoots;
+    private final Set<File> myOutputRoots;
     private final Project myProject;
 
     private MyCompilationStatusListener(Project project) {
       myProject = project;
-      myOutputRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      myOutputRoots = FileCollectionFactory.createCanonicalFileSet();
       for (final String path : CompilerPaths.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
         myOutputRoots.add(new File(path));
       }

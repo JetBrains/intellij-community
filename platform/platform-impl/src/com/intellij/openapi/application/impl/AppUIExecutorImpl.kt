@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -214,6 +215,12 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
 }
 
 internal class InSmartMode(private val project: Project) : ContextConstraint {
+  init {
+    check(!LightEdit.owns(project)) {
+      "InSmartMode can't be used in LightEdit mode, check that LightEdit.owns(project)==false before calling"
+    }
+  }
+
   override fun isCorrectContext(): Boolean =
     !DumbService.getInstance(project).isDumb
 

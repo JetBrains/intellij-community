@@ -170,7 +170,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
 
   directorySerializerFactoriesByUrl.forEach { (url, directorySerializer) ->
     assertEquals(url, directorySerializer.directoryUrl)
-    val fileSerializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer)!!
+    val fileSerializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer) ?: emptyList()
     val directoryFileUrls = JpsPathUtil.urlToFile(url).listFiles { file: File -> file.isFile }?.map { JpsPathUtil.pathToUrl(it.systemIndependentPath) } ?: emptyList()
     assertEquals(directoryFileUrls.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
@@ -182,18 +182,18 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
-  fileSerializersByUrl.entrySet().forEach { (url, serializers) ->
+  fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }.forEach { (url, serializers) ->
     serializers.forEach {
       assertEquals(url, getNonNullActualFileUrl(it.internalEntitySource))
     }
   }
 
   moduleSerializers.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
+    assertTrue(it in fileSerializersByUrl.getValues(getNonNullActualFileUrl(it.internalEntitySource)))
   }
 
   serializerToDirectoryFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
+    assertTrue(it in fileSerializersByUrl.getValues(getNonNullActualFileUrl(it.internalEntitySource)))
   }
 
   fun <E : WorkspaceEntity> isSerializerWithoutEntities(serializer: JpsFileEntitiesSerializer<E>) =
@@ -201,7 +201,8 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
 
   val allSources = storage.entitiesBySource { true }
   val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
-  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.entrySet().filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
+  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
+    .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()

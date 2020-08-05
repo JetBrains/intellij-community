@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import org.jetbrains.annotations.NotNull;
 
-public final class WindowDressing implements ProjectManagerListener {
+public final class WindowDressing implements ProjectManagerListener, LightEditServiceListener {
   @Override
   public void projectOpened(@NotNull Project project) {
     getWindowActionGroup().addProject(project);
@@ -21,4 +23,15 @@ public final class WindowDressing implements ProjectManagerListener {
   public static ProjectWindowActionGroup getWindowActionGroup() {
     return (ProjectWindowActionGroup)ActionManager.getInstance().getAction("OpenProjectWindows");
   }
+
+  @Override
+  public void lightEditWindowOpened() {
+    getWindowActionGroup().addProject(LightEditService.getInstance().getProject());
+  }
+
+  @Override
+  public void lightEditWindowClosed() {
+    getWindowActionGroup().removeProject(LightEditService.getInstance().getProject());
+  }
+
 }

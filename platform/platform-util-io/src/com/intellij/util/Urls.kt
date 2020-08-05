@@ -156,7 +156,7 @@ object Urls {
     urls.any { equals(url, it, caseSensitive, true) }
 
   fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean = when {
-    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !SystemInfo.isFileSystemCaseSensitive)
+    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !file.isCaseSensitive)
     url.isInLocalFileSystem -> false
     else -> parseUrl(file.url)?.equalsIgnoreParameters(url) ?: false
   }

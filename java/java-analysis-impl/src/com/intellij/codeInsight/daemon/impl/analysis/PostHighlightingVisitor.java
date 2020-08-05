@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
@@ -346,7 +348,7 @@ class PostHighlightingVisitor {
     return StringUtil.capitalize(message);
   }
 
-  private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {
+  private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull @NlsContexts.DetailedDescription String message) {
     HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
       QuickFixAction
@@ -422,8 +424,14 @@ class PostHighlightingVisitor {
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
       HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       if (declarationMethod != null) {
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAssignFieldFromParameterFix());
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateFieldFromParameterFix());
+        IntentionAction assignFix = QuickFixFactory.getInstance().createAssignFieldFromParameterFix();
+        IntentionAction createFieldFix = QuickFixFactory.getInstance().createCreateFieldFromParameterFix();
+        if (!declarationMethod.isConstructor()) {
+          assignFix = PriorityIntentionActionWrapper.lowPriority(assignFix);
+          createFieldFix = PriorityIntentionActionWrapper.lowPriority(createFieldFix);
+        }
+        QuickFixAction.registerQuickFixAction(info, assignFix);
+        QuickFixAction.registerQuickFixAction(info, createFieldFix);
       }
       return info;
     }

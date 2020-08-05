@@ -3,17 +3,17 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 class TemplateSegments {
   private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
-  private final Editor myEditor;
+  private final @NotNull Document myDocument;
 
-  TemplateSegments(Editor editor) {
-    myEditor = editor;
+  TemplateSegments(@NotNull Document document) {
+    myDocument = document;
   }
 
   int getSegmentStart(int i) {
@@ -38,7 +38,7 @@ class TemplateSegments {
   }
 
   void addSegment(int start, int end) {
-    RangeMarker rangeMarker = myEditor.getDocument().createRangeMarker(start, end);
+    RangeMarker rangeMarker = myDocument.createRangeMarker(start, end);
     mySegments.add(rangeMarker);
   }
 
@@ -68,8 +68,7 @@ class TemplateSegments {
     boolean greedyToRight = rangeMarker.isGreedyToRight();
     rangeMarker.dispose();
     
-    Document doc = myEditor.getDocument();
-    rangeMarker = doc.createRangeMarker(start, end);
+    rangeMarker = myDocument.createRangeMarker(start, end);
     rangeMarker.setGreedyToLeft(greedyToLeft || !preserveGreediness);
     rangeMarker.setGreedyToRight(greedyToRight || !preserveGreediness);
     mySegments.set(index, rangeMarker);

@@ -80,10 +80,8 @@
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"
-              icon="AllIcons.Welcome.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"
-              icon="AllIcons.Actions.Menu_open"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"/>
+      <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>

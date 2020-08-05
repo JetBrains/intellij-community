@@ -13,10 +13,8 @@ import java.io.Serializable
 /**
  * A prototype of implementation of the current (legacy) project model via [WorkspaceEntity]. It uses similar concepts to simplify implementation
  * of the bridge to the current model. Some peculiarities are fixed though:
- * * source roots are moved out from content entries, content roots are stored separately in a module;
- * * module libraries are stored in a real library table, unnamed libraries aren't allowed;
+ * * unnamed libraries aren't allowed: module-level libraries without a name get automatically generated names;
  * * 'jar directory' flag is stored in a library root itself;
- * * SDKs are represented as [LibraryEntity] with additional properties specified in [SdkEntity] attached to it.
  */
 
 @Suppress("unused")
@@ -81,7 +79,8 @@ class ModuleEntity(
 
   override fun persistentId(): ModuleId = ModuleId(name)
 
-  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
+  val sourceRoots: Sequence<SourceRootEntity>
+    get() = contentRoots.flatMap { it.sourceRoots }
 
   val contentRoots: Sequence<ContentRootEntity> by contentRootDelegate
 
@@ -92,7 +91,6 @@ class ModuleEntity(
   val javaSettings: JavaModuleSettingsEntity? by javaSettingsDelegate
 
   companion object {
-    val sourceRootDelegate = OneToMany<ModuleEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
     val contentRootDelegate = OneToMany<ModuleEntity, ContentRootEntity>(ContentRootEntity::class.java, false)
     val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java, false)
     val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java, false)
@@ -225,10 +223,10 @@ open class SourceRootEntity(
   val tests: Boolean,
   val rootType: String
 ) : WorkspaceEntityBase() {
-  val module: ModuleEntity by moduleDelegate
+  val contentRoot: ContentRootEntity by contentRootDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, SourceRootEntity>(ModuleEntity::class.java)
+    val contentRootDelegate = ManyToOne.NotNull<ContentRootEntity, SourceRootEntity>(ContentRootEntity::class.java)
   }
 }
 
@@ -316,17 +314,12 @@ open class ContentRootEntity(
   val excludedPatterns: List<String>
 ) : WorkspaceEntityBase() {
   open val module: ModuleEntity by moduleDelegate
+  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ContentRootEntity>(ModuleEntity::class.java)
+    val sourceRootDelegate = OneToMany<ContentRootEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
   }
-}
-
-class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : ContentRootEntity(url, emptyList(), emptyList()) {
-  override val module: ModuleEntity = moduleEntity
-  override var entitySource: EntitySource = moduleEntity.entitySource
-  override fun hasEqualProperties(e: WorkspaceEntity): Boolean = throw UnsupportedOperationException()
-  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = throw UnsupportedOperationException()
 }
 
 /**

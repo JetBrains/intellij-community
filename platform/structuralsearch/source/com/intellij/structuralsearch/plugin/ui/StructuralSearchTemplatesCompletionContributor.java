@@ -15,7 +15,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor {
   @Override
@@ -34,7 +34,7 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
     final CharSequence text = document.getCharsSequence();
     if (StringUtil.startsWithChar(shortPrefix, '$')) {
       shortPrefix = shortPrefix.substring(1);
-      final LinkedHashSet<String> variableNames = TemplateImplUtil.parseVariableNames(text);
+      Set<String> variableNames = TemplateImplUtil.parseVariableNames(text);
       for (String name : variableNames) {
         if (name.startsWith(shortPrefix) && !name.equals(shortPrefix)) {
           result.addElement(LookupElementBuilder.create('$' + name + '$')
@@ -75,7 +75,7 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
           .withPresentableText(configurationName);
         if (dialog != null)
           element = element.withInsertHandler((InsertionContext context, LookupElement item) -> context.setLaterRunnable(
-            () -> { dialog.loadConfiguration((Configuration)item.getObject()); }
+            () -> dialog.loadConfiguration((Configuration)item.getObject())
           ));
         insensitive.addElement(element);
       }

@@ -13,6 +13,7 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -21,12 +22,17 @@ class CmdLabel(cmd: String,
                private val componentSize: Dimension = JBDimension(100, 28)) : JPanel() {
 
   init {
-    layout = MigLayout(LC().insets("0"))
+    layout = MigLayout(LC().insets("0").noGrid())
 
-    val label = JLabel(cmd)
-    val gapY = (componentSize.height - label.preferredSize.height) / 2
-    add(label,
-        CC().gapY("${gapY}px", "0").gapBefore("${JBUI.scale(6)}px"))
+    addComponent(JLabel(cmd))
+  }
+
+  fun addComponent(component: JComponent) {
+    val gapY = (componentSize.height - component.preferredSize.height) / 2
+    add(component,
+        CC()
+          .y("${gapY}px")
+          .gapBefore("${JBUI.scale(6)}px"))
   }
 
   override fun getPreferredSize() = componentSize

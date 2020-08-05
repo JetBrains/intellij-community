@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 
 @NlsContext(prefix = "tooltip.title")
 @Nls(capitalization = Nls.Capitalization.Sentence)
-@Target(ElementType.TYPE_USE)
+@Target({ElementType.TYPE_USE, ElementType.PARAMETER})
 public @interface TooltipTitle {
 }

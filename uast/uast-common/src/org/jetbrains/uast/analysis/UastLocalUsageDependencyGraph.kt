@@ -342,6 +342,12 @@ private class VisitorWithVariablesTracking(
     return@checkedDepthCall true
   }
 
+  // Ignore class nodes
+  override fun visitClass(node: UClass): Boolean = true
+
+  // Ignore field nodes
+  override fun visitField(node: UField): Boolean = true
+
   private fun registerDependency(dependent: Dependent,
                                  dependency: Dependency) {
     for (el in dependency.elements) {
@@ -374,6 +380,10 @@ private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression
     is USwitchExpression -> body.expressions.filterIsInstance<USwitchClauseExpression>()
       .mapNotNull { it.lastExpression }
       .forEach { it.accumulateBranchesResult(results) }
+    is UTryExpression -> {
+      tryClause.lastExpression?.accumulateBranchesResult(results)
+      catchClauses.mapNotNull { it.body.lastExpression }.forEach { it.accumulateBranchesResult(results) }
+    }
     else -> results += this
   }
 }

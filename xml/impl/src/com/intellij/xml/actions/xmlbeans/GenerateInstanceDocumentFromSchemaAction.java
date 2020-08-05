@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -21,20 +21,20 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlBundle;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
+public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -97,7 +97,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
       pathToUse = tempDir.getPath() + File.separatorChar + Xsd2InstanceUtils.processAndSaveAllSchemas(
         (XmlFile) file,
-        new THashMap<>(),
+        new HashMap<>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
           @Override
           public void processSchema(String schemaFileName, byte[] schemaContent) {

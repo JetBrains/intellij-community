@@ -15,13 +15,14 @@
  */
 package com.intellij.packaging.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.SimpleTextAttributes;
 
 public abstract class TreeNodePresentation {
-  public abstract String getPresentableName();
+  public abstract @NlsSafe String getPresentableName();
 
   public String getSearchName() {
     return getPresentableName();

@@ -16,17 +16,15 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
 
 class SourceFolderManagerTest: HeavyPlatformTestCase() {
-
   fun `test source folder is added to content root when created`() {
     val rootManager = ModuleRootManager.getInstance(module)
-    val dir = createTempDir("contentEntry")
     val modifiableModel = rootManager.modifiableModel
-    modifiableModel.addContentEntry(VfsUtilCore.pathToUrl(dir.absolutePath))
+    modifiableModel.addContentEntry(tempDir.createVirtualDir())
     runWriteAction {
       modifiableModel.commit()
     }
 
-    val manager: SourceFolderManagerImpl = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
+    val manager = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
 
     val folderUrl = ModuleRootManager.getInstance(module).contentRootUrls[0] + "/newFolder"
     val folderFile = File(VfsUtilCore.urlToPath(folderUrl))

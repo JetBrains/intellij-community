@@ -22,6 +22,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -73,5 +74,20 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
   @Override
   public boolean isAccessedForReading() {
     return BitUtil.isSet(myRwLevel, 1);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ReadWriteAccessUsageInfo2UsageAdapter adapter = (ReadWriteAccessUsageInfo2UsageAdapter)o;
+    return initialRwLevel == adapter.initialRwLevel &&
+           myRwLevel == adapter.myRwLevel
+      && this.getUsageInfo().equals(((ReadWriteAccessUsageInfo2UsageAdapter)o).getUsageInfo());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(initialRwLevel, myRwLevel, getUsageInfo());
   }
 }

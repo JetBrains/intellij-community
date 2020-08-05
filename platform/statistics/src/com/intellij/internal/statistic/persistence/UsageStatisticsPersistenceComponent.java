@@ -13,11 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-  name = "UsagesStatistic",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-  reportStatistic = false
-)
+@State(name = "UsagesStatistic", storages = @Storage(StoragePathMacros.CACHE_FILE))
 @Service
 public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element>, StatisticsSystemEventIdProvider {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
@@ -142,7 +138,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
 
   @Nullable
   private static ConsentOptionsProvider getConsentOptionsProvider() {
-    return ServiceManager.getService(ConsentOptionsProvider.class);
+    return ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
   }
 
   @Override

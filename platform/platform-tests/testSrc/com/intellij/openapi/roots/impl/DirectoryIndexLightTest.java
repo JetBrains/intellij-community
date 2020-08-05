@@ -32,14 +32,27 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
       }
     });
 
-    List<LightVirtualFile> filesWithoutId = Arrays.asList(new MyVirtualFile1(), new MyVirtualFile2(), new MyVirtualFile3());
+    VirtualFile noId1 = new LightVirtualFile();
+    VirtualFile noId2 = new LightVirtualFile() {
+      @Override
+      public VirtualFile getParent() {
+        return noId1;
+      }
+    };
+    VirtualFile noId3 = new LightVirtualFile() {
+      @Override
+      public VirtualFile getParent() {
+        return noId2;
+      }
+    };
+    List<VirtualFile> filesWithoutId = Arrays.asList(noId1, noId2, noId3);
 
     ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
 
     PlatformTestUtil.startPerformanceTest("Directory index query", 2500, () -> {
       for (int i = 0; i < 100; i++) {
         assertFalse(index.isInContent(fsRoot));
-        for (LightVirtualFile file : filesWithoutId) {
+        for (VirtualFile file : filesWithoutId) {
           assertFalse(file instanceof VirtualFileWithId);
           assertFalse(index.isInContent(file));
           assertFalse(index.isInSource(file));
@@ -52,15 +65,6 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
         }
       }
     }).reattemptUntilJitSettlesDown().assertTiming();
-  }
-
-  private static class MyVirtualFile1 extends LightVirtualFile {
-  }
-
-  private static class MyVirtualFile2 extends LightVirtualFile {
-  }
-
-  private static class MyVirtualFile3 extends LightVirtualFile {
   }
 
 }

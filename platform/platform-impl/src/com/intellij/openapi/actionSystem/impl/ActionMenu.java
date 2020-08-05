@@ -194,14 +194,31 @@ public final class ActionMenu extends JBMenu {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
-      setIcon(icon);
-      if (presentation.getDisabledIcon() != null) {
-        setDisabledIcon(presentation.getDisabledIcon());
-      }
-      else {
-        setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+      if (isShowIcons()) {
+        setIcon(null);
+        setDisabledIcon(null);
+      } else {
+        setIcon(icon);
+        if (presentation.getDisabledIcon() != null) {
+          setDisabledIcon(presentation.getDisabledIcon());
+        }
+        else {
+          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+        }
       }
     }
+  }
+
+  static boolean isShowIcons() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
+  }
+
+  static boolean isAligned() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
+  }
+
+  static boolean isAlignedInGroup() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
   }
 
   @Override

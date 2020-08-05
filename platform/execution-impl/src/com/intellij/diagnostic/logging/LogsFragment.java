@@ -24,7 +24,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +32,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
-
-  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<>();
+public final class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
+  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
   private final TableView<LogFileOptions> myFilesTable;
   private final ListTableModel<LogFileOptions> myModel;
@@ -69,11 +67,12 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
     myFilesTable.setShowHorizontalLines(false);
     myFilesTable.setShowVerticalLines(false);
     myFilesTable.setIntercellSpacing(new Dimension(0, 0));
+    myFilesTable.setupEasyFocusTraversing();
 
     myComponent = ToolbarDecorator.createDecorator(myFilesTable)
       .setToolbarPosition(ActionToolbarPosition.BOTTOM)
       .setAddAction(button -> {
-        ArrayList<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
+        List<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
         LogFileOptions newOptions = new LogFileOptions("", "", true);
         if (showEditorDialog(newOptions)) {
           newList.add(newOptions);
@@ -127,7 +126,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
   @Override
   protected void resetEditorFrom(@NotNull T configuration) {
     super.resetEditorFrom(configuration);
-    ArrayList<LogFileOptions> list = new ArrayList<>();
+    List<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
       list.add(

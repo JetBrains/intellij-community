@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
@@ -33,6 +32,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.OverrideMethodsProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -147,12 +147,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, myRefactoringScope, false).forEach(method -> {
-      if (AnnotationUtil.isAnnotated(method, Override.class.getName(), 0)) {
-        usages.add(new UsageInfo(method));
-      }
-      return true;
-    });
+    if (myDeleteTheDeclaration) {
+      OverridingMethodsSearch.search(myMethod, myRefactoringScope, true)
+        .forEach(method -> {
+          if (shouldDeleteOverrideAttribute(method)) {
+            usages.add(new OverrideAttributeUsageInfo(method));
+          }
+          return true;
+        });
+    }
 
     if (mySearchInComments || mySearchForTextOccurrences) {
       final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
@@ -174,6 +177,22 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private boolean shouldDeleteOverrideAttribute(PsiMethod method) {
+    return method.getHierarchicalMethodSignature()
+      .getSuperSignatures().stream()
+      .allMatch(signature -> {
+        PsiMethod superMethod = signature.getMethod();
+        if (superMethod == myMethod) {
+          return true;
+        }
+        if (JavaLanguage.INSTANCE == method.getLanguage() &&
+            Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
+          return !PsiUtil.isLanguageLevel6OrHigher(method);
+        }
+        return false;
+      });
   }
 
   @Override
@@ -321,7 +340,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(container, StringUtil.capitalize(message));
       }
     });
   }
@@ -455,6 +474,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final List<PsiElement> imports2Delete = new ArrayList<>();
           for (final UsageInfo usage : usages) {
             final PsiElement element = usage.getElement();
+            if (element == null) continue;
+            if (usage instanceof OverrideAttributeUsageInfo) {
+              for (OverrideMethodsProcessor processor : OverrideMethodsProcessor.EP_NAME.getExtensionList()) {
+                if (processor.removeOverrideAttribute(element)) {
+                  break;
+                }
+              }
+              continue;
+            }
+            
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
             }
@@ -464,12 +493,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                 //no overloads available: ensure broken import are deleted and
                 //unused overloaded imports are deleted by optimize imports helper
                 imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
-              }
-            }
-            else if (element instanceof PsiMethod) {
-              PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiMethod) element, false, Override.class.getName());
-              if (annotation != null) {
-                annotation.delete();
               }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
@@ -492,7 +515,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
+        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) {
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(myMethod.getBody());
+          tracker.markUnchanged(myMethod.getDocComment());
+          tracker.deleteAndRestoreComments(myMethod);
+        }
       }
       removeAddedBracesWhenPossible();
     }
@@ -1228,6 +1256,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
+    }
+  }
+
+  private static class OverrideAttributeUsageInfo extends UsageInfo {
+    private OverrideAttributeUsageInfo(@NotNull PsiElement element) {
+      super(element);
     }
   }
 }

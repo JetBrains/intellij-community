@@ -441,7 +441,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.getFieldOfGetter(getter) == field) {
-        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtilRt.toStringArray(annoToRemove));
+        LocalQuickFix getterAnnoFix = new AddAnnotationPsiFix(anno, getter, ArrayUtilRt.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             holder.registerProblem(nameIdentifier, JavaAnalysisBundle
@@ -491,7 +491,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   @NotNull
   private static AddAnnotationPsiFix createAddAnnotationFix(String anno, List<String> annoToRemove, PsiParameter parameter) {
-    return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annoToRemove));
+    return new AddAnnotationPsiFix(anno, parameter, ArrayUtilRt.toStringArray(annoToRemove));
   }
 
   @Contract("_,_,null -> fail")

@@ -312,6 +312,10 @@ public class WindowsDefenderChecker {
     });
   }
 
+  public String getNotificationText(Set<? extends Path> nonExcludedPaths) {
+    return DiagnosticBundle.message("virus.scanning.warn.message", StringUtil.join(nonExcludedPaths, "<br/>"));
+  }
+
   public String getConfigurationInstructionsUrl() {
     return "https://intellij-support.jetbrains.com/hc/en-us/articles/360006298560";
   }

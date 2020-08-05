@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
@@ -174,6 +175,7 @@ public final class EditorWindow {
             myRemovedTabs.push(pair);
             myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
             editorManager.disposeComposite(editor);
+            file.putUserData(INITIAL_INDEX_KEY, null);
           }
         }
         else {
@@ -876,6 +878,7 @@ public final class EditorWindow {
     editorComposite.setPinned(pinned);
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
       updateFileIconDecoration(file);
+      ObjectUtils.consumeIfCast(getTabbedPane().getTabs(), JBTabsImpl.class, JBTabsImpl::doLayout);
     }
   }
 

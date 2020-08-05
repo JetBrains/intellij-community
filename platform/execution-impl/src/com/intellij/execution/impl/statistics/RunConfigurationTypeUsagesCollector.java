@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -28,7 +30,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.*;
 
-public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
+public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
   public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 7);
   public static final StringEventField ID_FIELD = EventFields.String("id").withCustomRule("run_config_id");
@@ -58,7 +60,7 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
     AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
-        TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
+        Object2IntOpenHashMap<Template> templates = new Object2IntOpenHashMap<>();
         if (project.isDisposed()) {
           result.setResult(Collections.emptySet());
           return;
@@ -85,10 +87,9 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           }
         }
         Set<MetricEvent> metrics = new HashSet<>();
-        templates.forEachEntry((template, value) -> {
-          metrics.add(template.createMetricEvent(value));
-          return true;
-        });
+        for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
+          metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
+        }
         result.setResult(metrics);
       }
       catch (Throwable t) {
@@ -99,16 +100,11 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
     return result;
   }
 
-  private static void addOrIncrement(TObjectIntHashMap<Template> templates, Template template) {
-    if (templates.containsKey(template)) {
-      templates.increment(template);
-    }
-    else {
-      templates.put(template, 1);
-    }
+  private static void addOrIncrement(Object2IntOpenHashMap<Template> templates, Template template) {
+    templates.addTo(template, 1);
   }
 
-  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, TObjectIntHashMap<Template> templates) {
+  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, Object2IntOpenHashMap<Template> templates) {
     if (runConfiguration instanceof RunConfigurationBase) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;

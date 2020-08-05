@@ -7,10 +7,10 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,22 +20,18 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-class ChangeLargeFileEncodingAction extends com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction {
+class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 
-  private final LargeFileEditorAccessor myLargeFileEditorAccessor;
-  private final Project project;
   private final StatusBar statusBar;
 
-  ChangeLargeFileEncodingAction(LargeFileEditorAccessor largeFileEditorAccessor, Project project, StatusBar statusBar) {
-    this.myLargeFileEditorAccessor = largeFileEditorAccessor;
-    this.project = project;
+  ChangeLargeFileEncodingAction(StatusBar statusBar) {
     this.statusBar = statusBar;
   }
 
   private boolean chosen(@NotNull Charset charset) {
-    LargeFileEditorAccess largeFileEditorAccess = myLargeFileEditorAccessor.getAccess(project, statusBar);
+    LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(statusBar);
     if (largeFileEditorAccess == null) {
       logger.warn("tried to change encoding while editor is not accessible");
       return false;
@@ -46,9 +42,9 @@ class ChangeLargeFileEncodingAction extends com.intellij.openapi.vfs.encoding.Ch
   }
 
   private void updateWidget() {
-    StatusBarWidget widget = statusBar.getWidget(EncodingWidget.WIDGET_ID);
-    if (widget instanceof EncodingWidget) {
-      ((EncodingWidget)widget).requestUpdate();
+    StatusBarWidget widget = statusBar.getWidget(LargeFileEncodingWidget.WIDGET_ID);
+    if (widget instanceof LargeFileEncodingWidget) {
+      ((LargeFileEncodingWidget)widget).requestUpdate();
     }
     else {
       logger.warn("[LargeFileEditorSubsystem] ChangeFileEncodingAction.updateWidget(): "

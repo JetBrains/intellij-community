@@ -2353,7 +2353,7 @@
                      implementationClass="com.siyeh.ig.style.RedundantFieldInitializationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="RedundantInterfaceDeclaration" shortName="RedundantImplements" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.implements.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.RedundantImplementsInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ReturnOfThis" shortName="ReturnThis" bundle="messages.InspectionGadgetsBundle"
                      key="return.this.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"

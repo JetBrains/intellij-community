@@ -90,8 +90,8 @@ public final class MavenDomProjectProcessorUtils {
   public static MavenDomProjectModel findParent(@NotNull MavenDomParent mavenDomParent, Project project) {
     if (!DomUtil.hasXml(mavenDomParent)) return null;
 
-    MavenId id = new MavenId(mavenDomParent.getGroupId().getStringValue(), mavenDomParent.getArtifactId().getStringValue(),
-                             mavenDomParent.getVersion().getStringValue());
+    MavenId id = new MavenId(mavenDomParent.getGroupId().getValue(), mavenDomParent.getArtifactId().getValue(),
+                             mavenDomParent.getVersion().getValue());
     MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(id);
 
     return mavenProject != null ? MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile()) : null;

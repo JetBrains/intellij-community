@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class LightEditAssociateFileTypesAction extends DumbAwareAction implements LightEditCompatible {
   public final static String ENABLE_REG_KEY =  "system.file.type.associations.enabled";
 
+  private static final Logger LOG = Logger.getInstance(LightEditAssociateFileTypesAction.class);
   private final static String NOTIFICATION_GROUP_ID = "associate.files";
 
   public LightEditAssociateFileTypesAction() {
@@ -49,6 +51,7 @@ public class LightEditAssociateFileTypesAction extends DumbAwareAction implement
             }
             catch (FileAssociationException exception) {
               notifyOnError(exception.getMessage());
+              LOG.info(exception);
             }
           }
         );

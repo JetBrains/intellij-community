@@ -32,12 +32,19 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   }
 
   private fun checkOpenedProjects() {
-    val instance = ProjectManager.getInstance()
-    project?.let { pr ->
-      val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-      val recentSame = LinkedHashSet(recentProjectManager.getRecentPaths()).any { recentProjectManager.getProjectName(it) == pr.name && pr.basePath != it}
-      multipleSameNamed = instance.openProjects.any { it != pr && it.name == pr.name } || recentSame
+    val currentProject = project ?: return
+    val manager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    val currentPath = manager.getProjectPath(currentProject) ?: return
+    val currentName = manager.getProjectName(currentPath)
+    val sameNameInRecent = manager.getRecentPaths().any {
+      currentPath != it && currentName == manager.getProjectName(it)
     }
+    val sameNameInOpen = ProjectManager.getInstance().openProjects.any {
+      val path = manager.getProjectPath(it) ?: return@any false
+      val name = manager.getProjectName(path)
+      currentPath != path && currentName == name
+    }
+    multipleSameNamed = sameNameInRecent || sameNameInOpen
   }
 
   private val titleChangeListener = PropertyChangeListener{

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,7 +20,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 /**
  * @author peter
  */
-public class ToArrayConversion {
+public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,
                              final Consumer<? super LookupElement> result, @Nullable final PsiElement qualifier,

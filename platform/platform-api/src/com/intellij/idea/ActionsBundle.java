@@ -2,6 +2,8 @@
 package com.intellij.idea;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -17,16 +19,16 @@ public final class ActionsBundle extends DynamicBundle {
     super(IDEA_ACTIONS_BUNDLE);
   }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 
-  public static String actionText(@NonNls String actionId) {
+  public static @NlsActions.ActionText String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
@@ -34,7 +36,7 @@ public final class ActionsBundle extends DynamicBundle {
     return message("group." + actionId + ".text");
   }
 
-  public static String actionDescription(@NonNls String actionId) {
+  public static @NlsActions.ActionDescription String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
   }
 }

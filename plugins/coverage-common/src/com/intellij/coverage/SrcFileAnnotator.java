@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.history.FileRevisionTimestampComparator;
@@ -48,7 +47,8 @@ import com.intellij.util.Function;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class SrcFileAnnotator implements Disposable {
+public final class SrcFileAnnotator implements Disposable {
   private static final Logger LOG = Logger.getInstance(SrcFileAnnotator.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
@@ -69,8 +69,8 @@ public class SrcFileAnnotator implements Disposable {
   private Document myDocument;
   private final Project myProject;
 
-  private SoftReference<TIntIntHashMap> myNewToOldLines;
-  private SoftReference<TIntIntHashMap> myOldToNewLines;
+  private SoftReference<Int2IntMap> myNewToOldLines;
+  private SoftReference<Int2IntMap> myOldToNewLines;
   private SoftReference<byte[]> myOldContent;
   private final static Object LOCK = new Object();
 
@@ -140,8 +140,8 @@ public class SrcFileAnnotator implements Disposable {
     return linesRef.get();
   }
 
-  private static TIntIntHashMap getCoverageVersionToCurrentLineMapping(Diff.Change change, int firstNLines) {
-    TIntIntHashMap result = new TIntIntHashMap();
+  private static Int2IntMap getCoverageVersionToCurrentLineMapping(Diff.Change change, int firstNLines) {
+    Int2IntMap result = new Int2IntOpenHashMap();
     int prevLineInFirst = 0;
     int prevLineInSecond = 0;
     while (change != null) {
@@ -164,7 +164,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   @Nullable
-  private TIntIntHashMap getOldToNewLineMapping(final long date, MyEditorBean editorBean) {
+  private Int2IntMap getOldToNewLineMapping(final long date, MyEditorBean editorBean) {
     if (myOldToNewLines == null) {
       myOldToNewLines = doGetLineMapping(date, true, editorBean);
       if (myOldToNewLines == null) return null;
@@ -173,7 +173,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   @Nullable
-  private TIntIntHashMap getNewToOldLineMapping(final long date, MyEditorBean editorBean) {
+  private Int2IntMap getNewToOldLineMapping(final long date, MyEditorBean editorBean) {
     if (myNewToOldLines == null) {
       myNewToOldLines = doGetLineMapping(date, false, editorBean);
       if (myNewToOldLines == null) return null;
@@ -181,8 +181,7 @@ public class SrcFileAnnotator implements Disposable {
     return myNewToOldLines.get();
   }
 
-  @Nullable
-  private SoftReference<TIntIntHashMap> doGetLineMapping(final long date, boolean oldToNew, MyEditorBean editorBean) {
+  private @Nullable SoftReference<Int2IntMap> doGetLineMapping(final long date, boolean oldToNew, MyEditorBean editorBean) {
     VirtualFile virtualFile = editorBean.getVFile();
     if (myOldContent == null && ApplicationManager.getApplication().isDispatchThread()) return null;
     final byte[] oldContent;
@@ -281,7 +280,7 @@ public class SrcFileAnnotator implements Disposable {
     // local history doesn't index libraries, so let's distinguish libraries content with other one
     final long fileTimeStamp = file.getTimeStamp();
     final long coverageTimeStamp = suite.getLastCoverageTimeStamp();
-    final TIntIntHashMap oldToNewLineMapping;
+    final Int2IntMap oldToNewLineMapping;
 
     //do not show coverage info over cls
     if (engine.isInLibraryClasses(myProject, file)) {
@@ -344,7 +343,7 @@ public class SrcFileAnnotator implements Disposable {
                 final int lineNumberInCurrent;
                 if (oldToNewLineMapping != null) {
                   // use mapping based on local history
-                  if (!oldToNewLineMapping.contains(line)) {
+                  if (!oldToNewLineMapping.containsKey(line)) {
                     continue;
                   }
                   lineNumberInCurrent = oldToNewLineMapping.get(line);
@@ -422,7 +421,7 @@ public class SrcFileAnnotator implements Disposable {
         myUpdateAlarm.cancelAllRequests();
         if (!myUpdateAlarm.isDisposed()) {
           myUpdateAlarm.addRequest(() -> {
-            final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp(), editorBean);
+            Int2IntMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp(), editorBean);
             if (newToOldLineMapping != null) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (editorBean.isDisposed()) return;
@@ -479,12 +478,12 @@ public class SrcFileAnnotator implements Disposable {
       markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
-      final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date, editorBean);
+      final Int2IntMap oldLineMapping = getNewToOldLineMapping(date, editorBean);
       return oldLineMapping != null ? oldLineMapping.get(newLine.intValue()) : newLine.intValue();
     };
     final Function<Integer, Integer> oldToNewConverter = newLine -> {
       if (editor == null) return -1;
-      final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date, editorBean);
+      final Int2IntMap newLineMapping = getOldToNewLineMapping(date, editorBean);
       return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : newLine.intValue();
     };
     final LineMarkerRendererWithErrorStripe markerRenderer = coverageSuite
@@ -547,7 +546,7 @@ public class SrcFileAnnotator implements Disposable {
     if (coverageSuite == null) return;
     Document document = editorBean.getDocument();
     VirtualFile file = editorBean.getVFile();
-    final TIntIntHashMap mapping;
+    final Int2IntMap mapping;
     if (outputFile.lastModified() < file.getTimeStamp()) {
       mapping = getOldToNewLineMapping(outputFile.lastModified(), editorBean);
       if (mapping == null) return;

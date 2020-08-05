@@ -14,15 +14,13 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
+final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
 
   private final List<Node.Clazz> myTestClasses = new SmartList<>();
@@ -32,7 +30,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node.Clazz) {
-      return new ArrayList<>((Collection<? extends Node.Method>)myTests.get((Node.Clazz)parent));
+      return new ArrayList<>(myTests.get((Node.Clazz)parent));
     }
     return Collections.emptyList();
   }
@@ -142,7 +140,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     }
 
     static final class Method extends Node<PsiMethod> {
-      private final Collection<String> myParameters = new THashSet<>();
+      private final Collection<String> myParameters = new HashSet<>();
 
       private Method(@NotNull PsiMethod method) {
         super(method);

@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,6 +43,7 @@ public final class ProjectWindowActionGroup extends DefaultActionGroup {
 
   @NotNull
   private static String getProjectDisplayName(@NotNull final Project project) {
+    if (LightEdit.owns(project)) return LightEditService.WINDOW_NAME;
     final String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
     return name != null ? name : project.getName();
   }

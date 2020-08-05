@@ -11,8 +11,8 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
-import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
@@ -23,8 +23,7 @@ class PyFinalInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
@@ -35,7 +34,7 @@ class PyFinalInspection : PyInspection() {
         if (finalSuperClasses.isEmpty()) return@let
 
         val postfix = " ${if (finalSuperClasses.size == 1) "is" else "are"} marked as '@final' and should not be subclassed"
-        registerProblem(node.nameIdentifier, finalSuperClasses.joinToString(postfix = postfix) { "'${it.name}'" ?: "" })
+        registerProblem(node.nameIdentifier, finalSuperClasses.joinToString(postfix = postfix) { "'${it.name}'" })
       }
 
       if (PyiUtil.isInsideStub(node)) {
@@ -396,7 +395,7 @@ class PyFinalInspection : PyInspection() {
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {
       val parent = node.parent
       if (parent is PyAnnotation) return true
-      if (parent is PyExpressionStatement && parent.parent is PyDocstringFile) return true
+      if (parent is PyExpressionStatement && parent.parent is PyTypeHintFile) return true
       if (parent is PyParameterTypeList) return true
       if (parent is PyFunctionTypeAnnotation) return true
       return false

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -23,7 +22,7 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public class ShuffleNamesAction extends AnAction {
+public final class ShuffleNamesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -48,7 +47,7 @@ public class ShuffleNamesAction extends AnAction {
   }
 
   private static boolean shuffleIds(PsiFile file, Editor editor) {
-    final Map<String, String> map = new THashMap<>();
+    final Map<String, String> map = new HashMap<>();
     final StringBuilder sb = new StringBuilder();
     final StringBuilder quote = new StringBuilder();
     final ArrayList<String> split = new ArrayList<>(100);

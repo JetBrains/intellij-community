@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     super(text, description, icon);
   }
 
-  protected ResizeToolWindowAction(@NotNull ToolWindow toolWindow, String originalAction, JComponent component) {
+  protected ResizeToolWindowAction(@NotNull ToolWindow toolWindow, @NonNls String originalAction, JComponent component) {
     myToolWindow = toolWindow;
     new ShadowAction(this, ActionManager.getInstance().getAction(originalAction), component, toolWindow.getDisposable());
   }

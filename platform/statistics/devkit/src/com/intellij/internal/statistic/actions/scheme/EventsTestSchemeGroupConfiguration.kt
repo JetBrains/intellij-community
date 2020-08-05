@@ -2,9 +2,11 @@
 package com.intellij.internal.statistic.actions.scheme
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -12,6 +14,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
+import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup.Companion.EMPTY_RULES
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
@@ -33,7 +37,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ContextHelpLabel
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.TextFieldCompletionProviderDumbAware
@@ -46,28 +50,35 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
-                                         private val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
+                                         productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
                                          initialGroup: LocalWhitelistGroup,
+                                         generatedScheme: List<WhitelistBuilder.WhitelistGroup>,
                                          groupIdChangeListener: ((LocalWhitelistGroup) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
   private val log = logger<EventsTestSchemeGroupConfiguration>()
   private var currentGroup: LocalWhitelistGroup = initialGroup
-  private val addCustomRuleCheckBox: JBCheckBox = JBCheckBox(StatisticsBundle.message("stats.use.custom.validation.rules"),
-                                                             initialGroup.useCustomRules)
+  private lateinit var allowAllEventsRadioButton: JBRadioButton
+  private lateinit var customRulesRadioButton: JBRadioButton
+  private lateinit var generateSchemeButton: JComponent
   private val validationRulesEditorComponent: JComponent
   private val validationRulesDescription: JLabel
   private val tempFile: PsiFile
   private val validationRulesEditor: EditorEx
+  private val eventsScheme: Map<String, String> = createEventsScheme(generatedScheme)
 
   init {
-    val completionProvider = object : TextFieldCompletionProviderDumbAware() {
-      override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
-        result.addAllElements(productionGroups.groups.mapNotNull { it.id }.map(LookupElementBuilder::create))
+    groupIdTextField = TextFieldWithCompletion(project, createCompletionProvider(productionGroups), initialGroup.groupId, true, true, false)
+    groupIdTextField.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
+        currentGroup.groupId = groupIdTextField.text
+        if (groupIdChangeListener != null) {
+          groupIdChangeListener(currentGroup)
+        }
+        updateGenerateSchemeButton()
       }
-    }
-    groupIdTextField = TextFieldWithCompletion(project, completionProvider, initialGroup.groupId, true, true, false)
+    })
 
     tempFile = TestParseEventsSchemeDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
     tempFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
@@ -81,15 +92,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     validationRulesEditorComponent = validationRulesEditor.component
     validationRulesEditorComponent.minimumSize = JBUI.size(200, 100)
 
-    groupIdTextField.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
-        currentGroup.groupId = groupIdTextField.text
-        if (groupIdChangeListener != null) {
-          groupIdChangeListener(currentGroup)
-        }
-      }
-    })
-    addCustomRuleCheckBox.addChangeListener { updateRulesOption() }
     validationRulesDescription = ComponentPanelBuilder.createCommentComponent(
       StatisticsBundle.message("stats.validation.rules.format"), true)
 
@@ -100,14 +102,31 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
           groupIdTextField(growX)
         }
       }
-      row {
-        cell {
-          addCustomRuleCheckBox()
-          ContextHelpLabel.create(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))()
+      buttonGroup {
+        row {
+          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events")).component
+          allowAllEventsRadioButton.isSelected = !initialGroup.useCustomRules
+          allowAllEventsRadioButton.addChangeListener { updateRulesOption() }
+        }
+        row {
+          cell {
+            customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules")).component
+            customRulesRadioButton.isSelected = initialGroup.useCustomRules
+            customRulesRadioButton.addChangeListener { updateRulesOption() }
+            ContextHelpLabel.create(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))()
+          }
         }
       }
       row {
         validationRulesEditorComponent(growX)
+      }
+      row {
+        generateSchemeButton = button("Generate scheme") {
+          val scheme = eventsScheme[groupIdTextField.text]
+          if (scheme != null) {
+            WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
+          }
+        }.component
       }
       row {
         validationRulesDescription()
@@ -115,6 +134,46 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     }
       .withBorder(JBUI.Borders.empty(2))
     updateRulesOption()
+  }
+
+  private fun updateGenerateSchemeButton() {
+    val useCustomRules = customRulesRadioButton.isSelected
+    generateSchemeButton.isVisible = useCustomRules
+    generateSchemeButton.isEnabled = useCustomRules && eventsScheme[groupIdTextField.text] != null
+    if (!generateSchemeButton.isEnabled) {
+      generateSchemeButton.toolTipText = StatisticsBundle.message("stats.scheme.generation.available.only.for.new.api")
+    }
+    else {
+      generateSchemeButton.toolTipText = null
+    }
+  }
+
+  private fun createCompletionProvider(productionGroups: FUStatisticsWhiteListGroupsService.WLGroups): TextFieldCompletionProviderDumbAware {
+    return object : TextFieldCompletionProviderDumbAware() {
+      override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
+        val generatedSchemeVariants = eventsScheme.keys.map {
+          LookupElementBuilder.create(it).withInsertHandler(InsertHandler { _, item ->
+            val scheme = eventsScheme[item.lookupString]
+            if (scheme != null) {
+              customRulesRadioButton.isSelected = true
+              WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
+            }
+          })
+        }
+        result.addAllElements(generatedSchemeVariants)
+
+        val productionGroupsVariants = productionGroups.groups.asSequence()
+          .mapNotNull { it.id }
+          .filterNot { eventsScheme.keys.contains(it) }
+          .map {
+            LookupElementBuilder.create(it).withInsertHandler(InsertHandler { _, _ ->
+              allowAllEventsRadioButton.isSelected = true
+              WriteAction.run<Throwable> { validationRulesEditor.document.setText(EMPTY_RULES) }
+            })
+          }.toList()
+        result.addAllElements(productionGroupsVariants)
+      }
+    }
   }
 
   private fun createEditor(project: Project, file: PsiFile): EditorEx {
@@ -144,14 +203,20 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     currentGroup = newGroup
     groupIdTextField.text = newGroup.groupId
     groupIdTextField.requestFocusInWindow()
-    addCustomRuleCheckBox.isSelected = newGroup.useCustomRules
+    if (newGroup.useCustomRules) {
+      customRulesRadioButton.isSelected = true
+    }
+    else {
+      allowAllEventsRadioButton.isSelected = true
+    }
     WriteAction.run<Throwable> { validationRulesEditor.document.setText(newGroup.customRules) }
   }
 
   private fun updateRulesOption() {
-    val useCustomRules = addCustomRuleCheckBox.isSelected
+    val useCustomRules = customRulesRadioButton.isSelected
     validationRulesEditorComponent.isVisible = useCustomRules
     validationRulesDescription.isVisible = useCustomRules
+    updateGenerateSchemeButton()
 
     currentGroup.useCustomRules = useCustomRules
   }
@@ -176,6 +241,44 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
   fun validate(): List<ValidationInfo> {
     return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
+  }
+
+  private fun createEventsScheme(generatedScheme: List<WhitelistBuilder.WhitelistGroup>): HashMap<String, String> {
+    val eventsScheme = HashMap<String, String>()
+    val gson = GsonBuilder().setPrettyPrinting().create()
+    for (group in generatedScheme) {
+      val validationRules = createValidationRules(group)
+      if (validationRules != null) {
+        eventsScheme[group.id] = gson.toJson(validationRules)
+      }
+    }
+    return eventsScheme
+  }
+
+  private fun createValidationRules(group: WhitelistBuilder.WhitelistGroup): FUStatisticsWhiteListGroupsService.WLRule? {
+    val eventIds = hashSetOf<String>()
+    val eventData = hashMapOf<String, MutableSet<String>>()
+    val events = group.schema
+    for (event in events) {
+      eventIds.add(event.event)
+      for (dataField in event.fields) {
+        val validationRule = dataField.value
+        val validationRules = eventData[dataField.path]
+        if (validationRules == null) {
+          eventData[dataField.path] = validationRule.toHashSet()
+        }
+        else {
+          validationRules.addAll(validationRule)
+        }
+      }
+    }
+
+    if (eventIds.isEmpty() && eventData.isEmpty()) return null
+
+    val rules = FUStatisticsWhiteListGroupsService.WLRule()
+    rules.event_id = eventIds
+    rules.event_data = eventData
+    return rules
   }
 
   companion object {
@@ -206,9 +309,11 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     internal fun validateCustomValidationRules(project: Project,
                                                customRules: String,
                                                customRulesFile: PsiFile?): List<ValidationInfo> {
+      if (customRules.isBlank()) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
       val file = if (customRulesFile != null) {
         customRulesFile
-      } else {
+      }
+      else {
         val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
         psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile

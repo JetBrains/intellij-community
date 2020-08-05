@@ -21,7 +21,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -43,6 +46,7 @@ import icons.UIDesignerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
 import java.util.*;
@@ -121,7 +125,8 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
 
     I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles,
                                                                                                         I18nizeFormBatchFix::createUsageInfo,
-                                                                                                        UIDesignerIcons.InspectionSuppression);
+                                                                                                        UIDesignerIcons.InspectionSuppression,
+                                                                                                        false);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -146,7 +151,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
                                                                           Collections.singletonList(propertiesFile),
                                                                           data.getKey(),
                                                                           data.getValue(),
-                                                                          PsiExpression.EMPTY_ARRAY);
+                                                                          new UExpression[0]);
             valueDescriptor = new StringDescriptor(bundleName, data.getKey());
           }
           else {

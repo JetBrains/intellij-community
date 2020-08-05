@@ -32,10 +32,6 @@ import javax.swing.*;
 public class DiffErrorElement extends DiffElement {
   private final String myMessage;
 
-  public DiffErrorElement() {
-    this("Can't load children", "");
-  }
-
   public DiffErrorElement(@NotNull String message, @NotNull String description) {
     myMessage = message;
   }

@@ -14,6 +14,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   I18nInspection myTool = new I18nInspection();
   
   private void doTest() {
+    myTool.setReportUnannotatedReferences(true);
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }
@@ -33,19 +34,21 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
   public void testEnum() { doTest(); }
+  public void testIgnoredLines() { doTest(); }
+  public void testStringMethods() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
   public void testNonNlsArray() { doTest(); }
   public void testNonNlsEquals() { doTest(); }
+  public void testNonNlsTernary() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
   public void _testConstructorChains() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNestedArrayParenthesized() { doTest(); }
   public void testNonNlsComment() {
-    myTool.nonNlsCommentPattern = "MYNON-NLS";
-    myTool.cacheNonNlsCommentPattern();
+    myTool.setNonNlsCommentPattern("MYNON-NLS");
     doTest();
   }
 
@@ -137,6 +140,20 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   }
   
   public void testNlsMeta() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+  
+  public void testUseConstant() {
+    doTest();
+  }
+  
+  public void testUseConstantNls() {
     boolean old = myTool.setIgnoreForAllButNls(true);
     try {
       doTest();

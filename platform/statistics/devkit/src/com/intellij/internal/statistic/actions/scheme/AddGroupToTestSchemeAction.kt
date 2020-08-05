@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -58,9 +58,8 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
     fun createAddToTestSchemeDialog(project: Project,
                                     testGroupStorage: WhitelistTestGroupStorage,
                                     group: LocalWhitelistGroup): DialogWrapper? {
-      val productionGroups = loadProductionGroups(project, testGroupStorage)
-      if (productionGroups == null) return null
-      val groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, group)
+      val scheme = loadEventsScheme(project, testGroupStorage) ?: return null
+      val groupConfiguration = EventsTestSchemeGroupConfiguration(project, scheme.productionGroups, group, scheme.generatedScheme)
       val dialog = dialog(
         StatisticsBundle.message("stats.add.test.group.to.test.scheme"),
         panel = groupConfiguration.panel,
@@ -73,14 +72,15 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
       return dialog
     }
 
-    private fun loadProductionGroups(project: Project,
-                                     testGroupStorage: WhitelistTestGroupStorage): FUStatisticsWhiteListGroupsService.WLGroups? {
-      return ProgressManager.getInstance().run(object : Task.WithResult<FUStatisticsWhiteListGroupsService.WLGroups?, IOException>(
+    private fun loadEventsScheme(project: Project,
+                                 testGroupStorage: WhitelistTestGroupStorage): EditEventsTestSchemeAction.EventsTestScheme? {
+      return ProgressManager.getInstance().run(object : Task.WithResult<EditEventsTestSchemeAction.EventsTestScheme?, IOException>(
         project, StatisticsBundle.message("stats.loading.validation.rules"), true) {
-        override fun compute(indicator: ProgressIndicator): FUStatisticsWhiteListGroupsService.WLGroups? {
+        override fun compute(indicator: ProgressIndicator): EditEventsTestSchemeAction.EventsTestScheme? {
           val productionGroups = testGroupStorage.loadProductionGroups()
           if (indicator.isCanceled) return null
-          return productionGroups
+          val eventsScheme = WhitelistBuilder.buildWhitelist()
+          return EditEventsTestSchemeAction.EventsTestScheme(emptyList(), productionGroups, eventsScheme)
         }
       })
     }

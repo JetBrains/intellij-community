@@ -12,11 +12,9 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
@@ -24,7 +22,6 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.*
 import kotlin.collections.ArrayList
@@ -62,9 +59,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   final override fun clearStorages() = storageManager.clearStorages()
 
   private fun loadProjectFromTemplate(defaultProject: Project) {
-    val stateStore = defaultProject.stateStore as DefaultProjectStoreImpl
-    runBlocking { stateStore.save() }
-    val element = stateStore.getStateCopy() ?: return
+    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     LOG.runAndLogException {
       val dotIdea = dotIdea
       if (dotIdea != null) {
@@ -109,11 +104,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
-      if (isRefreshVfsNeeded) {
-        val fs = LocalFileSystem.getInstance()
-        VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByNioFile(file), fs.refreshAndFindFileByNioFile(workspacePath))
-      }
-
       if (isUnitTestMode) {
         // we don't load default state in tests as app store does because
         // 1) we should not do it
@@ -140,11 +130,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         isOptimiseTestLoadSpeed = !file.exists()
 
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, dotIdea.resolve("product-workspace.xml")))
-      }
-
-      if (isRefreshVfsNeeded) {
-        val fs = LocalFileSystem.getInstance()
-        VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByNioFile(dotIdea))
       }
     }
 
@@ -258,7 +243,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     if (!isDirectoryBased) {
       return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
     }
-    return FileUtil.isAncestor(projectFilePath.parent.systemIndependentPath, filePath, false)
+    return PathUtil.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
 
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()

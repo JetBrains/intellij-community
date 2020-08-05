@@ -291,6 +291,10 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   public void markCurrentCommandAsGlobal() {
+    if (myCurrentMerger == null) {
+      LOG.error("Must be called inside command");
+      return;
+    }
     myCurrentMerger.markAsGlobal();
   }
 

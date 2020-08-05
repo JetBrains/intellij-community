@@ -261,7 +261,18 @@ public final class PsiSuperMethodImplUtil {
       thisRet = unifyingSubstitutor.substitute(thisRet);
       thatRet = unifyingSubstitutor.substitute(thatRet);
     }
-    return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet, false);
+    if (thatRet == null || thisRet == null) {
+      return false;
+    }
+    if (!thatRet.isValid()) {
+      PsiUtilCore.ensureValid(thatSig.getMethod());
+      PsiUtil.ensureValidType(thatRet);
+    }
+    if (!thisRet.isValid()) {
+      PsiUtilCore.ensureValid(thisSig.getMethod());
+      PsiUtil.ensureValidType(thisRet);
+    }
+    return !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet, false);
   }
 
   private static void mergeSupers(@NotNull HierarchicalMethodSignatureImpl existing, @NotNull HierarchicalMethodSignature superSignature) {

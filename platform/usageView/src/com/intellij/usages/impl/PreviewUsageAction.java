@@ -19,7 +19,7 @@ class PreviewUsageAction extends RuleAction {
   @Override
   protected boolean getOptionValue(@NotNull AnActionEvent e) {
     UsageViewImpl impl = getUsageViewImpl(e);
-    return impl != null ? impl.isPreviewUsages() : false;
+    return impl != null && impl.isPreviewUsages();
   }
 
   @Override

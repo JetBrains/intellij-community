@@ -60,7 +60,7 @@ public abstract class LRUPopupBuilder<T> {
                                            @NotNull Iterable<? extends VirtualFile> files,
                                            @NotNull PerFileMappings<Language> mappings) {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
-    Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
+    Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.isCaseSensitive()));
     return forFileLanguages(project, title, null, t -> {
       try {
         WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(

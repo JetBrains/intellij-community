@@ -305,6 +305,7 @@ public class HelpTooltip {
     instance.initPopupBuilder();
     myPopupSize = instance.myPopupSize;
     myPopupBuilder = instance.myPopupBuilder;
+    initialShowScheduled = false;
   }
 
   @NotNull

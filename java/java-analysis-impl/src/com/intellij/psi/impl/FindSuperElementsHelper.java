@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FindSuperElementsHelper {
+public final class FindSuperElementsHelper {
   public static PsiElement @NotNull [] findSuperElements(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass) element;

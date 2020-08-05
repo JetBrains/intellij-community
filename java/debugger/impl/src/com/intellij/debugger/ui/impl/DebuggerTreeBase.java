@@ -89,7 +89,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     final JToolTip tooltip = new JToolTip();
 
     if (tipText == null) {
-      tooltip.setTipText(tipText);
+      tooltip.setTipText(null);
     }
     else {
       Dimension rootSize = getVisibleRect().getSize();

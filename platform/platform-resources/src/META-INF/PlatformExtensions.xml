@@ -92,6 +92,9 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
+                        serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdValueStoreService" serviceImplementation="com.intellij.codeWithMe.ClientIdValueStoreServiceImpl" preload="true" />
 
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
@@ -105,17 +108,13 @@
       </description>
     </experimentalFeature>
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
-      <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using P9 protocol (available since Windows update
-        1903).
-      </description>
+      <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>
     </experimentalFeature>
     <experimentalFeature id="wsl.prefer.p9.support" percentOfUsers="0">
-      <description>Prefer P9 FS access protocol even if direct access to WSL FS is available.
-      </description>
+      <description>Prefer 9P FS access protocol even if direct access to WSL FS is available.</description>
     </experimentalFeature>
     <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
-      <description>Show P9 roots (\\wsl$\...) of available WSL distributions in the file chooser (available since Windows update 1903).
-      </description>
+      <description>Show UNC roots (\\wsl$\...) of available WSL distributions in the file chooser (available since Windows 10 update 1903).</description>
     </experimentalFeature>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
@@ -259,11 +258,7 @@
 
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
 
-    <fileEditorProvider implementation="com.intellij.diff.editor.GraphViewEditorProvider"/>
-
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
-
-    <fileIconProvider implementation="com.intellij.diff.editor.GraphViewFileIconProvider"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 
@@ -579,6 +574,7 @@
     <filePropertyPusher implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
+    <backgroundPostStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -663,6 +659,8 @@
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
     <statistics.counterUsagesCollector groupId="editor.typing" version="1"/>
+
+    <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
@@ -904,6 +902,25 @@
         <component>IntentionsCollector</component>
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>
+        <component>EventLogWhitelist</component>
+        <component>PhpLanguageFeatureUsagesStatistics</component>
+        <component>FeatureUsageStatistics</component>
+        <component>UsagesStatistic</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="lastSelectedPropertiesFile.xml">
+      <components>
+        <component>LastSelectedPropertiesFileStore</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="vcs.log.big.repos.xml">
+      <components>
+        <component>Vcs.Log.Big.Repositories</component>
+      </components>
+    </obsoleteStorage>
+    <obsoleteStorage file="errorReporting.xml">
+      <components>
+        <component>ErrorReportConfigurable</component>
       </components>
     </obsoleteStorage>
 
@@ -1003,6 +1020,9 @@
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="10000" description="HTML editor content loading timeout in ms."/>
     <iw.actionProvider implementation="com.intellij.codeInsight.actions.ReaderModeActionProvider"/>
+    <gotoActionAliasMatcher implementation="com.intellij.ide.util.gotoByName.LocalizedActionAliasMatcher" />
+    <experimentalFeature id="i18n.match.actions" percentOfUsers="100"/>
+    <startupActivity implementation="com.intellij.ide.util.I18nMnemonicsSettingsMigrator"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

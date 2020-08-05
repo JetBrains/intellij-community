@@ -16,25 +16,19 @@ import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ProjectStoreBridge(project: Project) : ProjectWithModulesStoreImpl(project) {
+internal class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
     return ProjectWithModulesSaveSessionProducerManager(project)
   }
 
-  override suspend fun saveModules(errors: MutableList<Throwable>,
-                                   isForceSavingAllSettings: Boolean,
-                                   projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
-    val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, this, project)
+  override fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore) {
+    val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, store, project)
     project.getComponent(JpsProjectModelSynchronizer::class.java).saveChangedProjectEntities(writer)
-    return super.saveModules(errors, isForceSavingAllSettings, projectSaveSessionManager)
   }
 
-  override fun commitModuleComponents(moduleStore: ComponentStoreImpl,
-                                      moduleSaveSessionManager: SaveSessionProducerManager,
-                                      projectSaveSessionManager: SaveSessionProducerManager,
-                                      isForceSavingAllSettings: Boolean,
-                                      errors: MutableList<Throwable>) {
-    super.commitModuleComponents(moduleStore, moduleSaveSessionManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
+  override fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,
+                                      moduleStore: ComponentStoreImpl,
+                                      moduleSaveSessionManager: SaveSessionProducerManager) {
     (projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager).commitComponents(moduleStore, moduleSaveSessionManager)
   }
 }

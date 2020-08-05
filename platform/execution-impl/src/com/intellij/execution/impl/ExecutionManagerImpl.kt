@@ -17,7 +17,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -44,7 +43,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
@@ -130,7 +128,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
   private val runningConfigurations: MutableList<RunningConfigurationEntry> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  private val inProgress = Collections.synchronizedSet(THashSet<InProgressEntry>())
+  private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
   private fun processNotStarted(environment: ExecutionEnvironment) {
     val executorId = environment.executor.id

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,9 +39,7 @@ public final class StatusBarUtil {
     FileEditor fileEditor = getCurrentFileEditor(statusBar);
     if (fileEditor instanceof TextEditor) {
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      if (ensureValidEditorFile(editor)) {
-        return editor;
-      }
+      return ensureValidEditorFile(editor, fileEditor) ? editor : null;
     }
 
     Project project = statusBar.getProject();
@@ -48,7 +48,7 @@ public final class StatusBarUtil {
     FileEditorManager manager = FileEditorManager.getInstance(project);
     Editor editor = manager.getSelectedTextEditor();
     if (editor != null &&
-        ensureValidEditorFile(editor) &&
+        ensureValidEditorFile(editor, null) &&
         WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == statusBar) {
       return editor;
     }
@@ -67,6 +67,10 @@ public final class StatusBarUtil {
     Project project = statusBar.getProject();
     if (project == null) {
       return null;
+    }
+
+    if (LightEdit.owns(project)) {
+      return LightEditService.getInstance().getSelectedFileEditor();
     }
 
     DockContainer c = DockManager.getInstance(project).getContainerFor(statusBar.getComponent());
@@ -91,7 +95,7 @@ public final class StatusBarUtil {
     }
   }
 
-  private static boolean ensureValidEditorFile(@NotNull Editor editor) {
+  private static boolean ensureValidEditorFile(@NotNull Editor editor, @Nullable FileEditor fileEditor) {
     Document document = editor.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && !file.isValid()) {
@@ -100,6 +104,7 @@ public final class StatusBarUtil {
       Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
       LOG.error("Returned editor for invalid file: " + editor +
                 "; disposed=" + editor.isDisposed() +
+                (fileEditor == null ? "" : "; fileEditor=" + fileEditor + "; fileEditor.valid=" + fileEditor.isValid()) +
                 "; file " + file.getClass() +
                 "; cached document exists: " + (cachedDocument != null) +
                 "; same as document: " + (cachedDocument == document) +

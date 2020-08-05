@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -21,6 +21,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.FilePathHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,10 +66,11 @@ final class FilePartNodeRoot extends FilePartNode {
                                @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
                                @NotNull List<? super NodeToUpdate> toUpdateNodes,
                                boolean addSubdirectoryPointers,
-                               @NotNull NewVirtualFileSystem fs) {
-    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
+                               @NotNull NewVirtualFileSystem fs,
+                               @NotNull VFileEvent event) {
     NodeToUpdate toUpdate = matchById(parent, file, childNameId, toFirePointers, false, fs);
     if (toUpdate != null) {
+      toUpdate.myEvent = event;
       toUpdateNodes.add(toUpdate);
       toUpdate.node.processPointers(pointer -> toFirePointers.putValue(pointer.myListener, pointer));
       if (addSubdirectoryPointers) {
@@ -163,7 +165,7 @@ final class FilePartNodeRoot extends FilePartNode {
         if (fsRoot == null) {
           String rootPath = ContainerUtil.getLastItem(names);
           fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
-          if (fsRoot != null && !FileUtil.namesEqual(fsRoot.getName(), rootPath)) {
+          if (fsRoot != null && !FilePathHashingStrategy.create(fsRoot.isCaseSensitive()).equals(fsRoot.getName(), rootPath)) {
             // ignore really weird root names, like "/" under windows
             fsRoot = null;
           }

@@ -3,13 +3,12 @@ package com.intellij.usages;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.tree.DoubleClickExpandable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface UsageGroup extends Comparable<UsageGroup>, Navigatable, DoubleClickExpandable {
+public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   @Nullable
   Icon getIcon(boolean isOpen);
 
@@ -21,9 +20,4 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable, DoubleC
 
   boolean isValid();
   void update();
-
-  @Override
-  default boolean expandOnDoubleClick() {
-    return !canNavigateToSource();
-  }
 }

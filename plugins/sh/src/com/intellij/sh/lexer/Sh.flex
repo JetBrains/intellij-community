@@ -122,8 +122,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
-ParameterExpansionExpr   = [^}/$`\"]* | {EscapedChar}*
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
+ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -203,6 +203,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 <TEST_EXPRESSION> {
     "!="                          { return WORD; }
     ";"                           { popState(); return SEMI; }
+    ")" | "&&" | "||"             { popState(); yypushback(yylength()); }
+    "`"                           { if (isBackquoteOpen) { popState(); yypushback(yylength()); }
+                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
 

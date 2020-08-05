@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LambdaRefactoringUtil {
+public final class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
 
   public static @Nullable PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {
@@ -295,7 +295,7 @@ public class LambdaRefactoringUtil {
   }
 
   /**
-   * Works for expression lambdas/one statement code block lambdas to ensures equivalent method ref -> lambda transformation. 
+   * Works for expression lambdas/one statement code block lambdas to ensures equivalent method ref -> lambda transformation.
    */
   public static void removeSideEffectsFromLambdaBody(Editor editor, PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null && lambdaExpression.isValid()) {
@@ -316,7 +316,7 @@ public class LambdaRefactoringUtil {
         }
         else {
           SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-        } 
+        }
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||
               Messages.showYesNoDialog(lambdaExpression.getProject(),

@@ -39,7 +39,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  private final ServerType<S> myServerType;
+  private final String myServerTypeId;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
   private boolean myDeploymentSourceIsLocked;
@@ -52,7 +52,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
                                         ServerType<S> serverType,
                                         DeploymentConfigurator<D, S> deploymentConfigurator) {
     super(project, factory, name);
-    myServerType = serverType;
+    myServerTypeId = serverType.getId();
     myDeploymentConfigurator = deploymentConfigurator;
   }
 
@@ -63,7 +63,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
   @NotNull
   public ServerType<S> getServerType() {
-    return myServerType;
+    //noinspection unchecked
+    ServerType<S> result = (ServerType<S>)ServerType.EP_NAME.findFirstSafe(next -> next.getId().equals(myServerTypeId));
+    assert result != null : "Server type `" + myServerTypeId + "` had been unloaded already";
+    return result;
   }
 
   public String getServerName() {
@@ -78,10 +81,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
+    ServerType<S> serverType = getServerType();
     //noinspection unchecked
     SettingsEditor<DeployToServerRunConfiguration> commonEditor =
-      myDeploymentSourceIsLocked ? new LockedSource(myServerType, myDeploymentConfigurator, getProject(), myDeploymentSource)
-                                 : new AnySource(myServerType, myDeploymentConfigurator, getProject());
+      myDeploymentSourceIsLocked ? new LockedSource(serverType, myDeploymentConfigurator, getProject(), myDeploymentSource)
+                                 : new AnySource(serverType, myDeploymentConfigurator, getProject());
 
 
     SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<>();
@@ -130,7 +134,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       return null;
     }
 
-    return RemoteServersManager.getInstance().findByName(serverName, myServerType);
+    return RemoteServersManager.getInstance().findByName(serverName, getServerType());
   }
 
   public void setServerName(String serverName) {
@@ -257,7 +261,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @Override
   public void onNewConfigurationCreated() {
     if (getServerName() == null) {
-      RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
+      RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(getServerType()));
       if (server != null) {
         setServerName(server.getName());
       }

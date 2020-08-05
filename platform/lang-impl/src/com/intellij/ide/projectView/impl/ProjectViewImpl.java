@@ -96,10 +96,7 @@ import java.util.function.Function;
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
-@State(name = "ProjectView", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
   private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
@@ -917,7 +914,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void ensurePanesLoaded() {
-    if (myProject.isDisposed() || myExtensionsLoaded.getAndSet(true)) return; // avoid recursive loading
+    if (myProject.isDisposed() || myExtensionsLoaded.getAndSet(true)) {
+      // avoid recursive loading
+      return;
+    }
 
     for (AbstractProjectViewPane pane : loadPanes().values()) {
       if (pane.isInitiallyVisible()) {
@@ -926,18 +926,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private Map<String, AbstractProjectViewPane> loadPanes() {
-    HashMap<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
-    AbstractProjectViewPane.EP.getExtensions(myProject).stream().sorted(PANE_WEIGHT_COMPARATOR).forEach(pane -> {
+  private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
+    Map<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
+    List<AbstractProjectViewPane> toSort = new ArrayList<>(AbstractProjectViewPane.EP.getExtensions(myProject));
+    toSort.sort(PANE_WEIGHT_COMPARATOR);
+    for (AbstractProjectViewPane pane : toSort) {
       AbstractProjectViewPane added = map.computeIfAbsent(pane.getId(), id -> pane);
       if (pane != added) {
         LOG.warn("ignore duplicated pane with id=" + pane.getId() + "\nold " + added.getClass() + "\nnew " + pane.getClass());
       }
       else {
         Element element = myUninitializedPaneState.remove(pane.getId());
-        if (element != null) applyPaneState(pane, element);
+        if (element != null) {
+          applyPaneState(pane, element);
+        }
       }
-    });
+    }
     return map;
   }
 
@@ -980,12 +984,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     pane.addToolbarActions(myActionGroup);
 
-    List<AnAction> titleActions = new SmartList<>();
+    List<AnAction> titleActions = new ArrayList<>();
     createTitleActions(titleActions);
     if (!titleActions.isEmpty()) {
-      ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
       if (window != null) {
-        window.setTitleActions(titleActions.toArray(AnAction.EMPTY_ARRAY));
+        window.setTitleActions(titleActions);
       }
     }
   }
@@ -2065,9 +2069,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       JTree tree = pane.getTree();
       if (tree != null) {
         SelectionInfo info = pane.getId().equals(myCurrentViewId) ? SelectionInfo.create(pane) : null;
-        if (withComparator) pane.installComparator();
+        if (withComparator) {
+          pane.installComparator();
+        }
         pane.updateFromRoot(false);
-        if (info != null) info.apply(pane);
+        if (info != null) {
+          info.apply(pane);
+        }
       }
     }
   }

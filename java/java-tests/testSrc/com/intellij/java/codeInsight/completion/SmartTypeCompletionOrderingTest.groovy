@@ -61,7 +61,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
       imitateItemSelection(lookup, 2) //Container
     }
-    refreshSorting(lookup)
+    refreshSorting()
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
   }
 
@@ -72,7 +72,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
       imitateItemSelection(lookup, 3) //AbstractSequentialList
     }
-    refreshSorting(lookup)
+    refreshSorting()
     assertPreferredItems 1, 'List', 'AbstractSequentialList', 'ArrayList', 'AbstractList'
   }
 
@@ -286,8 +286,13 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
       imitateItemSelection(lookup, 3) //goo
     }
-    refreshSorting(lookup)
+    refreshSorting()
     assertPreferredItems(0, "foo", "param", "this", "goo", "bar")
+  }
+
+  private void refreshSorting() {
+    lookup.hideLookup(true)
+    complete()
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -334,6 +339,12 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.Full
   void testAssertEquals() throws Throwable {
     myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }")
+    checkPreferredItems(0, "boo", "bar")
+  }
+
+  @NeedsIndex.Full
+  void testAssertNotEquals() throws Throwable {
+    myFixture.addClass("package org.junit; public class Assert { public static void assertNotEquals(Object a, Object b) {} }")
     checkPreferredItems(0, "boo", "bar")
   }
 
@@ -412,8 +423,8 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   void testPreferGlobalMembersReturningExpectedType() {
     configureNoCompletion(getTestName(false) + ".java")
     def items = myFixture.complete(CompletionType.SMART, 2)
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'Map.builder'
-    assert LookupElementPresentation.renderElement(items[1]).itemText == 'BiMap.builder'
+    assert NormalCompletionTestCase.renderElement(items[0]).itemText == 'Map.builder'
+    assert NormalCompletionTestCase.renderElement(items[1]).itemText == 'BiMap.builder'
   }
 
   void testPreferExpectedLocalOverExactlyDefaultMember() {

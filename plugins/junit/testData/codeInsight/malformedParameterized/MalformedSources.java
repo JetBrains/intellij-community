@@ -21,6 +21,10 @@ class ValueSourcesTest {
   void testWithStringValues(String s) { }
 
   @ParameterizedTest
+  @ValueSource(booleans = {<warning descr="No implicit conversion found to convert object of type boolean to int">false</warning>})
+  void testWithBooleanSource(int argument) { }
+
+  @ParameterizedTest
   <warning descr="Exactly one type of input must be provided">@ValueSource(ints = {1},
     strings = "str")</warning>
   void testWithMultipleValues(int i) { }

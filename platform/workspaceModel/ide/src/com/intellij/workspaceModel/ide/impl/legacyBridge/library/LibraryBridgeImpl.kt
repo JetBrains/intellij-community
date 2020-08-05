@@ -14,11 +14,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
@@ -47,7 +46,7 @@ internal class LibraryBridgeImpl(
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
-  val filePointerProvider = FilePointerProviderImpl(project).also { Disposer.register(this, it) }
+  val filePointerProvider: FilePointerProvider = FilePointerProvider.getInstance(project)
 
   var entityStorage: VersionedEntityStorage = initialEntityStorage
     internal set(value) {
@@ -73,7 +72,8 @@ internal class LibraryBridgeImpl(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       filePointerProvider = filePointerProvider,
       storage = storage,
-      libraryTable = libraryTable
+      libraryTable = libraryTable,
+      parentDisposable = this
     )
   }
 

@@ -18,35 +18,35 @@ public class RelayUiToDelegateIndicator extends AbstractProgressIndicatorExBase 
   }
 
   @Override
-  public void setText(String text) {
+  public final void setText(String text) {
     myDelegate.setText(text);
   }
 
   @Override
-  public void setText2(String text) {
+  public final void setText2(String text) {
     myDelegate.setText2(text);
   }
 
   @Override
-  public void setFraction(double fraction) {
+  public final void setFraction(double fraction) {
     myDelegate.setFraction(fraction);
   }
 
   @Override
-  public void setIndeterminate(boolean indeterminate) {
+  public final void setIndeterminate(boolean indeterminate) {
     myDelegate.setIndeterminate(indeterminate);
   }
 
   @Override
-  public void pushState() {
+  public final void pushState() {
   }
 
   @Override
-  public void popState() {
+  public final void popState() {
   }
 
   @Override
-  protected void onProgressChange() {
+  protected final void onProgressChange() {
     throw new IllegalStateException("Adding delegates to this indicator is not supported");
   }
 }

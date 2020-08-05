@@ -826,8 +826,6 @@
       <reference ref="PinActiveEditorTab"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
-      <reference ref="NextTab"/>
-      <reference ref="PreviousTab"/>
       <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
@@ -836,6 +834,8 @@
 
     <group id="WelcomeScreen.QuickStart">
     </group>
+
+    <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
 
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
@@ -877,7 +877,8 @@
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
       <separator/>
-      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"/>
+      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
+              use-shortcut-of="$Delete"/>
     </group>
 
     <group id="FileChooser">

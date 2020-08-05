@@ -4,11 +4,12 @@ package com.intellij.refactoring.typeMigration;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -36,10 +37,10 @@ public final class Util {
         return null;
       }
       final List<PsiMethod> normalized = new SmartList<>();
-      final Queue<PsiMethod> queue = new Queue<>(1);
+      final Deque<PsiMethod> queue = new ArrayDeque<>(1);
       queue.addLast(method);
       while (!queue.isEmpty()) {
-        final PsiMethod currentMethod = queue.pullFirst();
+        PsiMethod currentMethod = queue.removeFirst();
         if (initialMethodReturnType.equals(currentMethod.getReturnType())) {
           for (PsiMethod toConsume : currentMethod.findSuperMethods(false)) {
             queue.addLast(toConsume);

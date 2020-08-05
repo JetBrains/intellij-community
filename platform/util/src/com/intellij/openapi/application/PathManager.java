@@ -45,6 +45,7 @@ public final class PathManager {
   public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
 
   private static final String KOTLIN_IDE_IML_RELATIVE_PATH = "kotlin/idea/kotlin.idea.iml";
+  private static final String KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH = "idea/kotlin.idea.iml";
   private static final String INTELLIJ_SUB_REPO_NAME = "intellij";
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
@@ -162,8 +163,11 @@ public final class PathManager {
    * This is temp util method and it's supposed to be removed when kotlin-20202 experiment is over
    */
   private static boolean isKotlinIdeRepoHome(@NotNull Path path) {
+    boolean containsRootKotlinModuleFile = Files.isRegularFile(path.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) ||
+                                           Files.isRegularFile(path.resolve(KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH));
+
     return Files.isDirectory(path) &&
-           Files.isRegularFile(path.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) &&
+           containsRootKotlinModuleFile &&
            Files.isDirectory(path.resolve(INTELLIJ_SUB_REPO_NAME)) &&
            isIdeaHome(path.resolve(INTELLIJ_SUB_REPO_NAME));
   }

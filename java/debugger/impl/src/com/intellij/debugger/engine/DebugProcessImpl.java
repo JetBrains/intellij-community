@@ -77,6 +77,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -654,7 +655,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public void showStatusText(final String text) {
+  public void showStatusText(final @Nls String text) {
     myStatusUpdateAlarm.cancelAllRequests();
     myStatusUpdateAlarm.addRequest(() -> {
       if (!myProject.isDisposed()) {
@@ -1731,7 +1732,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @NotNull
-    protected String getStatusText() {
+    protected @Nls String getStatusText() {
       return JavaDebuggerBundle.message("status.step.over");
     }
 

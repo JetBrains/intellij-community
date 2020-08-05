@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -99,7 +100,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndentAbsolute.setEnabled(enabled);
   }
 
-  private static String getLabelIndentLabel() {
+  private static @Nls String getLabelIndentLabel() {
     return ApplicationBundle.message("editbox.indent.label.indent");
   }
 }

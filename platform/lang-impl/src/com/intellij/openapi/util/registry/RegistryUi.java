@@ -11,11 +11,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -412,6 +414,14 @@ public class RegistryUi implements Disposable {
   @Override
   public void dispose() { }
 
+  private static String[] getOptions(@NotNull RegistryValue value) {
+    String[] options = value.getOptions();
+    for (int i = 0; i < options.length; i++) {
+      options[i] = Strings.trimEnd(options[i], "*");
+    }
+    return options;
+  }
+
   private static class MyRenderer implements TableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
@@ -460,6 +470,12 @@ public class RegistryUi implements Disposable {
               box.setSelected(v.asBoolean());
               box.setBackground(bg);
               return box;
+            }
+            else if (v.isMultiValue()) {
+              String[] options = getOptions(v);
+              ComboBox<String> combo = new ComboBox<>(options);
+              combo.setSelectedItem(v.getSelectedOption());
+              return combo;
             }
             else {
               myComponent.clear();
@@ -515,6 +531,7 @@ public class RegistryUi implements Disposable {
 
     private final JTextField myField = new JTextField();
     private final JCheckBox myCheckBox = new JCheckBox();
+    private ComboBox<String> myComboBox;
     private RegistryValue myValue;
 
     @Override
@@ -532,6 +549,10 @@ public class RegistryUi implements Disposable {
         myCheckBox.setSelected(myValue.asBoolean());
         myCheckBox.setBackground(table.getBackground());
         return myCheckBox;
+      } else if (myValue.isMultiValue()) {
+        myComboBox = new ComboBox<>(getOptions(myValue));
+        myComboBox.setSelectedItem(myValue.getSelectedOption());
+        return myComboBox;
       } else {
         myField.setText(myValue.asString());
         myField.setBorder(null);
@@ -545,6 +566,9 @@ public class RegistryUi implements Disposable {
       if (myValue != null) {
         if (myValue.isBoolean()) {
           setValue(myValue, myCheckBox.isSelected());
+        } else if (myValue.isMultiValue()) {
+          String selected = (String)myComboBox.getSelectedItem();
+          myValue.setSelectedOption(selected);
         } else {
           setValue(myValue, myField.getText().trim());
         }

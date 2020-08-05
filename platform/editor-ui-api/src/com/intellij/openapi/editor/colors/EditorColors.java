@@ -29,16 +29,20 @@ public interface EditorColors {
   ColorKey SELECTED_INDENT_GUIDE_COLOR = ColorKey.createColorKey("SELECTED_INDENT_GUIDE");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
-  ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" :  "ScrollBar.thumbColor");
-  ColorKey SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.hoverThumbColor" :  "ScrollBar.hoverThumbColor");
+  ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" : "ScrollBar.thumbColor");
+  ColorKey SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR =
+    ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.hoverThumbColor" : "ScrollBar.hoverThumbColor");
 
   TextAttributesKey TAB_SELECTED = TextAttributesKey.createTextAttributesKey("TAB_SELECTED");
   TextAttributesKey TAB_SELECTED_INACTIVE = TextAttributesKey.createTextAttributesKey("TAB_SELECTED_INACTIVE");
   ColorKey TAB_UNDERLINE = ColorKey.createColorKey("TAB_UNDERLINE");
   ColorKey TAB_UNDERLINE_INACTIVE = ColorKey.createColorKey("TAB_UNDERLINE_INACTIVE");
 
-  TextAttributesKey REFERENCE_HYPERLINK_COLOR = TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(JBColor.blue, null, JBColor.blue, EffectType.LINE_UNDERSCORE,
-                                                                                                                               Font.PLAIN));
+  ColorKey MODIFIED_TAB_ICON_COLOR = ColorKey.createColorKey("MODIFIED_TAB_ICON");
+
+  TextAttributesKey REFERENCE_HYPERLINK_COLOR = TextAttributesKey
+    .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(JBColor.blue, null, JBColor.blue, EffectType.LINE_UNDERSCORE,
+                                                                  Font.PLAIN));
 
   TextAttributesKey SEARCH_RESULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("SEARCH_RESULT_ATTRIBUTES");
   TextAttributesKey LIVE_TEMPLATE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("LIVE_TEMPLATE_ATTRIBUTES");

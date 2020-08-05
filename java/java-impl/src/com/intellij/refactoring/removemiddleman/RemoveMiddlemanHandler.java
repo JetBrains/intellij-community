@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -91,7 +92,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     new RemoveMiddlemanDialog(field, infos).show();
   }
 
-  private static String getRefactoringNameText() {
+  private static @NlsContexts.DialogTitle String getRefactoringNameText() {
     return RefactorJBundle.message("remove.middleman");
   }
 }

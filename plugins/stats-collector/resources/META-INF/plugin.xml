@@ -51,8 +51,9 @@
                         serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.WebServiceStatus"
-                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider"/>
+    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
+                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
+                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
@@ -91,8 +92,17 @@
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage in EAP builds"/>
 
+    <registryKey key="completion.stats.show.arrows.notification" defaultValue="true"
+                 description="Show notification about arrows if user in corresponding group of A/B experiment"/>
+
     <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
+
+    <registryKey key="stats.collector.analytics.platform.send" defaultValue="false"
+                 description="Send completion logs to Analytics Platform"/>
+
+    <registryKey key="stats.collector.analytics.platform.url" defaultValue="default"
+                 description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
     <preloadingActivity implementation="com.intellij.stats.sender.SenderPreloadingActivity"/>
 
@@ -105,6 +115,9 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.MLRankingLookupUsageDescriptor"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.completion.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
   </extensions>
 
   <applicationListeners>

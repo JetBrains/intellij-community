@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +66,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
-      () -> Messages.setTestDialog(TestDialog.DEFAULT),
+      () -> TestDialogManager.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
       () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
       () -> {
@@ -528,7 +529,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected static AtomicInteger configConfirmationForYesAnswer() {
     final AtomicInteger counter = new AtomicInteger();
-    Messages.setTestDialog(message -> {
+    TestDialogManager.setTestDialog(message -> {
       counter.getAndIncrement();
       return Messages.YES;
     });
@@ -537,7 +538,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected static AtomicInteger configConfirmationForNoAnswer() {
     final AtomicInteger counter = new AtomicInteger();
-    Messages.setTestDialog(message -> {
+    TestDialogManager.setTestDialog(message -> {
       counter.getAndIncrement();
       return Messages.NO;
     });

@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,7 +30,8 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected Module createMainModule() throws IOException {
     String root = PluginPathManager.getPluginHomePath("java-i18n") + "/testData/performance/" + getTestName(true);
-    VirtualFile tempProjectRootDir = PsiTestUtil.createTestProjectStructure(myProject, null, root, myFilesToDelete, false);
+    VirtualFile tempProjectRootDir = createTestProjectStructure(null, root, false, getTempDir());
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     Module module = loadAllModulesUnder(tempProjectRootDir);
     return module != null ? module : super.createMainModule();
   }

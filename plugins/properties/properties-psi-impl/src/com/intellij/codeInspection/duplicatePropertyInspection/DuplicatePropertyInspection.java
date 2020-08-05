@@ -2,21 +2,13 @@
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalSimpleInspectionTool;
-import com.intellij.codeInspection.HTMLComposer;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
@@ -40,22 +32,12 @@ import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import org.jetbrains.annotations.NotNull;
+import java.util.*;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   public boolean CURRENT_FILE = true;
@@ -134,11 +116,11 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return;
-    final GlobalSearchScope scope = CURRENT_FILE
+    final GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(CURRENT_FILE
                                     ? GlobalSearchScope.fileScope(file)
                                     : MODULE_WITH_DEPENDENCIES
                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
-                                      : GlobalSearchScope.projectScope(file.getProject());
+                                      : GlobalSearchScope.projectScope(file.getProject()), PropertiesFileType.INSTANCE);
     final Map<String, Set<PsiFile>> processedValueToFiles = Collections.synchronizedMap(new HashMap<>());
     final Map<String, Set<PsiFile>> processedKeyToFiles = Collections.synchronizedMap(new HashMap<>());
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();

@@ -46,6 +46,7 @@ public final class EditorListenerTracker {
           // app level listener
           String name = listener.getClass().getName();
           return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
+                 name.startsWith("com.intellij.model.BranchServiceImpl$") ||
                  name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
         });
         if (!afterList.isEmpty()) {

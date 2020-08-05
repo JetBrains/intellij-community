@@ -25,6 +25,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -52,6 +53,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,7 +256,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             if (!reportedContainers.contains(container)) {
               String message = JavaRefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
-              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, StringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -270,7 +272,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               String message = JavaRefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));
-              conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(container, StringUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
@@ -373,6 +375,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       addField(usages);
       delegateMethods();
       addImplementingInterfaces();
+      updateSealedHierarchy();
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -583,6 +586,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+  }
+
+  private void updateSealedHierarchy() {
+    if (!myBaseClass.hasModifierProperty(PsiModifier.SEALED)) return;
+    ClassUtils.removeFromPermitsList(myBaseClass, myClass);
+    PsiModifierList modifiers = myClass.getModifierList();
+    if (modifiers == null) return;
+    if (!modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) || ClassUtils.hasSealedParent(myClass)) return;
+    modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
   }
 
   private void addField(UsageInfo[] usages) throws IncorrectOperationException {

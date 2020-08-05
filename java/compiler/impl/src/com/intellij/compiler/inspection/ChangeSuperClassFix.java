@@ -69,7 +69,12 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
   @Override
   public String getName() {
-    return String.format("Make " + (myImplements ? "implements" : "extends") + " '%s'", myNewSuperName);
+    if (myImplements) {
+      return JavaCompilerBundle.message("intention.name.make.implements", myNewSuperName);
+    }
+    else {
+      return JavaCompilerBundle.message("intention.name.make.extends", myNewSuperName);
+    }
   }
 
   @NotNull

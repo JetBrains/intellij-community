@@ -49,8 +49,8 @@ object FeatureUsageLogger {
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
-  fun logState(group: EventLogGroup, action: String) {
-    loggerProvider.logger.logAsync(group, action, true)
+  fun logState(group: EventLogGroup, action: String): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, true)
   }
 
   /**

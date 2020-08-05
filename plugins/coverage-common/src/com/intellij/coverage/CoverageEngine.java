@@ -279,7 +279,7 @@ public abstract class CoverageEngine {
                                     int endOffset,
                                     @Nullable LineData lineData) {
     final int hits = lineData == null ? 0 : lineData.getHits();
-    return "Hits: " + hits;
+    return CoverageBundle.message("hits.title", hits);
   }
 
   public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -48,7 +49,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       return;
     }
 
-    final List<String> errorMessages = new ArrayList<>();
+    final List<@Nls String> errorMessages = new ArrayList<>();
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final List<PluginId> notInstalled = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
@@ -56,7 +57,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
       if (plugin == null) {
-        errorMessages.add("Plugin '" + dependency.getPluginId() + "' required for '" + project.getName() + "' project isn't installed.");
+        errorMessages.add(IdeBundle.message("error.plugin.required.for.project.not.installed", dependency.getPluginId(), project.getName()));
         notInstalled.add(pluginId);
         continue;
       }
@@ -77,7 +78,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
           }
         }
         if (!canEnableWithoutRestart) {
-          errorMessages.add("Plugin '" + plugin.getName() + "' required for '" + project.getName() + "' project is disabled.");
+          errorMessages.add(IdeBundle.message("error.plugin.required.for.project.disabled", plugin.getName(), project.getName()));
           disabled.add(plugin);
         }
         continue;
@@ -90,22 +91,18 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
         String pluginFromString = PluginManagerCore.CORE_ID == plugin.getPluginId() ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
-          errorMessages.add("Project '" + project.getName() + "' requires " + pluginFromString +
-                            "'" + minVersion + "' or newer build of the IDE, but the current build is '" + pluginVersion + "'.");
+          errorMessages.add(IdeBundle.message("error.project.requires.newer.ide", project.getName(), pluginFromString, minVersion, pluginVersion));
         }
         if (maxVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(maxVersion)) > 0) {
-          errorMessages.add("Project '" + project.getName() + "' requires " + pluginFromString +
-                            "'" + maxVersion + "' or older build of the IDE, but the current build is '" + pluginVersion + "'.");
+          errorMessages.add(IdeBundle.message("error.project.requires.older.ide", project.getName(), pluginFromString, maxVersion, pluginVersion));
         }
       }
       else {
         if (minVersion != null && VersionComparatorUtil.compare(pluginVersion, minVersion) < 0) {
-          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + minVersion + "' or higher, but '" +
-                            pluginVersion + "' is installed.");
+          errorMessages.add(IdeBundle.message("error.project.requires.newer.plugin", project.getName(), plugin.getName(), minVersion, pluginVersion));
         }
         if (maxVersion != null && VersionComparatorUtil.compare(pluginVersion, maxVersion) > 0) {
-          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + maxVersion + "' or lower, but '" +
-                            pluginVersion + "' is installed.");
+          errorMessages.add(IdeBundle.message("error.project.requires.older.plugin", project.getName(), plugin.getName(), maxVersion, pluginVersion));
         }
       }
     }
