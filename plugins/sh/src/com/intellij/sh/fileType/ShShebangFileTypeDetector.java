@@ -14,7 +14,9 @@ import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
@@ -27,22 +29,21 @@ import java.util.Set;
 @Service
 public final class ShShebangFileTypeDetector implements DocumentListener, Disposable {
   private static final Set<String> KNOWN_SHELLS = ContainerUtil.set("sh", "zsh", "bash");
-  private final Project myProject;
-
-  public ShShebangFileTypeDetector(Project project) {
-    myProject = project;
-  }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    Project project = ProjectUtil.guessProjectForFile(virtualFile);
+    if (project == null) return;
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = psiDocumentManager.getPsiFile(document);
     if (!(psiFile instanceof PsiPlainTextFile)) return;
     TextRange textRange = TextRange.create(document.getLineStartOffset(0), document.getLineEndOffset(0));
     String firstLine = document.getText(textRange);
     String interpreter = ShShebangParserUtil.detectInterpreter(firstLine);
     if (interpreter != null && KNOWN_SHELLS.contains(interpreter)) {
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+      psiDocumentManager.performLaterWhenAllCommitted(() -> {
         ApplicationManager.getApplication().runWriteAction(() -> {
           FileTypeManager.getInstance().removeAssociation(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(psiFile.getName()));
           FileDocumentManager.getInstance().saveDocument(document);
