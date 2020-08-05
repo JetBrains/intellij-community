@@ -64,7 +64,7 @@ internal class CoroutineSuspenderElement(active: Boolean)
   : AbstractCoroutineContextElement(CoroutineSuspenderElementKey),
     CoroutineSuspender {
 
-  private val myState: AtomicReference<CoroutineSuspenderState> = AtomicReference<CoroutineSuspenderState>(
+  private val myState: AtomicReference<CoroutineSuspenderState> = AtomicReference(
     if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE
   )
 
