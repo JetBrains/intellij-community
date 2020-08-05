@@ -81,15 +81,15 @@ class TestDirectory extends TestPackage {
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
     final String dirName = getConfiguration().getPersistentData().getDirName();
     if (dirName == null || dirName.isEmpty()) {
-      throw new RuntimeConfigurationError("Directory is not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("directory.is.not.specified.error.message"));
     }
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new RuntimeConfigurationError("Directory '" + dirName + "' is not found");
+      throw new RuntimeConfigurationError(JUnitBundle.message("directory.0.is.not.found.error.message", dirName));
     }
     final Module module = getConfiguration().getConfigurationModule().getModule();
     if (module == null) {
-      throw new RuntimeConfigurationError("Module to choose classpath from is not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("module.to.choose.classpath.not.specified.error.message"));
     }
   }
 
