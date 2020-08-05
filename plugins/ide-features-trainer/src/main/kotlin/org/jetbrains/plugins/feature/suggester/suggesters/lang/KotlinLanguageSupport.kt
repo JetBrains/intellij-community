@@ -1,16 +1,11 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
-import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findDescendantOfType
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
 class KotlinLanguageSupport : LanguageSupport {
-
-    override val supportedLang: Language
-        get() = KotlinLanguage.INSTANCE
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is KtIfExpression

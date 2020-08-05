@@ -1,16 +1,11 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
-import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findDescendantOfType
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.*
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
 class PythonLanguageSupport : LanguageSupport {
-
-    override val supportedLang: Language
-        get() = PythonLanguage.INSTANCE
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PyIfStatement

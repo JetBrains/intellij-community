@@ -1,15 +1,10 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
-import com.intellij.lang.Language
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.util.findDescendantOfType
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
-
-    override val supportedLang: Language
-        get() = JavaLanguage.INSTANCE
 
     override fun isIfStatement(element: PsiElement): Boolean {
         return element is PsiIfStatement

@@ -1,5 +1,5 @@
 <idea-plugin>
     <extensions defaultExtensionNs="org.intellij">
-        <featureSuggester.languageSupport implementation="org.jetbrains.plugins.feature.suggester.suggesters.lang.PythonLanguageSupport"/>
+        <featureSuggester.languageSupport language="Python" implementationClass="org.jetbrains.plugins.feature.suggester.suggesters.lang.PythonLanguageSupport"/>
     </extensions>
 </idea-plugin>

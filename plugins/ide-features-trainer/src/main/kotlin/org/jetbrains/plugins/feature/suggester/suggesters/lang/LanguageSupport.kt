@@ -1,20 +1,22 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 
 interface LanguageSupport {
     companion object {
-        val EP_NAME: ExtensionPointName<LanguageSupport> =
+        val EP_NAME: ExtensionPointName<LanguageExtensionPoint<LanguageSupport>> =
             ExtensionPointName.create("org.intellij.featureSuggester.languageSupport")
 
+        val extensions: List<LanguageExtensionPoint<LanguageSupport>>
+            get() = EP_NAME.extensionList
+
         fun getForLanguage(language: Language): LanguageSupport? {
-            return EP_NAME.extensionList.find { it.supportedLang == language }
+            return extensions.find { it.language == language.id }?.instance
         }
     }
-
-    val supportedLang: Language
 
     fun isIfStatement(element: PsiElement): Boolean
 

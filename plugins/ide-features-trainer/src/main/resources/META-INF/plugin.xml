@@ -16,7 +16,11 @@
 
     <extensionPoints>
         <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester" dynamic="true"/>
-        <extensionPoint name="languageSupport" interface="org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport" dynamic="true"/>
+        <extensionPoint name="languageSupport"
+                        beanClass="com.intellij.lang.LanguageExtensionPoint"
+                        dynamic="true">
+            <with attribute="implementationClass" implements="org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport"/>
+        </extensionPoint>
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.intellij">
