@@ -760,8 +760,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return Collections.emptyList();
     }
 
-    while (sourcePsi.getParent() instanceof PsiPolyadicExpression || sourcePsi.getParent() instanceof PsiParenthesizedExpression) {
-      sourcePsi = sourcePsi.getParent();
+    while (true) {
+      PsiElement psiParent = sourcePsi.getParent();
+      if (psiParent instanceof PsiPolyadicExpression || psiParent instanceof PsiParenthesizedExpression ||
+          (psiParent instanceof PsiConditionalExpression && ((PsiConditionalExpression)psiParent).getCondition() != sourcePsi)) {
+        sourcePsi = psiParent;
+      }
+      else {
+        break;
+      }
     }
 
     PsiExpression passThrough = ExpressionUtils.getPassThroughExpression((PsiExpression)sourcePsi);
