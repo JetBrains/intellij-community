@@ -27,6 +27,7 @@ import com.siyeh.ig.ui.UiUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Element option : node.getChildren("option")) {
-      final String name = option.getAttributeValue("name");
+      final @NonNls String name = option.getAttributeValue("name");
       if ("ignoredTypes".equals(name)) {
         final String ignoredTypesString = option.getAttributeValue("value");
         if (ignoredTypesString != null) {

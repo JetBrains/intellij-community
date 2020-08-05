@@ -66,9 +66,9 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
   }
 
   private static class SideEffectVisitor extends JavaRecursiveElementWalkingVisitor {
-    private String sideEffectDescription;
+    private @Nls String sideEffectDescription;
 
-    private String getSideEffectDescription() {
+    private @Nls String getSideEffectDescription() {
       return sideEffectDescription;
     }
 

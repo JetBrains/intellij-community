@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class FieldNamingConventionInspection extends AbstractNamingConventionIns
   }
 
   static class FieldNamingConventionBean extends NamingConventionBean {
-    FieldNamingConventionBean(String regex, int minLength, int maxLength) {
+    FieldNamingConventionBean(@NonNls String regex, int minLength, int maxLength) {
       super(regex, minLength, maxLength, HardcodedMethodConstants.SERIAL_VERSION_UID);
     }
   }

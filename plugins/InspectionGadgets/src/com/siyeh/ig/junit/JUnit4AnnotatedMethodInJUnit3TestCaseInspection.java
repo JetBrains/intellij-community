@@ -29,6 +29,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -390,8 +391,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull @Nls String getName() {
       return myNewName == null ? getFamilyName()
                                : InspectionGadgetsBundle.message("remove.junit4.test.annotation.and.rename.quickfix", myNewName);
     }

@@ -32,6 +32,8 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends BaseInspection {
@@ -49,8 +51,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
   private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull @Nls String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "compareTo()==0");
     }
 
@@ -62,7 +63,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
       CommentTracker commentTracker = new CommentTracker();
       final String qualifierText = commentTracker.text(check.getLeft(), ParenthesesUtils.METHOD_CALL_PRECEDENCE);
       final String argText = commentTracker.text(check.getRight());
-      String replacement = qualifierText + ".compareTo(" + argText + ")==0";
+      @NonNls String replacement = qualifierText + ".compareTo(" + argText + ")==0";
       if (!check.isLeftDereferenced() && NullabilityUtil.getExpressionNullability(check.getLeft(), true) != Nullability.NOT_NULL) {
         replacement = commentTracker.text(check.getLeft(), ParenthesesUtils.EQUALITY_PRECEDENCE) + "!=null && " + replacement;
       }

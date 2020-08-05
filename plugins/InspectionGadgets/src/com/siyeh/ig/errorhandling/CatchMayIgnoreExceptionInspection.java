@@ -36,6 +36,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ import java.util.Properties;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final String IGNORED_PARAMETER_NAME = "ignored";
+  private static final @NonNls String IGNORED_PARAMETER_NAME = "ignored";
 
   public boolean m_ignoreCatchBlocksWithComments = true;
   public boolean m_ignoreNonEmptyCatchBlock = true;

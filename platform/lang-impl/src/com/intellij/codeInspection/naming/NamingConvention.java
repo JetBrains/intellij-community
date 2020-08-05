@@ -6,6 +6,7 @@ package com.intellij.codeInspection.naming;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
   /**
@@ -23,6 +24,7 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
    *         if tool was already present and merging of settings is required ({@link AbstractNamingConventionMerger}),
    *         short name should be equal to the old tool name
    */
+  @NonNls
   public abstract String getShortName();
 
   /**

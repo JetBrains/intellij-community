@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +64,7 @@ public class BreakConverter {
     return breaks;
   }
 
-  @Nullable
-  private static String getReplacement(PsiStatement statement) {
+  private static @Nullable @NonNls String getReplacement(PsiStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiIfStatement || parent instanceof PsiLabeledStatement) {
       return getReplacement((PsiStatement)parent);

@@ -78,7 +78,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
         boolean wildCardIsUseless = VarianceUtil.wildCardIsUseless(candidate, canBeExtends);
         ProblemHighlightType type = wildCardIsUseless ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        String msg = (canBeExtends
+        @Nls String msg = (canBeExtends
                       ? InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor")
                       : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor")) +
                      (wildCardIsUseless ? " but decided against it" : "");
