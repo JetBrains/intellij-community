@@ -55,7 +55,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       nameStorageCrashed();
     }
     finally {
-      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
+      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
     }
 
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
