@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
@@ -37,6 +39,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
   private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
+  private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
   private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
@@ -71,6 +74,15 @@ public final class ProgressSuspender implements AutoCloseable {
 
   public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
     return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  }
+
+  public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
+    myProgressesInNonSuspendableSections.compute(indicator, ((__, number) -> (number == null ? 0 : number) + 1));
+    try {
+      runnable.run();
+    } finally {
+      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null || number <= 1 ? null : number - 1));
+    }
   }
 
   @Nullable
@@ -140,6 +152,10 @@ public final class ProgressSuspender implements AutoCloseable {
     }
 
     if (isCurrentThreadHoldingKnownLocks()) {
+      return false;
+    }
+
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
       return false;
     }
 
