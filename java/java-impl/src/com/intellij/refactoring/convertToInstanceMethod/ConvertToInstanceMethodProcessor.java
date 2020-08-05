@@ -297,7 +297,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     if (!myTargetClass.isInterface()) {
       result = addMethodToClass(myTargetClass);
       fixVisibility(result, usages);
-      EditorHelper.openInEditor(result);
     }
     else {
       result = addMethodToClass(myTargetClass);
@@ -307,8 +306,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
         modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
       }
       RefactoringUtil.makeMethodAbstract(myTargetClass, result);
-
-      EditorHelper.openInEditor(result);
 
       if (!markAsDefault) {
         for (final PsiClass psiClass : inheritors) {
