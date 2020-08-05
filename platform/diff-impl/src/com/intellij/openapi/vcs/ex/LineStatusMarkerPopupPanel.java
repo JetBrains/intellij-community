@@ -49,25 +49,16 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     myEditorComponent = editorComponent;
     boolean isEditorVisible = myEditorComponent != null;
 
-    Color borderColor = new JBColor(Gray._206, Gray._75);
-
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setBorder(null);
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
-    Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
+    Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
 
     if (additionalInfo != null) {
       toolbarPanel.add(additionalInfo, BorderLayout.EAST);
-    }
-
-    if (myEditorComponent != null) {
-      // default border of EditorFragmentComponent is replaced here with our own.
-      Border outsideEditorBorder = JBUI.Borders.customLine(borderColor, 1);
-      Border insideEditorBorder = JBUI.Borders.empty(2);
-      myEditorComponent.setBorder(BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder));
     }
 
     // 'empty space' to the right of toolbar
@@ -192,11 +183,18 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       uEditor.setBorder(null);
 
       uEditor.setColorsScheme(editor.getColorsScheme());
-      uEditor.setBackgroundColor(EditorFragmentComponent.getBackgroundColor(editor, true));
+      uEditor.setBackgroundColor(getEditorBackgroundColor(editor));
       uEditor.getSettings().setCaretRowShown(false);
 
       uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
       uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
+    });
+
+    DataManager.registerDataProvider(field, data -> {
+      if (CommonDataKeys.HOST_EDITOR.is(data)) {
+        return field.getEditor();
+      }
+      return null;
     });
 
     return field;
@@ -205,16 +203,25 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   @NotNull
   public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
     JPanel editorComponent = JBUI.Panels.simplePanel(textField);
-    editorComponent.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
-    editorComponent.setBackground(EditorFragmentComponent.getBackgroundColor(editor, true));
-
-    DataManager.registerDataProvider(editorComponent, data -> {
-      if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return textField.getEditor();
-      }
-      return null;
-    });
+    editorComponent.setBorder(createEditorFragmentBorder());
+    editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
+  }
+
+  @NotNull
+  public static Border createEditorFragmentBorder() {
+    Border outsideEditorBorder = JBUI.Borders.customLine(getBorderColor(), 1);
+    Border insideEditorBorder = JBUI.Borders.empty(2);
+    return BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder);
+  }
+
+  public static Color getEditorBackgroundColor(@NotNull Editor editor) {
+    return EditorFragmentComponent.getBackgroundColor(editor, true);
+  }
+
+  @NotNull
+  public static Color getBorderColor() {
+    return new JBColor(Gray._206, Gray._75);
   }
 
   @NotNull

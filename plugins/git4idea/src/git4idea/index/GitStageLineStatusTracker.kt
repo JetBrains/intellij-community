@@ -23,15 +23,19 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.PeekableIteratorWrapper
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
@@ -39,6 +43,9 @@ import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.*
 import java.util.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.math.max
 
 class GitStageLineStatusTracker(
@@ -405,6 +412,62 @@ class GitStageLineStatusTracker(
       override fun mergeFlags(flags1: StageLineFlags, flags2: StageLineFlags): StageLineFlags =
         StageLineFlags(flags1.isStaged || flags2.isStaged,
                        flags1.isUnstaged || flags2.isUnstaged)
+    }
+
+    override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
+      if (!myTracker.isValid()) return
+      myTracker as GitStageLineStatusTracker
+      range as StagedRange
+
+      if (!range.hasStaged || !range.hasUnstaged) {
+        super.showHintAt(editor, range, mousePosition)
+        return
+      }
+
+      val disposable = Disposer.newDisposable()
+
+      val vcsTextField = createTextField(editor, myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      val stagedTextField = createTextField(editor, myTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+
+      val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
+
+      val actions = createToolbarActions(editor, range, mousePosition)
+      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+
+      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, null, mousePosition, disposable)
+    }
+
+    fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
+      val editorsPanel = JPanel(VerticalLayout(0))
+      editorsPanel.background = LineStatusMarkerPopupPanel.getEditorBackgroundColor(editor)
+      editorsPanel.add(createEditorPane(editor, GitBundle.message("stage.content.staged"), stagedTextField, true))
+      editorsPanel.add(createEditorPane(editor, GitUtil.HEAD, vcsTextField, false))
+      return editorsPanel
+    }
+
+    private fun createEditorPane(editor: Editor, text: String, textField: EditorTextField, topBorder: Boolean): JComponent {
+      val label = JBLabel(text)
+      label.border = JBUI.Borders.emptyBottom(2);
+      label.font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
+      label.foreground = UIUtil.getLabelDisabledForeground()
+
+      val borderColor = LineStatusMarkerPopupPanel.getBorderColor()
+      val outerLineBorder = JBUI.Borders.customLine(borderColor, if (topBorder) 1 else 0, 1, 1, 1)
+      val innerEmptyBorder = JBUI.Borders.empty(2)
+      val border = BorderFactory.createCompoundBorder(outerLineBorder, innerEmptyBorder)
+
+      return JBUI.Panels.simplePanel(textField)
+        .addToTop(label)
+        .withBackground(LineStatusMarkerPopupPanel.getEditorBackgroundColor(editor))
+        .withBorder(border)
+    }
+
+    private fun createTextField(editor: Editor, document: Document, line1: Int, line2: Int): EditorTextField {
+      val textRange = DiffUtil.getLinesRange(document, line1, line2)
+      val content = textRange.subSequence(document.immutableCharSequence).toString()
+      val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.project, textField, document, textRange, fileType)
+      return textField
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
