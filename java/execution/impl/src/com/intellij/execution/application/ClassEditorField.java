@@ -26,11 +26,13 @@ import java.awt.event.KeyEvent;
 
 public final class ClassEditorField extends EditorTextField {
 
-  public static ClassEditorField createClassField(Project project, Computable<? extends Module> moduleSelector) {
+  public static ClassEditorField createClassField(Project project,
+                                                  Computable<? extends Module> moduleSelector,
+                                                  JavaCodeFragment.VisibilityChecker visibilityChecker) {
     PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     JavaCodeFragment fragment = factory.createReferenceCodeFragment("", defaultPackage, true, true);
-    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE);
+    fragment.setVisibilityChecker(visibilityChecker);
     Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
 
     ClassEditorField field = new ClassEditorField(document, project, JavaFileType.INSTANCE);

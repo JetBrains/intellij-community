@@ -61,7 +61,11 @@ public class ConfigurationModuleSelector {
     this(project, modulesDescriptionsComboBox, NO_MODULE_TEXT);
   }
 
-  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox, String emptySelectionText) {
+  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, NO_MODULE_TEXT);
+  }
+
+  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox, String emptySelectionText) {
     myProject = project;
     myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
     myModulesList = null;
