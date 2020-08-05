@@ -72,7 +72,7 @@ class ClassPatternsPanel extends JPanel {
         myTable.repaint();
       })
       .setRemoveActionUpdater(e -> myTable.getSelectedRow() >= 0);
-    add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
+    add(SeparatorFactory.createSeparator(JavaBundle.message("class.patterns.separator.mark.code.as.entry.point.if.qualified.name.matches"), null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     add(new MultiLineLabel("Leave method blank to represent constructors\n" +
                            "Any * will match against one or more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
@@ -142,7 +142,7 @@ class ClassPatternsPanel extends JPanel {
       final String subst = pattern.method.replace("*", "");
       if (!subst.isEmpty()) {
         if (!nameHelper.isIdentifier(subst)) {
-          return "Method pattern '" + pattern.method + "' must be a valid java identifier, only '*' are accepted as placeholders";
+          return JavaBundle.message("class.patterns.error.method.pattern.0.must.be.a.valid.java.identifier", pattern.method);
         }
       }
     }
@@ -159,7 +159,7 @@ class ClassPatternsPanel extends JPanel {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      String errorMessage = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
+      String errorMessage = JavaBundle.message("class.patterns.error.class.pattern.0.must.be.a.valid.java.qualifier");
       if (inputString.startsWith(".")) return errorMessage;
       final String qName = inputString.replace("*", "").replace(".", "");
       return !StringUtil.isEmpty(qName) && !myNameHelper.isQualifiedName(qName) ? errorMessage : null;
