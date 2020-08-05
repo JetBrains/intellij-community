@@ -85,7 +85,9 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
                      message("remote.dialog.add.remote"),
                      message("remotes.dialog.cannot.add.remote.error.message", dialog.remoteName, dialog.remoteUrl),
                      repository, rebuildTreeOnSuccess) {
-        git.addRemote(repository, dialog.remoteName, dialog.remoteUrl)
+        arrayListOf<GitCommandResult>().apply {
+          add(git.addRemote(repository, dialog.remoteName, dialog.remoteUrl))
+        }
       }
     }
   }
@@ -95,7 +97,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     val remote = remoteNode.remote
     val repository = remoteNode.repository
 
-    removeRemote(git, repository, remote, rootPane, rebuildTreeOnSuccess)
+    removeRemotes(git, repository, setOf(remote), rootPane, rebuildTreeOnSuccess)
   }
 
   private fun editRemote() {
@@ -113,7 +115,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       val fontMetrics = table.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD))
       val nameWidth = fontMetrics.stringWidth(node.getPresentableString())
       val remote = (node as? RemoteNode)?.remote
-      val urlWidth = if (remote == null) 0 else fontMetrics.stringWidth(getUrl(remote))
+      val urlWidth = if (remote == null) 0 else fontMetrics.stringWidth(remote.url)
       if (maxNameWidth < nameWidth) maxNameWidth = nameWidth
       if (maxUrlWidth < urlWidth) maxUrlWidth = urlWidth
     }
@@ -196,7 +198,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       when {
         columnIndex == NAME_COLUMN -> return node
         node is RepoNode -> return ""
-        node is RemoteNode -> return getUrl(node.remote)
+        node is RemoteNode -> return node.remote.url
         else -> {
           LOG.error("Unexpected position at row $rowIndex and column $columnIndex")
           return ""
@@ -222,22 +224,26 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   }
 }
 
-fun removeRemote(git: Git, repository: GitRepository, remote: GitRemote, parent: Component? = null, onSuccess: () -> Unit = {}) {
+fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, parent: Component? = null, onSuccess: () -> Unit = {}) {
   if (YES == showYesNoDialog(if (parent == null) parent else repository.project,
-                             message("remotes.dialog.remove.remote.message", remote.name, getUrl(remote)),
-                             message("remotes.dialog.remove.remote.title"), getQuestionIcon())) {
-    runInModalTask(message("remotes.dialog.removing.remote.progress"),
-                   message("remotes.dialog.removing.remote.error.title"),
-                   message("remotes.dialog.removing.remote.error.message", remote),
+                             message("remotes.dialog.remove.remote.message", remotes.size, remotes.toStringRepresentation()),
+                             message("remotes.dialog.remove.remote.title", remotes.size), getQuestionIcon())) {
+    runInModalTask(message("remotes.dialog.removing.remote.progress", remotes.size),
+                   message("remotes.dialog.removing.remote.error.title", remotes.size),
+                   message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()), //FIXME
                    repository, onSuccess) {
-      git.removeRemote(repository, remote)
+      arrayListOf<GitCommandResult>().apply {
+        for (remote in remotes) {
+          add(git.removeRemote(repository, remote))
+        }
+      }
     }
   }
 }
 
 fun editRemote(git: Git, repository: GitRepository, remote: GitRemote, onSuccess: () -> Unit = {}) {
   val oldName = remote.name
-  val oldUrl = getUrl(remote)
+  val oldUrl = remote.url
   val dialog = GitDefineRemoteDialog(repository, git, oldName, oldUrl)
   if (dialog.showAndGet()) {
     val newRemoteName = dialog.remoteName
@@ -247,12 +253,17 @@ fun editRemote(git: Git, repository: GitRepository, remote: GitRemote, onSuccess
                    message("remotes.changing.remote.error.title"),
                    message("remotes.changing.remote.error.message", oldName, newRemoteName, newRemoteUrl),
                    repository, onSuccess) {
-      changeRemote(git, repository, oldName, oldUrl, newRemoteName, newRemoteUrl)
+      arrayListOf<GitCommandResult>().apply {
+        add(changeRemote(git, repository, oldName, oldUrl, newRemoteName, newRemoteUrl))
+      }
     }
   }
 }
 
-private fun getUrl(remote: GitRemote) = remote.urls.firstOrNull() ?: ""
+private val GitRemote.url: String get() = urls.firstOrNull() ?: ""
+
+private fun Set<GitRemote>.toStringRepresentation() =
+  if (size == 1) with(first()){"$name '$url'"} else "\n${joinToString(separator = "\n") {"${it.name} '${it.url}'" }}"
 
 private fun changeRemote(git: Git, repo: GitRepository, oldName: String, oldUrl: String, newName: String, newUrl: String): GitCommandResult {
   var result : GitCommandResult? = null
@@ -271,19 +282,21 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
                            @Nls(capitalization = Nls.Capitalization.Sentence) errorMessage: String,
                            repository: GitRepository,
                            onSuccess: () -> Unit,
-                           operation: () -> GitCommandResult) {
+                           operation: () -> List<GitCommandResult>?) {
   ProgressManager.getInstance().run(object : Task.Modal(repository.project, title, true) {
-    private var result: GitCommandResult? = null
+    private var results: List<GitCommandResult>? = null
 
     override fun run(indicator: ProgressIndicator) {
-      result = operation()
+      results = operation()
       repository.update()
     }
 
     override fun onSuccess() {
       onSuccess()
-      if (result == null || !result!!.success()) {
-        val errorDetails = if (result == null) message("remotes.operation.not.executed.message") else result!!.errorOutputAsJoinedString
+      if (results == null || results!!.any { !it.success() }) {
+        val errorDetails =
+          if (results == null) message("remotes.operation.not.executed.message")
+          else results!!.joinToString(separator = "\n") { it.errorOutputAsJoinedString }
         val message = message("remotes.operation.error.message", errorMessage, repository, errorDetails)
         LOG.warn(message)
         showErrorDialog(myProject, message, errorTitle)

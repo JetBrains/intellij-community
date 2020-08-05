@@ -28,7 +28,7 @@ import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.isRemoteBranchProtected
 import git4idea.remote.editRemote
-import git4idea.remote.removeRemote
+import git4idea.remote.removeRemotes
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -51,9 +51,11 @@ internal object BranchesDashboardActions {
       BranchActionsBuilder(project, tree).build()?.getChildren(e) ?: AnAction.EMPTY_ARRAY
   }
 
-  class MultipleLocalBranchActions : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
+  class MultipleLocalBranchActions(private val containsRemoteBranches: Boolean, private val repository: GitRepository) : ActionGroup(), DumbAware {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+      val commonActions: Array<AnAction> = arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
+      return if (containsRemoteBranches) commonActions + arrayOf<AnAction>(Separator(), EditRemoteAction(repository), RemoveRemoteAction(repository)) else commonActions
+    }
   }
 
   class CurrentBranchActions(project: Project,
@@ -98,6 +100,12 @@ internal object BranchesDashboardActions {
       arrayListOf<AnAction>(EditRemoteAction(currentRepository), RemoveRemoteAction(currentRepository)).toTypedArray()
   }
 
+  class MultipleGroupActions(private val currentRepository: GitRepository) : ActionGroup(), DumbAware {
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      arrayListOf<AnAction>(RemoveRemoteAction(currentRepository)).toTypedArray()
+  }
+
   class RemoteGlobalActions : ActionGroup(), DumbAware {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
@@ -111,7 +119,7 @@ internal object BranchesDashboardActions {
       val guessRepo = DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project),
                                                            GitVcsSettings.getInstance(project).recentRootPath) ?: return null
       if (multipleBranchSelection) {
-        return MultipleLocalBranchActions()
+        return MultipleLocalBranchActions(selectedBranches.any { !it.isLocal }, guessRepo)
       }
 
       val branchInfo = selectedBranches.singleOrNull()
@@ -126,6 +134,9 @@ internal object BranchesDashboardActions {
       val selectedRemotes = tree.getSelectedRemotes()
       if (selectedRemotes.size == 1) {
         return GroupActions(guessRepo)
+      }
+      else if (selectedRemotes.isNotEmpty()) {
+        return MultipleGroupActions(guessRepo)
       }
 
       val selectedBranchNodes = tree.getSelectedBranchNodes()
@@ -394,10 +405,14 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class RemoveRemoteAction(private val repository: GitRepository) : RemoteActionBase(repository, messagePointer("action.Git.Log.Remove.Remote.text")) {
+  class RemoveRemoteAction(private val repository: GitRepository) : RemoteActionBase(repository) {
+
+    override fun update(e: AnActionEvent, project: Project, remoteNames: Set<String>) {
+      e.presentation.text = message("action.Git.Log.Remove.Remote.text", remoteNames.size)
+    }
 
     override fun doAction(e: AnActionEvent, project: Project, remotes: Set<GitRemote>) {
-      removeRemote(service(), repository, remotes.first())
+      removeRemotes(service(), repository, remotes)
     }
   }
 
