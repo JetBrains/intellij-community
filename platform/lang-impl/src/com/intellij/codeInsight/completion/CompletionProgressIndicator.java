@@ -305,15 +305,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
-      if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
+        if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
-      //noinspection deprecation
-      String s = contributor.advertise(parameters);
-      if (s != null) {
-        addAdvertisement(s, null);
+        //noinspection deprecation
+        String s = contributor.advertise(parameters);
+        if (s != null) {
+          addAdvertisement(s, null);
+        }
       }
-    }
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
   }
 
   private boolean isOutdated() {
