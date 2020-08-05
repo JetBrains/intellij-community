@@ -105,7 +105,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
         val repoService: RepositoryService = client.repoService
         val prKey = projectComboBoxModel.selected!!.key
         try {
-          val repository = repoService.createNewRepository(prKey,
+          val repository = repoService.createNewRepository(prKey.identifier,
                                                            repoNameField.text,
                                                            repoDescription.text.orEmpty(),
                                                            initialize = false) // always create empty repo
