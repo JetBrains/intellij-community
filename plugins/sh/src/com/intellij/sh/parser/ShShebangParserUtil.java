@@ -52,7 +52,7 @@ public final class ShShebangParserUtil {
   }
 
   @Nullable
-  public static String detectInterpreter(@Nullable String shebang) {
+  private static String detectInterpreter(@Nullable String shebang) {
     if (shebang == null || !shebang.startsWith(PREFIX)) return null;
 
     String interpreterPath = getInterpreterPath(shebang.substring(PREFIX.length()).trim());
@@ -76,5 +76,10 @@ public final class ShShebangParserUtil {
   private static String trimKnownExt(@NotNull String name) {
     String ext = PathUtil.getFileExtension(name);
     return ext != null && KNOWN_EXTENSIONS.contains(ext) ? name.substring(0, name.length() - ext.length() - 1) : name;
+  }
+
+  @TestOnly
+  static String getInterpreter(@Nullable String shebang) {
+    return detectInterpreter(shebang);
   }
 }
