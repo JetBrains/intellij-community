@@ -39,6 +39,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -1198,14 +1199,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @ApiStatus.Internal
   public static final class TextIndexQuery {
     @NotNull
-    private final Collection<IdIndexEntry> idIndexEntries;
+    private final Set<IdIndexEntry> idIndexEntries;
     @NotNull
-    private final Collection<Integer> trigrams;
+    private final Set<Integer> trigrams;
     @Nullable
     private final Short myContext;
 
-    private TextIndexQuery(@NotNull Collection<IdIndexEntry> idIndexEntries,
-                           @NotNull Collection<Integer> trigrams,
+    private TextIndexQuery(@NotNull Set<IdIndexEntry> idIndexEntries,
+                           @NotNull Set<Integer> trigrams,
                            @Nullable Short context) {
       this.idIndexEntries = idIndexEntries;
       this.trigrams = trigrams;
@@ -1239,7 +1240,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         new FileBasedIndex.AllKeysQuery<>(IdIndex.NAME, idIndexEntries, contextCondition);
 
       if (trigrams.isEmpty()) {
-        // short words doesn't produce trigrams
+        // short words don't produce trigrams
         return Collections.singletonList(idIndexQuery);
       }
 
@@ -1256,8 +1257,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     @NotNull
     public static TextIndexQuery fromWords(@NotNull Collection<String> words, boolean caseSensitively, @Nullable Short context) {
-      Collection<IdIndexEntry> keys = ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively));
-      Collection<Integer> trigrams = new IntOpenHashSet();
+      Set<IdIndexEntry> keys = CollectionFactory.createSmallMemoryFootprintSet(ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively)));
+      Set<Integer> trigrams = new IntOpenHashSet();
       for (String word : words) {
         TrigramBuilder.processTrigrams(word, new TrigramBuilder.TrigramProcessor() {
           @Override
