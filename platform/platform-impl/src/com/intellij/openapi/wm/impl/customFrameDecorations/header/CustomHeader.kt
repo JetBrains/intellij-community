@@ -314,9 +314,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
                         // colorization color balance.
                         var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
                         if (colorizationColorBalance != null) {
-                            // Sanity check, see IDEA-247359:
                             if (colorizationColorBalance > 100) {
-                                LOGGER.error("colorizationColorBalance > 100: $colorizationColorBalance")
+                                // May be caused by custom Windows themes installed.
                                 colorizationColorBalance = 100
                             }
 
