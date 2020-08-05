@@ -781,7 +781,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
     }
 
-    if (local != null) {
+    if (local != null && NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
       PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
       if (codeBlock instanceof PsiCodeBlock) {
         for (PsiElement e : DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, passThrough)) {

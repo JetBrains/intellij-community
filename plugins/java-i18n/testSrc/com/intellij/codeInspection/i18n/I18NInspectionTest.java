@@ -41,6 +41,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testInitializerInAnonymousClass() { doTest(); }
   public void testNonNlsArray() { doTest(); }
   public void testNonNlsEquals() { doTest(); }
+  public void testNonNlsTernary() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
   public void _testConstructorChains() { doTest(); }
