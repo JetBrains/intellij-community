@@ -25,7 +25,7 @@ import java.util.List;
 public final class SignatureParsing {
   private SignatureParsing() { }
   
-  public static class TypeParametersDeclaration {
+  static class TypeParametersDeclaration {
     static final TypeParametersDeclaration EMPTY = new TypeParametersDeclaration(Collections.emptyList());
     
     private final List<TypeParameterDeclaration> myDeclarations;
@@ -84,7 +84,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  public static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
