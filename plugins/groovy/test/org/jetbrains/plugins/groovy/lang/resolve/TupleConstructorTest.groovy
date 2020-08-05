@@ -243,4 +243,16 @@ static void main(String[] args) {
     new Rr<error>(1, true, "", {})</error>
 }"""
   }
+
+  @Test
+  void 'closures in annotation have access to class members'() {
+    highlightingTest """
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(pre = { foo() }, post = { q == 1 })
+class Rr {
+    int q
+    
+    def foo() {}
+}"""
+  }
 }
