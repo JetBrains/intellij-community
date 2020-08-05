@@ -380,7 +380,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(@NotNull GlobalSearchScope searchScope) {
-      Set<VirtualFile> files = new LinkedHashSet<>();
+      Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
       dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 
@@ -398,9 +398,11 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
         PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
-        for (String word : likelyNames) {
-          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
-        }
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(likelyNames),
+                                                                  ProgressIndicatorProvider.getGlobalProgressIndicator(), word -> {
+            helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
+            return true;
+          });
       });
       return files;
     }
