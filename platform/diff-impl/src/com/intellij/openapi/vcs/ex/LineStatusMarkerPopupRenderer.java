@@ -146,7 +146,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     List<DiffFragment> wordDiff = computeWordDiff(range);
 
     installMasterEditorHighlighters(editor, range, wordDiff, disposable);
-    JComponent editorComponent = createEditorComponent(editor, range, wordDiff);
+    EditorTextField textField = createEditorComponent(editor, range, wordDiff);
+    JComponent editorComponent = createEditorComponent(editor, textField);
 
     ActionToolbar toolbar = buildToolbar(editor, range, mousePosition, disposable);
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
@@ -221,20 +222,19 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Nullable
-  private JComponent createEditorComponent(@NotNull Editor editor,
-                                           @NotNull Range range,
-                                           @Nullable List<? extends DiffFragment> wordDiff) {
+  private EditorTextField createEditorComponent(@NotNull Editor editor,
+                                                @NotNull Range range,
+                                                @Nullable List<? extends DiffFragment> wordDiff) {
     if (!range.hasVcsLines()) return null;
 
     TextRange vcsTextRange = getVcsTextRange(range);
     String content = getVcsContent(range).toString();
 
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
-    EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
+    EditorHighlighter highlighter =
+      highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
     highlighter.setText(myTracker.getVcsDocument().getImmutableCharSequence());
     FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
-
-    Color backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, true);
 
     EditorTextField field = new EditorTextField(content);
     field.setBorder(null);
@@ -250,7 +250,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       uEditor.setBorder(null);
 
       uEditor.setColorsScheme(editor.getColorsScheme());
-      uEditor.setBackgroundColor(backgroundColor);
+      uEditor.setBackgroundColor(EditorFragmentComponent.getBackgroundColor(editor, true));
       uEditor.getSettings().setCaretRowShown(false);
 
       uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
@@ -269,18 +269,23 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       }
     });
 
-    JPanel panel = JBUI.Panels.simplePanel(field);
-    panel.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
-    panel.setBackground(backgroundColor);
+    return field;
+  }
 
-    DataManager.registerDataProvider(panel, data -> {
+  @Nullable
+  private static JComponent createEditorComponent(@NotNull Editor editor, @Nullable EditorTextField textField) {
+    if (textField == null) return null;
+    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
+    editorComponent.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
+    editorComponent.setBackground(EditorFragmentComponent.getBackgroundColor(editor, true));
+
+    DataManager.registerDataProvider(editorComponent, data -> {
       if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return field.getEditor();
+        return textField.getEditor();
       }
       return null;
     });
-
-    return panel;
+    return editorComponent;
   }
 
   private static String getFileName(@NotNull Document document) {
