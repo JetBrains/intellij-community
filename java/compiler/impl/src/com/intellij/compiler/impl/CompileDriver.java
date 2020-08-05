@@ -114,7 +114,10 @@ public final class CompileDriver {
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         TaskFuture<?> future = compileInExternalProcess(compileContext, true);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
@@ -131,6 +134,7 @@ public final class CompileDriver {
         ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
         task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
         result.set(exitStatus);
+        buildManager.allowBackgroundTasks();
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
@@ -242,9 +246,7 @@ public final class CompileDriver {
     }
 
     Map<String, List<Artifact>> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
-    final BuildManager buildManager = BuildManager.getInstance();
-    buildManager.cancelAutoMakeTasks(myProject);
-    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+    return BuildManager.getInstance().scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
@@ -404,7 +406,10 @@ public final class CompileDriver {
         return;
       }
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
           compileContext.addMessage(message);
@@ -444,6 +449,7 @@ public final class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
+        buildManager.allowBackgroundTasks();
         compilerCacheManager.flushCaches();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));

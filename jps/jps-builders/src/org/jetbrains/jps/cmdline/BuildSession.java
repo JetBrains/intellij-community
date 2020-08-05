@@ -71,6 +71,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     mySessionId = sessionId;
     myChannel = channel;
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Starting build with ordinal " + (delta == null ? null : delta.getOrdinal()));
+    }
+
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
@@ -361,6 +365,10 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("applyFSEvent ordinal=" + event.getOrdinal());
+    }
+
     final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
@@ -416,6 +424,9 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("updateFsStateOnDisk, ordinal=" + ordinal);
+    }
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
@@ -510,6 +521,9 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       final long savedOrdinal = in.readLong();
       if (savedOrdinal + 1L != currentEventOrdinal) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Discarding FS data: savedOrdinal=" + savedOrdinal + "; currentEventOrdinal=" + currentEventOrdinal);
+        }
         return null;
       }
       return in;
