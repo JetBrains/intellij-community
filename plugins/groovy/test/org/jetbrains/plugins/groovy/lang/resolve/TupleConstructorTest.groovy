@@ -219,4 +219,28 @@ static void main(String[] args) {
     new Rr(actionType: {}, referrerUrl: true, referrerCode: 1)
 }"""
   }
+
+  @Test
+  void 'allProperties do not affect superclasses'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allProperties = true, includeFields = true)
+class NN {
+    public int r
+    String s
+    void setMp(boolean t) {
+
+    }
+}
+
+@groovy.transform.TupleConstructor(allProperties = true, includeSuperFields = true, includeSuperProperties = true)
+class Rr extends NN {
+    Closure actionType
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr("", 1, {})
+    new Rr<error>(1, true, "", {})</error>
+}"""
+  }
 }
