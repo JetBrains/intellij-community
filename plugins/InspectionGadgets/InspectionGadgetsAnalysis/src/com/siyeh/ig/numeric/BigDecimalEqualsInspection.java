@@ -51,7 +51,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
   private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
     @Override
-    public @NotNull @Nls String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "compareTo()==0");
     }
 

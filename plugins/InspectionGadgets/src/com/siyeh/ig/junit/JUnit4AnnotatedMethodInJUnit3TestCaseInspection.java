@@ -394,7 +394,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    public @NotNull @Nls String getName() {
+    public @NotNull String getName() {
       return myNewName == null ? getFamilyName()
                                : InspectionGadgetsBundle.message("remove.junit4.test.annotation.and.rename.quickfix", myNewName);
     }
