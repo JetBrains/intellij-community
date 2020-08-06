@@ -32,6 +32,7 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -80,7 +81,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage").parameterCount(0),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
-  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body|li|ol|ul)>|&\\w+;)*";
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|(</?(html|b|i|body|li|ol|ul)>)*|&\\w+;";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
@@ -381,7 +382,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.gridy ++;
     gc.anchor = GridBagConstraints.NORTHWEST;
     gc.weighty = 1;
-    final JTextField literalPattern = new JTextField(nonNlsLiteralPattern);
+    final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
+                                                              strings -> StringUtil.join(strings, "|"));
+    literalPattern.setText(nonNlsLiteralPattern);
     final FieldPanel nonNlsStringPatternComponent =
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null, 
