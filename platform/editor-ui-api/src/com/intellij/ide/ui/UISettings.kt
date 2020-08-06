@@ -420,6 +420,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.fullPathsInWindowHeader = value
     }
 
+  var enableBorderlessMode: Boolean
+    get() = state.enableBorderlessMode
+    set(value) {
+      state.enableBorderlessMode = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
     if (SystemProperties.`is`("tabs.alphabetical")) {

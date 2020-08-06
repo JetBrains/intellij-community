@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
@@ -65,6 +66,7 @@ private val cdOverrideLaFFont                         get() = CheckboxDescriptor
 private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons                           get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+private val cdEnableBorderlessMode                    get() = CheckboxDescriptor(message("checkbox.enable.borderless.mode"), settings::enableBorderlessMode, groupName = windowOptionGroupName)
 
 // @formatter:on
 
@@ -134,6 +136,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                            settings.fontSize)
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
+        }
+        if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+          fullRow {
+            checkBox(cdEnableBorderlessMode)
+            commentNoWrap(message("checkbox.enable.borderless.mode.comment"))
+              .withLargeLeftGap()
+          }
         }
       }
       titledRow(message("title.accessibility")) {

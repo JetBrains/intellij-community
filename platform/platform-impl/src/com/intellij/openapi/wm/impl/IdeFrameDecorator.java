@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -187,7 +189,21 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     }
   }
 
+  public static boolean isCustomDecorationAvailable() {
+    return SystemInfo.isWindows
+           && SystemProperties.getBooleanProperty("ide.win.frame.decoration", true)
+           && JdkEx.isCustomDecorationSupported();
+  }
+
+  private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();
   public static boolean isCustomDecorationActive() {
-    return SystemInfo.isWindows && SystemProperties.getBooleanProperty("ide.win.frame.decoration", true) && JdkEx.isCustomDecorationSupported();
+    UISettings settings = UISettings.getInstanceOrNull();
+    if (settings == null)
+      return isCustomDecorationAvailable(); // true by default is no settings is available (e.g. during the initial IDE setup wizard)
+
+    // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
+    // of frames already created, and changing this setting during any frame lifetime will cause weird effects).
+    return isCustomDecorationActiveCache.updateAndGet(
+      cached -> cached != null ? cached : isCustomDecorationAvailable() && settings.getEnableBorderlessMode());
   }
 }
