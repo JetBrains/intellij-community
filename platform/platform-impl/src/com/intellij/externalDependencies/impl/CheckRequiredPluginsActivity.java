@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -16,6 +16,8 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
@@ -118,11 +120,12 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
 
     if (!errorMessages.isEmpty()) {
       if (!disabled.isEmpty() && notInstalled.isEmpty()) {
-        String plugins = disabled.size() == 1 ? disabled.get(0).getName() : "required plugins";
-        errorMessages.add("<a href=\"enable\">Enable " + plugins + "</a>");
+        errorMessages.add(HtmlChunk.link("enable", disabled.size() == 1
+                                                   ? IdeBundle.message("link.enable.required.plugin", disabled.get(0).getName())
+                                                   : IdeBundle.message("link.enable.required.plugins")).toString());
       }
       else if (!disabled.isEmpty() || !notInstalled.isEmpty()) {
-        errorMessages.add("<a href=\"install\">Install required plugins</a>");
+        errorMessages.add(HtmlChunk.link("install", IdeBundle.message("link.install.required.plugins")).toString());
       }
       NOTIFICATION_GROUP
         .createNotification(IdeBundle.message("notification.title.required.plugins.weren.t.loaded"), StringUtil.join(errorMessages, "<br>"), NotificationType.ERROR,

@@ -1310,7 +1310,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull String prefix, @Nullable String suffix, boolean deleteOnExit)
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit)
     throws IOException {
     return FileUtilRt.createTempFile(prefix, suffix, deleteOnExit);
   }
