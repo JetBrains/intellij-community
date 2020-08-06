@@ -128,7 +128,7 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
-  private Collection<PluginDownloader> myInitUpdates;
+  private Collection<IdeaPluginDescriptor> myInitUpdates;
 
   public PluginManagerConfigurable() {
   }
@@ -1125,7 +1125,7 @@ public class PluginManagerConfigurable
                 });
               }
 
-              Collection<PluginDownloader> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
+              Collection<IdeaPluginDescriptor> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
               myInitUpdates = null;
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
@@ -1164,9 +1164,8 @@ public class PluginManagerConfigurable
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
-    for (PluginDownloader downloader : updates) {
-      IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<IdeaPluginDescriptor> updates) {
+    for (IdeaPluginDescriptor descriptor : updates) {
       for (UIPluginGroup group : panel.getGroups()) {
         ListPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
@@ -1382,7 +1381,7 @@ public class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
 
-  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<PluginDownloader> updates) {
+  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     configurable.setInitUpdates(updates);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
@@ -1646,7 +1645,7 @@ public class PluginManagerConfigurable
     return myPluginModel;
   }
 
-  public void setInitUpdates(@NotNull Collection<PluginDownloader> initUpdates) {
+  public void setInitUpdates(@NotNull Collection<IdeaPluginDescriptor> initUpdates) {
     myInitUpdates = initUpdates;
   }
 
