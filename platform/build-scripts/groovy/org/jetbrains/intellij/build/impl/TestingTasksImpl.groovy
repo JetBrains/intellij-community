@@ -276,7 +276,11 @@ class TestingTasksImpl extends TestingTasks {
 
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath, remoteDebugging)
 
-    context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+    if (isRunningInBatchMode()) {
+      context.messages.info("Running tests from ${options.batchTestDir} matched by '${options.batchTestIncludes}' pattern.")
+    } else {
+      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+    }
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
     }
@@ -288,7 +292,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
 
     notifySnapshotBuilt(allJvmArgs)
   }
@@ -449,7 +453,13 @@ class TestingTasksImpl extends TestingTasks {
         }
       }
 
-      test(name: options.bootstrapSuite)
+      if (isRunningInBatchMode()) {
+        batchtest {
+          fileset dir: options.batchTestDir, includes: options.batchTestIncludes
+        }
+      } else {
+        test(name: options.bootstrapSuite)
+      }
     }
   }
 
@@ -527,6 +537,10 @@ class TestingTasksImpl extends TestingTasks {
 
   protected boolean isBootstrapSuiteDefault() {
     return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
+  }
+
+  protected boolean isRunningInBatchMode() {
+    return options.batchTestDir != null
   }
 
   private List<String> buildCausalProfilingAgentJvmArg(CausalProfilingOptions options) {
