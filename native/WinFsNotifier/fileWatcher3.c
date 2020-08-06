@@ -73,7 +73,8 @@ static bool IsMountPoint(const wchar_t *path)
 }
 
 /* Converts path to correct file system representation, particularly case.
- * Leaves path unchanged in case of error. */
+ * Leaves path unchanged in case of error. If path is on a SUBST drive,
+ * returns the path relative to that drive. */
 static void CanonicalizePath(wchar_t* path)
 {
     DWORD len = 0;
@@ -82,6 +83,7 @@ static void CanonicalizePath(wchar_t* path)
     wchar_t subst[MAX_PATH + 1] = {0};
     wchar_t drive[3] = { path[0], L':', 0 };
     if (path[1] == L':') {
+        /* The path returned in subst will never end with a backslash. */
         QueryDosDeviceW(drive, subst, MAX_PATH + 1);
 
         /* If there is no subst, the function returns the NT path
@@ -277,6 +279,7 @@ static void PrintEverythingChangedUnderRoot(const wchar_t *rootPath) {
 #define EVENT_MASK (FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | \
                     FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE)
 
+/* Attempts to replace the current watch root with a new one above it. */
 static bool RecoverWatchRoot(WatchRoot* root, HANDLE* hRootDir)
 {
 	HANDLE hNew = NULL;
@@ -286,10 +289,14 @@ static bool RecoverWatchRoot(WatchRoot* root, HANDLE* hRootDir)
 	if (AdjustWatchRoot(root->rootPath)) {
 		hNew = CreateFileW(root->rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
 		if (hNew != INVALID_HANDLE_VALUE) {
+
+            /* Generate the DELETE event for the old watch root
+             * that ReadDirectoryChangesW() does not return. */
 			EnterCriticalSection(&csOutput);
 			_putws(L"DELETE");
 			_putws(oldRoot);
 			LeaveCriticalSection(&csOutput);
+
 			CloseHandle(*hRootDir);
 			*hRootDir = hNew;
 			result = true;
