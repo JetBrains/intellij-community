@@ -51,7 +51,6 @@ import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.Future;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -135,7 +134,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        activateVirtualEnv(sdk);
         updateLocalSdkVersionAndPaths(sdk, null, myProject);
         generateSkeletons(sdk, indicator);
         refreshPackages(sdk, indicator);
@@ -343,24 +341,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
     }
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, key, requestData));
-  }
-
-  private static void activateVirtualEnv(@NotNull Sdk sdk) {
-    String sdkHome = sdk.getHomePath();
-    if (PythonSdkUtil.isVirtualEnv(sdkHome) || PythonSdkUtil.isConda(sdkHome)) {
-      final Future<?> updateSdkFeature = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        PySdkUtil.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
-      });
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
-        try {
-          updateSdkFeature.get();
-        }
-        catch (final InterruptedException | java.util.concurrent.ExecutionException e) {
-          throw new AssertionError("Exception thrown while synchronizing with sdk updater ", e);
-        }
-      }
-    }
   }
 
   /**
