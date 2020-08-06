@@ -20,6 +20,7 @@
  */
 package com.intellij.ui.classFilter;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -104,7 +105,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       public void run(AnActionButton button) {
         TableUtil.removeSelectedItems(myTable);
       }
-    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), JavaBundle.message("class.filter.editor.toolbar.button.remove"))
+    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), CommonBundle.message("button.remove"))
           .disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myChooserFilter = classFilter;
