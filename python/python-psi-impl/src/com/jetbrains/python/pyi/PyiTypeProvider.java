@@ -68,20 +68,6 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull PyCallable callable, @NotNull final TypeEvalContext context) {
-    final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
-    if (pythonStub instanceof PyFunction) {
-      return new PyFunctionTypeImpl((PyFunction)pythonStub);
-    }
-    else if (callable.getContainingFile() instanceof PyiFile && callable instanceof PyFunction) {
-      final PyFunction functionStub = (PyFunction)callable;
-      return new PyFunctionTypeImpl(functionStub);
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(function);
 
