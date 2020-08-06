@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -70,8 +71,13 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setText(myFile.getName());
-      presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, e.getProject()));
+      Project project = e.getProject();
+      if (project == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+      presentation.setText(UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile));
+      presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, project));
     }
 
     @Override
