@@ -742,7 +742,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")));
       getTemplatePresentation().setText(focusedSide.select(DiffBundle.message("action.presentation.diff.revert.text"),
                                                            DiffBundle.message("action.presentation.diff.accept.text")));
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Revert, AllIcons.Actions.Checked));
     }
 
     @Override

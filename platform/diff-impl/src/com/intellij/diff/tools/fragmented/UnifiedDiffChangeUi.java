@@ -96,7 +96,7 @@ public class UnifiedDiffChangeUi {
       if (!myViewer.isEditable(sourceSide.other(), true)) return null;
 
       if (sourceSide.isLeft()) {
-        return createIconRenderer(sourceSide, DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Remove);
+        return createIconRenderer(sourceSide, DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Revert);
       }
       else {
         return createIconRenderer(sourceSide, DiffBundle.message("action.presentation.diff.accept.text"), AllIcons.Actions.Checked);
