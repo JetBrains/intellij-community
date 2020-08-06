@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
@@ -41,7 +40,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Font
-import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
@@ -203,9 +201,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   }
 
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
-    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }
+    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
+    fontSizes.add(fontProperty.get());
     val model = DefaultComboBoxModel(fontSizes.toTypedArray())
-    model.addElement(fontProperty.get())
     return comboBox(model, fontProperty).applyToComponent {
       isEditable = true
     }
