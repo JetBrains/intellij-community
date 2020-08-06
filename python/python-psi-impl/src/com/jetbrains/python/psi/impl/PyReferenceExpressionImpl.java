@@ -19,7 +19,6 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -35,7 +34,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
 
 /**
  * Implements reference expression PSI.
@@ -239,7 +238,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return descriptorType.get();
     }
 
-    final PyType callableType = getCallableType(context);
+    final PyType callableType = getCallableType(context, key);
     if (callableType != null) {
       return callableType;
     }
@@ -248,25 +247,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getCallableType(@NotNull TypeEvalContext context) {
+  private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      List<PyCallableType> callableTypes = new ArrayList<>();
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-
-      for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(this, resolveContext)) {
-        for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(callExpression, resolveResult, resolveContext)) {
-          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context);
-          if (callableType == null) continue;
-
-          callableTypes.add(callableType);
-        }
-      }
-
-      PyType resolvedType =
-        PyUnionType.union(forEveryScopeTakeOverloadsOtherwiseImplementations(callableTypes, PyCallableType::getCallable, context)
-                            .collect(Collectors.toList())
-        );
+      PyType resolvedType = getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context), key);
 
       if (PyTypeUtil
             .toStream(resolvedType)
