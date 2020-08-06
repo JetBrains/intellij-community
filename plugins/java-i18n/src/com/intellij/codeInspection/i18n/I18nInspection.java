@@ -833,9 +833,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           if (shouldIgnoreUsage(project, value, nonNlsTargets, usage)) {
             break;
           }
-          if (isSuppressedByComment(project, expression)) {
-            return NlsInfo.nonLocalized();
-          }
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
