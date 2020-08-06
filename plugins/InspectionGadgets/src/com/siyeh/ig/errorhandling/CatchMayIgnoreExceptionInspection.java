@@ -198,7 +198,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   static class IgnoredExceptionVisitor extends SideEffectVisitor {
     private final @NotNull PsiParameter myParameter;
     private final @NotNull PsiCodeBlock myBlock;
-    private final @NotNull List<PsiMethod> myMethods;
+    @NonNls private final @NotNull List<PsiMethod> myMethods;
     private final @NotNull DfaVariableValue myExceptionVar;
 
     IgnoredExceptionVisitor(@NotNull PsiParameter parameter,

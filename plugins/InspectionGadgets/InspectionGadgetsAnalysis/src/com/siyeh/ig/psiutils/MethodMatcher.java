@@ -36,7 +36,7 @@ public class MethodMatcher {
     this(false, "METHOD_MATCHER_CONFIG");
   }
 
-  public MethodMatcher(boolean writeDefaults, String optionName) {
+  public MethodMatcher(boolean writeDefaults, @NonNls String optionName) {
     myWriteDefaults = writeDefaults;
     myOptionName = optionName;
   }

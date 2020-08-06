@@ -330,7 +330,7 @@ public final class MethodCallUtils {
   }
 
   public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, boolean considerStaticFinalConstant,
-                                                  String className, String... methodNames) {
+                                                  @NonNls String className, @NonNls String... methodNames) {
     final String methodName = getMethodName(expression);
     boolean found = false;
     for (String name : methodNames) {

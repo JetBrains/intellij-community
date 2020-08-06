@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.CommonClassNames;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 public class JavaPsiBoxingUtils {
 
-  private static final Map<String, String> parseMethodsMap = new HashMap<>();
+  private static final @NonNls Map<String, String> parseMethodsMap = new HashMap<>();
 
   static {
     parseMethodsMap.put(CommonClassNames.JAVA_LANG_INTEGER, "parseInt");

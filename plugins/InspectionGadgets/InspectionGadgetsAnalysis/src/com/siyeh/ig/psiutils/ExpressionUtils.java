@@ -1606,7 +1606,7 @@ public final class ExpressionUtils {
   }
 
   private static boolean hasCharArrayParameter(PsiMethod method) {
-    final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
+    @NonNls final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
     return parameter == null || parameter.getType().equalsToText("char[]");
   }
 
