@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlTag;
@@ -76,7 +77,7 @@ public interface ExtensionPoint extends DomElement {
    *
    * @return {@code PluginID.name} or {@code qualifiedName}.
    */
-  @NotNull
+  @NotNull @NlsSafe
   String getEffectiveQualifiedName();
 
   /**

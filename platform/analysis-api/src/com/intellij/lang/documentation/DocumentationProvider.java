@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
@@ -96,7 +97,7 @@ public interface DocumentationProvider {
    * for the given element
    */
   @Nullable
-  default String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @NlsSafe String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
