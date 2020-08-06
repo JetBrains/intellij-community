@@ -66,6 +66,70 @@ static void AppendString(PrintBuffer *buffer, const wchar_t *str) {
     wcscat_s(buffer->text, buffer->size, str);
 }
 
+static bool IsMountPoint(const wchar_t *path)
+{
+	DWORD attrs = GetFileAttributesW(path);
+	return (attrs == 0 
+			|| (attrs & FILE_ATTRIBUTE_REPARSE_POINT)
+					== FILE_ATTRIBUTE_REPARSE_POINT);
+}
+
+/* Changes the path to the path best suited to watching.
+ * Returns whether this was successful. */
+static bool AdjustWatchRoot(wchar_t *path)
+{
+	struct _stat buffer;
+	bool removed = false;
+	int res = 0;
+
+	memset(&buffer, 0, sizeof(struct _stat));
+	res = _wstat(path, &buffer);
+
+	/* Step 1: Move to the closest existing directory. */
+
+	/* If path is a file, just cut off the name. */
+	if (res == 0 && (buffer.st_mode & _S_IFREG) == _S_IFREG) {
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			PathAddBackslashW(path);
+			return true;
+		}
+		return false;
+	} else if (res != 0 && errno != ENOENT) {
+		return false;
+	}
+
+	/* Remove path elements until reaching an existing directory. */
+	while (res == -1 && errno == ENOENT) {
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			removed = true;
+			res = _wstat(path, &buffer);
+		} else {
+			return false;
+		}
+	}
+
+	/* Step 2: To monitor the original watch-root directory itself
+	 * (for events affecting it, such as renaming or moving), the
+	 * monitored directory must be the parent of the requested. */
+
+	if (!removed && !PathIsRootW(path) && !IsMountPoint(path)) {
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			PathAddBackslashW(path);
+			return true;
+		}
+		return false;
+	}
+
+	PathAddBackslashW(path);
+	return true;
+}
+
 // -- Volume operations ---------------------------------------------------
 
 static bool IsDriveWatchable(const wchar_t *rootPath) {
@@ -169,6 +233,29 @@ static void PrintEverythingChangedUnderRoot(const wchar_t *rootPath) {
 #define EVENT_MASK (FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | \
                     FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE)
 
+static bool RecoverWatchRoot(WatchRoot* root, HANDLE* hRootDir)
+{
+	HANDLE hNew = NULL;
+	bool result = false;
+	wchar_t* oldRoot = _wcsdup(root->rootPath);
+
+	if (AdjustWatchRoot(root->rootPath)) {
+		hNew = CreateFileW(root->rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
+		if (hNew != INVALID_HANDLE_VALUE) {
+			EnterCriticalSection(&csOutput);
+			_putws(L"DELETE");
+			_putws(oldRoot);
+			LeaveCriticalSection(&csOutput);
+			CloseHandle(*hRootDir);
+			*hRootDir = hNew;
+			result = true;
+		}
+	}
+
+	free(oldRoot);
+	return result;
+}
+
 static DWORD WINAPI WatcherThread(void *param) {
 #ifdef __PRINT_STATS
     LARGE_INTEGER t1, t2, t3;
@@ -180,7 +267,7 @@ static DWORD WINAPI WatcherThread(void *param) {
     memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    const wchar_t *rootPath = pRoot->rootPath;
+    wchar_t *rootPath = pRoot->rootPath;
     HANDLE hRootDir = CreateFileW(rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
 
     char buffer[EVENT_BUFFER_SIZE];
@@ -188,6 +275,9 @@ static DWORD WINAPI WatcherThread(void *param) {
     while (true) {
         int rcDir = ReadDirectoryChangesW(hRootDir, buffer, sizeof(buffer), TRUE, EVENT_MASK, NULL, &overlapped, NULL);
         if (rcDir == 0) {
+			if (RecoverWatchRoot(pRoot, &hRootDir)) {
+				continue;
+			}
             pRoot->state = rsFailed;
             break;
         }
@@ -202,6 +292,9 @@ static DWORD WINAPI WatcherThread(void *param) {
 #endif
             DWORD dwBytesReturned;
             if (!GetOverlappedResult(hRootDir, &overlapped, &dwBytesReturned, FALSE)) {
+				if (RecoverWatchRoot(pRoot, &hRootDir)) {
+					continue;
+				}
                 pRoot->state = rsFailed;
                 break;
             }
@@ -301,75 +394,11 @@ static void UpdateRoots(bool report) {
     free(buffer.text);
 }
 
-static bool IsMountPoint(const wchar_t *path)
-{
-	DWORD attrs = GetFileAttributesW(path);
-	return (attrs == 0 
-			|| (attrs & FILE_ATTRIBUTE_REPARSE_POINT)
-					== FILE_ATTRIBUTE_REPARSE_POINT);
-}
-
-/* Changes the path to the path best suited to watching.
- * Returns whether this was successful. */
-static bool AdjustWatchRoot(wchar_t *path)
-{
-	struct _stat buffer;
-	bool removed = false;
-	int res = 0;
-
-	memset(&buffer, 0, sizeof(struct _stat));
-	res = _wstat(path, &buffer);
-
-	/* Step 1: Move to the closest existing directory. */
-
-	/* If path is a file, just cut off the name. */
-	if (res == 0 && (buffer.st_mode & _S_IFREG) == _S_IFREG) {
-		wchar_t *p = wcsrchr(path, L'\\');
-		if (p != NULL) {
-			*p = 0;
-			return true;
-		}
-		return false;
-	} else if (res != 0 && errno != ENOENT) {
-		return false;
-	}
-
-	/* Remove path elements until reaching an existing directory. */
-	while (res == -1 && errno == ENOENT) {
-		wchar_t *p = wcsrchr(path, L'\\');
-		if (p != NULL) {
-			*p = 0;
-			removed = true;
-			res = _wstat(path, &buffer);
-		} else {
-			return false;
-		}
-	}
-
-	/* Step 2: To monitor the original watch-root directory itself
-	 * (for events affecting it, such as renaming or moving), the
-	 * monitored directory must be the parent of the requested. */
-
-	if (!removed && !PathIsRootW(path) && !IsMountPoint(path)) {
-		wchar_t *p = wcsrchr(path, L'\\');
-		if (p != NULL) {
-			*p = 0;
-			return true;
-		}
-		return false;
-	}
-
-	return true;
-}
-
 static void AddWatchRoot(const wchar_t *path) {
     WatchRoot *root = (WatchRoot *)calloc(1, sizeof(WatchRoot));
     root->next = NULL;
 	wcsncpy(root->rootPath, path, MAX_PATH);
 	if (AdjustWatchRoot(root->rootPath)) {
-		if (root->rootPath[wcslen(root->rootPath)-1] != L'\\') {
-			wcscat(root->rootPath, L"\\");
-		}
 		root->hThread = NULL;
 		root->hStopEvent = NULL;
 		root->state = rsOff;
