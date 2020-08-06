@@ -1,0 +1,66 @@
+package records;
+
+public record TestRecordAnno(@RC @TA int x, int y) {
+   public TestRecordAnno(@TA int x, @P int y) {
+      this.x = x;
+      this.y = y;
+   }
+
+   public final String toString() {
+      return this.toString<invokedynamic>(this);
+   }
+
+   public final int hashCode() {
+      return this.hashCode<invokedynamic>(this);
+   }
+
+   public final boolean equals(Object o) {
+      return this.equals<invokedynamic>(this, o);
+   }
+
+   @TA
+   public int x() {
+      return this.x;
+   }
+
+   @M
+   public int y() {
+      return this.y;// 5
+   }
+}
+
+class 'records/TestRecordAnno' {
+   method '<init> (II)V' {
+      6      4
+      b      5
+      e      6
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      9
+      6      9
+   }
+
+   method 'hashCode ()I' {
+      1      13
+      6      13
+   }
+
+   method 'equals (Ljava/lang/Object;)Z' {
+      2      17
+      7      17
+   }
+
+   method 'x ()I' {
+      1      22
+      4      22
+   }
+
+   method 'y ()I' {
+      1      27
+      4      27
+   }
+}
+
+Lines mapping:
+5 <-> 28

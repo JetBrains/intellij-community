@@ -557,8 +557,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
       boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
-      JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readShort(6));
-      LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
+      int majorMinor = reader.readInt(4);
+      LanguageLevel level = ClsParsingUtil.getLanguageLevelFromBytecode(majorMinor & 0xFFFF, (majorMinor >>> 16));
 
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);

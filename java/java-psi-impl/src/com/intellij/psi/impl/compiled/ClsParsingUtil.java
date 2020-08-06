@@ -162,6 +162,19 @@ public final class ClsParsingUtil {
   }
 
   @Nullable
+  public static LanguageLevel getLanguageLevelFromBytecode(int major, int minor) {
+    JavaSdkVersion version = getJdkVersionByBytecode(major);
+    if (version != null) {
+      LanguageLevel level = version.getMaxLanguageLevel();
+      if (minor == 0xFFFF && level.getPreviewLevel() != null) {
+        return level.getPreviewLevel();
+      }
+      return level;
+    }
+    return null;
+  }
+
+  @Nullable
   public static JavaSdkVersion getJdkVersionByBytecode(int major) {
     if (major == Opcodes.V1_1 || major == 45) {
       return JavaSdkVersion.JDK_1_1;
