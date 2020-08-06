@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -98,7 +99,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
               return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
             }
           };
-          ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
+          ui.setHint(JavaBundle.message("generate.getter.setter.header.visibility.hint."));
           ui.selectNodeInTree(templatesManager.getDefaultTemplate());
           if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
             setComboboxModel(templatesManager, comboBox);

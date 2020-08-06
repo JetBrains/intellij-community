@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,7 +173,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
   protected @NlsContexts.HintText String getNothingFoundMessage() {
-    return "Nothing found to insert";
+    return JavaBundle.message("generate.members.nothing.to.insert");
   }
 
   private static void runTemplates(final Project myProject, final Editor editor, final List<? extends TemplateGenerationInfo> templates, final int index) {
