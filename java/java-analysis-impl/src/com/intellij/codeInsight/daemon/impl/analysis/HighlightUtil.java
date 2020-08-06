@@ -15,6 +15,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -268,7 +269,8 @@ public final class HighlightUtil {
             if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
               return true;
             }
-            differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+            differentArgumentsMessage.set(CommonQuickFixBundle.message("fix.x.and.y", pair.first.getPresentableText(),
+                                                                       pair.second.getPresentableText()));
             return false;
           });
         if (sameGenericParameterization != null) {
@@ -668,8 +670,8 @@ public final class HighlightUtil {
       if (vFile != null) {
         final String path = FileUtil.toSystemIndependentName(vFile.getPath());
         String linkText = "<a href=\"#navigation/" + path + ":" + oldVariable.getTextOffset() + "\">" + variable.getName() + "</a>";
-        builder = builder.description(description)
-          .escapedToolTip("<html>" + JavaErrorBundle.message("variable.already.defined", linkText) + "</html>");
+        String tip = CommonQuickFixBundle.message("fix.link", JavaErrorBundle.message("variable.already.defined", linkText));
+        builder = builder.description(description).escapedToolTip(tip);
       }
       else {
         builder = builder.descriptionAndTooltip(description);
@@ -800,7 +802,7 @@ public final class HighlightUtil {
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
     if (highlightType == null) return null;
 
-    String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
+    String description = getUnhandledExceptionsDescriptor(unhandled, JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
     HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
     return highlight;

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -482,13 +483,19 @@ public final class GenericsHighlightUtil {
             continue;
           }
 
-          final String message = unrelatedDefaults != null ? " inherits unrelated defaults for " : " inherits abstract and default for ";
-          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
-            HighlightUtil.formatClass(aClass) +
-            message +
-            JavaHighlightUtil.formatMethod(defaultMethod) + " from types " +
-            (unrelatedDefaults != null ? unrelatedDefaults
-                                       : HighlightUtil.formatClass(defaultMethodContainingClass) + " and " + HighlightUtil.formatClass(unrelatedMethodContainingClass)))
+          final String message;
+          if (unrelatedDefaults == null) {
+            message = JavaErrorBundle.message("text.class.inherits.abstract.and.default", HighlightUtil.formatClass(aClass),
+                                              JavaHighlightUtil.formatMethod(defaultMethod),
+                                              HighlightUtil.formatClass(defaultMethodContainingClass),
+                                              HighlightUtil.formatClass(unrelatedMethodContainingClass));
+          }
+          else {
+            message = JavaErrorBundle.message("text.class.inherits.unrelated.defaults", HighlightUtil.formatClass(aClass),
+                                              JavaHighlightUtil.formatMethod(defaultMethod), unrelatedDefaults);
+          }
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier)
+            .descriptionAndTooltip(message)
             .create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
           return info;
@@ -516,7 +523,8 @@ public final class GenericsHighlightUtil {
       }
 
       if (classes.size() > 1) {
-        return HighlightUtil.formatClass(classes.get(0)) + " and " + HighlightUtil.formatClass(classes.get(1));
+        return CommonQuickFixBundle.message("fix.x.and.y", HighlightUtil.formatClass(classes.get(0)),
+                                            HighlightUtil.formatClass(classes.get(1)));
       }
     }
 
@@ -1312,8 +1320,8 @@ public final class GenericsHighlightUtil {
         resolved instanceof PsiTypeParameterListOwner &&
         ((PsiTypeParameterListOwner)resolved).hasTypeParameters() &&
         !((PsiTypeParameterListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(
-        "Improper formed type; some type parameters are missing").create();
+      final String message = JavaErrorBundle.message("text.improper.formed.type");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message).create();
     }
     return null;
   }
@@ -1344,7 +1352,8 @@ public final class GenericsHighlightUtil {
             }
           }
           if (hiddenClass != null) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(hiddenClass.getName() + " is not accessible in current context").range(ref).create();
+            final String message = JavaErrorBundle.message("text.class.is.not.accessible", hiddenClass.getName());
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).range(ref).create();
           }
         }
       }
@@ -1512,7 +1521,7 @@ public final class GenericsHighlightUtil {
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
-        return "Cannot access " + HighlightUtil.formatClass(aClass);
+        return JavaErrorBundle.message("text.class.cannot.access", HighlightUtil.formatClass(aClass));
       }
 
       if (!checkParameters){
