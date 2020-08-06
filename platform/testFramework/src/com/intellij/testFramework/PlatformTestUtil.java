@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -1037,9 +1038,9 @@ public final class PlatformTestUtil {
       fail("No runner found for: " + executorId + " and " + runConfiguration);
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
-    ExecutionEnvironment executionEnvironment =
-      new ExecutionEnvironment(DefaultRunExecutor.getRunExecutorInstance(), runner, runnerAndConfigurationSettings,
-                               project);
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    assertNotNull("Unable to find executor: " + executorId, executor);
+    ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
