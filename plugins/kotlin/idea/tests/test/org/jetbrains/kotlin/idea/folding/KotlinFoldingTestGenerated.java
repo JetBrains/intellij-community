@@ -121,6 +121,11 @@ public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
             runTest("testData/folding/checkCollapse/functionWithExpressionBody2.kt");
         }
 
+        @TestMetadata("functionWithExpressionBody3.kt")
+        public void testFunctionWithExpressionBody3() throws Exception {
+            runTest("testData/folding/checkCollapse/functionWithExpressionBody3.kt");
+        }
+
         @TestMetadata("headerKDoc.kt")
         public void testHeaderKDoc() throws Exception {
             runTest("testData/folding/checkCollapse/headerKDoc.kt");
