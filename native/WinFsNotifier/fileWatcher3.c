@@ -74,6 +74,51 @@ static bool IsMountPoint(const wchar_t *path)
 					== FILE_ATTRIBUTE_REPARSE_POINT);
 }
 
+/* Converts path to correct file system representation, particularly case.
+ * Leaves path unchanged in case of error. */
+static void CanonicalizePath(wchar_t* path)
+{
+    DWORD len = 0;
+    wchar_t canon[MAX_PATH + 1] = {0};
+
+    wchar_t subst[MAX_PATH + 1] = {0};
+    wchar_t drive[3] = { path[0], L':', 0 };
+    if (path[1] == L':') {
+        QueryDosDeviceW(drive, subst, MAX_PATH + 1);
+
+        /* If there is no subst, the function returns the NT path
+         * (\Device\HarddiskVolume*); get rid of it. */
+        if (subst[1] == L'D') {
+            subst[0] = 0;
+        }
+    }
+
+    HANDLE h = CreateFileW(path,
+            GENERIC_READ,
+            FILE_SHARE_ALL,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS,
+            NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+        if ((len = pGetFinalPathNameByHandle(h, canon, MAX_PATH + 1, 0)) > 0) {
+            if (subst[0] != 0) {
+                wchar_t tmp[MAX_PATH + 1] = { drive[0], L':', 0 };
+                wcsncat(tmp, canon + wcslen(subst), MAX_PATH - 2);
+                wcsncpy(canon, tmp, MAX_PATH);
+            }
+            if (wcsncmp(canon, L"\\\\?\\UNC\\", 8) == 0) {
+                path[0] = L'\\';
+                path[1] = 0;
+                wcsncat(path, canon + 7, len - 7);
+            } else if (wcsncmp(canon, L"\\\\?\\", 4) == 0) {
+                wcsncpy(path, canon + 4, len - 4);
+            }
+        }
+        CloseHandle(h);
+    }
+}
+
 /* Changes the path to the path best suited to watching.
  * Returns whether this was successful. */
 static bool AdjustWatchRoot(wchar_t *path)
@@ -82,6 +127,7 @@ static bool AdjustWatchRoot(wchar_t *path)
 	bool removed = false;
 	int res = 0;
 
+    CanonicalizePath(path);
 	memset(&buffer, 0, sizeof(struct _stat));
 	res = _wstat(path, &buffer);
 
