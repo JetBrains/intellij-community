@@ -13,7 +13,8 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.CapturingProcessAdapter;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -1029,10 +1030,25 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * Executing {@code runConfiguration} with eeecutor {@code executoId} and wait for 60 seconds till process ends.
+   * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
    */
   public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
                                                                  @NotNull String executorId) throws InterruptedException {
+    Pair<ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+    ProcessHandler processHandler = result.second.getProcessHandler();
+    processHandler.waitFor(60000);
+    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    return result.first;
+  }
+
+  /**
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}
+   */
+  @NotNull
+  public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
+                                                                                      @NotNull String executorId)
+    throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1058,22 +1074,29 @@ public final class PlatformTestUtil {
       }
     });
     latch.await(60, TimeUnit.SECONDS);
-    ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
+    RunContentDescriptor runContentDescriptor = refRunContentDescriptor.get();
+    ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
     if (processHandler == null) {
       fail("No process handler found");
     }
 
-    CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
-    processHandler.addProcessListener(capturingProcessAdapter);
-    processHandler.waitFor(60000);
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        LOG.debug("Process started");
+      }
 
-    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
-    ProcessOutput processOutput = capturingProcessAdapter.getOutput();
-    LOG.debug("Exit code: " + processOutput.getExitCode());
-    LOG.debug("Stdout: " + processOutput.getStdout());
-    LOG.debug("Stderr: " + processOutput.getStderr());
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+      }
 
-    return executionEnvironment;
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        LOG.debug(outputType + ": " + event.getText());
+      }
+    });
+    return Pair.create(executionEnvironment, runContentDescriptor);
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
