@@ -16,7 +16,7 @@ public final class CommonQuickFixBundle extends DynamicBundle {
   private CommonQuickFixBundle() { super(BUNDLE); }
 
   @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NonNls Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
