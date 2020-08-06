@@ -1069,34 +1069,32 @@ public final class PlatformTestUtil {
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
         LOG.debug("Process started");
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        assertNotNull(processHandler);
+        processHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void startNotified(@NotNull ProcessEvent event) {
+            LOG.debug("Process started");
+          }
+
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+          }
+
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            LOG.debug(outputType + ": " + event.getText());
+          }
+        });
         refRunContentDescriptor.set(descriptor);
         latch.countDown();
       }
     });
-    latch.await(60, TimeUnit.SECONDS);
-    RunContentDescriptor runContentDescriptor = refRunContentDescriptor.get();
-    ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
-    if (processHandler == null) {
-      fail("No process handler found");
+    if (!latch.await(60, TimeUnit.SECONDS)) {
+      fail("Process failed to start");
     }
-
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-        LOG.debug("Process started");
-      }
-
-      @Override
-      public void processTerminated(@NotNull ProcessEvent event) {
-        LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
-      }
-
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        LOG.debug(outputType + ": " + event.getText());
-      }
-    });
-    return Pair.create(executionEnvironment, runContentDescriptor);
+    return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
