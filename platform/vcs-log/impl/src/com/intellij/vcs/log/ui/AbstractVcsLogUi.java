@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +41,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull protected final Project myProject;
   @NotNull protected final VcsLogData myLogData;
   @NotNull protected final VcsLogColorManager myColorManager;
-  @NotNull protected final VcsLog myLog;
+  @NotNull protected final VcsLogImpl myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
 
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -133,14 +132,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
       if (model.getRowCount() <= r) return -1;
       return r;
     }, SettableFuture.create(), silently);
-  }
-
-  @Override
-  @NotNull
-  public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
-    return future;
   }
 
   @NotNull

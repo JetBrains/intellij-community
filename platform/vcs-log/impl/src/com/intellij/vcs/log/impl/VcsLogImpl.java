@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -91,10 +92,18 @@ public class VcsLogImpl implements VcsLog {
         }
         else {
           VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
-          future.setFuture(myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot()));
+          future.setFuture(jumpToCommit(ref.getCommitHash(), ref.getRoot()));
         }
       });
     });
+    return future;
+  }
+
+  @Override
+  @NotNull
+  public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
+    SettableFuture<Boolean> future = SettableFuture.create();
+    myUi.jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
     return future;
   }
 

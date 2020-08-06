@@ -148,7 +148,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
-            ui.jumpToCommit((Hash)commitId, myRoot);
+            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
           }
           else if (commitId instanceof String) {
             ui.jumpToHash((String)commitId);

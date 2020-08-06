@@ -80,6 +80,17 @@ public interface VcsLog {
   Future<Boolean> jumpToReference(@NotNull String reference);
 
   /**
+   * Asynchronously selects the given commit in the given root.
+   * Returns a {@link Future future} that allows to check if the commit was selected, wait for the selection while log is being loaded,
+   * or cancel commit selection.
+   *
+   * @param commitHash target commit
+   * @param root target repository root
+   */
+  @NotNull
+  Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root);
+
+  /**
    * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.
    */
   @NotNull
