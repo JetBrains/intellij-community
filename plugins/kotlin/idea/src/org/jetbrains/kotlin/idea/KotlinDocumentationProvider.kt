@@ -369,7 +369,6 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
                 }
             }
 
-            @OptIn(FrontendInternals::class)
             val deprecationProvider = resolutionFacade.frontendService<DeprecationResolver>()
 
             return KDocTemplate().apply {
