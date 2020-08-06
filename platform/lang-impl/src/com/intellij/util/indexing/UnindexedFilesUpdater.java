@@ -34,6 +34,7 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.roots.IndexableFilesProvider;
+import com.intellij.util.indexing.roots.ModuleIndexableFilesProvider;
 import com.intellij.util.indexing.roots.SdkIndexableFilesProvider;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
@@ -213,6 +214,20 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     originalOrderedProviders.stream()
       .filter(p -> p instanceof SdkIndexableFilesProvider)
       .collect(Collectors.toCollection(() -> orderedProviders));
+
+    if (SystemProperties.getBooleanProperty("shared.indexes.performance.tests.try.to.index.sources.after.libraries", false)) {
+      List<IndexableFilesProvider> sourcesGoLastOrder = new ArrayList<>();
+      orderedProviders.stream()
+        .filter(p -> !(p instanceof ModuleIndexableFilesProvider))
+        .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
+
+      orderedProviders.stream()
+        .filter(p -> p instanceof ModuleIndexableFilesProvider)
+        .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
+
+      return sourcesGoLastOrder;
+    }
+
     return orderedProviders;
   }
 
