@@ -68,10 +68,8 @@ static void AppendString(PrintBuffer *buffer, const wchar_t *str) {
 
 static bool IsMountPoint(const wchar_t *path)
 {
-	DWORD attrs = GetFileAttributesW(path);
-	return (attrs == 0 
-			|| (attrs & FILE_ATTRIBUTE_REPARSE_POINT)
-					== FILE_ATTRIBUTE_REPARSE_POINT);
+	return ((GetFileAttributesW(path) & FILE_ATTRIBUTE_REPARSE_POINT)
+                == FILE_ATTRIBUTE_REPARSE_POINT);
 }
 
 /* Converts path to correct file system representation, particularly case.
