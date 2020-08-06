@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
+import com.intellij.diff.DiffApplicationSettings
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
+import com.intellij.diff.comparison.ByWord
+import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.contents.DiffContent
+import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.requests.SimpleDiffRequest
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.ThreeSide
+import com.intellij.diff.util.*
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
@@ -22,10 +24,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
@@ -426,8 +431,9 @@ class GitStageLineStatusTracker(
 
       val disposable = Disposer.newDisposable()
 
-      val vcsTextField = createTextField(editor, myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
       val stagedTextField = createTextField(editor, myTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+      val vcsTextField = createTextField(editor, myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      installWordDiff(editor, stagedTextField, vcsTextField, range, disposable)
 
       val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
@@ -468,6 +474,117 @@ class GitStageLineStatusTracker(
       val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
       LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.project, textField, document, textRange, fileType)
       return textField
+    }
+
+    private fun installWordDiff(editor: Editor,
+                                stagedTextField: EditorTextField,
+                                vcsTextField: EditorTextField,
+                                range: StagedRange,
+                                disposable: Disposable) {
+      myTracker as GitStageLineStatusTracker
+      if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return
+      if (!range.hasLines()) return
+
+      val currentContent = DiffUtil.getLinesContent(myTracker.document, range.line1, range.line2)
+      val stagedContent = DiffUtil.getLinesContent(myTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+      val vcsContent = DiffUtil.getLinesContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      val (stagedWordDiff, vcsWordDiff) = BackgroundTaskUtil.tryComputeFast(
+        { indicator ->
+          Pair(if (range.hasStagedLines()) ByWord.compare(stagedContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null,
+               if (range.hasVcsLines()) ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null)
+        }, 200) ?: return
+
+      if (stagedWordDiff != null) {
+        LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(stagedTextField, stagedWordDiff)
+      }
+      if (vcsWordDiff != null) {
+        LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(vcsTextField, vcsWordDiff)
+      }
+
+      if (stagedWordDiff != null || vcsWordDiff != null) {
+        val currentStartOffset = myTracker.document.getLineStartOffset(range.line1)
+        installMasterEditorWordHighlighters(editor, currentStartOffset, stagedWordDiff.orEmpty(), vcsWordDiff.orEmpty(), disposable)
+      }
+    }
+
+    private fun installMasterEditorWordHighlighters(editor: Editor,
+                                                    currentStartOffset: Int,
+                                                    wordDiff1: List<DiffFragment>,
+                                                    wordDiff2: List<DiffFragment>,
+                                                    parentDisposable: Disposable) {
+      val highlighters = WordDiffMerger(editor, currentStartOffset, wordDiff1, wordDiff2).run()
+      Disposer.register(parentDisposable, Disposable {
+        highlighters.forEach(RangeHighlighter::dispose)
+      })
+    }
+
+    private class WordDiffMerger(private val editor: Editor,
+                                 private val currentStartOffset: Int,
+                                 private val wordDiff1: List<DiffFragment>,
+                                 private val wordDiff2: List<DiffFragment>) {
+      val highlighters: MutableList<RangeHighlighter> = ArrayList()
+
+      private var dirtyStart = -1
+      private var dirtyEnd = -1
+      private val affectedFragments: MutableList<DiffFragment> = mutableListOf()
+
+      fun run(): List<RangeHighlighter> {
+        val it1 = PeekableIteratorWrapper(wordDiff1.iterator())
+        val it2 = PeekableIteratorWrapper(wordDiff2.iterator())
+
+        while (it1.hasNext() || it2.hasNext()) {
+          if (!it2.hasNext()) {
+            handleFragment(it1.next())
+            continue
+          }
+          if (!it1.hasNext()) {
+            handleFragment(it2.next())
+            continue
+          }
+
+          val fragment1 = it1.peek()
+          val fragment2 = it2.peek()
+
+          if (fragment1.startOffset2 <= fragment2.startOffset2) {
+            handleFragment(it1.next())
+          }
+          else {
+            handleFragment(it2.next())
+          }
+        }
+        flush(Int.MAX_VALUE)
+
+        return highlighters
+      }
+
+      private fun handleFragment(fragment: DiffFragment) {
+        flush(fragment.startOffset2)
+        markDirtyRange(fragment.startOffset2, fragment.endOffset2)
+        affectedFragments.add(fragment)
+      }
+
+      private fun markDirtyRange(start: Int, end: Int) {
+        if (dirtyEnd == -1) {
+          dirtyStart = start
+          dirtyEnd = end
+        }
+        else {
+          dirtyEnd = max(dirtyEnd, end)
+        }
+      }
+
+      private fun flush(nextLine: Int) {
+        if (dirtyEnd != -1 && dirtyEnd < nextLine) {
+          val currentStart = currentStartOffset + dirtyStart
+          val currentEnd = currentStartOffset + dirtyEnd
+          val type = affectedFragments.map { DiffUtil.getDiffType(it) }.distinct().singleOrNull() ?: TextDiffType.MODIFIED
+          highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type))
+
+          dirtyStart = -1
+          dirtyEnd = -1
+          affectedFragments.clear()
+        }
+      }
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
@@ -574,6 +691,8 @@ class StagedRange(line1: Int, line2: Int,
   override val vcsStart: Int get() = vcsLine1
   override val vcsEnd: Int get() = vcsLine2
   override val isEmpty: Boolean get() = line1 == line2 && stagedLine1 == stagedLine2 && vcsLine1 == vcsLine2
+
+  fun hasStagedLines() : Boolean = stagedLine1 != stagedLine2
 }
 
 private class BlockMerger(private val staged: List<DocumentTracker.Block>,

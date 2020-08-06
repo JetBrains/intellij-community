@@ -10,9 +10,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
@@ -22,10 +20,8 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -45,10 +41,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
@@ -163,41 +157,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
-
-    installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
-    installPopupEditorWordHighlighters(textField, wordDiff);
-  }
-
-  private static void installMasterEditorWordHighlighters(@NotNull Editor editor,
-                                                          int currentStartOffset,
-                                                          @Nullable List<? extends DiffFragment> wordDiff,
-                                                          @NotNull Disposable parentDisposable) {
     if (wordDiff == null) return;
-    final List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    for (DiffFragment fragment : wordDiff) {
-      int currentStart = currentStartOffset + fragment.getStartOffset2();
-      int currentEnd = currentStartOffset + fragment.getEndOffset2();
-      TextDiffType type = getDiffType(fragment);
-
-      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
-    }
-
-    Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
-  }
-
-  private static void installPopupEditorWordHighlighters(@NotNull EditorTextField textField,
-                                                         @Nullable List<? extends DiffFragment> wordDiff) {
-    if (wordDiff == null) return;
-    textField.addSettingsProvider(uEditor -> {
-      for (DiffFragment fragment : wordDiff) {
-        int vcsStart = fragment.getStartOffset1();
-        int vcsEnd = fragment.getEndOffset1();
-        TextDiffType type = getDiffType(fragment);
-
-        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-      }
-    });
+    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
+    LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
   }
 
   @NotNull
