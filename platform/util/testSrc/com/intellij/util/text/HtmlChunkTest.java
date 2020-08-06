@@ -21,7 +21,7 @@ public class HtmlChunkTest {
 
   @Test
   public void nbsp() {
-    assertEquals("&nbsp;", HtmlChunk.nbsp(1).toString());
+    assertEquals("&nbsp;", HtmlChunk.nbsp().toString());
     assertEquals("&nbsp;&nbsp;&nbsp;", HtmlChunk.nbsp(3).toString());
   }
 

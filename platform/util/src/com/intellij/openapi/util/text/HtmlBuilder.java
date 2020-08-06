@@ -42,7 +42,7 @@ public final class HtmlBuilder {
   }
 
   /**
-   * Appends a raw html text to this builder. Should be sued with care.
+   * Appends a raw html text to this builder. Should be used with care.
    * The purpose of this method is to be able to externalize the text with embedded link. E.g.:
    * {@code "Click <a href=\"...\">here</a> for details"}.
    *
@@ -89,6 +89,17 @@ public final class HtmlBuilder {
   }
 
   /**
+   * Appends a non-breaking space ({@code &nbsp;} entity).
+   * 
+   * @return this builder
+   */
+  @Contract(" -> this")
+  public HtmlBuilder nbsp() {
+    myChunks.add(HtmlChunk.nbsp());
+    return this;
+  }
+
+  /**
    * Appends a series of non-breaking spaces ({@code &nbsp;} entities).
    * 
    * @param count number of non-breaking spaces to append
@@ -115,11 +126,22 @@ public final class HtmlBuilder {
    * Wraps this builder content with a specified tag
    * 
    * @param tag name of the tag to wrap with
-   * @return a new Element object that contains elements from this builder
+   * @return a new Element object that contains chunks from this builder
    */
   @Contract(pure = true)
   public @NotNull Element wrapWith(@NotNull @NonNls String tag) {
     return HtmlChunk.tag(tag).children(myChunks.toArray(new HtmlChunk[0]));
+  }
+
+  /**
+   * Wraps this builder content with a {@code <html><body></body></html>}.
+   * 
+   * @return a new HTML Element object that wraps BODY Element that contains 
+   * chunks from this builder
+   */
+  @Contract(pure = true)
+  public @NotNull Element wrapWithHtmlBody() {
+    return wrapWith("body").wrapWith("html");
   }
 
   /**

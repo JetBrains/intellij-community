@@ -40,6 +40,7 @@ public abstract class HtmlChunk {
   }
   
   private static class Nbsp extends HtmlChunk {
+    private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
 
     private Nbsp(int count) {
@@ -235,6 +236,16 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull Element html() {
     return Element.HTML;
+  }
+
+  /**
+   * Creates a HTML text node that represents a non-breaking space ({@code &nbsp;}).
+   * 
+   * @return HtmlChunk that represents a sequence of non-breaking spaces
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk nbsp() {
+    return Nbsp.ONE;
   }
 
   /**

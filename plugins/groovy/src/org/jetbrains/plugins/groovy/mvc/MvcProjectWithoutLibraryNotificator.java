@@ -57,7 +57,7 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity.Dumb
       for (String actionName : actions.keySet()) {
         builder.appendLink(actionName, actionName).append(" ");
       }
-      String message = builder.wrapWith("body").wrapWith("html").toString();
+      String message = builder.wrapWithHtmlBody().toString();
 
       new Notification(
         name + ".Configure", name + " SDK not found", message, NotificationType.INFORMATION,

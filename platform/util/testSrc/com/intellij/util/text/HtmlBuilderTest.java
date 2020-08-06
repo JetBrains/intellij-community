@@ -47,4 +47,9 @@ public class HtmlBuilderTest {
     assertEquals("<html>Click <a href=\"foo\">here</a></html>", 
                  new HtmlBuilder().append("Click ").appendLink("foo", "here").wrapWith("html").toString());
   }
+  
+  @Test
+  public void wrapWithHtmlBody() {
+    assertEquals("<html><body>Hello</body></html>", new HtmlBuilder().append("Hello").wrapWithHtmlBody().toString());
+  }
 }
