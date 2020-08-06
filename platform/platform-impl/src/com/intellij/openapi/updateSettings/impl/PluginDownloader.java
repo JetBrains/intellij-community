@@ -247,7 +247,7 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.installAfterRestart(myFile, !UpdateSettings.getInstance().isKeepPluginsArchive(), myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile.toPath(), !UpdateSettings.getInstance().isKeepPluginsArchive(), myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {

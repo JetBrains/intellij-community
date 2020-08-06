@@ -169,7 +169,7 @@ internal class MarketplacePluginDownloadService {
     }
 
     private fun renameFileToZipRoot(zip: File): File {
-      val newName = "${PluginInstaller.rootEntryName(zip)}.zip"
+      val newName = "${PluginInstaller.rootEntryName(zip.toPath())}.zip"
       val newZip = File("${zip.parent}/$newName")
       if (newZip.exists()) {
         FileUtil.delete(newZip)

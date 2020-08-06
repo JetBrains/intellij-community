@@ -214,8 +214,8 @@ public final class PluginInstaller {
     return target;
   }
 
-  public static String rootEntryName(File zip) throws IOException {
-    try (ZipFile zipFile = new ZipFile(zip)) {
+  public static String rootEntryName(@NotNull Path zip) throws IOException {
+    try (ZipFile zipFile = new ZipFile(zip.toFile())) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry zipEntry = entries.nextElement();
