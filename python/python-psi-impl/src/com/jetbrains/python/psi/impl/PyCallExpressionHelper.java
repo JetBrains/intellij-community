@@ -99,11 +99,6 @@ public final class PyCallExpressionHelper {
 
   @NotNull
   public static List<@NotNull PyCallableType> multiResolveCallee(@NotNull PyCallExpression call, @NotNull PyResolveContext resolveContext) {
-    final List<PyCallableType> calleesFromProviders = getCalleesFromProviders(call.getCallee(), resolveContext.getTypeEvalContext());
-    if (calleesFromProviders != null) {
-      return calleesFromProviders;
-    }
-
     return ContainerUtil.concat(getExplicitResolveResults(call, resolveContext), getImplicitResolveResults(call, resolveContext));
   }
 
@@ -174,29 +169,6 @@ public final class PyCallExpressionHelper {
       .flatMap(list -> StreamEx.of(list).map(RatedResolveResult::getElement))
       .nonNull()
       .toList();
-  }
-
-  @Nullable
-  private static List<@NotNull PyCallableType> getCalleesFromProviders(@Nullable PyExpression callee, @NotNull TypeEvalContext context) {
-    if (callee instanceof PyReferenceExpression) {
-      final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
-
-      final List<PyCallableType> callableTypes = PyUtil.getParameterizedCachedValue(
-        referenceExpression,
-        context,
-        it -> StreamEx
-          .of(PyTypeProvider.EP_NAME.getExtensionList())
-          .map(provider -> provider.getReferenceExpressionType(referenceExpression, it))
-          .select(PyCallableType.class)
-          .toList()
-      );
-
-      if (!callableTypes.isEmpty()) {
-        return callableTypes;
-      }
-    }
-
-    return null;
   }
 
   @NotNull
