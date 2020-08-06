@@ -67,7 +67,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   public AttachSourcesNotificationProvider() {
     EXTENSION_POINT_NAME.addChangeListener(() -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        EditorNotifications.getInstance(project).updateNotifications(AttachSourcesNotificationProvider.this);
+        EditorNotifications.getInstance(project).updateNotifications(this);
       }
     }, null);
   }
@@ -127,11 +127,11 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
         String originalText = text;
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
-          panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
+          String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
+          panel.createActionLabel(escapedName, () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
             if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
-                                       CommonBundle.message("title.error"));
+              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()), CommonBundle.message("title.error"));
               return;
             }
 

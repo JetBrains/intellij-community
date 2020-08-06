@@ -18,7 +18,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 /**
  * @author ven
