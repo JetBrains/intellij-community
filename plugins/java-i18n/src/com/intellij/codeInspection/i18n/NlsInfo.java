@@ -256,7 +256,9 @@ public abstract class NlsInfo {
     if (var instanceof PsiVariable) {
       NlsInfo info = fromAnnotationOwner(((PsiVariable)var).getModifierList());
       if (info != Unspecified.UNKNOWN) return info;
-      return fromType(((PsiVariable)var).getType());
+      info = fromType(((PsiVariable)var).getType());
+      if (info != Unspecified.UNKNOWN) return info;
+      if (var instanceof PsiField) return fromContainer((PsiField)var);
     }
     return Unspecified.UNKNOWN;
   }
@@ -519,9 +521,9 @@ public abstract class NlsInfo {
     return fromContainer(method);
   }
 
-  private static @NotNull NlsInfo fromContainer(@NotNull PsiMethod method) {
+  private static @NotNull NlsInfo fromContainer(@NotNull PsiMember member) {
     // From class
-    PsiClass containingClass = method.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       NlsInfo classInfo = fromAnnotationOwner(containingClass.getModifierList());
       if (classInfo != Unspecified.UNKNOWN) {
@@ -531,10 +533,10 @@ public abstract class NlsInfo {
     }
 
     // From package
-    PsiFile containingFile = method.getContainingFile();
+    PsiFile containingFile = member.getContainingFile();
     if (containingFile instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)containingFile).getPackageName();
-      PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+      PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(packageName);
       if (aPackage != null) {
         NlsInfo info = fromAnnotationOwner(aPackage.getAnnotationList());
         if (info != Unspecified.UNKNOWN) {

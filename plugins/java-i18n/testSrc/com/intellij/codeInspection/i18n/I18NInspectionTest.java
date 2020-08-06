@@ -114,6 +114,8 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNlsMeta() { doTestNlsMode(); }
   
   public void testUseConstant() { doTest(); }
+
+  public void testNonNlsOnContainer() { doTest(); }
   
   public void testUseConstantNls() { doTestNlsMode(); }
   
