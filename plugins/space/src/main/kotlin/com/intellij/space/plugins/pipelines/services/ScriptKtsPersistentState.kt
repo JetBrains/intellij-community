@@ -55,7 +55,7 @@ class ScriptKtsPersistentState(val project: Project) {
   fun save(config: ScriptConfig) {
     val path = getCacheFile(project)
     path.safeOutputStream().use {
-      it.write(config.printJson().toByteArray())
+      it.write(config.printJson().toByteArray(Charsets.UTF_8))
     }
   }
 
