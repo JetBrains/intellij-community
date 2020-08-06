@@ -340,7 +340,7 @@ public class WelcomeScreenComponentFactory {
   static boolean isActionAvailable(@NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT);
     action.update(event);
-    return event.getPresentation().isEnabledAndVisible();
+    return event.getPresentation().isVisible();
   }
 
   @NotNull
