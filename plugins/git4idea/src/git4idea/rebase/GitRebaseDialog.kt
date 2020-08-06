@@ -46,6 +46,7 @@ import java.awt.Dimension
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
@@ -471,6 +472,24 @@ internal class GitRebaseDialog(private val project: Project,
       ::getOptionInfo,
       { selectedOptions },
       { isOptionEnabled(it) })
+
+    override fun handleSelect(handleFinalChoices: Boolean) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    private fun handleSelect() {
+      (selectedValues.firstOrNull() as? GitRebaseOption)?.let { option -> optionChosen(option) }
+
+      list.repaint()
+    }
   }
 
   private fun isOptionEnabled(option: GitRebaseOption) = selectedOptions.all { it.isOptionSuitable(option) }
