@@ -68,11 +68,9 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     InsertPathAction.addTo(directoryField.getTextField(), dirFileChooser);
     FileChooserFactory.getInstance().installFileCompletion(directoryField.getTextField(), dirFileChooser, true, null);
 
-    BrowseModuleValueActionListener<?>[] browsers =
-      JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
-    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(),
-                                                               JUnitConfigurable.createClassVisibilityChecker(
-                                                                 (JUnitConfigurable.TestClassBrowser)browsers[CLASS]));
+    BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
+    JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
+    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
@@ -100,10 +98,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
   private void kindChanged(int kind) {
     myTypeChooser.setItem(kind);
-    for (JComponent field : myFields) {
-      field.setVisible(false);
-    }
+    Arrays.stream(myFields).forEach(field -> field.setVisible(false));
     myFields[kind].setVisible(true);
+    if (METHOD == kind) {
+      myFields[CLASS].setVisible(true);
+    }
     fireEditorStateChanged();
   }
 

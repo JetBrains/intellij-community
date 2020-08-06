@@ -611,7 +611,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     private final ConfigurationModuleSelector myModuleSelector;
     private final EditorTextFieldWithBrowseButton myPackageTextField;
 
-    TestClassBrowser(final Project project, ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton packageTextField) {
+    TestClassBrowser(final Project project, @NotNull ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton packageTextField) {
       super(project, ExecutionBundle.message("choose.test.class.dialog.title"));
       myModuleSelector = moduleSelector;
       myPackageTextField = packageTextField;
