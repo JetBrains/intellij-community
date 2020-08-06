@@ -20,8 +20,8 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 plugins {
     id 'idea'
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.18'
-    id 'org.jetbrains.grammarkit' version '2020.1.2'
+    id 'org.jetbrains.intellij' version '0.4.21'
+    id 'org.jetbrains.grammarkit' version '2020.2.1'
     id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
 }
 
@@ -35,14 +35,14 @@ group = 'de.thomasrosenau'
 sourceCompatibility = 1.8
 
 // version of this plugin
-version = '2.1.4-SNAPSHOT'
+version = '2.1.5-SNAPSHOT'
 
 // IDE version that will be used for compilation and for :runIde task
-intellij.version = '201-EAP-SNAPSHOT'
+intellij.version = '202.6397.94'
 
 patchPluginXml {
     sinceBuild = '201'
-    untilBuild = '201.*'
+    untilBuild = '202.*'
 
     // language=HTML prefix=<body> suffix=</body>
     pluginDescription = '''
@@ -66,6 +66,10 @@ patchPluginXml {
 
     // language=HTML prefix=<body> suffix=</body>
     changeNotes = '''
+        <h5>2.1.5</h5>
+        <ul>
+          <li>Update compatibility for 2020.2 product line</li>
+        </ul>
         <h5>2.1.4</h5>
         <ul>
           <li>Update compatibility for 2020.1 product line</li>
