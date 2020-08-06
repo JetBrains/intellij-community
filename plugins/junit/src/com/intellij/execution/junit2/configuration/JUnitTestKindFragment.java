@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -77,6 +78,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
     setupField(ALL_IN_PACKAGE, packageField, packageField.getChildComponent().getDocument(), browsers[ALL_IN_PACKAGE]);
     setupField(CLASS, classField, classField.getDocument(), null);
+    ((MethodBrowser)browsers[METHOD]).installCompletion(methodField.getChildComponent());
     setupField(METHOD, methodField, methodField.getChildComponent().getDocument(), browsers[METHOD]);
     setupField(PATTERN, pattern, pattern.getTextField().getDocument(), browsers[PATTERN]);
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR]);
