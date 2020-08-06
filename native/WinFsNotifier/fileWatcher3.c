@@ -104,15 +104,15 @@ static void CanonicalizePath(wchar_t* path)
         if ((len = pGetFinalPathNameByHandle(h, canon, MAX_PATH + 1, 0)) > 0) {
             if (subst[0] != 0) {
                 wchar_t tmp[MAX_PATH + 1] = { drive[0], L':', 0 };
-                wcsncat(tmp, canon + wcslen(subst), MAX_PATH - 2);
-                wcsncpy(canon, tmp, MAX_PATH);
+                wcscat_s(tmp, MAX_PATH + 1, canon + wcslen(subst));
+                wcscpy_s(canon, MAX_PATH + 1, tmp);
             }
             if (wcsncmp(canon, L"\\\\?\\UNC\\", 8) == 0) {
                 path[0] = L'\\';
                 path[1] = 0;
-                wcsncat(path, canon + 7, len - 7);
+                wcscat_s(path, MAX_PATH + 1, canon + 7);
             } else if (wcsncmp(canon, L"\\\\?\\", 4) == 0) {
-                wcsncpy(path, canon + 4, len - 4);
+                wcscpy_s(path, MAX_PATH + 1, canon + 4);
             }
         }
         CloseHandle(h);
@@ -450,7 +450,7 @@ static void UpdateRoots(bool report) {
 static void AddWatchRoot(const wchar_t *path) {
     WatchRoot *root = (WatchRoot *)calloc(1, sizeof(WatchRoot));
     root->next = NULL;
-	wcsncpy(root->rootPath, path, MAX_PATH);
+	wcscpy_s(root->rootPath, MAX_PATH + 1, path);
 	if (AdjustWatchRoot(root->rootPath)) {
 		root->hThread = NULL;
 		root->hStopEvent = NULL;
