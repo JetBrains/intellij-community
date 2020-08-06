@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.feature.suggester.settings
 
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
@@ -14,33 +16,63 @@ class FeatureSuggestersPanel(
     suggestingActionNames: Iterable<String>,
     private val settings: FeatureSuggesterSettings
 ) : JPanel() {
-    private val toggleAllCheckBox = ThreeStateCheckBox("Show suggestions for:", State.SELECTED)
+    private val toggleAllCheckBox =
+        ThreeStateCheckBox("Show suggestions for actions that I have not performed in more than ", State.SELECTED)
+    private val suggestingIntervalField = JTextField(3)
     private val actionPanels: List<SuggestingActionPanel> = suggestingActionNames.map(::SuggestingActionPanel)
 
     init {
         layout = BorderLayout()
-        val label =
-            JLabel("Configure suggestions for actions. It will suggest the following actions in cases where their application can be effective.")
-        add(label, BorderLayout.NORTH)
+        add(createTopPanel(), BorderLayout.NORTH)
         add(createListPanel(), BorderLayout.WEST)
         loadFromSettings()
     }
 
-    private fun createListPanel(): JPanel {
-        val panel = JPanel()
-        panel.apply {
-            layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+    private fun createTopPanel(): JPanel {
+        val panel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
             border = JBUI.Borders.empty(0, 10, 0, 0)
+        }
+        val instructionLabel =
+            JLabel("Configure suggestions for actions. It will suggest the following actions in cases where their application can be effective.")
+        panel.apply {
+            add(instructionLabel)
             add(Box.createRigidArea(JBUI.size(0, 10)))
+            add(createToggleAllPanel())
+        }
+        return panel
+    }
+
+    private fun createToggleAllPanel(): JPanel {
+        val panel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.X_AXIS)
+            alignmentX = 0f
         }
         toggleAllCheckBox.isThirdStateEnabled = false
         toggleAllCheckBox.addActionListener {
             if (toggleAllCheckBox.state != State.DONT_CARE) {
                 val selected = toggleAllCheckBox.isSelected
                 actionPanels.forEach { it.select(selected) }
+                suggestingIntervalField.isEnabled = selected
             }
         }
-        panel.add(toggleAllCheckBox)
+
+        suggestingIntervalField.maximumSize = Dimension(49, 30)
+        val daysLabel = JBLabel(" days.")
+
+        panel.apply {
+            add(toggleAllCheckBox)
+            add(suggestingIntervalField)
+            add(daysLabel)
+        }
+        return panel
+    }
+
+    private fun createListPanel(): JPanel {
+        val panel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = JBUI.Borders.empty(0, 10, 0, 0)
+        }
         configureActionPanels()
         actionPanels.forEach { panel.add(it) }
 
@@ -73,13 +105,16 @@ class FeatureSuggestersPanel(
                 toggleAllCheckBox.state = State.DONT_CARE
             } else if (anySelected) {
                 toggleAllCheckBox.isSelected = true
+                suggestingIntervalField.isEnabled = true
             } else if (anyNotSelected) {
                 toggleAllCheckBox.isSelected = false
+                suggestingIntervalField.isEnabled = false
             }
         }
     }
 
     fun loadFromSettings() {
+        suggestingIntervalField.text = settings.suggestingIntervalDays.toString()
         if (settings.isAllEnabled()) {
             toggleAllCheckBox.isSelected = true
             actionPanels.forEach { it.select(true) }
@@ -90,7 +125,12 @@ class FeatureSuggestersPanel(
                 if (selected) somethingIsSelected = true
                 it.select(selected)
             }
-            toggleAllCheckBox.state = if (somethingIsSelected) State.DONT_CARE else State.NOT_SELECTED
+            if(somethingIsSelected) {
+                toggleAllCheckBox.state = State.DONT_CARE
+            } else {
+                toggleAllCheckBox.state = State.NOT_SELECTED
+                suggestingIntervalField.isEnabled = false
+            }
         }
     }
 
@@ -102,6 +142,15 @@ class FeatureSuggestersPanel(
         val panel = actionPanels.find { it.actionDisplayName == suggestingActionName }
             ?: throw IllegalArgumentException("Unknown action name: $suggestingActionName")
         return panel.selected()
+    }
+
+    fun getSuggestingIntervalDays(): Int {
+        val interval = suggestingIntervalField.text.toIntOrNull()
+        return if (interval != null && interval >= 0) {
+            interval
+        } else {
+            FeatureSuggesterSettings.DEFAULT_SUGGESTING_INTERVAL_DAYS
+        }
     }
 
     private class SuggestingActionPanel(val actionDisplayName: String) : JPanel() {

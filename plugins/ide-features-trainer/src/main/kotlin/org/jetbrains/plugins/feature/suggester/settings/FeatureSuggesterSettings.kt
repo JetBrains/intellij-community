@@ -18,14 +18,19 @@ class FeatureSuggesterSettings : SimplePersistentStateComponent<FeatureSuggester
         fun instance(): FeatureSuggesterSettings {
             return ApplicationManager.getApplication().getService(FeatureSuggesterSettings::class.java)
         }
+
+        const val DEFAULT_SUGGESTING_INTERVAL_DAYS = 14
     }
 
     class State : BaseState() {
         @get:XCollection
         val disabledSuggesters by list<String>()
+
+        var suggestingIntervalDays by property(DEFAULT_SUGGESTING_INTERVAL_DAYS)
     }
 
     fun reset() {
+        state.suggestingIntervalDays = DEFAULT_SUGGESTING_INTERVAL_DAYS
         state.disabledSuggesters.clear()
     }
 
@@ -44,4 +49,10 @@ class FeatureSuggesterSettings : SimplePersistentStateComponent<FeatureSuggester
     fun enableSuggester(suggestingActionDisplayName: String) {
         state.disabledSuggesters.remove(suggestingActionDisplayName)
     }
+
+    var suggestingIntervalDays: Int
+        get() = state.suggestingIntervalDays
+        set(value) {
+            state.suggestingIntervalDays = value
+        }
 }
