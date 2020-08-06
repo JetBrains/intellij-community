@@ -6,7 +6,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
+import com.jetbrains.plugin.blockmap.core.BlockMap
+import com.jetbrains.plugin.blockmap.core.FileHash
 import groovy.io.FileType
+import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -23,11 +26,16 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -267,6 +275,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
+    buildNonBundledPluginsBlockMaps()
     buildThirdPartyLibrariesList()
     reorderJARs()
   }
@@ -778,6 +787,45 @@ class DistributionJARsBuilder {
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
+      }
+    }
+  }
+
+  void buildNonBundledPluginsBlockMaps(){
+    def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
+    def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
+    Files.walk(Paths.get(nonBundledPluginsArtifacts))
+      .filter({ it -> Files.isRegularFile(it)} )
+      .filter({ it -> it.toString().endsWith(".zip") })
+      .collect(Collectors.toList())
+      .each { it ->
+        def blockMapFileName = it.toString().replace(".zip", "-blockmap.zip")
+        def hashFileName = it.toString().replace(".zip", "-hash.json")
+        def blockMapJson = "blockmap.json"
+        def algorithm = "SHA-256"
+        def file = it.toFile()
+        file.withInputStream { input ->
+          def blockMap = new BlockMap(input, algorithm)
+          new File(blockMapFileName).withOutputStream { output ->
+            writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
+          }
+        }
+        file.withInputStream { input ->
+          def fileHash = new FileHash(input, algorithm)
+          new File(hashFileName).withWriter { writer ->
+            writer.writeLine(JsonOutput.toJson(fileHash).toString())
+          }
+        }
+      }
+  }
+
+  private static void writeBlockMapToZip(OutputStream output, byte[] bytes, String blockMapJson){
+    new BufferedOutputStream(output).withStream {bufferedOutput ->
+      new ZipOutputStream(bufferedOutput).withStream { zipOutputStream ->
+        def entry = new ZipEntry(blockMapJson)
+        zipOutputStream.putNextEntry(entry)
+        zipOutputStream.write(bytes)
+        zipOutputStream.closeEntry()
       }
     }
   }
