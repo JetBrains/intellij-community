@@ -580,7 +580,7 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
-          if (Registry.`is`("ide.plugins.analyze.snapshot")) {
+          if (Registry.`is`("ide.plugins.analyze.snapshot") && File(snapshotPath).exists()) {
             val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
             if (analysisResult.isEmpty()) {
               LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
