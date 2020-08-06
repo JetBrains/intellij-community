@@ -57,7 +57,7 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     result.removeAll(Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()));
-    return new ArrayList<>(result);
+    return ContainerUtil.reverse(new ArrayList<>(result));
   }
 
   private static final class OpenFileAction extends DumbAwareAction implements LightEditCompatible {
