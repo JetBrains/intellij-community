@@ -30,7 +30,7 @@ class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoI
     val ciWorkspaceSettings = CodeInsightWorkspaceSettings.getInstance(project)
     lateinit var dataContextOwner: JComponent
     return panel {
-      titledRow("Java") {
+      titledRow(JavaBundle.message("java")) {
         row {
           cell {
             label(JavaBundle.message("label.show.import.popup.for"))
