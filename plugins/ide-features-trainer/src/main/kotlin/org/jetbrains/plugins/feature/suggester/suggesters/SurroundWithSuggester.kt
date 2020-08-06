@@ -19,7 +19,6 @@ class SurroundWithSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Why not to use Surround With action?"
         const val SUGGESTING_ACTION_ID = "SurroundWith"
         const val SUGGESTING_TIP_FILENAME = "neue-SurroundWith.html"
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     private val actionsSummary = actionsLocalSummary()
@@ -95,11 +94,11 @@ class SurroundWithSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 

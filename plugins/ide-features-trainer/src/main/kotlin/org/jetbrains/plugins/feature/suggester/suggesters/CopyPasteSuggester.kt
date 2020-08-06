@@ -19,7 +19,6 @@ class CopyPasteSuggester : FeatureSuggester {
         const val MIN_OCCURRENCE_INDEX = 1
         const val MAX_OCCURRENCE_INDEX = 2
         const val MAX_COPY_INTERVAL_TIME_MILLIS = 20000L
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     override lateinit var langSupport: LanguageSupport
@@ -51,11 +50,11 @@ class CopyPasteSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 

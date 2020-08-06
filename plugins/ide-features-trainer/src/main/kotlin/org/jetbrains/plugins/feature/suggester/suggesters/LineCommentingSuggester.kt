@@ -24,7 +24,6 @@ class LineCommentingSuggester : FeatureSuggester {
         const val DESCRIPTOR_ID = "codeassists.comment.line"
         const val NUMBER_OF_COMMENTS_TO_GET_SUGGESTION = 3
         const val MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS = 5000
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
@@ -70,11 +69,11 @@ class LineCommentingSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 

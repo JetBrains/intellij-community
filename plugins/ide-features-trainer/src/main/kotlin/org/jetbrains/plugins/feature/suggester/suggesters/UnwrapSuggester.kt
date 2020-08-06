@@ -14,7 +14,6 @@ class UnwrapSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Unwrap action?"
         const val SUGGESTING_ACTION_ID = "Unwrap"
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     override lateinit var langSupport: LanguageSupport
@@ -64,11 +63,11 @@ class UnwrapSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 

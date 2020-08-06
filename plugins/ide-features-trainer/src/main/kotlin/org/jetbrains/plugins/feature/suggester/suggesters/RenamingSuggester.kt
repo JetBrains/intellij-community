@@ -20,7 +20,6 @@ class RenamingSuggester : FeatureSuggester {
         const val SUGGESTING_ACTION_ID = "Rename"
         const val SUGGESTING_TIP_FILENAME = "neue-Rename.html"
         const val NUMBER_OF_RENAMES_TO_GET_SUGGESTION = 3
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     private val actionsSummary = actionsLocalSummary()
@@ -90,11 +89,11 @@ class RenamingSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 

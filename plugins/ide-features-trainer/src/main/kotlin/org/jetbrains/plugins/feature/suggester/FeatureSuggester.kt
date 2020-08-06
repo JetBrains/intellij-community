@@ -36,7 +36,7 @@ interface FeatureSuggester {
 
     fun getSuggestion(actions: UserActionsHistory): Suggestion
 
-    fun isSuggestionNeeded(): Boolean
+    fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean
 
     fun isSuggestionNeeded(
         actionsSummary: ActionsLocalSummary,

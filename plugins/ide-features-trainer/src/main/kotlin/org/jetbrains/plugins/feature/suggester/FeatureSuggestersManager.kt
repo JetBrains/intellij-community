@@ -15,6 +15,7 @@ class FeatureSuggestersManager(val project: Project) {
     private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
+    private val settings = FeatureSuggesterSettings.instance()
 
     fun actionPerformed(action: Action) {
         val language = action.language ?: return
@@ -27,7 +28,7 @@ class FeatureSuggestersManager(val project: Project) {
 
     private fun processSuggesters(langSupport: LanguageSupport) {
         for (suggester in FeatureSuggester.suggesters) {
-            if (suggester.isEnabled() && suggester.isSuggestionNeeded()) {
+            if (suggester.isEnabled() && suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
                 suggester.langSupport = langSupportprocessSuggester(suggester)
             }
         }

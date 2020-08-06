@@ -23,7 +23,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
         const val SUGGESTING_ACTION_ID = "IntroduceVariable"
         const val SUGGESTING_TIP_FILENAME = "neue-IntroduceVariable.html"
         const val DESCRIPTOR_ID = "refactoring.introduceVariable"
-        const val MIN_NOTIFICATION_INTERVAL_DAYS = 14
     }
 
     private val actionsSummary = actionsLocalSummary()
@@ -104,11 +103,11 @@ class IntroduceVariableSuggester : FeatureSuggester {
         return NoSuggestion
     }
 
-    override fun isSuggestionNeeded(): Boolean {
+    override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
         return super.isSuggestionNeeded(
             actionsSummary,
             SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(MIN_NOTIFICATION_INTERVAL_DAYS.toLong())
+            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
     }
 
