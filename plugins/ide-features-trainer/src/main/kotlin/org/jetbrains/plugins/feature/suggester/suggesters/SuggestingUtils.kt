@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -80,25 +79,31 @@ internal fun actionsLocalSummary(): ActionsLocalSummary {
     return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
 }
 
-internal fun createSuggestion(
-    descriptorId: String?,
+internal fun createTipSuggestion(
     popupMessage: String,
     suggesterId: String,
-    suggestingTipFilename: String,
-    usageDelta: Long = 1000
+    suggestingTipFilename: String
 ): Suggestion {
-    val commandName = CommandProcessor.getInstance().currentCommandName
-    if (commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))) {
-        return NoSuggestion
+    return if (isRedoOrUndoRunning()) {
+        NoSuggestion
+    } else {
+        TipSuggestion(popupMessage, suggesterId, suggestingTipFilename)
     }
-    if (descriptorId != null) {
-        val descriptor = ProductivityFeaturesRegistry.getInstance()!!.getFeatureDescriptor(descriptorId)
-        val lastTimeUsed = descriptor.lastTimeUsed
-        val delta = System.currentTimeMillis() - lastTimeUsed
-        if (delta < usageDelta) {
-            return FeatureUsageSuggestion
-        }
-    }
+}
 
-    return PopupSuggestion(popupMessage, suggesterId, suggestingTipFilename)
+internal fun createDocumentationSuggestion(
+    popupMessage: String,
+    suggesterId: String,
+    suggestingDocUrl: String
+): Suggestion {
+    return if (isRedoOrUndoRunning()) {
+        NoSuggestion
+    } else {
+        DocumentationSuggestion(popupMessage, suggesterId, suggestingDocUrl)
+    }
+}
+
+private fun isRedoOrUndoRunning(): Boolean {
+    val commandName = CommandProcessor.getInstance().currentCommandName
+    return commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))
 }

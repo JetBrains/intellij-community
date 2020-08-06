@@ -16,6 +16,7 @@ class CopyPasteSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "You may use history of clipboard that can save your time."
         const val SUGGESTING_ACTION_ID = "PasteMultiple"
+        const val SUGGESTING_DOC_URL = "https://www.jetbrains.com/help/idea/2020.2/working-with-source-code.html#copy_paste"
         const val MIN_OCCURRENCE_INDEX = 1
         const val MAX_OCCURRENCE_INDEX = 2
         const val MAX_COPY_INTERVAL_TIME_MILLIS = 20000L
@@ -37,11 +38,10 @@ class CopyPasteSuggester : FeatureSuggester {
                         ?: return NoSuggestion
                     val delta = lastAction.timeMillis - prevAction.timeMillis
                     if (delta < MAX_COPY_INTERVAL_TIME_MILLIS) {
-                        return createSuggestion(
-                            null,
+                        return createDocumentationSuggestion(
                             createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                             suggestingActionDisplayName,
-                            ""
+                            SUGGESTING_DOC_URL
                         )
                     }
                 }

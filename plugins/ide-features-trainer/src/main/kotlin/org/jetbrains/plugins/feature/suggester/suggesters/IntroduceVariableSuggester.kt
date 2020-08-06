@@ -22,7 +22,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Why not use the Introduce Variable refactoring?"
         const val SUGGESTING_ACTION_ID = "IntroduceVariable"
         const val SUGGESTING_TIP_FILENAME = "neue-IntroduceVariable.html"
-        const val DESCRIPTOR_ID = "refactoring.introduceVariable"
     }
 
     private val actionsSummary = actionsLocalSummary()
@@ -67,8 +66,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
                         extractedExprData!!.declaration = newChild
                     } else if (isVariableInserted()) {
                         extractedExprData = null
-                        return createSuggestion(
-                            DESCRIPTOR_ID,
+                        return createTipSuggestion(
                             createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                             suggestingActionDisplayName,
                             SUGGESTING_TIP_FILENAME

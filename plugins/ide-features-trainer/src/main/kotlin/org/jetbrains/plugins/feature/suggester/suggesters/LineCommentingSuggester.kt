@@ -21,7 +21,6 @@ class LineCommentingSuggester : FeatureSuggester {
         const val POPUP_MESSAGE = "Try the Comment Line feature to do it faster."
         const val SUGGESTING_ACTION_ID = "CommentByLineComment"
         const val SUGGESTING_TIP_FILENAME = "neue-CommentCode.html"
-        const val DESCRIPTOR_ID = "codeassists.comment.line"
         const val NUMBER_OF_COMMENTS_TO_GET_SUGGESTION = 3
         const val MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS = 5000
     }
@@ -56,8 +55,7 @@ class LineCommentingSuggester : FeatureSuggester {
                     && commentsHistory.isLinesCommentedInARow()
                 ) {
                     commentsHistory.clear()
-                    return createSuggestion(
-                        DESCRIPTOR_ID,
+                    return createTipSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                         suggestingActionDisplayName,
                         SUGGESTING_TIP_FILENAME

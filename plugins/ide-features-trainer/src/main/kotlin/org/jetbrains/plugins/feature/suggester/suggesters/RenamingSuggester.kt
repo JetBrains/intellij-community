@@ -76,8 +76,7 @@ class RenamingSuggester : FeatureSuggester {
                     if (renamedIdentifiersData.references.contains(parent)
                         && renamedIdentifiersData.isAllRenamed()
                     ) {
-                        return createSuggestion(
-                            null,
+                        return createTipSuggestion(
                             POPUP_MESSAGE,
                             suggestingActionDisplayName,
                             SUGGESTING_TIP_FILENAME

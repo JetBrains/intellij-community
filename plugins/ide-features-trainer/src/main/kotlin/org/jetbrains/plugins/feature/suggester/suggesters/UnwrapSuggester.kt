@@ -14,6 +14,7 @@ class UnwrapSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Unwrap action?"
         const val SUGGESTING_ACTION_ID = "Unwrap"
+        const val SUGGESTING_DOC_URL = "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
     }
 
     override lateinit var langSupport: LanguageSupport
@@ -45,11 +46,10 @@ class UnwrapSuggester : FeatureSuggester {
                         val statements = langSupport.getStatements(codeBlock)
                         if (intersectsByText(unwrappingStatements!!, statements)) {
                             unwrappingStatements = null
-                            return createSuggestion(
-                                null,
+                            return createDocumentationSuggestion(
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                                 suggestingActionDisplayName,
-                                ""
+                                SUGGESTING_DOC_URL
                             )
                         }
                         unwrappingStatements = null

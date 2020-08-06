@@ -71,8 +71,7 @@ class SurroundWithSuggester : FeatureSuggester {
                     ) {
                         if (isStatementsSurrounded()) {
                             surroundingStatementData = null
-                            return createSuggestion(
-                                null,
+                            return createTipSuggestion(
                                 createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                                 suggestingActionDisplayName,
                                 SUGGESTING_TIP_FILENAME
