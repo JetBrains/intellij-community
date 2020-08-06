@@ -25,7 +25,15 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull HtmlChunk chunk) {
-    myChunks.add(chunk);
+    if (!chunk.isEmpty()) {
+      myChunks.add(chunk);
+    }
+    return this;
+  }
+
+  @Contract("_ -> this")
+  public HtmlBuilder append(@NotNull HtmlBuilder builder) {
+    myChunks.addAll(builder.myChunks);
     return this;
   }
 
@@ -37,8 +45,7 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull @Nls String text) {
-    myChunks.add(HtmlChunk.text(text));
-    return this;
+    return append(HtmlChunk.text(text));
   }
 
   /**
@@ -51,8 +58,7 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder appendRaw(@NotNull @Nls String rawHtml) {
-    myChunks.add(HtmlChunk.raw(rawHtml));
-    return this;
+    return append(HtmlChunk.raw(rawHtml));
   }
 
   /**
@@ -64,8 +70,7 @@ public final class HtmlBuilder {
    */
   @Contract("_, _ -> this")
   public HtmlBuilder appendLink(@NotNull @NonNls String target, @NotNull @Nls String text) {
-    myChunks.add(HtmlChunk.link(target, text));
-    return this;
+    return append(HtmlChunk.link(target, text));
   }
 
   /**
@@ -95,8 +100,7 @@ public final class HtmlBuilder {
    */
   @Contract(" -> this")
   public HtmlBuilder nbsp() {
-    myChunks.add(HtmlChunk.nbsp());
-    return this;
+    return append(HtmlChunk.nbsp());
   }
 
   /**
@@ -107,8 +111,7 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder nbsp(int count) {
-    myChunks.add(HtmlChunk.nbsp(count));
-    return this;
+    return append(HtmlChunk.nbsp(count));
   }
 
   /**
@@ -118,8 +121,7 @@ public final class HtmlBuilder {
    */
   @Contract(" -> this")
   public HtmlBuilder br() {
-    myChunks.add(HtmlChunk.br());
-    return this;
+    return append(HtmlChunk.br());
   }
 
   /**
@@ -131,6 +133,17 @@ public final class HtmlBuilder {
   @Contract(pure = true)
   public @NotNull Element wrapWith(@NotNull @NonNls String tag) {
     return HtmlChunk.tag(tag).children(myChunks.toArray(new HtmlChunk[0]));
+  }
+
+  /**
+   * Wraps this builder content with a specified element
+   * 
+   * @param element name of the tag to wrap with
+   * @return a new Element object that contains chunks from this builder
+   */
+  @Contract(pure = true)
+  public @NotNull Element wrapWith(@NotNull HtmlChunk.Element element) {
+    return element.children(myChunks.toArray(new HtmlChunk[0]));
   }
 
   /**
@@ -152,6 +165,13 @@ public final class HtmlBuilder {
     return myChunks.isEmpty();
   }
 
+  /**
+   * @return a fragment chunk that contains all the chunks of this builder.
+   */
+  public HtmlChunk toFragment() {
+    return new HtmlChunk.Fragment(new ArrayList<>(myChunks));
+  }
+  
   /**
    * @return a rendered HTML representation of all the chunks in this builder.
    */
