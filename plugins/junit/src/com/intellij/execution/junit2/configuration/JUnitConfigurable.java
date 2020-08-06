@@ -124,6 +124,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         myModel.reloadTestKindModel(JUnitConfigurable.this.myTypeChooser, myModuleSelector.getModule());
       }
     });
+    final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
+    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
     myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
     myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getKindName(value)));
@@ -447,10 +449,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private void createUIComponents() {
     myPackage = new LabeledComponent<>();
     myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
-
-    myClass = new LabeledComponent<>();
-    final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
-    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
     myCategory = new LabeledComponent<>();
     myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
