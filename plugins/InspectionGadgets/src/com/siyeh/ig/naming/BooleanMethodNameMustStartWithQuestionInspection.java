@@ -44,7 +44,7 @@ import java.util.List;
 public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspection {
 
   public static final String DEFAULT_QUESTION_WORDS =
-    "add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,put,remove,shall,should,startsWith,was,were,will,would";
+    "add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,non,put,remove,shall,should,startsWith,was,were,will,would";
   @SuppressWarnings("PublicField")
   public boolean ignoreBooleanMethods = false;
   @SuppressWarnings("PublicField")
