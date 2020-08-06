@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +44,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,12 +215,12 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
 
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
       return JavaUiBundle.message("module.libraries.attach.sources.button");
     }
 
     @Override
-    public String getBusyText() {
+    public @NlsContexts.LinkLabel String getBusyText() {
       return JavaUiBundle.message("library.attach.sources.action.busy.text");
     }
 
@@ -265,12 +267,12 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
 
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
       return JavaUiBundle.message("module.libraries.choose.sources.button");
     }
 
     @Override
-    public String getBusyText() {
+    public @NlsContexts.LinkLabel String getBusyText() {
       return JavaUiBundle.message("library.attach.sources.action.busy.text");
     }
 

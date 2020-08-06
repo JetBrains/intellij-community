@@ -22,6 +22,8 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
@@ -54,11 +56,16 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
     return new WizardInputField<JTextField>(IJ_BASE_PACKAGE, defaultValue) {
 
-      private final JTextField myField = new JTextField(PropertiesComponent.getInstance().getValue(IJ_BASE_PACKAGE, defaultValue));
+      private final JTextField myField;
+
+      {
+        @NlsSafe final String value = PropertiesComponent.getInstance().getValue(IJ_BASE_PACKAGE, defaultValue);
+        myField = new JTextField(value);
+      }
 
       @Override
-      public String getLabel() {
-        return "Base \u001Bpackage:";
+      public @NlsContexts.Label String getLabel() {
+        return JavaBundle.message("base.package.parameter.wizard.label");
       }
 
       @Override

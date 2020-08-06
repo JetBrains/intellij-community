@@ -86,11 +86,13 @@ public final class LibraryEditingUtil {
         final Library source = ((LibraryEx)library).getSource();
         if (source != null && result.contains(source)) return false;
       }
-      PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
-      if (kind != null) {
-        LibraryType type = LibraryType.findByKind(kind);
-        if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
-          return false;
+      if (library instanceof LibraryEx) {
+        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+        if (kind != null) {
+          LibraryType type = LibraryType.findByKind(kind);
+          if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+            return false;
+          }
         }
       }
       return true;
@@ -160,7 +162,11 @@ public final class LibraryEditingUtil {
           @NotNull
           @Override
           public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : JavaUiBundle.message("create.default.library.type.action.name");
+            if (value != null) {
+              final String name = value.getCreateActionName();
+              if (name != null) return name;
+            }
+            return JavaUiBundle.message("create.default.library.type.action.name");
           }
 
           @Override

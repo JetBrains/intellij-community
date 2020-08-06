@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
@@ -173,7 +174,8 @@ public class DownloadingOptionsDialog extends DialogWrapper {
       myFilesList.setModel(new CollectionListModel<>(
         ContainerUtil.map2Array(downloads, JCheckBox.class, (Function<DownloadableLibraryFileDescription, JCheckBox>)description -> {
           final boolean selected = selectedFiles != null ? selectedFiles.contains(description) : !description.isOptional();
-          return new JCheckBox(description.getPresentableFileName(), selected);
+          @NlsSafe final String name = description.getPresentableFileName();
+          return new JCheckBox(name, selected);
         })));
       if (myNameAndLevelPanel != null) {
         myNameAndLevelPanel.setDefaultName(version.getDefaultLibraryName());

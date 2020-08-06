@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +15,8 @@ public interface AttachSourcesProvider {
   @NotNull Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
 
   interface AttachSourcesAction {
-    @Nls String getName();
-    @Nls String getBusyText();
+    @Nls(capitalization = Nls.Capitalization.Title) String getName();
+    @NlsContexts.LinkLabel String getBusyText();
     ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile);
   }
 
