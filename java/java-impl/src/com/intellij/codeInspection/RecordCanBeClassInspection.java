@@ -208,7 +208,10 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
       // Non-type-use annotations are added at the beginning, so we try to preserve order iterating original annotations backwards
       for (PsiAnnotation annotation : StreamEx.ofReversed(component.getAnnotations())) {
         String qualifiedName = annotation.getQualifiedName();
-        if (qualifiedName == null || AnnotationTargetUtil.findAnnotationTarget(annotation, targetType) == null) continue;
+        if (qualifiedName == null || AnnotationTargetUtil.findAnnotationTarget(annotation, targetType) == null ||
+            AnnotationTargetUtil.findAnnotationTarget(annotation, TargetType.TYPE_USE) != null) {
+          continue;
+        }
         PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, qualifiedName);
         if (target == null) continue;
         PsiAnnotation dummy = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent("Dummy", PsiNameValuePair.EMPTY_ARRAY, target);

@@ -32,6 +32,7 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -76,11 +77,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "toString"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "toString"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "toString"),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath", "getName", "getPath"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage").parameterCount(0),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
-  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|</?(html|b|i|body)>|&\\w+;";
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "(?i)https?://.+|\\w*[.][\\w.]+|\\w*[$]\\w*|(</?(html|b|i|body|li|ol|ul)>)*|&\\w+;";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
@@ -381,7 +382,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.gridy ++;
     gc.anchor = GridBagConstraints.NORTHWEST;
     gc.weighty = 1;
-    final JTextField literalPattern = new JTextField(nonNlsLiteralPattern);
+    final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
+                                                              strings -> StringUtil.join(strings, "|"));
+    literalPattern.setText(nonNlsLiteralPattern);
     final FieldPanel nonNlsStringPatternComponent =
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null, 
@@ -760,8 +763,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return Collections.emptyList();
     }
 
-    while (sourcePsi.getParent() instanceof PsiPolyadicExpression || sourcePsi.getParent() instanceof PsiParenthesizedExpression) {
-      sourcePsi = sourcePsi.getParent();
+    while (true) {
+      PsiElement psiParent = sourcePsi.getParent();
+      if (psiParent instanceof PsiPolyadicExpression || psiParent instanceof PsiParenthesizedExpression ||
+          (psiParent instanceof PsiConditionalExpression && ((PsiConditionalExpression)psiParent).getCondition() != sourcePsi)) {
+        sourcePsi = psiParent;
+      }
+      else {
+        break;
+      }
     }
 
     PsiExpression passThrough = ExpressionUtils.getPassThroughExpression((PsiExpression)sourcePsi);
@@ -781,7 +791,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
     }
 
-    if (local != null) {
+    if (local != null && NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
       PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
       if (codeBlock instanceof PsiCodeBlock) {
         for (PsiElement e : DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, passThrough)) {
@@ -800,6 +810,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return NlsInfo.nonLocalized();
     }
 
+    if (isSuppressedByComment(project, expression)) {
+      return NlsInfo.nonLocalized();
+    }
+
+    if (value != null && myCachedLiteralPattern != null && myCachedLiteralPattern.matcher(value).matches()) {
+      return NlsInfo.nonLocalized();
+    }
+
     List<UExpression> usages = findIndirectUsages(expression);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);
@@ -809,9 +827,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
         case YES: {
-          if (isSuppressedByComment(project, expression)) {
-            return NlsInfo.nonLocalized();
-          }
           return info;
         }
         case UNSURE: {
@@ -820,9 +835,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           }
           if (shouldIgnoreUsage(project, value, nonNlsTargets, usage)) {
             break;
-          }
-          if (isSuppressedByComment(project, expression)) {
-            return NlsInfo.nonLocalized();
           }
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
@@ -863,11 +875,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                     @Nullable String value,
                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
                                     @NotNull UExpression usage) {
-    if (value != null && myCachedLiteralPattern != null && myCachedLiteralPattern.matcher(value).matches()) {
-      return true;
-    }
-    
-    if (isInNonNlsCall(usage, nonNlsTargets)) {
+    if (isInNonNlsCallChain(usage, nonNlsTargets)) {
       return true;
     }
 
@@ -875,7 +883,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return true;
     }
 
-    if (isPassedToNonNlsVariable(usage, nonNlsTargets)) {
+    if (isPassedToNonNls(usage, nonNlsTargets)) {
       return true;
     }
 
@@ -958,57 +966,19 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(@NotNull UExpression expression,
-                                           final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression, false);
-    PsiModifierListOwner var = null;
-    if (UastExpressionUtils.isAssignment(toplevel)) {
-      UExpression lExpression = ((UBinaryExpression)toplevel).getLeftOperand();
-      while (lExpression instanceof UArrayAccessExpression) {
-        lExpression = ((UArrayAccessExpression)lExpression).getReceiver();
-      }
-      if (lExpression instanceof UResolvable) {
-        final PsiElement resolved = ((UResolvable)lExpression).resolve();
-        if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
-      }
-    }
-
-    if (var == null) {
-      UElement parent = toplevel.getUastParent();
-      if (parent instanceof UVariable && toplevel.equals(((UVariable)parent).getUastInitializer())) {
-        if (((UVariable)parent).findAnnotation(AnnotationUtil.NON_NLS) != null) {
-          return true;
-        }
-
-        PsiElement psi = parent.getSourcePsi();
-        if (psi instanceof PsiModifierListOwner) {
-          var = (PsiModifierListOwner)psi;
-        }
-      }
-      else if (toplevel instanceof USwitchExpression) {
-        UExpression switchExpression = ((USwitchExpression)toplevel).getExpression();
-        if (switchExpression instanceof UResolvable) {
-          PsiElement resolved = ((UResolvable)switchExpression).resolve();
-          if (resolved instanceof PsiVariable) {
-            UElement caseParent = expression.getUastParent();
-            if (caseParent instanceof USwitchClauseExpression && ((USwitchClauseExpression)caseParent).getCaseValues().contains(expression)) {
-              var = (PsiVariable)resolved;
-            }
-          }
-        }
-      }
-    }
-
-    if (var != null) {
-      if (annotatedAsNonNls(var)) {
+  private boolean isPassedToNonNls(@NotNull UExpression expression,
+                                   final Set<? super PsiModifierListOwner> nonNlsTargets) {
+    NlsInfo info = NlsInfo.forExpression(JavaI18nUtil.getTopLevelExpression(expression, false));
+    if (info == NlsInfo.nonLocalized()) return true;
+    if (info instanceof NlsInfo.Unspecified) {
+      PsiModifierListOwner candidate = ((NlsInfo.Unspecified)info).getAnnotationCandidate();
+      if (candidate instanceof PsiVariable &&
+          ignoreAssignedToConstants &&
+          candidate.hasModifierProperty(PsiModifier.STATIC) &&
+          candidate.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
-      if (ignoreAssignedToConstants &&
-          var.hasModifierProperty(PsiModifier.STATIC) &&
-          var.hasModifierProperty(PsiModifier.FINAL)) {
-        return true;
-      }
-      nonNlsTargets.add(var);
+      ContainerUtil.addIfNotNull(nonNlsTargets, candidate);
     }
     return false;
   }
@@ -1039,8 +1009,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isInNonNlsCall(@NotNull UExpression expression,
-                                        final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isInNonNlsCallChain(@NotNull UExpression expression,
+                                             final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression parent = UastUtils.skipParenthesizedExprDown(JavaI18nUtil.getTopLevelExpression(expression, true));
     if (parent instanceof UQualifiedReferenceExpression) {
       return isNonNlsCall((UQualifiedReferenceExpression)parent, nonNlsTargets);

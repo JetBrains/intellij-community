@@ -3,6 +3,7 @@ package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,10 +37,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -112,12 +110,12 @@ public class TypeMigrationLabeler {
       final PsiExpression element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
       final PsiType type = element.getType();
-      report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXmlEntities(element.getText()) + "</b>" +
-                    (type != null
-                     ? " from <b>" + StringUtil.escapeXmlEntities(type.getCanonicalText()) + "</b>" +
-                       " to <b>" + StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()) + "</b>"
-                     : "")
-                    + "<br>";
+      report[j++] = JavaBundle.message("type.migration.cannon.convert.tooltip", 
+                                       StringUtil.escapeXmlEntities(element.getText()),
+                                       type != null ? StringUtil.escapeXmlEntities(type.getCanonicalText()) : "",
+                                       StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
+                                       type == null ? 0 : 1);
+                    
     }
 
     return report;
@@ -143,8 +141,8 @@ public class TypeMigrationLabeler {
           public String getTooltipText() {
             final PsiType type = expr.isValid() ? expr.getType() : null;
             if (type == null) return null;
-            return "Cannot convert type of the expression from " +
-                   type.getCanonicalText() + " to " + pair.getSecond().getCanonicalText();
+            return JavaBundle
+              .message("type.migration.cannot.convert.tooltip", type.getCanonicalText(), pair.getSecond().getCanonicalText());
           }
         };
       });
@@ -163,10 +161,10 @@ public class TypeMigrationLabeler {
         public String getTooltipText() {
           if (conv instanceof String) {   //todo
             final String conversion = (String)conv;
-            return "Replaced with " + conversion.replaceAll("\\$", element.getText());
+            return JavaBundle.message("type.migration.replaced.notification", conversion.replaceAll("\\$", element.getText()));
           }
           else {
-            return "Replaced with " + conv.toString();
+            return JavaBundle.message("type.migration.replaced.notification", conv.toString());
           }
         }
 
@@ -1131,7 +1129,7 @@ public class TypeMigrationLabeler {
 
   @TestOnly
   public String getMigrationReport() {
-    final StringBuilder buffer = new StringBuilder();
+    final @NonNls StringBuilder buffer = new StringBuilder();
 
     buffer.append("Types:\n").append(getTypeEvaluator().getReport()).append("\n");
 

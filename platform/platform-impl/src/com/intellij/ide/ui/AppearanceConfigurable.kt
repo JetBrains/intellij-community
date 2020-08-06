@@ -64,9 +64,9 @@ private val cdDnDWithAlt                              get() = CheckboxDescriptor
 private val cdUseTransparentMode                      get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
 private val cdOverrideLaFFont                         get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
+private val cdMergeMainMenuWithWindowTitle            get() = CheckboxDescriptor(message("checkbox.merge.main.menu.with.window.title"), settings::mergeMainMenuWithWindowTitle, groupName = windowOptionGroupName)
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons                           get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
-private val cdEnableBorderlessMode                    get() = CheckboxDescriptor(message("checkbox.enable.borderless.mode"), settings::enableBorderlessMode, groupName = windowOptionGroupName)
 
 // @formatter:on
 
@@ -192,41 +192,41 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
       titledRow(message("group.ui.options")) {
-        fun optional(condition: Boolean, control: InnerCell.() -> Unit): (InnerCell.() -> Unit)? =
-          if (condition) control else null
-
-        val leftColumnControls = sequenceOf<InnerCell.() -> Unit>(
-          { checkBox(cdShowTreeIndents) },
-          { checkBox(cdUseCompactTreeIndents) },
-          { checkBox(cdEnableMenuMnemonics) },
-          { checkBox(cdEnableControlsMnemonics) }
-        )
-        val rightColumnControls = sequenceOf<(InnerCell.() -> Unit)?>(
+        val hasMergeMainMenuWithWindowTitleOption = IdeFrameDecorator.isCustomDecorationAvailable()
+        twoPanelRow(
           {
-            checkBox(cdSmoothScrolling)
-            ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
+            fullRow { checkBox(cdShowTreeIndents) }
+            fullRow { checkBox(cdUseCompactTreeIndents) }
+            fullRow { checkBox(cdEnableMenuMnemonics) }
+            fullRow { checkBox(cdEnableControlsMnemonics) }
+            // The last item migrates here from the right column if the right column has the additional item:
+            if (hasMergeMainMenuWithWindowTitleOption)
+              fullRow { checkBox(cdShowMenuIcons) }
           },
-          { checkBox(cdDnDWithAlt) },
-          optional(IdeFrameDecorator.isCustomDecorationAvailable()) {
-            checkBox(cdEnableBorderlessMode)
-            commentNoWrap(message("checkbox.enable.borderless.mode.comment"))
-              .withLargeLeftGap()
-          },
-          { checkBox(cdFullPathsInTitleBar) },
-          { checkBox(cdShowMenuIcons) }
-        ).filterNotNull()
+          {
+            fullRow {
+              checkBox(cdSmoothScrolling)
+              ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
+            }
+            fullRow { checkBox(cdDnDWithAlt) }
 
-        // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
-        // column to the left one:
-        val leftIt = leftColumnControls.iterator()
-        val rightIt = rightColumnControls.iterator()
-        while (leftIt.hasNext() || rightIt.hasNext()) {
-          when {
-            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnRow(leftIt.next()) { placeholder() }
-            rightIt.hasNext() -> twoColumnRow(rightIt.next()) { placeholder() } // move from right to left
+            if (hasMergeMainMenuWithWindowTitleOption) {
+              fullRow {
+                val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
+                checkBox(cdMergeMainMenuWithWindowTitle).enabled(!overridden)
+                if (overridden) {
+                  ContextHelpLabel.create(
+                    message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))()
+                }
+                commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment")).withLargeLeftGap()
+              }
+            }
+            fullRow { checkBox(cdFullPathsInTitleBar) }
+            // The last item migrates to the left column if the right column has the additional item:
+            if (!hasMergeMainMenuWithWindowTitleOption)
+              fullRow { checkBox(cdShowMenuIcons) }
           }
-        }
+        )
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           fullRow {
@@ -350,6 +350,16 @@ private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: Inne
     column2()
   }
   placeholder().constraints(growX, pushX)
+}
+
+private fun RowBuilder.twoPanelRow(initPanel1: LayoutBuilder.() -> Unit, initPanel2: LayoutBuilder.() -> Unit): Row {
+  val panel1 = panel {
+    initPanel1()
+  }
+  val panel2 = panel {
+    initPanel2()
+  }
+  return twoColumnRow({ component(panel1) }, { component(panel2) })
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {

@@ -123,6 +123,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
 
     myList.setItems(myDescriptors, GutterIconDescriptor::getName);
     myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     return myPanel;
   }
 

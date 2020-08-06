@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -15,7 +14,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 
-@Staging
 public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   private static class PyDebuggerMultiprocessTask extends PyDebuggerTask {

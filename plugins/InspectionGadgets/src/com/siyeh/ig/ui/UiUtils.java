@@ -69,7 +69,7 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final String chooserTitle,
+  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, @NlsContexts.DialogTitle final String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {

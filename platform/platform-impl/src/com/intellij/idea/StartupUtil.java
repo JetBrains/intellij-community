@@ -274,7 +274,7 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, Arrays.asList(args), log), initUiTask);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {

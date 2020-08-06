@@ -115,7 +115,7 @@ public final class TestUtils {
     final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
     if (testFramework == null) return false;
     if (testFramework.isTestMethod(method, false)) {
-      final String testFrameworkName = testFramework.getName();
+      @NonNls final String testFrameworkName = testFramework.getName();
       return testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5");
     }
     return false;

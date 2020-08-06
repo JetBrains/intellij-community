@@ -240,6 +240,18 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
+  @Nullable
+  public static String patchExecutablePath(@NotNull String path) {
+    if (SystemInfo.isWindows) {
+      File file = new File(path);
+      if (file.getName().equals("git-cmd.exe") || file.getName().equals("git-bash.exe")) {
+        File patchedFile = new File(file.getParent(), "bin/git.exe");
+        if (patchedFile.exists()) return patchedFile.getPath();
+      }
+    }
+    return null;
+  }
+
   // Compare strategy: greater is better (if v1 > v2, then v1 is a better candidate for the Git executable)
   private static class VersionDirsComparator implements Comparator<File> {
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -243,7 +244,7 @@ public final class DirectoryAccessChecker {
         else if (o.startsWith("port")) port = getValue(o);
       }
 
-      List<String> command = new ArrayList<>();
+      @NonNls List<String> command = new ArrayList<>();
       command.add(clientPath);
       command.add(fsSpec);
       if (StringUtil.isNotEmpty(authFile)) {

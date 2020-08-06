@@ -20,12 +20,13 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class InstanceMethodNamingConvention extends NamingConvention<PsiMethod> {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
-  public static final String INSTANCE_METHOD_NAMING_CONVENTION = "InstanceMethodNamingConvention";
+  @NonNls public static final String INSTANCE_METHOD_NAMING_CONVENTION = "InstanceMethodNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {

@@ -15,6 +15,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static @NotNull String getDescription(@Nullable Project project) {
-    StringBuilder sb = new StringBuilder("\n\n");
+    @NonNls StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
     sb.append("JRE ");

@@ -90,7 +90,10 @@ public final class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
+  public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
+                                     @NotNull Path newConfigDir,
+                                     @NotNull List<String> args,
+                                     @NotNull Logger log) {
     log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
@@ -105,17 +108,10 @@ public final class ConfigImportHelper {
       return;
     }
 
-    ConfigImportSettings settings = null;
-    try {
-      String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
-      if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
-        settings = ReflectionUtil.newInstance(customProviderClass);
-      }
-    }
-    catch (Exception ignored) { }
+    ConfigImportSettings settings = findCustomConfigImportSettings();
 
-    @NotNull List<PathAndFileTime> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
+    String pathSelectorOfOtherIde = (settings != null ? settings.getProductToImportFrom(args) : null);
+    @NotNull List<PathAndFileTime> guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
 
@@ -196,10 +192,25 @@ public final class ConfigImportHelper {
       if (isConfigImported()) {
         properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
       }
-      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
 
-      restart();
+      if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
+        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
+        restart();
+      }
     }
+  }
+
+  @Nullable
+  static ConfigImportSettings findCustomConfigImportSettings() {
+    try {
+      String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
+      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
+        return ReflectionUtil.newInstance(customProviderClass);
+      }
+    }
+    catch (Exception ignored) { }
+    return null;
   }
 
   private static boolean isConfigOld(@NotNull FileTime time) {
@@ -365,6 +376,10 @@ public final class ConfigImportHelper {
   }
 
   static @NotNull List<PathAndFileTime> findConfigDirectories(@NotNull Path newConfigDir) {
+    return findConfigDirectories(newConfigDir, null);
+  }
+
+  static @NotNull List<PathAndFileTime> findConfigDirectories(@NotNull Path newConfigDir, @Nullable String productPrefixOtherIde) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -379,25 +394,45 @@ public final class ConfigImportHelper {
       if (productName != null) prefix = productName.replace(" ", "");
     }
     if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
-    String dotPrefix = '.' + prefix;
 
-    List<Path> candidates = new ArrayList<>();
+    List<Path> exactCandidates = new ArrayList<>();
+    List<Path> otherPreferredCandidates = new ArrayList<>();
+    List<Path> otherCandidates = new ArrayList<>();
     for (Path home : homes) {
       if (home == null || !Files.isDirectory(home)) continue;
 
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
-          if (!path.equals(newConfigDir)) {
+          if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
             String name = path.getFileName().toString();
-            if ((StringUtil.startsWithIgnoreCase(name, prefix) || StringUtil.startsWithIgnoreCase(name, dotPrefix)) && Files.isDirectory(path)) {
-              candidates.add(path);
+            if (nameMatchesPrefix(name, prefix)) {
+              exactCandidates.add(path);
+            }
+            else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
+              if (nameMatchesPrefix(name, productPrefixOtherIde)) {
+                otherPreferredCandidates.add(path);
+              }
+              else if (otherPreferredCandidates.isEmpty() && isConfigDirectory(path)) {
+                otherCandidates.add(path);
+              }
             }
           }
         }
       }
       catch (IOException ignore) { }
     }
-    if (candidates.isEmpty()) {
+
+    List<Path> candidates;
+    if (!exactCandidates.isEmpty()) {
+      candidates = exactCandidates;
+    }
+    else if (!otherPreferredCandidates.isEmpty()) {
+      candidates = otherPreferredCandidates;
+    }
+    else if (!otherCandidates.isEmpty()) {
+      candidates = otherCandidates;
+    }
+    else {
       return Collections.emptyList();
     }
 
@@ -428,6 +463,10 @@ public final class ConfigImportHelper {
       return diff;
     });
     return lastModified;
+  }
+
+  private static boolean nameMatchesPrefix(@NotNull String name, @NotNull String prefix) {
+    return StringUtil.startsWithIgnoreCase(name, prefix) || StringUtil.startsWithIgnoreCase(name, '.' + prefix);
   }
 
   private static String getNameWithVersion(Path configDir) {

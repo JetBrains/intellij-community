@@ -17,6 +17,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,7 +164,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   @NotNull
-  static String getShowToolbarProperty(@NotNull String s) {
+  static String getShowToolbarProperty(@NotNull @NonNls String s) {
     return s + ".ShowToolbar";
   }
 

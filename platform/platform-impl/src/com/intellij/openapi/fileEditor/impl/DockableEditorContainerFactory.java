@@ -13,11 +13,12 @@ import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
-  public static final String TYPE = "file-editors";
+  @NonNls public static final String TYPE = "file-editors";
 
   private final Project myProject;
   private final FileEditorManagerImpl myFileEditorManager;

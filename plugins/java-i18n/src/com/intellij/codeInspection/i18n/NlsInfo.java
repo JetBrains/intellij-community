@@ -232,31 +232,61 @@ public abstract class NlsInfo {
     PsiElement var = null;
     while (true) {
       parent = expression.getUastParent();
-      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression ||
+      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression || 
+            parent != null && UastExpressionUtils.isArrayInitializer(parent) ||
+            parent != null && UastExpressionUtils.isNewArray(parent) ||
             (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS))) {
         break;
       }
       expression = (UExpression)parent;
     }
-    if (parent instanceof UBinaryExpression) {
+    
+    if (parent instanceof UVariable) {
+      var = parent.getJavaPsi();
+    }
+    else if (parent instanceof UBinaryExpression) {
       UBinaryExpression binOp = (UBinaryExpression)parent;
       UastBinaryOperator operator = binOp.getOperator();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
           expression.equals(binOp.getRightOperand())) {
-        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()),
-                                                          UReferenceExpression.class);
+        UExpression leftOperand = UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand());
+        UReferenceExpression lValue = ObjectUtils.tryCast(leftOperand, UReferenceExpression.class);
         if (lValue != null) {
           var = lValue.resolve();
         }
+        else {
+          while (leftOperand instanceof UArrayAccessExpression) {
+            leftOperand = ((UArrayAccessExpression)leftOperand).getReceiver();
+          }
+          if (leftOperand instanceof UResolvable) {
+            var = ((UResolvable)leftOperand).resolve();
+          }
+        }
       }
     }
-    else if (parent instanceof UVariable) {
-      var = parent.getJavaPsi();
+    else if (parent instanceof USwitchClauseExpression) {
+      if (((USwitchClauseExpression)parent).getCaseValues().contains(expression)) {
+        USwitchExpression switchExpression = UastUtils.getParentOfType(parent, USwitchExpression.class);
+        if (switchExpression != null) {
+          UExpression selector = switchExpression.getExpression();
+          if (selector instanceof UResolvable) {
+            var = ((UResolvable)selector).resolve();
+          }
+        }
+      }
     }
+
     if (var instanceof PsiVariable) {
       NlsInfo info = fromAnnotationOwner(((PsiVariable)var).getModifierList());
       if (info != Unspecified.UNKNOWN) return info;
-      return fromType(((PsiVariable)var).getType());
+      info = fromType(((PsiVariable)var).getType());
+      if (info != Unspecified.UNKNOWN) return info;
+      if (var instanceof PsiField) {
+        info = fromContainer((PsiField)var);
+        if (info != Unspecified.UNKNOWN) return info;
+      }
+      return parent instanceof UCallExpression ? Unspecified.UNKNOWN 
+                                               : new Unspecified((PsiVariable)var);
     }
     return Unspecified.UNKNOWN;
   }
@@ -519,9 +549,9 @@ public abstract class NlsInfo {
     return fromContainer(method);
   }
 
-  private static @NotNull NlsInfo fromContainer(@NotNull PsiMethod method) {
+  private static @NotNull NlsInfo fromContainer(@NotNull PsiMember member) {
     // From class
-    PsiClass containingClass = method.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       NlsInfo classInfo = fromAnnotationOwner(containingClass.getModifierList());
       if (classInfo != Unspecified.UNKNOWN) {
@@ -531,10 +561,10 @@ public abstract class NlsInfo {
     }
 
     // From package
-    PsiFile containingFile = method.getContainingFile();
+    PsiFile containingFile = member.getContainingFile();
     if (containingFile instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)containingFile).getPackageName();
-      PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+      PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(packageName);
       if (aPackage != null) {
         NlsInfo info = fromAnnotationOwner(aPackage.getAnnotationList());
         if (info != Unspecified.UNKNOWN) {

@@ -6,6 +6,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -457,7 +458,8 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
 
     if (getCheckedRows().length == 0) {
-      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), "Nothing found to encapsulate", HelpID.ENCAPSULATE_FIELDS, myProject);
+      String noTargetMessage = JavaRefactoringBundle.message("encapsulate.fields.no.target");
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), noTargetMessage, HelpID.ENCAPSULATE_FIELDS, myProject);
       return;
     }
 
@@ -469,6 +471,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   /**
    * @return error string if errors were found, or null if everything is ok
    */
+  @NlsContexts.DialogMessage
   private String validateData() {
     PsiManager manager = PsiManager.getInstance(myProject);
     for (int idx = 0; idx < myFields.length; idx++) {

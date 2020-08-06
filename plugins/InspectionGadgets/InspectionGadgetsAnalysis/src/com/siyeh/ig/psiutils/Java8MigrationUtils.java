@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,7 @@ public class Java8MigrationUtils {
    * @param expectedName name of the Map method
    */
   @Contract("null, _ -> null")
-  public static PsiMethodCallExpression extractMapMethodCall(PsiExpression expression, @NotNull String expectedName) {
+  public static PsiMethodCallExpression extractMapMethodCall(PsiExpression expression, @NotNull @NonNls String expectedName) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
@@ -360,7 +361,7 @@ public class Java8MigrationUtils {
       return myIsEntrySet;
     }
 
-    private boolean isParamCall(@NotNull PsiExpression expression, @NotNull String expectedName) {
+    private boolean isParamCall(@NotNull PsiExpression expression, @NotNull @NonNls String expectedName) {
       PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
       if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();

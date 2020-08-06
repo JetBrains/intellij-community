@@ -538,7 +538,7 @@ public final class UIUtil {
    * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
    */
-  public static Object getClientProperty(Object component, @NotNull Object key) {
+  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
   }
 

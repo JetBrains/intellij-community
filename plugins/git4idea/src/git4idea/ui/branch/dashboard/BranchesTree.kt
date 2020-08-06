@@ -150,7 +150,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
-  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.HEAD_NODE, displayName = VcsLogUtil.HEAD))
+  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.HEAD_NODE))
   private val branchFilter: (BranchInfo) -> Boolean =
     { branch -> !uiController.showOnlyMy || branch.isMy == ThreeState.YES }
   private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
@@ -235,7 +235,7 @@ internal class FilteringBranchesTree(project: Project,
 
   fun getSelectedBranchFilters(): List<String> {
     return component.getSelectedNodes()
-      .mapNotNull { with(it.getNodeDescriptor()) { if (type == NodeType.HEAD_NODE) displayName else branchInfo?.branchName } }
+      .mapNotNull { with(it.getNodeDescriptor()) { if (type == NodeType.HEAD_NODE) VcsLogUtil.HEAD else branchInfo?.branchName } }
       .toList()
   }
 

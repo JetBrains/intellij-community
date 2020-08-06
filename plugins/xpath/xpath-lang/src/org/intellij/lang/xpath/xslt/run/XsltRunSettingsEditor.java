@@ -60,6 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           component.setText(text);
         }
       };
-      myXsltFile.addBrowseFolderListener("Choose XSLT File", null, project, myXsltDescriptor, projectDefaultAccessor);
+      myXsltFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xslt.file"), null, project, myXsltDescriptor, projectDefaultAccessor);
       myXsltFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         final VirtualFileManager fileMgr = VirtualFileManager.getInstance();
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
@@ -195,7 +196,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myXmlInputFile.getComboBox().setEditable(true);
 
       myXmlDescriptor = new AnyXMLDescriptor(false);
-      myXmlInputFile.addBrowseFolderListener("Choose XML File", null, project, myXmlDescriptor, new TextComponentAccessor<JComboBox>() {
+      myXmlInputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xml.file"), null, project, myXmlDescriptor, new TextComponentAccessor<JComboBox>() {
         @Override
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();
@@ -218,7 +219,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         }
       });
 
-      myOutputFile.addBrowseFolderListener("Choose Output File", "The selected file will be overwritten during execution.",
+      myOutputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.output.file"),
+                                           XPathBundle.message("label.selected.file.will.be.overwritten.during.execution"),
                                            project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor());
 
       final ItemListener outputStateListener = new ItemListener() {
@@ -237,7 +239,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
           if (value == null) {
             setIcon(AllIcons.Actions.Cancel);
-            setText("Disabled");
+            setText(XPathBundle.message("label.disabled"));
           }
           else {
             super.customize(list, value, index, selected, hasFocus);
@@ -260,7 +262,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           if (column == 0) {
             if (table.getModel().getValueAt(row, 1) == null) {
               setForeground(PlatformColors.BLUE);
-              setToolTipText("No value set for parameter '" + value + "'");
+              setToolTipText(XPathBundle.message("tooltip.no.value.set.for.parameter.0", value));
             }
           }
           else if (value == null) {
@@ -290,7 +292,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
           if (value instanceof Module) {
             final Module module = (Module)value;
-            label.setText(ReadAction.compute(() -> module.getName()));
+            final String moduleName = ReadAction.compute(() -> module.getName());
+            label.setText(moduleName);
             label.setIcon(ModuleType.get(module).getIcon());
           }
           else if (value instanceof String) {
@@ -323,7 +326,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       updateJdkState();
 
       myWorkingDirectory
-        .addBrowseFolderListener("Working Directory", null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+        .addBrowseFolderListener(XPathBundle.message("dialog.title.working.directory"), null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
       myVmArguments.setDialogCaption("VM Arguments");
 

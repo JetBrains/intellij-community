@@ -67,7 +67,6 @@ class VersionedEntityStorageOnBuilder(private val builder: WorkspaceEntityStorag
         currentSnapshot.set(count to snapshot)
         return snapshot
       }
-
       return pair.second
     }
 
@@ -102,6 +101,19 @@ class VersionedEntityStorageOnStorage(private val storage: WorkspaceEntityStorag
   override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
     valuesCache.clearCachedValue(value, parameter)
+}
+
+class DummyVersionedEntityStorage(private val builder: WorkspaceEntityStorageBuilder) : VersionedEntityStorage {
+  override val version: Long
+    get() = builder.modificationCount
+
+  override val current: WorkspaceEntityStorage
+    get() = builder
+
+  override fun <R> cachedValue(value: CachedValue<R>): R = value.source(current)
+  override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R = value.source(current, parameter)
+  override fun <R> clearCachedValue(value: CachedValue<R>) { }
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
 open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : VersionedEntityStorage {

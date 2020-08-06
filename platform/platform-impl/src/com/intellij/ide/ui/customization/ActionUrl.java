@@ -268,6 +268,7 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "ActionUrl{" +
            "myGroupPath=" + myGroupPath +

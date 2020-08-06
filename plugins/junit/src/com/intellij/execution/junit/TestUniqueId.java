@@ -2,9 +2,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Location;
-import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -98,7 +96,7 @@ public class TestUniqueId extends TestObject {
     super.checkConfiguration();
     String[] ids = getConfiguration().getPersistentData().getUniqueIds();
     if (ids == null || ids.length == 0) {
-      throw new RuntimeConfigurationException("No unique id specified");
+      throw new RuntimeConfigurationException(JUnitBundle.message("dialog.message.no.unique.id.specified.exception"));
     }
   }
 }

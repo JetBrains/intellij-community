@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -24,7 +25,7 @@ public final class AttachmentFactory {
   private static final long BIG_FILE_THRESHOLD_BYTES = 50 * 1024;
 
   @NotNull
-  public static Attachment createContext(@NotNull Object start, Object... more) {
+  public static Attachment createContext(@NotNull @NonNls Object start, @NonNls Object... more) {
     StringBuilder builder = new StringBuilder(String.valueOf(start));
     for (Object o : more) builder.append(",").append(o);
     return new Attachment("current-context.txt", builder.length() > 0 ? builder.toString() : "(unknown)");

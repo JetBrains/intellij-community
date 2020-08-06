@@ -87,6 +87,7 @@ data class ProjectIndexingHistory(val projectName: String) {
     var indexExtensionsStart: Instant? = null,
     var indexExtensionsEnd: Instant? = null,
     var scanFilesStart: Instant? = null,
-    var scanFilesEnd: Instant? = null
+    var scanFilesEnd: Instant? = null,
+    var wasInterrupted: Boolean = false
   )
 }

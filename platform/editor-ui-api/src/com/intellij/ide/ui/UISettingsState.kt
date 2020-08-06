@@ -174,7 +174,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
   var fullPathsInWindowHeader by property(false)
   @get:OptionTag("BORDERLESS_MODE")
-  var enableBorderlessMode by property(SystemInfo.isWindows)
+  var mergeMainMenuWithWindowTitle by property(SystemInfo.isWin10OrNewer && SystemInfo.isJetBrainsJvm)
 
   var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(

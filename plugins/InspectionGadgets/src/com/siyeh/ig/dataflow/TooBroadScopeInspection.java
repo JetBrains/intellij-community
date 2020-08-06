@@ -36,6 +36,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +208,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     if (aClass == null) {
       return false;
     }
-    final String qualifiedName = aClass.getQualifiedName();
+    @NonNls final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread") ||
         qualifiedName.equals("java.lang.System") || qualifiedName.equals("java.lang.Runtime")) {
       return false;

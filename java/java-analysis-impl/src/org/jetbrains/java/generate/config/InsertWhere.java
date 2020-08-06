@@ -19,21 +19,23 @@
  */
 package org.jetbrains.java.generate.config;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.PropertyKey;
 
 public enum InsertWhere {
-    AT_CARET("At caret"),
-    AFTER_EQUALS_AND_HASHCODE("After equals() and hashCode()"),
-    AT_THE_END_OF_A_CLASS("At the end of class");
+    AT_CARET("generate.members.position.at.caret"),
+    AFTER_EQUALS_AND_HASHCODE("generate.members.position.after.equals.and.hashcode"),
+    AT_THE_END_OF_A_CLASS("generate.members.position.at.the.end.of.class");
 
-    private final @Nls String displayName;
+    private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String propertyKey;
 
-    InsertWhere(@Nls String displayName) {
-        this.displayName = displayName;
+    InsertWhere(@PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String propertyKey) {
+        this.propertyKey = propertyKey;
     }
 
     @Override
     public @Nls String toString() {
-        return displayName;
+        return JavaAnalysisBundle.message(propertyKey);
     }
 }

@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.IntStreamEx;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -106,6 +107,34 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     ensureIndexUpToDate();
     PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
+  }
+
+  public void testResolveOfManyStaticallyImportedFields() throws Exception {
+    int fieldCount = 7000;
+
+    createFile(myModule, "Constants.java",
+               "interface Constants { " +
+               IntStreamEx.range(0, fieldCount).mapToObj(i -> "String field" + i + ";").joining("\n") +
+               "}");
+
+    PsiFile file = createFile(myModule, "a.java",
+                              "import static Constants.*;\n" +
+                              "class Usage { \n" +
+                              "void foo(String s) {}\n" +
+                              "{" +
+                              IntStreamEx.range(0, fieldCount).mapToObj(i -> "foo(field" + i + ");").joining("\n") +
+                              "}}");
+
+    List<PsiJavaCodeReferenceElement> refs = SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class).toList();
+
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 1_000, () -> {
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        assertNotNull(ref.resolve());
+      }
+    })
+      .setup(getPsiManager()::dropPsiCaches)
+      .assertTiming();
+
   }
 
   private void ensureIndexUpToDate() {

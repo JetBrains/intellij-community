@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -79,7 +80,8 @@ public class TestNGTestPackage extends TestNGTestObject {
   public void checkConfiguration() throws RuntimeConfigurationException {
     final TestData data = myConfig.getPersistantData();
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(data.getPackageName());
-    if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getPackageName() + "' not found");
+    if (psiPackage == null) throw new RuntimeConfigurationException(
+      TestngBundle.message("tetsng.dialog.message.package.not.found.exception", data.getPackageName()));
   }
 
   @Override

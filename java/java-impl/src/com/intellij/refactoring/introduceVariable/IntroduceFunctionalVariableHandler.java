@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,7 +81,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         }
 
         if (types.isEmpty()) {
-          showErrorMessage(project, editor, "No applicable functional interfaces found");
+          showErrorMessage(project, editor, JavaBundle.message("introduce.functional.variable.nothing.found.message"));
           return;
         }
         if (types.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -96,7 +97,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
             PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
           final PsiType returnType = emptyMethod.getReturnType();
           assert returnType != null;
-          final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
+          final String title =
+            JavaBundle.message("introduce.functional.variable.interface.chooser.title", methodSignature, returnType.getPresentableText());
           NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
                                             psiClass -> {
                                               functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
@@ -269,7 +271,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
               if (PsiUtil.isLanguageLevel8OrHigher(data.variable) 
                   ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null) 
                   : data.variable.hasModifierProperty(PsiModifier.FINAL)) {
-                conflicts.putValue(null, "Variable " + data.name + " is not effectively final and won't be accessible inside functional expression");
+                conflicts.putValue(null, JavaBundle.message("introduce.functional.variable.accessibility.conflict", data.name));
               }
             }
           }

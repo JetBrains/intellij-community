@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +22,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
@@ -190,20 +190,27 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   public static boolean isCustomDecorationAvailable() {
-    return SystemInfo.isWindows
-           && SystemProperties.getBooleanProperty("ide.win.frame.decoration", true)
-           && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && JdkEx.isCustomDecorationSupported();
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
-    if (settings == null)
-      return isCustomDecorationAvailable(); // true by default is no settings is available (e.g. during the initial IDE setup wizard)
+    if (settings == null) {
+      // true by default is no settings is available (e.g. during the initial IDE setup wizard) and not overridden
+      return isCustomDecorationAvailable()
+             && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
+    }
 
     // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
     // of frames already created, and changing this setting during any frame lifetime will cause weird effects).
     return isCustomDecorationActiveCache.updateAndGet(
-      cached -> cached != null ? cached : isCustomDecorationAvailable() && settings.getEnableBorderlessMode());
+      cached -> {
+        if (cached != null) return cached;
+        if (!isCustomDecorationAvailable()) return false;
+        Boolean override = UISettings.getMergeMainMenuWithWindowTitleOverrideValue();
+        if (override != null) return override;
+        return settings.getMergeMainMenuWithWindowTitle();
+      });
   }
 }

@@ -1264,6 +1264,8 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
     <completion.plainTextSymbol language="JAVA" implementationClass="com.intellij.codeInsight.completion.JvmPlainTextSymbolCompletionContributor"/>
     <completion.ignoringDumbnessAllowed language="JAVA"/>
+    <codeInsight.wordCompletionFilter language="JAVA"
+                                      implementationClass="com.intellij.lang.java.JavaWordCompletionFilter"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider" id="excludeFromCompletion" order="last"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>

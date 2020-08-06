@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,6 +138,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return getTemplatePresentation().getText()
            + " previous: " + myPrevious.getTemplatePresentation().getText()

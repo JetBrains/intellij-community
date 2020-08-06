@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
@@ -698,7 +699,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   @Override
-  public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
+  public void addSettingsField(@NotNull @NlsContexts.Label String label, @NotNull JComponent field) {
     ProjectSettingsStep.addField(label, field, myHeaderPanel);
   }
 
@@ -712,7 +713,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   @Override
-  public void addExpertField(@NotNull String label, @NotNull JComponent field) {
+  public void addExpertField(@NotNull @NlsContexts.Label String label, @NotNull JComponent field) {
 
   }
 

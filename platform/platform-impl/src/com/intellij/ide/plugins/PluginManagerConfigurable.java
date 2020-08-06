@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.SystemInfo;
@@ -128,7 +127,7 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
-  private Collection<PluginDownloader> myInitUpdates;
+  private Collection<IdeaPluginDescriptor> myInitUpdates;
 
   public PluginManagerConfigurable() {
   }
@@ -923,6 +922,7 @@ public class PluginManagerConfigurable
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
+          @NonNls
           protected List<String> getAttributes() {
             return Arrays
               .asList(
@@ -1081,7 +1081,7 @@ public class PluginManagerConfigurable
                   continue;
                 }
               }
-              if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
+              if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
                 I.remove();
               }
             }
@@ -1124,7 +1124,7 @@ public class PluginManagerConfigurable
                 });
               }
 
-              Collection<PluginDownloader> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
+              Collection<IdeaPluginDescriptor> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
               myInitUpdates = null;
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
@@ -1155,6 +1155,13 @@ public class PluginManagerConfigurable
     });
   }
 
+  private static boolean containsQuery(IdeaPluginDescriptor descriptor, String searchQuery) {
+    if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
+
+    String description = descriptor.getDescription();
+    return description != null && StringUtil.containsIgnoreCase(description, searchQuery);
+  }
+
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
       for (ListPluginComponent plugin : group.plugins) {
@@ -1163,9 +1170,8 @@ public class PluginManagerConfigurable
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
-    for (PluginDownloader downloader : updates) {
-      IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<IdeaPluginDescriptor> updates) {
+    for (IdeaPluginDescriptor descriptor : updates) {
       for (UIPluginGroup group : panel.getGroups()) {
         ListPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
@@ -1381,7 +1387,7 @@ public class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
 
-  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<PluginDownloader> updates) {
+  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     configurable.setInitUpdates(updates);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
@@ -1645,7 +1651,7 @@ public class PluginManagerConfigurable
     return myPluginModel;
   }
 
-  public void setInitUpdates(@NotNull Collection<PluginDownloader> initUpdates) {
+  public void setInitUpdates(@NotNull Collection<IdeaPluginDescriptor> initUpdates) {
     myInitUpdates = initUpdates;
   }
 

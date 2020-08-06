@@ -232,28 +232,38 @@ public class XPathEvalAction extends XPathAction {
                     }
                     if (!cfg.SHOW_USAGE_VIEW && !cfg.HIGHLIGHT_RESULTS) {
                         final String s = StringUtil.pluralize("match", list.size());
-                        Messages.showInfoMessage(project, "Expression produced " + list.size() + " " + s, "XPath Result");
+                        Messages.showInfoMessage(project, XPathBundle.message("dialog.message.expression.produced") + list.size() + " " + s,
+                                                 XPathBundle.message("dialog.title.xpath.result"));
                     }
                 } else {
-                    return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result",
-                                                       "OK", "Edit Expression", Messages.getInformationIcon()) != Messages.OK;
+                    return Messages.showOkCancelDialog(project,
+                                                       XPathBundle.message("dialog.message.sorry.your.expression.did.not.return.any.result"),
+                                                       XPathBundle.message("dialog.title.xpath.result"),
+                                                       XPathBundle.message("button.ok"),
+                                                       XPathBundle.message("button.edit.expression"), Messages.getInformationIcon()) != Messages.OK;
                 }
             } else if (result instanceof String) {
-                Messages.showMessageDialog("'" + result.toString() + "'", "XPath result (String)", Messages.getInformationIcon());
+                Messages.showMessageDialog("'" + result + "'", XPathBundle.message("dialog.title.xpath.result.string"), Messages.getInformationIcon());
             } else if (result instanceof Number) {
-                Messages.showMessageDialog(result.toString(), "XPath result (Number)", Messages.getInformationIcon());
+              final String s = result.toString();
+              Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.number"), Messages.getInformationIcon());
             } else if (result instanceof Boolean) {
-                Messages.showMessageDialog(result.toString(), "XPath result (Boolean)", Messages.getInformationIcon());
+              final String s = result.toString();
+              Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.boolean"), Messages.getInformationIcon());
             } else {
               LOG.error("Unknown XPath result: " + result);
             }
         } catch (XPathSyntaxException e) {
             LOG.debug(e);
             // TODO: Better layout of the error message with non-fixed size fonts
-            return Messages.showOkCancelDialog(project, e.getMultilineMessage(), "XPath syntax error", "Edit Expression", "Cancel", Messages.getErrorIcon()) == Messages.OK;
+          final String message = e.getMultilineMessage();
+          return Messages.showOkCancelDialog(project, message,
+                                             XPathBundle.message("dialog.title.xpath.syntax.error"),
+                                             XPathBundle.message("button.edit.expression"),
+                                             XPathBundle.message("button.cancel"), Messages.getErrorIcon()) == Messages.OK;
         } catch (SAXPathException e) {
             LOG.debug(e);
-            Messages.showMessageDialog(project, e.getMessage(), "XPath error", Messages.getErrorIcon());
+            Messages.showMessageDialog(project, e.getMessage(), XPathBundle.message("dialog.title.xpath.error"), Messages.getErrorIcon());
         }
         return false;
     }
@@ -460,7 +470,8 @@ public class XPathEvalAction extends XPathAction {
                         list = (List<?>)myXPath.selectNodes(myContextNode);
                     } catch (JaxenException e) {
                         LOG.debug(e);
-                        Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(), "XPath error", Messages.getErrorIcon());
+                        Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(),
+                                                   XPathBundle.message("dialog.title.xpath.error"), Messages.getErrorIcon());
                         return;
                     }
                 } else {
@@ -469,7 +480,7 @@ public class XPathEvalAction extends XPathAction {
 
                 final int size = list.size();
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                indicator.setText("Collecting matches...");
+                indicator.setText(XPathBundle.message("progress.text.collecting.matches"));
 
                 list.sort((Comparator)(o1, o2) -> {
                   indicator.checkCanceled();

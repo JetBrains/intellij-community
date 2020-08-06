@@ -101,6 +101,11 @@ public final class StubIndexImpl extends StubIndexEx {
     return state;
   }
 
+  public void initializationFailed(@NotNull Throwable error) {
+    myStateFuture = new CompletableFuture<>();
+    myStateFuture.completeExceptionally(error);
+  }
+
   public static @NotNull <K> FileBasedIndexExtension<K, Void> wrapStubIndexExtension(StubIndexExtension<K, ?> extension) {
     return new FileBasedIndexExtension<K, Void>() {
       @Override

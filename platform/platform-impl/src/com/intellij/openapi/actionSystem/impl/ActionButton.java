@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -493,7 +494,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
-    String propertyName = e.getPropertyName();
+    @NonNls String propertyName = e.getPropertyName();
     if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
@@ -624,5 +625,5 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   // Contains actions IDs which descriptions are permitted for displaying in the ActionButton tooltip
-  private static final Set<String> WHITE_LIST = ContainerUtil.immutableSet("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
+  @NonNls private static final Set<String> WHITE_LIST = ContainerUtil.immutableSet("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 }

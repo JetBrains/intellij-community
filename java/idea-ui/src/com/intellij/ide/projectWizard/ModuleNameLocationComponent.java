@@ -213,7 +213,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     }
     if (module != null) {
-      throw new ConfigurationException("Module '" + moduleName + "' already exist in project. Please, specify another name.");
+      throw new ConfigurationException(
+        JavaUiBundle.message("module.name.location.dialog.message.module.already.exist.in.project", moduleName));
     }
   }
 
@@ -221,10 +222,10 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     String moduleName = getModuleName();
     String moduleFileDirectory = myModuleFileLocation.getText();
     if (moduleFileDirectory.isEmpty()) {
-      throw new ConfigurationException("Enter module file location");
+      throw new ConfigurationException(JavaUiBundle.message("module.name.location.dialog.message.enter.module.file.location"));
     }
     if (moduleName.isEmpty()) {
-      throw new ConfigurationException("Enter a module name");
+      throw new ConfigurationException(JavaUiBundle.message("module.name.location.dialog.message.enter.module.name"));
     }
 
     if (!ProjectWizardUtil.createDirectoryIfNotExists(JavaUiBundle.message("directory.module.file"), moduleFileDirectory,

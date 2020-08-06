@@ -900,7 +900,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @SuppressWarnings("SpellCheckingInspection")
     private static final AccessibleRole TEXT_AREA = new TextAccessibleRole("textarea");
 
-    private TextAccessibleRole(String key) {
+    private TextAccessibleRole(@NonNls String key) {
       super(key);
     }
   }

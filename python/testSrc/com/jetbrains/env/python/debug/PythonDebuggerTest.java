@@ -11,10 +11,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
-import com.jetbrains.env.StagingOn;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
@@ -34,7 +31,6 @@ import java.util.Set;
 import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.addExceptionBreakpoint;
 import static org.junit.Assert.*;
 
-@Staging
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     BreakpointStopAndEvalTask(String scriptName) {
@@ -267,7 +263,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testExceptionBreakpointIgnoreLibrariesOnRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 
@@ -294,7 +289,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testExceptionBreakpointIgnoreInUnittestModule() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_exceptions_in_unittest.py") {
 
@@ -427,7 +421,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testEggDebug() {
     runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
       @Override
@@ -746,7 +739,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSetNextStatement() {
     runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
       @Override
@@ -816,7 +808,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
   @Test
-  @Staging
   public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
@@ -1532,7 +1523,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testNoDebuggerRelatedStacktraceOnDebuggerStop() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override

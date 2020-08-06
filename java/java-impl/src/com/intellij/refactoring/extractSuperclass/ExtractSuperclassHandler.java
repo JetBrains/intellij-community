@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements ElementsHandler, ExtractSuperclassDialog.Callback, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance(ExtractSuperclassHandler.class);
 
   private PsiClass mySubclass;
   private Project myProject;

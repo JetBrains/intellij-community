@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ExpressionUtils {
-  private static final Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
+  private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
     ContainerUtil.immutableSet("append", "format", "print", "printf", "println", "valueOf");
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
@@ -1606,7 +1606,7 @@ public final class ExpressionUtils {
   }
 
   private static boolean hasCharArrayParameter(PsiMethod method) {
-    final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
+    @NonNls final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
     return parameter == null || parameter.getType().equalsToText("char[]");
   }
 

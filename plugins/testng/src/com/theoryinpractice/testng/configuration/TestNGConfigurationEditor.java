@@ -518,7 +518,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
+        .createWithInnerClassesScopeChooser(TestngBundle.message("testng.config.editor.dialog.title.choose.listener.class"), filter.getScope(), filter, null);
       chooser.showDialog();
       PsiClass psiclass = chooser.getSelected();
       if (psiclass == null) {

@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -45,6 +46,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import java.util.Collections.synchronizedMap
@@ -229,7 +231,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val branches = getBranches()
+    val branches = GitBranchUtil.sortBranchNames(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
@@ -382,6 +384,24 @@ class GitMergeDialog(private val project: Project,
       ::getOptionInfo,
       { selectedOptions },
       { option -> isOptionEnabled(option) })
+
+    override fun handleSelect(handleFinalChoices: Boolean) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    private fun handleSelect() {
+      (selectedValues.firstOrNull() as? GitMergeOption)?.let { option -> optionChosen(option) }
+
+      list.repaint()
+    }
   }
 
   private fun getOptionInfo(option: GitMergeOption) = optionInfos.computeIfAbsent(option) {

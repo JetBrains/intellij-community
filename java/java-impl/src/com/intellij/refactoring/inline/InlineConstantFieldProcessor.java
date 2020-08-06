@@ -256,12 +256,12 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         final PsiElement element = info.getElement();
         if (element instanceof PsiDocMethodOrFieldRef) {
           if (!PsiTreeUtil.isAncestor(myField, element, false)) {
-            conflicts.putValue(element, "Inlined field is used in javadoc");
+            conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.used.in.javadoc"));
           }
         }
         if (element instanceof PsiLiteralExpression &&
             Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
-          conflicts.putValue(element, "Inlined field is used reflectively");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.used.in.reflection"));
         }
       }
     }

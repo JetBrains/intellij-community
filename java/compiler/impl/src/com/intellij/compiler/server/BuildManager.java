@@ -90,7 +90,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +106,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -146,13 +148,14 @@ public final class BuildManager implements Disposable {
   private final Executor myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "BuildManager Auto-Make Trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
-  private volatile int myFileChangeCounter;
+  private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
   private boolean myGeneratePortableCachesEnabled = false;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      return Registry.intValue("compiler.automake.trigger.delay");
+      final int delay = Registry.intValue("compiler.automake.trigger.delay");
+      return HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0? 10 * delay : delay;
     }
 
     @Override
@@ -162,7 +165,15 @@ public final class BuildManager implements Disposable {
 
     @Override
     protected boolean shouldPostpone() {
-      return shouldPostponeAutomake();
+      // Heuristics for automake postpone decision:
+      // 1. There are unsaved documents OR
+      // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
+      if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
+        return true;
+      }
+      final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+      final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+      return idleSinceLastActivity < threshold;
     }
   };
 
@@ -316,13 +327,13 @@ public final class BuildManager implements Disposable {
     connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
       @Override
       public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
-        myFileChangeCounter++;
+        postponeBackgroundTasks();
         cancelAutoMakeTasks(project);
       }
 
       @Override
       public void batchChangeCompleted(@NotNull Project project) {
-        myFileChangeCounter--;
+        allowBackgroundTasks();
       }
     });
 
@@ -332,6 +343,14 @@ public final class BuildManager implements Disposable {
       ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
     }
+  }
+
+  public final void postponeBackgroundTasks() {
+    mySuspendBackgroundTasksCounter.incrementAndGet();
+  }
+
+  public final void allowBackgroundTasks() {
+    mySuspendBackgroundTasksCounter.decrementAndGet();
   }
 
   @Nullable
@@ -418,9 +437,13 @@ public final class BuildManager implements Disposable {
             final UUID sessionId = future.getRequestID();
             final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
             if (channel != null) {
-              final CmdlineRemoteProto.Message.ControllerMessage message =
-                CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
-                  CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT).setFsEvent(data.createNextEvent()).build();
+              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent();
+              final CmdlineRemoteProto.Message.ControllerMessage message = CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
+                CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
+              ).setFsEvent(event).build();
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Sending to running build, ordinal=" + event.getOrdinal());
+              }
               channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, message));
             }
           }
@@ -550,18 +573,6 @@ public final class BuildManager implements Disposable {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
-  }
-
-  private static boolean shouldPostponeAutomake() {
-    // Heuristics for postpone-decision:
-    // 1. There are unsaved documents OR
-    // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
-    if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
-      return true;
-    }
-    final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
-    final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
-    return idleSinceLastActivity < threshold;
   }
 
   @Nullable
@@ -717,9 +728,7 @@ public final class BuildManager implements Disposable {
         sessionId = UUID.randomUUID();
       }
 
-      final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<>(handler,
-                                                                                                                                 sessionId,
-                                                                                                                                 new CancelBuildSessionAction<>());
+      final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<>(handler, sessionId, new CancelBuildSessionAction<>());
       // futures we need to wait for: either just "future" or both "future" and "buildFuture" below
       List<TaskFuture<?>> delegatesToWait = Collections.singletonList(future);
 
@@ -750,6 +759,9 @@ public final class BuildManager implements Disposable {
           }
           needRescan = data.getAndResetRescanFlag();
           currentFSChanges = needRescan ? null : data.createNextEvent();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
+          }
           projectTaskQueue = data.taskQueue;
         }
 
@@ -811,9 +823,9 @@ public final class BuildManager implements Disposable {
 
               Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
               if (debugPort != null) {
-                String message = "Build: waiting for debugger connection on port " + debugPort;
-                messageHandler
-                  .handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(message).getCompileMessage());
+                messageHandler.handleCompileMessage(
+                  sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort
+                ).getCompileMessage());
               }
 
               while (!processHandler.waitFor()) {
@@ -1474,7 +1486,7 @@ public final class BuildManager implements Disposable {
 
     @Override
     public final void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !shouldPostpone() && !myInProgress.getAndSet(true)) {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && mySuspendBackgroundTasksCounter.get() <= 0 && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
           ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
         }
@@ -1713,6 +1725,7 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void projectClosingBeforeSave(@NotNull Project project) {
+      myAutoMakeTask.cancelPendingExecution();
       cancelAutoMakeTasks(project);
     }
 
@@ -1722,8 +1735,8 @@ public final class BuildManager implements Disposable {
       ProgressManager.getInstance().run(new Task.Modal(project, JavaCompilerBundle.message("progress.title.cancelling.auto.make.builds"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          myAutoMakeTask.cancelPendingExecution();
           cancelPreloadedBuilds(projectPath);
-
           for (TaskFuture<?> future : cancelAutoMakeTasks(getProject())) {
             future.waitFor(500, TimeUnit.MILLISECONDS);
           }

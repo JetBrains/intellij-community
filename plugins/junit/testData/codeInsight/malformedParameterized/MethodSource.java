@@ -211,3 +211,32 @@ abstract class FooThree {
 
   abstract List<String> method1();
 }
+
+class SomeTest extends Base {
+
+  @ParameterizedTest
+  @MethodSource
+  void testSomething(String content) {}
+}
+
+class SomeTestTwo implements Inter {
+
+  @ParameterizedTest
+  @MethodSource
+  void testSomething(String content) {}
+}
+
+interface Inter extends Inter2{ }
+
+interface Inter2 {
+  static Stream<String> testSomething() {
+    return Stream.of("a", "aa");
+  }
+}
+
+
+class Base {
+  static Stream<String> testSomething() {
+    return Stream.of("a", "aa");
+  }
+}

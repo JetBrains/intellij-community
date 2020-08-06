@@ -13,6 +13,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.input.SAXBuilder
 import org.jdom.input.sax.SAXHandler
+import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
@@ -79,7 +80,7 @@ fun Element.toByteArray(): ByteArray {
 }
 
 @JvmOverloads
-fun Element.addOptionTag(name: String, value: String, elementName: String = Constants.OPTION) {
+fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementName: String = Constants.OPTION) {
   val element = Element(elementName)
   element.setAttribute(Constants.NAME, name)
   element.setAttribute(Constants.VALUE, value)

@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffManager
+import com.intellij.diff.contents.DiffContent
+import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.ide.GeneralSettings
@@ -10,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -25,7 +31,10 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.PeekableIteratorWrapper
+import git4idea.GitUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.*
 import java.util.*
@@ -210,17 +219,9 @@ class GitStageLineStatusTracker(
   private fun runBulkRollback(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
-    if (toRevert.any { it.hasUnstaged }) {
-      val filter = BlockFilter.create(toRevert, Side.RIGHT)
-      updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
-        unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
-      }
-    }
-    else {
-      val filter = BlockFilter.create(toRevert, Side.LEFT)
-      updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
-        stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
-      }
+    val filter = BlockFilter.create(toRevert, Side.RIGHT)
+    updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
+      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
     }
   }
 
@@ -236,6 +237,21 @@ class GitStageLineStatusTracker(
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
       unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+    }
+  }
+
+  private fun unstageChanges(range: Range) {
+    val newRange = blockOperations.findBlock(range) ?: return
+    runBulkUnstage(listOf(newRange))
+  }
+
+  @CalledInAwt
+  private fun runBulkUnstage(toRevert: List<StagedRange>) {
+    if (!isValid()) return
+
+    val filter = BlockFilter.create(toRevert, Side.LEFT)
+    updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
+      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
     }
   }
 
@@ -398,14 +414,20 @@ class GitStageLineStatusTracker(
       actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(AddLineStatusRangeAction(editor, range))
-      actions.add(ShowLineStatusRangeDiffAction(editor, range))
+      actions.add(ResetLineStatusRangeAction(editor, range))
+      actions.add(StageShowDiffAction(editor, range))
       actions.add(CopyLineStatusRangeAction(editor, range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }
 
     private inner class AddLineStatusRangeAction(editor: Editor, range: Range) :
-      RangeMarkerAction(editor, range, "Git.Add"), LightEditCompatible {
+      RangeMarkerAction(editor, range, null), LightEditCompatible {
+      init {
+        templatePresentation.setText(GitAddOperation.actionText)
+        templatePresentation.icon = GitAddOperation.icon
+      }
+
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
@@ -413,12 +435,63 @@ class GitStageLineStatusTracker(
       }
     }
 
+    private inner class ResetLineStatusRangeAction(editor: Editor, range: Range) :
+      RangeMarkerAction(editor, range, null), LightEditCompatible {
+      init {
+        templatePresentation.setText(GitResetOperation.actionText)
+        templatePresentation.icon = GitResetOperation.icon
+      }
+
+      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasStaged
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        tracker.unstageChanges(range)
+      }
+    }
+
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
       : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
-      override fun isEnabled(editor: Editor, range: Range): Boolean = true
+      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
         RollbackLineStatusAction.rollback(tracker, range, editor)
+      }
+    }
+
+    private inner class StageShowDiffAction(editor: Editor, range: Range)
+      : RangeMarkerAction(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON), LightEditCompatible {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = true
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        range as StagedRange
+        myTracker as GitStageLineStatusTracker
+
+        val canExpandBefore = range.line1 != 0 && range.stagedLine1 != 0 && range.vcsLine1 != 0
+        val canExpandAfter = range.line2 < DiffUtil.getLineCount(myTracker.document) &&
+                             range.stagedLine2 < DiffUtil.getLineCount(myTracker.stagedDocument) &&
+                             range.vcsLine2 < DiffUtil.getLineCount(myTracker.vcsDocument)
+
+        val currentContent = createDiffContent(myTracker.document, range.line1, range.line2,
+                                               canExpandBefore, canExpandAfter)
+        val stagedContent = createDiffContent(myTracker.stagedDocument, range.stagedLine1, range.stagedLine2,
+                                              canExpandBefore, canExpandAfter)
+        val vcsContent = createDiffContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2,
+                                           canExpandBefore, canExpandAfter)
+
+        val request = SimpleDiffRequest(
+          DiffBundle.message("dialog.title.diff.for.range"),
+          vcsContent, stagedContent, currentContent,
+          GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"))
+        DiffManager.getInstance().showDiff(myTracker.project, request)
+      }
+
+      private fun createDiffContent(document: Document, line1: Int, line2: Int,
+                                    canExpandBefore: Boolean, canExpandAfter: Boolean): DiffContent {
+        val textRange = DiffUtil.getLinesRange(document,
+                                               line1 - if (canExpandBefore) 1 else 0,
+                                               line2 + if (canExpandAfter) 1 else 0)
+        val content = DiffContentFactory.getInstance().create(myTracker.project, document, myTracker.virtualFile)
+        return DiffContentFactory.getInstance().createFragment(myTracker.project, content, textRange)
       }
     }
   }

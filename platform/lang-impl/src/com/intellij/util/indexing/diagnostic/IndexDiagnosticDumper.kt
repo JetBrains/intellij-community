@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -18,6 +19,15 @@ import java.time.format.DateTimeParseException
 import kotlin.streams.asSequence
 
 object IndexDiagnosticDumper {
+
+  @JvmStatic
+  val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
+    SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+
+  @JvmStatic
+  val indexingDiagnosticsLimitOfFiles: Int get() =
+    SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+
   val indexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
     Paths.get(logPath).resolve("indexing-diagnostic")
@@ -45,7 +55,7 @@ object IndexDiagnosticDumper {
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
       jacksonMapper.writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
 
-      val limitOfHistories = 20
+      val limitOfHistories = indexingDiagnosticsLimitOfFiles
       val survivedHistories = Files.list(indexDiagnosticDirectory).use { files ->
         files.asSequence()
           .filter { it.fileName.toString().startsWith(fileNamePrefix) && it.fileName.toString().endsWith(".json") }

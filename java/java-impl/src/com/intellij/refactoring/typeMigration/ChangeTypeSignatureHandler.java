@@ -48,7 +48,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
                                         JavaRefactoringBundle.message("caret.position.warning.message"),
-                                        "Type Migration", "refactoring.migrateType");
+                                        JavaRefactoringBundle.message("type.migration.error.hint.title"), "refactoring.migrateType");
   }
 
   @Override

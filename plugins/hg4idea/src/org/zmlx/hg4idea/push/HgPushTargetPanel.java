@@ -10,6 +10,7 @@ import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -37,7 +38,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     myBranchName = source.getBranch();
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
     String defaultText = defaultTarget != null ? defaultTarget.getPresentation() : "";
-    myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + defaultText + "</a>", null);
+    myTargetRenderedComponent = new VcsEditableTextComponent(HtmlChunk.link("", defaultText).toString(), null);
     myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, defaultText);
     add(myDestTargetPanel, BorderLayout.CENTER);
   }

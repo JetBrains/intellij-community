@@ -6,8 +6,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.InboundSemiGraph
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@NonNls
 private val NUMBER = Regex("\\d+")
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UpdateSettings) {

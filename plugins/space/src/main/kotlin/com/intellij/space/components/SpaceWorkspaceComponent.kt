@@ -85,6 +85,8 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     }
 
     workspace.forEach(lifetime) { ws ->
+      System.setProperty("space_server_for_script_definition", ws?.client?.server?.let { "$it/system/maven" } ?: "not_set")
+
       loginState.value = if (ws == null) {
         SpaceLoginState.Disconnected(settings.serverSettings.server)
       }

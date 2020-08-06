@@ -4,6 +4,7 @@ import circlet.client.api.PR_Project
 import circlet.client.api.Projects
 import circlet.client.pr
 import circlet.common.permissions.ProjectRight
+import circlet.common.permissions.VcsAdmin
 import com.intellij.space.components.space
 import circlet.platform.api.batchAll
 import circlet.platform.api.map
@@ -29,7 +30,7 @@ class SpaceShareProjectVM(val lifetime: LifetimeSource) {
     try {
       val projectService: Projects = client.pr
       // projects in which there is the right to create new repositories
-      val projects = projectService.projectsWithRight(batchAll, ProjectRight.VcsAdmin.code, null, null)
+      val projects = projectService.projectsWithRight(batchAll, VcsAdmin.code, null, null)
         .map { it.resolve() }
         .data
       ProjectListState.Projects(projects)

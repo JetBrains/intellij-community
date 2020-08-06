@@ -45,8 +45,8 @@ import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
-  public static final String HIDE_ID_LABEL = "HideIdLabel";
-  private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
+  @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
   private final @NotNull ContentManager contentManager;
 

@@ -14,10 +14,12 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -284,7 +286,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   @Nullable
-  private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
+  private static Sdk showDialog(final Project project, @NlsContexts.DialogTitle String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null, null);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
@@ -308,7 +310,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.roots.ui.configuration.SdkPopupFactory}
+   * @deprecated Use {@link SdkPopupFactory}
    */
   @Nullable
   @Deprecated

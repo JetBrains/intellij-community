@@ -152,7 +152,7 @@ public class CreateSwitchBranchesUtil {
     return elementsToReplace;
   }
 
-  private static List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  private static @NonNls List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {

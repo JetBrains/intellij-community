@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -24,6 +23,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -33,12 +33,13 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.util.concurrent.ConcurrentHashMap
 
-class ModifiableRootModelBridge(
+class ModifiableRootModelBridgeImpl(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
   private val initialStorage: WorkspaceEntityStorage,
-  override val accessor: RootConfigurationAccessor
-) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker, ModuleRootModelBridge {
+  override val accessor: RootConfigurationAccessor,
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableRootModelBridge, ModuleRootModelBridge {
 
   override fun getModificationCount(): Long = diff.modificationCount
 
@@ -356,6 +357,10 @@ class ModifiableRootModelBridge(
         it.addDiff(diff)
       }
     }
+  }
+
+  override fun prepareForCommit() {
+    collectChangesAndDispose()
   }
 
   override fun dispose() {

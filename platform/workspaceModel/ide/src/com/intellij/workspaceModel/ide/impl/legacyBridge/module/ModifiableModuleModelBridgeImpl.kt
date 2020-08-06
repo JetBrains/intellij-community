@@ -25,6 +25,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -33,11 +34,12 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class ModifiableModuleModelBridge(
+internal class ModifiableModuleModelBridgeImpl(
   private val project: Project,
   private val moduleManager: ModuleManagerComponentBridge,
-  diff: WorkspaceEntityStorageBuilder
-) : LegacyBridgeModifiableBase(diff), ModifiableModuleModel {
+  diff: WorkspaceEntityStorageBuilder,
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
   override fun getProject(): Project = project
 
   private val myModulesToAdd = HashBiMap.create<String, ModuleBridge>()
@@ -175,7 +177,6 @@ internal class ModifiableModuleModelBridge(
     }
 
     myNewNameToModule.inverse().remove(module)
-
     myModulesToDispose[module.name] = module
     val moduleEntity = diff.findModuleEntity(module) ?: error("Could not find module entity to remove by $module")
     moduleEntity.dependencies
@@ -232,13 +233,13 @@ internal class ModifiableModuleModelBridge(
     }
   }
 
-  fun collectChanges(): WorkspaceEntityStorageBuilder {
+  override fun prepareForCommit() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
+    myUncommittedModulesToDispose.forEach {module -> Disposer.dispose(module) }
+  }
 
-    for (module in myUncommittedModulesToDispose) {
-      Disposer.dispose(module)
-    }
-
+  fun collectChanges(): WorkspaceEntityStorageBuilder {
+    prepareForCommit()
     return diff
   }
 

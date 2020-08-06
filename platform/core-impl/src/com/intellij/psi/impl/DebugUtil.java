@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -27,6 +28,7 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -523,7 +525,7 @@ public final class DebugUtil {
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   @Deprecated
-  public static void startPsiModification(@Nullable String trace) {
+  public static void startPsiModification(@Nullable @NlsSafe String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
     }
@@ -569,7 +571,7 @@ public final class DebugUtil {
     }
   }
 
-  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T performPsiModification(@NlsSafe String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     startPsiModification(trace);
     try {
       return runnable.compute();

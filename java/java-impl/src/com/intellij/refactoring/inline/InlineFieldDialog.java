@@ -31,9 +31,10 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getNameLabelText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
-
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+    String occurrencesString = myOccurrencesNumber > -1 ?
+                              JavaRefactoringBundle.message("inline.field.field.occurrences", fieldText, myOccurrencesNumber) :
+                              JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
     return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
   }
 

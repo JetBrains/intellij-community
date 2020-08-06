@@ -9,6 +9,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -48,7 +49,8 @@ public class FrameworkSupportOptionsComponent {
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
-      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, "Versions:");
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions,
+                                                                  JavaUiBundle.message("framework.support.options.label.versions"));
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
     else {
@@ -92,7 +94,7 @@ public class FrameworkSupportOptionsComponent {
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
-        JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
+        JComponent separator1 = SeparatorFactory.createSeparator(JavaUiBundle.message("configurable.ProjectLibrariesConfigurable.display.name"), null);
         separator1.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
         myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
       }

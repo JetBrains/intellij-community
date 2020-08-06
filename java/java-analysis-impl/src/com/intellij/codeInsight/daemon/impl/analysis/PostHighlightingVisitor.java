@@ -560,7 +560,8 @@ class PostHighlightingVisitor {
     VirtualFile file = PsiUtilCore.getVirtualFile(myFile);
     Set<String> imports = file != null ? file.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
-    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") : "Unused import (specified in template)";
+    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
+                         JavaAnalysisBundle.message("text.unused.import.in.template");
     HighlightInfo info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT)
         .range(importStatement)
         .descriptionAndTooltip(description)

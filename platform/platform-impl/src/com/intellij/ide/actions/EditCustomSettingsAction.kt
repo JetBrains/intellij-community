@@ -30,6 +30,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
+import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,7 +40,7 @@ import javax.swing.ScrollPaneConstants
 
 abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
-  protected abstract fun template(): String
+  @NonNls protected abstract fun template(): String
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null

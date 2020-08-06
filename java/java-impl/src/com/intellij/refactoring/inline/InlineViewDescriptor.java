@@ -49,7 +49,7 @@ class InlineViewDescriptor implements UsageViewDescriptor{
     if (myElement instanceof PsiMethod) {
       return JavaRefactoringBundle.message("inline.method.elements.header");
     }
-    return "Unknown element";
+    return JavaRefactoringBundle.message("inline.element.unknown.header");
   }
 
   @NotNull

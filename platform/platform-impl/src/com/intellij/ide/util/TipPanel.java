@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +36,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
-  private static final String SEEN_TIPS = "seenTips";
+  @NonNls private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
+  @NonNls private static final String SEEN_TIPS = "seenTips";
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;

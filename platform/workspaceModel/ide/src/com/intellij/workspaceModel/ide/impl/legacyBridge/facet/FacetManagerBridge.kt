@@ -53,7 +53,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   }
 
   fun createModifiableModel(diff: WorkspaceEntityStorageDiffBuilder): ModifiableFacetModel {
-    return ModifiableFacetModelBridge(module.entityStorage.current, diff, module, this)
+    return ModifiableFacetModelBridgeImpl(module.entityStorage.current, diff, module, this)
   }
 
 }

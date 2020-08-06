@@ -140,7 +140,7 @@ internal class GHAccountsPanel(
   }
 
   fun isAccountUnique(login: String, server: GithubServerPath) =
-    accountListModel.items.none { it.account.name == login && it.account.server == server }
+    accountListModel.items.none { it.account.name == login && it.account.server.equals(server, true) }
 
   fun loadExistingAccountsDetails() {
     for (accountData in accountListModel.items) {

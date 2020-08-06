@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -312,11 +313,12 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
       if (name.length() != 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
-        throw new ConfigurationException("'" + name + "' is invalid destination package name");
+        throw new ConfigurationException(JavaBundle.message("move.classes.invalid.destination.package.name.message", name));
       }
     }
     else {
-      if (findTargetClass() == null) throw new ConfigurationException("Destination class not found");
+      if (findTargetClass() == null) throw new ConfigurationException(
+        JavaBundle.message("move.classes.destination.class.not.found.message"));
       final String validationError = verifyInnerClassDestination();
       if (validationError != null) throw new ConfigurationException(validationError);
     }

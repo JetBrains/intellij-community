@@ -32,6 +32,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
+  @Nls(capitalization = Nls.Capitalization.Title)
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
   private PluginDescriptor myPluginDescriptor;
@@ -80,6 +81,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getPresentableName() {
     return myPresentableName;
   }

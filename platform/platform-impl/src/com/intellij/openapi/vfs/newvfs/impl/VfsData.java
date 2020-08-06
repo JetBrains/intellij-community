@@ -20,6 +20,7 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -432,6 +433,7 @@ public final class VfsData {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "DirectoryData{" +
              "myUserMap=" + myUserMap +

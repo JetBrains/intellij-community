@@ -10,8 +10,6 @@ import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
-import com.intellij.execution.junit.TestObject;
-import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
@@ -31,7 +29,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -60,6 +57,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
@@ -123,70 +121,14 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       @Override
       public void actionPerformed(ActionEvent e) {
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
-        reloadTestKindModel();
+        myModel.reloadTestKindModel(JUnitConfigurable.this.myTypeChooser, myModuleSelector.getModule());
       }
     });
-    myBrowsers = new BrowseModuleValueActionListener[]{
-      new PackageChooserActionListener(project),
-      new TestClassBrowser(project),
-      new MethodBrowser(project) {
-        @Override
-        protected Condition<PsiMethod> getFilter(PsiClass testClass) {
-          return new JUnitUtil.TestMethodFilter(testClass);
-        }
+    final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
+    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
-        @Override
-        protected String getClassName() {
-          return JUnitConfigurable.this.getClassName();
-        }
-
-        @Override
-        protected ConfigurationModuleSelector getModuleSelector() {
-          return myModuleSelector;
-        }
-      },
-      new TestsChooserActionListener(project),
-      new BrowseModuleValueActionListener(project) {
-        @Override
-        protected String showDialog() {
-          final VirtualFile virtualFile =
-            FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
-          if (virtualFile != null) {
-            return FileUtil.toSystemDependentName(virtualFile.getPath());
-          }
-          return null;
-        }
-      },
-      new CategoryBrowser(project),
-      null
-    };
-
-    reloadTestKindModel();
-    myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> {
-      switch (value) {
-        case JUnitConfigurationModel.ALL_IN_PACKAGE:
-          return "All in package";
-        case JUnitConfigurationModel.DIR:
-          return "All in directory";
-        case JUnitConfigurationModel.PATTERN:
-          return "Pattern";
-        case JUnitConfigurationModel.CLASS:
-          return "Class";
-        case JUnitConfigurationModel.METHOD:
-          return "Method";
-        case JUnitConfigurationModel.CATEGORY:
-          return "Category";
-        case JUnitConfigurationModel.UNIQUE_ID:
-          return "UniqueId";
-        case JUnitConfigurationModel.TAGS:
-          return "Tags";
-        case JUnitConfigurationModel.BY_SOURCE_POSITION:
-          return "Through source location";
-        case JUnitConfigurationModel.BY_SOURCE_CHANGES:
-          return "Over changes in sources";
-      }
-      throw new IllegalArgumentException(String.valueOf(value));
-    }));
+    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
+    myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getKindName(value)));
 
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
@@ -218,7 +160,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     FileChooserFactory.getInstance().installFileCompletion(textField, dirFileChooser, true, null);
     // Done
 
-    myModel.setListener(this);
+    myBrowsers = createBrowsers(project, myModuleSelector, myPackage.getComponent(), myPatternTextField, myCategory.getComponent(), () -> getClassName());
+    myModel.setListener(integer -> onTypeChanged(integer));
 
     myTypeChooser.addActionListener(new ActionListener() {
       @Override
@@ -232,9 +175,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        int item = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-        if (item == JUnitConfigurationModel.CLASS || item == JUnitConfigurationModel.METHOD) {
-          myForkCb.setModel(getForkModelBasedOnRepeat());
+        int testType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
+        if (testType == JUnitConfigurationModel.CLASS || testType == JUnitConfigurationModel.METHOD) {
+          String[] model = getForkModel(testType, JUnitConfigurable.this.myRepeatCb.getSelectedItem());
+          myForkCb.setModel(new DefaultComboBoxModel<>(model));
         }
       }
     });
@@ -279,37 +223,46 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
   }
 
-  private void reloadTestKindModel() {
-    int selectedIndex = myTypeChooser.getSelectedIndex();
-    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
-    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
-    aModel.addElement(JUnitConfigurationModel.DIR);
-    aModel.addElement(JUnitConfigurationModel.PATTERN);
-    aModel.addElement(JUnitConfigurationModel.CLASS);
-    aModel.addElement(JUnitConfigurationModel.METHOD);
+  public static BrowseModuleValueActionListener[] createBrowsers(Project project,
+                                                                 ConfigurationModuleSelector moduleSelector,
+                                                                 EditorTextFieldWithBrowseButton packageField,
+                                                                 TextFieldWithBrowseButton patternField,
+                                                                 EditorTextFieldWithBrowseButton categoryField,
+                                                                 Supplier<String> className) {
+    return new BrowseModuleValueActionListener[]{
+      new PackageChooserActionListener(project),
+      new TestClassBrowser(project, moduleSelector, packageField),
+      new MethodBrowser(project) {
+        @Override
+        protected Condition<PsiMethod> getFilter(PsiClass testClass) {
+          return new JUnitUtil.TestMethodFilter(testClass);
+        }
 
-    Module module = getModuleSelector().getModule();
-    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                                   : GlobalSearchScope.allScope(myProject);
+        @Override
+        protected String getClassName() {
+          return className.get();
+        }
 
-    if (myProject.isDefault() ||
-        JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
-      aModel.addElement(JUnitConfigurationModel.CATEGORY);
-    }
-
-    if (myProject.isDefault() ||
-        JUnitUtil.isJUnit5(searchScope, myProject) ||
-        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
-      aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
-      aModel.addElement(JUnitConfigurationModel.TAGS);
-    }
-
-    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
-    }
-    myTypeChooser.setModel(aModel);
-    myTypeChooser.setSelectedIndex(selectedIndex);
+        @Override
+        protected ConfigurationModuleSelector getModuleSelector() {
+          return moduleSelector;
+        }
+      },
+      new TestsChooserActionListener(project, moduleSelector, packageField, patternField),
+      new BrowseModuleValueActionListener(project) {
+        @Override
+        protected String showDialog() {
+          final VirtualFile virtualFile =
+            FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
+          if (virtualFile != null) {
+            return FileUtil.toSystemDependentName(virtualFile.getPath());
+          }
+          return null;
+        }
+      },
+      new CategoryBrowser(project, moduleSelector, categoryField),
+      null
+    };
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -417,30 +370,31 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTagsField.setVisible(selectedType == JUnitConfigurationModel.TAGS);
     myChangeListLabeledComponent.setVisible(selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES);
 
-    //set fork model
-    String selectedItem = (String)myForkCb.getSelectedItem();
-    if (selectedItem == null) {
-      selectedItem = JUnitConfiguration.FORK_NONE;
-    }
-    else if (selectedType == JUnitConfigurationModel.CLASS && selectedItem == JUnitConfiguration.FORK_KLASS) {
-      selectedItem = JUnitConfiguration.FORK_METHOD;
-    }
-    if (selectedType == JUnitConfigurationModel.CLASS || 
-        selectedType == JUnitConfigurationModel.METHOD || 
-        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION) {
-      myForkCb.setModel(getForkModelBasedOnRepeat());
-    }
-    else {
-      myForkCb.setModel(new DefaultComboBoxModel<>(FORK_MODE_ALL));
-    }
-    myForkCb.setSelectedItem(selectedItem);
+    myForkCb.setModel(new DefaultComboBoxModel<>(getForkModel(selectedType, myRepeatCb.getSelectedItem())));
+    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem()));
   }
 
-  private DefaultComboBoxModel<String> getForkModelBasedOnRepeat() {
-    int selectedType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-    boolean isMethod = selectedType == JUnitConfigurationModel.METHOD || 
+  @NotNull
+  public static String updateForkMethod(Integer selectedType, String forkMethod) {
+    if (forkMethod == null) {
+      forkMethod = JUnitConfiguration.FORK_NONE;
+    }
+    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS) {
+      forkMethod = JUnitConfiguration.FORK_METHOD;
+    }
+    return forkMethod;
+  }
+
+  public static String[] getForkModel(int selectedType, Object repeat) {
+    if (selectedType != JUnitConfigurationModel.CLASS &&
+        selectedType != JUnitConfigurationModel.METHOD &&
+        selectedType != JUnitConfigurationModel.BY_SOURCE_POSITION) {
+      return FORK_MODE_ALL;
+    }
+
+    boolean isMethod = selectedType == JUnitConfigurationModel.METHOD ||
                        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION;
-    boolean once = RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem());
+    boolean once = RepeatCount.ONCE.equals(repeat);
     String[] model = FORK_MODE;
     if (once && isMethod) {
       model = FORK_MODE_NONE;
@@ -448,7 +402,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     else if (!once && !isMethod) {
       model = FORK_MODE_ALL;
     }
-    return new DefaultComboBoxModel<>(model);
+    return model;
   }
 
   public ModuleDescriptionsComboBox getModulesComponent() {
@@ -498,23 +452,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myPackage = new LabeledComponent<>();
     myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
 
-    myClass = new LabeledComponent<>();
-    final TestClassBrowser classBrowser = new TestClassBrowser(myProject);
-    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
-      @Override
-      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
-        try {
-          if (declaration instanceof PsiClass && (classBrowser.getFilter().isAccepted(((PsiClass)declaration)) || classBrowser.findClass(((PsiClass)declaration).getQualifiedName()) != null && place.getParent() != null)) {
-            return Visibility.VISIBLE;
-          }
-        }
-        catch (ClassBrowser.NoFilterException e) {
-          return Visibility.NOT_VISIBLE;
-        }
-        return Visibility.NOT_VISIBLE;
-      }
-    }));
-
     myCategory = new LabeledComponent<>();
     myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
@@ -527,12 +464,31 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }));
 
     myMethod = new LabeledComponent<>();
-    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true,
-                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
-                                                                                                          PlainTextLanguage.INSTANCE.getAssociatedFileType());
-    myMethod.setComponent(textFieldWithBrowseButton);
+    myMethod.setComponent(new EditorTextFieldWithBrowseButton(myProject, true,
+                                                              JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
+                                                              PlainTextLanguage.INSTANCE.getAssociatedFileType()));
 
     myShortenClasspathModeCombo = new LabeledComponent<>();
+  }
+
+  @NotNull
+  public static JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
+    return new JavaCodeFragment.VisibilityChecker() {
+      @Override
+      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        try {
+          if (declaration instanceof PsiClass &&
+              (classBrowser.getFilter().isAccepted(((PsiClass)declaration)) ||
+               classBrowser.findClass(((PsiClass)declaration).getQualifiedName()) != null && place.getParent() != null)) {
+            return Visibility.VISIBLE;
+          }
+        }
+        catch (ClassBrowser.NoFilterException e) {
+          return Visibility.NOT_VISIBLE;
+        }
+        return Visibility.NOT_VISIBLE;
+      }
+    };
   }
 
   @Override
@@ -617,9 +573,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
   }
 
-  private class TestsChooserActionListener extends TestClassBrowser {
-    TestsChooserActionListener(final Project project) {
-      super(project);
+  private static class TestsChooserActionListener extends TestClassBrowser {
+    private final TextFieldWithBrowseButton myPatternTextField;
+
+    TestsChooserActionListener(final Project project, ConfigurationModuleSelector moduleSelector,
+                               EditorTextFieldWithBrowseButton packageField, TextFieldWithBrowseButton patternField) {
+      super(project, moduleSelector, packageField);
+      myPatternTextField = patternField;
     }
 
     @Override
@@ -647,30 +607,32 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
   }
 
-  private class TestClassBrowser extends ClassBrowser {
-    TestClassBrowser(final Project project) {
+  public static class TestClassBrowser extends ClassBrowser {
+    private final ConfigurationModuleSelector myModuleSelector;
+    private final EditorTextFieldWithBrowseButton myPackageTextField;
+
+    TestClassBrowser(final Project project, ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton packageTextField) {
       super(project, ExecutionBundle.message("choose.test.class.dialog.title"));
+      myModuleSelector = moduleSelector;
+      myPackageTextField = packageTextField;
     }
 
     @Override
     protected void onClassChosen(@NotNull PsiClass psiClass) {
-      EditorTextFieldWithBrowseButton packageTextField =
-        ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent();
-      packageTextField.setText(StringUtil.getPackageName(Objects.requireNonNull(psiClass.getQualifiedName())));
+      myPackageTextField.setText(StringUtil.getPackageName(Objects.requireNonNull(psiClass.getQualifiedName())));
     }
 
     @Override
     protected PsiClass findClass(final String className) {
-      return getModuleSelector().findClass(className);
+      return myModuleSelector.findClass(className);
     }
 
     @Override
     protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      final ConfigurationModuleSelector moduleSelector = getModuleSelector();
-      final Module module = moduleSelector.getModule();
+      final Module module = myModuleSelector.getModule();
       if (module == null) {
-        final Project project = moduleSelector.getProject();
-        final String moduleName = moduleSelector.getModuleName();
+        final Project project = myModuleSelector.getProject();
+        final String moduleName = myModuleSelector.getModuleName();
         throw new NoFilterException(new MessagesEx.MessageInfo(
           project,
           moduleName.isEmpty() ? "No module selected" : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
@@ -679,7 +641,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
         final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
-        applyEditorTo(configurationCopy);
+        myModuleSelector.applyTo(configurationCopy);
         SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
         GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
         if (JUnitUtil.isJUnit5(globalSearchScope, getProject())) {
@@ -707,9 +669,14 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
   }
 
-  private class CategoryBrowser extends ClassBrowser {
-    CategoryBrowser(Project project) {
+  private static class CategoryBrowser extends ClassBrowser {
+    private final ConfigurationModuleSelector myModuleSelector;
+    private final EditorTextFieldWithBrowseButton myCategoryField;
+
+    CategoryBrowser(Project project, ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton categoryField) {
       super(project, "Category Interface");
+      myModuleSelector = moduleSelector;
+      myCategoryField = categoryField;
     }
 
     @Override
@@ -722,7 +689,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       final Module module = myModuleSelector.getModule();
       final GlobalSearchScope scope;
       if (module == null) {
-        scope = GlobalSearchScope.allScope(myProject);
+        scope = GlobalSearchScope.allScope(getProject());
       }
       else {
         scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -742,8 +709,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     @Override
     protected void onClassChosen(@NotNull PsiClass psiClass) {
-      ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CATEGORY)).getComponent()
-        .setText(psiClass.getQualifiedName());
+      myCategoryField.setText(psiClass.getQualifiedName());
     }
   }
 }

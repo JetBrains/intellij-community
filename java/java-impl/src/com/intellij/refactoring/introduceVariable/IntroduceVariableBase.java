@@ -10,6 +10,7 @@ import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -539,7 +540,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
-      return "Extracting selected expression would change the semantic of the whole expression.";
+      return JavaBundle.message("introduce.variable.change.semantics.warning");
     }
     return null;
   }

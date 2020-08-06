@@ -16,9 +16,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -30,7 +30,6 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -471,7 +470,7 @@ public class ExceptionWorker {
       String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
       Ref<Balloon> ref = Ref.create();
       Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(getActionLink(actionName), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(HyperlinkEvent e) {
               if (e.getDescription().equals("analyze")) {
@@ -493,10 +492,6 @@ public class ExceptionWorker {
       editor.getScrollingModel().addVisibleAreaListener(e -> {
         Disposer.dispose(balloon);
       }, balloon);
-    }
-
-    private static @NlsSafe String getActionLink(@Nls String actionName) {
-      return String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName));
     }
   }
 

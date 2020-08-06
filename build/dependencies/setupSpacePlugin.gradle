@@ -2,7 +2,7 @@
 import java.util.concurrent.TimeUnit
 
 task setupSpaceAutomationDefinitions {
-  def version = "1.0.51354"
+  def version = "1.0.53368"
   def artifact = file("$buildDir/space/space-idea-script-definition.jar")
   outputs.file(artifact)
   doLast {

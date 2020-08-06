@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -351,9 +352,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
             PsiExpressionTrimRenderer
               .render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(proposed, call));
         }
-        String message = displayCode.isEmpty() ? "Remove redundant steps from optional chain" :
-                         "Simplify optional chain to '" + displayCode + "'";
-        String description = "Optional chain can be simplified";
+        String message = displayCode.isEmpty()
+                         ? JavaBundle.message("simplify.optional.chain.inspection.remove.redundant.steps.from.optional.chain")
+                         : JavaBundle.message("simplify.optional.chain.inspection.to.x", displayCode);
+        String description = JavaBundle.message("simplify.optional.chain.inspection.map.or.else.description");
         return new StringReplacement(proposed, message, description);
       }
       return null;
@@ -450,13 +452,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Unwrap";
+      return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Unnecessary Optional rewrapping";
+      return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.description");
     }
 
     @Nullable
@@ -514,6 +516,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   private static final class OrElseReturnCase implements ChainSimplificationCase<OrElseReturnCase.Context> {
+    public static final String OR_ELSE = "orElse";
+    public static final String OR_ELSE_GET = "orElseGet";
     private final OrElseType myType;
 
     private OrElseReturnCase(OrElseType type) {myType = type;}
@@ -521,14 +525,14 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      String method = context.myIsSimple ? "orElse" : "orElseGet";
-      return "Replace null check with " + method + "(" + PsiExpressionTrimRenderer.render(context.myDefaultExpression) + ")";
+      String method = context.myIsSimple ? OR_ELSE : OR_ELSE_GET;
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.name", method, PsiExpressionTrimRenderer.render(context.myDefaultExpression));
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Null check can be eliminated";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.description");
     }
 
     @Nullable
@@ -609,7 +613,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "'" + context.myReplacement + "()' can be used instead";
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", context.myReplacement + "()");
     }
 
     @Nullable
@@ -661,13 +665,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return "Replace null check with ifPresent()";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Null check can be eliminated with 'ifPresent'";
+      return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.description");
     }
 
     @Nullable

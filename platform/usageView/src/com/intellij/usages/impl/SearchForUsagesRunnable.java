@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -97,16 +99,17 @@ final class SearchForUsagesRunnable implements Runnable {
   @NotNull
   private static String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
-    String shortcutText = "";
+    HtmlBuilder builder = new HtmlBuilder()
+      .appendLink(FIND_OPTIONS_HREF_TARGET, "Find Options...");
     if (shortcut != null) {
-      shortcutText = "&nbsp;(" + KeymapUtil.getShortcutText(shortcut) + ")";
+      builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
     }
-    return "<a href='" + FIND_OPTIONS_HREF_TARGET + "'>Find Options...</a>" + shortcutText;
+    return builder.toString();
   }
 
   @NotNull
   private static String createSearchInProjectHtml() {
-    return "<a href='" + SEARCH_IN_PROJECT_HREF_TARGET + "'>Search in Project</a>";
+    return HtmlChunk.link(SEARCH_IN_PROJECT_HREF_TARGET, "Search in Project").toString();
   }
 
   private void notifyByFindBalloon(@Nullable final HyperlinkListener listener,

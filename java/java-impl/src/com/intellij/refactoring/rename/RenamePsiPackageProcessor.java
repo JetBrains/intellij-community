@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -107,7 +108,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
       @NotNull
       @Override
       protected String getCommandName() {
-        return "Rename package";
+        return JavaBundle.message("rename.package.command.name");
       }
     };
   }
@@ -146,7 +147,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
     final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
-      conflicts.putValue(psiClass, "Class with qualified name '" + qualifiedNameAfterRename + "'  already exist");
+      conflicts.putValue(psiClass, JavaBundle.message("rename.package.class.already.exist.conflict", qualifiedNameAfterRename));
     }
   }
 

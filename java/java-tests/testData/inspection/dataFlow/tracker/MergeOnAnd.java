@@ -1,7 +1,7 @@
 /*
 Value is always false (bar.equals("Asdasdd") && asdsa.length() == 12; line#32)
   One of the following happens:
-    Operand #1 of &&-chain is false (bar.equals("Asdasdd"); line#32)
+    Operand #1 of and-chain is false (bar.equals("Asdasdd"); line#32)
       According to hard-coded contract, method 'equals' returns 'false' value when this != parameter (equals; line#32)
         One of the following happens:
           'bar' was assigned (=; line#25)
@@ -12,7 +12,7 @@ Value is always false (bar.equals("Asdasdd") && asdsa.length() == 12; line#32)
             Values cannot be equal because "asdbaz".length != "Asdasdd".length
               Left operand is 6 (foo + "baz"; line#27)
               and right operand is 7 ("Asdasdd"; line#32)
-    or operand #2 of &&-chain is false (asdsa.length() == 12; line#32)
+    or operand #2 of and-chain is false (asdsa.length() == 12; line#32)
       Left operand is in {0..3} (asdsa.length(); line#32)
         Range is known from line #32 (bar.equals("Asdasdd"); line#32)
  */

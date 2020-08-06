@@ -12,10 +12,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.StringFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -2889,12 +2886,12 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull String fqName) {
+  public static @NotNull @NonNls String getShortName(@NotNull @NonNls String fqName) {
     return StringUtilRt.getShortName(fqName);
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull String fqName, char separator) {
+  public static @NotNull @NonNls String getShortName(@NotNull @NonNls String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
   }
 

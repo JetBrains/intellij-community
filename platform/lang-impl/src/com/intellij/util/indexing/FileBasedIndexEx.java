@@ -30,6 +30,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
 import it.unimi.dsi.fastutil.ints.IntIterable;
@@ -161,7 +162,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
-    // TODO revise behaviour later
+    if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
+        !((FileBasedIndexExtension<K, V>)getIndex(id).getExtension()).needsForwardIndexWhenSharing()) {
+      LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+    }
+
     if (getAccessibleFileIdFilter(project).test(fileId)) {
       Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
       return ContainerUtil.notNullize(map);
@@ -340,7 +345,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                       @Nullable Condition<? super V> valueChecker,
                                                       @NotNull Processor<? super VirtualFile> processor) {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
-    IntSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet);
+    IntSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet, null);
     return set != null && processVirtualFiles(set, filter, processor);
   }
 
@@ -354,7 +359,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     //noinspection rawtypes
     for (AllKeysQuery query : queries) {
       @SuppressWarnings("unchecked")
-      IntSet queryResult = collectFileIdsContainingAllKeys(query.indexId, query.dataKeys, filter, query.valueChecker, filesSet);
+      IntSet queryResult = collectFileIdsContainingAllKeys(query.getIndexId(), query.getDataKeys(), filter, query.getValueChecker(), filesSet, set);
       if (queryResult == null) return false;
       if (queryResult.isEmpty()) return true;
       if (set == null) {
@@ -480,10 +485,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @NotNull final Collection<? extends K> dataKeys,
                                                         @NotNull final GlobalSearchScope filter,
                                                         @Nullable final Condition<? super V> valueChecker,
-                                                        @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
+                                                        @Nullable final ProjectIndexableFilesFilter projectFilesFilter,
+                                                        @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
     ValueContainer.IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter::test : id ->
-      projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id);
+      projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id) && (restrictedIds == null || restrictedIds.contains(id));
     Condition<? super K> keyChecker = __ -> {
       ProgressManager.checkCanceled();
       return true;

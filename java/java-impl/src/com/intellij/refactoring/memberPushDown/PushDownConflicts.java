@@ -16,6 +16,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -99,7 +100,7 @@ public class PushDownConflicts {
                 if (resolvedClass != null && myClass.isInheritor(resolvedClass, true)) {
                   final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
                   if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
-                    myConflicts.putValue(expression, "Super method call will resolve to another method");
+                    myConflicts.putValue(expression, JavaBundle.message("push.down.super.method.call.changed.conflict"));
                   }
                 }
               }
@@ -111,7 +112,9 @@ public class PushDownConflicts {
         Set<PsiClass> unrelatedDefaults = new LinkedHashSet<>();
         for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
           if (!isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            myConflicts.putValue(member, "Non abstract " + RefactoringUIUtil.getDescription(myClass, false) + " will miss implementation of " + RefactoringUIUtil.getDescription(superMethod, false));
+            myConflicts.putValue(member, JavaBundle
+              .message("push.down.missed.implementation.conflict", RefactoringUIUtil.getDescription(myClass, false),
+                       RefactoringUIUtil.getDescription(superMethod, false)));
             break;
           }
           if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
@@ -219,7 +222,9 @@ public class PushDownConflicts {
     if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
         PsiUtil.getEnclosingStaticElement(targetClass, null) == null &&
         !(targetClass.getParent() instanceof PsiFile)) {
-      myConflicts.putValue(movedMember, "Static " + RefactoringUIUtil.getDescription(movedMember, false) + " can't be pushed to non-static " + RefactoringUIUtil.getDescription(targetClass, false));
+      myConflicts.putValue(movedMember, JavaBundle
+        .message("push.down.static.nonstatic.conflict", RefactoringUIUtil.getDescription(movedMember, false),
+                 RefactoringUIUtil.getDescription(targetClass, false)));
     }
   }
 

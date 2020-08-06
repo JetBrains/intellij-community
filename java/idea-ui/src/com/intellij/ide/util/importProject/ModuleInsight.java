@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
@@ -210,10 +211,10 @@ public abstract class ModuleInsight {
 
     for (File contentRoot : moduleContentRoots) {
       final ModuleDescriptor checkedModule = contentRootToModules.get(contentRoot);
-      myProgress.setText2("Building library dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.library.dependencies.for.module", checkedModule.getName()));
       buildJarDependencies(checkedModule);
 
-      myProgress.setText2("Building module dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.module.dependencies.for.module", checkedModule.getName()));
       for (File aContentRoot : moduleContentRoots) {
         final ModuleDescriptor aModule = contentRootToModules.get(aContentRoot);
         if (checkedModule.equals(aModule)) {
@@ -252,13 +253,13 @@ public abstract class ModuleInsight {
     try {
       try {
         for (File root : myEntryPointRoots) {
-          myProgress.setText("Scanning for libraries " + root.getPath());
+          myProgress.setText(JavaUiBundle.message("progress.text.scanning.for.libraries", root.getPath()));
           scanRootForLibraries(root);
         }
       }
       catch (ProcessCanceledException ignored) {
       }
-      myProgress.setText("Building initial libraries layout...");
+      myProgress.setText(JavaUiBundle.message("progress.text.building.initial.libraries.layout"));
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
       // correct library names so that there are no duplicates
       final Set<String> libNames = new HashSet<>(myExistingProjectLibraryNames);

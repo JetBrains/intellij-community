@@ -354,6 +354,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
+  @NonNls
   public String toString() {
     if (isValid()) {
       return getUrl();

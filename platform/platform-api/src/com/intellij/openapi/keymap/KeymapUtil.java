@@ -4,6 +4,7 @@ package com.intellij.openapi.keymap;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -55,7 +56,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getShortcutText(@NotNull Shortcut shortcut) {
+  public static @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
     if (shortcut instanceof KeyboardShortcut) {
@@ -237,12 +238,12 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     return getFirstKeyboardShortcutText(action.getShortcutSet());
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
     Shortcut[] shortcuts = set.getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null ? "" : getShortcutText(shortcut);

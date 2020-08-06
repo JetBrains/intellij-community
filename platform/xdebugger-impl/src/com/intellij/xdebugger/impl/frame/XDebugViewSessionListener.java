@@ -15,7 +15,7 @@ public final class XDebugViewSessionListener implements XDebugSessionListener {
   }
 
   public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
-    session.addSessionListener(new XDebugViewSessionListener(debugView, session)); // do not use disposable here, all listeners are removed on session end
+    session.addSessionListener(new XDebugViewSessionListener(debugView, session), debugView);
   }
 
   private void onSessionEvent(@NotNull XDebugView.SessionEvent event) {

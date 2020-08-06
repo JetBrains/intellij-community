@@ -90,15 +90,11 @@ public class AssertionCanBeIfInspection extends BaseInspection {
       }
       final PsiExpression condition = assertStatement.getAssertCondition();
       CommentTracker tracker = new CommentTracker();
-      final StringBuilder newStatement = new StringBuilder("if(");
-      newStatement.append(BoolUtils.getNegatedExpressionText(condition, tracker));
-      newStatement.append(") throw new java.lang.AssertionError(");
+      final String conditionText = BoolUtils.getNegatedExpressionText(condition, tracker);
       final PsiExpression description = assertStatement.getAssertDescription();
-      if (description != null) {
-        newStatement.append(tracker.text(description));
-      }
-      newStatement.append(");");
-      PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString(), tracker);
+      final String errorText = description != null ? tracker.text(description) : "";
+      String newStatement = "if(" + conditionText + ") throw new java.lang.AssertionError(" + errorText + ");";
+      PsiReplacementUtil.replaceStatement(assertStatement, newStatement, tracker);
     }
   }
 }

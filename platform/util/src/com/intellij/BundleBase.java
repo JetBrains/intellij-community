@@ -2,6 +2,7 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
@@ -25,6 +26,7 @@ public abstract class BundleBase {
   static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
+  public static final boolean SHOW_KEYS = Boolean.getBoolean("idea.l10n.keys");
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys;
@@ -108,32 +110,46 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    if (SHOW_DEFAULT_MESSAGES && resourceFound) {
-      try {
-        Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
-        if (parent != null) {
-          Object parentBundle = parent.get(bundle);
-          if (parentBundle instanceof ResourceBundle) {
-            String suffix = " (" + ((ResourceBundle)parentBundle).getString(key) + ")";
-            return appendLocalizationSuffix(result, suffix);
-          }
-        }
-      }
-      catch (IllegalAccessException e) {
-        LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
-      }
+    if (!resourceFound) {
+      return result;
     }
 
-    if (SHOW_LOCALIZED_MESSAGES && resourceFound) {
+    if (SHOW_KEYS && SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_KEYS) {
+      return appendLocalizationSuffix(result, " (" + key + ")");
+    }
+    if (SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_LOCALIZED_MESSAGES) {
       return appendLocalizationSuffix(result, L10N_MARKER);
     }
     return result;
   }
 
+  @NotNull
+  public static String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
+    try {
+      Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
+      if (parent != null) {
+        Object parentBundle = parent.get(bundle);
+        if (parentBundle instanceof ResourceBundle) {
+          return ((ResourceBundle)parentBundle).getString(key);
+        }
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
+    }
+    return "undefined";
+  }
+
   private static final String[] SUFFIXES = {"</body></html>", "</html>"};
 
   @NotNull
-  protected static String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
+  protected static @NlsSafe String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
     for (String suffix : SUFFIXES) {
       if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }

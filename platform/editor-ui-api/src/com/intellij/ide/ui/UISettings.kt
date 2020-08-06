@@ -420,10 +420,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.fullPathsInWindowHeader = value
     }
 
-  var enableBorderlessMode: Boolean
-    get() = state.enableBorderlessMode
+  var mergeMainMenuWithWindowTitle: Boolean
+    get() = state.mergeMainMenuWithWindowTitle
     set(value) {
-      state.enableBorderlessMode = value
+      state.mergeMainMenuWithWindowTitle = value
     }
 
   init {
@@ -569,6 +569,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
+
+    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+    @JvmStatic
+    val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+    val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

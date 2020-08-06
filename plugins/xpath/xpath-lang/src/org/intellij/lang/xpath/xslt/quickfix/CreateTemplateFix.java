@@ -24,6 +24,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateTemplateFix implements LocalQuickFix {
@@ -41,13 +42,13 @@ public class CreateTemplateFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Create Template '" + myName + "'";
+    return XPathBundle.message("intention.name.create.template", myName);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create Template";
+    return XPathBundle.message("intention.family.name.create.template");
   }
 
   @Override

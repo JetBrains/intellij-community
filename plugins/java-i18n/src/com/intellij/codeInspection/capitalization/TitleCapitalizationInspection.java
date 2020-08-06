@@ -77,13 +77,24 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
+  private static @Nls String getCapitalizationName(Nls.Capitalization capitalization) {
+    switch (capitalization) {
+      case Title:
+        return JavaI18nBundle.message("capitalization.kind.title");
+      case Sentence:
+        return JavaI18nBundle.message("capitalization.kind.sentence");
+      default:
+        throw new IllegalArgumentException();
+    }
+  }
+
   private static void checkCapitalization(PsiExpression e,
                                           Value titleValue,
                                           @NotNull ProblemsHolder holder,
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
       holder.registerProblem(e, JavaI18nBundle
-                               .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
+                               .message("inspection.title.capitalization.description", titleValue, getCapitalizationName(capitalization)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
     }
@@ -245,7 +256,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
-      return NlsCapitalizationUtil.isCapitalizationSatisfied(myText, capitalization);
+      return NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(myText, true), capitalization);
     }
   }
 
@@ -269,12 +280,14 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       Format[] formats = myFormat.getFormats();
       MessageFormat clone = (MessageFormat)myFormat.clone();
       clone.setFormats(new Format[formats.length]);
-      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(clone.toPattern(), capitalization)) return false;
-      for (Format format : formats) {
+      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(clone.toPattern(), true), capitalization)) return false;
+      boolean startsWithFormat = myFormat.toPattern().startsWith("{");
+      for (int i = 0; i < formats.length; i++) {
+        Format format = formats[i];
         if (format instanceof ChoiceFormat) {
           for (Object subValue : ((ChoiceFormat)format).getFormats()) {
             String str = subValue.toString();
-            if (capitalization == Nls.Capitalization.Sentence) {
+            if (capitalization == Nls.Capitalization.Sentence && (i > 0 || !startsWithFormat)) {
               str = "The " + str;
             }
             if (!NlsCapitalizationUtil.isCapitalizationSatisfied(str, capitalization)) return false;

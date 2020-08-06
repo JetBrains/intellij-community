@@ -374,8 +374,8 @@ abstract class Cell : BaseBuilder {
     ).withValidationOnInput {
       val value = it.text.toIntOrNull()
       when {
-        value == null -> error("Please enter a number")
-        range != null && value !in range -> error("Please enter a number from ${range.first} to ${range.last}")
+        value == null -> error(UIBundle.message("please.enter.a.number"))
+        range != null && value !in range -> error(UIBundle.message("please.enter.a.number.from.0.to.1", range.first, range.last))
         else -> null
       }
     }

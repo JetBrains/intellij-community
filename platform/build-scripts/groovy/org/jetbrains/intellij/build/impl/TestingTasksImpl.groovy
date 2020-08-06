@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
@@ -13,6 +14,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
@@ -274,7 +276,11 @@ class TestingTasksImpl extends TestingTasks {
 
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath, remoteDebugging)
 
-    context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+    if (isRunningInBatchMode()) {
+      context.messages.info("Running tests from ${options.batchTestDir} matched by '${options.batchTestIncludes}' pattern.")
+    } else {
+      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+    }
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
     }
@@ -286,7 +292,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
 
     notifySnapshotBuilt(allJvmArgs)
   }
@@ -381,6 +387,12 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.add(debuggerParameter)
     }
 
+    if (options.enableCausalProfiling) {
+      def causalProfilingOptions = CausalProfilingOptions.IMPL
+      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
+      jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
+    }
+
     if (suspendDebugProcess) {
       context.messages.info("""
 ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
@@ -441,7 +453,13 @@ class TestingTasksImpl extends TestingTasks {
         }
       }
 
-      test(name: options.bootstrapSuite)
+      if (isRunningInBatchMode()) {
+        batchtest {
+          fileset dir: options.batchTestDir, includes: options.batchTestIncludes
+        }
+      } else {
+        test(name: options.bootstrapSuite)
+      }
     }
   }
 
@@ -519,5 +537,29 @@ class TestingTasksImpl extends TestingTasks {
 
   protected boolean isBootstrapSuiteDefault() {
     return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
+  }
+
+  protected boolean isRunningInBatchMode() {
+    return options.batchTestDir != null
+  }
+
+  private List<String> buildCausalProfilingAgentJvmArg(CausalProfilingOptions options) {
+    List<String> causalProfilingJvmArgs = []
+
+    String causalProfilerAgentName = SystemInfo.isLinux || SystemInfo.isMac ? "liblagent.so" : null
+    if (causalProfilerAgentName != null) {
+      def agentArgs = options.buildAgentArgsString()
+      if (agentArgs != null) {
+        causalProfilingJvmArgs << "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/$causalProfilerAgentName=$agentArgs".toString()
+      }
+      else {
+        context.messages.info("Could not find agent options")
+      }
+    }
+    else {
+      context.messages.info("Causal profiling is supported for Linux and Mac only")
+    }
+
+    return causalProfilingJvmArgs
   }
 }

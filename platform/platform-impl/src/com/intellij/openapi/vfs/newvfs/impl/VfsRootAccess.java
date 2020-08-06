@@ -25,6 +25,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,10 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -97,7 +95,7 @@ public final class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = CollectionFactory.createFilePathSet();
+    @NonNls Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
@@ -200,7 +198,11 @@ public final class VfsRootAccess {
   @TestOnly
   public static void allowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+      if (path.isEmpty()) {
+        throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots)+"'");
+      }
+      ourAdditionalRoots.add(path);
     }
   }
 

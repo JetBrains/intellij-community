@@ -3,12 +3,14 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.eventLog.EventField;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
 public interface FeatureUsageCollectorExtension {
   ExtensionPointName<FeatureUsageCollectorExtension> EP_NAME = ExtensionPointName.create("com.intellij.statistics.collectorExtension");
 
+  @NonNls
   String getGroupId();
   String getEventId();
 

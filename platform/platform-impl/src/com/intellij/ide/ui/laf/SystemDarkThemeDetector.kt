@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
+import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
 internal abstract class SystemDarkThemeDetector {
@@ -57,8 +58,8 @@ internal abstract class SystemDarkThemeDetector {
 
   private class WindowsDetector (override val detectionSupported: Boolean = JnaLoader.isLoaded()): AsyncDetector() {
     companion object {
-      const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
-      const val REGISTRY_VALUE = "AppsUseLightTheme"
+      @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
+      @NonNls const val REGISTRY_VALUE = "AppsUseLightTheme"
     }
 
     override fun isDark(): Boolean {

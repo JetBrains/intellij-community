@@ -105,7 +105,7 @@ public final class BoolUtils {
     Predicate<PsiMethodCallExpression> predicate;
     String name;
 
-    private PredicatedReplacement(Predicate<PsiMethodCallExpression> predicate, String name) {
+    private PredicatedReplacement(Predicate<PsiMethodCallExpression> predicate, @NonNls String name) {
       this.predicate = predicate;
       this.name = name;
     }

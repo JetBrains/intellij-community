@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -12,7 +13,8 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.CapturingProcessAdapter;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -1020,11 +1022,33 @@ public final class PlatformTestUtil {
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
-    return executeConfiguration(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull String executorId) throws InterruptedException {
+  /**
+   * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                 @NotNull String executorId) throws InterruptedException {
+    Pair<ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+    ProcessHandler processHandler = result.second.getProcessHandler();
+    processHandler.waitFor(60000);
+    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    return result.first;
+  }
+
+  /**
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}
+   */
+  @NotNull
+  public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
+                                                                                      @NotNull String executorId)
+    throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1037,35 +1061,40 @@ public final class PlatformTestUtil {
       fail("No runner found for: " + executorId + " and " + runConfiguration);
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
-    ExecutionEnvironment executionEnvironment =
-      new ExecutionEnvironment(DefaultRunExecutor.getRunExecutorInstance(), runner, runnerAndConfigurationSettings,
-                               project);
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    assertNotNull("Unable to find executor: " + executorId, executor);
+    ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
         LOG.debug("Process started");
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        assertNotNull(processHandler);
+        processHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void startNotified(@NotNull ProcessEvent event) {
+            LOG.debug("Process started");
+          }
+
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+          }
+
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            LOG.debug(outputType + ": " + event.getText());
+          }
+        });
         refRunContentDescriptor.set(descriptor);
         latch.countDown();
       }
     });
-    latch.await(60, TimeUnit.SECONDS);
-    ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
-    if (processHandler == null) {
-      fail("No process handler found");
+    if (!latch.await(60, TimeUnit.SECONDS)) {
+      fail("Process failed to start");
     }
-
-    CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
-    processHandler.addProcessListener(capturingProcessAdapter);
-    processHandler.waitFor(60000);
-
-    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
-    ProcessOutput processOutput = capturingProcessAdapter.getOutput();
-    LOG.debug("Exit code: " + processOutput.getExitCode());
-    LOG.debug("Stdout: " + processOutput.getStdout());
-    LOG.debug("Stderr: " + processOutput.getStderr());
-
-    return executionEnvironment;
+    return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {

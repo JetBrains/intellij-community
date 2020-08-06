@@ -1,33 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package git4idea.remote
 
 import com.intellij.dvcs.DvcsUtil
@@ -52,9 +24,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.*
 import javax.swing.*
@@ -76,7 +50,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   init {
     init()
-    title = "Git Remotes"
+    title = message("remotes.dialog.title")
     updateTableWidth()
   }
 
@@ -106,8 +80,10 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     val proposedName = if (repository.remotes.any { it.name == ORIGIN }) "" else ORIGIN
     val dialog = GitDefineRemoteDialog(repository, git, proposedName, "")
     if (dialog.showAndGet()) {
-      runInModalTask("Adding Remote...", repository,
-                     "Add Remote", "Couldn't add remote ${dialog.remoteName} '${dialog.remoteUrl}'") {
+      runInModalTask(message("remotes.dialog.adding.remote"),
+                     message("remote.dialog.add.remote"),
+                     message("remotes.dialog.cannot.add.remote.error.message", dialog.remoteName, dialog.remoteUrl),
+                     repository) {
         git.addRemote(repository, dialog.remoteName, dialog.remoteUrl)
       }
     }
@@ -116,8 +92,13 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   private fun removeRemote() {
     val remoteNode = getSelectedRemote()!!
     val remote = remoteNode.remote
-    if (YES == showYesNoDialog(rootPane, "Remove remote ${remote.name} '${getUrl(remote)}'?", "Remove Remote", getQuestionIcon())) {
-      runInModalTask("Removing Remote...", remoteNode.repository, "Remove Remote", "Couldn't remove remote $remote") {
+    if (YES == showYesNoDialog(rootPane,
+                               message("remotes.dialog.remove.remote.message", remote.name, getUrl(remote)),
+                               message("remotes.dialog.remove.remote.title"), getQuestionIcon())) {
+      runInModalTask(message("remotes.dialog.removing.remote.progress"),
+                     message("remotes.dialog.removing.remote.error.title"),
+                     message("remotes.dialog.removing.remote.error.message", remote),
+                     remoteNode.repository) {
         git.removeRemote(remoteNode.repository, remote)
       }
     }
@@ -135,8 +116,10 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       val newRemoteName = dialog.remoteName
       val newRemoteUrl = dialog.remoteUrl
       if (newRemoteName == oldName && newRemoteUrl == oldUrl) return
-      runInModalTask("Changing Remote...", repository,
-                     "Change Remote", "Couldn't change remote $oldName to $newRemoteName '$newRemoteUrl'") {
+      runInModalTask(message("remotes.changing.remote.progress"),
+                     message("remotes.changing.remote.error.title"),
+                     message("remotes.changing.remote.error.message", oldName, newRemoteName, newRemoteUrl),
+                     repository) {
         changeRemote(repository, oldName, oldUrl, newRemoteName, newRemoteUrl)
       }
     }
@@ -199,11 +182,11 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     (table.model as RemotesTableModel).fireTableDataChanged()
   }
 
-private fun runInModalTask(title: String,
-                           repository: GitRepository,
-                           errorTitle: String,
-                           errorMessage: String,
-                           operation: () -> GitCommandResult) {
+  private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: String,
+                             @Nls(capitalization = Nls.Capitalization.Title) errorTitle: String,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) errorMessage: String,
+                             repository: GitRepository,
+                             operation: () -> GitCommandResult) {
     ProgressManager.getInstance().run(object : Task.Modal(project, title, true) {
       private var result: GitCommandResult? = null
 
@@ -215,8 +198,8 @@ private fun runInModalTask(title: String,
       override fun onSuccess() {
         rebuildTable()
         if (result == null || !result!!.success()) {
-          val errorDetails = if (result == null) "operation was not executed" else result!!.errorOutputAsJoinedString
-          val message = "$errorMessage in $repository:\n$errorDetails"
+          val errorDetails = if (result == null) message("remotes.operation.not.executed.message") else result!!.errorOutputAsJoinedString
+          val message = message("remotes.operation.error.message", errorMessage, repository, errorDetails)
           LOG.warn(message)
           Messages.showErrorDialog(myProject, message, errorTitle)
         }
@@ -255,13 +238,13 @@ private fun runInModalTask(title: String,
     override fun getPresentableString() = remote.name
   }
 
-  private inner class RemotesTableModel() : AbstractTableModel() {
+  private inner class RemotesTableModel : AbstractTableModel() {
     override fun getRowCount() = nodes.size
     override fun getColumnCount() = 2
 
     override fun getColumnName(column: Int): String {
-      if (column == NAME_COLUMN) return "Name"
-      else return "URL"
+      if (column == NAME_COLUMN) return message("remotes.remote.column.name")
+      else return message("remotes.remote.column.url")
     }
 
     override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +62,7 @@ public abstract class InspectionElementsMerger {
    * @return shortName of the new merged inspection.
    */
   @Contract(pure = true)
-  @NotNull
-  public abstract String getMergedToolName();
+  public abstract @NotNull @NonNls String getMergedToolName();
 
   /**
    * @return the shortNames of the inspections whose settings needs to be merged.
@@ -70,6 +70,7 @@ public abstract class InspectionElementsMerger {
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @Contract(pure = true)
+  @NonNls
   public abstract String @NotNull [] getSourceToolNames();
 
   /**
@@ -78,6 +79,7 @@ public abstract class InspectionElementsMerger {
    * @return the suppressIds of the merged inspections.
    */
   @Contract(pure = true)
+  @NonNls
   public String @NotNull [] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }

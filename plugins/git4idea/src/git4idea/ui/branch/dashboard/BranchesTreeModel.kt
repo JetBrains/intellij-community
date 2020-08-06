@@ -3,7 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
-import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import java.util.*
@@ -43,6 +42,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
     return when (nodeDescriptor.type) {
       NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
       NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
+      NodeType.HEAD_NODE -> message("group.Git.HEAD.Branch.Filter.title")
       else -> nodeDescriptor.getDisplayText() ?: super.toString()
     }
   }
