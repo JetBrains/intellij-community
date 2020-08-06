@@ -9,6 +9,7 @@
 #include <string.h>
 #include <wchar.h>
 #include <Windows.h>
+#include <shlwapi.h>
 
 enum RootState {
 	rsOff,
@@ -300,32 +301,72 @@ static void UpdateRoots(bool report) {
     free(buffer.text);
 }
 
-static bool GetClosestExistingDirectory(const wchar_t *path)
+static bool IsMountPoint(const wchar_t *path)
+{
+	DWORD attrs = GetFileAttributesW(path);
+	return (attrs == 0 
+			|| (attrs & FILE_ATTRIBUTE_REPARSE_POINT)
+					== FILE_ATTRIBUTE_REPARSE_POINT);
+}
+
+/* Changes the path to the path best suited to watching.
+ * Returns whether this was successful. */
+static bool AdjustWatchRoot(wchar_t *path)
 {
 	struct _stat buffer;
-	bool result = false;
-	while (true) {
-		int res = _wstat(path, &buffer);
-		if (res == 0 && (buffer.st_mode & _S_IFDIR) == _S_IFDIR) {
-			result = true;
-			break;
-		}
+	bool removed = false;
+	int res = 0;
+
+	memset(&buffer, 0, sizeof(struct _stat));
+	res = _wstat(path, &buffer);
+
+	/* Step 1: Move to the closest existing directory. */
+
+	/* If path is a file, just cut off the name. */
+	if (res == 0 && (buffer.st_mode & _S_IFREG) == _S_IFREG) {
 		wchar_t *p = wcsrchr(path, L'\\');
 		if (p != NULL) {
 			*p = 0;
-			continue;
+			return true;
 		}
-		break;
+		return false;
+	} else if (res != 0 && errno != ENOENT) {
+		return false;
 	}
 
-	return result;
+	/* Remove path elements until reaching an existing directory. */
+	while (res == -1 && errno == ENOENT) {
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			removed = true;
+			res = _wstat(path, &buffer);
+		} else {
+			return false;
+		}
+	}
+
+	/* Step 2: To monitor the original watch-root directory itself
+	 * (for events affecting it, such as renaming or moving), the
+	 * monitored directory must be the parent of the requested. */
+
+	if (!removed && !PathIsRootW(path) && !IsMountPoint(path)) {
+		wchar_t *p = wcsrchr(path, L'\\');
+		if (p != NULL) {
+			*p = 0;
+			return true;
+		}
+		return false;
+	}
+
+	return true;
 }
 
 static void AddWatchRoot(const wchar_t *path) {
     WatchRoot *root = (WatchRoot *)calloc(1, sizeof(WatchRoot));
     root->next = NULL;
 	wcsncpy(root->rootPath, path, MAX_PATH);
-	if (GetClosestExistingDirectory(root->rootPath)) {
+	if (AdjustWatchRoot(root->rootPath)) {
 		if (root->rootPath[wcslen(root->rootPath)-1] != L'\\') {
 			wcscat(root->rootPath, L"\\");
 		}
