@@ -1021,11 +1021,18 @@ public final class PlatformTestUtil {
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
-    return executeConfiguration(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull String executorId) throws InterruptedException {
+  /**
+   * Executing {@code runConfiguration} with eeecutor {@code executoId} and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                 @NotNull String executorId) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
