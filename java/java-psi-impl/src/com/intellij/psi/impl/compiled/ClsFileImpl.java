@@ -69,6 +69,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class ClsFileImpl extends PsiBinaryFileImpl
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance(ClsFileImpl.class);
@@ -557,8 +559,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
       boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
-      int majorMinor = reader.readInt(4);
-      LanguageLevel level = ClsParsingUtil.getLanguageLevelFromBytecode(majorMinor & 0xFFFF, (majorMinor >>> 16));
+      JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readUnsignedShort(6));
+      LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
+      if (level != null && level.isAtLeast(LanguageLevel.JDK_11) && ClsParsingUtil.isPreviewLevel(reader.readUnsignedShort(4))) {
+        level = notNull(level.getPreviewLevel(), level);
+      }
 
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
