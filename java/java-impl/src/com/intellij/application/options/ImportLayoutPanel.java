@@ -15,15 +15,15 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
@@ -128,7 +128,7 @@ public abstract class ImportLayoutPanel extends JPanel {
       })
       .setButtonComparator(JavaBundle.message("button.add.package"),
                            JavaBundle.message("button.add.blank"),
-                           JavaBundle.message("import.layout.panel.remove.button"),
+                           IdeBundle.message("action.remove"),
                            JavaBundle.message("import.layout.panel.up.button"),
                            JavaBundle.message("import.layout.panel.down.button"))
       .setPreferredSize(new Dimension(-1, 100)).createPanel();
@@ -343,10 +343,10 @@ public abstract class ImportLayoutPanel extends JPanel {
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
-          append(JavaBundle.message("import.layout.panel.import"), SimpleTextAttributes.fromTextAttributes(attributes));
+          append(PsiKeyword.IMPORT, SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            append(JavaBundle.message("import.layout.panel.static"), SimpleTextAttributes.fromTextAttributes(attributes));
+            append(PsiKeyword.STATIC, SimpleTextAttributes.fromTextAttributes(attributes));
           }
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
