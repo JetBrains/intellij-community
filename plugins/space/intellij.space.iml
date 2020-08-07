@@ -104,9 +104,10 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="space-idea-sdk" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-datatype-joda" level="project" />
-    <orderEntry type="library" name="space-idea-sdk" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="okhttp3" level="project" />
   </component>
 </module>
