@@ -446,8 +446,11 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
   }
 
+  @Nullable
   protected PropertiesFile getPropertiesFile() {
-    return getPropertyFileByPath(FileUtil.toSystemIndependentName(getPropertiesFilePath()));
+    String path = getPropertiesFilePath();
+    if (path == null) return null;
+    return getPropertyFileByPath(FileUtil.toSystemIndependentName(path));
   }
 
   private String getPropertiesFilePath() {
