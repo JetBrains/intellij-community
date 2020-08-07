@@ -5,12 +5,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
@@ -132,9 +134,19 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     if (myMain != null) {
       panel.add(SeparatorFactory.createSeparator(myMain.getGroup(), null), BorderLayout.CENTER);
     }
-    myLinkLabel = new DropDownLink<>(OptionsBundle.message(myMain == null ? "settings.editor.modify.options" : "settings.editor.modify"), link -> showOptions());
+    String message = OptionsBundle.message(myMain == null ? "settings.editor.modify.options" : "settings.editor.modify");
+    myLinkLabel = new DropDownLink<>(message, link -> showOptions());
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
-    panel.add(myLinkLabel, BorderLayout.EAST);
+    JPanel linkPanel = new JPanel(new BorderLayout());
+    linkPanel.add(myLinkLabel, BorderLayout.CENTER);
+    CustomShortcutSet shortcut = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonic());
+    if (shortcut != null) {
+      JLabel shortcutLabel = new JLabel(KeymapUtil.getFirstKeyboardShortcutText(shortcut));
+      shortcutLabel.setEnabled(false);
+      shortcutLabel.setBorder(JBUI.Borders.empty(0, 5));
+      linkPanel.add(shortcutLabel, BorderLayout.EAST);
+    }
+    panel.add(linkPanel, BorderLayout.EAST);
     return panel;
   }
 

@@ -243,7 +243,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
     Shortcut[] shortcuts = set.getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null ? "" : getShortcutText(shortcut);
