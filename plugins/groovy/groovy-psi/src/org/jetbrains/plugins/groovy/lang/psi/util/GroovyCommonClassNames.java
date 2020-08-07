@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import java.util.Set;
@@ -50,6 +50,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_LANG_DELEGATES_TO = "groovy.lang.DelegatesTo";
   String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
   String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
+  String GROOVY_TRANSFORM_VISIBILITY_OPTIONS = "groovy.transform.VisibilityOptions";
   String GROOVY_TRANSFORM_STC_CLOSURE_PARAMS = "groovy.transform.stc.ClosureParams";
   String GROOVY_TRANSFORM_STC_SIMPLE_TYPE = "groovy.transform.stc.SimpleType";
   String GROOVY_TRANSFORM_STC_FROM_STRING = "groovy.transform.stc.FromString";

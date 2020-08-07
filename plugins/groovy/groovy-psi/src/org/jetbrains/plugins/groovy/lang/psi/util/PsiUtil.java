@@ -8,13 +8,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.JavaIdentifier;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -307,10 +307,6 @@ public final class PsiUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiMember member) {
-    if (member instanceof LightElement) {
-      return true;
-    }
-
     return AccessibilityKt.isAccessible(member, place);
   }
 
@@ -1234,6 +1230,18 @@ public final class PsiUtil {
       }
     }
     return false;
+  }
+
+  public static @NotNull List<@NotNull PsiAnnotation> getAllAnnotations(@NotNull PsiElement element, @NotNull String annotationNameFq) {
+    List<PsiModifierListOwner> parents = PsiTreeUtil.collectParents(element, PsiModifierListOwner.class, true, __ -> false);
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    for (PsiModifierListOwner parent : parents) {
+      PsiAnnotation annotation = parent.getAnnotation(annotationNameFq);
+      if (annotation != null) {
+        annotations.add(annotation);
+      }
+    }
+    return annotations;
   }
 
   @Nullable

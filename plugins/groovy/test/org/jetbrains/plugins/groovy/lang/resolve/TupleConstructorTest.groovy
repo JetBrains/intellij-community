@@ -154,7 +154,8 @@ static void main(String[] args) {
     highlightingTest """
 @groovy.transform.TupleConstructor(defaults = false)
 class Rr {
-    String actionType = ""
+// todo: defval
+    String actionType
     long referrerCode;
     boolean referrerUrl;
 }
@@ -270,5 +271,27 @@ class Rr {}
 @groovy.transform.TupleConstructor(pre = <error>Integer</error>, post = <error>String</error>)
 class Rr {}
 """
+  }
+
+  @Test
+  void 'test visibility options'() {
+    fixture.addFileToProject 'other.groovy', """
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(defaults = false)
+@groovy.transform.VisibilityOptions(constructor = Visibility.PRIVATE)
+class Cde {
+    String actionType
+    long referrerCode
+    boolean referrerUrl
+}"""
+    highlightingTest """
+class X {
+
+    @groovy.transform.CompileStatic
+    static void main(String[] args) {
+        def x = new <error>Cde</error>("mem", 1, true)
+    }
+
+}"""
   }
 }

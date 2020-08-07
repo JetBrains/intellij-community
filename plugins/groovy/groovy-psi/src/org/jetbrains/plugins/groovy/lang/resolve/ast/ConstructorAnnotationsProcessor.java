@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
 /**
  * @author peter
  */
@@ -77,6 +78,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     GeneratedConstructorCollector collector = new GeneratedConstructorCollector(tupleConstructor, immutable, fieldsConstructor);
 
     if (tupleConstructor != null) {
+      Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
+      fieldsConstructor.addModifier(visibility.toString());
+
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
