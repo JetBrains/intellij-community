@@ -21,7 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -67,7 +71,7 @@ class ReturnValueBeanBuilder {
   }
 
   public String buildBeanClass() throws IOException {
-    final StringBuilder out = new StringBuilder(1024);
+    final @NonNls StringBuilder out = new StringBuilder(1024);
 
     if (myPackageName.length() > 0) {
       out.append("package ").append(myPackageName).append(";\n\n");
@@ -101,12 +105,12 @@ class ReturnValueBeanBuilder {
     return out.toString();
   }
 
-  private void outputField(StringBuilder out) {
+  private void outputField(@NonNls StringBuilder out) {
     final String typeText = myValueType.getCanonicalText(false);
     out.append('\t' + "private final ").append(typeText).append(' ').append(getFieldName("value")).append(";");
   }
 
-  private void outputConstructor(StringBuilder out) {
+  private void outputConstructor(@NonNls StringBuilder out) {
     final String typeText = myValueType.getCanonicalText(true);
     final String name = "value";
     final String parameterName = JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
@@ -130,7 +134,7 @@ class ReturnValueBeanBuilder {
     return myFile != null ? CodeStyle.getSettings(myFile) : CodeStyle.getProjectOrDefaultSettings(myProject);
   }
 
-  private void outputGetter(StringBuilder out) {
+  private void outputGetter(@NonNls StringBuilder out) {
     final String typeText = myValueType.getCanonicalText(true);
     final String name = "value";
     final String capitalizedName = StringUtil.capitalize(name);
