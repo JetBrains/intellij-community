@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
@@ -2170,5 +2171,30 @@ class Abc {
     myFixture.assertPreferredCompletionItems 0, 'bar', 'bar().getGoo'
     selectItem(myItems[1])
     checkResult()
+  }
+
+  void testPerformanceWithManyNonMatchingDeclarations() {
+    def importedNumbers = 0..<10
+    for (i in (importedNumbers)) {
+      myFixture.addClass("class Foo$i {\n" +
+                         (0..100).collect { "static int FOO$it = 3;\n" }.join("") +
+                         "}")
+    }
+    String text = importedNumbers.collect { "import static Foo${it}.*;\n" }.join("") +
+                  "class C {\n" +
+                  (0..100).collect { "String method$it() {}\n" } +
+                  "{ " +
+                  "int localVariable = 2;\n" +
+                  "localV<caret>x }" +
+                  "}"
+    myFixture.configureByText("a.java", text)
+    PlatformTestUtil.startPerformanceTest(name, 300, {
+      assert myFixture.completeBasic().length == 1
+    }).setup {
+      lookup?.hideLookup(true)
+      myFixture.type("\bV")
+      psiManager.dropPsiCaches()
+      assert !lookup
+    }.assertTiming()
   }
 }
