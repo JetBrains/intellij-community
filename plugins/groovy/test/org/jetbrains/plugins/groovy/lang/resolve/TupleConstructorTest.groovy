@@ -266,6 +266,14 @@ class Rr {}
   }
 
   @Test
+  void 'empty excludes'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = "a", excludes = [])
+class Rr {}
+"""
+  }
+
+  @Test
   void 'wrong expressions at pre and post'() {
     highlightingTest """
 @groovy.transform.TupleConstructor(pre = <error>Integer</error>, post = <error>String</error>)

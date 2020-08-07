@@ -9,16 +9,17 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector
 
 class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
 
   companion object {
-    fun registerIdentifierListError(holder: AnnotationHolder, element: PsiElement) =
+    private fun registerIdentifierListError(holder: AnnotationHolder, element: PsiElement) =
       holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("explicit.includes.and.excludes"))
         .range(element)
         .create()
 
-    fun registerClosureError(holder: AnnotationHolder, element: PsiElement) =
+    private fun registerClosureError(holder: AnnotationHolder, element: PsiElement) =
       holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("require.closure.as.attribute.value"))
         .range(element)
         .create()
@@ -28,10 +29,10 @@ class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
     if (annotation.qualifiedName != GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) {
       return false
     }
-    val excludes = AnnotationUtil.findDeclaredAttribute(annotation, "excludes")
+    val excludes = GeneratedConstructorCollector.getIdentifierList(annotation, "excludes")
     val includes = AnnotationUtil.findDeclaredAttribute(annotation, "includes")
-    if (includes != null && excludes != null) {
-      registerIdentifierListError(holder, excludes)
+    if (includes != null && excludes != null && excludes.isNotEmpty()) {
+      registerIdentifierListError(holder, AnnotationUtil.findDeclaredAttribute(annotation, "excludes")!!)
       registerIdentifierListError(holder, includes)
     }
     val pre = AnnotationUtil.findDeclaredAttribute(annotation, "pre")?.value

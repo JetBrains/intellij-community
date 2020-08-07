@@ -97,21 +97,19 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
 
     private fun String.isInternal(): Boolean = contains("$")
 
-    private fun getIdentifierList(annotation: PsiAnnotation, attributeName: String): List<String>? {
+    fun getIdentifierList(annotation: PsiAnnotation, attributeName: String): List<String>? {
       annotation.takeIf { it.hasAttribute(attributeName) } ?: return null
       val rawIdentifiers = GrAnnotationUtil.inferStringAttribute(annotation, attributeName)
-      return rawIdentifiers?.split(',')?.toList() ?: GrAnnotationUtil.getStringArrayValue(annotation, attributeName, false)
+      return rawIdentifiers?.split(',')?.mapNotNull { it.trim().takeUnless(CharSequence::isBlank) }?.toList()
+             ?: GrAnnotationUtil.getStringArrayValue(annotation, attributeName, false)
     }
 
     private fun collectNamesOrderInformation(tupleConstructor: PsiAnnotation): Pair<(String) -> Boolean, List<String>?> {
 
-      val excludesList = getIdentifierList(tupleConstructor, "excludes") ?: emptyList()
-      val excludes: List<String> = excludesList.mapNotNull { name -> name.trim().takeIf(CharSequence::isNotBlank) }
+      val excludes: List<String> = getIdentifierList(tupleConstructor, "excludes") ?: emptyList()
 
-      val includesList = getIdentifierList(tupleConstructor, "includes")
-      val includes: List<String>? = includesList
+      val includes: List<String>? = getIdentifierList(tupleConstructor, "includes")
         ?.takeUnless { Undefined.isUndefined(it.singleOrNull()) }
-        ?.mapNotNull { name -> name.trim().takeIf(CharSequence::isNotBlank) }
 
       val allowInternalNames = GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "allNames") ?: false
 
