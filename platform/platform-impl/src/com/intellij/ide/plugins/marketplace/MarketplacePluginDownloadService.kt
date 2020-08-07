@@ -24,11 +24,11 @@ internal class MarketplacePluginDownloadService {
   companion object {
     private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
-    private const val BLOCKMAP_ZIP = "blockmap.zip"
+    private const val BLOCKMAP_ZIP_SUFFIX = "-blockmap.zip"
 
     private const val BLOCKMAP_FILENAME = "blockmap.json"
 
-    private const val HASH_FILENAME = "hash.json"
+    private const val HASH_FILENAME_SUFFIX = "-hash.json"
 
     private const val FILENAME = "filename="
 
@@ -67,8 +67,9 @@ internal class MarketplacePluginDownloadService {
       val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com", "plugin-blockmap-patches.dev.marketplace.intellij.net")
 
       val (pluginFileUrl, guessFileParameters) = getPluginFileUrlAndGuessFileParameters(curPluginUrl)
-      val blockMapFileUrl = pluginFileUrl.replaceAfterLast("/", BLOCKMAP_ZIP)
-      val pluginHashFileUrl = pluginFileUrl.replaceAfterLast("/", HASH_FILENAME)
+      val suffix = if(pluginFileUrl.endsWith(".zip")) ".zip" else ".jar"
+      val blockMapFileUrl = pluginFileUrl.replace(suffix, BLOCKMAP_ZIP_SUFFIX)
+      val pluginHashFileUrl = pluginFileUrl.replaceAfterLast(suffix, HASH_FILENAME_SUFFIX)
       try {
         val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
           request.inputStream.use { input ->
@@ -127,7 +128,7 @@ internal class MarketplacePluginDownloadService {
             objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
           }
           else {
-            throw IOException("There is no entry $BLOCKMAP_FILENAME in the $BLOCKMAP_ZIP archive")
+            throw IOException("There is no entry $BLOCKMAP_FILENAME")
           }
         }
       }
