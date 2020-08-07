@@ -270,11 +270,13 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       MessageFormat clone = (MessageFormat)myFormat.clone();
       clone.setFormats(new Format[formats.length]);
       if (!NlsCapitalizationUtil.isCapitalizationSatisfied(clone.toPattern(), capitalization)) return false;
-      for (Format format : formats) {
+      boolean startsWithFormat = myFormat.toPattern().startsWith("{");
+      for (int i = 0; i < formats.length; i++) {
+        Format format = formats[i];
         if (format instanceof ChoiceFormat) {
           for (Object subValue : ((ChoiceFormat)format).getFormats()) {
             String str = subValue.toString();
-            if (capitalization == Nls.Capitalization.Sentence) {
+            if (capitalization == Nls.Capitalization.Sentence && (i > 0 || !startsWithFormat)) {
               str = "The " + str;
             }
             if (!NlsCapitalizationUtil.isCapitalizationSatisfied(str, capitalization)) return false;

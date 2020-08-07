@@ -31,5 +31,8 @@ class X {
     test2(message("property.choice.lower", x));
 
     test2(message("property.sentence.with.quote"));
+
+    test(<warning descr="String '{0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far' is not properly capitalized. It should have title capitalization">message("property.choice.sentence.start", x)</warning>);
+    test2(message("property.choice.sentence.start", x));
   }
 }
