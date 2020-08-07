@@ -36,9 +36,6 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @NotNull
   private final LinkedHashMap<String, FieldTypeAndDefaultValue> myFields;
 
-  @NotNull
-  private final DefinitionLevel myDefinitionLevel;
-
   private final boolean myTyped;
 
   @Nullable
@@ -47,17 +44,16 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull String name,
                           @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
-                          @NotNull DefinitionLevel definitionLevel,
+                          boolean isDefinition,
                           boolean typed,
                           @Nullable PyQualifiedNameOwner declaration) {
     super(tupleClass,
           Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
           false,
-          definitionLevel != DefinitionLevel.INSTANCE);
+          isDefinition);
 
     myFields = new LinkedHashMap<>(fields);
     myName = name;
-    myDefinitionLevel = definitionLevel;
     myTyped = typed;
     myDeclaration = declaration;
   }
@@ -104,10 +100,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Nullable
   @Override
   public PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
-      return new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myDeclaration);
-    }
-    else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
+    if (isDefinition()) {
       return getCallDefinitionType(callSite, context);
     }
 
@@ -117,16 +110,16 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @NotNull
   @Override
   public PyNamedTupleType toInstance() {
-    return myDefinitionLevel == DefinitionLevel.NEW_TYPE
-           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.INSTANCE, myTyped, myDeclaration)
+    return isDefinition()
+           ? new PyNamedTupleType(myClass, myName, myFields, false, myTyped, myDeclaration)
            : this;
   }
 
   @NotNull
   @Override
   public PyNamedTupleType toClass() {
-    return myDefinitionLevel == DefinitionLevel.INSTANCE
-           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myDeclaration)
+    return !isDefinition()
+           ? new PyNamedTupleType(myClass, myName, myFields, true, myTyped, myDeclaration)
            : this;
   }
 
@@ -143,13 +136,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
     final PyNamedTupleType type = (PyNamedTupleType)o;
     return Objects.equals(myName, type.myName) &&
-           Objects.equals(myFields.keySet(), type.myFields.keySet()) &&
-           myDefinitionLevel == type.myDefinitionLevel;
+           Objects.equals(myFields.keySet(), type.myFields.keySet());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), myName, myFields.keySet(), myDefinitionLevel);
+    return Objects.hash(super.hashCode(), myName, myFields.keySet());
   }
 
   @NotNull
@@ -168,7 +160,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @Override
   public boolean isCallable() {
-    return myDefinitionLevel != DefinitionLevel.INSTANCE;
+    return isDefinition();
   }
 
   @Nullable
@@ -196,7 +188,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
         }
       }
 
-      return new PyNamedTupleType(myClass, myName, newFields, myDefinitionLevel, false, myDeclaration);
+      return new PyNamedTupleType(myClass, myName, newFields, isDefinition(), false, myDeclaration);
     }
 
     return this;
@@ -227,13 +219,6 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @NotNull
   private static PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
     return PyCallableParameterImpl.nonPsi(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
-  }
-
-  public enum DefinitionLevel {
-
-    NT_FUNCTION, // type for collections.namedtuple and typing.NamedTuple.__init__
-    NEW_TYPE,
-    INSTANCE
   }
 
   public static class FieldTypeAndDefaultValue {

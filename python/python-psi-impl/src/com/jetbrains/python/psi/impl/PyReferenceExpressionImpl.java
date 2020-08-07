@@ -250,14 +250,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      PyType resolvedType = getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context), key);
-
-      if (PyTypeUtil
-            .toStream(resolvedType)
-            .noneMatch(type -> type instanceof PyCallableType && ((PyCallableType)type).getCallable() == null) &&
-          resolvedType != null) {
-        return resolvedType;
-      }
+      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context), key);
     }
     return null;
   }
@@ -526,18 +519,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }
     return null;
-  }
-
-  @Nullable
-  public static Ref<PyType> getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
-                                                                    @NotNull TypeEvalContext context,
-                                                                    @Nullable PsiElement anchor) {
-    return StreamEx
-      .of(PyTypeProvider.EP_NAME.getExtensionList())
-      .select(PyOverridingTypeProvider.class)
-      .map(provider -> provider.getReferenceType(target, context, anchor))
-      .findFirst(Objects::nonNull)
-      .orElse(null);
   }
 
   @Nullable
