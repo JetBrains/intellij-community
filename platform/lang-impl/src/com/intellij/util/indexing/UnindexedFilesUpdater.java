@@ -5,8 +5,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.*;
@@ -81,10 +81,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     this(project, false, false);
   }
 
-  private void updateUnindexedFiles(ProgressIndicator indicator) {
+  private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
-    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject.getName());
-    projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
 
     if (myStartSuspended) {
       ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
@@ -177,14 +175,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       } finally {
         subTaskIndicator.finished();
       }
-    }
-
-    projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      NonUrgentExecutor.getInstance().execute(() -> {
-        IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory);
-      });
     }
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
@@ -313,17 +303,36 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject.getName());
+    projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
     myIndex.filesUpdateStarted(myProject);
     try {
-      updateUnindexedFiles(indicator);
+      updateUnindexedFiles(projectIndexingHistory, indicator);
     }
-    catch (ProcessCanceledException e) {
-      LOG.info("Unindexed files update canceled");
+    catch (Throwable e) {
+      projectIndexingHistory.getTimes().setWasInterrupted(true);
+      if (e instanceof ControlFlowException) {
+        LOG.info("Unindexed files update canceled");
+      }
       throw e;
     }
     finally {
       myIndex.filesUpdateFinished(myProject);
+      projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
+      dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
+  }
+
+  private static void dumpProjectIndexingHistoryIfNecessary(@NotNull ProjectIndexingHistory projectIndexingHistory) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+    if (projectIndexingHistory.getTimes().getWasInterrupted() && !IndexDiagnosticDumper.getShouldDumpDiagnosticsForInterruptedUpdaters()) {
+      return;
+    }
+    NonUrgentExecutor.getInstance().execute(() -> {
+      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory);
+    });
   }
 
   /**
