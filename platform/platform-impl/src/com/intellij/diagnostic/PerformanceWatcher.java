@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
@@ -35,10 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -157,8 +155,9 @@ public final class PerformanceWatcher implements Disposable {
       File systemDir = new File(PathManager.getSystemPath());
       File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
       if (appInfoFile.isFile()) {
+        String filePrefix = "java_error_in_" + StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
         File[] crashFiles = new File(SystemProperties.getUserHome())
-          .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
+          .listFiles(file -> file.getName().startsWith(filePrefix) && !file.getName().endsWith("hprof") && file.isFile());
         if (crashFiles != null) {
           for (File file : crashFiles) {
             if (file.lastModified() > appInfoFile.lastModified()) {
