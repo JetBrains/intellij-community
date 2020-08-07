@@ -137,13 +137,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
         }
-        if (IdeFrameDecorator.isCustomDecorationAvailable()) {
-          fullRow {
-            checkBox(cdEnableBorderlessMode)
-            commentNoWrap(message("checkbox.enable.borderless.mode.comment"))
-              .withLargeLeftGap()
-          }
-        }
       }
       titledRow(message("title.accessibility")) {
         fullRow {
@@ -199,25 +192,41 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
       titledRow(message("group.ui.options")) {
-        twoColumnRow(
+        fun optional(condition: Boolean, control: InnerCell.() -> Unit): (InnerCell.() -> Unit)? =
+          if (condition) control else null
+
+        val leftColumnControls = sequenceOf<InnerCell.() -> Unit>(
           { checkBox(cdShowTreeIndents) },
+          { checkBox(cdUseCompactTreeIndents) },
+          { checkBox(cdEnableMenuMnemonics) },
+          { checkBox(cdEnableControlsMnemonics) }
+        )
+        val rightColumnControls = sequenceOf<(InnerCell.() -> Unit)?>(
           {
             checkBox(cdSmoothScrolling)
             ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-          }
-        )
-        twoColumnRow(
-          { checkBox(cdUseCompactTreeIndents) },
-          { checkBox(cdDnDWithAlt) }
-        )
-        twoColumnRow(
-          { checkBox(cdEnableMenuMnemonics) },
-          { checkBox(cdFullPathsInTitleBar) }
-        )
-        twoColumnRow(
-          { checkBox(cdEnableControlsMnemonics) },
+          },
+          { checkBox(cdDnDWithAlt) },
+          optional(IdeFrameDecorator.isCustomDecorationAvailable()) {
+            checkBox(cdEnableBorderlessMode)
+            commentNoWrap(message("checkbox.enable.borderless.mode.comment"))
+              .withLargeLeftGap()
+          },
+          { checkBox(cdFullPathsInTitleBar) },
           { checkBox(cdShowMenuIcons) }
-        )
+        ).filterNotNull()
+
+        // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
+        // column to the left one:
+        val leftIt = leftColumnControls.iterator()
+        val rightIt = rightColumnControls.iterator()
+        while (leftIt.hasNext() || rightIt.hasNext()) {
+          when {
+            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
+            leftIt.hasNext() -> twoColumnRow(leftIt.next()) { placeholder() }
+            rightIt.hasNext() -> twoColumnRow(rightIt.next()) { placeholder() } // move from right to left
+          }
+        }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           fullRow {
