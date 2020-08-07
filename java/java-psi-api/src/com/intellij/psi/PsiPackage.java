@@ -102,7 +102,7 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   VirtualFile @NotNull [] occursInPackagePrefixes();
 
   @Override
-  @Nullable("default package")
+  @Nullable("default package") @NlsSafe
   String getName();
 
   boolean containsClassNamed(@NotNull String name);

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +15,7 @@ import gnu.trove.THashSet;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,10 +101,13 @@ public interface TypeConstraint {
   /**
    * @param otherType          other type
    * @param expectedAssignable whether other type is expected to be assignable from this, or not
+   * @param elementTitle
    * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
    * explanation cannot be found.
    */
-  default @Nullable String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+  default @Nullable @Nls String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                                            boolean expectedAssignable,
+                                                            @Nls String elementTitle) {
     return null;
   }
 
@@ -210,19 +215,21 @@ public interface TypeConstraint {
     }
 
     @Override
-    default String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+    default String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                               boolean expectedAssignable,
+                                               @Nls String elementTitle) {
       Exact exact = otherType.instanceOfTypes().collect(MoreCollectors.onlyOne()).orElse(null);
       if (exact == null) return null;
       boolean actual = exact.isAssignableFrom(this);
       if (actual != expectedAssignable) return null;
       if (expectedAssignable) {
         if (equals(exact)) {
-          return "is already known to be " + toShortString();
+          return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact", elementTitle, toShortString());
         }
-        return "type is exactly " + toShortString() + " which is a subtype of " + exact.toShortString();
+        return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact.subtype", elementTitle, toShortString(), exact.toShortString());
       }
       else {
-        return "type is exactly " + toShortString() + " which is not a subtype of " + exact.toShortString();
+        return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact.not.subtype", elementTitle, toShortString(), exact.toShortString());
       }
     }
     
@@ -447,28 +454,40 @@ public interface TypeConstraint {
       }
       return false;
     }
-    
+
     @Override
-    public String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+    public String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                              boolean expectedAssignable,
+                                              @Nls String elementTitle) {
       Exact exact = otherType.instanceOfTypes().collect(MoreCollectors.onlyOne()).orElse(null);
       if (exact == null) return null;
       if (expectedAssignable) {
         for (Exact inst : myInstanceOf) {
           if (exact.isAssignableFrom(inst)) {
-            return "is already known to be " + inst.toShortString() +
-                   (exact == inst ? "" : " which is a subtype of " + exact.toShortString());
+            if (exact == inst) {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact", elementTitle, inst.toShortString());
+            }
+            else {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.subtype.of.subtype", 
+                                                elementTitle, inst.toShortString(), exact.toShortString());
+            }
           }
         }
-      } else {
+      }
+      else {
         for (Exact notInst : myNotInstanceOf) {
           if (notInst.isAssignableFrom(exact)) {
-            return "is known to be not " + notInst.toShortString() +
-                   (exact == notInst ? "" : " which is a supertype of " + exact.toShortString());
+            if (exact == notInst) {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.not.instance.of", elementTitle, notInst.toShortString());
+            }
+            else {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.not.instance.of.supertype", elementTitle, notInst.toShortString(), exact.toShortString());
+            }
           }
         }
         for (Exact inst : myInstanceOf) {
           if (!exact.isConvertibleFrom(inst)) {
-            return "is known to be " + inst.toShortString() + " which is definitely incompatible with " + exact.toShortString();
+            return JavaAnalysisBundle.message("type.constraint.assignability.explanation.definitely.inconvertible", elementTitle, inst.toShortString(), exact.toShortString());
           }
         }
       }

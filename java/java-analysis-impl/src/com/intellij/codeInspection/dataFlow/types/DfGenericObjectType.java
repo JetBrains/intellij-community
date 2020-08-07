@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
-import gnu.trove.THashSet;
+import com.intellij.java.JavaBundle;import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -282,7 +282,7 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
       components.add(myMutability.name());
     }
     if (myLocal) {
-      components.add("local object");
+      components.add(JavaBundle.message("type.information.local.object"));
     }
     if (mySpecialField != null) {
       components.add(mySpecialField + "=" + mySpecialFieldType);
