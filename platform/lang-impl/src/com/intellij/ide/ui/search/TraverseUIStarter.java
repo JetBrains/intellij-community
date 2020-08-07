@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
@@ -25,6 +26,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
@@ -205,9 +207,9 @@ public final class TraverseUIStarter implements ApplicationStarter {
     String path = StringUtil.substringBefore(url, "fileTemplates");
     assert path != null : "Template URL doesn't contain 'fileTemplates' directory.";
     if (path.startsWith(URLUtil.JAR_PROTOCOL)) {
-      path = StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR);
+      path = URLUtil.splitJarUrl(path).first;  // Android Studio: support jars
     }
-    return PathUtil.getFileName(path);
+    return getModuleByPath(path);  // Android Studio: support jars
   }
 
   private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
@@ -307,9 +309,26 @@ public final class TraverseUIStarter implements ApplicationStarter {
     return ROOT_ACTION_MODULE;
   }
 
+  // Android Studio: support jars
+  @NotNull
+  private static String getModuleByPath(@NotNull String path) {
+    // If it is not a directory, the module is already inside a jar, use the full path to disambiguate
+    // different plugins having the same jar names.
+    if (new File(path).isFile()) {
+      String homePath = PathManager.getHomePath();
+      if (FileUtil.isAncestor(homePath, path, true)) {
+        String relative = FileUtil.getRelativePath(homePath, path, File.separatorChar);
+        if (relative != null) {
+          return relative.replaceAll(File.separator, ".");
+        }
+      }
+    }
+    return PathUtil.getFileName(path);
+  }
+
   @NotNull
   private static String getModuleByClass(@NotNull final Class<?> aClass) {
-    return PathUtil.getFileName(PathUtil.getJarPathForClass(aClass));
+    return getModuleByPath(PathUtil.getJarPathForClass(aClass));  // Android Studio: support jars
   }
 
   private static void writeOptions(Element configurableElement, Set<? extends OptionDescription> options) {
