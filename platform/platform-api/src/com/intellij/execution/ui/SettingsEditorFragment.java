@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
 
   private final String myId;
-  private final String myName;
+  private final @Nls String myName;
   private final String myGroup;
   protected C myComponent;
   private final BiConsumer<Settings, C> myReset;
@@ -102,6 +103,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myId;
   }
 
+  @Nls
   public String getName() {
     return myName;
   }
@@ -115,6 +117,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public boolean isTag() { return false; }
+
+  @Nullable
+  public ActionGroup getCustomActionGroup() {
+    return null;
+  }
 
   public boolean isSelected() {
     return myComponent.isVisible();

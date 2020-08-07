@@ -10,6 +10,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
@@ -44,12 +45,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
-  private final DefaultActionGroup myActionGroup;
 
   FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
     myMain = main;
-    myActionGroup = buildGroup(ContainerUtil.filter(fragments, fragment -> fragment.getName() != null));
   }
 
   @Override
@@ -140,7 +139,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   private void registerShortcuts() {
-    for (AnAction action : myActionGroup.getChildActionsOrStubs()) {
+    for (AnAction action : buildGroup().getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
       if (shortcutSet != null && action instanceof ToggleFragmentAction) {
         action.registerCustomShortcutSet(shortcutSet, null);
@@ -156,10 +155,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private JBPopup showOptions() {
     DataContext dataContext = DataManager.getInstance().getDataContext(myLinkLabel);
-    return JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
-                                                               myActionGroup,
-                                                               dataContext,
-                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
+                                                                          buildGroup(),
+                                                                          dataContext,
+                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+    return popup;
   }
 
   @NotNull
@@ -171,6 +171,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));
+      }
+      ActionGroup customGroup = fragment.getCustomActionGroup();
+      if (customGroup != null) {
+        actionGroup.add(customGroup);
+        continue;
       }
       actionGroup.add(new ToggleFragmentAction(fragment));
       List<SettingsEditorFragment<Settings, ?>> children = fragment.getChildren();
@@ -184,8 +189,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return actionGroup;
   }
 
+  private DefaultActionGroup buildGroup() {
+    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null));
+  }
+
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<SettingsEditorFragment<Settings, ?>> fragments) {
-    HashMap<String, Integer> groups = new HashMap<>();
     ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       String group = fragment.getGroup();
