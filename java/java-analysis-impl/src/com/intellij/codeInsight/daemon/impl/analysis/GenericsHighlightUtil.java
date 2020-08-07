@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -523,8 +523,8 @@ public final class GenericsHighlightUtil {
       }
 
       if (classes.size() > 1) {
-        return CommonQuickFixBundle.message("fix.x.and.y", HighlightUtil.formatClass(classes.get(0)),
-                                            HighlightUtil.formatClass(classes.get(1)));
+        return IdeBundle.message("x.and.y", HighlightUtil.formatClass(classes.get(0)),
+                                 HighlightUtil.formatClass(classes.get(1)));
       }
     }
 

@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.jvm.JvmModifier;
@@ -269,8 +270,8 @@ public final class HighlightUtil {
             if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
               return true;
             }
-            differentArgumentsMessage.set(CommonQuickFixBundle.message("fix.x.and.y", pair.first.getPresentableText(),
-                                                                       pair.second.getPresentableText()));
+            differentArgumentsMessage.set(IdeBundle.message("x.and.y", pair.first.getPresentableText(),
+                                                            pair.second.getPresentableText()));
             return false;
           });
         if (sameGenericParameterization != null) {
@@ -670,7 +671,7 @@ public final class HighlightUtil {
       if (vFile != null) {
         final String path = FileUtil.toSystemIndependentName(vFile.getPath());
         String linkText = "<a href=\"#navigation/" + path + ":" + oldVariable.getTextOffset() + "\">" + variable.getName() + "</a>";
-        String tip = CommonQuickFixBundle.message("fix.link", JavaErrorBundle.message("variable.already.defined", linkText));
+        String tip = IdeBundle.message("x.as.link", JavaErrorBundle.message("variable.already.defined", linkText));
         builder = builder.description(description).escapedToolTip(tip);
       }
       else {
