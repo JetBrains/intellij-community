@@ -288,6 +288,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
+    synchronized(stateLock) {
+      state.additionalInfo.put(path, info)
+    }
+  }
+
   @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER")
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null

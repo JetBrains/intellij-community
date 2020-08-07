@@ -27,24 +27,24 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
-public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionListener {
-  private static final String BUTTONS = "BUTTONS";
-  private static final String NO_BUTTONS = "NO_BUTTONS";
+public class CustomizeIDEWizardDialog extends DialogWrapper implements CustomizeIDEWizardDialogInterface {
+  protected static final String BUTTONS = "BUTTONS";
+  protected static final String NO_BUTTONS = "NO_BUTTONS";
 
-  private final JButton mySkipButton = new JButton(IdeBundle.message("button.skip.remaining.and.set.defaults"));
-  private final JButton myBackButton = new JButton(IdeBundle.message("button.back"));
-  private final JButton myNextButton = new JButton(IdeBundle.message("button.next"));
+  protected final JButton mySkipButton = new JButton(IdeBundle.message("button.skip.remaining.and.set.defaults"));
+  protected final JButton myBackButton = new JButton(IdeBundle.message("button.back"));
+  protected final JButton myNextButton = new JButton(IdeBundle.message("button.next"));
 
-  private final JBCardLayout myCardLayout = new JBCardLayout();
-  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
-  private int myIndex = 0;
-  private final JBLabel myNavigationLabel = new JBLabel();
-  private final JBLabel myHeaderLabel = new JBLabel();
-  private final JBLabel myFooterLabel = new JBLabel();
-  private final CardLayout myButtonWrapperLayout = new CardLayout();
-  private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
-  private JPanel myContentPanel;
-  private final boolean myHideSkipButton;
+  protected final JBCardLayout myCardLayout = new JBCardLayout();
+  protected final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
+  protected int myIndex = 0;
+  protected final JBLabel myNavigationLabel = new JBLabel();
+  protected final JBLabel myHeaderLabel = new JBLabel();
+  protected final JBLabel myFooterLabel = new JBLabel();
+  protected final CardLayout myButtonWrapperLayout = new CardLayout();
+  protected final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
+  protected JPanel myContentPanel;
+  protected final boolean myHideSkipButton;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null, true, true);
@@ -94,12 +94,18 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
+  @Override
   public final boolean showIfNeeded() {
     boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
     if (willBeShown) {
       show();
     }
     return willBeShown;
+  }
+
+  @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   @Override
@@ -212,7 +218,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     return false;
   }
 
-  private void initCurrentStep(boolean forward) {
+  protected void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
     myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
@@ -253,7 +259,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   }
 
   @Contract(value = "!null->!null" ,pure = true)
-  private static String ensureHTML(@Nullable String s) {
+  protected static String ensureHTML(@Nullable String s) {
     return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXmlEntities(s) + "</html>";
   }
 }

@@ -22,14 +22,14 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int GAP = 20;
 
   @Nls(capitalization = Nls.Capitalization.Title)
-  protected abstract String getTitle();
+  public abstract String getTitle();
 
   @Nls
-  protected abstract String getHTMLHeader();
+  public abstract String getHTMLHeader();
 
   @Nullable
   @Nls
-  protected String getHTMLFooter() {
+  public String getHTMLFooter() {
     return null;
   }
 
@@ -80,7 +80,7 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
     return panel;
   }
 
-  Component getDefaultFocusedComponent() {
+  public Component getDefaultFocusedComponent() {
     return null;
   }
 

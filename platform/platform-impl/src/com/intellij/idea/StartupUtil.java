@@ -10,6 +10,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.*;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.customize.CustomizeIDEWizardDialogInterface;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.Agreements;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -53,6 +54,7 @@ import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
@@ -712,8 +714,22 @@ public final class StartupUtil {
     }
 
     appStarter.beforeStartupWizard();
-    //do not show Customize IDE Wizard [IDEA-249516]
-    if (Boolean.valueOf(System.getProperty("idea.show.customize.ide.wizard")).booleanValue()) {
+
+    String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
+    if (stepsDialogName != null) {
+      try {
+        Class<?> dialogClass = Class.forName(stepsDialogName);
+        Constructor<?> constr =
+                dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
+        ((CustomizeIDEWizardDialogInterface)constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+      }
+      catch (Throwable e) {
+        System.out.println("failed to start custom wizard: ");
+        e.getCause().printStackTrace();
+        new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+      }
+    }
+    else {
       new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
     }
 

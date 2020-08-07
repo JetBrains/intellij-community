@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -254,7 +255,12 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.installAfterRestart(myFile.toPath(), !UpdateSettings.getInstance().isKeepPluginsArchive(), myOldFile, myDescriptor);
+    UpdateSettings updateSettingsService = ServiceManager.getServiceIfCreated(UpdateSettings.class);
+    if (updateSettingsService != null) {
+      PluginInstaller.installAfterRestart(myFile.toPath(), !updateSettingsService.isKeepPluginsArchive(), myOldFile, myDescriptor);
+    } else {
+      PluginInstaller.installAfterRestart(myFile.toPath(), true, myOldFile, myDescriptor);
+    }
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
