@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +108,12 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
            Registry.is("ide.java.completion.suggest.static.after.instance");
   }
 
+  @ApiStatus.Internal
+  public static boolean seemsInternal(PsiClass clazz) {
+    String name = clazz.getName();
+    return name != null && name.contains("$");
+  }
+
   @Override
   public void handleEvent(@NotNull Event event, Object associated){
     if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
@@ -132,6 +139,10 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
           PsiTreeUtil.getParentOfType(myElement, PsiImportStatementBase.class) != null) {
         return true;
       }
+    }
+
+    if (element instanceof PsiClass && seemsInternal((PsiClass) element)) {
+      return true;
     }
 
     if (element instanceof PsiMethod) {
