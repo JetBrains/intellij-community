@@ -1,35 +1,17 @@
 package records;
 
 public record TestRecordEmpty() {
-   public final String toString() {
-      return this.toString<invokedynamic>(this);
-   }
-
-   public final int hashCode() {
-      return this.hashCode<invokedynamic>(this);
-   }
-
-   public final boolean equals(Object o) {
-      return this.equals<invokedynamic>(this, o);// 3
+   public int hashCode() {
+      return 0;// 5
    }
 }
 
 class 'records/TestRecordEmpty' {
-   method 'toString ()Ljava/lang/String;' {
-      1      4
-      6      4
-   }
-
    method 'hashCode ()I' {
-      1      8
-      6      8
-   }
-
-   method 'equals (Ljava/lang/Object;)Z' {
-      2      12
-      7      12
+      0      4
+      1      4
    }
 }
 
 Lines mapping:
-3 <-> 13
+5 <-> 5

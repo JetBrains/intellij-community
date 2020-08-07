@@ -262,6 +262,21 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
+  private static boolean isSyntheticRecordMethod(StructMethod mt, TextBuffer code) {
+    if (mt.getClassStruct().getRecordComponents() == null) return false;
+    String name = mt.getName();
+    String descriptor = mt.getDescriptor();
+    if (name.equals("equals") && descriptor.equals("(Ljava/lang/Object;)Z") ||
+        name.equals("hashCode") && descriptor.equals("()I") ||
+        name.equals("toString") && descriptor.equals("()Ljava/lang/String;")) {
+      if (code.countLines() == 1) {
+        String str = code.toString().trim();
+        return str.startsWith("return this." + name + "<invokedynamic>(this");
+      }
+    }
+    return false;
+  }
+
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
     StructLineNumberTableAttribute table = method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
@@ -880,7 +895,8 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags));
+            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags))
+                  || isSyntheticRecordMethod(mt, code);
 
             buffer.append(code);
 

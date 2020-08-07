@@ -7,18 +7,6 @@ public record TestRecordGenericVararg<T>(T first, T... other) {
       this.other = other;
    }
 
-   public final String toString() {
-      return this.toString<invokedynamic>(this);
-   }
-
-   public final int hashCode() {
-      return this.hashCode<invokedynamic>(this);
-   }
-
-   public final boolean equals(Object o) {
-      return this.equals<invokedynamic>(this, o);
-   }
-
    public T first() {
       return this.first;
    }
@@ -35,32 +23,17 @@ class 'records/TestRecordGenericVararg' {
       e      7
    }
 
-   method 'toString ()Ljava/lang/String;' {
-      1      10
-      6      10
-   }
-
-   method 'hashCode ()I' {
-      1      14
-      6      14
-   }
-
-   method 'equals (Ljava/lang/Object;)Z' {
-      2      18
-      7      18
-   }
-
    method 'first ()Ljava/lang/Object;' {
-      1      22
-      4      22
+      1      10
+      4      10
    }
 
    method 'other ()[Ljava/lang/Object;' {
-      1      26
-      4      26
+      1      14
+      4      14
    }
 }
 
 Lines mapping:
-3 <-> 27
+3 <-> 15
 5 <-> 6

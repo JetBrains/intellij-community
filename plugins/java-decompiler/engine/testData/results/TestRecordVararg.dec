@@ -6,18 +6,6 @@ public record TestRecordVararg(int x, int[]... y) {
       this.y = y;
    }
 
-   public final String toString() {
-      return this.toString<invokedynamic>(this);
-   }
-
-   public final int hashCode() {
-      return this.hashCode<invokedynamic>(this);
-   }
-
-   public final boolean equals(Object o) {
-      return this.equals<invokedynamic>(this, o);
-   }
-
    public int x() {
       return this.x;
    }
@@ -34,31 +22,16 @@ class 'records/TestRecordVararg' {
       e      6
    }
 
-   method 'toString ()Ljava/lang/String;' {
-      1      9
-      6      9
-   }
-
-   method 'hashCode ()I' {
-      1      13
-      6      13
-   }
-
-   method 'equals (Ljava/lang/Object;)Z' {
-      2      17
-      7      17
-   }
-
    method 'x ()I' {
-      1      21
-      4      21
+      1      9
+      4      9
    }
 
    method 'y ()[[I' {
-      1      25
-      4      25
+      1      13
+      4      13
    }
 }
 
 Lines mapping:
-3 <-> 26
+3 <-> 14

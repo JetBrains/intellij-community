@@ -367,6 +367,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if ("values".equals(name) && desc.startsWith("()")) return null;
       if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
     }
+    
+    if (myFirstPassData.isSyntheticRecordMethod(name, desc)) return null;
 
     boolean isDeprecated = isSet(access, Opcodes.ACC_DEPRECATED);
     boolean isVarargs = isSet(access, Opcodes.ACC_VARARGS);
