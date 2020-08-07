@@ -2197,4 +2197,21 @@ class Abc {
       assert !lookup
     }.assertTiming()
   }
+
+  void "test performance with many matching statically-imported declarations"() {
+    def fieldCount = 7000
+
+    myFixture.addClass("interface Constants {" +
+            (0..<fieldCount).collect { "String field$it = \"x\";\n" } +
+    "}")
+    myFixture.configureByText("a.java", "import static Constants.*; class C { { field<caret>x } }")
+    PlatformTestUtil.startPerformanceTest(name, 10_000, {
+      assert myFixture.completeBasic().length > 100
+    }).setup {
+      lookup?.hideLookup(true)
+      myFixture.type("\bd")
+      psiManager.dropPsiCaches()
+      assert !lookup
+    }.assertTiming()
+  }
 }
