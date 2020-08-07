@@ -25,6 +25,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -245,7 +246,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     String propertyKey = StringUtil.escapeStringCharacters(getKey());
     I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
     if (textGenerator != null) {
-      return generateText(textGenerator, propertyKey, getPropertiesFile(), myLiteralExpression.getSourcePsi());
+      return generateText(textGenerator, propertyKey, ContainerUtil.getFirstItem(getAllPropertiesFiles(), null), myLiteralExpression.getSourcePsi());
     }
 
     String templateName = getTemplateName();
