@@ -2,11 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
@@ -36,7 +36,10 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.ThreadInfo;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -51,6 +54,7 @@ public final class PerformanceWatcher implements Disposable {
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   static final String DUMP_PREFIX = "threadDump-";
   private static final String DURATION_FILE_NAME = ".duration";
+  private static final String PID_FILE_NAME = ".pid";
   private ScheduledFuture<?> myThread;
   private final File myLogDir = new File(PathManager.getLogPath());
 
@@ -104,13 +108,14 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static void reportCrashesIfAny() {
+    File systemDir = new File(PathManager.getSystemPath());
     try {
-      File systemDir = new File(PathManager.getSystemPath());
       File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
-      if (appInfoFile.isFile()) {
-        String filePrefix = "java_error_in_" + StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+      File pidFile = new File(systemDir, PID_FILE_NAME);
+      if (appInfoFile.isFile() && pidFile.isFile()) {
+        String pid = FileUtil.loadFile(pidFile);
         File[] crashFiles = new File(SystemProperties.getUserHome())
-          .listFiles(file -> file.getName().startsWith(filePrefix) && !file.getName().endsWith("hprof") && file.isFile());
+          .listFiles(file -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile());
         if (crashFiles != null) {
           for (File file : crashFiles) {
             if (file.lastModified() > appInfoFile.lastModified()) {
@@ -131,6 +136,7 @@ public final class PerformanceWatcher implements Disposable {
         }
       }
       IdeaFreezeReporter.saveAppInfo(systemDir, true);
+      FileUtil.writeToFile(new File(systemDir, PID_FILE_NAME), OSProcessUtil.getApplicationPid());
     }
     catch (IOException e) {
       LOG.info(e);
