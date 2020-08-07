@@ -25,13 +25,13 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   private final String myId;
   private final @Nls String myName;
-  private final String myGroup;
+  private final @Nls String myGroup;
   protected C myComponent;
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
   private final Predicate<Settings> myInitialSelection;
-  private @Nullable String myHint;
+  private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
   private @Nullable Function<C, JComponent> myEditorGetter;
   private boolean myRemovable = true;
@@ -63,7 +63,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, String name, String group, @NotNull SettingsEditor<S> inner) {
+  public static <S> SettingsEditorFragment<S, ?> createWrapper(String id, @Nls String name, @Nls String group, @NotNull SettingsEditor<S> inner) {
     JComponent component = inner.getComponent();
     SettingsEditorFragment<S, JComponent> fragment = new SettingsEditorFragment<>(id, name, group, component,
                                                                                   (settings, c) -> inner.resetFrom(settings),
@@ -80,7 +80,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return fragment;
   }
 
-  public static <Settings> SettingsEditorFragment<Settings, ?> createTag(String id, String name, String group,
+  public static <Settings> SettingsEditorFragment<Settings, ?> createTag(String id, @Nls String name, @Nls String group,
                                                                          Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, ?>> ref = new Ref<>();
     TagButton tagButton = new TagButton(name, () -> ref.get().setSelected(false));
@@ -108,6 +108,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myName;
   }
 
+  @Nls
   public String getGroup() {
     return myGroup;
   }
@@ -197,7 +198,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return Collections.emptyList();
   }
 
-  public @Nullable String getChildrenGroupName() {
+  public @Nullable @Nls String getChildrenGroupName() {
     return null;
   }
 
@@ -205,7 +206,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myHint;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@Nullable @Nls String hint) {
     myHint = hint;
   }
 
