@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +155,10 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
       }
     }
 
+    if (element instanceof PsiClass && seemsInternal((PsiClass) element)) {
+      return true;
+    }
+
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
@@ -195,6 +200,12 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     }
 
     return true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean seemsInternal(PsiClass clazz) {
+    String name = clazz.getName();
+    return name != null && name.contains("$");
   }
 
   @Nullable

@@ -1731,6 +1731,12 @@ class Foo extends myClass
 '''
   }
 
+  void testNoClassesWithDollar() {
+    myFixture.addClass('package some; public class $WithDollarNonImported {}')
+    myFixture.addClass('package imported; public class $WithDollarImported {}')
+    doAntiTest()
+  }
+
   @NeedsIndex.ForStandardLibrary
   void "test don't show static inner class after instance qualifier"() {
     myFixture.configureByText "a.java", """
