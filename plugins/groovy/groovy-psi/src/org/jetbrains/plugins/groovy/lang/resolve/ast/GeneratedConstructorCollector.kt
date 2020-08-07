@@ -97,6 +97,7 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
 
     private fun String.isInternal(): Boolean = contains("$")
 
+    @JvmStatic
     fun getIdentifierList(annotation: PsiAnnotation, attributeName: String): List<String>? {
       annotation.takeIf { it.hasAttribute(attributeName) } ?: return null
       val rawIdentifiers = GrAnnotationUtil.inferStringAttribute(annotation, attributeName)

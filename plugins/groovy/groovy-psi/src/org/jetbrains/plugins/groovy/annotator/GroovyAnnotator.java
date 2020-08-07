@@ -78,6 +78,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -86,6 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
@@ -576,6 +578,24 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     super.visitField(field);
     if (field.getTypeElementGroovy() == null && field.getContainingClass() instanceof GrAnnotationTypeDefinition) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("annotation.field.should.have.type.declaration")).range(field.getNameIdentifierGroovy()).create();
+    }
+    checkInitializer(field);
+  }
+
+  private void checkInitializer(@NotNull GrField field) {
+    PsiExpression initializer = field.getInitializer();
+    if (initializer == null) return;
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return;
+    PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    if (tupleConstructor == null) return;
+    if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "defaults"))) return;
+    List<String> excludes = GeneratedConstructorCollector.getIdentifierList(tupleConstructor, "excludes");
+    List<String> includes = GeneratedConstructorCollector.getIdentifierList(tupleConstructor, "includes");
+    if ((excludes != null && !excludes.contains(field.getName())) || (includes != null && includes.contains(field.getName()))) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
+        .range(initializer)
+        .create();
     }
   }
 

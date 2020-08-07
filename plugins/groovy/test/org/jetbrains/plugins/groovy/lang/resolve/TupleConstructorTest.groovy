@@ -154,7 +154,6 @@ static void main(String[] args) {
     highlightingTest """
 @groovy.transform.TupleConstructor(defaults = false)
 class Rr {
-// todo: defval
     String actionType
     long referrerCode;
     boolean referrerUrl;
@@ -278,6 +277,18 @@ class Rr {}
     highlightingTest """
 @groovy.transform.TupleConstructor(pre = <error>Integer</error>, post = <error>String</error>)
 class Rr {}
+"""
+  }
+
+  @Test
+  void 'forbidden initializer'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(defaults = false, includes = ['a', 'b'])
+class Rr {
+  String a = <error>""</error>
+  int b = <error>1000</error>
+  boolean c = true
+}
 """
   }
 
