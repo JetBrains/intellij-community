@@ -359,7 +359,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     //noinspection rawtypes
     for (AllKeysQuery query : queries) {
       @SuppressWarnings("unchecked")
-      IntSet queryResult = collectFileIdsContainingAllKeys(query.indexId, query.dataKeys, filter, query.valueChecker, filesSet, set);
+      IntSet queryResult = collectFileIdsContainingAllKeys(query.getIndexId(), query.getDataKeys(), filter, query.getValueChecker(), filesSet, set);
       if (queryResult == null) return false;
       if (queryResult.isEmpty()) return true;
       if (set == null) {
