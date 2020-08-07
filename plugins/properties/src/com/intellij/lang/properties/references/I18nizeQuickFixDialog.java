@@ -400,7 +400,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       myPropertiesFile.setText(lastPath);
     }
     if (myPropertiesFile.getSelectedIndex() == -1 && !paths.isEmpty()) {
-      myPropertiesFile.setText(paths.get(0));
+      String selectedItem = paths.get(0);
+      myPropertiesFile.setSelectedItem(selectedItem);
+      myPropertiesFile.setText(selectedItem);
     }
   }
 
