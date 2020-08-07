@@ -1080,7 +1080,7 @@ public class PluginManagerConfigurable
                   continue;
                 }
               }
-              if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
+              if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
                 I.remove();
               }
             }
@@ -1137,6 +1137,13 @@ public class PluginManagerConfigurable
         return myInstalledSearchPanel;
       }
     };
+  }
+
+  private static boolean containsQuery(IdeaPluginDescriptor descriptor, String searchQuery) {
+    if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
+
+    String description = descriptor.getDescription();
+    return description != null && StringUtil.containsIgnoreCase(description, searchQuery);
   }
 
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
