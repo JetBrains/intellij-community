@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -198,7 +199,7 @@ public final class PerformanceWatcher implements Disposable {
     return RegistryManager.getInstance().intValue("performance.watcher.unresponsive.max.attempts.before.log");
   }
 
-  public void processUnfinishedFreeze(@NotNull BiConsumer<File, Integer> consumer) {
+  public void processUnfinishedFreeze(@NotNull BiConsumer<? super File, ? super Integer> consumer) {
     File[] files = myLogDir.listFiles();
     if (files != null) {
       Arrays.stream(files)
@@ -246,7 +247,8 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static boolean shouldWatch() {
-    return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+    Application application = ApplicationManager.getApplication();
+    return application != null && !application.isHeadlessEnvironment() &&
            getUnresponsiveInterval() != 0 &&
            getMaxAttempts() != 0;
   }
@@ -458,8 +460,9 @@ public final class PerformanceWatcher implements Disposable {
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
-                                                         final StackTraceElement[] stackTraceElements) {
+  @NotNull
+  static List<StackTraceElement> getStacktraceCommonPart(final @NotNull List<StackTraceElement> commonPart,
+                                                         final StackTraceElement @NotNull [] stackTraceElements) {
     for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
       StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
       StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
