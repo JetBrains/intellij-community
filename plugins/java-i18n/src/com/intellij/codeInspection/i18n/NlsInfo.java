@@ -281,7 +281,12 @@ public abstract class NlsInfo {
       if (info != Unspecified.UNKNOWN) return info;
       info = fromType(((PsiVariable)var).getType());
       if (info != Unspecified.UNKNOWN) return info;
-      if (var instanceof PsiField) return fromContainer((PsiField)var);
+      if (var instanceof PsiField) {
+        info = fromContainer((PsiField)var);
+        if (info != Unspecified.UNKNOWN) return info;
+      }
+      return parent instanceof UCallExpression ? Unspecified.UNKNOWN 
+                                               : new Unspecified((PsiVariable)var);
     }
     return Unspecified.UNKNOWN;
   }

@@ -875,7 +875,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                     @Nullable String value,
                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
                                     @NotNull UExpression usage) {
-    if (isInNonNlsCall(usage, nonNlsTargets)) {
+    if (isInNonNlsCallChain(usage, nonNlsTargets)) {
       return true;
     }
 
@@ -883,7 +883,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return true;
     }
 
-    if (isPassedToNonNlsVariable(usage, nonNlsTargets)) {
+    if (isPassedToNonNls(usage, nonNlsTargets)) {
       return true;
     }
 
@@ -966,57 +966,19 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(@NotNull UExpression expression,
-                                           final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression, false);
-    PsiModifierListOwner var = null;
-    if (UastExpressionUtils.isAssignment(toplevel)) {
-      UExpression lExpression = ((UBinaryExpression)toplevel).getLeftOperand();
-      while (lExpression instanceof UArrayAccessExpression) {
-        lExpression = ((UArrayAccessExpression)lExpression).getReceiver();
-      }
-      if (lExpression instanceof UResolvable) {
-        final PsiElement resolved = ((UResolvable)lExpression).resolve();
-        if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
-      }
-    }
-
-    if (var == null) {
-      UElement parent = toplevel.getUastParent();
-      if (parent instanceof UVariable && toplevel.equals(((UVariable)parent).getUastInitializer())) {
-        if (((UVariable)parent).findAnnotation(AnnotationUtil.NON_NLS) != null) {
-          return true;
-        }
-
-        PsiElement psi = parent.getSourcePsi();
-        if (psi instanceof PsiModifierListOwner) {
-          var = (PsiModifierListOwner)psi;
-        }
-      }
-      else if (toplevel instanceof USwitchExpression) {
-        UExpression switchExpression = ((USwitchExpression)toplevel).getExpression();
-        if (switchExpression instanceof UResolvable) {
-          PsiElement resolved = ((UResolvable)switchExpression).resolve();
-          if (resolved instanceof PsiVariable) {
-            UElement caseParent = expression.getUastParent();
-            if (caseParent instanceof USwitchClauseExpression && ((USwitchClauseExpression)caseParent).getCaseValues().contains(expression)) {
-              var = (PsiVariable)resolved;
-            }
-          }
-        }
-      }
-    }
-
-    if (var != null) {
-      if (annotatedAsNonNls(var)) {
+  private boolean isPassedToNonNls(@NotNull UExpression expression,
+                                   final Set<? super PsiModifierListOwner> nonNlsTargets) {
+    NlsInfo info = NlsInfo.forExpression(JavaI18nUtil.getTopLevelExpression(expression, false));
+    if (info == NlsInfo.nonLocalized()) return true;
+    if (info instanceof NlsInfo.Unspecified) {
+      PsiModifierListOwner candidate = ((NlsInfo.Unspecified)info).getAnnotationCandidate();
+      if (candidate instanceof PsiVariable &&
+          ignoreAssignedToConstants &&
+          candidate.hasModifierProperty(PsiModifier.STATIC) &&
+          candidate.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
-      if (ignoreAssignedToConstants &&
-          var.hasModifierProperty(PsiModifier.STATIC) &&
-          var.hasModifierProperty(PsiModifier.FINAL)) {
-        return true;
-      }
-      nonNlsTargets.add(var);
+      ContainerUtil.addIfNotNull(nonNlsTargets, candidate);
     }
     return false;
   }
@@ -1047,8 +1009,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isInNonNlsCall(@NotNull UExpression expression,
-                                        final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isInNonNlsCallChain(@NotNull UExpression expression,
+                                             final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression parent = UastUtils.skipParenthesizedExprDown(JavaI18nUtil.getTopLevelExpression(expression, true));
     if (parent instanceof UQualifiedReferenceExpression) {
       return isNonNlsCall((UQualifiedReferenceExpression)parent, nonNlsTargets);
