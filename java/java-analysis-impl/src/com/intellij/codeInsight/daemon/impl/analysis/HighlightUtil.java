@@ -671,8 +671,8 @@ public final class HighlightUtil {
       if (vFile != null) {
         final String path = FileUtil.toSystemIndependentName(vFile.getPath());
         String linkText = "<a href=\"#navigation/" + path + ":" + oldVariable.getTextOffset() + "\">" + variable.getName() + "</a>";
-        String tip = IdeBundle.message("x.as.link", JavaErrorBundle.message("variable.already.defined", linkText));
-        builder = builder.description(description).escapedToolTip(tip);
+        builder = builder.description(description)
+          .escapedToolTip("<html>" + JavaErrorBundle.message("variable.already.defined", linkText) + "</html>");
       }
       else {
         builder = builder.descriptionAndTooltip(description);
