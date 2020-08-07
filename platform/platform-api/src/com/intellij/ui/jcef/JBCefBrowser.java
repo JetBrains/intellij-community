@@ -374,7 +374,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
       if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       myCefBrowser.stopLoad();
-      myCefBrowser.close(false);
+      myCefBrowser.close(true);
       if (myIsDefaultClient) {
         Disposer.dispose(myCefClient);
       }
