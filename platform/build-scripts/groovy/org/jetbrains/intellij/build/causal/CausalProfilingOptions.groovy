@@ -1,30 +1,48 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.causal
 
+import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 
-import org.jetbrains.intellij.build.impl.causal.CausalProfilingOptionsImpl
+@CompileStatic
+@MapConstructor
+@SuppressWarnings('GrFinalVariableAccess')
+class CausalProfilingOptions {
 
-abstract class CausalProfilingOptions {
-
-  static final CausalProfilingOptions IMPL = new CausalProfilingOptionsImpl()
+  static final CausalProfilingOptions IMPL = new CausalProfilingOptions(
+    testClass: "com.intellij.causal.HighlightHugeCallChainCausalTest",
+    progressPoint: new ProgressPoint("com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase", 306),
+    searchScope: "com.intellij",
+    scopesToIgnore: [
+      "com.intellij.openapi.application",
+      "com.intellij.openapi.progress",
+      "com.intellij.testFramework",
+      "com.intellij.junit4",
+      "com.intellij.rt",
+      "com.intellij.ide.IdeEventQueue",
+      "com.intellij.util.concurrency.AppDelayQueue",
+      "com.intellij.util.TimeoutUtil",
+      "com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest"
+    ]
+  )
 
   /**
-   * @return fqn of test class that must be run with causal profiler
+   * Fqn of test class that must be run with causal profiler
    */
-  abstract String getTestClass()
+  final String testClass
 
-  protected abstract ProgressPoint getProgressPoint()
-
-  /**
-   * @return such prefix that if class fqn has it, then this class can be selected for experiment
-   */
-  protected abstract String getSearchScope()
+  final ProgressPoint progressPoint
 
   /**
-   * @return such prefixes that if class fqn has at least one of them, then this class will never be selected for experiment.
-   * Note that any string returned by this method should have string returned by {@link #getSearchScope} as a prefix.
+   * Such prefix that if class fqn has it, then this class can be selected for experiment
    */
-  protected abstract Collection<String> getScopesToIgnore()
+  final String searchScope
+
+  /**
+   * Such prefixes that if class fqn has at least one of them, then this class will never be selected for experiment.
+   * Note that any string returned by this method should have string returned by {@link #searchScope} as a prefix.
+   */
+  final Collection<String> scopesToIgnore
 
   String buildAgentArgsString() {
     def agentArgs = "pkg=${searchScope}_progress-point=${progressPoint.classFqn}:${progressPoint.lineNumber}"
