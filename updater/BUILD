@@ -39,7 +39,7 @@ iml_module(
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/8.4.0:jar"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Log4J",
@@ -60,7 +60,7 @@ java_binary(
     runtime_deps = [
         ":intellij.platform.updater.jar",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
-        "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/8.4.0:jar",
         "//tools/adt/idea/studio-updater:intellij.android.updater.studio-updater.jar",  # Adds analytics to the updater
         "//tools/analytics-library/shared:analytics-shared.jar",
         "//tools/analytics-library/tracker:analytics-tracker.jar",

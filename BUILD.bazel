@@ -350,7 +350,7 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea:intellij.java.ui.tests",
-        "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/8.4.0:jar",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

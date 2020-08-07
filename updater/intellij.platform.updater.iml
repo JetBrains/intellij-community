@@ -25,9 +25,9 @@
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="fastutil" type="repository">
-        <properties maven-id="it.unimi.dsi:fastutil:7.2.1" />
+        <properties maven-id="it.unimi.dsi:fastutil:8.4.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/7.2.1/fastutil-7.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/8.4.0/fastutil-8.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
