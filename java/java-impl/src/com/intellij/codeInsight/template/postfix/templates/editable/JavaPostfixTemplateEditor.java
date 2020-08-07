@@ -127,7 +127,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     }
 
     private String getFqn() {
-      String title = "Choose Class";
+      String title = JavaBundle.message("postfix.template.editor.choose.class.title");
       if (myProject == null || myProject.isDefault()) {
         return Messages.showInputDialog(myPanel, JavaBundle.message("label.enter.fully.qualified.class.name"),
                                         JavaBundle.message("dialog.title.choose.class"), null);
