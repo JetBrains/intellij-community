@@ -5,11 +5,13 @@ import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.ui.*;
+import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
+
+import static com.intellij.execution.junit.JUnitConfiguration.FORK_NONE;
 
 public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfiguration> {
 
@@ -32,16 +34,27 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(createShortenClasspath(classpathCombo, jrePath, false));
 
     ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(myProject, classpathCombo);
-    fragments.add(new JUnitTestKindFragment(myProject, moduleSelector));
+    JUnitTestKindFragment testKind = new JUnitTestKindFragment(myProject, moduleSelector);
+    fragments.add(testKind);
 
     String group = JUnitBundle.message("test.group");
-    Supplier<List<String>> variantsProvider = () -> Arrays.asList(JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_KLASS);
+    VariantTagFragment<JUnitConfiguration, String> repeat =
+      VariantTagFragment.createFragment("repeat", JUnitBundle.message("repeat.name"), group,
+                                        () -> RepeatCount.REPEAT_TYPES,
+                                        configuration -> configuration.getRepeatMode(),
+                                        (configuration, mode) -> configuration.setRepeatMode(mode),
+                                        configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
+    fragments.add(repeat);
+
+    Supplier<String[]> variantsProvider = () -> JUnitConfigurable.getForkModel(testKind.getTestKind(), repeat.getSelectedVariant());
     VariantTagFragment<JUnitConfiguration, String> forkMode =
-      VariantTagFragment.createFragment("forkMode", JUnitBundle.message("fork.mode.name"), group,
-                                        variantsProvider,
+      VariantTagFragment.createFragment("forkMode", JUnitBundle.message("fork.mode.name"), group, variantsProvider,
                                         configuration -> configuration.getForkMode(),
                                         (configuration, s) -> configuration.setForkMode(s),
-                                        configuration -> !JUnitConfiguration.FORK_NONE.equals(configuration.getForkMode()));
+                                        configuration -> !FORK_NONE.equals(configuration.getForkMode()));
     fragments.add(forkMode);
+
+    testKind.addSettingsEditorListener(
+      editor -> forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(testKind.getTestKind(), forkMode.getSelectedVariant())));
   }
 }

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -29,7 +28,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
                                                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                                @Nls(capitalization = Nls.Capitalization.Title) String group,
-                                                               Supplier<? extends List<V>> variantsProvider,
+                                                               Supplier<V[]> variantsProvider,
                                                                Function<T, V> getter,
                                                                BiConsumer<T, V> setter,
                                                                Predicate<T> initialSelection) {
@@ -42,7 +41,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   private V mySelectedVariant;
-  private final Supplier<? extends List<V>> myVariantsProvider;
+  private final Supplier<V[]> myVariantsProvider;
   private Function<V, String> myVariantNameProvider;
   private final Function<T, V> myGetter;
   private final BiConsumer<T, V> mySetter;
@@ -51,7 +50,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
                             @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                             @Nls(capitalization = Nls.Capitalization.Title) String group,
                             TagButton component,
-                            Supplier<? extends List<V>> variantsProvider,
+                            Supplier<V[]> variantsProvider,
                             Function<T, V> getter,
                             BiConsumer<T, V> setter,
                             Predicate<T> initialSelection) {
@@ -61,20 +60,24 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     mySetter = setter;
   }
 
-  protected List<V> getVariants() {
-    return myVariantsProvider.get();
+  public V getSelectedVariant() {
+    return mySelectedVariant;
   }
 
-  private void setSelectedVariant(V selectedVariant) {
-    mySelectedVariant = selectedVariant;
-    setSelected(!selectedVariant.equals(getVariants().get(0)));
+  public void setSelectedVariant(V variant) {
+    mySelectedVariant = variant;
+    setSelected(!variant.equals(getVariants()[0]));
+  }
+
+  protected V[] getVariants() {
+    return myVariantsProvider.get();
   }
 
   @Override
   public void toggle(boolean selected) {
     super.toggle(selected);
     if (!selected) {
-      setSelectedVariant(getVariants().get(0));
+      setSelectedVariant(getVariants()[0]);
     }
   }
 

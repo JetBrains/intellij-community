@@ -85,6 +85,10 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY]);
   }
 
+  public int getTestKind() {
+    return myTypeChooser.getItem();
+  }
+
   private void setupField(int kind, JComponent field, Object document, @Nullable BrowseModuleValueActionListener<?> browser) {
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.HORIZONTAL;
