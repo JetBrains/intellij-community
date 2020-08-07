@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -230,7 +231,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val branches = getBranches()
+    val branches = GitBranchUtil.sortBranchNames(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
