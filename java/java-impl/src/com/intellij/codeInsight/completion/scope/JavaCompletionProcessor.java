@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.openapi.diagnostic.Logger;
@@ -106,25 +105,6 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   private static boolean allowStaticAfterInstanceQualifier(@NotNull PsiElement position) {
     return SuppressManager.getInstance().isSuppressedFor(position, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE) ||
            Registry.is("ide.java.completion.suggest.static.after.instance");
-  }
-
-  public static List<LookupElement> dispreferStaticAfterInstance(PsiJavaCodeReferenceElement position, List<LookupElement> items) {
-    if (allowStaticAfterInstanceQualifier(position)) return items;
-
-    PsiElement qualifier = position.getQualifier();
-    if (qualifier == null ||
-        qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
-      return items;
-    }
-
-    List<LookupElement> preferred = new ArrayList<>();
-    for (LookupElement item : items) {
-      Object object = item.getObject();
-      if (!(object instanceof PsiModifierListOwner) || !((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
-        preferred.add(item);
-      }
-    }
-    return preferred.isEmpty() ? items : preferred;
   }
 
   @Override

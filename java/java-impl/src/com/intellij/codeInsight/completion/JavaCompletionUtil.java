@@ -231,12 +231,12 @@ public final class JavaCompletionUtil {
     return subst.get().substitute(rawType);
   }
 
-  public static Set<LookupElement> processJavaReference(final PsiElement element,
-                                                        final PsiJavaReference javaReference,
-                                                        final ElementFilter elementFilter,
-                                                        final JavaCompletionProcessor.Options options,
-                                                        final PrefixMatcher matcher,
-                                                        final CompletionParameters parameters) {
+  static Set<LookupElement> processJavaReference(PsiElement element,
+                                                 PsiJavaCodeReferenceElement javaReference,
+                                                 ElementFilter elementFilter,
+                                                 JavaCompletionProcessor.Options options,
+                                                 Condition<String> nameCondition,
+                                                 CompletionParameters parameters) {
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression)elementParent).getQualifierExpression();
@@ -257,7 +257,7 @@ public final class JavaCompletionUtil {
                 if (qualifierType == null) return;
 
                 PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
-                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
+                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, nameCondition, parameters));
               });
               if (overloadsFound) return set;
             }
@@ -265,14 +265,16 @@ public final class JavaCompletionUtil {
         }
       }
     }
-    return processJavaQualifiedReference(element, javaReference, elementFilter, options, matcher, parameters);
+    return processJavaQualifiedReference(element, javaReference, elementFilter, options, nameCondition, parameters);
   }
 
-  private static Set<LookupElement> processJavaQualifiedReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
-                                                        JavaCompletionProcessor.Options options,
-                                                        final PrefixMatcher matcher, CompletionParameters parameters) {
+  private static Set<LookupElement> processJavaQualifiedReference(PsiElement element,
+                                                                  PsiJavaCodeReferenceElement javaReference,
+                                                                  ElementFilter elementFilter,
+                                                                  JavaCompletionProcessor.Options options,
+                                                                  Condition<String> nameCondition,
+                                                                  CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<>();
-    final Condition<String> nameCondition = matcher::prefixMatches;
 
     final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options, nameCondition);
     final PsiType plainQualifier = processor.getQualifierType();
@@ -317,19 +319,17 @@ public final class JavaCompletionUtil {
       }
     }
 
-    if (javaReference instanceof PsiJavaCodeReferenceElement) {
-      PsiElement refQualifier = ((PsiJavaCodeReferenceElement)javaReference).getQualifier();
-      if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
-        final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
-        memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
-          if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-            ContainerUtil.addIfNotNull(set, memberProcessor.createLookupElement(member, psiClass, true));
-          }
-        });
-      }
-      else if (refQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)refQualifier).getQualifier() == null) {
-        set.addAll(SuperCalls.suggestQualifyingSuperCalls(element, javaReference, elementFilter, options, nameCondition));
-      }
+    PsiElement refQualifier = javaReference.getQualifier();
+    if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
+      final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
+      memberProcessor.processMembersOfRegisteredClasses(nameCondition, (member, psiClass) -> {
+        if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
+          ContainerUtil.addIfNotNull(set, memberProcessor.createLookupElement(member, psiClass, true));
+        }
+      });
+    }
+    else if (refQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)refQualifier).getQualifier() == null) {
+      set.addAll(SuperCalls.suggestQualifyingSuperCalls(element, javaReference, elementFilter, options, nameCondition));
     }
 
     return set;
