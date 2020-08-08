@@ -107,8 +107,10 @@ public class TestAll implements Test {
   public TestAll(String rootPackage, List<? extends File> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     myTestCaseLoader = new TestCaseLoader(classFilterName);
-    myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
-    myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
+    if (shouldAddFirstAndLastTests()) {
+      myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
+      myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
+    }
     myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
 
     outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
@@ -242,6 +244,10 @@ public class TestAll implements Test {
 
   private static boolean shouldRecord(@NotNull Class<?> aClass) {
     return aClass.getAnnotation(RecordExecution.class) != null;
+  }
+
+  private static boolean shouldAddFirstAndLastTests() {
+    return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
   }
 
   private void loadTestRecorder() {
