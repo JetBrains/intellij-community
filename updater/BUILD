@@ -61,7 +61,7 @@ java_binary(
         ":intellij.platform.updater.jar",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
         "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar",
-        "//tools/adt/idea/studio-updater:intellij.android.updater.studio-updater",  # Adds analytics to the updater
+        "//tools/adt/idea/studio-updater:intellij.android.updater.studio-updater.jar",  # Adds analytics to the updater
         "//tools/analytics-library/shared:analytics-shared.jar",
         "//tools/analytics-library/tracker:analytics-tracker.jar",
         "//tools/base/annotations:studio.android.sdktools.android-annotations.jar",
