@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -15,11 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.function.Function;
 
 final class ObjectTree {
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
@@ -63,10 +59,6 @@ final class ObjectTree {
         return new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
                                               "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
                                               wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
-      }
-
-      if (isDisposing(parent)) {
-        return new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
       }
 
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
@@ -137,14 +129,15 @@ final class ObjectTree {
       }
       else {
         ObjectNode parent = node.getParent();
-        List<Throwable> exceptions = new SmartList<>();
-        node.execute(exceptions, onlyChildren);
+        List<Throwable> exceptions = node.execute(null, onlyChildren);
         if (parent != null && !onlyChildren) {
           synchronized (treeLock) {
             parent.removeChild(node);
           }
         }
-        handleExceptions(exceptions);
+        if (exceptions != null) {
+          handleExceptions(exceptions);
+        }
       }
     }
     finally {
@@ -169,7 +162,7 @@ final class ObjectTree {
     }
   }
 
-  public boolean isDisposing(@NotNull Disposable disposable) {
+  boolean isDisposing(@NotNull Disposable disposable) {
     List<ObjectNode> guard = getNodesInExecution();
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (guard) {
@@ -180,17 +173,19 @@ final class ObjectTree {
     return false;
   }
 
-  static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull List<T> recursiveGuard, @NotNull Consumer<? super T> action) {
+  static <T> List<Throwable> executeActionWithRecursiveGuard(@NotNull T object,
+                                                             @NotNull List<T> recursiveGuard,
+                                                             @NotNull Function<? super T, ? extends List<Throwable>> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
       if (ArrayUtil.indexOf(recursiveGuard, object, (t, t2) -> t == t2) != -1) {
-        return;
+        return null;
       }
       recursiveGuard.add(object);
     }
 
     try {
-      action.accept(object);
+      return action.apply(object);
     }
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -203,7 +198,19 @@ final class ObjectTree {
   }
 
   private void executeUnregistered(@NotNull Disposable disposable) {
-    executeActionWithRecursiveGuard(disposable, myExecutedUnregisteredObjects, Disposable::dispose);
+    List<Throwable> exceptions = executeActionWithRecursiveGuard(disposable, myExecutedUnregisteredObjects, d -> {
+      try {
+        //noinspection SSBasedInspection
+        d.dispose();
+        return null;
+      }
+      catch (Throwable e) {
+        return Collections.singletonList(e);
+      }
+    });
+    if (exceptions != null) {
+      handleExceptions(exceptions);
+    }
   }
 
   @TestOnly
@@ -272,5 +279,4 @@ final class ObjectTree {
       return parentNode.findChildEqualTo(object);
     }
   }
-
 }

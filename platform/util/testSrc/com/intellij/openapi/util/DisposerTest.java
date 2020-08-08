@@ -373,7 +373,7 @@ public class DisposerTest extends TestCase {
       fail("Must throw");
     }
     catch (Throwable e) {
-      assertEquals("Sorry but parent: parent is being disposed so the child: child will never be disposed", e.getMessage());
+      assertTrue(e.getMessage(), e.getMessage().startsWith("Sorry but parent"));
     }
 
     assertTrue(Disposer.isDisposed(parent));

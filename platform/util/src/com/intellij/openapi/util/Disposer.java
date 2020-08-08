@@ -125,11 +125,11 @@ public final class Disposer {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void disposeChildren(@NotNull Disposable disposable) {
-    ourTree.executeAll(disposable, false, /* onlyChildren */ true);
+    ourTree.executeAll(disposable, false, true);
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered, /* onlyChildren */ false);
+    ourTree.executeAll(disposable, processUnregistered, false);
   }
 
   @NotNull

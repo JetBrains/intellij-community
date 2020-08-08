@@ -67,10 +67,14 @@ final class ObjectNode {
     }
   }
 
-  void execute(@NotNull List<? super Throwable> exceptions, boolean onlyChildren) {
-    ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
+  List<Throwable> execute(@Nullable List<Throwable> exceptions, boolean onlyChildren) {
+    return ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), __ -> {
+      List<Throwable> result = exceptions;
       if (myTree.getDisposalInfo(myObject) != null) {
-        return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+        return result; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+      }
+      if (!onlyChildren) {
+        myTree.rememberDisposedTrace(myObject);
       }
 
       if (!onlyChildren && myObject instanceof Disposable.Parent) {
@@ -82,40 +86,45 @@ final class ObjectNode {
         }
       }
 
-      ObjectNode[] childrenArray;
-      synchronized (myTree.treeLock) {
-        List<ObjectNode> children = myChildren;
-        childrenArray = children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
-        myChildren = null;
-      }
+      ObjectNode[] childrenArray = getAndClearChildren();
 
       for (int i = childrenArray.length - 1; i >= 0; i--) {
         try {
           ObjectNode childNode = childrenArray[i];
-          childNode.execute(exceptions, false);
+          result = childNode.execute(result, false);
           synchronized (myTree.treeLock) {
             childNode.myParent = null;
           }
         }
         catch (Throwable e) {
-          exceptions.add(e);
+          if (result == null) result = new SmartList<>();
+          result.add(e);
         }
       }
 
       if (onlyChildren) {
-        return;
+        return result;
       }
 
       try {
         //noinspection SSBasedInspection
         myObject.dispose();
-        myTree.rememberDisposedTrace(myObject);
       }
       catch (Throwable e) {
-        exceptions.add(e);
+        if (result == null) result = new SmartList<>();
+        result.add(e);
       }
       removeFromObjectTree();
+      return result;
     });
+  }
+
+  private ObjectNode @NotNull [] getAndClearChildren() {
+    synchronized (myTree.treeLock) {
+      List<ObjectNode> children = myChildren;
+      myChildren = null;
+      return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
+    }
   }
 
   private void removeFromObjectTree() {
