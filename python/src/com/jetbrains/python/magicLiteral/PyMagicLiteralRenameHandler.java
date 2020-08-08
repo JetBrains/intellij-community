@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +43,7 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
   @Nullable
   private static PsiElement getElement(PsiFile file, Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getCurrentCaret().getOffset());
-    if (element instanceof PyStringLiteralExpression) {
-      return element;
-    }
-    return PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
+    return PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class, false, PyFStringFragment.class);
   }
 
   @Override
