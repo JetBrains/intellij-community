@@ -107,10 +107,9 @@ declare -ar BUILD_PROPERTIES=(
 
 $ANT "${BUILD_PROPERTIES[@]}" build
 
-if [[ "${STUDIO_SDK}" == "false" ]]; then
-  # TODO fullupdater builds sdk-updater, so for now we don't build it
-  $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
+$ANT "-Dstudio.sdk=${STUDIO_SDK}" "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
+if [[ "${STUDIO_SDK}" == "false" ]]; then
   $BAZEL build //tools/idea/updater:updater_deploy.jar
 fi
 
@@ -128,6 +127,8 @@ else
     # write the version number into the windows installer dir
     echo $BNUM > ../adt/idea/native/installer/win/version
     (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
+  else
+    cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/updater-full.jar
   fi
 fi
 

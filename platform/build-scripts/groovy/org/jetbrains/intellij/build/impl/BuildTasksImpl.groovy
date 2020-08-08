@@ -724,7 +724,7 @@ idea.fatal.error.notification=disabled
       it.getFiles(JpsOrderRootType.COMPILED)
     }
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar(name: "updater-full.jar", duplicate: "preserve") {  // Android Studio: libraries can have conflicting files in META-INF especially
+      jar(name: "updater-full.jar") {
         module(updaterModule)
         libraryFiles.each { file ->
           ant.zipfileset(src: file.absolutePath)
@@ -732,22 +732,25 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    new LayoutBuilder(buildContext, false).layout("$buildContext.paths.buildOutputRoot/sdk-patcher") {
-      jar(name: "patcher.jar", duplicate: "preserve") {  // Android Studio: libraries can have conflicting files in META-INF especially
-        module("intellij.android.updater.ui")
-        module("intellij.platform.updater")
-        libraryFiles.each { file ->
-          ant.zipfileset(src: file.absolutePath)
+    // Android Studio: Build sdk-patcher
+    if (!buildContext.options.studioSdk) {
+      new LayoutBuilder(buildContext, false).layout("$buildContext.paths.buildOutputRoot/sdk-patcher") {
+        jar(name: "patcher.jar", duplicate: "preserve") {
+          module("intellij.android.updater.ui")
+          module("intellij.platform.updater")
+          libraryFiles.each { file ->
+            ant.zipfileset(src: file.absolutePath)
+          }
         }
       }
+      def modulePath = new URI(buildContext.findModule("intellij.android.updater.ui").getContentRootsList().getUrls().get(0)).getPath()
+      buildContext.ant.copy(file: "$modulePath/source.properties", todir: "$buildContext.paths.buildOutputRoot/sdk-patcher")
+      buildContext.ant.zip(
+          destfile: "$buildContext.paths.artifacts/sdk-patcher.zip",
+          basedir: "$buildContext.paths.buildOutputRoot",
+          includes: "sdk-patcher/*",
+      )
     }
-    def modulePath = new URI(buildContext.findModule("intellij.android.updater.ui").getContentRootsList().getUrls().get(0)).getPath()
-    buildContext.ant.copy(file: "$modulePath/source.properties", todir: "$buildContext.paths.buildOutputRoot/sdk-patcher")
-    buildContext.ant.zip(
-        destfile: "$buildContext.paths.artifacts/sdk-patcher.zip",
-        basedir: "$buildContext.paths.buildOutputRoot",
-        includes: "sdk-patcher/*",
-    )
   }
 
   @Override
