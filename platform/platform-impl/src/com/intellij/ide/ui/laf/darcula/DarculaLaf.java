@@ -16,7 +16,10 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,7 +336,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, getClass(), true);
+      Icon icon = IconLoader.findIcon(value, getClass(), true, false);
       if (icon != null) {
         return icon;
       }

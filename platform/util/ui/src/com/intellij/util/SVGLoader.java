@@ -1,25 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
 import com.intellij.ui.svg.SaxSvgDocumentFactory;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.ui.svg.SvgCacheManager;
+import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.transcoder.TranscoderException;
-import org.apache.batik.transcoder.TranscoderInput;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,37 +39,74 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-/**
- * @author tav
- */
+@ApiStatus.Internal
 public final class SVGLoader {
-  private static final byte[] DEFAULT_THEME = new byte[0];
+  private static final byte[] DEFAULT_THEME = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  public static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
-  private static SvgElementColorPatcherProvider ourColorPatcher = null;
-  private static SvgElementColorPatcherProvider ourColorPatcherForSelection = null;
+  private static SvgElementColorPatcherProvider ourColorPatcher;
+  private static SvgElementColorPatcherProvider ourColorPatcherForSelection;
 
   private static boolean ourIsSelectionContext = false;
 
-  private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
-    @NotNull
-    @Override
-    protected Path getCachesHome() {
-      return Paths.get(PathManager.getSystemPath(), "icons");
+  private static final SvgCacheManager persistentCache;
+  private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
+
+  static {
+    SvgPrebuiltCacheManager prebuiltCache;
+    try {
+      Path dbFile;
+      if (USE_CACHE) {
+        String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
+        if (dbPath == null || dbPath.isEmpty()) {
+          Path distDir = Paths.get(PathManager.getHomePath());
+          dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("icons.db");
+        }
+        else {
+          dbFile = Paths.get(dbPath);
+        }
+      }
+      else {
+        dbFile = null;
+      }
+
+
+      prebuiltCache = dbFile != null && Files.exists(dbFile) ? new SvgPrebuiltCacheManager(dbFile) : null;
+    }
+    catch (Exception e) {
+      Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);
+      prebuiltCache = null;
     }
 
-    @Override
-    protected void forkIOTask(@NotNull Runnable action) {
-      AppExecutorUtil.getAppExecutorService().execute(action);
+    prebuiltPersistentCache = prebuiltCache;
+
+    SvgCacheManager cache;
+    try {
+      cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v1.db")) : null;
     }
-  };
+    catch (Exception e) {
+      Logger.getInstance(SVGLoader.class).error(e);
+      cache = null;
+    }
+
+    persistentCache = cache;
+  }
+
+  public static @Nullable SvgCacheManager getCache() {
+    return persistentCache;
+  }
 
   public static final int ICON_DEFAULT_SIZE = 16;
+
+  private SVGLoader() {
+  }
 
   public static Image load(@NotNull URL url, float scale) throws IOException {
     return load(url, url.openStream(), scale);
@@ -76,42 +117,142 @@ public final class SVGLoader {
   }
 
   public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale) throws IOException {
-    return load(url, stream, scale, null);
+    return load(url == null ? null : url.getPath(), stream, scale, false, null);
   }
 
   @ApiStatus.Internal
-  public static Image load(@Nullable URL url,
-                           @NotNull InputStream stream,
-                           double scale,
-                           @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  public static @Nullable Image loadFromClassResource(@NotNull Class<?> resourceClass,
+                                                      @NotNull String path,
+                                                      long rasterizedCacheKey,
+                                                      double scale,
+                                                      boolean isDark,
+                                                      @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+
+    byte[] svgBytes = null;
+
+    InputStream stream = null;
+    byte[] theme = DEFAULT_THEME;
+    SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+    if (colorPatcher != null) {
+      SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
+      if (subPatcher != null) {
+        theme = subPatcher.digest();
+      }
+    }
+
+    if (theme != null) {
+      Image image;
+      if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
+        SvgPrebuiltCacheManager cache = prebuiltPersistentCache;
+        if (cache != null) {
+          image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+          if (image != null) {
+            return image;
+          }
+        }
+      }
+
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      stream = resourceClass.getResourceAsStream(path);
+      if (stream == null) {
+        return null;
+      }
+      try {
+        svgBytes = stream.readAllBytes();
+      }
+      finally {
+        stream.close();
+      }
+
+      image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+      if (image != null) {
+        return image;
+      }
+
+      stream = new ByteArrayInputStream(svgBytes);
+    }
+
+    if (start != -1) {
+      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+    }
+
+    start = StartUpMeasurer.getCurrentTimeIfEnabled();
+
+    BufferedImage bufferedImage;
+    if (stream == null) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      stream = resourceClass.getResourceAsStream(path);
+      if (stream == null) {
+        return null;
+      }
+    }
+
+    try {
+      bufferedImage = loadWithoutCache(path, new InputSource(stream), scale, docSize);
+    }
+    catch (TranscoderException e) {
+      docSize.setSize(0, 0);
+      throw new IOException(e);
+    }
+    finally {
+      stream.close();
+    }
+
+    if (start != -1) {
+      IconLoadMeasurer.svgDecoding.addDurationStartedAt(start);
+    }
+    if (theme != null) {
+      cacheImage(path, scale, docSize, theme, svgBytes, bufferedImage);
+    }
+    return bufferedImage;
+  }
+
+  private static void cacheImage(@Nullable String path,
+                                 double scale,
+                                 ImageLoader.@NotNull Dimension2DDouble docSize,
+                                 byte[] theme,
+                                 byte[] svgBytes,
+                                 BufferedImage bufferedImage) {
+    try {
+      long writeStart = StartUpMeasurer.getCurrentTimeIfEnabled();
+      persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
+      IconLoadMeasurer.svgCacheWrite.addDurationStartedAt(writeStart);
+    }
+    catch (Exception e) {
+      Logger.getInstance(SVGLoader.class).error("Failed to write SVG cache for: " + path, e);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Image load(@Nullable String path,
+                                    @NotNull InputStream stream,
+                                    double scale,
+                                    boolean isDark,
+                                    @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+
     if (docSize == null) {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
     byte[] theme = null;
     byte[] svgBytes = null;
-    BufferedImage image;
+    Image image;
 
-    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true) && !isSelectionContext()) {
+    if (USE_CACHE && !isSelectionContext()) {
       theme = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
-        SvgElementColorPatcher subPatcher = colorPatcher.forURL(url);
+        SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
         if (subPatcher != null) {
           theme = subPatcher.digest();
         }
       }
 
-      if (theme == DEFAULT_THEME) {
-        image = url == null ? null : SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
-        if (image != null) {
-          return image;
-        }
-      }
-
       if (theme != null) {
-        svgBytes = FileUtilRt.loadBytes(stream);
-        image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
+        svgBytes = stream.readAllBytes();
+        image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
@@ -119,27 +260,48 @@ public final class SVGLoader {
       }
     }
 
-    image = loadWithoutCache(url, stream, scale, docSize);
-    if (image != null && theme != null && !isSelectionContext()) {
-      ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
+    if (start != -1) {
+      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+    }
+
+    start = StartUpMeasurer.getCurrentTimeIfEnabled();
+    BufferedImage bufferedImage;
+    try {
+      bufferedImage = loadWithoutCache(path, new InputSource(stream), scale, docSize);
+    }
+    catch (TranscoderException e) {
+      docSize.setSize(0, 0);
+      throw new IOException(e);
+    }
+
+    if (start != -1) {
+      IconLoadMeasurer.svgDecoding.addDurationStartedAt(start);
+    }
+    if (theme != null) {
+      cacheImage(path, scale, docSize, theme, svgBytes, bufferedImage);
+    }
+    return bufferedImage;
+  }
+
+  public static @NotNull BufferedImage loadWithoutCache(@Nullable String path,
+                                                        @NotNull InputSource inputSource,
+                                                        double scale,
+                                                        @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/)
+    throws IOException, TranscoderException {
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+    BufferedImage image = MyTranscoder.createImage(scale, createDocument(path, inputSource), docSize);
+    if (start != -1) {
+      IconLoadMeasurer.svgDecoding.addDurationStartedAt(start);
     }
     return image;
   }
 
-  @ApiStatus.Internal
-  public static BufferedImage loadWithoutCache(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  public static @NotNull BufferedImage loadWithoutCache(byte @NotNull [] content, double scale) throws IOException {
     try {
-      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
-      if (docSize != null) {
-        docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
-      }
-      return transcoder.getImage();
+      return MyTranscoder.createImage(scale, createDocument(null, new InputSource(new ByteArrayInputStream(content))), null);
     }
-    catch (TranscoderException ex) {
-      if (docSize != null) {
-        docSize.setSize(0, 0);
-      }
-      throw new IOException(ex);
+    catch (TranscoderException e) {
+      throw new IOException(e);
     }
   }
 
@@ -149,7 +311,7 @@ public final class SVGLoader {
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
     try {
       double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-      return MyTranscoder.createImage(1, createTranscodeInput(url, stream), (float)(width * scale), (float)(height * scale)).getImage();
+      return MyTranscoder.createImage(1, createDocument(url != null ? url.getPath() : null, new InputSource(stream)), null, (float)(width * scale), (float)(height * scale));
     }
     catch (TranscoderException e) {
       throw new IOException(e);
@@ -171,7 +333,7 @@ public final class SVGLoader {
     return loadHiDPI(url, stream, (ScaleContext)ctx);
   }
 
-  public static ImageLoader.Dimension2DDouble getDocumentSize(@Nullable URL url, @NotNull InputStream stream, double scale) throws IOException {
+  public static ImageLoader.Dimension2DDouble getDocumentSize(@NotNull InputStream stream, double scale) throws IOException {
     // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
     // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
     // Assumes 8-bit encoding of the input stream (no one in theirs right mind would use wide characters for SVG anyway).
@@ -189,44 +351,29 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        return getDocumentSize(scale, createTranscodeInput(url, new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size())));
+        return getDocumentSize(scale, createDocument(null, new InputSource(new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size()))));
       }
     }
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
-  public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
-    ImageLoader.Dimension2DDouble size = getDocumentSize(ctx.getScale(DerivedScaleType.PIX_SCALE), createTranscodeInput(url, stream));
+  public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) throws IOException {
+    ImageLoader.Dimension2DDouble size = getDocumentSize(scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, new InputSource(stream)));
     double iconMaxSize = MyTranscoder.getIconMaxSize();
     return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
   }
 
-  private SVGLoader() {
-  }
-
-  @NotNull
-  private static TranscoderInput createTranscodeInput(@Nullable URL url, @NotNull InputStream stream) throws IOException {
-    TranscoderInput myTranscoderInput;
-    String uri = null;
-    try {
-      if (url != null && "jar".equals(url.getProtocol())) {
-        // workaround for BATIK-1217
-        url = new URL(url.getPath());
-      }
-      uri = url != null ? url.toURI().toString() : null;
-    }
-    catch (URISyntaxException ignore) { }
-
-    Document document = new SaxSvgDocumentFactory().createDocument(uri, stream);
+  private static @NotNull Document createDocument(@Nullable String url, @NotNull InputSource inputSource) {
+    inputSource.setSystemId(url);
+    Document document = new SaxSvgDocumentFactory().createDocument(url, inputSource);
     patchColors(url, document);
-    myTranscoderInput = new TranscoderInput(document);
-    return myTranscoderInput;
+    return document;
   }
 
-  private static void patchColors(@Nullable URL url, @NotNull Document document) {
+  private static void patchColors(@Nullable String url, @NotNull Document document) {
     SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
     if (colorPatcher != null) {
-      final SvgElementColorPatcher patcher = colorPatcher.forURL(url);
+      final SvgElementColorPatcher patcher = colorPatcher.forPath(url);
       if (patcher != null) {
         patcher.patchColors(document.getDocumentElement());
       }
@@ -234,7 +381,7 @@ public final class SVGLoader {
     if (isSelectionContext()) {
       SvgElementColorPatcherProvider selectionPatcherProvider = getSelectionPatcherProvider();
       if (selectionPatcherProvider != null) {
-        SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forURL(url);
+        SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forPath(url);
         if (selectionPatcher != null) {
           selectionPatcher.patchColors(document.getDocumentElement());
         }
@@ -259,8 +406,8 @@ public final class SVGLoader {
 
   @Nullable
   public static SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
-                                                      @NotNull Map<String, String> newPalette,
-                                                      @NotNull Map<String, Integer> alphas) {
+                                                            @NotNull Map<String, String> newPalette,
+                                                            @NotNull Map<String, Integer> alphas) {
     if (newPalette.isEmpty()) {
       return null;
     }
@@ -335,11 +482,16 @@ public final class SVGLoader {
 
     setColorPatcherProvider(new SvgElementColorPatcherProvider() {
       @Override
-      public SvgElementColorPatcher forURL(@Nullable final URL url) {
+      public SvgElementColorPatcher forPath(@Nullable String path) {
         return new SvgElementColorPatcher() {
           @Override
           public void patchColors(@NotNull Element svg) {
-            colorPatcher.patchColors(url, svg);
+            try {
+              colorPatcher.patchColors(path == null ? null : new URL("jar", "icons", path), svg);
+            }
+            catch (MalformedURLException e) {
+              colorPatcher.patchColors(null, svg);
+            }
           }
 
           @Override
@@ -356,8 +508,7 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
-  private static ImageLoader.Dimension2DDouble getDocumentSize(double scale, @NotNull TranscoderInput input) {
-    Document document = input.getDocument();
+  private static ImageLoader.Dimension2DDouble getDocumentSize(double scale, @NotNull Document document) {
     BridgeContext ctx = new MyTranscoder(scale).createBridgeContext((SVGOMDocument)document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
@@ -369,14 +520,15 @@ public final class SVGLoader {
   }
 
   public static boolean isSelectionContext() {
-    return ourColorPatcherForSelection != null && ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
+    return ourColorPatcherForSelection != null && ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection", false);
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
     try {
       setIsSelectionContext(true);
       icon.paintIcon(c, g, x, y);
-    } finally {
+    }
+    finally {
       setIsSelectionContext(false);
     }
   }
@@ -391,8 +543,18 @@ public final class SVGLoader {
   }
 
   public interface SvgElementColorPatcherProvider {
-    @Nullable
-    SvgElementColorPatcher forURL(@Nullable URL url);
+    /**
+     * @deprecated Use {@link #forPath(String)}
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    default @Nullable SvgElementColorPatcher forURL(@SuppressWarnings("unused") @Nullable URL url) {
+      return null;
+    }
+
+    default @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
+      return forURL(null);
+    }
   }
 
   /**

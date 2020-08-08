@@ -66,7 +66,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -709,7 +708,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
      SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
        @Override
-       public SVGLoader.@Nullable SvgElementColorPatcher forURL(@Nullable URL url) {
+       public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
          return SVGLoader.newPatcher(null, map, alpha);
        }
      });

@@ -108,12 +108,12 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     return false;
   }
 
-  @NotNull
-  public static BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
+  public static @NotNull BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
     try {
-      Image image = SVGLoader.load(new ByteArrayInputStream(content), JBUIScale.sysScale());
-      if (image != null) return ImageUtil.toBufferedImage(image);
-    } catch (IOException ignored) {}
+      return ImageUtil.toBufferedImage(SVGLoader.loadWithoutCache(content, JBUIScale.sysScale()));
+    }
+    catch (IOException ignored) {
+    }
 
     InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
     try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {

@@ -1104,9 +1104,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Changelist = load("/vcs/changelist.svg", 6782300811885813281L);
     /** 16x16 */ public static final @NotNull Icon Clone = load("/vcs/clone.svg", 6701092609372439091L);
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg", -7607781512783556234L);
-    /** 128x128 */ public static final @NotNull Icon Diff_frame128 = load("/vcs/diff_frame128.png", 0L);
-    /** 32x32 */ public static final @NotNull Icon Diff_frame32 = load("/vcs/diff_frame32.png", 0L);
-    /** 64x64 */ public static final @NotNull Icon Diff_frame64 = load("/vcs/diff_frame64.png", 0L);
     /** 16x16 */ public static final @NotNull Icon Equal = load("/vcs/equal.svg", 2377046888921181536L);
     /** 16x16 */ public static final @NotNull Icon Folders = load("/vcs/folders.svg", 5315569763424492128L);
     /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("/vcs/fromVCSDialog.svg", -6399194869733346951L);

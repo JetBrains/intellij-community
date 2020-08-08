@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -16,7 +16,7 @@ import static com.intellij.ui.scale.ScaleType.*;
  *
  * @author tav
  */
-public abstract class JBScalableIcon extends UserScaleContextSupport implements ScalableIcon {
+public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScaleContext> implements ScalableIcon {
   private final Scaler myScaler = new Scaler() {
     @Override
     protected double currentScale() {
@@ -27,6 +27,7 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   private boolean autoUpdateScaleContext = true;
 
   public JBScalableIcon() {
+    super(UserScaleContext.create());
   }
 
   protected JBScalableIcon(@NotNull JBScalableIcon icon) {

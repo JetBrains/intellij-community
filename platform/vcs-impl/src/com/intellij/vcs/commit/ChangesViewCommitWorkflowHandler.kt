@@ -146,7 +146,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
-      val possibleInclusion = changeLists.flatMapTo(ObjectOpenCustomHashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
+      val possibleInclusion: MutableSet<Any> = changeLists.flatMapTo(ObjectOpenCustomHashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
 
       inclusionModel.retainInclusion(possibleInclusion)

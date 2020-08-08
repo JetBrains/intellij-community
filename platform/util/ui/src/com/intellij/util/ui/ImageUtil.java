@@ -180,10 +180,11 @@ public final class ImageUtil {
     return image.getHeight(null);
   }
 
-  public static Image filter(Image image, ImageFilter filter) {
-    if (image == null || filter == null) return image;
-    return Toolkit.getDefaultToolkit().createImage(
-      new FilteredImageSource(toBufferedImage(image).getSource(), filter));
+  public static Image filter(@Nullable Image image, @Nullable ImageFilter filter) {
+    if (image == null || filter == null) {
+      return image;
+    }
+    return Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(toBufferedImage(image).getSource(), filter));
   }
 
   /**
@@ -223,7 +224,7 @@ public final class ImageUtil {
   }
 
   /**
-   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code ctx} when applicable.
+   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code context} when applicable.
    * The real (dev) width/height of the provided image is usually calculated based on the scale context and the
    * expected user width/height of the target wrapped image. In the {@link #ensureHiDPI(Image, ScaleContext)} method version,
    * the expected user width/height of the wrapped image is reconstructed from the image's real width/height and the scale context.
@@ -231,14 +232,16 @@ public final class ImageUtil {
    * may differ from the original values. To avoid the loss this method version accepts the original user width/height.
    *
    * @param image the raw image to wrap
-   * @param ctx the scale context to match
+   * @param context the scale context to match
    * @param userWidth the expected user width of the wrapped image
    * @param userHeight the expected user height of the wrapped image
    */
   @Contract("null, _, _, _ -> null; !null, _, _, _ -> !null")
-  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx, double userWidth, double userHeight) {
-    if (image == null) return null;
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
+  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext context, double userWidth, double userHeight) {
+    if (image == null) {
+      return null;
+    }
+    if (StartupUiUtil.isJreHiDPI(context)) {
       return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;

@@ -1,3 +1,7 @@
+# 23
+
+* `svg-decode` doesn't include `svg-cache-read` anymore.
+
 # 22
 
 * `project dumb post-startup` -> `project post-startup`

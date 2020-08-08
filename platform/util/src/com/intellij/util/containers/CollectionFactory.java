@@ -19,6 +19,16 @@ public final class CollectionFactory {
   }
 
   @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakValueMap() {
+    return new ConcurrentWeakValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftValueMap() {
+    return new ConcurrentSoftValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakIdentityMap() {
     return new ConcurrentWeakHashMap<>(ContainerUtil.identityStrategy());
   }

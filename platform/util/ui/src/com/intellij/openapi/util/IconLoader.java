@@ -5,7 +5,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.*;
@@ -53,7 +52,7 @@ public final class IconLoader {
 
   private static final String ICON_CACHE_URL_KEY = "ICON_CACHE_URL_KEY";
   // the key: Pair(ICON_CACHE_URL_KEY, url) or Pair(path, classLoader)
-  private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> ourIconsCache = new ConcurrentHashMap<>(100, 0.9f, 2);
+  private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
   /**
    * This cache contains mapping between icons and disabled icons.
    */
@@ -61,7 +60,7 @@ public final class IconLoader {
 
   private static volatile boolean STRICT_GLOBAL;
 
-  private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<Boolean>() {
+  private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
     @Override
     protected Boolean initialValue() {
       return false;
@@ -116,7 +115,7 @@ public final class IconLoader {
     if (prev != next) {
       ourIconToDisabledIcon.clear();
       //clears svg cache
-      ImageDescriptor.clearCache();
+      ImageLoader.clearCache();
     }
   }
 
@@ -187,6 +186,10 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  /**
+   * @deprecated Use {@link #findIcon(String, Class, boolean, boolean)}
+   */
+  @Deprecated
   public static @Nullable Icon findIcon(@NonNls @NotNull String path, boolean strict) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) {
@@ -201,6 +204,37 @@ public final class IconLoader {
       throw new IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.getName() + "'");
     }
     return icon;
+  }
+
+  // reflective path is not supported
+  // result is not cached
+  @SuppressWarnings("DuplicatedCode")
+  @ApiStatus.Internal
+  public static @NotNull IconUrlResolver loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
+    ClassLoader classLoader = aClass.getClassLoader();
+    long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
+    Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(path, classLoader);
+    String effectivePath = patchedPath == null ? path : patchedPath.first;
+    if (patchedPath != null && patchedPath.second != null) {
+      classLoader = patchedPath.second;
+    }
+
+    IconUrlResolver resolver = new UrlResolverImpl(effectivePath, aClass, classLoader, null, /* useCacheOnLoad = */ true) {
+      @Override
+      public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+        // do not use cache
+        int flags = ImageLoader.ALLOW_FLOAT_SCALING;
+        if (isDark) {
+          flags |= ImageLoader.DARK;
+        }
+        assert overriddenPath != null;
+        return ImageLoader.load(overriddenPath, filters, ownerClass, flags, scaleContext, cacheKey == 0, cacheKey);
+      }
+    };
+    if (startTime != -1) {
+      IconLoadMeasurer.addFindIcon(startTime);
+    }
+    return resolver;
   }
 
   public static void activate() {
@@ -230,14 +264,8 @@ public final class IconLoader {
     return findIcon(path, aClass, aClass.getClassLoader(), null, false);
   }
 
-  @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow) {
-    return findIcon(path, aClass, aClass.getClassLoader(), null, computeNow);
-  }
-
-  @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow, boolean strict) {
-    return findIcon(path, aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, computeNow);
+  public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean deferUrlResolve, boolean strict) {
+    return findIcon(path, aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, deferUrlResolve);
   }
 
   private static boolean isReflectivePath(@NotNull String path) {
@@ -266,10 +294,10 @@ public final class IconLoader {
 
     Pair<String, Object> key = new Pair<>(ICON_CACHE_URL_KEY, url);
     if (useCache) {
-      return ourIconsCache.computeIfAbsent(key, __ -> new CachedImageIcon(url, true));
+      return iconCache.computeIfAbsent(key, __ -> new CachedImageIcon(url, true));
     }
     else {
-      CachedImageIcon icon = ourIconsCache.get(key);
+      CachedImageIcon icon = iconCache.get(key);
       return icon == null ? null : new CachedImageIcon(url, false);
     }
   }
@@ -292,14 +320,14 @@ public final class IconLoader {
     }
     else {
       Pair<String, Object> key = new Pair<>(originalPath, classLoader);
-      CachedImageIcon cachedIcon = ourIconsCache.get(key);
+      CachedImageIcon cachedIcon = iconCache.get(key);
       if (cachedIcon == null) {
-        cachedIcon = ourIconsCache.computeIfAbsent(key, k -> {
-          MyUrlResolver resolver = new MyUrlResolver(path, clazz, (ClassLoader)k.getSecond(), handleNotFound);
+        cachedIcon = iconCache.computeIfAbsent(key, k -> {
+          UrlResolverImpl resolver = new UrlResolverImpl(path, clazz, (ClassLoader)k.getSecond(), handleNotFound, /* useCacheOnLoad = */ true);
           if (!deferUrlResolve && resolver.getURL() == null) {
             return null;
           }
-          return new CachedImageIcon(originalPath, resolver, null, true, null);
+          return new CachedImageIcon(originalPath, resolver, null, null);
         });
       }
       else {
@@ -314,7 +342,7 @@ public final class IconLoader {
     }
 
     if (startTime != -1) {
-      IconLoadMeasurer.addFindIcon(StartUpMeasurer.getCurrentTime() - startTime);
+      IconLoadMeasurer.addFindIcon(startTime);
     }
     return icon;
   }
@@ -400,14 +428,16 @@ public final class IconLoader {
     };
   }
 
-  @Nullable
-  private static ImageIcon checkIcon(final @Nullable Image image, @NotNull CachedImageIcon cii) {
-    if (image == null || image.getHeight(null) < 1) { // image wasn't loaded or broken
+  private static @Nullable ImageIcon checkIcon(@Nullable Image image, @NotNull CachedImageIcon cii) {
+    // image wasn't loaded or broken
+    if (image == null || image.getHeight(null) < 1) {
       return null;
     }
-    final ImageIcon icon = new JBImageIcon(image);
+
+    ImageIcon icon = new JBImageIcon(image);
     if (!isGoodSize(icon)) {
-      LOG.error("Invalid icon: " + cii); // # 22481
+      // # 22481
+      LOG.error("Invalid icon: " + cii);
       return EMPTY_ICON;
     }
     return icon;
@@ -574,86 +604,91 @@ public final class IconLoader {
   }
 
   public static void detachClassLoader(@NotNull ClassLoader classLoader) {
-    for (Map.Entry<Pair<String, Object>, CachedImageIcon> entry : new ArrayList<>(ourIconsCache.entrySet())) {
-      entry.getValue().detachClassLoader(classLoader);
-      if (entry.getKey().second == classLoader) {
-        CachedImageIcon icon = ourIconsCache.remove(entry.getKey());
-        if (icon != null) {
-          Icon disabledIcon = ourIconToDisabledIcon.remove(icon);
-          if (disabledIcon instanceof CachedImageIcon) {
-            ((CachedImageIcon)disabledIcon).detachClassLoader(classLoader);
-          }
-        }
+    iconCache.entrySet().removeIf(entry -> {
+      CachedImageIcon icon = entry.getValue();
+      icon.detachClassLoader(classLoader);
+      if (entry.getKey().second != classLoader) {
+        return false;
       }
-    }
+
+      Icon disabledIcon = ourIconToDisabledIcon.remove(icon);
+      if (disabledIcon instanceof CachedImageIcon) {
+        ((CachedImageIcon)disabledIcon).detachClassLoader(classLoader);
+      }
+      return true;
+    });
   }
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static final class CachedImageIcon extends com.intellij.ui.icons.LazyImageIcon {
-    @Nullable private final String myOriginalPath;
-    @NotNull private volatile IconUrlResolver myResolver;
-    @Nullable("when not overridden") private final Boolean myDarkOverridden;
-    private int myTransformModCount;
-    private final boolean myUseCacheOnLoad;
+  @ApiStatus.Internal
+  public static class CachedImageIcon extends com.intellij.ui.icons.LazyImageIcon {
+    @Nullable private final String originalPath;
+    @Nullable private volatile IconUrlResolver resolver;
+    @Nullable("when not overridden") private final Boolean isDarkOverridden;
+    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+    private int transformModCount;
 
     @Nullable private final Supplier<? extends RGBImageFilter> myLocalFilterSupplier;
-    private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
-    private final MyScaledIconsCache mySelectedIconsCache = new MyScaledIconsCache();
+    private final ScaledIconCache scaledIconCache = new ScaledIconCache(this);
+    private final ScaledIconCache selectedIconCache = new ScaledIconCache(this);
 
     public CachedImageIcon(@NotNull URL url) {
-      this(null, new MyUrlResolver(url, null), null, true, null);
+      this(null, new UrlResolverImpl(url, null, true), null, null);
     }
 
     CachedImageIcon(@Nullable URL url, boolean useCacheOnLoad) {
-      this(null, new MyUrlResolver(url, null), null, useCacheOnLoad, null);
+      this(null, new UrlResolverImpl(url, null, useCacheOnLoad), null, null);
     }
 
-    private CachedImageIcon(@Nullable String originalPath,
-                            @NotNull IconUrlResolver resolver,
-                            @Nullable Boolean darkOverridden,
-                            boolean useCacheOnLoad,
-                            @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
-      myOriginalPath = originalPath;
-      myResolver = resolver;
-      myDarkOverridden = darkOverridden;
-      myUseCacheOnLoad = useCacheOnLoad;
-      myTransformModCount = ourTransformModCount.get();
+    protected CachedImageIcon(@Nullable String originalPath,
+                              @Nullable IconUrlResolver resolver,
+                              @Nullable Boolean darkOverridden,
+                              @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
+      this.originalPath = originalPath;
+      this.resolver = resolver;
+      isDarkOverridden = darkOverridden;
+      transformModCount = ourTransformModCount.get();
       myLocalFilterSupplier = localFilterSupplier;
     }
 
-    @Nullable
-    public String getOriginalPath() {
-      return myOriginalPath;
+    public final @Nullable String getOriginalPath() {
+      return originalPath;
     }
 
     @Override
-    @NotNull
-    protected ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
+    protected final @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context) {
       if (!isValid()) {
         if (isLoaderDisabled()) {
           return EMPTY_ICON;
         }
+
         synchronized (myLock) {
           if (!isValid()) {
-            myTransformModCount = ourTransformModCount.get();
-            myResolver.resolve();
+            transformModCount = ourTransformModCount.get();
             myRealIcon = null;
-            myScaledIconsCache.clear();
-            if (myOriginalPath != null) {
-              myResolver = myResolver.patch(myOriginalPath, ourTransform.get());
+            scaledIconCache.clear();
+            if (originalPath != null) {
+              IconUrlResolver resolver = this.resolver;
+              if (resolver == null) {
+                return EMPTY_ICON;
+              }
+              this.resolver = resolver.patch(originalPath, ourTransform.get());
             }
           }
         }
       }
+
       Object realIcon = myRealIcon;
       synchronized (myLock) {
-        if (!updateScaleContext(ctx) && realIcon != null) {
+        if (!updateScaleContext(context) && realIcon != null) {
           // try returning the current icon as the context is up-to-date
           ImageIcon icon = unwrapIcon(realIcon);
-          if (icon != null) return icon;
+          if (icon != null) {
+            return icon;
+          }
         }
 
-        ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
+        ImageIcon icon = scaledIconCache.getOrScaleIcon(1f);
         if (icon != null) {
           myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
           return icon;
@@ -663,9 +698,9 @@ public final class IconLoader {
     }
 
     @Override
-    protected ImageIcon getRealIconForSelection(@Nullable ScaleContext ctx) {
+    protected final ImageIcon getRealIconForSelection(@Nullable ScaleContext context) {
       synchronized (myLock) {
-        ImageIcon icon = mySelectedIconsCache.getOrScaleIcon(1f);
+        ImageIcon icon = selectedIconCache.getOrScaleIcon(1f);
         if (icon != null) {
           return icon;
         }
@@ -674,41 +709,43 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return ourTransformModCount.get() == myTransformModCount && myResolver.isResolved();
+      IconUrlResolver resolver = this.resolver;
+      return resolver != null && ourTransformModCount.get() == transformModCount && resolver.isResolved();
     }
 
     @Override
-    public String toString() {
-      if (myResolver.isResolved()) {
-        URL url = myResolver.getURL();
-        if (url != null) return url.toString();
+    public final String toString() {
+      IconUrlResolver resolver = this.resolver;
+      if (resolver != null && resolver.isResolved()) {
+        return resolver.toString();
       }
-      return myOriginalPath != null ? myOriginalPath : "unknown path";
+      return originalPath != null ? originalPath : "unknown path";
     }
 
-    @NotNull
     @Override
-    public Icon scale(float scale) {
-      if (scale == 1f) return this;
-
-      getRealIcon(); // force state update & cache reset
-
-      Icon icon = myScaledIconsCache.getOrScaleIcon(scale);
-      if (icon != null) {
-        return icon;
+    public final @NotNull Icon scale(float scale) {
+      if (scale == 1f) {
+        return this;
       }
-      return this;
+
+      // force state update & cache reset
+      getRealIcon();
+
+      Icon icon = scaledIconCache.getOrScaleIcon(scale);
+      return icon == null ? this : icon;
     }
 
-    @NotNull
     @Override
-    public Icon getDarkIcon(boolean isDark) {
-      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, myLocalFilterSupplier);
+    public final @NotNull Icon getDarkIcon(boolean isDark) {
+      IconUrlResolver resolver = this.resolver;
+      if (resolver == null) {
+        return EMPTY_ICON;
+      }
+      return new CachedImageIcon(originalPath, resolver, isDark, myLocalFilterSupplier);
     }
 
-    @NotNull
     @Override
-    public Icon getMenuBarIcon(boolean isDark) {
+    public final @NotNull Icon getMenuBarIcon(boolean isDark) {
       boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
       ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
       ctx.setScale(USR_SCALE.of(1));
@@ -722,19 +759,21 @@ public final class IconLoader {
       return this;
     }
 
-    @NotNull
     @Override
-    public CachedImageIcon copy() {
-      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myLocalFilterSupplier);
+    public final @NotNull CachedImageIcon copy() {
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, myLocalFilterSupplier);
     }
 
-    @NotNull
-    private Icon createWithFilter(@NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
-      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, filterSupplier);
+    private @NotNull Icon createWithFilter(@NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
+      IconUrlResolver resolver = this.resolver;
+      if (resolver == null) {
+        return EMPTY_ICON;
+      }
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier);
     }
 
     private boolean isDark() {
-      return myDarkOverridden == null ? ourTransform.get().isDark() : myDarkOverridden;
+      return isDarkOverridden == null ? ourTransform.get().isDark() : isDarkOverridden;
     }
 
     private @Nullable List<ImageFilter> getFilters() {
@@ -751,160 +790,152 @@ public final class IconLoader {
       }
     }
 
-    public @Nullable URL getURL() {
-      return myResolver.getURL();
+    public final @Nullable URL getURL() {
+      IconUrlResolver resolver = this.resolver;
+      return resolver == null ? null : resolver.getURL();
     }
 
-    @Nullable
-    private Image loadFromUrl(@NotNull ScaleContext scaleContext, boolean dark) {
+    private @Nullable Image loadFromUrl(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      Image image = loadFromUrlImpl(scaleContext, dark);
+
+      IconUrlResolver resolver = this.resolver;
+      if (resolver == null) {
+        return null;
+      }
+
+      Image image = resolver.loadImage(getFilters(), scaleContext, isDark);
       if (start != -1) {
-        IconLoadMeasurer.addFindIconLoad(StartUpMeasurer.getCurrentTime() - start);
+        IconLoadMeasurer.addFindIconLoad(start);
       }
       return image;
     }
 
-    private @Nullable Image loadFromUrlImpl(@NotNull ScaleContext scaleContext, boolean dark) {
-      int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
-      if (myUseCacheOnLoad) {
-        flags |= ImageLoader.USE_CACHE;
-      }
-      if (dark) {
-        flags |= ImageLoader.DARK;
-      }
-
-      String path = myResolver.getOverriddenPath();
-      Class<?> aClass = myResolver.getOwnerClass();
-      if (aClass != null && path != null) {
-        return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), scaleContext);
-      }
-
-      URL url = getURL();
-      if (url == null) {
-        return null;
-      }
-      return ImageLoader.loadFromUrl(url.toString(), null, flags, getFilters(), scaleContext);
-    }
-
-    void detachClassLoader(ClassLoader loader) {
+    final void detachClassLoader(@NotNull ClassLoader loader) {
       synchronized (myLock) {
-        myResolver = myResolver.detachClassLoader(loader);
+        IconUrlResolver resolver = this.resolver;
+        if (resolver != null) {
+          this.resolver = resolver.detachClassLoader(loader);
+        }
       }
-    }
-
-    private final class MyScaledIconsCache {
-      private static final int SCALED_ICONS_CACHE_LIMIT = 5;
-
-      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(
-        new FixedHashMap<>(SCALED_ICONS_CACHE_LIMIT));
-
-      private Couple<Double> key(@NotNull ScaleContext ctx) {
-        return new Couple<>(ctx.getScale(DerivedScaleType.EFF_USR_SCALE), ctx.getScale(SYS_SCALE));
-      }
-
-      /**
-       * Retrieves the orig icon scaled by the provided scale.
-       */
-      ImageIcon getOrScaleIcon(float scale) {
-        ScaleContext scaleContext = getScaleContext();
-        if (scale != 1) {
-          scaleContext = scaleContext.copy();
-          scaleContext.setScale(OBJ_SCALE.of(scale));
-        }
-
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(scaleContext)));
-        if (icon != null && !SVGLoader.isSelectionContext()) {
-          return icon;
-        }
-        Image image = loadFromUrl(scaleContext, isDark());
-        icon = checkIcon(image, CachedImageIcon.this);
-
-        if (icon != null && 4L * icon.getIconWidth() * icon.getIconHeight() < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(key(scaleContext), new SoftReference<>(icon));
-        }
-        return icon;
-      }
-
-      public void clear() {
-        scaledIconsCache.clear();
-      }
-    }
-
-    enum HandleNotFound {
-      THROW_EXCEPTION {
-        @Override
-        void handle(@NotNull String msg) {
-          throw new RuntimeException(msg);
-        }
-      },
-      LOG_ERROR {
-        @Override
-        void handle(@NotNull String msg) {
-          LOG.error(msg);
-        }
-      },
-      IGNORE;
-
-      void handle(@NotNull String msg) throws RuntimeException {}
     }
   }
 
-  private interface IconUrlResolver {
-    @Nullable
-    Class<?> getOwnerClass();
+  private static final class ScaledIconCache {
+    private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
-    @Nullable
-    String getOverriddenPath();
+    private final CachedImageIcon host;
+
+    private ScaledIconCache(@NotNull CachedImageIcon host) {
+      this.host = host;
+    }
+
+    private final Map<Couple<Double>, SoftReference<ImageIcon>>
+      cache = Collections.synchronizedMap(new FixedHashMap<>(SCALED_ICONS_CACHE_LIMIT));
+
+    private static Couple<Double> key(@NotNull ScaleContext context) {
+      return new Couple<>(context.getScale(DerivedScaleType.EFF_USR_SCALE), context.getScale(SYS_SCALE));
+    }
+
+    /**
+     * Retrieves the orig icon scaled by the provided scale.
+     */
+    ImageIcon getOrScaleIcon(float scale) {
+      ScaleContext scaleContext = host.getScaleContext();
+      if (scale != 1) {
+        scaleContext = scaleContext.copy();
+        scaleContext.setScale(OBJ_SCALE.of(scale));
+      }
+
+      ImageIcon icon = SoftReference.dereference(cache.get(key(scaleContext)));
+      if (icon != null && !SVGLoader.isSelectionContext()) {
+        return icon;
+      }
+
+      Image image = host.loadFromUrl(scaleContext, host.isDark());
+      icon = checkIcon(image, host);
+      if (icon != null && 4L * icon.getIconWidth() * icon.getIconHeight() < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
+        cache.put(key(scaleContext), new SoftReference<>(icon));
+      }
+      return icon;
+    }
+
+    public void clear() {
+      cache.clear();
+    }
+  }
+
+  enum HandleNotFound {
+    THROW_EXCEPTION {
+      @Override
+      void handle(@NotNull String msg) {
+        throw new RuntimeException(msg);
+      }
+    },
+    LOG_ERROR {
+      @Override
+      void handle(@NotNull String msg) {
+        LOG.error(msg);
+      }
+    },
+    IGNORE;
+
+    void handle(@NotNull String msg) throws RuntimeException {}
+  }
+
+  @ApiStatus.Internal
+  public interface IconUrlResolver {
+    @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark);
 
     boolean isResolved();
-
-    void resolve();
 
     @Nullable
     URL getURL();
 
     IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform);
 
-    IconUrlResolver detachClassLoader(ClassLoader loader);
+    @Nullable IconUrlResolver detachClassLoader(@NotNull ClassLoader loader);
   }
 
   /**
    * Used to defer URL resolve.
    */
-  private static final class MyUrlResolver implements IconUrlResolver {
-    @Nullable private final Class<?> ownerClass;
-    @Nullable private final ClassLoader classLoader;
-    @Nullable private final String overriddenPath;
+  private static class UrlResolverImpl implements IconUrlResolver {
+    @Nullable protected final Class<?> ownerClass;
+    @Nullable protected final ClassLoader classLoader;
+    @Nullable protected final String overriddenPath;
     @NotNull private final HandleNotFound handleNotFound;
-    // Every myUrl write is performed before isResolved write (see resolve())
-    // and every myUrl read is performed after isResolved read (see getUrl()), thus
-    // no necessary to declare myUrl as volatile: happens-before is established via isResolved.
-    @Nullable private URL myUrl;
+    // Every url write is performed before isResolved write (see resolve())
+    // and every url read is performed after isResolved read (see getUrl()), thus
+    // no necessary to declare url as volatile: happens-before is established via isResolved.
+    @Nullable private URL url;
     private volatile boolean isResolved;
+    private final boolean useCacheOnLoad;
 
-    MyUrlResolver(@Nullable URL url, @Nullable ClassLoader classLoader) {
+    UrlResolverImpl(@Nullable URL url, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
       ownerClass = null;
       overriddenPath = null;
       this.classLoader = classLoader;
-      myUrl = url;
+      this.url = url;
       handleNotFound = HandleNotFound.IGNORE;
       isResolved = true;
+      this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    MyUrlResolver(@Nullable URL url, @NotNull String path, @Nullable ClassLoader classLoader) {
+    UrlResolverImpl(@Nullable URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
       ownerClass = null;
       overriddenPath = path;
       this.classLoader = classLoader;
-      myUrl = url;
+      this.url = url;
       handleNotFound = HandleNotFound.IGNORE;
       isResolved = true;
+      this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    MyUrlResolver(@NotNull String path,
-                  @Nullable Class<?> clazz,
-                  @Nullable ClassLoader classLoader,
-                  @Nullable HandleNotFound handleNotFound) {
+    UrlResolverImpl(@NotNull String path,
+                    @Nullable Class<?> clazz,
+                    @Nullable ClassLoader classLoader,
+                    @Nullable HandleNotFound handleNotFound,
+                    boolean useCacheOnLoad) {
       overriddenPath = path;
       ownerClass = clazz;
       this.classLoader = classLoader;
@@ -912,35 +943,46 @@ public final class IconLoader {
         handleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
       }
       this.handleNotFound = handleNotFound;
+      this.useCacheOnLoad = useCacheOnLoad;
     }
 
     @Override
-    public @Nullable Class<?> getOwnerClass() {
-      return ownerClass;
+    public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+      int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      if (useCacheOnLoad) {
+        flags |= ImageLoader.USE_CACHE;
+      }
+      if (isDark) {
+        flags |= ImageLoader.DARK;
+      }
+
+      if (ownerClass != null && overriddenPath != null) {
+        return ImageLoader.loadFromUrl(overriddenPath, ownerClass, flags, filters, scaleContext);
+      }
+      else {
+        if (!isResolved) {
+          resolve();
+        }
+        URL url = this.url;
+        return url == null ? null : ImageLoader.loadFromUrl(url.toString(), null, flags, filters, scaleContext);
+      }
     }
 
     @Override
-    @Nullable
-    public String getOverriddenPath() {
-      return overriddenPath;
-    }
-
-    @Override
-    public boolean isResolved() {
+    public final boolean isResolved() {
       return isResolved;
     }
 
     /**
      * Resolves the URL if it's not yet resolved.
      */
-    @Override
-    public void resolve() {
+    public final void resolve() {
       if (isResolved) {
         return;
       }
 
       try {
-        myUrl = doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
+        url = doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
       }
       finally {
         isResolved = true;
@@ -971,15 +1013,15 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable URL getURL() {
+    public final @Nullable URL getURL() {
       if (!isResolved()) {
         resolve();
       }
-      return myUrl;
+      return url;
     }
 
     @Override
-    public IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+    public final IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
       Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
       if (patchedPath == null) {
         return this;
@@ -988,7 +1030,7 @@ public final class IconLoader {
       ClassLoader classLoader = patchedPath.second == null ? this.classLoader : patchedPath.second;
       String path = patchedPath.first;
       if (classLoader != null && path != null && path.startsWith("/")) {
-        IconUrlResolver resolver = new MyUrlResolver(path.substring(1), null, classLoader, handleNotFound);
+        UrlResolverImpl resolver = new UrlResolverImpl(path.substring(1), null, classLoader, handleNotFound, useCacheOnLoad);
         resolver.resolve();
         return resolver;
       }
@@ -996,7 +1038,7 @@ public final class IconLoader {
       // This use case for temp themes only. Here we want immediately replace existing icon to a local one
       if (path != null && path.startsWith("file:/")) {
         try {
-          IconUrlResolver resolver = new MyUrlResolver(new URL(path), path.substring(1), classLoader);
+          UrlResolverImpl resolver = new UrlResolverImpl(new URL(path), path.substring(1), classLoader, useCacheOnLoad);
           resolver.resolve();
           return resolver;
         }
@@ -1031,49 +1073,20 @@ public final class IconLoader {
     }
 
     @Override
-    public IconUrlResolver detachClassLoader(ClassLoader loader) {
-      if (classLoader == loader) {
-        return new DummyUrlResolver();
-      }
-      return this;
-    }
-  }
-
-  private static final class DummyUrlResolver implements IconUrlResolver {
-    @Override
-    public @Nullable Class<?> getOwnerClass() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getOverriddenPath() {
-      return null;
+    public final IconUrlResolver detachClassLoader(@NotNull ClassLoader loader) {
+      return classLoader == loader ? null : this;
     }
 
     @Override
-    public boolean isResolved() {
-      return false;
-    }
-
-    @Override
-    public void resolve() throws RuntimeException {
-    }
-
-    @Nullable
-    @Override
-    public URL getURL() {
-      return null;
-    }
-
-    @Override
-    public IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      return this;
-    }
-
-    @Override
-    public IconUrlResolver detachClassLoader(ClassLoader loader) {
-      return this;
+    public final String toString() {
+      return "UrlResolver{" +
+             "ownerClass=" + ownerClass +
+             ", classLoader=" + classLoader +
+             ", overriddenPath='" + overriddenPath + '\'' +
+             ", url=" + url +
+             ", isResolved=" + isResolved +
+             ", useCacheOnLoad=" + useCacheOnLoad +
+             '}';
     }
   }
 

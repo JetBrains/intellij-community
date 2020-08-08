@@ -267,6 +267,10 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     return (int)myStatus.get() == 0;
   }
 
+  public int getQueueSize() {
+    return myTaskQueue.size();
+  }
+
   @NotNull
   public List<Runnable> clearAndCancelAll() {
     List<Runnable> queued = new ArrayList<>();

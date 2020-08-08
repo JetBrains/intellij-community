@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,6 +33,9 @@ public interface IconManager {
   }
 
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
+
+  @ApiStatus.Internal
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey);
 
   @NotNull
   default Icon createEmptyIcon(@NotNull Icon icon) {
@@ -109,6 +113,11 @@ final class DummyIconManager implements IconManager {
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
+    return DummyIcon.INSTANCE;
+  }
+
+  @Override
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
     return DummyIcon.INSTANCE;
   }
 

@@ -632,7 +632,6 @@ class DistributionJARsBuilder {
 
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
-    SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
