@@ -181,4 +181,12 @@ public class PyStringLiteralTest extends PyTestCase {
     final PyStringLiteralExpression string = createLiteralFromText("'foo' 'bar' 'baz'");
     assertSize(3, string.getStringElements());
   }
+
+  public void testInterpolationDetection() {
+    assertFalse(createLiteralFromText("'''foo'''").isInterpolated());
+    assertFalse(createLiteralFromText("f'foo'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{}'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{42}' 'bar'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{42}'").isInterpolated());
+  }
 }

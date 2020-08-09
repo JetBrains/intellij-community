@@ -43,7 +43,12 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
   @Nullable
   private static PsiElement getElement(PsiFile file, Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getCurrentCaret().getOffset());
-    return PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class, false, PyFStringFragment.class);
+    StringLiteralExpression stringLiteral = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class, false,
+                                                                        PyFStringFragment.class);
+    if (stringLiteral instanceof PyStringLiteralExpression && ((PyStringLiteralExpression)stringLiteral).isInterpolated()) {
+      return null;
+    }
+    return stringLiteral;
   }
 
   @Override
