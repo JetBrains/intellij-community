@@ -93,7 +93,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private boolean validIsWitherUnique(@NotNull PsiField psiField, @NotNull final ProblemBuilder builder) {
     final PsiClass fieldContainingClass = psiField.getContainingClass();
     final String psiFieldName = psiField.getName();
-    if (psiFieldName != null && fieldContainingClass != null) {
+    if (fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
 
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
