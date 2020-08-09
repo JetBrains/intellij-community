@@ -87,13 +87,8 @@ public final class EnvironmentUtil {
       getter = CompletableFuture.completedFuture(getSystemEnv());
     }
 
-    if (ourEnvGetter.compareAndSet(null, getter)) {
-      return getter;
-    }
-    else {
-      getter.cancel(true);
-      return ourEnvGetter.get();
-    }
+    ourEnvGetter.set(getter);
+    return getter;
   }
 
   /**
