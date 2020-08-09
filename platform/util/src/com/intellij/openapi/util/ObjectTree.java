@@ -170,6 +170,13 @@ final class ObjectTree {
         if (node.getObject() == disposable) return true;
       }
     }
+    List<Disposable> unregistered = myExecutedUnregisteredObjects;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (unregistered) {
+      if (ContainerUtil.indexOfIdentity(unregistered, disposable) != -1) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -178,7 +185,7 @@ final class ObjectTree {
                                                              @NotNull Function<? super T, ? extends List<Throwable>> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, (t, t2) -> t == t2) != -1) {
+      if (ArrayUtil.indexOf(recursiveGuard, object, (t1, t2) -> t1 == t2) != -1) {
         return null;
       }
       recursiveGuard.add(object);
@@ -190,7 +197,7 @@ final class ObjectTree {
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, (t, t2) -> t == t2);
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, (t1, t2) -> t1 == t2);
         assert i != -1;
         recursiveGuard.remove(i);
       }

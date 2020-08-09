@@ -4,13 +4,20 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.Disposer.newDisposable;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -167,6 +174,44 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(myRoot);
     assertDisposed(myFolder1);
     assertDisposed(myLeaf1);
+  }
+
+  public void testIsDisposingWorksForDisposablesRegisteredWithParent() throws ExecutionException, InterruptedException {
+    AtomicBoolean disposeRun = new AtomicBoolean();
+    AtomicBoolean allowToContinueDispose = new AtomicBoolean();
+    Disposable disposable = () -> {
+      disposeRun.set(true);
+      while (!allowToContinueDispose.get());
+    };
+    Disposer.register(myRoot, disposable);
+
+    assertFalse(Disposer.isDisposing(disposable));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+    Future<?> future = executor.submit(() -> Disposer.dispose(myRoot));
+    while (!disposeRun.get());
+    assertTrue(Disposer.isDisposing(disposable));
+    assertFalse(future.isDone());
+    allowToContinueDispose.set(true);
+    future.get();
+    assertFalse(Disposer.isDisposing(disposable));
+  }
+
+  public void testIsDisposingWorksForUnregisteredDisposables() throws ExecutionException, InterruptedException {
+    AtomicBoolean disposeRun = new AtomicBoolean();
+    AtomicBoolean allowToContinueDispose = new AtomicBoolean();
+    Disposable disposable = () -> {
+      disposeRun.set(true);
+      while (!allowToContinueDispose.get());
+    };
+    assertFalse(Disposer.isDisposing(disposable));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+    Future<?> future = executor.submit(() -> Disposer.dispose(disposable));
+    while (!disposeRun.get());
+    assertTrue(Disposer.isDisposing(disposable));
+    assertFalse(future.isDone());
+    allowToContinueDispose.set(true);
+    future.get();
+    assertFalse(Disposer.isDisposing(disposable));
   }
 
   public void testDisposableParentNotify() {
