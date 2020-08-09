@@ -78,7 +78,8 @@ public final class EnvironmentUtil {
           setCharsetVar(env);
           return Collections.unmodifiableMap(env);
         }
-        catch (IOException e) {
+        catch (Throwable e) {
+          LOG.warn("can't get shell environment", e);
           throw new CompletionException(e);
         }
       }, AppExecutorUtil.getAppExecutorService());
@@ -118,7 +119,6 @@ public final class EnvironmentUtil {
       return getter.join();
     }
     catch (Throwable t) {
-      LOG.warn("can't get shell environment", t);
       return getSystemEnv();
     }
   }
