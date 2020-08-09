@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -40,46 +41,14 @@ public abstract class AbstractProcessor implements Processor {
   /**
    * Constructor for all Lombok-Processors
    *  @param supportedClass           kind of output elements this processor supports
-   * @param supportedAnnotationClass annotation this processor supports
+   * @param supportedAnnotationClasses annotations this processor supports
    */
   @SuppressWarnings("unchecked")
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+                              @NotNull Class<? extends Annotation>... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
-    this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass};
-  }
-
-  /**
-   * Constructor for all Lombok-Processors
-   *  @param supportedClass            kind of output elements this processor supports
-   * @param supportedAnnotationClass  annotation this processor supports
-   * @param equivalentAnnotationClass another equivalent annotation
-   */
-  @SuppressWarnings("unchecked")
-  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                              @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
-    this.configDiscovery = ConfigDiscovery.getInstance();
-    this.supportedClass = supportedClass;
-    this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass, equivalentAnnotationClass};
-  }
-
-  /**
-   * Constructor for all Lombok-Processors
-   * @param supportedClass                  kind of output elements this processor supports
-   * @param supportedAnnotationClass        annotation this processor supports
-   * @param oneEquivalentAnnotationClass    another equivalent annotation
-   * @param secondEquivalentAnnotationClass another equivalent annotation
-   */
-  @SuppressWarnings("unchecked")
-  AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                    @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                    @NotNull Class<? extends Annotation> oneEquivalentAnnotationClass,
-                    @NotNull Class<? extends Annotation> secondEquivalentAnnotationClass) {
-    this.configDiscovery = ConfigDiscovery.getInstance();
-    this.supportedClass = supportedClass;
-    this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass, oneEquivalentAnnotationClass, secondEquivalentAnnotationClass};
+    this.supportedAnnotationClasses = supportedAnnotationClasses;
   }
 
   @NotNull

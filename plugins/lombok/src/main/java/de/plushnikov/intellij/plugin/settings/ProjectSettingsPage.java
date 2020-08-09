@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.settings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import org.jetbrains.annotations.Nls;
@@ -31,10 +32,9 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private PropertiesComponent myPropertiesComponent;
   private LombokProcessorProvider myLombokProcessorProvider;
 
-  public ProjectSettingsPage(PropertiesComponent propertiesComponent,
-                             LombokProcessorProvider lombokProcessorProvider) {
-    myPropertiesComponent = propertiesComponent;
-    myLombokProcessorProvider = lombokProcessorProvider;
+  public ProjectSettingsPage(Project project) {
+    myPropertiesComponent = project.getService(PropertiesComponent.class);
+    myLombokProcessorProvider = project.getService(LombokProcessorProvider.class);
   }
 
   @Nls

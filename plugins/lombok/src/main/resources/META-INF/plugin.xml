@@ -7,7 +7,7 @@
   </vendor>
   <version>XXX</version>
 
-  <idea-version since-build="190.00"/>
+  <idea-version since-build="201.00"/>
 
   <description><![CDATA[ Description will be added by gradle build]]></description>
   <category>Tools Integration</category>
