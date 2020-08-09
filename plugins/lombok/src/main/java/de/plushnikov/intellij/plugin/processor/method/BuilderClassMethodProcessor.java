@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,11 +23,8 @@ import java.util.List;
  */
 public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
-  private final BuilderHandler builderHandler;
-
-  public BuilderClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
+  public BuilderClassMethodProcessor() {
     super(PsiClass.class, Builder.class);
-    this.builderHandler = builderHandler;
   }
 
   @Override
@@ -36,13 +34,13 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiMethod, psiAnnotation, builder);
+    return ServiceManager.getService(BuilderHandler.class).validate(psiMethod, psiAnnotation, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
-      builderHandler.createBuilderClassIfNotExist(psiClass, psiMethod, psiAnnotation).ifPresent(target::add);
+      ServiceManager.getService(BuilderHandler.class).createBuilderClassIfNotExist(psiClass, psiMethod, psiAnnotation).ifPresent(target::add);
     }
   }
 }

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,11 +23,8 @@ import java.util.List;
  */
 public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
-  private final BuilderHandler builderHandler;
-
-  public BuilderMethodProcessor(@NotNull BuilderHandler builderHandler) {
+  public BuilderMethodProcessor() {
     super(PsiMethod.class, Builder.class);
-    this.builderHandler = builderHandler;
   }
 
   @Override
@@ -42,6 +40,7 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
+    final BuilderHandler builderHandler = ServiceManager.getService(BuilderHandler.class);
     if (null != psiClass) {
 
       PsiClass builderClass = builderHandler.getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).orElse(null);

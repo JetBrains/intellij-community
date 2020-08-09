@@ -31,7 +31,7 @@ public class LombokProcessorProvider {
     return service;
   }
 
-  private final PropertiesComponent myPropertiesComponent;
+  private final Project myProject;
 
   private final Map<Class, Collection<Processor>> lombokTypeProcessors;
   private final Map<String, Collection<Processor>> lombokProcessors;
@@ -39,12 +39,16 @@ public class LombokProcessorProvider {
 
   private boolean alreadyInitialized;
 
-  public LombokProcessorProvider(@NotNull PropertiesComponent propertiesComponent) {
-    myPropertiesComponent = propertiesComponent;
+  public LombokProcessorProvider(@NotNull Project project) {
+    myProject = project;
 
     lombokProcessors = new ConcurrentHashMap<>();
     lombokTypeProcessors = new ConcurrentHashMap<>();
     registeredAnnotationNames = ConcurrentHashMap.newKeySet();
+  }
+
+  private PropertiesComponent getPropertiesComponent() {
+    return myProject.getService(PropertiesComponent.class);
   }
 
   private void checkInitialized() {
@@ -58,9 +62,9 @@ public class LombokProcessorProvider {
     lombokProcessors.clear();
     lombokTypeProcessors.clear();
     registeredAnnotationNames.clear();
-
+    PropertiesComponent propertiesComponent = getPropertiesComponent();
     for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
-      if (processor.isEnabled(myPropertiesComponent)) {
+      if (processor.isEnabled(propertiesComponent)) {
 
         Class<? extends Annotation>[] annotationClasses = processor.getSupportedAnnotationClasses();
         for (Class<? extends Annotation> annotationClass : annotationClasses) {

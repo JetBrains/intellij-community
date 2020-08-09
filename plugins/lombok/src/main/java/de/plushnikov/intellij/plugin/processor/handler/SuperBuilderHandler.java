@@ -31,10 +31,6 @@ public class SuperBuilderHandler extends BuilderHandler {
   private static final String INSTANCE_VARIABLE_NAME = "instance";
   private static final String BUILDER_VARIABLE_NAME = "b";
 
-  public SuperBuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
-    super(toStringProcessor, noArgsConstructorProcessor);
-  }
-
   @Override
   public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
     final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);

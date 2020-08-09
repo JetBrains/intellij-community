@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,14 +21,9 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ConfigDiscovery {
-  private final FileBasedIndex fileBasedIndex;
 
   public static ConfigDiscovery getInstance() {
     return ServiceManager.getService(ConfigDiscovery.class);
-  }
-
-  public ConfigDiscovery(FileBasedIndex fileBasedIndex) {
-    this.fileBasedIndex = fileBasedIndex;
   }
 
   @NotNull
@@ -112,7 +108,7 @@ public class ConfigDiscovery {
   @NotNull
   private String discoverProperty(@NotNull ConfigKey configKey, @NotNull String canonicalPath, @NotNull Project project) {
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-
+    final FileBasedIndex fileBasedIndex = getFileBasedIndex();
     String currentPath = canonicalPath;
     while (null != currentPath) {
 
@@ -131,6 +127,11 @@ public class ConfigDiscovery {
     }
 
     return configKey.getConfigDefaultValue();
+  }
+
+  @VisibleForTesting
+  protected FileBasedIndex getFileBasedIndex() {
+    return ServiceManager.getService(FileBasedIndex.class);
   }
 
   @Nullable
@@ -159,7 +160,7 @@ public class ConfigDiscovery {
     List<String> result = new ArrayList<>();
 
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-
+    final FileBasedIndex fileBasedIndex = getFileBasedIndex();
     String currentPath = canonicalPath;
     while (null != currentPath) {
 
