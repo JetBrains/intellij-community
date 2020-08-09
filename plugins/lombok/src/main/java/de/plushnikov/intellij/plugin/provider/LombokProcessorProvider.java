@@ -1,15 +1,8 @@
 package de.plushnikov.intellij.plugin.provider;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -47,10 +40,6 @@ public class LombokProcessorProvider {
     registeredAnnotationNames = ConcurrentHashMap.newKeySet();
   }
 
-  private PropertiesComponent getPropertiesComponent() {
-    return myProject.getService(PropertiesComponent.class);
-  }
-
   private void checkInitialized() {
     if (!alreadyInitialized) {
       initProcessors();
@@ -62,9 +51,9 @@ public class LombokProcessorProvider {
     lombokProcessors.clear();
     lombokTypeProcessors.clear();
     registeredAnnotationNames.clear();
-    PropertiesComponent propertiesComponent = getPropertiesComponent();
+
     for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
-      if (processor.isEnabled(propertiesComponent)) {
+      if (processor.isEnabled(myProject)) {
 
         Class<? extends Annotation>[] annotationClasses = processor.getSupportedAnnotationClasses();
         for (Class<? extends Annotation> annotationClass : annotationClasses) {

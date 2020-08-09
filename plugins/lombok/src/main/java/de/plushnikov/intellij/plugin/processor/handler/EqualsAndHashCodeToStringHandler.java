@@ -1,29 +1,15 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class EqualsAndHashCodeToStringHandler {
 

@@ -3,9 +3,9 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
-import lombok.Builder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import lombok.Builder;
+import org.jetbrains.annotations.NotNull;
 
 
 public class BuilderHandler {

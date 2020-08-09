@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -44,8 +44,8 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_BUILDER_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @NotNull

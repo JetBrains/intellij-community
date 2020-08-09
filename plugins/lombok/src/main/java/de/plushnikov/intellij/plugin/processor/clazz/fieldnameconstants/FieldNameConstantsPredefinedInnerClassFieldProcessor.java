@@ -13,11 +13,7 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Updates fields of existing inner class type in class annotated by FieldNameConstants

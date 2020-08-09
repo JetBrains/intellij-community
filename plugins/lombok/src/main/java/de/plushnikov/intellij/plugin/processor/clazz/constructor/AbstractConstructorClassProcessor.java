@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
@@ -15,12 +15,7 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiElementUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.*;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -28,11 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,8 +40,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_CONSTRUCTOR_ENABLED);
   }
 
   @Override

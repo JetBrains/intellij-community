@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 
 public enum RedundantModifiersInfoType {
 

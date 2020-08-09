@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.*;
+import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.INNER_CLASS;
 
 public abstract class LombokRedundantModifierInspection extends AbstractBaseJavaLocalInspectionTool {
 

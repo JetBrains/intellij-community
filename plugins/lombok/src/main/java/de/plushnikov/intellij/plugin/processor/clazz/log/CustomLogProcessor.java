@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import java.util.List;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -13,6 +11,8 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.CustomLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Adam Juraszek

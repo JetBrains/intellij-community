@@ -6,13 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodReferenceExpression;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.EqualsAndHashCodeCallSuperHandler;
@@ -22,11 +16,7 @@ import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 

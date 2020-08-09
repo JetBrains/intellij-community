@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -25,8 +25,8 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_DELEGATE_ENABLED);
   }
 
   @Override

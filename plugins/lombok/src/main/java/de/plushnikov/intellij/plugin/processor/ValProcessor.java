@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.processor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
@@ -89,13 +88,9 @@ public class ValProcessor extends AbstractProcessor {
     return reference.getQualifiedName();
   }
 
-  public boolean isEnabled(@NotNull Project project) {
-    return isEnabled(PropertiesComponent.getInstance(project));
-  }
-
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_VAL_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_VAL_ENABLED);
   }
 
   @NotNull
