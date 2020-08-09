@@ -17,16 +17,6 @@ Provides support for lombok annotations to write great Java code with IntelliJ I
 
 ---
 
-:collision: **The latest IntelliJ IDEA version (2020.1) contains a BUG :beetle: for several plugins (including plugin for Lombok) were shown as incompatible with the updated version of the IDE.** :collision:
-
-You can find the issue with a detailed explanation here: https://youtrack.jetbrains.com/issue/IDEA-237113.
-
-It has already been resolved and the fix will be in the nearest IDE patch (presumably 2020.1.1).
-
-:hammer_and_wrench: **FIX:** As of now, the workaround is to re-install the plugin in the IDE settings.
-
----
-
 34th version of plugin released.
 
 Install it automatically from IntelliJ Idea plugin repository.
