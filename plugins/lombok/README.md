@@ -141,6 +141,7 @@ Developed By
 - [**@jeromewaibel** Jérôme Waibel](https://github.com/jeromewaibel)
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@juriad** Adam Juraszek](https://github.com/juriad)
+- [**@kuil09** Hwang, Geon Gu](https://github.com/kuil09)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
 - [**@Lekanich** Aleksandr Zhelezniak](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
