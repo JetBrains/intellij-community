@@ -113,7 +113,12 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
-    dialog.show();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.doAction();
+    }
+    else {
+      dialog.show();
+    }
   }
 
   private static boolean isAccessedForWriting(PsiElement referenceElement) {
