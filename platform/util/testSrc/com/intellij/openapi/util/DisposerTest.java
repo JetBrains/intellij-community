@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
@@ -111,7 +110,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myFolder1);
     assertDisposed(myFolder2);
 
-    assertEquals(0, Disposer.getTree().getNodesInExecution().size());
+    assertEquals(0, Disposer.getTree().myObjectsBeingDisposed.size());
   }
 
   public void testDirectCallOfUnregisteredSelfDisposable() {

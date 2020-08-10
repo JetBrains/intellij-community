@@ -2524,6 +2524,17 @@ public class ContainerUtil {
     return -1;
   }
 
+  @Contract(pure=true)
+  public static <T> int lastIndexOfIdentity(@NotNull List<? extends T> list, T object) {
+    for (int i = list.size() - 1; i >= 0; i--) {
+      T t = list.get(i);
+      if (t == object) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, final @NotNull Class<? extends U> clazz) {
     int i = lastIndexOf(list, (Condition<T>)clazz::isInstance);

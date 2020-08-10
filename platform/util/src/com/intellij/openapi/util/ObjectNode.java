@@ -67,8 +67,9 @@ final class ObjectNode {
     }
   }
 
+  @Nullable
   List<Throwable> execute(@Nullable List<Throwable> exceptions, boolean onlyChildren) {
-    return ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), __ -> {
+    return myTree.executeActionWithRecursiveGuard(myObject, () -> {
       List<Throwable> result = exceptions;
       if (myTree.getDisposalInfo(myObject) != null) {
         return result; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination

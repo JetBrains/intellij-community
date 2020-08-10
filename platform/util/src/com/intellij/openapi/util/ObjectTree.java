@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class ObjectTree {
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
@@ -24,11 +23,11 @@ final class ObjectTree {
   private final Set<Disposable> myRootObjects = new ReferenceOpenHashSet<>(); // guarded by treeLock
   // guarded by treeLock
   private final Map<Disposable, ObjectNode> myObject2NodeMap = new Reference2ObjectOpenHashMap<>();
-  // Disposable to trace or boolean marker (if trace unavailable)
+  // Disposable -> trace or boolean marker (if trace unavailable)
   private final Map<Disposable, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
-  private final List<ObjectNode> myExecutedNodes = new ArrayList<>(); // guarded by myExecutedNodes
-  private final List<Disposable> myExecutedUnregisteredObjects = new ArrayList<>(); // guarded by myExecutedUnregisteredObjects
+  // disposables for which Disposer.dispose() is currently running
+  final List<Disposable> myObjectsBeingDisposed = new ArrayList<>(); // guarded by myObjectsBeingDisposed
 
   final Object treeLock = new Object();
 
@@ -43,11 +42,6 @@ final class ObjectTree {
     else {
       myObject2NodeMap.put(object, node);
     }
-  }
-
-  @NotNull
-  final List<ObjectNode> getNodesInExecution() {
-    return myExecutedNodes;
   }
 
   @Nullable
@@ -163,52 +157,42 @@ final class ObjectTree {
   }
 
   boolean isDisposing(@NotNull Disposable disposable) {
-    List<ObjectNode> guard = getNodesInExecution();
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (guard) {
-      for (ObjectNode node : guard) {
-        if (node.getObject() == disposable) return true;
-      }
-    }
-    List<Disposable> unregistered = myExecutedUnregisteredObjects;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (unregistered) {
-      if (ContainerUtil.indexOfIdentity(unregistered, disposable) != -1) {
+    synchronized (myObjectsBeingDisposed) {
+      if (ContainerUtil.indexOfIdentity(myObjectsBeingDisposed, disposable) != -1) {
         return true;
       }
     }
     return false;
   }
 
-  static <T> List<Throwable> executeActionWithRecursiveGuard(@NotNull T object,
-                                                             @NotNull List<T> recursiveGuard,
-                                                             @NotNull Function<? super T, ? extends List<Throwable>> action) {
+  List<Throwable> executeActionWithRecursiveGuard(@NotNull Disposable object, @NotNull Supplier<? extends List<Throwable>> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, (t1, t2) -> t1 == t2) != -1) {
+    synchronized (myObjectsBeingDisposed) {
+      int i = ContainerUtil.lastIndexOfIdentity(myObjectsBeingDisposed, object);
+      if (i != -1) {
         return null;
       }
-      recursiveGuard.add(object);
+      myObjectsBeingDisposed.add(object);
     }
 
     try {
-      return action.apply(object);
+      return action.get();
     }
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, (t1, t2) -> t1 == t2);
+      synchronized (myObjectsBeingDisposed) {
+        int i = ContainerUtil.lastIndexOfIdentity(myObjectsBeingDisposed, object);
         assert i != -1;
-        recursiveGuard.remove(i);
+        myObjectsBeingDisposed.remove(i);
       }
     }
   }
 
   private void executeUnregistered(@NotNull Disposable disposable) {
-    List<Throwable> exceptions = executeActionWithRecursiveGuard(disposable, myExecutedUnregisteredObjects, d -> {
+    List<Throwable> exceptions = executeActionWithRecursiveGuard(disposable, ()-> {
       try {
         //noinspection SSBasedInspection
-        d.dispose();
+        disposable.dispose();
         return null;
       }
       catch (Throwable e) {
