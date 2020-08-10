@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -264,7 +265,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public String getHint() {
       if (areDetected(getIndentOptions())) {
-        return "detected";
+        return LangBundle.message("indent.option.detected");
       }
       return null;
     }
