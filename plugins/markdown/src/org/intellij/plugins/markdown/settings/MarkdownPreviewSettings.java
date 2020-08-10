@@ -5,7 +5,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
-import org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public final class MarkdownPreviewSettings {
   @Property(surroundWithTag = false)
   @NotNull
   private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo =
-    JBCefApp.isSupported() ? new JCEFHtmlPanelProvider().getProviderInfo() : new JavaFxHtmlPanelProvider().getProviderInfo();
+    JBCefApp.isSupported() ? new JCEFHtmlPanelProvider().getProviderInfo() : new MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable");
 
   @Attribute("UseGrayscaleRendering")
   private boolean myUseGrayscaleRendering = true;
