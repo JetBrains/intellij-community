@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.ui.treeStructure.Tree;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,7 @@ public class HideWhitespaceAction extends ToggleAction {
   private final GeneratedStructureModel myEventModel;
 
   public HideWhitespaceAction(Tree structureTree, GeneratedStructureModel eventModel) {
-    super("Hide Whitespace Nodes");
+    super(XsltDebuggerBundle.message("action.hide.whitespace.nodes.text"));
     myStructureTree = structureTree;
     myEventModel = eventModel;
 
