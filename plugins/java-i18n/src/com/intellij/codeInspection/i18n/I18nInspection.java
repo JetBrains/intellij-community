@@ -1038,7 +1038,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isNonNlsCall(UReferenceExpression qualifier, Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isNonNlsCall(UResolvable qualifier, Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiElement resolved = qualifier.resolve();
     if (resolved instanceof PsiModifierListOwner) {
       final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
@@ -1060,8 +1060,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
     if (qualifier instanceof UQualifiedReferenceExpression) {
       UExpression receiver = UastUtils.skipParenthesizedExprDown(((UQualifiedReferenceExpression)qualifier).getReceiver());
-      if (receiver instanceof UReferenceExpression) {
-        return isNonNlsCall((UReferenceExpression)receiver, nonNlsTargets);
+      if (receiver instanceof UResolvable) {
+        return isNonNlsCall((UResolvable)receiver, nonNlsTargets);
       }
     }
     return false;
