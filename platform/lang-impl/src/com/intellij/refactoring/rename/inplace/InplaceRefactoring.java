@@ -575,16 +575,24 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+    return startMarkAction(myProject, myEditor, getCommandName());
+  }
+
+  static @NotNull StartMarkAction startMarkAction(
+    @NotNull Project project,
+    @NotNull Editor editor,
+    @NlsContexts.Command String commandName
+  ) throws StartMarkAction.AlreadyStartedException {
     final StartMarkAction[] markAction = new StartMarkAction[1];
     final StartMarkAction.AlreadyStartedException[] ex = new StartMarkAction.AlreadyStartedException[1];
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+    CommandProcessor.getInstance().executeCommand(project, () -> {
       try {
-        markAction[0] = StartMarkAction.start(myEditor, myProject, getCommandName());
+        markAction[0] = StartMarkAction.start(editor, project, commandName);
       }
       catch (StartMarkAction.AlreadyStartedException e) {
         ex[0] = e;
       }
-    }, getCommandName(), null);
+    }, commandName, null);
     if (ex[0] != null) throw ex[0];
     return markAction[0];
   }
