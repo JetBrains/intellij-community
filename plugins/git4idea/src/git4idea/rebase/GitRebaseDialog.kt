@@ -411,7 +411,8 @@ internal class GitRebaseDialog(private val project: Project,
     editor = createFieldEditor(GitBundle.message("rebase.dialog.new.base"))
     prototypeDisplayValue = PresentableRef(GitLocalBranch(COMBOBOX_VALUE_PROTOTYPE))
     renderer = ComboBoxPrototypeRenderer.create(this, PresentableRef::toString)
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createUpstreamField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
@@ -421,13 +422,15 @@ internal class GitRebaseDialog(private val project: Project,
     editor = createFieldEditor(GitBundle.message("rebase.dialog.target"))
     prototypeDisplayValue = PresentableRef(GitLocalBranch(COMBOBOX_VALUE_PROTOTYPE))
     renderer = ComboBoxPrototypeRenderer.create(this, PresentableRef::toString)
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createRootField() = ComboBox(CollectionComboBoxModel(roots)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create(GitBundle.message("rebase.dialog.invalid.root")) { it.name }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
     item = defaultRoot ?: roots[0]
 
     val listener = ActionListener {
@@ -441,9 +444,10 @@ internal class GitRebaseDialog(private val project: Project,
     isSwingPopup = false
     isEditable = true
     editor = createFieldEditor(GitBundle.message("rebase.dialog.branch.field"))
-    ui = FlatComboBoxUI(
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
-      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+      popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
   }
 
   private fun createFieldEditor(@Nls placeHolder: String) = object : BasicComboBoxEditor() {

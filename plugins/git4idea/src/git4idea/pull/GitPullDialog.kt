@@ -437,11 +437,12 @@ class GitPullDialog(private val project: Project,
 
     prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
     renderer = ComboBoxPrototypeRenderer.create(this) { it }
-    ui = FlatComboBoxUI(
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),
       GitBundle.message("pull.branch.nothing.to.pull"),
-      this@GitPullDialog::createBranchFieldPopupComponent)
+      this@GitPullDialog::createBranchFieldPopupComponent))
   }
 
   private fun createBranchFieldPopupComponent(content: JComponent): JComponent {
