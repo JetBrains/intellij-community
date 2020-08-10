@@ -1083,7 +1083,7 @@ public final class PlatformTestUtil {
         processHandler.addProcessListener(new ProcessAdapter() {
           @Override
           public void startNotified(@NotNull ProcessEvent event) {
-            LOG.debug("Process started");
+            LOG.debug("Process notified");
           }
 
           @Override
@@ -1100,6 +1100,7 @@ public final class PlatformTestUtil {
         latch.countDown();
       }
     });
+    LOG.debug("Waiting for process to start");
     if (!latch.await(60, TimeUnit.SECONDS)) {
       fail("Process failed to start");
     }
