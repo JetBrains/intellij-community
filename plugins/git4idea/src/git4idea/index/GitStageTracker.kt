@@ -42,6 +42,7 @@ class GitStageTracker(val project: Project) : Disposable {
 
   @Volatile
   var state: State = State(gitRoots().associateWith { RootState.empty(it) })
+    private set
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
