@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
@@ -68,10 +69,10 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
   }
 
-  private static String getUniqueVirtualFilePath(Project project,
-                                                 VirtualFile file,
+  private static String getUniqueVirtualFilePath(@NotNull Project project,
+                                                 @NotNull VirtualFile file,
                                                  boolean skipNonOpenedFiles,
-                                                 GlobalSearchScope scope) {
+                                                 @NotNull GlobalSearchScope scope) {
     UniqueNameBuilder<VirtualFile> builder = getUniqueVirtualFileNameBuilder(project,
                                                                              file,
                                                                              skipNonOpenedFiles,
@@ -83,10 +84,10 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   }
 
   @Nullable
-  private static UniqueNameBuilder<VirtualFile> getUniqueVirtualFileNameBuilder(Project project,
-                                                 VirtualFile file,
-                                                 boolean skipNonOpenedFiles,
-                                                 GlobalSearchScope scope) {
+  private static UniqueNameBuilder<VirtualFile> getUniqueVirtualFileNameBuilder(@NotNull Project project,
+                                                                                @NotNull VirtualFile file,
+                                                                                boolean skipNonOpenedFiles,
+                                                                                @NotNull GlobalSearchScope scope) {
     Key<CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>>> key =
       skipNonOpenedFiles ? ourShortNameOpenedBuilderCacheKey : ourShortNameBuilderCacheKey;
     CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>> data = project.getUserData(key);
@@ -132,11 +133,12 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   }
 
   @Nullable
-  private static UniqueNameBuilder<VirtualFile> filesWithTheSameName(String fileName,
-                                                                     Project project,
+  private static UniqueNameBuilder<VirtualFile> filesWithTheSameName(@NotNull String fileName,
+                                                                     @NotNull Project project,
                                                                      boolean skipNonOpenedFiles,
-                                                                     GlobalSearchScope scope) {
-    Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.emptySet() : getFilesByNameFromIndex(fileName, project, scope);
+                                                                     @NotNull GlobalSearchScope scope) {
+    boolean useIndex = !skipNonOpenedFiles && !LightEdit.owns(project);
+    Collection<VirtualFile> filesWithSameName = useIndex ? getFilesByNameFromIndex(fileName, project, scope) : Collections.emptySet();
     THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<>(filesWithSameName);
     // add open files out of project scope
     for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles()) {

@@ -335,10 +335,10 @@ public class VcsProjectLog implements Disposable {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
+        myValue = null;
 
         LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
-        myValue = null;
 
         return oldValue;
       }

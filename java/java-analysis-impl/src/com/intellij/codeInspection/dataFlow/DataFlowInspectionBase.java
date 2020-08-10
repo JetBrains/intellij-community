@@ -40,7 +40,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -724,11 +723,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     nullArgs.forEach((anchor, alwaysPresent) -> {
       if (alwaysPresent == ThreeState.UNSURE) return;
       if (alwaysPresent.toBoolean()) {
-        reporter.registerProblem(anchor, "Passing a non-null argument to <code>Optional</code>",
+        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.non.null.argument.to.optional"),
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(anchor));
       }
       else {
-        reporter.registerProblem(anchor, "Passing <code>null</code> argument to <code>Optional</code>",
+        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.null.argument.to.optional"),
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor));
       }
     });

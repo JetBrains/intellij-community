@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
@@ -66,7 +65,6 @@ private val cdOverrideLaFFont                         get() = CheckboxDescriptor
 private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons                           get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
-private val cdEnableBorderlessMode                    get() = CheckboxDescriptor(message("checkbox.enable.borderless.mode"), settings::enableBorderlessMode, groupName = windowOptionGroupName)
 
 // @formatter:on
 
@@ -192,41 +190,25 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
       titledRow(message("group.ui.options")) {
-        fun optional(condition: Boolean, control: InnerCell.() -> Unit): (InnerCell.() -> Unit)? =
-          if (condition) control else null
-
-        val leftColumnControls = sequenceOf<InnerCell.() -> Unit>(
+        twoColumnRow(
           { checkBox(cdShowTreeIndents) },
-          { checkBox(cdUseCompactTreeIndents) },
-          { checkBox(cdEnableMenuMnemonics) },
-          { checkBox(cdEnableControlsMnemonics) }
-        )
-        val rightColumnControls = sequenceOf<(InnerCell.() -> Unit)?>(
           {
             checkBox(cdSmoothScrolling)
             ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-          },
-          { checkBox(cdDnDWithAlt) },
-          optional(IdeFrameDecorator.isCustomDecorationAvailable()) {
-            checkBox(cdEnableBorderlessMode)
-            commentNoWrap(message("checkbox.enable.borderless.mode.comment"))
-              .withLargeLeftGap()
-          },
-          { checkBox(cdFullPathsInTitleBar) },
-          { checkBox(cdShowMenuIcons) }
-        ).filterNotNull()
-
-        // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
-        // column to the left one:
-        val leftIt = leftColumnControls.iterator()
-        val rightIt = rightColumnControls.iterator()
-        while (leftIt.hasNext() || rightIt.hasNext()) {
-          when {
-            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnRow(leftIt.next()) { placeholder() }
-            rightIt.hasNext() -> twoColumnRow(rightIt.next()) { placeholder() } // move from right to left
           }
-        }
+        )
+        twoColumnRow(
+          { checkBox(cdUseCompactTreeIndents) },
+          { checkBox(cdDnDWithAlt) }
+        )
+        twoColumnRow(
+          { checkBox(cdEnableMenuMnemonics) },
+          { checkBox(cdFullPathsInTitleBar) }
+        )
+        twoColumnRow(
+          { checkBox(cdEnableControlsMnemonics) },
+          { checkBox(cdShowMenuIcons) }
+        )
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           fullRow {

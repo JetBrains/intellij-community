@@ -40,7 +40,7 @@ public class ActionCallback implements Disposable {
     this(null);
   }
 
-  public ActionCallback(String name) {
+  public ActionCallback(@NonNls String name) {
     myName = name;
     myDone = new ExecutionCallback();
     myRejected = new ExecutionCallback();

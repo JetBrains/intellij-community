@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -271,15 +272,15 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract void setElementName(T entry, String name);
 
-  protected abstract String getSplitDialogChooseFilesPrompt();
+  protected abstract @NlsContexts.Label String getSplitDialogChooseFilesPrompt();
 
-  protected abstract String getNameAlreadyUsedMessage(final String name);
+  protected abstract @NlsContexts.DialogMessage String getNameAlreadyUsedMessage(final String name);
 
-  protected abstract String getStepDescriptionText();
+  protected abstract @NlsContexts.DialogMessage String getStepDescriptionText();
 
-  protected abstract String getEntriesChooserTitle();
+  protected abstract @NlsContexts.TabTitle String getEntriesChooserTitle();
 
-  protected abstract String getDependenciesTitle();
+  protected abstract @NlsContexts.TabTitle String getDependenciesTitle();
 
   protected abstract String getElementTypeName();
 

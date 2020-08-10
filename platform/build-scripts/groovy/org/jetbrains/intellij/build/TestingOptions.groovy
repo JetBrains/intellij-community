@@ -89,6 +89,23 @@ class TestingOptions {
    */
   String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
+  /**
+   * If {@code true} causal profiler agent will be attached to the testing process.
+   */
+  boolean enableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
+
+  /**
+   * Specifies a directory to define tests based on pattern matching.
+   *
+   * Note that it should not include package folders.
+   */
+  String batchTestDir = System.getProperty("intellij.build.test.batchTest.dir")
+
+  /**
+   * Pattern to match tests in {@link #batchTestDir}.
+   */
+  String batchTestIncludes = System.getProperty("intellij.build.test.batchTest.includes")
+
   boolean performanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"

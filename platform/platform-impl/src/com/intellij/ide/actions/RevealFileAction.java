@@ -243,7 +243,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static class Holder {
-    private static final String fileManagerApp =
+    @NonNls private static final String fileManagerApp =
       readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
@@ -269,6 +269,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return Optional.empty();
     }
 
+    @NonNls
     private static String getXdgDataDirectories() {
       return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
              StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");

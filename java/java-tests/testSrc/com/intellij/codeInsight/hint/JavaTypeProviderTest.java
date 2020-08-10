@@ -19,8 +19,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "    <selection>x</selection>\n" +
            "  }", "int",
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>Integer.MIN_VALUE or &gt;= 0</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>Integer.MIN_VALUE or &gt;= 0</td></tr>" +
            "</table>");
   }
 
@@ -31,9 +31,9 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "    }\n" +
            "  }", "Optional&lt;String&gt;",
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Optional&lt;String&gt;</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Value:</td><td>present Optional</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Optional&lt;String&gt;</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Optional value:</td><td>present Optional</td></tr>" +
            "</table>");
   }
 
@@ -42,8 +42,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "      Runnable r = <selection>() -> {}</selection>;\n" +
            "  }", "Runnable", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Runnable</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Runnable</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
            "</table>");
   }
 
@@ -58,9 +58,9 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "    }\n" +
            "  }", "Object",
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>instanceof CharSequence\n" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Object</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>instanceof CharSequence\n" +
            "not instanceof Number, String</td></tr>" +
            "</table>");
   }
@@ -76,8 +76,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "    }\n" +
            "  }\n", "Object",
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>not instanceof CharSequence, Number</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Object</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>not instanceof CharSequence, Number</td></tr>" +
            "</table>");
   }
 
@@ -88,9 +88,9 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }\n" +
            "}", "int[]",
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int[]</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>1</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int[]</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Array length:</td><td>1</td></tr>" +
            "</table>");
   }
   
@@ -99,8 +99,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  if(x > 5 && <selection>x < 0</selection>) {}\n" +
            "}", "boolean", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>boolean</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Value:</td><td>false</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>boolean</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>false</td></tr>" +
            "</table>");
   }
   
@@ -111,8 +111,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }\n" +
            "}", "String", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Value (one of):</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>String</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value (one of):</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
            "</table>");
   }
   
@@ -123,9 +123,9 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }\n" +
            "}", "String", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>String</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Not equal to:</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
            "</table>");
   }
   
@@ -137,8 +137,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }\n" +
            "}", "X", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>X</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>X.A</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>X</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Not equal to:</td><td>X.A</td></tr>" +
            "</table>");
   }
   
@@ -149,8 +149,8 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "  }\n" +
            "}", "int", 
            "<table>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>&lt;= 49</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&lt;= 49</td></tr>" +
            "</table>");
   }
 

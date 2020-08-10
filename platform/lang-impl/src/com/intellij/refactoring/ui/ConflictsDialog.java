@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -109,14 +110,14 @@ public class ConflictsDialog extends DialogWrapper{
 
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
-    @NonNls StringBuilder buf = new StringBuilder();
+    HtmlBuilder buf = new HtmlBuilder();
 
     for (int i = 0; i < Math.min(myConflictDescriptions.length, MAX_CONFLICTS_SHOWN); i++) {
-      buf.append(myConflictDescriptions[i]).append("<br><br>");
+      buf.append(myConflictDescriptions[i]).br().br();
     }
 
     if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
-      buf.append("<a href='" + EXPAND_LINK + "'>Show more...</a>");
+      buf.appendLink(EXPAND_LINK, "Show more...");
     }
 
     JEditorPane messagePane = new JEditorPane();

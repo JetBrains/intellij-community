@@ -15,8 +15,11 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import icons.OpenapiIcons;
 import org.jetbrains.annotations.NonNls;
@@ -49,12 +52,12 @@ public class RepositoryLibraryDescription {
   
   private final String groupId;
   private final String artifactId;
-  private final String libraryName;
+  private final @NlsContexts.DialogTitle String libraryName;
 
-  protected RepositoryLibraryDescription(String groupId, String artifactId, String libraryName) {
+  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName) {
     this.groupId = groupId == null? "" : groupId;
     this.artifactId = artifactId == null? "" : artifactId;
-    this.libraryName = libraryName == null? "<unknown>" : libraryName;
+    this.libraryName = libraryName == null ? CodeInsightBundle.message("unknown.node.text") : libraryName;
   }
 
   @NotNull
@@ -67,7 +70,7 @@ public class RepositoryLibraryDescription {
       }
       ourStaticallyDefinedLibraries = Collections.unmodifiableMap(Collections.synchronizedMap(map));
     }
-    final String id = groupId == null && artifactId == null? "<unknown>" : groupId + ":" + artifactId;
+    final String id = groupId == null && artifactId == null ? CodeInsightBundle.message("unknown.node.text") : groupId + ":" + artifactId;
     final RepositoryLibraryDescription description = ourStaticallyDefinedLibraries.get(id);
     return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id);
   }
@@ -93,7 +96,7 @@ public class RepositoryLibraryDescription {
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @NlsContexts.DialogTitle String getDisplayName() {
     return libraryName;
   }
 
@@ -127,7 +130,7 @@ public class RepositoryLibraryDescription {
     return getDisplayName() + (version == null ? "" : ":" + version);
   }
 
-  public String getMavenCoordinates(String version) {
+  public @NlsSafe String getMavenCoordinates(String version) {
     return getGroupId() + ":" + getArtifactId() + ":" + version;
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +17,7 @@ public final class RunOnceUtil {
    * @param id unique id for the task
    * @return {@code true} if task was performed, {@code false} if task had already been performed before.
    */
-  public static boolean runOnceForProject(@NotNull Project project, @NotNull String id, @NotNull Runnable task) {
+  public static boolean runOnceForProject(@NotNull Project project, @NotNull @NonNls String id, @NotNull Runnable task) {
     return _runOnce(PropertiesComponent.getInstance(project), id, task);
   }
 

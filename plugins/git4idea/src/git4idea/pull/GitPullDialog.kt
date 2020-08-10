@@ -29,6 +29,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
@@ -47,6 +48,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -154,7 +156,7 @@ class GitPullDialog(private val project: Project,
     val repository = getSelectedRepository()
     val remote = getSelectedRemote()
 
-    val branches = getRemoteBranches(repository, remote)
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
 
     val model = branchField.model as MutableCollectionComboBoxModel
 
@@ -228,6 +230,24 @@ class GitPullDialog(private val project: Project,
       { selectedOptions },
       ::isOptionEnabled
     )
+
+    override fun handleSelect(handleFinalChoices: Boolean) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    private fun handleSelect() {
+      (selectedValues.firstOrNull() as? GitPullOption)?.let { option -> optionChosen(option) }
+
+      list.repaint()
+    }
   }
 
   private fun getOptionInfo(option: GitPullOption) = optionInfos.computeIfAbsent(option) {

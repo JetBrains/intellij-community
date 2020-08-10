@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
@@ -59,7 +60,7 @@ public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
     if (field == null) return;
     final String name = field.getName();
     final CommentTracker tracker = new CommentTracker();
-    final StringBuilder newText = new StringBuilder();
+    @NonNls final StringBuilder newText = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
       newText.append(tracker.text(qualifier)).append('.');

@@ -213,6 +213,9 @@ public class JBCefBrowser implements JBCefDisposable {
         if (consume && SystemInfoRt.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
 
         Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focusedWindow == null) {
+          return true; // consume
+        }
         KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
 
@@ -371,7 +374,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
       if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       myCefBrowser.stopLoad();
-      myCefBrowser.close(false);
+      myCefBrowser.close(true);
       if (myIsDefaultClient) {
         Disposer.dispose(myCefClient);
       }

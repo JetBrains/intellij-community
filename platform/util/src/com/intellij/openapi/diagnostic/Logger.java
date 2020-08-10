@@ -79,7 +79,7 @@ public abstract class Logger {
     return !(ourFactory instanceof DefaultFactory);
   }
 
-  public static @NotNull Logger getInstance(@NotNull String category) {
+  public static @NotNull Logger getInstance(@NonNls @NotNull String category) {
     return ourFactory.getLoggerInstance(category);
   }
 
@@ -95,7 +95,7 @@ public abstract class Logger {
 
   public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
-  public void debug(@NonNls @NotNull String message, Object @NotNull ... details) {
+  public void debug(@NonNls @NotNull String message, @NonNls Object @NotNull ... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
       sb.append(message);

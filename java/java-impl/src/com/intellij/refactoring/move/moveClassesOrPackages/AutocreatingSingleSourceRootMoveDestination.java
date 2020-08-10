@@ -51,7 +51,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   @Override
-  public PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException {
+  public PsiDirectory getTargetDirectory(@Nullable PsiDirectory source) throws IncorrectOperationException {
     return getDirectory(source);
   }
 
@@ -95,10 +95,10 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   PsiDirectory myTargetDirectory;
-  private PsiDirectory getDirectory(PsiElement source) throws IncorrectOperationException {
+  private PsiDirectory getDirectory(@Nullable PsiElement source) throws IncorrectOperationException {
     if (myTargetDirectory == null) {
       VirtualFile sourceRoot = mySourceRoot;
-      ModelBranch branch = ModelBranch.getPsiBranch(source);
+      ModelBranch branch = source == null ? null : ModelBranch.getPsiBranch(source);
       if (branch != null) {
         sourceRoot = branch.findFileCopy(mySourceRoot);
       }

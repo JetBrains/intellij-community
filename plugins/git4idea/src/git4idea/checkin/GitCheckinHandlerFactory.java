@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -294,22 +296,24 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
       final String title;
       final String message;
-      final CharSequence rootPath = detachedRoot.myRoot.getPresentableUrl();
+      final String rootPath = detachedRoot.myRoot.getPresentableUrl();
       final String messageCommonStart = "The Git repository at the following path";
       if (detachedRoot.myRebase) {
         title = "Unfinished Rebase Process";
-        message = messageCommonStart + " has an <b>unfinished rebase</b> process: <br/>" +
-                  "<b>" + rootPath + "</b><br>" +
-                  "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
-                  "Committing during rebase may lead to the commit loss. <br/>" +
-                  readMore("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
+        message = new HtmlBuilder()
+          .appendRaw(messageCommonStart + " has an <b>unfinished rebase</b> process:").br()
+          .append(HtmlChunk.text(rootPath).bold()).br()
+          .appendRaw("You probably want to <b>continue rebase</b> instead of committing.").br()
+          .append("Committing during rebase may lead to the commit loss.").br()
+          .appendLink("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase").toString();
       } else {
         title = "Commit in Detached HEAD";
-        message = messageCommonStart + " is in the <b>detached HEAD</b> state: <br/>" +
-                  "<b>" + rootPath + "</b><br>" +
-                  "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
-                  "Otherwise you risk losing your changes. <br/>" +
-                  readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
+        message = new HtmlBuilder()
+          .appendRaw(messageCommonStart + " is in the <b>detached HEAD</b> state:").br()
+          .append(HtmlChunk.text(rootPath).bold()).br() 
+          .append("You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work.").br()
+          .append("Otherwise you risk losing your changes.").br()
+          .appendLink("http://gitolite.com/detached-head.html", "Read more about detached HEAD").toString();
       }
 
       DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption.Adapter() {
@@ -335,11 +339,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     private static boolean commitOrCommitAndPush(@Nullable CommitExecutor executor) {
       return executor == null || executor instanceof GitCommitAndPushExecutor;
-    }
-
-    @NotNull
-    private static String readMore(@NotNull String link, @NotNull String message) {
-      return String.format("<a href='%s'>%s</a>.", link, message);
     }
 
     /**

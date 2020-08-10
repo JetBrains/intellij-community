@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +45,7 @@ final class DumbServiceGuiTaskQueue {
         bindProgress.accept(pair.getIndicator());
         pair.registerStageStarted(activity);
 
-        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.performing.indexing.tasks"), HeavyProcessLatch.Type.Indexing)) {
           runSingleTask(pair);
         }
         finally {

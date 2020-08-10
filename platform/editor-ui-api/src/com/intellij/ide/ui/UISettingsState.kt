@@ -173,8 +173,6 @@ class UISettingsState : BaseState() {
   var navigateToPreview by property(false)
   @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
   var fullPathsInWindowHeader by property(false)
-  @get:OptionTag("BORDERLESS_MODE")
-  var enableBorderlessMode by property(SystemInfo.isWindows)
 
   var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(

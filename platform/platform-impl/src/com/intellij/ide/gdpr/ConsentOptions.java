@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public final class ConsentOptions {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private final boolean myIsEAP;
 
-  private static @NotNull String getBundledResourcePath() {
+  private static @NotNull @NonNls String getBundledResourcePath() {
     final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     return appInfo.isVendorJetBrains() ? "/consents.json" : "/consents-" + appInfo.getShortCompanyName() + ".json";
   }

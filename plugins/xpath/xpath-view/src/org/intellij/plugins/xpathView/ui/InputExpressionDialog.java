@@ -44,6 +44,7 @@ import org.intellij.lang.xpath.psi.QNameElement;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.Namespace;
@@ -547,13 +548,13 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         @Override
         @NotNull
         public String getText() {
-            return "Register namespace prefix";
+            return getFamilyName();
         }
 
         @Override
         @NotNull
         public String getFamilyName() {
-            return getText();
+            return XPathBundle.message("intention.family.name.register.namespace.prefix");
         }
 
         @Override
@@ -597,7 +598,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 }
                 else {
                     n = Collections.singleton(namespace);
-                    //noinspection unchecked
                     v = Collections.emptySet();
                 }
 

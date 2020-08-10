@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -94,7 +95,7 @@ public class ModuleDescriptor {
     return contentRoot.getName();
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

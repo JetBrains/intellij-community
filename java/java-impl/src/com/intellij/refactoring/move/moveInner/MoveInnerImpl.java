@@ -3,6 +3,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -54,7 +55,7 @@ public final class MoveInnerImpl {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage == null) {
           if (chooseIfNotUnderSource) {
-            PackageChooserDialog chooser = new PackageChooserDialog("Select Target Package", innerClass.getProject());
+            PackageChooserDialog chooser = new PackageChooserDialog(JavaBundle.message("move.inner.select.target.package.title"), innerClass.getProject());
             if (!chooser.showAndGet()) {
               return null;
             }

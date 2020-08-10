@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -239,7 +240,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         consumer.consume(methodToSearchIn, methodToSearchFor);
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
     myEnclosingMethodsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-      .setTitle("Introduce parameter to method")
+      .setTitle(RefactoringBundle.message("refactoring.introduce.parameter.popup.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
@@ -554,7 +555,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
             PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
           final PsiType returnType = emptyMethod.getReturnType();
           LOG.assertTrue(returnType != null);
-          final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
+          final String title = RefactoringBundle.message("refactoring.introduce.parameter.interface.chooser.popup.title",
+                                                             methodSignature, returnType.getPresentableText());
           NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
                                             new PsiElementProcessor<PsiClass>() {
                                               @Override

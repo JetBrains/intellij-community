@@ -204,7 +204,8 @@ internal class ProjectLibraryTableBridgeImpl(
       libraryTable = this,
       project = project,
       originalStorage = entityStorage.current,
-      diff = diff
+      diff = diff,
+      cacheStorageResult = false
     )
 
   override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)

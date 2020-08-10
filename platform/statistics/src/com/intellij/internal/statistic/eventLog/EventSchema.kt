@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.eventLog.EventLogSystemEvents.SYSTEM_EVENTS
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -11,6 +10,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 import kotlin.reflect.KProperty
 
@@ -48,12 +48,12 @@ data class StringEventField(override val name: String): PrimitiveEventField<Stri
     }
   }
 
-  fun withCustomRule(id: String): StringEventField {
+  fun withCustomRule(@NonNls id: String): StringEventField {
     customRuleId = id
     return this
   }
 
-  fun withCustomEnum(id: String): StringEventField {
+  fun withCustomEnum(@NonNls id: String): StringEventField {
     customEnumId = id
     return this
   }
@@ -228,30 +228,30 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
 
 object EventFields {
   @JvmStatic
-  fun String(name: String): StringEventField = StringEventField(name)
+  fun String(@NonNls name: String): StringEventField = StringEventField(name)
 
   @JvmStatic
-  fun Int(name: String): IntEventField = IntEventField(name)
+  fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
   @JvmStatic
-  fun Long(name: String): LongEventField = LongEventField(name)
+  fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
   @JvmStatic
-  fun Boolean(name: String): BooleanEventField = BooleanEventField(name)
+  fun Boolean(@NonNls name: String): BooleanEventField = BooleanEventField(name)
 
   @JvmStatic
-  fun Class(name: String): ClassEventField = ClassEventField(name)
+  fun Class(@NonNls name: String): ClassEventField = ClassEventField(name)
 
   @JvmStatic
   @JvmOverloads
-  fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  fun <T : Enum<*>> Enum(@NonNls name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, enumClass, transform)
 
-  inline fun <reified T : Enum<*>> Enum(name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+  inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
 
   @JvmStatic
-  fun StringList(name: String): StringListEventField = StringListEventField(name)
+  fun StringList(@NonNls name: String): StringListEventField = StringListEventField(name)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {
@@ -358,54 +358,6 @@ object EventFields {
       }
     }
     return ObjectEventField("additional", *additionalFields.toTypedArray())
-  }
-}
-
-/**
- * Best practices:
- * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each.
- * - Prefer shorter group names; avoid common prefixes (such as "statistics.").
- */
-class EventLogGroup(val id: String, val version: Int) {
-  private val registeredEventIds = mutableSetOf<String>()
-  private val registeredEvents = mutableListOf<BaseEventId>()
-
-  val events: List<BaseEventId> get() = registeredEvents
-
-  private fun addToRegisteredEvents(eventId: BaseEventId) {
-    registeredEvents.add(eventId)
-    registeredEventIds.add(eventId.eventId)
-  }
-
-  fun registerEvent(eventId: String): EventId {
-    return EventId(this, eventId).also { addToRegisteredEvents(it) }
-  }
-
-  fun <T1> registerEvent(eventId: String, eventField1: EventField<T1>): EventId1<T1> {
-    return EventId1(this, eventId, eventField1).also { addToRegisteredEvents(it) }
-  }
-
-  fun <T1, T2> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
-    return EventId2(this, eventId, eventField1, eventField2).also { addToRegisteredEvents(it) }
-  }
-
-  fun <T1, T2, T3> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
-    return EventId3(this, eventId, eventField1, eventField2, eventField3).also { addToRegisteredEvents(it) }
-  }
-
-  fun registerVarargEvent(eventId: String, vararg fields: EventField<*>): VarargEventId {
-    return VarargEventId(this, eventId, *fields).also { addToRegisteredEvents(it) }
-  }
-
-  internal fun validateEventId(eventId: String) {
-    if (!isEventIdValid(eventId)) {
-      throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
-    }
-  }
-
-  private fun isEventIdValid(eventId: String): Boolean {
-    if (SYSTEM_EVENTS.contains(eventId)) return true
-    return registeredEventIds.isEmpty() || eventId in registeredEventIds
   }
 }
 

@@ -20,10 +20,11 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class ConstantNamingConvention extends NamingConvention<PsiField> {
 
-  static final String CONSTANT_NAMING_CONVENTION_SHORT_NAME = "ConstantNamingConvention";
+  static final @NonNls String CONSTANT_NAMING_CONVENTION_SHORT_NAME = "ConstantNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;

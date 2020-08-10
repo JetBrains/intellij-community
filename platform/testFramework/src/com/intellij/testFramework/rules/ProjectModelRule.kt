@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
@@ -24,6 +23,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -38,11 +38,11 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   companion object {
     @JvmStatic
     val isWorkspaceModelEnabled: Boolean
-      get() = Registry.`is`("ide.new.project.model")
+      get() = WorkspaceModel.isEnabled
 
     @JvmStatic
     fun ignoreTestUnderWorkspaceModel() {
-      Assume.assumeFalse("Not applicable to workspace model", isWorkspaceModelEnabled)
+      Assume.assumeFalse("Not applicable to workspace model", WorkspaceModel.isEnabled)
     }
   }
 

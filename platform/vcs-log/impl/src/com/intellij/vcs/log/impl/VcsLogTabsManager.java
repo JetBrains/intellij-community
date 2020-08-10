@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class VcsLogTabsManager {
+  private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
   @NotNull private final Project myProject;
   @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
@@ -42,7 +44,11 @@ public class VcsLogTabsManager {
       @Override
       public void logCreated(@NotNull VcsLogManager manager) {
         myIsLogDisposing = false;
-        createLogTabs(manager);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
+            createLogTabs(manager);
+          }
+        }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
       }
 
       @Override
@@ -103,7 +109,7 @@ public class VcsLogTabsManager {
                                                boolean focus) {
     MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR, true);
     DefaultVcsLogFile file = new DefaultVcsLogFile(name, new VcsLogPanel(manager, ui));
-    ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(project).openFile(file, focus), ModalityState.NON_MODAL);
+    FileEditorManager.getInstance(project).openFile(file, focus);
     manager.scheduleInitialization();
     return ui;
   }

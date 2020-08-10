@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -89,7 +91,7 @@ abstract class GitBranchOperation {
   protected abstract void rollback();
 
   @NotNull
-  public abstract String getSuccessMessage();
+  public abstract @NlsContexts.NotificationContent String getSuccessMessage();
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -161,7 +163,7 @@ abstract class GitBranchOperation {
   }
 
   @NotNull
-  protected String successfulRepositoriesJoined() {
+  protected @NlsSafe String successfulRepositoriesJoined() {
     return GitUtil.joinToHtml(mySuccessfulRepositories);
   }
   
@@ -177,7 +179,7 @@ abstract class GitBranchOperation {
     return repositories;
   }
 
-  protected void notifySuccess(@NotNull String message) {
+  protected void notifySuccess(@NotNull @NlsContexts.NotificationContent String message) {
     VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 

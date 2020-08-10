@@ -200,7 +200,7 @@ public final class AssertHint {
     @NonNls public static final Map<String, Integer> ASSERT_METHOD_2_PARAMETER_COUNT;
 
     static {
-      final HashMap<String, Integer> map = new HashMap<>(15);
+      final @NonNls HashMap<String, Integer> map = new HashMap<>(15);
       map.put("assertArrayEquals", 2);
       map.put("assertEquals", 2);
       map.put("assertNotEquals", 2);

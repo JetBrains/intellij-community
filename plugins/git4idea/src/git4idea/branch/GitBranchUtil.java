@@ -284,6 +284,11 @@ public final class GitBranchUtil {
                    .collect(Collectors.toList());
   }
 
+  @NotNull
+  public static List<String> sortBranchNames(@NotNull Collection<String> branchNames) {
+    return ContainerUtil.sorted(branchNames, NaturalComparator.INSTANCE);
+  }
+
   /**
    * List branches containing a commit. Specify null if no commit filtering is needed.
    */

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -319,6 +320,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "DnDEvent[attachedObject: " + myAttachedObject + ", delegatedTarget: " + myDelegatedTarget + ", dropHandler: " + myDropHandler + "]";
   }

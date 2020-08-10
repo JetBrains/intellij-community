@@ -146,7 +146,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private boolean myFirstSetup = true;
   private boolean myUpdatingPlugin = false;
-  private final Set<String> myThemesInUpdatedPlugin = new HashSet<>();
+  private @Nullable String myThemeIdBeforePluginUpdate = null;
   private final SynchronizedClearableLazy<Boolean> autodetect = new SynchronizedClearableLazy<>(() -> Registry.is("ide.laf.autodetect"));
 
   private static UIManager.LookAndFeelInfo getDefaultLightTheme() {
@@ -260,11 +260,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         myUpdatingPlugin = isUpdate;
+        if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+          myThemeIdBeforePluginUpdate = ((UIThemeBasedLookAndFeelInfo) myCurrentLaf).getTheme().getId();
+        }
+        else {
+          myThemeIdBeforePluginUpdate = null;
+        }
       }
 
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        myThemesInUpdatedPlugin.clear();
+        myUpdatingPlugin = false;
+        myThemeIdBeforePluginUpdate = null;
       }
     });
 
@@ -1241,8 +1248,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       updateLafComboboxModel();
 
       // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-      if (!myThemesInUpdatedPlugin.contains(theme.getId())) {
-        setCurrentLookAndFeel(newTheme);
+      if (!myUpdatingPlugin || newTheme.getTheme().getId().equals(myThemeIdBeforePluginUpdate)) {
+        setLookAndFeelImpl(newTheme, false, false);
         JBColor.setDark(newTheme.getTheme().isDark());
         updateUI();
       }
@@ -1258,9 +1265,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           if (theme.getId().equals(provider.id)) {
             if (lookAndFeel == getCurrentLookAndFeel(LafType.ALL)) {
               switchLafTo = theme.isDark() ? myDefaultDarkLaf : myDefaultLightLaf;
-            }
-            else if (myUpdatingPlugin) {
-              myThemesInUpdatedPlugin.add(theme.getId());
             }
             ((EditorColorsManagerImpl) EditorColorsManager.getInstance()).handleThemeRemoved(theme);
             continue;

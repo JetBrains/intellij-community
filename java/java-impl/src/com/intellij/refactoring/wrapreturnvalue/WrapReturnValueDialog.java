@@ -3,6 +3,7 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -168,7 +169,8 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final PsiClass containingClass = sourceMethod.getContainingClass();
     assert containingClass != null : sourceMethod;
     final String containingClassName = containingClass instanceof PsiAnonymousClass
-                                       ? "Anonymous " + ((PsiAnonymousClass)containingClass).getBaseClassType().getClassName()
+                                       ? JavaBundle.message("wrap.return.value.anonymous.class.presentation",
+                                                            ((PsiAnonymousClass)containingClass).getBaseClassType().getClassName())
                                        : containingClass.getName();
     final String sourceMethodName = sourceMethod.getName();
     sourceMethodTextField.setText(containingClassName + '.' + sourceMethodName);

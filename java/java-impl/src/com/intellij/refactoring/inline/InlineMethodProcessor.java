@@ -231,11 +231,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (UsageInfo info : usagesIn) {
         final PsiElement element = info.getElement();
         if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
-          conflicts.putValue(element, "Inlined method is used in javadoc");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
         }
         if (element instanceof PsiLiteralExpression &&
             Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
-          conflicts.putValue(element, "Inlined method is used reflectively");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
         }
         if (element instanceof PsiMethodReferenceExpression) {
           final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
@@ -243,7 +243,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final List<PsiElement> sideEffects = new ArrayList<>();
             SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
             if (!sideEffects.isEmpty()) {
-              conflicts.putValue(element, "Inlined method is used in method reference with side effects in qualifier");
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.qualifier.usage.side.effect"));
             }
           }
         }
@@ -314,13 +314,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
           LOG.assertTrue(methodCallExpression != null);
           if (!targetContainingClasses.isEmpty()) {
-            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
-                                           StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ","));
+            String descriptions = StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ",");
+            conflicts.putValue(expression, JavaRefactoringBundle.message("inline.method.calls.not.accessible.in", methodCallExpression.getText(), descriptions));
           }
 
           if (qualifiedCall != null) {
-            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessible on qualifier "
-                                           + qualifiedCall.getText());
+            conflicts.putValue(expression, JavaRefactoringBundle.message("inline.method.calls.not.accessible.on.qualifier",
+                                                                         methodCallExpression.getText(), qualifiedCall.getText()));
           }
         }
       }
@@ -1141,21 +1141,21 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     return checkUnableToInsertCodeBlock(methodBody, element,
                                         expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)
-           ? "Inline cannot be applied to multiline method in constructor call"
+           ? JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call")
            : null;
   }
 
   public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
-      return "Inline cannot be applied to multiline method in constructor call";
+      return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");
     }
     return checkUnableToInsertCodeBlock(methodBody, element,
                                         expr -> {
                                           PsiElement parent = expr.getParent();
                                           return parent instanceof PsiLoopStatement && PsiUtil.isCondition(expr, parent);
                                         })
-           ? "Inline cannot be applied to multiline method in loop condition"
+           ? JavaRefactoringBundle.message("inline.method.multiline.method.in.loop.condition")
            : null;
   }
 

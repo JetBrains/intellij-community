@@ -155,7 +155,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     myExtractEnumProcessor.findEnumConstantConflicts(refUsages);
     if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
-      conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
+      String notAccessibleMessage = RefactorJBundle.message("extracted.class.not.accessible.in.0", RefactoringUIUtil.getDescription(sourceClass, true));
+      conflicts.putValue(sourceClass, notAccessibleMessage);
     }
     WriteCommandAction.writeCommandAction(myProject).run(() -> myClass.delete());
     final Project project = sourceClass.getProject();
@@ -175,13 +176,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       fieldsNeedingGetter.addAll(visitor.getFieldsNeedingGetter());
       fieldsNeedingGetter.addAll(srcVisitor.getFieldsNeedingGetter());
       for (PsiField field : fieldsNeedingGetter) {
-        conflicts.putValue(field, "Field '" + field.getName() + "' needs getter");
+        conflicts.putValue(field, RefactorJBundle.message("field.needs.getter", field.getName()));
       }
       final Set<PsiField> fieldsNeedingSetter = new LinkedHashSet<>();
       fieldsNeedingSetter.addAll(visitor.getFieldsNeedingSetter());
       fieldsNeedingSetter.addAll(srcVisitor.getFieldsNeedingSetter());
       for (PsiField field : fieldsNeedingSetter) {
-        conflicts.putValue(field, "Field '" + field.getName() + "' needs setter");
+        conflicts.putValue(field, RefactorJBundle.message("field.needs.setter", field.getName()));
       }
     }
     checkConflicts(refUsages, conflicts);
@@ -198,12 +199,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       if (initializerDependsOnMoved(initializer)) {
-        conflicts.putValue(initializer, "Class initializer requires moved members");
+        conflicts.putValue(initializer, RefactorJBundle.message("initializer.requires.moved.members"));
       }
     }
     for (PsiMethod constructor : sourceClass.getConstructors()) {
       if (initializerDependsOnMoved(constructor.getBody())) {
-        conflicts.putValue(constructor, "Constructor requires moved members");
+        conflicts.putValue(constructor, RefactorJBundle.message("constructor.requires.moved.members", false));
       }
     }
   }

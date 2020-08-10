@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -36,6 +38,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +143,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     final PsiFile containingFile = mySourceClass.getContainingFile();
     final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty();
     if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !PsiNameHelper.getInstance(myProject).isQualifiedName(targetPackageName)) {
-      throw new OperationFailedException("Invalid package name: " + targetPackageName);
+      throw new OperationFailedException(JavaRefactoringBundle.message("invalid.package.name", targetPackageName));
     }
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetPackageName);
     if (aPackage != null) {
@@ -182,7 +185,9 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Nullable
   @Override
   protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
-    return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected"
-                                                                                                                 : null;
+    if (StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName())) {
+      return JavaRefactoringBundle.message("different.name.expected");
+    }
+    return null;
   }
 }

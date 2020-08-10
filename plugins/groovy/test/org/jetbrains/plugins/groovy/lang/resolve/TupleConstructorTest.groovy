@@ -86,4 +86,189 @@ static void main(String[] args) {
 }
 """
   }
+
+  @Test
+  void 'includes induces order of parameters'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = 'referrerUrl, actionType ')
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr(true, "groovy")
+}
+"""
+  }
+
+  @Test
+  void 'internal names are not among parameters'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor()
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+}
+"""
+  }
+
+  @Test
+  void 'include internal names'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allNames = true)
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr("")
+}
+"""
+  }
+
+  @Test
+  void 'includes does not affect internal name'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(includes = "\$actionType")
+class Rr {
+    String \$actionType = ""
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+}
+"""
+  }
+
+  @Test
+  void 'defaults removes additional constructors'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(defaults = false)
+class Rr {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+    new Rr<error>("", 1)</error>
+    new Rr("", 1, true)
+    new Rr<error>(actionType: "a", referrerUrl: true, referrerCode: 1)</error>
+}
+"""
+  }
+
+  @Test
+  void 'defaults with superclass'() {
+    highlightingTest """
+class NN {
+    String top
+}
+
+@groovy.transform.TupleConstructor(defaults = false, includeSuperProperties = true)
+class Rr extends NN {
+    String actionType = ""
+    long referrerCode;
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("")</error>
+    new Rr<error>("", 1)</error>
+    new Rr<error>("", 1, true)</error>
+    new Rr("", "", 1, true)
+    new Rr<error>(actionType: "a", referrerUrl: true, referrerCode: 1)</error>
+}"""
+  }
+
+  @Test
+  void 'allProperties enable JavaBean support'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allProperties = true)
+class Rr {
+    Closure actionType
+    long referrerCode;
+
+    void setProp(String s) {
+
+    }
+    
+    private int referrerId;
+
+    boolean referrerUrl;
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr({})
+    new Rr({}, 1)
+    new Rr({}, 1, true)
+    new Rr({}, 1, true, "")
+    new Rr(actionType: {}, referrerUrl: true, referrerCode: 1)
+}"""
+  }
+
+  @Test
+  void 'allProperties do not affect superclasses'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(allProperties = true, includeFields = true)
+class NN {
+    public int r
+    String s
+    void setMp(boolean t) {
+
+    }
+}
+
+@groovy.transform.TupleConstructor(allProperties = true, includeSuperFields = true, includeSuperProperties = true)
+class Rr extends NN {
+    Closure actionType
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr("", 1, {})
+    new Rr<error>(1, true, "", {})</error>
+}"""
+  }
+
+  @Test
+  void 'closures in annotation have access to class members'() {
+    highlightingTest """
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(pre = { foo() }, post = { q == 1 })
+class Rr {
+    int q
+    
+    def foo() {}
+}"""
+  }
+
+  @Test
+  void 'simultaneous includes and excludes'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(<error>includes = "a"</error>, <error>excludes = ['b']</error>)
+class Rr {}
+"""
+  }
+
+  @Test
+  void 'wrong expressions at pre and post'() {
+    highlightingTest """
+@groovy.transform.TupleConstructor(pre = <error>Integer</error>, post = <error>String</error>)
+class Rr {}
+"""
+  }
 }

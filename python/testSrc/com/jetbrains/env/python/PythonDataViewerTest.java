@@ -20,7 +20,6 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +37,6 @@ import static org.junit.Assert.assertEquals;
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
-  @Staging
   public void testDataFrameChunkRetrieval() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7, 15, 22)) {
       @Override
@@ -78,7 +75,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSeries() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
       @Override
@@ -111,7 +107,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testDataFrameFloatFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
       @Override
@@ -128,7 +123,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testDataFrameDefaultFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
       @Override
@@ -145,7 +139,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSeriesFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
       @Override
@@ -162,7 +155,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testLabelWithPercentSign() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(33)) {
       @Override
@@ -177,7 +169,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testTuples() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", ImmutableSet.of(5)) {
       @Override

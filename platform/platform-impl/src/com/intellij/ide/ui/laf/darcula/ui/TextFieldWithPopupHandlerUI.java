@@ -14,6 +14,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,12 +41,12 @@ import static com.intellij.util.FontUtil.disableKerning;
  * @author Konstantin Bulenkov
  */
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI implements Condition {
-  private static final String DOCUMENT = "document";
-  private static final String MONOSPACED = "monospaced";
-  private static final String VARIANT = "JTextField.variant";
-  private static final String POPUP = "JTextField.Search.FindPopup";
-  private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
-  private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @NonNls private static final String DOCUMENT = "document";
+  @NonNls private static final String MONOSPACED = "monospaced";
+  @NonNls private static final String VARIANT = "JTextField.variant";
+  @NonNls private static final String POPUP = "JTextField.Search.FindPopup";
+  @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
+  @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
 
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();

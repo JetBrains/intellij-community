@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -25,11 +26,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
-import java.util.function.IntFunction;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -447,7 +444,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     final Object object;
     volatile boolean started;
 
-    Command(@NotNull String name, Object object) {
+    Command(@NotNull @NonNls String name, Object object) {
       this.name = name;
       this.object = object;
       if (LOG.isTraceEnabled()) LOG.debug("create command: ", this);
@@ -492,7 +489,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   private final class CmdGetRoot extends Command {
-    private CmdGetRoot(@NotNull String name, Object object) {
+    private CmdGetRoot(@NotNull @NonNls String name, Object object) {
       super(name, object);
       tree.queue.add(this, old -> old.started || old.object != object);
     }
@@ -558,7 +555,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     private final Node node;
     private volatile boolean deep;
 
-    CmdGetChildren(@NotNull String name, @NotNull Node node, boolean deep) {
+    CmdGetChildren(@NotNull @NonNls String name, @NotNull Node node, boolean deep) {
       super(name, node.object);
       this.node = node;
       if (deep) this.deep = true;

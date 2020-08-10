@@ -31,6 +31,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -299,7 +300,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
       String cmdLine = StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
-      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") + cmdLine;
+      @NonNls String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") + cmdLine;
       FileUtil.writeToFile(file, text);
       FileUtil.setExecutable(file);
     }

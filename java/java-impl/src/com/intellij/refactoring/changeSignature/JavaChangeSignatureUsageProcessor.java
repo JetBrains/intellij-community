@@ -1171,7 +1171,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
             if (toRemove.length > 0 && toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
-              conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
+              conflictDescriptions.putValue(baseMethod, JavaRefactoringBundle.message("implicit.last.parameter.warning"));
             }
           }
           else if (prototype != null && baseMethod == myChangeInfo.getMethod()) {
@@ -1195,7 +1195,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               for (int i = 0; i < toRemove.length; i++) {
                 if (toRemove[i] && i < args.length) {
                   if (RemoveUnusedVariableUtil.checkSideEffects(args[i], null, new ArrayList<>())) {
-                    conflictDescriptions.putValue(args[i], "Parameter '" + myChangeInfo.getOldParameterNames()[i] + "' has usage that is not safe to delete");
+                    conflictDescriptions.putValue(args[i], JavaRefactoringBundle.message("safe.delete.parameter.usage.warning", myChangeInfo.getOldParameterNames()[i]));
                   }
                 }
               }
@@ -1215,7 +1215,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final LocalSearchScope searchScope = new LocalSearchScope(body);
         for (int i = 0; i < toRemove.length; i++) {
           if (toRemove[i] && ReferencesSearch.search(parameters[i], searchScope).findFirst() != null) {
-            conflictDescriptions.putValue(parameters[i], StringUtil.capitalize(RefactoringUIUtil.getDescription(parameters[i], true)) + " is used in method body");
+            String paramName = StringUtil.capitalize(RefactoringUIUtil.getDescription(parameters[i], true));
+            conflictDescriptions.putValue(parameters[i], JavaRefactoringBundle.message("parameter.used.in.method.body.warning", paramName));
           }
         }
       }
@@ -1227,11 +1228,11 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
       catch (ContractConverter.ContractInheritedException e) {
         if (!override) {
-          conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
+          conflictDescriptions.putValue(method, JavaRefactoringBundle.message("changeSignature.contract.converter.can.not.update.annotation", e.getMessage()));
         }
       }
       catch (ContractConverter.ContractConversionException e) {
-        conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
+        conflictDescriptions.putValue(method, JavaRefactoringBundle.message("changeSignature.contract.converter.can.not.update.annotation", e.getMessage()));
       }
     }
 

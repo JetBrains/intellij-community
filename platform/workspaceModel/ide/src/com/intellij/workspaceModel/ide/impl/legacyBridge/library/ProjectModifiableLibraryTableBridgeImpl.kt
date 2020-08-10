@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -24,8 +25,9 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   originalStorage: WorkspaceEntityStorage,
   private val libraryTable: ProjectLibraryTableBridgeImpl,
   private val project: Project,
-  diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage)
-) : LegacyBridgeModifiableBase(diff), LibraryTable.ModifiableModel {
+  diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage),
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ProjectModifiableLibraryTableBridge {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
 
@@ -95,16 +97,16 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun commit() {
-    assertModelIsLive()
-    modelIsCommittedOrDisposed = true
-
-    myAddedLibraries.forEach { library ->
-      library.clearTargetBuilder()
-    }
-
+    prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
+  }
+
+  override fun prepareForCommit() {
+    assertModelIsLive()
+    modelIsCommittedOrDisposed = true
+    myAddedLibraries.forEach { library -> library.clearTargetBuilder() }
   }
 
   override fun getLibraryIterator(): Iterator<Library> = librariesArray.iterator()

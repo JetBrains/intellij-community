@@ -13,6 +13,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
 
     private final String argumentText;
 
-    ReplaceDoubleArgumentWithStringFix(String argumentText) {
+    ReplaceDoubleArgumentWithStringFix(@NonNls String argumentText) {
       this.argumentText = argumentText;
     }
 

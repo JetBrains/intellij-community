@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,23 +108,10 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
            Registry.is("ide.java.completion.suggest.static.after.instance");
   }
 
-  public static List<LookupElement> dispreferStaticAfterInstance(PsiJavaCodeReferenceElement position, List<LookupElement> items) {
-    if (allowStaticAfterInstanceQualifier(position)) return items;
-
-    PsiElement qualifier = position.getQualifier();
-    if (qualifier == null ||
-        qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
-      return items;
-    }
-
-    List<LookupElement> preferred = new ArrayList<>();
-    for (LookupElement item : items) {
-      Object object = item.getObject();
-      if (!(object instanceof PsiModifierListOwner) || !((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
-        preferred.add(item);
-      }
-    }
-    return preferred.isEmpty() ? items : preferred;
+  @ApiStatus.Internal
+  public static boolean seemsInternal(PsiClass clazz) {
+    String name = clazz.getName();
+    return name != null && name.contains("$");
   }
 
   @Override
@@ -152,6 +139,10 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
           PsiTreeUtil.getParentOfType(myElement, PsiImportStatementBase.class) != null) {
         return true;
       }
+    }
+
+    if (element instanceof PsiClass && seemsInternal((PsiClass) element)) {
+      return true;
     }
 
     if (element instanceof PsiMethod) {

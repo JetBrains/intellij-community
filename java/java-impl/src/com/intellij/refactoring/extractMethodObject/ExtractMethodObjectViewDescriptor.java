@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -27,6 +28,6 @@ public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
   @NotNull
   @Override
   public String getCodeReferencesText(final int usagesCount, final int filesCount) {
-    return "References to be changed";
+    return JavaRefactoringBundle.message("refactoring.extract.method.reference.to.change");
   }
 }

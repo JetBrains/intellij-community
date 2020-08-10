@@ -128,7 +128,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }, myRunContentDescriptor);
   }
 
-  private void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
+  protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
       myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
@@ -339,6 +339,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void setWatchesInVariablesImpl() {
+    if (mySession == null) return;
+
     removeContent(DebuggerContentInfo.VARIABLES_CONTENT);
     removeContent(DebuggerContentInfo.WATCHES_CONTENT);
     addVariablesAndWatches(mySession);

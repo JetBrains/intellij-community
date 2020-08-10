@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -75,7 +76,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt) {
+  public void replaceElement(PsiElement element, @NonNls String varName, Expression expression, boolean alwaysStopAt) {
     replaceElement(element, varName, expression, alwaysStopAt, false);
   }
 
@@ -108,7 +109,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(key);
   }
 
-  public void replaceElement (PsiReference ref, String varName, String dependantVariableName, boolean alwaysStopAt) {
+  public void replaceElement (PsiReference ref, @NonNls String varName, @NonNls String dependantVariableName, boolean alwaysStopAt) {
     final RangeMarker key = wrapReference(ref);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);

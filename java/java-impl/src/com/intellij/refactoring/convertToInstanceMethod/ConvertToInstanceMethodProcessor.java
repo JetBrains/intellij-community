@@ -213,7 +213,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       }
 
       if (myTargetParameter == null && place != null && myTargetClass.hasTypeParameters() && !thisAccessExpressionApplicable(place)) {
-        conflicts.putValue(place, "Impossible to infer class type arguments. When proceed, raw " + myTargetClass.getName() + " would be created");
+        conflicts.putValue(place, JavaRefactoringBundle.message("infer.class.type.args.warning", myTargetClass.getName()));
       }
     }
 
@@ -297,7 +297,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     if (!myTargetClass.isInterface()) {
       result = addMethodToClass(myTargetClass);
       fixVisibility(result, usages);
-      EditorHelper.openInEditor(result);
     }
     else {
       result = addMethodToClass(myTargetClass);
@@ -307,8 +306,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
         modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
       }
       RefactoringUtil.makeMethodAbstract(myTargetClass, result);
-
-      EditorHelper.openInEditor(result);
 
       if (!markAsDefault) {
         for (final PsiClass psiClass : inheritors) {

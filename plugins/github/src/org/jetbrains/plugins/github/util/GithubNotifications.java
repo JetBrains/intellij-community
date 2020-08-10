@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -98,9 +99,8 @@ public final class GithubNotifications {
                                  @NotificationContent @NotNull String message,
                                  @NotNull String url) {
     LOG.info(title + "; " + message + "; " + url);
-    //noinspection HardCodedStringLiteral
     VcsNotifier.getInstance(project)
-      .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
+      .notifyImportantInfo(title, HtmlChunk.link(url, message).toString(), NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showWarningURL(@NotNull Project project,

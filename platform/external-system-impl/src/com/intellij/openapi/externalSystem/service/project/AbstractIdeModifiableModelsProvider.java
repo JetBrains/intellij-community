@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -55,15 +54,15 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toC
 public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
-  private ModifiableModuleModel myModifiableModuleModel;
-  private final Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
-  private final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
-  private final Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
-  private final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
-  private final ClassMap<ModifiableModel> myModifiableModels = new ClassMap<>();
+  protected ModifiableModuleModel myModifiableModuleModel;
+  protected final Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
+  protected final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
+  protected final Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
+  protected final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
+  protected final ClassMap<ModifiableModel> myModifiableModels = new ClassMap<>();
   @Nullable
   private ModifiableWorkspace myModifiableWorkspace;
-  private final MyUserDataHolderBase myUserData;
+  protected final MyUserDataHolderBase myUserData;
   private volatile boolean myDisposed;
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
@@ -295,7 +294,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }));
   }
 
-  private static class MyUserDataHolderBase extends UserDataHolderBase {
+  protected static class MyUserDataHolderBase extends UserDataHolderBase {
     void clear() {
       clearUserData();
     }
@@ -444,7 +443,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return workspace == null ? null : workspace.findModule(publicationId);
   }
 
-  private void updateSubstitutions() {
+  protected void updateSubstitutions() {
     ModifiableWorkspace workspace = getModifiableWorkspace();
     if (workspace == null) return;
 

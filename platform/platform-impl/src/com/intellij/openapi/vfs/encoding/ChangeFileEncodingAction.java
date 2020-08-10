@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
                                               Editor editor,
                                               Document document,
                                               byte[] bytes,
-                                              @Nullable String clearItemText) {
+                                              @Nullable @NlsActions.ActionText String clearItemText) {
     return new ChooseFileEncodingAction(myFile) {
      @Override
      public void update(@NotNull final AnActionEvent e) {
@@ -106,7 +107,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> "Change encoding to '" + charset.displayName() + "'");
+       return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
        // no 'clear'
      }
 

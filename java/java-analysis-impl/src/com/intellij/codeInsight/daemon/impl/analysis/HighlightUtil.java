@@ -15,7 +15,9 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.jvm.JvmModifier;
@@ -268,7 +270,8 @@ public final class HighlightUtil {
             if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
               return true;
             }
-            differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+            differentArgumentsMessage.set(IdeBundle.message("x.and.y", pair.first.getPresentableText(),
+                                                            pair.second.getPresentableText()));
             return false;
           });
         if (sameGenericParameterization != null) {
@@ -800,7 +803,7 @@ public final class HighlightUtil {
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
     if (highlightType == null) return null;
 
-    String description = getUnhandledExceptionsDescriptor(unhandled, "auto-closeable resource");
+    String description = getUnhandledExceptionsDescriptor(unhandled, JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
     HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
     return highlight;

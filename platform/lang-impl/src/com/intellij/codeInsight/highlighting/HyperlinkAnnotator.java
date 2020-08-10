@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class HyperlinkAnnotator implements Annotator {
@@ -70,6 +71,7 @@ public class HyperlinkAnnotator implements Annotator {
     }
   }
 
+  @Nls
   @NotNull
   @ApiStatus.Internal
   public static String getMessage() {

@@ -29,6 +29,7 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import java.awt.event.WindowEvent;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
-  static final String DIMENSION_KEY = "WELCOME_SCREEN";
+  @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
   private final WelcomeScreen myScreen;

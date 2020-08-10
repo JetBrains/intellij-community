@@ -3,6 +3,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ public class IntLiteralMayBeLongLiteralInspection extends CastedLiteralMaybeJust
 
   @NotNull
   @Override
+  @NonNls
   String getSuffix() {
     return "L";
   }

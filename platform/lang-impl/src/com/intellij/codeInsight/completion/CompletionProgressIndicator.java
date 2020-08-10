@@ -305,15 +305,17 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
-      if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
+        if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
-      //noinspection deprecation
-      String s = contributor.advertise(parameters);
-      if (s != null) {
-        addAdvertisement(s, null);
+        //noinspection deprecation
+        String s = contributor.advertise(parameters);
+        if (s != null) {
+          addAdvertisement(s, null);
+        }
       }
-    }
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
   }
 
   private boolean isOutdated() {
@@ -794,12 +796,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
-    return CompletionContributor.forParameters(parameters)
-                                       .stream()
-                                       .map(c -> c.handleEmptyLookup(parameters, getEditor()))
-                                       .filter(StringUtil::isNotEmpty)
-                                       .findFirst()
-                                       .orElse(LangBundle.message("completion.no.suggestions"));
+    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      return CompletionContributor.forParameters(parameters)
+        .stream()
+        .map(c -> c.handleEmptyLookup(parameters, getEditor()))
+        .filter(StringUtil::isNotEmpty)
+        .findFirst()
+        .orElse(LangBundle.message("completion.no.suggestions"));
+    });
   }
 
   private LightweightHint showErrorHint(Project project, Editor editor, String text) {

@@ -42,6 +42,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -62,7 +63,7 @@ public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
-  private static final String MODE_ATTACH = "attach";
+  @NonNls private static final String MODE_ATTACH = "attach";
   private static final String MODE_REPLACE = "replace";
   private static final String MODE_NEW = "new";
 

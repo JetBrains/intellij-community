@@ -219,20 +219,23 @@ object UpdateChecker {
    *
    * If build is not specified then current IDE version is used.
    */
-  private data class CheckPluginsUpdateResult(
+  data class CheckPluginsUpdateResult(
     val availableUpdates: Collection<PluginDownloader>?,
+    val availableDisabledUpdates: Collection<IdeaPluginDescriptor>,
     val customRepositoryPlugins: Collection<IdeaPluginDescriptor>,
     val incompatiblePlugins: Collection<IdeaPluginDescriptor>?
   )
 
-  private val EMPTY_CHECK_UPDATE_RESULT = CheckPluginsUpdateResult(null, emptyList(), null)
+  private val EMPTY_CHECK_UPDATE_RESULT = CheckPluginsUpdateResult(null, emptyList(), emptyList(), null)
 
   /**
    * If [newBuildNumber] is null, returns new versions of plugins compatible with the current IDE version.
    *
    * If not null, returns new versions of plugins compatible with the specified build.
    */
-  private fun checkPluginsUpdate(
+  @JvmStatic
+  @JvmOverloads
+  fun checkPluginsUpdate(
     indicator: ProgressIndicator?,
     newBuildNumber: BuildNumber? = null
   ): CheckPluginsUpdateResult {
@@ -241,13 +244,14 @@ object UpdateChecker {
     if (updateable.isEmpty()) return EMPTY_CHECK_UPDATE_RESULT
 
     val toUpdate = mutableMapOf<PluginId, PluginDownloader>()
+    val toUpdateDisabled = mutableMapOf<PluginId, IdeaPluginDescriptor>()
 
     val latestCustomPluginsAsMap = HashMap<PluginId, IdeaPluginDescriptor>()
     val state = InstalledPluginsState.getInstance()
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-          validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, newBuildNumber, state, indicator)
+          validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, toUpdateDisabled, newBuildNumber, state, indicator)
         }
         else {
           val list = RepositoryHelper.loadPlugins(host, newBuildNumber, indicator)
@@ -255,7 +259,7 @@ object UpdateChecker {
             val id = descriptor.pluginId
             if (updateable.containsKey(id)) {
               updateable.remove(id)
-              buildDownloaderAndPrepareToInstall(state, descriptor, newBuildNumber, toUpdate, indicator, host)
+              buildDownloaderAndPrepareToInstall(state, descriptor, newBuildNumber, toUpdate, toUpdateDisabled, indicator, host)
             }
             //collect latest plugins from custom repos
             val storedDescriptor = latestCustomPluginsAsMap[id]
@@ -273,7 +277,7 @@ object UpdateChecker {
 
     val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = getIncompatiblePlugins(newBuildNumber, updateable, toUpdate)
 
-    return CheckPluginsUpdateResult(if (toUpdate.isEmpty()) null else toUpdate.values, latestCustomPluginsAsMap.values, incompatiblePlugins)
+    return CheckPluginsUpdateResult(if (toUpdate.isEmpty()) null else toUpdate.values, toUpdateDisabled.values, latestCustomPluginsAsMap.values, incompatiblePlugins)
   }
 
   private fun getIncompatiblePlugins(
@@ -298,7 +302,7 @@ object UpdateChecker {
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return
-    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), null, state, null)
+    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
   }
 
   /**
@@ -308,6 +312,7 @@ object UpdateChecker {
   private fun validateCompatibleUpdatesForCurrentPlugins(
     updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
+    toUpdateDisabled: MutableMap<PluginId, IdeaPluginDescriptor>,
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
     indicator: ProgressIndicator?
@@ -326,7 +331,7 @@ object UpdateChecker {
           if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue
           else throw e
         }
-        buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, indicator, null)
+        buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, toUpdateDisabled, indicator, null)
       }
     }
     toUpdate.keys.forEach { updateable.remove(it) }
@@ -337,12 +342,18 @@ object UpdateChecker {
     descriptor: IdeaPluginDescriptor,
     buildNumber: BuildNumber?,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
+    toUpdateDisabled: MutableMap<PluginId, IdeaPluginDescriptor>,
     indicator: ProgressIndicator?,
     host: String?
   ) {
     val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
     state.onDescriptorDownload(descriptor)
-    checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
+    if (PluginManagerCore.isDisabled(downloader.id)) {
+      toUpdateDisabled[downloader.id] = downloader.descriptor
+    }
+    else {
+      checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
+    }
   }
 
   /**
@@ -545,7 +556,7 @@ object UpdateChecker {
         PluginUpdateDialog(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins).show()
       }
       else {
-        val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins) }
+        val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins.map { it.descriptor }) }
 
         val ideFrame = WelcomeFrame.getInstance()
         if (ideFrame is WelcomeFrameUpdater) {

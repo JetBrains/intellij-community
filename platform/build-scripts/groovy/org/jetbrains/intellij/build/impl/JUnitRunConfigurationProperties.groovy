@@ -53,7 +53,9 @@ class JUnitRunConfigurationProperties extends RunConfigurationProperties {
             find { it.@name == "BuildArtifacts" && it.@enabled == "true" }?.
             artifact?.collect { it.@name } ?: []
 
-    def vmParameters = (options["VM_PARAMETERS"] ?: "-ea").tokenize()
+    def vmParameters = (options["VM_PARAMETERS"] ?: "-ea").tokenize() +
+                       // Pattern is a regex already, we don't need to escape it in com.intellij.TestClassesFilter
+                       ("pattern" == testKind ? ["-Dintellij.build.test.patterns.escaped=true"] : [])
     def envVariables = first(configuration.envs)?.env?.collectEntries { [it.@name, it.@value] } ?: [:]
     return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testClassPatterns, vmParameters, requiredArtifacts, envVariables)
   }

@@ -922,12 +922,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       try {
         ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
         String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
-        NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"), JavaUiBundle
-          .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), JavaUiBundle
-                                                                    .message("title.select.project.file.directory", modulePresentation),
-                                                                  JavaUiBundle.message("description.select.project.file.directory",
-                                                                                    StringUtil.capitalize(modulePresentation)), true,
-                                                                  false);
+        NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"),
+                                                            JavaUiBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)),
+                                                            JavaUiBundle
+                                                              .message("title.select.project.file.directory", modulePresentation),
+                                                            JavaUiBundle.message("description.select.project.file.directory",
+                                                                                 StringUtil.capitalize(modulePresentation)),
+                                                            true,
+                                                            false);
         Module originalModule = moduleEditor.getModule();
         if (originalModule != null) {
           component.setPath(FileUtil.toSystemDependentName(originalModule.getModuleNioFile().getParent().toString()));

@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +28,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   public abstract boolean isValueSet(@NonNls @NotNull String name);
 
   @Nullable
-  public abstract String getValue(@NonNls @NotNull String name);
+  public abstract @NlsSafe String getValue(@NonNls @NotNull String name);
 
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
@@ -92,7 +93,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   }
 
   @NotNull
-  public String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
+  public @NlsSafe String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
     String value = getValue(name);
     return value == null ? defaultValue : value;
   }
@@ -199,7 +200,8 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   public float getFloat(@NonNls @NotNull String name, float defaultValue) {
     if (isValueSet(name)) {
       try {
-        return Float.parseFloat(getValue(name));
+        final String value = getValue(name);
+        if (value != null) return Float.parseFloat(value);
       }
       catch (NumberFormatException ignore) {
       }

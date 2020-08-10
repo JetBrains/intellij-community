@@ -31,7 +31,6 @@ public final class NonProjectFilesScope extends NamedScope {
                                       @NotNull Project project) {
     // do not include fake-files e.g. fragment-editors, etc.
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
-    if (!file.isInLocalFileSystem()) return true;
     if (ScratchUtil.isScratch(file)) return false;
     return !ProjectScope.getProjectScope(project).contains(file);
   }

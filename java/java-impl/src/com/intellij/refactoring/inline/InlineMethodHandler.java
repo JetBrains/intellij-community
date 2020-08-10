@@ -187,7 +187,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
 
   @Override
   public @NotNull String getActionName(PsiElement element) {
-    return getRefactoringName() + "...";
+    return RefactoringBundle.message("inline.method.action.name");
   }
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {

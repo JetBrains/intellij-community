@@ -19,15 +19,23 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestObject;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.util.Arrays;
@@ -64,7 +72,7 @@ public class JUnitConfigurationModel {
   }
 
 
-  private JUnitConfigurable myListener;
+  private Consumer<Integer> myListener;
   private int myType = -1;
   private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
@@ -82,10 +90,10 @@ public class JUnitConfigurationModel {
   }
 
   private void fireTypeChanged(final int newType) {
-    myListener.onTypeChanged(newType);
+    myListener.consume(newType);
   }
 
-  public void setListener(final JUnitConfigurable listener) {
+  public void setListener(final Consumer<Integer> listener) {
     myListener = listener;
   }
 
@@ -207,6 +215,64 @@ public class JUnitConfigurationModel {
 
   private void setTestType(final String testObject) {
     setType(ourTestObjects.indexOf(testObject));
+  }
+
+  @NotNull
+  public static String getKindName(int value) {
+    switch (value) {
+      case ALL_IN_PACKAGE:
+        return "All in package";
+      case DIR:
+        return "All in directory";
+      case PATTERN:
+        return "Pattern";
+      case CLASS:
+        return "Class";
+      case METHOD:
+        return "Method";
+      case CATEGORY:
+        return "Category";
+      case UNIQUE_ID:
+        return "UniqueId";
+      case TAGS:
+        return "Tags";
+      case BY_SOURCE_POSITION:
+        return "Through source location";
+      case BY_SOURCE_CHANGES:
+        return "Over changes in sources";
+    }
+    throw new IllegalArgumentException(String.valueOf(value));
+  }
+
+  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module) {
+    int selectedIndex = comboBox.getSelectedIndex();
+    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+    aModel.addElement(ALL_IN_PACKAGE);
+    aModel.addElement(DIR);
+    aModel.addElement(PATTERN);
+    aModel.addElement(CLASS);
+    aModel.addElement(METHOD);
+
+    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                   : GlobalSearchScope.allScope(myProject);
+
+    if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+      aModel.addElement(CATEGORY);
+    }
+
+    if (myProject.isDefault() ||
+        JUnitUtil.isJUnit5(searchScope, myProject) ||
+        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+      aModel.addElement(UNIQUE_ID);
+      aModel.addElement(TAGS);
+    }
+
+    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+      aModel.addElement(BY_SOURCE_POSITION);
+      aModel.addElement(BY_SOURCE_CHANGES);
+    }
+    comboBox.setModel(aModel);
+    comboBox.setSelectedIndex(selectedIndex);
   }
 }
 

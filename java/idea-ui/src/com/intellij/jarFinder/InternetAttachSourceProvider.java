@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,12 +96,12 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
     if (sourceFile.exists()) {
       return Collections.singleton(new LightAttachSourcesAction() {
         @Override
-        public String getName() {
-          return "Attach downloaded source";
+        public @NlsContexts.LinkLabel @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+          return JavaUiBundle.message("internet.attach.source.provider.name");
         }
 
         @Override
-        public String getBusyText() {
+        public @NlsContexts.LinkLabel String getBusyText() {
           return getName();
         }
 
@@ -113,13 +115,13 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
 
     return Collections.singleton(new LightAttachSourcesAction() {
       @Override
-      public String getName() {
-        return "Download...";
+      public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+        return JavaUiBundle.message("internet.attach.source.provider.action.name");
       }
 
       @Override
-      public String getBusyText() {
-        return "Searching...";
+      public @NlsContexts.LinkLabel String getBusyText() {
+        return JavaUiBundle.message("internet.attach.source.provider.action.busy.text");
       }
 
       @Override
@@ -136,7 +138,8 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
               }
               catch (SourceSearchException e) {
                 LOG.warn(e);
-                showMessage("Downloading failed", e.getMessage(), NotificationType.ERROR);
+                final String title = JavaUiBundle.message("internet.attach.source.provider.action.notification.title.downloading.failed");
+                showMessage(title, e.getMessage(), NotificationType.ERROR);
                 continue;
               }
 
@@ -144,12 +147,16 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
             }
 
             if (artifactUrl == null) {
-              showMessage("Sources not found", "Sources for '" + jarName + ".jar' not found", NotificationType.WARNING);
+              showMessage(JavaUiBundle.message("internet.attach.source.provider.action.notification.title.sources.not.found"),
+                          JavaUiBundle.message("internet.attach.source.provider.action.notification.content.sources.for.jar.not.found", jarName),
+                          NotificationType.WARNING);
               return;
             }
 
             if (!(libSourceDir.isDirectory() || libSourceDir.mkdirs())) {
-              showMessage("Downloading failed", "Failed to create directory to store sources: " + libSourceDir, NotificationType.ERROR);
+              showMessage(JavaUiBundle.message("internet.attach.source.provider.action.notification.title.downloading.failed"),
+                          JavaUiBundle.message("internet.attach.source.provider.action.notification.content.failed.to.create.directory", libSourceDir),
+                          NotificationType.ERROR);
               return;
             }
 
@@ -162,7 +169,9 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
             }
             catch (IOException e) {
               LOG.warn(e);
-              showMessage("Downloading failed", "Connection problem. See log for more details.", NotificationType.ERROR);
+              showMessage(JavaUiBundle.message("internet.attach.source.provider.action.notification.title.downloading.failed"),
+                          JavaUiBundle.message("internet.attach.source.provider.action.notification.content.connection.problem"),
+                          NotificationType.ERROR);
             }
           }
 
@@ -171,7 +180,9 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
             attachSourceJar(sourceFile, libraries);
           }
 
-          private void showMessage(String title, String message, NotificationType notificationType) {
+          private void showMessage(@NlsContexts.NotificationTitle String title,
+                                   @NlsContexts.NotificationContent String message,
+                                   NotificationType notificationType) {
             new Notification("Source searcher", title, message, notificationType).notify(getProject());
           }
         };

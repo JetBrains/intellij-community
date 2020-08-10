@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.sh.ShStringUtil.quote;
 
@@ -44,7 +45,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     ShRunner shRunner = ServiceManager.getService(myProject, ShRunner.class);
-    if (shRunner == null || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
+    if (shRunner == null || !myRunConfiguration.isExecuteInTerminal() || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
       return buildExecutionResult();
     }
     shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName());
@@ -102,6 +103,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     }
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
+    commandLine.withEnvironment(myRunConfiguration.getEnvData().getEnvs());
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
     commandLine.setWorkDirectory(convertToWslIfNeeded(myRunConfiguration.getScriptWorkingDirectory(), wslDistribution));
 
@@ -136,6 +138,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     final List<String> commandLine = new ArrayList<>();
 
 
+    addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
     addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), null));
     addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
     commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
@@ -153,6 +156,20 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   private static void addIfPresent(@NotNull List<String> commandLine, @Nullable String options) {
     ContainerUtil.addIfNotNull(commandLine, StringUtil.nullize(options));
+  }
+
+  private static void addIfPresent(@NotNull List<String> commandLine, @NotNull Map<String, String> envs) {
+    envs.forEach((key, value) -> {
+      String quotedString;
+      if (Platform.current() != Platform.WINDOWS) {
+        quotedString = quote(value);
+      }
+      else {
+        String escapedValue = StringUtil.escapeQuotes(value);
+        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.fun(escapedValue) : escapedValue;
+      }
+      commandLine.add(key + "=" + quotedString);
+    });
   }
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,

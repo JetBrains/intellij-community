@@ -21,6 +21,7 @@ import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.*;
 
 public final class CreateDefaultBranchFix extends BaseSwitchFix {
-  private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
+  @NonNls private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
   private final @IntentionName String myMessage;
 
   public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, @IntentionName String message) {
@@ -89,7 +90,7 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     }
   }
 
-  private static List<String> generateStatements(PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  private static @NonNls List<String> generateStatements(PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
     Project project = switchBlock.getProject();
     FileTemplate branchTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_SWITCH_DEFAULT_BRANCH);
     Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
@@ -99,7 +100,7 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION_TYPE, expressionType == null ? "" : expressionType.getCanonicalText());
     PsiStatement statement;
     try {
-      String text = branchTemplate.getText(props);
+      @NonNls String text = branchTemplate.getText(props);
       if (text.trim().isEmpty()) {
         if (switchBlock instanceof PsiSwitchExpression) {
           String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());

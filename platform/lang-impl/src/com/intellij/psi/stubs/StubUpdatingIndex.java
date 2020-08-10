@@ -314,6 +314,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     return VERSION;
   }
 
+  @Override
+  public void handleInitializationError(@NotNull Throwable e) {
+    ((StubIndexImpl)StubIndex.getInstance()).initializationFailed(e);
+  }
+
   @NotNull
   @Override
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,

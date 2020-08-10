@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Query;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 import java.util.Collection;
 
@@ -81,8 +82,9 @@ public final class XsltValidator {
                 fixes = new LocalQuickFix[]{ new DeleteUnusedVariableFix(name, variable) };
             }
 
-            holder.registerProblem(token, ((DeleteUnusedElementBase)fixes[0]).getType() +
-                    " '" + name + "' is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes);
+          final String message = XPathBundle.message("inspection.message.never.used",
+                                                     ((DeleteUnusedElementBase)fixes[0]).getType(), name);
+          holder.registerProblem(token, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes);
         }
     }
 

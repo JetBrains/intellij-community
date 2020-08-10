@@ -522,12 +522,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (actionDescriptionElements == null) {
       return;
     }
+    if (!initialStartup) {
+      myPreloadComplete = true;
+    }
 
     long startTime = StartUpMeasurer.getCurrentTime();
     for (Element e : actionDescriptionElements) {
       Element parent = e.getParentElement();
       String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
-      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName), initialStartup);
+      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName));
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
@@ -864,12 +867,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element, final PluginId pluginId, boolean initialStartup) {
+  private void processReferenceNode(final Element element, final PluginId pluginId) {
     final AnAction action = processReferenceElement(element, pluginId);
     if (action == null) return;
-    if (initialStartup) {
-      assertActionIsGroupOrStub(action);
-    }
+    assertActionIsGroupOrStub(action);
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
@@ -1105,8 +1106,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void processActionsChildElement(@NotNull Element child,
                                           @NotNull IdeaPluginDescriptorImpl plugin,
-                                          @Nullable ResourceBundle bundle,
-                                          boolean initialStartup) {
+                                          @Nullable ResourceBundle bundle) {
     String name = child.getName();
     switch (name) {
       case ACTION_ELEMENT_NAME:
@@ -1122,7 +1122,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processSeparatorNode(null, child, plugin.getPluginId(), bundle);
         break;
       case REFERENCE_ELEMENT_NAME:
-        processReferenceNode(child, plugin.getPluginId(), initialStartup);
+        processReferenceNode(child, plugin.getPluginId());
         break;
       case UNREGISTER_ELEMENT_NAME:
         processUnregisterNode(child, plugin.getPluginId());

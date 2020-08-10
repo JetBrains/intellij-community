@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ public final class PsiMethodReferenceHighlightingUtil {
           PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
           if (resolve instanceof PsiClass && ((PsiClass)resolve).hasTypeParameters()) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-              .descriptionAndTooltip("Raw constructor reference with explicit type parameters for constructor").create();
+              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters")).create();
           }
         }
       }

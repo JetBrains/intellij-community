@@ -252,12 +252,16 @@
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
+    <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
+    <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
+      <reference id="Git.Stage.AcceptTheirs"/>
+      <reference id="Git.Stage.AcceptYours"/>
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Reset"/>
       <reference id="Git.Stage.Revert"/>

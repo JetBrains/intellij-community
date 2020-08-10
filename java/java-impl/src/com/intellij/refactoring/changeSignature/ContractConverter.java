@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import one.util.streamex.IntStreamEx;
@@ -33,13 +35,13 @@ public final class ContractConverter {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
-      throw new ContractConversionException("automatic update of external annotation is not supported");
+      throw new ContractConversionException(JavaRefactoringBundle.message("changeSignature.contract.converter.external.annotations"));
     }
     if (annotation.getOwner() != method.getModifierList()) {
       throw new ContractInheritedException();
     }
     if (annotation.findDeclaredAttributeValue(MutationSignature.ATTR_MUTATES) != null) {
-      throw new ContractConversionException("it contains mutation contract");
+      throw new ContractConversionException(JavaRefactoringBundle.message("changeSignature.contract.converter.mutation.contract"));
     }
     String text = AnnotationUtil.getStringAttributeValue(annotation, null);
     List<StandardMethodContract> contracts = Collections.emptyList();
@@ -48,7 +50,9 @@ public final class ContractConverter {
         contracts = StandardMethodContract.parseContract(text);
       }
       catch (StandardMethodContract.ParseException exception) {
-        throw new ContractConversionException("error in contract definition: " + exception.getMessage());
+        String definitionError = JavaRefactoringBundle.message("changeSignature.contract.converter.definition.error",
+                                                               exception.getMessage());
+        throw new ContractConversionException(definitionError);
       }
     }
     int[] newToOldIndex = StreamEx.of(newParameters).mapToInt(ParameterInfo::getOldIndex).toArray();
@@ -69,12 +73,13 @@ public final class ContractConverter {
                                                         String @NotNull [] oldParameterNames) throws ContractConversionException {
     if (contract.getParameterCount() != oldToNewIndex.length) {
       // invalid contract
-      throw new ContractConversionException("invalid contract clause '" + contract + "'");
+      throw new ContractConversionException(JavaRefactoringBundle.message("changeSignature.contract.converter.invalid.clause", contract));
     }
     for (int i = 0; i < contract.getParameterCount(); i++) {
       if (contract.getParameterConstraint(i) != StandardMethodContract.ValueConstraint.ANY_VALUE && oldToNewIndex[i] == -1) {
-        throw new ContractConversionException(
-          "parameter '" + oldParameterNames[i] + "' was deleted, but contract clause '" + contract + "' depends on it");
+        String paramRemovedMessage = JavaRefactoringBundle.message("changeSignature.contract.converter.parameter.removed",
+                                                                   oldParameterNames[i], contract);
+        throw new ContractConversionException(paramRemovedMessage);
       }
     }
     StandardMethodContract.ValueConstraint[] newConstraints = IntStreamEx.of(newToOldIndex)
@@ -84,11 +89,14 @@ public final class ContractConverter {
     if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
       int oldIndex = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
       if (oldIndex >= contract.getParameterCount()) {
-        throw new ContractConversionException("invalid reference in return value: " + returnValue);
+        String errorRefMessage = JavaRefactoringBundle.message("changeSignature.contract.converter.invalid.return.reference", returnValue);
+        throw new ContractConversionException(errorRefMessage);
       }
       int index = oldToNewIndex[oldIndex];
       if (index == -1) {
-        throw new ContractConversionException("parameter '" + oldParameterNames[oldIndex] + "' was deleted, but contract clause '" + contract + "' returns it");
+        String paramRemovedMessage = JavaRefactoringBundle.message("changeSignature.contract.converter.parameter.removed",
+                                                                   oldParameterNames[oldIndex], contract);
+        throw new ContractConversionException(paramRemovedMessage);
       }
       returnValue = ContractReturnValue.returnParameter(index);
     }
@@ -108,14 +116,14 @@ public final class ContractConverter {
   }
 
   public static class ContractConversionException extends Exception {
-    ContractConversionException(String message) {
+    ContractConversionException(@NlsContexts.DialogMessage String message) {
       super(message);
     }
   }
 
   public static class ContractInheritedException extends ContractConversionException {
     ContractInheritedException() {
-      super("annotation is inherited from base method");
+      super(JavaRefactoringBundle.message("changeSignature.contract.converter.inherited.annotation"));
     }
   }
 }

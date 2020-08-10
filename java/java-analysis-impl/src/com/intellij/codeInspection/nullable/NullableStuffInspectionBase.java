@@ -24,6 +24,7 @@ import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -1012,10 +1013,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       super(defaultNotNull, annotationsToRemove);
     }
 
-    @NotNull
     @Override
-    protected String getPreposition() {
-      return "as";
+    public @NotNull String getName() {
+      return JavaAnalysisBundle.message("inspection.annotate.overridden.method.nullable.quickfix.name",
+                                        ClassUtil.extractClassName(myAnnotation));
     }
 
     @Override

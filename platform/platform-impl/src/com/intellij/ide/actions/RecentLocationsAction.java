@@ -44,6 +44,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ import java.util.List;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
-  public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+  @NonNls public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);

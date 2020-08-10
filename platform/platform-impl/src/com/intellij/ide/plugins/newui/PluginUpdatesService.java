@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -6,8 +6,10 @@ import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,15 +25,15 @@ import java.util.function.Consumer;
  */
 public class PluginUpdatesService {
   private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
-  private static Collection<PluginDownloader> myCache;
+  private static Collection<IdeaPluginDescriptor> myCache;
   private static boolean myPrepared;
   private static boolean myPreparing;
   private static boolean myReset;
 
   private Consumer<Integer> myTreeCallback;
   private Consumer<Integer> myTabCallback;
-  private Consumer<? super Collection<PluginDownloader>> myInstalledPanelCallback;
-  private Consumer<? super Collection<PluginDownloader>> myUpdatePanelCallback;
+  private Consumer<? super Collection<IdeaPluginDescriptor>> myInstalledPanelCallback;
+  private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdatePanelCallback;
 
   @NotNull
   public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<Integer> callback) {
@@ -69,7 +71,7 @@ public class PluginUpdatesService {
     return service;
   }
 
-  public void connectInstalled(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
+  public void connectInstalled(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     checkAccess();
     myInstalledPanelCallback = callback;
 
@@ -81,7 +83,7 @@ public class PluginUpdatesService {
     }
   }
 
-  public void calculateUpdates(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
+  public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     checkAccess();
     myUpdatePanelCallback = callback;
 
@@ -100,10 +102,10 @@ public class PluginUpdatesService {
       return;
     }
 
-    for (Iterator<PluginDownloader> I = myCache.iterator(); I.hasNext(); ) {
-      PluginDownloader downloader = I.next();
+    for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
+      IdeaPluginDescriptor downloadedDescriptor = I.next();
 
-      if (downloader.getDescriptor() == descriptor) {
+      if (downloadedDescriptor.equals(descriptor)) {
         I.remove();
 
         Integer countValue = getCount();
@@ -168,8 +170,8 @@ public class PluginUpdatesService {
 
     PluginId pluginId = descriptor.getPluginId();
     if (myPrepared && myCache != null) {
-      for (PluginDownloader downloader : myCache) {
-        if (pluginId == downloader.getId()) {
+      for (IdeaPluginDescriptor downloader : myCache) {
+        if (pluginId.equals(downloader.getPluginId())) {
           return true;
         }
       }
@@ -179,7 +181,7 @@ public class PluginUpdatesService {
   }
 
   @Nullable
-  public static Collection<PluginDownloader> getUpdates() {
+  public static Collection<IdeaPluginDescriptor> getUpdates() {
     checkAccess();
     return !myPrepared || myPreparing || myCache == null ? null : myCache;
   }
@@ -192,7 +194,7 @@ public class PluginUpdatesService {
     myCache = null;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
+      UpdateChecker.CheckPluginsUpdateResult updates = UpdateChecker.checkPluginsUpdate(new EmptyProgressIndicator());
 
       ApplicationManager.getApplication().invokeLater(() -> {
         checkAccess();
@@ -206,7 +208,13 @@ public class PluginUpdatesService {
         }
 
         myPrepared = true;
-        myCache = updates;
+        List<IdeaPluginDescriptor> cache = new ArrayList<>();
+        Collection<PluginDownloader> availableUpdates = updates.getAvailableUpdates();
+        if (availableUpdates != null) {
+          cache.addAll(ContainerUtil.map(availableUpdates, (downloader -> downloader.getDescriptor())));
+        }
+        cache.addAll(updates.getAvailableDisabledUpdates());
+        myCache = cache;
 
         Integer countValue = getCount();
         for (PluginUpdatesService service : SERVICES) {

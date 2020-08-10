@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.util.function.Consumer;
 
 public interface OptionsSearchTopHitProvider {
   @NotNull
+  @NonNls
   String getId();
 
   default boolean preloadNeeded() {

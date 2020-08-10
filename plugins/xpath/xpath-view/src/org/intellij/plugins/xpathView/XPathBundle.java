@@ -17,6 +17,12 @@ public final class XPathBundle extends DynamicBundle {
     super(BUNDLE);
   }
 
+  public static @Nls String partialMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                           int unassignedParams,
+                                           Object @NotNull ... params) {
+    return INSTANCE.getPartialMessage(key, unassignedParams, params);
+  }
+
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);

@@ -3,6 +3,7 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -75,7 +76,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)element)) {
-        descriptions.putValue(element, "Method reference will be converted to lambda");
+        descriptions.putValue(element, JavaBundle.message("refactoring.method.reference.to.lambda.conflict"));
       }
     }
     return descriptions;

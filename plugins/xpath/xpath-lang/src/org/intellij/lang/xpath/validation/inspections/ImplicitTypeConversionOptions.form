@@ -112,7 +112,7 @@
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="NODESET"/>
+          <text value="NODESET" noi18n="true"/>
         </properties>
       </component>
       <component id="c5286" class="javax.swing.JLabel">
@@ -120,7 +120,7 @@
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="STRING"/>
+          <text value="STRING" noi18n="true"/>
         </properties>
       </component>
       <component id="a9280" class="javax.swing.JLabel">
@@ -128,7 +128,7 @@
           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="NUMBER"/>
+          <text value="NUMBER" noi18n="true"/>
         </properties>
       </component>
       <component id="38baf" class="javax.swing.JLabel">
@@ -136,7 +136,7 @@
           <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="BOOLEAN"/>
+          <text value="BOOLEAN" noi18n="true"/>
         </properties>
       </component>
       <component id="f6c6a" class="javax.swing.JLabel">
@@ -144,7 +144,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="STRING"/>
+          <text value="STRING" noi18n="true"/>
         </properties>
       </component>
       <component id="2be34" class="javax.swing.JLabel">
@@ -152,7 +152,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="NUMBER"/>
+          <text value="NUMBER" noi18n="true"/>
         </properties>
       </component>
       <component id="650e7" class="javax.swing.JLabel">
@@ -160,7 +160,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="BOOLEAN"/>
+          <text value="BOOLEAN" noi18n="true"/>
         </properties>
       </component>
       <hspacer id="3d968">
@@ -178,7 +178,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;From &lt;hr&gt; &lt;center&gt;To&lt;/center&gt;&lt;/html&gt;"/>
+          <text resource-bundle="messages/XPathBundle" key="label.html.from.hr.center.to.center.html"/>
         </properties>
       </component>
       <grid id="8f9fb" layout-manager="GridLayoutManager" row-count="2" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -194,7 +194,7 @@
               <grid row="0" column="0" row-span="1" col-span="6" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Always flag explicit conversion to unexpected type"/>
+              <text resource-bundle="messages/XPathBundle" key="checkbox.always.flag.explicit.conversion.to.unexpected.type"/>
             </properties>
           </component>
           <component id="452a8" class="javax.swing.JCheckBox" binding="myIgnoreNodesetToString">
@@ -202,7 +202,7 @@
               <grid row="1" column="0" row-span="1" col-span="6" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Ignore conversion of NODESET to BOOLEAN by string()-conversion"/>
+              <text resource-bundle="messages/XPathBundle" key="checkbox.ignore.conversion.of.nodeset.to.boolean.by.string.conversion"/>
             </properties>
           </component>
         </children>

@@ -187,6 +187,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     invokeRefactoring(processor);
   }
 
+  @NlsContexts.DialogMessage
   private String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
@@ -198,7 +199,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       final String newName = info.getName(parameters);
       TypeParameterInfo existing = infos.get(newName);
       if (existing != null) {
-        return myClass.getName() + " already contains type parameter " + newName;
+        return JavaRefactoringBundle.message("changeClassSignature.already.contains.type.parameter", myClass.getName(), newName);
       }
       infos.put(newName, info);
     }
@@ -215,12 +216,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return null;
   }
 
+  @NlsContexts.DialogMessage
   private static String updateInfo(PsiTypeCodeFragment source, TypeParameterInfo.New info, InfoUpdater updater) {
     PsiType valueType;
     try {
       valueType = source.getType();
       if (valueType instanceof PsiPrimitiveType) {
-        return "Type parameter can't be primitive";
+        return JavaRefactoringBundle.message("changeClassSignature.Type.parameter.can.not.be.primitive");
       }
     }
     catch (PsiTypeCodeFragment.TypeSyntaxException e) {

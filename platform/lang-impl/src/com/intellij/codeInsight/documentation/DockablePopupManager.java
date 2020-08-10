@@ -25,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +44,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myProject = project;
   }
 
-  @Nls
+  @NonNls
   protected abstract String getShowInToolWindowProperty();
 
-  @Nls
+  @NonNls
   protected abstract String getAutoUpdateEnabledProperty();
 
   protected boolean getAutoUpdateDefault() {

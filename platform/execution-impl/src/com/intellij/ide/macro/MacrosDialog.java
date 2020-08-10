@@ -77,7 +77,7 @@ public final class MacrosDialog extends DialogWrapper {
                                      @NotNull Predicate<? super Macro> macroFilter,
                                      Computable<Boolean> hasModule) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
-      AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
+      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
       () -> show(textField, macroFilter, getPathMacros(hasModule.compute()))));
   }
 

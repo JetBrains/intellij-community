@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -78,7 +79,7 @@ public class ConstructionUtils {
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      String name = call.getMethodExpression().getReferenceName();
+      @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
       if(name != null && name.startsWith("new") && argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
@@ -120,7 +121,7 @@ public class ConstructionUtils {
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      String name = call.getMethodExpression().getReferenceName();
+      @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
       if(name != null && name.startsWith("new") && !argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
@@ -174,7 +175,7 @@ public class ConstructionUtils {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (ENUM_SET_NONE_OF.test(call)) return true;
-      String name = call.getMethodExpression().getReferenceName();
+      @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
       if (name != null && name.startsWith("new") && !argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();

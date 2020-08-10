@@ -7,6 +7,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public final class PathEnvironmentVariableUtil {
    * @return {@link File} instance or null if not found
    */
   @Nullable
-  public static File findInPath(@NotNull String fileBaseName) {
+  public static File findInPath(@NotNull @NonNls String fileBaseName) {
     return findInPath(fileBaseName, null);
   }
 

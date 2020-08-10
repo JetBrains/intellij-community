@@ -156,7 +156,7 @@ public class ConfigUI extends JPanel {
     }
 
     public static void main(String[] args) {
-        JFrame test = new JFrame("Config test");
+        @SuppressWarnings("HardCodedStringLiteral") JFrame test = new JFrame("Config test");
         test.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         final JPanel comp = new JPanel(new BorderLayout());
         comp.add(new ConfigUI(new Config()), BorderLayout.CENTER);

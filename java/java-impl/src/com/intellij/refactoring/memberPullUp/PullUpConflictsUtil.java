@@ -3,6 +3,7 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -99,7 +100,8 @@ public final class PullUpConflictsUtil {
             if (!sClass.isInheritor(subclass, true) && !sClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
               for (PsiMethod aMethod : newAbstractMethods) {
                 if (MethodSignatureUtil.findMethodBySignature(sClass, aMethod, true) == null) {
-                  conflicts.putValue(sClass, "Concrete '" + RefactoringUIUtil.getDescription(sClass, true) + "' would inherit a new abstract method");
+                  conflicts.putValue(sClass, JavaBundle
+                    .message("pull.up.concrete.inherit.abstract.method.conflict", RefactoringUIUtil.getDescription(sClass, true)));
                   return false;
                 }
               }
@@ -121,7 +123,9 @@ public final class PullUpConflictsUtil {
         assert qualifiedName != null;
         if (superClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (!Comparing.strEqual(StringUtil.getPackageName(qualifiedName), targetPackage.getQualifiedName())) {
-            conflicts.putValue(superClass, RefactoringUIUtil.getDescription(superClass, true) + " won't be accessible from " +RefactoringUIUtil.getDescription(targetPackage, true));
+            conflicts.putValue(superClass, JavaBundle
+              .message("pull.up.accessible.conflict.1", RefactoringUIUtil.getDescription(superClass, true),
+                       RefactoringUIUtil.getDescription(targetPackage, true)));
           }
         }
       }
@@ -305,10 +309,10 @@ public final class PullUpConflictsUtil {
         if (containingClass != null) {
           if (!PsiUtil.isAccessibleFromPackage(classMember, myTargetPackage)) {
             if (classMember.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+              myConflicts.putValue(myMember, JavaBundle.message("pull.up.accessible.conflict", RefactoringUIUtil.getDescription(classMember, true)));
             }
             else if (classMember.hasModifierProperty(PsiModifier.PROTECTED) && !mySubClass.isInheritor(containingClass, true)) {
-              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+              myConflicts.putValue(myMember, JavaBundle.message("pull.up.accessible.conflict", RefactoringUIUtil.getDescription(classMember, true)));
             }
           }
         }

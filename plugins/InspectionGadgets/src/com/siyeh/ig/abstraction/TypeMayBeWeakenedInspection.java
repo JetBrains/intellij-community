@@ -182,7 +182,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private static void writeBool(@NotNull Element node, boolean value, @NotNull String name) {
+  private static void writeBool(@NotNull Element node, boolean value, @NotNull @NonNls String name) {
     Element optionElement = new Element("option");
     optionElement.setAttribute("name", name);
     optionElement.setAttribute("value", String.valueOf(value));

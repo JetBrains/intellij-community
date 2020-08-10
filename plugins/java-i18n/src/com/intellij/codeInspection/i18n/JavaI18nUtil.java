@@ -453,6 +453,7 @@ public final class JavaI18nUtil extends I18nUtil {
                                                    boolean nested) {
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
+    boolean noEscapingRequired = !nested && SequencesKt.all(cf.getUastOperands(), expression -> expression instanceof ULiteralExpression);
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
       while (expression instanceof UParenthesizedExpression) {
         expression = ((UParenthesizedExpression)expression).getExpression();
@@ -460,8 +461,13 @@ public final class JavaI18nUtil extends I18nUtil {
       if (expression instanceof ULiteralExpression) {
         Object value = ((ULiteralExpression)expression).getValue();
         if (value != null) {
-          String formatString = PsiConcatenationUtil.formatString(value.toString(), false);
-          result.append(nested ? PsiConcatenationUtil.formatString(formatString, false) : formatString);
+          if (noEscapingRequired) {
+            result.append(value.toString());
+          }
+          else {
+            String formatString = PsiConcatenationUtil.formatString(value.toString(), false);
+            result.append(nested ? PsiConcatenationUtil.formatString(formatString, false) : formatString);
+          }
         }
       }
       else if (addChoicePattern(expression, formatParameters, project, result)) {

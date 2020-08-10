@@ -145,7 +145,9 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     if (myCreateInnerClassRb.isSelected()) {
       final PsiClass innerClass = myTargetClass.findInnerClassByName(myInnerClassName.getText(), false);
       if (innerClass != null) {
-        conflicts.putValue(innerClass, "Inner class " + myInnerClassName.getText() + " already defined in class " + myTargetClass.getName());
+        String innerClassDefinedMessage = JavaRefactoringBundle.message("refactoring.extract.method.inner.class.defined",
+                                                                        myInnerClassName.getText(), myTargetClass.getName());
+        conflicts.putValue(innerClass, innerClassDefinedMessage);
       }
     }
     if (conflicts.size() > 0) {

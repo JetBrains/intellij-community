@@ -124,9 +124,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     GridBagConstraints constraints =
       new GridBagConstraints(0, 0, 2, 1, 4.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
-    panel.add(Messages.configureMessagePaneUi(new JTextPane(), "<html>Please specify the contract text<p>" +
-                                                                 "Example: <code>_, null -> false</code><br>" +
-                                                                 "<small>See intention action description for more details</small></html>"), constraints);
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.contract.dialog.hint")), constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.gridwidth = 1;
