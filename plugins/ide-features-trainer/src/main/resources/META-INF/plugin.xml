@@ -5,6 +5,7 @@
             url="http://www.jetbrains.com">JetBrains</vendor>
 
     <description>Provides feature suggesting utility that helps users</description>
+    <change-notes>Plugin has been rewritten and updated to be compatible with last version of IDEA</change-notes>
     <category>Code tools</category>
 
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
