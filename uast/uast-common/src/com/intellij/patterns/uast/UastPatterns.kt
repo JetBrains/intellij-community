@@ -161,6 +161,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   }
 
   fun constructor(classPattern: ElementPattern<PsiClass>, parameterCount: Int): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
     val psiMethod = it.resolve() ?: return@filterWithContext false
 
     psiMethod.isConstructor
@@ -169,6 +171,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   }
 
   fun constructor(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
     val psiMethod = it.resolve() ?: return@filterWithContext false
     psiMethod.isConstructor && classPattern.accepts(psiMethod.containingClass, context)
   }
