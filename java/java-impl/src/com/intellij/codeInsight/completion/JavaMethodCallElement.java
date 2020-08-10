@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
@@ -276,10 +275,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     Template template = createArgTemplate(method, caretOffset, argList, argRange);
 
     context.getDocument().deleteString(caretOffset, argRange.getEndOffset());
-    TemplateManager.getInstance(method.getProject()).startTemplate(editor, template);
-
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState == null) return false;
+    TemplateState templateState = TemplateManager.getInstance(method.getProject()).runTemplate(editor, template);
 
     setupNonFilledArgumentRemoving(editor, templateState);
 
