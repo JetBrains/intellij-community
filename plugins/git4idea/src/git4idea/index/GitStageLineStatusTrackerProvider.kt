@@ -43,7 +43,6 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val status = GitStageTracker.getInstance(project).status(file) ?: return null
 
     if (!status.isTracked() ||
-        !status.has(ContentVersion.HEAD) ||
         !status.has(ContentVersion.STAGED) ||
         !status.has(ContentVersion.LOCAL)) return null
 
@@ -79,6 +78,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val indexFileCache = project.service<GitIndexVirtualFileCache>()
     val indexFile = indexFileCache.get(repository.root, status.path(ContentVersion.STAGED))
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
+
+    if (!status.has(ContentVersion.HEAD)) return StagedTrackerContent("", indexDocument)
 
     try {
       val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
