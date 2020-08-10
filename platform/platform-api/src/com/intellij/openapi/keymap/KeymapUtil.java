@@ -212,10 +212,10 @@ public final class KeymapUtil {
   private static String getSimplifiedMacKeyModifiersText(int modifiers) {
     StringBuilder buf = new StringBuilder();
 
-    if ((modifiers & InputEvent.META_MASK) != 0)      buf.append("Command+");
-    if ((modifiers & InputEvent.CTRL_MASK) != 0)      buf.append("Control+");
-    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append( "Option+");
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0)     buf.append( "Shift+");
+    if ((modifiers & InputEvent.META_MASK) != 0)      buf.append("Cmd+");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0)      buf.append("Ctrl+");
+    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append("Opt+");
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0)     buf.append("Shift+");
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");
 
