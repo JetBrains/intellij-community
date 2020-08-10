@@ -68,8 +68,6 @@
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
-
-    <applicationService serviceImplementation="com.jetbrains.python.newProject.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.welcome.PyWelcomeCollector"/>
   </extensions>
 
