@@ -296,7 +296,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   void start(@NotNull TemplateImpl template,
              @Nullable PairProcessor<? super String, ? super String> processor,
-             @Nullable Map<String, String> predefinedVarValues, int caretOffset) {
+             @Nullable Map<String, String> predefinedVarValues, int startCaretOffset) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
 
@@ -314,10 +314,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     setPredefinedVariableValues(predefinedVarValues);
 
     if (getTemplate().isInline()) {
+      int caretOffset = getCurrentCaretOffset(startCaretOffset);
       myTemplateRange = getDocument().createRangeMarker(caretOffset, caretOffset + getTemplate().getTemplateText().length());
     }
     else {
-      preprocessTemplate(file, caretOffset, getTemplate().getTemplateText());
+      preprocessTemplate(file, getCurrentCaretOffset(startCaretOffset), getTemplate().getTemplateText());
+      int caretOffset = getCurrentCaretOffset(startCaretOffset);
       myTemplateRange = getDocument().createRangeMarker(caretOffset, caretOffset);
     }
     myTemplateRange.setGreedyToLeft(true);
@@ -326,6 +328,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myLiveTemplateProcessor.logTemplate(myProject, template, file.getLanguage());
 
     processAllExpressions(getTemplate());
+  }
+
+  private int getCurrentCaretOffset(int caretOffset) {
+    Editor editor = getEditor();
+    return editor != null ? editor.getCaretModel().getOffset() : caretOffset;
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
