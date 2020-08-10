@@ -12,7 +12,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -66,13 +68,33 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
             PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
               PsiParameter parameter = parameters[i];
-              Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
+              Nls.Capitalization capitalization = getCapitalization(parameter);
               if (capitalization == Nls.Capitalization.NotSpecified) continue;
               ExpressionUtils.nonStructuralChildren(args[i])
                 .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), holder, capitalization));
             }
           }
         }
+      }
+
+      @NotNull
+      private Nls.Capitalization getCapitalization(PsiParameter parameter) {
+        Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
+        if (capitalization != Nls.Capitalization.NotSpecified) {
+          return capitalization;
+        }
+        PsiClassType classType = ObjectUtils.tryCast(parameter.getType(), PsiClassType.class);
+        if (classType != null && 
+            classType.equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER+"<"+ CommonClassNames.JAVA_LANG_STRING+">")) {
+          PsiType typeParameter = ArrayUtil.getFirstElement(classType.getParameters());
+          if (typeParameter != null) {
+            NlsInfo info = NlsInfo.forType(typeParameter);
+            if (info instanceof NlsInfo.Localized) {
+              return ((NlsInfo.Localized)info).getCapitalization();
+            }
+          }
+        }
+        return Nls.Capitalization.NotSpecified;
       }
     };
   }
