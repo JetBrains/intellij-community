@@ -5,6 +5,8 @@
     <module name="aswb.jcgdi.blaze.plugin.aswb" />
     <option name="VM_PARAMETERS" value="-ea -Xms2048m -Xmx4096m -XX:+UseG1GC -Didea.is.internal=true -Didea.platform.prefix=AndroidStudio -Dapple.laf.useScreenMenuBar=true -Dcom.apple.mrj.application.apple.menu.about.name=AndroidStudio -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -XX:ReservedCodeCacheSize=1024M -Ddisable.android.first.run=true -Dcaches.indexerThreadsCount=16 -Dstudio.projectview=true -Didea.classpath.index.enabled=false -Dandroid.sdk.custom.url=file:///google/src/head/depot/google3/third_party/android/sdk_repo/repository.xml -Dplugin.path=../../../tools/vendor/google3/blaze/prebuilts/g3plugins/opt/android-studio-with-blaze/plugin-updates/g3plugins -Didea.config.path=../onestudio/config -Didea.system.path=../onestudio/system -Dide.index.image.max.size=0" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <method v="2">
       <option name="Make" enabled="true" />
       <option name="BuildArtifacts" enabled="true" />
