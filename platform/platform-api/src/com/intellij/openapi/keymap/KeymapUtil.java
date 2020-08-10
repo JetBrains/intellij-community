@@ -143,7 +143,7 @@ public final class KeymapUtil {
   @NotNull
   public static String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
-    if (SystemInfo.isMac) {
+    if (isNativeMacShortcuts()) {
       return MacKeymapUtil.getKeyStrokeText(accelerator);
     }
     String acceleratorText = "";
@@ -152,7 +152,8 @@ public final class KeymapUtil {
       acceleratorText = getModifiersText(modifiers);
     }
 
-    acceleratorText += getKeyText(accelerator.getKeyCode());
+    int code = accelerator.getKeyCode();
+    acceleratorText += isSimplifiedMacShortcuts() ? getSimplifiedMacKeyText(code) : getKeyText(code);
     return acceleratorText.trim();
   }
 
@@ -171,14 +172,22 @@ public final class KeymapUtil {
       case KeyEvent.VK_EQUALS:         return "=";
     }
 
-    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+    String result = isNativeMacShortcuts() ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
     // [vova] this is dirty fix for bug #35092
     return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
   }
 
+  private static boolean isNativeMacShortcuts() {
+    return SystemInfo.isMac && !isSimplifiedMacShortcuts();
+  }
+  
+  private static boolean isSimplifiedMacShortcuts() {
+    return SystemInfo.isMac && Registry.is("ide.macos.disable.native.shortcut.symbols", false);
+  }
+
   @NotNull
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    if (SystemInfo.isMac) {
+    if (isNativeMacShortcuts()) {
       //try {
       //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
       //  Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);
@@ -194,8 +203,25 @@ public final class KeymapUtil {
       return MacKeymapUtil.getModifiersText(modifiers);
     }
 
-    final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
+    final String keyModifiersText = isSimplifiedMacShortcuts() ? getSimplifiedMacKeyModifiersText(modifiers)
+                                                               : KeyEvent.getKeyModifiersText(modifiers);
+
     return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
+  }
+
+  private static String getSimplifiedMacKeyModifiersText(int modifiers) {
+    StringBuilder buf = new StringBuilder();
+
+    if ((modifiers & InputEvent.META_MASK) != 0)      buf.append("Command+");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0)      buf.append("Control+");
+    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append( "Option+");
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0)     buf.append( "Shift+");
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");
+
+    if (buf.length() > 0) buf.setLength(buf.length() - 1);
+
+    return buf.toString();
   }
 
   @NotNull
@@ -205,6 +231,87 @@ public final class KeymapUtil {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  }
+
+  private static String getSimplifiedMacKeyText(int code) {
+    switch(code) {
+      case KeyEvent.VK_ENTER: return "Enter";
+      case KeyEvent.VK_BACK_SPACE: return "Backspace";
+      case KeyEvent.VK_TAB: return "Tab";
+      case KeyEvent.VK_CANCEL: return "Cancel";
+      case KeyEvent.VK_CLEAR: return "Clear";
+      case KeyEvent.VK_COMPOSE: return "Compose";
+      case KeyEvent.VK_PAUSE: return "Pause";
+      case KeyEvent.VK_CAPS_LOCK: return "Caps Lock";
+      case KeyEvent.VK_ESCAPE: return "Escape";
+      case KeyEvent.VK_SPACE: return "Space";
+      case KeyEvent.VK_PAGE_UP: return "Page Up";
+      case KeyEvent.VK_PAGE_DOWN: return "Page Down";
+      case KeyEvent.VK_END: return "End";
+      case KeyEvent.VK_HOME: return "Home";
+      case KeyEvent.VK_LEFT: return "Left";
+      case KeyEvent.VK_UP: return "Up";
+      case KeyEvent.VK_RIGHT: return "Right";
+      case KeyEvent.VK_DOWN: return "Down";
+      case KeyEvent.VK_BEGIN: return "Begin";
+
+      // modifiers
+      case KeyEvent.VK_SHIFT: return "Shift";
+      case KeyEvent.VK_CONTROL: return "Control";
+      case KeyEvent.VK_ALT: return "Alt";
+      case KeyEvent.VK_META: return "Meta";
+      case KeyEvent.VK_ALT_GRAPH: return "Alt Graph";
+
+      // numpad numeric keys handled below
+      case KeyEvent.VK_MULTIPLY: return "NumPad *";
+      case KeyEvent.VK_ADD: return "NumPad +";
+      case KeyEvent.VK_SEPARATOR: return "NumPad ,";
+      case KeyEvent.VK_SUBTRACT: return "NumPad -";
+      case KeyEvent.VK_DECIMAL: return "NumPad .";
+      case KeyEvent.VK_DIVIDE: return "NumPad /";
+      case KeyEvent.VK_DELETE: return "Delete";
+      case KeyEvent.VK_NUM_LOCK: return "Num Lock";
+      case KeyEvent.VK_SCROLL_LOCK: return "Scroll Lock";
+
+      case KeyEvent.VK_WINDOWS: return "Windows";
+      case KeyEvent.VK_CONTEXT_MENU: return "Context Menu";
+
+      case KeyEvent.VK_F1: return "F1";
+      case KeyEvent.VK_F2: return "F2";
+      case KeyEvent.VK_F3: return "F3";
+      case KeyEvent.VK_F4: return "F4";
+      case KeyEvent.VK_F5: return "F5";
+      case KeyEvent.VK_F6: return "F6";
+      case KeyEvent.VK_F7: return "F7";
+      case KeyEvent.VK_F8: return "F8";
+      case KeyEvent.VK_F9: return "F9";
+      case KeyEvent.VK_F10: return "F10";
+      case KeyEvent.VK_F11: return "F11";
+      case KeyEvent.VK_F12: return "F12";
+      case KeyEvent.VK_F13: return "F13";
+      case KeyEvent.VK_F14: return "F14";
+      case KeyEvent.VK_F15: return "F15";
+      case KeyEvent.VK_F16: return "F16";
+      case KeyEvent.VK_F17: return "F17";
+      case KeyEvent.VK_F18: return "F18";
+      case KeyEvent.VK_F19: return "F19";
+      case KeyEvent.VK_F20: return "F20";
+      case KeyEvent.VK_F21: return "F21";
+      case KeyEvent.VK_F22: return "F22";
+      case KeyEvent.VK_F23: return "F23";
+      case KeyEvent.VK_F24: return "F24";
+
+      case KeyEvent.VK_PRINTSCREEN: return "Print Screen";
+      case KeyEvent.VK_INSERT: return "Insert";
+      case KeyEvent.VK_HELP: return "Help";
+
+      case KeyEvent.VK_KP_UP: return "Up";
+      case KeyEvent.VK_KP_DOWN: return "Down";
+      case KeyEvent.VK_KP_LEFT: return "Left";
+      case KeyEvent.VK_KP_RIGHT: return "Right";
+    }
+
+    return getKeyText(code);
   }
 
   /**
