@@ -17,6 +17,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -189,11 +190,15 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected int restoreCaretOffset(int offset) {
-    if (myCaretRangeMarker.isValid()) {
-      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+    return restoreCaretOffset(myCaretRangeMarker, offset);
+  }
+
+  static int restoreCaretOffset(@NotNull RangeMarker caretRangeMarker, int offset) {
+    if (caretRangeMarker.isValid()) {
+      if (caretRangeMarker.getStartOffset() <= offset && caretRangeMarker.getEndOffset() >= offset) {
         return offset;
       }
-      return myCaretRangeMarker.getEndOffset();
+      return caretRangeMarker.getEndOffset();
     }
     return offset;
   }
