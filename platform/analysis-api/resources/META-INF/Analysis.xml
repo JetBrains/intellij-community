@@ -8,8 +8,6 @@
     <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
                     dynamic="true"/>
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
-    <extensionPoint name="completion.ignoringDumbnessAllowed" beanClass="com.intellij.codeInsight.completion.CompletionIgnoreDumbnessEP"
-                    dynamic="true"/>
     <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>

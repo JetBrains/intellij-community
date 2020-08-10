@@ -2,18 +2,8 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.project.DumbUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class MockDumbUtil implements DumbUtil {
-
-  @Override
-  public @NotNull <T> List<T> filterByDumbAwarenessHonoringIgnoring(@NotNull Collection<? extends T> collection) {
-    return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
-  }
 
   @Override
   public boolean mayUseIndices() {
