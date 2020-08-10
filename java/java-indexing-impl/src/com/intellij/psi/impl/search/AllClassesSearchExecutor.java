@@ -5,6 +5,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,7 +59,8 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
                                                         @NotNull final AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<? super PsiClass> processor) {
     final Set<String> names = new THashSet<>(10000);
-    processClassNames(parameters.getProject(), scope, s -> {
+    Project project = parameters.getProject();
+    processClassNames(project, scope, s -> {
       if (parameters.nameMatches(s)) {
         names.add(s);
       }
@@ -68,7 +70,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     List<String> sorted = new ArrayList<>(names);
     sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
-    return processClassesByNames(parameters.getProject(), scope, sorted, processor);
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(sorted, ProgressIndicatorProvider.getGlobalProgressIndicator(), name ->
+      processByName(project, scope, processor, cache, name));
   }
 
   public static boolean processClassesByNames(@NotNull Project project,
@@ -78,11 +82,20 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
-      for (PsiClass psiClass : DumbService.getInstance(project).runReadActionInSmartMode(() -> cache.getClassesByName(name, scope))) {
-        ProgressIndicatorProvider.checkCanceled();
-        if (!processor.process(psiClass)) {
-          return false;
-        }
+      if (!processByName(project, scope, processor, cache, name)) return false;
+    }
+    return true;
+  }
+
+  private static boolean processByName(Project project,
+                                       GlobalSearchScope scope,
+                                       Processor<? super PsiClass> processor,
+                                       PsiShortNamesCache cache,
+                                       String name) {
+    for (PsiClass psiClass : DumbService.getInstance(project).runReadActionInSmartMode(() -> cache.getClassesByName(name, scope))) {
+      ProgressIndicatorProvider.checkCanceled();
+      if (!processor.process(psiClass)) {
+        return false;
       }
     }
     return true;
