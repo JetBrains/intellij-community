@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
@@ -29,7 +30,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Pavel.Dolgov
  */
-public class JavaMethodHandleCompletionContributor extends CompletionContributor {
+public class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
 
   // MethodHandle for constructors and methods
   private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = ContainerUtil.immutableSet(

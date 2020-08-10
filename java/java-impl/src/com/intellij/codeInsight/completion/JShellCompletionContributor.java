@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiJShellSyntheticElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellCompletionContributor extends CompletionContributor {
+public class JShellCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet resultSet) {
     resultSet.runRemainingContributors(parameters, r -> {

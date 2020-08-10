@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
@@ -67,7 +68,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 /**
  * @author peter
  */
-public class JavaCompletionContributor extends CompletionContributor {
+public class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
