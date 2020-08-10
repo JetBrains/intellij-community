@@ -1041,14 +1041,25 @@ public final class PlatformTestUtil {
     return result.first;
   }
 
+
+  @NotNull
+  public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
+                                                                                      @NotNull String executorId)
+    throws InterruptedException {
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    assertNotNull("Unable to find executor: " + executorId, executor);
+    return executeConfiguration(runConfiguration, executor);
+  }
+
   /**
    * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
    * {@link RunContentDescriptor}
    */
   @NotNull
   public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                      @NotNull String executorId)
+                                                                                      @NotNull Executor executor)
     throws InterruptedException {
+
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1056,13 +1067,11 @@ public final class PlatformTestUtil {
     }
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
       RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
-    ProgramRunner<?> runner = ProgramRunner.getRunner(executorId, runConfiguration);
+    ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
     if (runner == null) {
-      fail("No runner found for: " + executorId + " and " + runConfiguration);
+      fail("No runner found for: " + executor.getId() + " and " + runConfiguration);
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
-    assertNotNull("Unable to find executor: " + executorId, executor);
     ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
