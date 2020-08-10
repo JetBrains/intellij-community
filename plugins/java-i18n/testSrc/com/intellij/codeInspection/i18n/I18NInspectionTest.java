@@ -66,6 +66,10 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     doTestNlsMode();
   }
   
+  public void testNlsOnlyTernary() {
+    doTestNlsMode();
+  }
+  
   public void testNlsOnlyFields() {
     doTestNlsMode();
   }

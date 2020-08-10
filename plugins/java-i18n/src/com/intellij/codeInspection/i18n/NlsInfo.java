@@ -355,17 +355,19 @@ public abstract class NlsInfo {
       method = UastUtils.getAnnotationMethod(nameValuePair);
     }
     else {
-      UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-      while (parent instanceof UCallExpression &&
-             (UastExpressionUtils.isArrayInitializer(parent) || UastExpressionUtils.isNewArrayWithInitializer(parent))) {
-        parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+      UElement parent = expression;
+      while (!(parent instanceof UReturnExpression)) {
+        UElement next = parent.getUastParent();
+        if (next == null || next instanceof ULambdaExpression) return Unspecified.UNKNOWN;
+        if (next instanceof UCallExpression) {
+          if (!UastExpressionUtils.isArrayInitializer(parent) && !UastExpressionUtils.isNewArrayWithInitializer(parent)) {
+            return Unspecified.UNKNOWN;
+          }
+        }
+        if (next instanceof UIfExpression && parent.equals(((UIfExpression)next).getCondition())) return Unspecified.UNKNOWN;
+        parent = next;
       }
-      if (parent == null) return Unspecified.UNKNOWN;
-      final UReturnExpression returnStmt =
-        UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-      if (returnStmt == null) {
-        return Unspecified.UNKNOWN;
-      }
+      final UReturnExpression returnStmt = (UReturnExpression)parent;
       UElement jumpTarget = returnStmt.getJumpTarget();
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();
