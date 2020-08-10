@@ -342,7 +342,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public String toString() {
     if (myName == null) return "Module (not initialized)";
-    return "Module: '" + getName() + "'";
+    return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
   }
 
   @Override

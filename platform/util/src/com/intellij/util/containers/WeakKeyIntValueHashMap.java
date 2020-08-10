@@ -30,10 +30,11 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
     @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof MyReference)) return false;
-      MyReference<T> other = (MyReference)obj;
+      //noinspection unchecked
+      MyReference<T> other = (MyReference<T>)obj;
       T myKey = get();
       T otherKey = other.get();
-      return obj == this || myKey != null && otherKey != null && myKey.equals(otherKey);
+      return obj == this || myKey != null && myKey.equals(otherKey);
     }
 
     @Override
@@ -43,8 +44,9 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   }
 
   private void processQueue() {
-    while(true){
-      MyReference<K> ref = (MyReference)myQueue.poll();
+    while (true) {
+      //noinspection unchecked
+      MyReference<K> ref = (MyReference<K>)myQueue.poll();
       if (ref == null) {
         return;
       }
@@ -102,6 +104,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   @NotNull
   @Override
   public Set<K> keySet() {
+    //noinspection unchecked
     return new THashSet<>(ContainerUtil.map(myMap.keys(), ref -> SoftReference.dereference((MyReference<K>)ref)));
   }
 
@@ -114,42 +117,38 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   @NotNull
   @Override
   public Iterable<Entry<K>> entries() {
-    return new Iterable<Entry<K>>() {
-      @NotNull
-      @Override
-      public Iterator<Entry<K>> iterator() {
-        final TObjectIntIterator<MyReference<K>> tIterator = myMap.iterator();
-        return ContainerUtil.filterIterator(new Iterator<Entry<K>>() {
-          @Override
-          public boolean hasNext() {
-            return tIterator.hasNext();
-          }
+    return () -> {
+      final TObjectIntIterator<MyReference<K>> tIterator = myMap.iterator();
+      return ContainerUtil.filterIterator(new Iterator<Entry<K>>() {
+        @Override
+        public boolean hasNext() {
+          return tIterator.hasNext();
+        }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
 
-          @Override
-          public Entry<K> next() {
-            tIterator.advance();
-            return new Entry<K>() {
-              @NotNull
-              @Override
-              public K getKey() {
-                K v = SoftReference.dereference(tIterator.key());
-                //noinspection unchecked
-                return ObjectUtils.notNull(v, (K)GCED);
-              }
+        @Override
+        public Entry<K> next() {
+          tIterator.advance();
+          return new Entry<K>() {
+            @NotNull
+            @Override
+            public K getKey() {
+              K v = SoftReference.dereference(tIterator.key());
+              //noinspection unchecked
+              return ObjectUtils.notNull(v, (K)GCED);
+            }
 
-              @Override
-              public int getValue() {
-                return tIterator.value();
-              }
-            };
-          }
-        }, o -> o.getKey() != GCED);
-      }
+            @Override
+            public int getValue() {
+              return tIterator.value();
+            }
+          };
+        }
+      }, o -> o.getKey() != GCED);
     };
   }
 }
