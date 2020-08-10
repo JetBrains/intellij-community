@@ -191,42 +191,46 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
       }
+      @Suppress("MoveLambdaOutsideParentheses") // this suggestion is wrong, see KT-40969
       titledRow(message("group.ui.options")) {
-        val hasMergeMainMenuWithWindowTitleOption = IdeFrameDecorator.isCustomDecorationAvailable()
-        twoPanelRow(
-          {
-            fullRow { checkBox(cdShowTreeIndents) }
-            fullRow { checkBox(cdUseCompactTreeIndents) }
-            fullRow { checkBox(cdEnableMenuMnemonics) }
-            fullRow { checkBox(cdEnableControlsMnemonics) }
-            // The last item migrates here from the right column if the right column has the additional item:
-            if (hasMergeMainMenuWithWindowTitleOption)
-              fullRow { checkBox(cdShowMenuIcons) }
-          },
-          {
-            fullRow {
-              checkBox(cdSmoothScrolling)
-              ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-            }
-            fullRow { checkBox(cdDnDWithAlt) }
-
-            if (hasMergeMainMenuWithWindowTitleOption) {
-              fullRow {
-                val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
-                checkBox(cdMergeMainMenuWithWindowTitle).enabled(!overridden)
-                if (overridden) {
-                  ContextHelpLabel.create(
-                    message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))()
-                }
-                commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment")).withLargeLeftGap()
-              }
-            }
-            fullRow { checkBox(cdFullPathsInTitleBar) }
-            // The last item migrates to the left column if the right column has the additional item:
-            if (!hasMergeMainMenuWithWindowTitleOption)
-              fullRow { checkBox(cdShowMenuIcons) }
+        val leftColumnControls = sequence<InnerCell.() -> Unit> {
+          yield({ checkBox(cdShowTreeIndents) })
+          yield({ checkBox(cdUseCompactTreeIndents) })
+          yield({ checkBox(cdEnableMenuMnemonics) })
+          yield({ checkBox(cdEnableControlsMnemonics) })
+        }
+        val rightColumnControls = sequence<InnerCell.() -> Unit> {
+          yield({
+                  checkBox(cdSmoothScrolling)
+                  ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
+                })
+          yield({ checkBox(cdDnDWithAlt) })
+          if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+            yield({
+                    val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
+                    checkBox(cdMergeMainMenuWithWindowTitle).enabled(!overridden)
+                    if (overridden) {
+                      ContextHelpLabel.create(
+                        message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))()
+                    }
+                    commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment")).withLargeLeftGap()
+                  })
           }
-        )
+          yield({ checkBox(cdFullPathsInTitleBar) })
+          yield({ checkBox(cdShowMenuIcons) })
+        }
+
+        // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
+        // column to the left one:
+        val leftIt = leftColumnControls.iterator()
+        val rightIt = rightColumnControls.iterator()
+        while (leftIt.hasNext() || rightIt.hasNext()) {
+          when {
+            leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
+            leftIt.hasNext() -> twoColumnRow(leftIt.next()) { placeholder() }
+            rightIt.hasNext() -> twoColumnRow(rightIt.next()) { placeholder() } // move from right to left
+          }
+        }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           fullRow {
@@ -350,16 +354,6 @@ private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: Inne
     column2()
   }
   placeholder().constraints(growX, pushX)
-}
-
-private fun RowBuilder.twoPanelRow(initPanel1: LayoutBuilder.() -> Unit, initPanel2: LayoutBuilder.() -> Unit): Row {
-  val panel1 = panel {
-    initPanel1()
-  }
-  val panel2 = panel {
-    initPanel2()
-  }
-  return twoColumnRow({ component(panel1) }, { component(panel2) })
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {
