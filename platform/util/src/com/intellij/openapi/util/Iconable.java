@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.intellij.lang.annotations.MagicConstant;
@@ -30,27 +27,25 @@ public interface Iconable {
   Icon getIcon(@IconFlags int flags);
 
   final class LastComputedIcon {
-    private static final Key<SoftReference<IntObjectMap<Icon>>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+    private static final Key<IntObjectMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable
     public static Icon get(@NotNull UserDataHolder holder, int flags) {
-      IntObjectMap<Icon> map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
+      IntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       return map == null ? null : map.get(flags);
     }
 
     public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
-      IntObjectMap<Icon> map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
+      IntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       if (icon == null) {
         if (map != null) {
           map.remove(flags);
         }
       }
       else {
-        ConcurrentIntObjectMap<Icon> freshMap = ContainerUtil.createConcurrentIntObjectMap();
-        while (map == null) {
-          map = SoftReference.dereference(((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, new SoftReference<>(freshMap)));
+        if (map == null) {
+          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.createConcurrentIntObjectMap());
         }
-        ObjectUtils.reachabilityFence(freshMap);
         map.put(flags, icon);
       }
     }
