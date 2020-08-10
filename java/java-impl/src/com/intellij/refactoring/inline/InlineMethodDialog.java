@@ -40,10 +40,12 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getNameLabelText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
     String methodText = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                    PsiFormatUtilBase.SHOW_TYPE);
+    String occurrencesString = myOccurrencesNumber > -1 ?
+                               JavaRefactoringBundle.message("inline.method.method.occurrences", methodText, myOccurrencesNumber) :
+                               JavaRefactoringBundle.message("inline.method.method.label", methodText);
     return RefactoringBundle.message("inline.method.method.label", methodText, occurrencesString);
   }
 

@@ -176,7 +176,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getRefactoringName() + "...";
+    return JavaRefactoringBundle.message("inline.field.action.name");
   }
 
   private static @NlsActions.ActionText String getRefactoringName() {

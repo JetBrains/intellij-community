@@ -213,7 +213,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       }
 
       if (myTargetParameter == null && place != null && myTargetClass.hasTypeParameters() && !thisAccessExpressionApplicable(place)) {
-        conflicts.putValue(place, "Impossible to infer class type arguments. When proceed, raw " + myTargetClass.getName() + " would be created");
+        conflicts.putValue(place, JavaRefactoringBundle.message("infer.class.type.args.warning", myTargetClass.getName()));
       }
     }
 

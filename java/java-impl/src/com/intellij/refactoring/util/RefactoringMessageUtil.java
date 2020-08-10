@@ -13,10 +13,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 public final class RefactoringMessageUtil {
 
+  @Nls
   public static String getIncorrectIdentifierMessage(String identifierName) {
     return JavaRefactoringBundle.message("0.is.not.a.legal.java.identifier", identifierName);
   }

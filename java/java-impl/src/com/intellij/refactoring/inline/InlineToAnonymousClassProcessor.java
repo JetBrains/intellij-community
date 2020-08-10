@@ -173,7 +173,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
                     continue;
                   }
                 }
-                result.putValue(refElement, "Class cannot be inlined because a call to its member inside body");
+                result.putValue(refElement, JavaRefactoringBundle.message("inline.to.anonymous.no.method.calls"));
               }
             }
           }
@@ -184,7 +184,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       public void visitNewExpression(PsiNewExpression expression) {
         super.visitNewExpression(expression);
         if (!myClass.isEquivalentTo(PsiUtil.resolveClassInType(expression.getType()))) return;
-        result.putValue(expression, "Class cannot be inlined because a call to its constructor inside body");
+        result.putValue(expression, JavaRefactoringBundle.message("inline.to.anonymous.no.ctor.calls"));
       }
 
       @Override
@@ -197,7 +197,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         if (resolved instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)resolved;
           if ("getClass".equals(method.getName()) && method.getParameterList().isEmpty()) {
-            result.putValue(methodExpression, "Result of getClass() invocation would be changed");
+            result.putValue(methodExpression, JavaRefactoringBundle.message("inline.to.anonymous.no.get.class.calls"));
           }
         }
       }

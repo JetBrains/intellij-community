@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -68,7 +69,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected abstract String validateName(String name);
   
   @Nullable
-  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+  protected @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
@@ -276,7 +277,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected static class OperationFailedException extends Exception {
-    public OperationFailedException(String message) {
+    public OperationFailedException(@NlsContexts.DialogMessage String message) {
       super(message);
     }
   }

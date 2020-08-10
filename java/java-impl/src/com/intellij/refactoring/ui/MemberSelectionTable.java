@@ -3,6 +3,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -19,11 +20,11 @@ import java.util.List;
 
 public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember, MemberInfo> {
 
-  public MemberSelectionTable(final List<MemberInfo> memberInfos, String abstractColumnHeader) {
+  public MemberSelectionTable(final List<MemberInfo> memberInfos, @NlsContexts.ColumnName String abstractColumnHeader) {
     this(memberInfos, null, abstractColumnHeader);
   }
 
-  public MemberSelectionTable(final List<MemberInfo> memberInfos, MemberInfoModel<PsiMember, MemberInfo> memberInfoModel, String abstractColumnHeader) {
+  public MemberSelectionTable(final List<MemberInfo> memberInfos, MemberInfoModel<PsiMember, MemberInfo> memberInfoModel, @NlsContexts.ColumnName String abstractColumnHeader) {
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
