@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -161,31 +161,51 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
-      Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-      TextRange selectedRange;
-      if (myEditor instanceof EditorWindow) {
-        PsiFile injected = ((EditorWindow)myEditor).getInjectedFile();
-        selectedRange = InjectedLanguageManager.getInstance(editor.getProject()).injectedToHost(injected, mySelectedRange);
-      } else {
-        selectedRange = mySelectedRange;
-      }
-      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-
-      if (state != null) {
-        for (int i = 0; i < state.getSegmentsCount(); i++) {
-          final TextRange segmentRange = state.getSegmentRange(i);
-          TextRange intersection = segmentRange.intersection(selectedRange);
-          if (intersection != null) {
-            editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
-            return;
-          }
-        }
-      }
-      myEditor.getSelectionModel().setSelection(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset());
+      restoreSelection(myEditor, mySelectedRange);
     }
     else if (!shouldSelectAll()) {
       myEditor.getSelectionModel().removeSelection();
     }
+  }
+
+  /**
+   * @param selectedRange range which is relative to the {@code editor}
+   */
+  static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (handleSelectionIntersection(editor, selectedRange)) {
+      return;
+    }
+    editor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+  }
+
+  private static boolean handleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (editor instanceof EditorWindow) {
+      EditorWindow editorWindow = (EditorWindow)editor;
+      Editor hostEditor = editorWindow.getDelegate();
+      PsiFile injected = editorWindow.getInjectedFile();
+      TextRange hostSelectedRange = InjectedLanguageManager.getInstance(hostEditor.getProject()).injectedToHost(injected, selectedRange);
+      return doHandleSelectionIntersection(hostEditor, hostSelectedRange);
+    }
+    else {
+      return doHandleSelectionIntersection(editor, selectedRange);
+    }
+  }
+
+  private static boolean doHandleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+    if (state == null) {
+      return false;
+    }
+    for (int i = 0; i < state.getSegmentsCount(); i++) {
+      final TextRange segmentRange = state.getSegmentRange(i);
+      TextRange intersection = segmentRange.intersection(selectedRange);
+      if (intersection == null) {
+        continue;
+      }
+      editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
+      return true;
+    }
+    return false;
   }
 
   @Override
