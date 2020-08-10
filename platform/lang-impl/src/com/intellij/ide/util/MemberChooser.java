@@ -15,8 +15,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
@@ -40,6 +42,8 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsLast;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   protected Tree myTree;
@@ -890,9 +894,15 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (n1.getDelegate() instanceof ClassMemberWithElement && n2.getDelegate() instanceof ClassMemberWithElement) {
         PsiElement element1 = ((ClassMemberWithElement)n1.getDelegate()).getElement();
         PsiElement element2 = ((ClassMemberWithElement)n2.getDelegate()).getElement();
-        if (Comparing.equal(element1.getContainingFile(), element2.getContainingFile()) &&
-            !(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
-          return element1.getTextOffset() - element2.getTextOffset();
+        if (!(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
+          final PsiFile file1 = element1.getContainingFile();
+          final PsiFile file2 = element2.getContainingFile();
+          if (Comparing.equal(file1, file2)) {
+            return element1.getTextOffset() - element2.getTextOffset();
+          }
+          else {
+            return comparing(PsiFile::getVirtualFile, nullsLast(comparing(VirtualFile::getPath))).compare(file1, file2);
+          }
         }
       }
       return n1.getOrder() - n2.getOrder();
