@@ -34,7 +34,7 @@ class CompletionFileLogger(private val installationUID: String,
       installationUID, completionUID, language.displayName,
       isExperimentPerformed, experimentVersion,
       state, userFactors, contextFactors,
-      queryLength = lookup.queryLength(), bucket = bucket,
+      prefixLength = lookup.prefix().length, bucket = bucket,
       timestamp = lookupStorage?.startedTimestamp ?: timestamp)
 
     val shownTimestamp = CompletionUtil.getShownTimestamp(lookup)
@@ -62,7 +62,7 @@ class CompletionFileLogger(private val installationUID: String,
 
   override fun afterCharTyped(c: Char, lookup: LookupImpl, timestamp: Long) {
     val state = stateManager.update(lookup, true)
-    val event = TypeEvent(installationUID, completionUID, state, lookup.queryLength(), bucket, timestamp, language.displayName)
+    val event = TypeEvent(installationUID, completionUID, state, lookup.prefix().length, bucket, timestamp, language.displayName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -110,7 +110,7 @@ class CompletionFileLogger(private val installationUID: String,
   override fun afterBackspacePressed(lookup: LookupImpl, timestamp: Long) {
     val state = stateManager.update(lookup, true)
 
-    val event = BackspaceEvent(installationUID, completionUID, state, lookup.queryLength(), bucket, timestamp, language.displayName)
+    val event = BackspaceEvent(installationUID, completionUID, state, lookup.prefix().length, bucket, timestamp, language.displayName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -63,8 +64,13 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     val logger = loggerProvider.newCompletionLogger(Language.ANY)
 
+    val documentMock = mock(Document::class.java).apply {
+      `when`(text).thenReturn("")
+    }
+
     val editorMock = mock(Editor::class.java).apply {
       `when`(caretModel).thenReturn(mock(CaretModel::class.java))
+      `when`(document).thenReturn(documentMock)
     }
 
     val lookup = mock(LookupImpl::class.java).apply {
