@@ -23,9 +23,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author ven
@@ -55,8 +58,8 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
     boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
-    copyExtendsList(refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
-    copyExtendsList(refClass.getImplementsList(), targetTypeParameter, elementFactory);
+    copyExtendsList(refClass, refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
+    copyExtendsList(refClass, refClass.getImplementsList(), targetTypeParameter, elementFactory);
 
     getElement().delete();
 
@@ -69,7 +72,8 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     }
   }
 
-  private void copyExtendsList(@Nullable PsiReferenceList sourceExtendsList,
+  private void copyExtendsList(@NotNull PsiClass classToRemove,
+                               @Nullable PsiReferenceList sourceExtendsList,
                                boolean targetExtends,
                                PsiElementFactory elementFactory) {
     if (sourceExtendsList != null) {
@@ -82,7 +86,17 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
         PsiElement extendsRef = targetExtendsList.add(elementFactory.createReferenceElementByType(classType));
         PsiClass classToExtend = classType.resolve();
         if (classToExtend != null && classToExtend.hasModifierProperty(PsiModifier.SEALED)) {
-          FillPermitsListFix.fillPermitsList(classToExtend, Collections.singleton(myExtendingClass.getQualifiedName()));
+          String extendingClassName = Objects.requireNonNull(myExtendingClass.getQualifiedName());
+          if (classToExtend.getPermitsList() == null) {
+            if (classToExtend.getContainingFile() != myExtendingClass.getContainingFile()) {
+              Collection<String> missingInheritors = ClassUtils.findSameFileInheritors(classToExtend, classToRemove);
+              missingInheritors.add(extendingClassName);
+              FillPermitsListFix.fillPermitsList(classToExtend, missingInheritors);
+            }
+          }
+          else {
+            FillPermitsListFix.fillPermitsList(classToExtend, Collections.singleton(extendingClassName));
+          }
         }
         CodeStyleManager.getInstance(myExtendingClass.getProject()).reformat(extendsRef);
       }

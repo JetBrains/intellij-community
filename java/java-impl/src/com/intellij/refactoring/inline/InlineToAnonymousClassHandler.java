@@ -76,7 +76,8 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (element instanceof PsiAnonymousClass) return false;
     PsiClass psiClass = (PsiClass)element;
     if (!findClassInheritors(psiClass)) return false;
-    return !isParentSealed(psiClass);
+    boolean hasMethods = PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) != null;
+    return !hasMethods && !ClassUtils.hasSealedParent(psiClass);
   }
 
   private static boolean findClassInheritors(final PsiClass element) {
@@ -93,11 +94,6 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }), JavaRefactoringBundle.message("inline.anonymous.conflict.progress", element.getQualifiedName()), true, element.getProject())) return false;
     return inheritors.isEmpty();
-  }
-
-  private static boolean isParentSealed(@NotNull PsiClass psiClass) {
-    if (PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) == null) return false;
-    return ClassUtils.hasSealedParent(psiClass);
   }
 
   @Override

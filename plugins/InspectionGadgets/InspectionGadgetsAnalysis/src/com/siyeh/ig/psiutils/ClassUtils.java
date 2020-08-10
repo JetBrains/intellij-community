@@ -18,10 +18,13 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -341,7 +344,7 @@ public final class ClassUtils {
 
   /**
    * Removes exChild class reference from permits list of a parent.
-   * If this was the last element in permits list then parent class is converted to final if possible (sealed modifier is removed).
+   * If this was the last element in permits list then sealed modifier of parent class is removed.
    */
   public static void removeFromPermitsList(@NotNull PsiClass parent, @NotNull PsiClass exChild) {
     PsiReferenceList permitsList = parent.getPermitsList();
@@ -354,7 +357,14 @@ public final class ClassUtils {
     PsiModifierList modifiers = parent.getModifierList();
     if (modifiers == null) return;
     modifiers.setModifierProperty(PsiModifier.SEALED, false);
-    if (!parent.hasModifierProperty(PsiModifier.ABSTRACT)) modifiers.setModifierProperty(PsiModifier.FINAL, true);
+  }
+
+  public static Collection<String> findSameFileInheritors(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
+    GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
+    return DirectClassInheritorsSearch.search(psiClass, fileScope)
+      .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))
+      .mapping(inheritor -> inheritor.getQualifiedName())
+      .findAll();
   }
 
   public static boolean hasSealedParent(@NotNull PsiClass psiClass) {
