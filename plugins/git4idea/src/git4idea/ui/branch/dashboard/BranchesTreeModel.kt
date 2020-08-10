@@ -9,6 +9,7 @@ import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal val GIT_BRANCHES = DataKey.create<Set<BranchInfo>>("GitBranchKey")
+internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterKey")
 
 internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,

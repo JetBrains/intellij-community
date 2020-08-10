@@ -399,9 +399,11 @@ internal object BranchesDashboardActions {
   class UpdateBranchFilterInLogAction : DumbAwareAction() {
 
     override fun update(e: AnActionEvent) {
+      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
-      val enabled = project != null && uiController != null && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
+      val enabled = project != null && uiController != null && branchFilters != null && branchFilters.isNotEmpty()
+                    && e.getData(PlatformDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
       e.presentation.isEnabled = enabled
     }
 

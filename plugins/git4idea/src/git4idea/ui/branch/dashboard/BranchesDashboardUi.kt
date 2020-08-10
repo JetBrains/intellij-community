@@ -41,8 +41,8 @@ import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.without
 import com.intellij.vcs.log.visible.filters.with
+import com.intellij.vcs.log.visible.filters.without
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -222,6 +222,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     override fun getData(dataId: String): Any? {
       return when {
         GIT_BRANCHES.`is`(dataId) -> tree.getSelectedBranches()
+        GIT_BRANCH_FILTERS.`is`(dataId) -> tree.getSelectedBranchFilters()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null
