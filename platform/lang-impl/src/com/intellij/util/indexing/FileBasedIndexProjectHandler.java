@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import org.jetbrains.annotations.ApiStatus;
@@ -158,7 +159,12 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
           PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
           int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
           LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
-          new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads).indexFiles(project, files, indicator);
+          IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
+          try {
+            indexUpdateRunner.indexFiles(project, files, indicator);
+          } catch (IndexUpdateRunner.IndexingInterruptedException e) {
+            ExceptionUtil.rethrow(e.getCause());
+          }
           snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
         }
       }

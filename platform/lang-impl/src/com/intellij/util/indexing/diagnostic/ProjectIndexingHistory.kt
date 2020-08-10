@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
-import com.intellij.util.indexing.diagnostic.dto.toJson
+import com.intellij.util.indexing.diagnostic.dto.createProviderJsonStatistics
 import java.time.Instant
 
 typealias TimeMillis = Long
@@ -25,11 +25,16 @@ data class ProjectIndexingHistory(val projectName: String) {
   var totalNumberOfTooLargeFiles: Int = 0
   val totalTooLargeFiles = LimitedPriorityQueue<TooLargeForIndexingFile>(5, compareBy { it.fileSize })
 
-  fun addProviderStatistics(statistics: FileProviderIndexStatistics) {
+  fun addProviderStatistics(
+    providerDebugName: String,
+    numberOfFiles: Int,
+    totalTime: TimeNano,
+    statistics: IndexingJobStatistics
+  ) {
     // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJson()
+    providerStatistics += statistics.createProviderJsonStatistics(providerDebugName, numberOfFiles, totalTime)
 
-    for ((fileType, fileTypeStats) in statistics.indexingStatistics.statsPerFileType) {
+    for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
         StatsPerFileType(0, 0, 0, 0, LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
       }
@@ -39,7 +44,7 @@ data class ProjectIndexingHistory(val projectName: String) {
       totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTime.sumTime
       totalStats.biggestFileTypeContributors.addElement(
         BiggestFileTypeContributor(
-          statistics.providerDebugName,
+          providerDebugName,
           fileTypeStats.numberOfFiles,
           fileTypeStats.totalBytes,
           fileTypeStats.indexingTime.sumTime
@@ -47,15 +52,15 @@ data class ProjectIndexingHistory(val projectName: String) {
       )
     }
 
-    for ((indexId, stats) in statistics.indexingStatistics.statsPerIndexer) {
+    for ((indexId, stats) in statistics.statsPerIndexer) {
       val totalStats = totalStatsPerIndexer.getOrPut(indexId) { StatsPerIndexer(0, 0, 0) }
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalBytes += stats.totalBytes
       totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
     }
 
-    totalNumberOfTooLargeFiles += statistics.indexingStatistics.numberOfTooLargeForIndexingFiles.get()
-    statistics.indexingStatistics.tooLargeForIndexingFiles.biggestElements.forEach { totalTooLargeFiles.addElement(it) }
+    totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles.get()
+    statistics.tooLargeForIndexingFiles.biggestElements.forEach { totalTooLargeFiles.addElement(it) }
   }
 
   data class StatsPerFileType(

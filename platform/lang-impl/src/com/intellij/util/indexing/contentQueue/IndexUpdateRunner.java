@@ -76,17 +76,43 @@ public final class IndexUpdateRunner {
     myNumberOfIndexingThreads = numberOfIndexingThreads;
   }
 
+  /**
+   * This exception contains indexing statistics accumulated by the time of a thrown exception.
+   */
+  public static class IndexingInterruptedException extends Exception {
+    public final IndexingJobStatistics myStatistics;
+
+    public IndexingInterruptedException(@NotNull Throwable cause, IndexingJobStatistics statistics) {
+      super(cause);
+      myStatistics = statistics;
+    }
+  }
+
   @NotNull
   public IndexingJobStatistics indexFiles(@NotNull Project project,
                                           @NotNull Collection<VirtualFile> files,
-                                          @NotNull ProgressIndicator indicator) {
+                                          @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
+    IndexingJobStatistics statistics = new IndexingJobStatistics();
+    try {
+      doIndexFiles(project, files, indicator, statistics);
+    }
+    catch (RuntimeException e) {
+      throw new IndexingInterruptedException(e, statistics);
+    }
+    return statistics;
+  }
+
+  private void doIndexFiles(@NotNull Project project,
+                            @NotNull Collection<VirtualFile> files,
+                            @NotNull ProgressIndicator indicator,
+                            @NotNull IndexingJobStatistics statistics) {
     indicator.checkCanceled();
     indicator.setIndeterminate(false);
 
     CachedFileContentLoader contentLoader = new CurrentProjectHintedCachedFileContentLoader(project);
     ProgressIndicator originalIndicator = unwrapAll(indicator);
     ProgressSuspender originalSuspender = ProgressSuspender.getSuspender(originalIndicator);
-    IndexingJob indexingJob = new IndexingJob(project, indicator, contentLoader, files, originalIndicator, originalSuspender);
+    IndexingJob indexingJob = new IndexingJob(project, indicator, contentLoader, files, statistics, originalIndicator, originalSuspender);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       // If the current thread has acquired the write lock, we can't grant it to worker threads, so we must do the work in the current thread.
       while (!indexingJob.areAllFilesProcessed()) {
@@ -138,7 +164,6 @@ public final class IndexUpdateRunner {
         ourIndexingJobs.remove(indexingJob);
       }
     }
-    return indexingJob.myStatistics;
   }
 
   // Index jobs one by one while there are some. Jobs may belong to different projects, and we index them fairly.
@@ -396,13 +421,14 @@ public final class IndexUpdateRunner {
     final CountDownLatch myAllFilesAreProcessedLatch;
     final ProgressIndicator myOriginalProgressIndicator;
     @Nullable final ProgressSuspender myOriginalProgressSuspender;
-    final IndexingJobStatistics myStatistics = new IndexingJobStatistics();
+    final IndexingJobStatistics myStatistics;
     final AtomicReference<Throwable> myError = new AtomicReference<>();
 
     IndexingJob(@NotNull Project project,
                 @NotNull ProgressIndicator indicator,
                 @NotNull CachedFileContentLoader contentLoader,
                 @NotNull Collection<VirtualFile> files,
+                @NotNull IndexingJobStatistics statistics,
                 @NotNull ProgressIndicator originalProgressIndicator,
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
@@ -410,6 +436,7 @@ public final class IndexUpdateRunner {
       myTotalFiles = files.size();
       myContentLoader = contentLoader;
       myQueueOfFiles = new ArrayBlockingQueue<>(files.size(), false, files);
+      myStatistics = statistics;
       myAllFilesAreProcessedLatch = new CountDownLatch(files.size());
       myOriginalProgressIndicator = originalProgressIndicator;
       myOriginalProgressSuspender = originalProgressSuspender;

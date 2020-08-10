@@ -23,13 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
-import com.intellij.util.indexing.diagnostic.FileProviderIndexStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
@@ -159,18 +159,27 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
       try {
-        long startTime = System.nanoTime();
-        IndexingJobStatistics indexStatistics = indexUpdateRunner.indexFiles(myProject, providerFiles, subTaskIndicator);
-        long totalTime = System.nanoTime() - startTime;
+        long totalTime = System.nanoTime();
+        IndexingJobStatistics statistics;
+        IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          FileProviderIndexStatistics statistics = new FileProviderIndexStatistics(provider.getDebugName(),
-                                                                                   providerFiles.size(),
-                                                                                   totalTime,
-                                                                                   indexStatistics);
-          projectIndexingHistory.addProviderStatistics(statistics);
+          statistics = indexUpdateRunner.indexFiles(myProject, providerFiles, subTaskIndicator);
+        } catch (IndexUpdateRunner.IndexingInterruptedException e) {
+          exception = e;
+          statistics = e.myStatistics;
+        } finally {
+          totalTime = System.nanoTime() - totalTime;
+        }
+
+        try {
+          projectIndexingHistory.addProviderStatistics(provider.getDebugName(), providerFiles.size(), totalTime, statistics);
         }
         catch (Exception e) {
           LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
+        }
+
+        if (exception != null) {
+          ExceptionUtil.rethrow(exception.getCause());
         }
       } finally {
         subTaskIndicator.finished();
