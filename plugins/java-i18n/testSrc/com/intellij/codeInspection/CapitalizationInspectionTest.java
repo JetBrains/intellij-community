@@ -60,10 +60,15 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
   public void testSuperConstructorArgument() {
     doTest(false);
   }
+  
+  public void testStripHtml() {
+    doTest(false);
+  }
 
   public void testPropertyTest() {
     String props = "property.lowercase=hello world\n" +
                    "property.titlecase=Hello World\n" +
+                   "property.titlecase.html=<html><b>Hello</b> World</html>\n" +
                    "property.parameterized=Hello {0}\n" +
                    "property.choice.title=Hello {0,choice,0#World|1#Universe}\n" +
                    "property.choice.mixed=Hello {0,choice,0#World|1#universe}\n" +

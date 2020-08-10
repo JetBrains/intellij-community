@@ -256,7 +256,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
-      return NlsCapitalizationUtil.isCapitalizationSatisfied(myText, capitalization);
+      return NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(myText, true), capitalization);
     }
   }
 
@@ -280,7 +280,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       Format[] formats = myFormat.getFormats();
       MessageFormat clone = (MessageFormat)myFormat.clone();
       clone.setFormats(new Format[formats.length]);
-      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(clone.toPattern(), capitalization)) return false;
+      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(clone.toPattern(), true), capitalization)) return false;
       boolean startsWithFormat = myFormat.toPattern().startsWith("{");
       for (int i = 0; i < formats.length; i++) {
         Format format = formats[i];
