@@ -35,12 +35,16 @@ fun getVisibility(annotation: PsiAnnotation, sourceElement: PsiElement, defaultV
   val targetAnnotation = visAnnotations.firstOrNull { inferStringAttribute(it, "id") == visAnnotationId }
   if (targetAnnotation == null) return defaultVisibility
 
-  val visibility: GroovyVisibility = when {
-    sourceElement is PsiMethod && sourceElement.isConstructor -> inferGroovyVisibility(targetAnnotation, "constructor")
-    sourceElement is PsiMethod -> inferGroovyVisibility(targetAnnotation, "method")
-    sourceElement is PsiClass -> inferGroovyVisibility(targetAnnotation, "type")
-    else -> null
-  } ?: inferGroovyVisibility(targetAnnotation, "value") ?: return defaultVisibility
+  val visibility: GroovyVisibility =
+    when {
+      sourceElement is PsiMethod && sourceElement.isConstructor -> inferGroovyVisibility(targetAnnotation, "constructor")
+      sourceElement is PsiMethod -> inferGroovyVisibility(targetAnnotation, "method")
+      sourceElement is PsiClass -> inferGroovyVisibility(targetAnnotation, "type")
+      else -> null
+    }?.takeUnless { it == GroovyVisibility.UNDEFINED }
+     ?: inferGroovyVisibility(targetAnnotation, "value")
+     ?.takeUnless { it == GroovyVisibility.UNDEFINED }
+     ?: return defaultVisibility
 
   return when (visibility) {
     GroovyVisibility.UNDEFINED -> defaultVisibility
@@ -53,10 +57,11 @@ fun getVisibility(annotation: PsiAnnotation, sourceElement: PsiElement, defaultV
 
 private fun inferGroovyVisibility(annotation: PsiAnnotation, attributeName: String) : GroovyVisibility? {
   val targetValue = annotation.findAttributeValue(attributeName)
-  return if (targetValue is PsiReference) {
+  return if (targetValue is PsiQualifiedReference) {
     try {
-      GroovyVisibility.valueOf(targetValue.canonicalText)
-    } catch (e : IllegalArgumentException) {
+      targetValue.referenceName?.run(GroovyVisibility::valueOf) ?: return null
+    }
+    catch (e: IllegalArgumentException) {
       null
     }
   } else {

@@ -313,4 +313,26 @@ class X {
 
 }"""
   }
+
+  @Test
+  void 'test visibility options with value'() {
+    fixture.addFileToProject 'other.groovy', """
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(defaults = false)
+@groovy.transform.VisibilityOptions(Visibility.PRIVATE)
+class Cde {
+    String actionType
+    long referrerCode
+    boolean referrerUrl
+}"""
+    highlightingTest """
+class X {
+
+    @groovy.transform.CompileStatic
+    static void main(String[] args) {
+        def x = new <error>Cde</error>("mem", 1, true)
+    }
+
+}"""
+  }
 }
