@@ -41,17 +41,6 @@ public final class StatusBarUtil {
       Editor editor = ((TextEditor)fileEditor).getEditor();
       return ensureValidEditorFile(editor, fileEditor) ? editor : null;
     }
-
-    Project project = statusBar.getProject();
-    if (project == null || project.isDisposed()) return null;
-
-    FileEditorManager manager = FileEditorManager.getInstance(project);
-    Editor editor = manager.getSelectedTextEditor();
-    if (editor != null &&
-        ensureValidEditorFile(editor, null) &&
-        WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == statusBar) {
-      return editor;
-    }
     return null;
   }
 
