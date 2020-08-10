@@ -32,7 +32,7 @@ internal class MarketplacePluginDownloadService {
 
     private const val FILENAME = "filename="
 
-    private const val MAXIMUM_DOWNLOAD_PERCENT = 1.0
+    private const val MAXIMUM_DOWNLOAD_PERCENT = 0.35 // 100% = 1.0
 
     private val objectMapper by lazy { ObjectMapper() }
 
@@ -63,13 +63,10 @@ internal class MarketplacePluginDownloadService {
         return downloadPlugin(pluginUrl, indicator)
       }
 
-      // working with demo
-      val curPluginUrl = pluginUrl.replace("plugins.jetbrains.com", "plugin-blockmap-patches.dev.marketplace.intellij.net")
-
-      val (pluginFileUrl, guessFileParameters) = getPluginFileUrlAndGuessFileParameters(curPluginUrl)
+      val (pluginFileUrl, guessFileParameters) = getPluginFileUrlAndGuessFileParameters(pluginUrl)
       val suffix = if(pluginFileUrl.endsWith(".zip")) ".zip" else ".jar"
       val blockMapFileUrl = pluginFileUrl.replace(suffix, BLOCKMAP_ZIP_SUFFIX)
-      val pluginHashFileUrl = pluginFileUrl.replaceAfterLast(suffix, HASH_FILENAME_SUFFIX)
+      val pluginHashFileUrl = pluginFileUrl.replace(suffix, HASH_FILENAME_SUFFIX)
       try {
         val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
           request.inputStream.use { input ->
