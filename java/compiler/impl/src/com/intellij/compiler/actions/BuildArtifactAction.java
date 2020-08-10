@@ -2,6 +2,7 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -177,15 +178,15 @@ public class BuildArtifactAction extends DumbAwareAction {
         if (outputPathContainingSourceRoots.size() == 1 && outputPathContainingSourceRoots.values().size() == 1) {
           final String name = ContainerUtil.getFirstItem(outputPathContainingSourceRoots.keySet());
           final String output = outputPathContainingSourceRoots.get(name);
-          message = "The output directory '" + output + "' of '" + name + "' artifact contains source roots of the project. Do you want to continue and clear it?";
+          message = JavaCompilerBundle.message("dialog.message.output.dir.contains.source.roots", output, name);
         }
         else {
           StringBuilder info = new StringBuilder();
           for (String name : outputPathContainingSourceRoots.keySet()) {
-            info.append(" '").append(name).append("' artifact ('").append(outputPathContainingSourceRoots.get(name)).append("')\n");
+            info.append(JavaCompilerBundle.message("dialog.message.output.dir.artifact", name, outputPathContainingSourceRoots.get(name)))
+              .append("\n");
           }
-          message = "The output directories of the following artifacts contains source roots:\n" +
-                    info + "Do you want to continue and clear these directories?";
+          message = JavaCompilerBundle.message("dialog.message.output.dirs.contain.source.roots", info);
         }
         final int answer = Messages.showYesNoDialog(myProject, message, JavaCompilerBundle.message("clean.artifacts"), null);
         if (answer != Messages.YES) {
@@ -293,7 +294,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
-      super("Build Artifact", artifacts);
+      super(ActionsBundle.message("group.BuildArtifactsGroup.text"), artifacts);
       myFirst = first;
       myProject = project;
       mySettingsService = settingsService;
@@ -337,7 +338,8 @@ public class BuildArtifactAction extends DumbAwareAction {
       if (mySettingsService != null) {
         actions.add(new EditArtifactItem(selectedValues, myProject, mySettingsService));
       }
-      return new BaseListPopupStep<ArtifactActionItem>(selectedValues.size() == 1 ? "Action" : "Action for " + selectedValues.size() + " artifacts", actions) {
+      String title = JavaCompilerBundle.message("popup.title.chosen.artifact.action", selectedValues.size());
+      return new BaseListPopupStep<ArtifactActionItem>(title, actions) {
         @NotNull
         @Override
         public String getTextFor(ArtifactActionItem value) {

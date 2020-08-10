@@ -415,7 +415,7 @@ public final class CompileDriver {
           compileContext.addMessage(message);
         }
         if (isRebuild) {
-          CompilerUtil.runInContext(compileContext, "Clearing build system data...",
+          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
                                     (ThrowableRunnable<Throwable>)() -> compilerCacheManager
                                       .clearCaches(compileContext));
         }

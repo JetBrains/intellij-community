@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
@@ -40,7 +41,8 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
 
   @Override
   public @NlsContexts.Label String getPresentableName() {
-    return myArtifactPointer != null ? myArtifactPointer.getArtifactName(myContext.getArtifactModel()) : "<unknown>";
+    return myArtifactPointer != null ? myArtifactPointer.getArtifactName(myContext.getArtifactModel()) :
+           JavaCompilerBundle.message("label.unknown.value");
   }
 
   @Override

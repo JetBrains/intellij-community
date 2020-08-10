@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -70,8 +71,9 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(getPresentableName() + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")",
-                               SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.addText(getPresentableName() + " (" + (myModuleName != null ?
+                                                              JavaCompilerBundle.message("label.library.element.module", myModuleName)
+                                                                                   : myLevel) + ")", SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 
