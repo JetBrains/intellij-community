@@ -555,15 +555,16 @@ public final class CompileDriver {
       message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
+      String durationString = StringUtil.formatDurationApproximate(duration);
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
-               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-               : JavaCompilerBundle.message("status.compilation.completed.successfully");
+               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
+               : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
       }
       else {
-        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", 
+                                             errorCount, warningCount, durationString);
       }
-      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }
