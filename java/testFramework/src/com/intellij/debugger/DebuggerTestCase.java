@@ -41,6 +41,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -69,7 +70,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   @Override
   protected void tearDown() throws Exception {
     try {
-      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+      EdtTestUtil.runInEdtAndWait(() -> FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles());
       if (myDebugProcess != null) {
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
