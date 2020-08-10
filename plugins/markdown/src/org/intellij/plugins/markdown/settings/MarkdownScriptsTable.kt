@@ -11,7 +11,6 @@ import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFil
 import org.intellij.plugins.markdown.extensions.javafx.MarkdownJavaFXPreviewExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 import java.awt.Component
 import javax.swing.JComponent
@@ -56,12 +55,6 @@ internal class MarkdownScriptsTable : JBTable() {
         this
       }
       else when (providerInfo.className) {
-        JavaFxHtmlPanelProvider::class.java.name -> filter {
-          if (it is MarkdownBrowserPreviewExtension) {
-            it !is MarkdownJCEFPreviewExtension
-          }
-          else true
-        }
         JCEFHtmlPanelProvider::class.java.name -> filter {
           if (it is MarkdownBrowserPreviewExtension) {
             it !is MarkdownJavaFXPreviewExtension
