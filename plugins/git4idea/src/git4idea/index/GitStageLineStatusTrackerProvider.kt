@@ -77,7 +77,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
 
     val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
-                                            VcsFileUtil.relativePath(repository.root, filePath))
+                                            VcsFileUtil.relativePath(repository.root, status.path(ContentVersion.HEAD)))
     val charset: Charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath)
     val headContent = CharsetToolkit.decodeString(bytes, charset)
     val correctedText = StringUtil.convertLineSeparators(headContent)
