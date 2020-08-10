@@ -77,13 +77,24 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
+  private static @Nls String getCapitalizationName(Nls.Capitalization capitalization) {
+    switch (capitalization) {
+      case Title:
+        return JavaI18nBundle.message("capitalization.kind.title");
+      case Sentence:
+        return JavaI18nBundle.message("capitalization.kind.sentence");
+      default:
+        throw new IllegalArgumentException();
+    }
+  }
+
   private static void checkCapitalization(PsiExpression e,
                                           Value titleValue,
                                           @NotNull ProblemsHolder holder,
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
       holder.registerProblem(e, JavaI18nBundle
-                               .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
+                               .message("inspection.title.capitalization.description", titleValue, getCapitalizationName(capitalization)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
     }
