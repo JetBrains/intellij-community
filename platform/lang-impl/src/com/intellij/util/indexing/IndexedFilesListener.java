@@ -33,6 +33,9 @@ abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   protected void buildIndicesForFileRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
+    if (VfsEventsMerger.LOG != null) {
+      VfsEventsMerger.LOG.info("Build indexes recursively for " + file + "; contentChange = " + contentChange);
+    }
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
         myEventMerger.recordFileEvent(fileOrDir, contentChange);
@@ -67,6 +70,9 @@ abstract class IndexedFilesListener implements AsyncFileListener {
                                     boolean contentChange,
                                     boolean forceRebuildRequested,
                                     @NotNull VfsEventsMerger eventMerger) {
+    if (VfsEventsMerger.LOG != null) {
+      VfsEventsMerger.LOG.info("Invalidating indexes recursively for " + file + "; contentChange = " + contentChange + "; forceRebuildRequest = " + forceRebuildRequested);
+    }
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
