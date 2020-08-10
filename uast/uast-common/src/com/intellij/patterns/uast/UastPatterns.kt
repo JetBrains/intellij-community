@@ -67,7 +67,10 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     })
 
   fun filterWithContext(filter: (T, ProcessingContext) -> Boolean): Self =
-    with(object : PatternCondition<T>(null) {
+    filterWithContext(null, filter)
+
+  fun filterWithContext(debugName: String?, filter: (T, ProcessingContext) -> Boolean): Self =
+    with(object : PatternCondition<T>(debugName) {
       override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context ?: ProcessingContext())
     })
 
@@ -244,7 +247,7 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 class ULiteralExpressionPattern : UExpressionPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java)
 
 fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
-  capture(UAnnotation::class.java).filterWithContext { it, context ->
+  capture(UAnnotation::class.java).filterWithContext(annotationQualifiedName.toString()) { it, context ->
     it.qualifiedName?.let {
       annotationQualifiedName.accepts(it, context)
     } ?: false
