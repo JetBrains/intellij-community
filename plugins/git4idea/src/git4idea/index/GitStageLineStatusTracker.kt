@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -45,6 +44,9 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.*
 import java.util.*
@@ -444,10 +446,13 @@ class GitStageLineStatusTracker(
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
-      val editorsPanel = JPanel(VerticalLayout(0))
+      val stagedEditorPane = createEditorPane(editor, GitBundle.message("stage.content.staged"), stagedTextField, true)
+      val vcsEditorPane = createEditorPane(editor, GitUtil.HEAD, vcsTextField, false)
+
+      val editorsPanel = JPanel(StagePopupVerticalLayout())
+      editorsPanel.add(stagedEditorPane)
+      editorsPanel.add(vcsEditorPane)
       editorsPanel.background = LineStatusMarkerPopupPanel.getEditorBackgroundColor(editor)
-      editorsPanel.add(createEditorPane(editor, GitBundle.message("stage.content.staged"), stagedTextField, true))
-      editorsPanel.add(createEditorPane(editor, GitUtil.HEAD, vcsTextField, false))
       return editorsPanel
     }
 
