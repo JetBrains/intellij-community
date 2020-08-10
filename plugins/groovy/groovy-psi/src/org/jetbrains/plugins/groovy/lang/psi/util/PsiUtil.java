@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
+import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
 import java.util.*;
 
@@ -307,6 +308,10 @@ public final class PsiUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiMember member) {
+    if (DynamicMemberUtils.isDynamicElement(member)) {
+      return true;
+    }
+
     return AccessibilityKt.isAccessible(member, place);
   }
 
