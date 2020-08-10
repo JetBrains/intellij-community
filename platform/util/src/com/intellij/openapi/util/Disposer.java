@@ -125,11 +125,11 @@ public final class Disposer {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void disposeChildren(@NotNull Disposable disposable) {
-    ourTree.executeAll(disposable, false, true);
+    ourTree.executeAllChildren(disposable);
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered, false);
+    ourTree.executeAll(disposable, processUnregistered);
   }
 
   @NotNull
@@ -175,6 +175,7 @@ public final class Disposer {
     return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
   }
 
+  @ApiStatus.Internal
   public static void clearDisposalTraces() {
     ourTree.clearDisposedObjectTraces();
   }

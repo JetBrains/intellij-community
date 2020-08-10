@@ -19,7 +19,7 @@ final class ObjectNode {
 
   private final ObjectTree myTree;
 
-  private ObjectNode myParent; // guarded by myTree.treeLock
+  ObjectNode myParent; // guarded by myTree.treeLock
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
@@ -68,17 +68,39 @@ final class ObjectNode {
   }
 
   @Nullable
-  List<Throwable> execute(@Nullable List<Throwable> exceptions, boolean onlyChildren) {
+  List<Throwable> executeChildren() {
     return myTree.executeActionWithRecursiveGuard(myObject, () -> {
-      List<Throwable> result = exceptions;
       if (myTree.getDisposalInfo(myObject) != null) {
-        return result; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
-      }
-      if (!onlyChildren) {
-        myTree.rememberDisposedTrace(myObject);
+        return null; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
       }
 
-      if (!onlyChildren && myObject instanceof Disposable.Parent) {
+      ObjectNode[] children = getAndClearChildren();
+      List<Throwable> result = null;
+
+      for (int i = children.length - 1; i >= 0; i--) {
+        try {
+          ObjectNode childNode = children[i];
+          result = childNode.execute(result);
+        }
+        catch (Throwable e) {
+          if (result == null) result = new SmartList<>();
+          result.add(e);
+        }
+      }
+
+      return result;
+    });
+  }
+
+  @Nullable
+  List<Throwable> execute(@Nullable List<Throwable> exceptions) {
+    return myTree.executeActionWithRecursiveGuard(myObject, () -> {
+      List<Throwable> result = exceptions;
+      if (myTree.rememberDisposedTrace(myObject) != null) {
+        return result; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+      }
+
+      if (myObject instanceof Disposable.Parent) {
         try {
           ((Disposable.Parent)myObject).beforeTreeDispose();
         }
@@ -87,24 +109,17 @@ final class ObjectNode {
         }
       }
 
-      ObjectNode[] childrenArray = getAndClearChildren();
+      ObjectNode[] children = getAndClearChildren();
 
-      for (int i = childrenArray.length - 1; i >= 0; i--) {
+      for (int i = children.length - 1; i >= 0; i--) {
         try {
-          ObjectNode childNode = childrenArray[i];
-          result = childNode.execute(result, false);
-          synchronized (myTree.treeLock) {
-            childNode.myParent = null;
-          }
+          ObjectNode childNode = children[i];
+          result = childNode.execute(result);
         }
         catch (Throwable e) {
           if (result == null) result = new SmartList<>();
           result.add(e);
         }
-      }
-
-      if (onlyChildren) {
-        return result;
       }
 
       try {
@@ -115,7 +130,7 @@ final class ObjectNode {
         if (result == null) result = new SmartList<>();
         result.add(e);
       }
-      removeFromObjectTree();
+      myTree.removeObjectFromTree(this);
       return result;
     });
   }
@@ -125,15 +140,6 @@ final class ObjectNode {
       List<ObjectNode> children = myChildren;
       myChildren = null;
       return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
-    }
-  }
-
-  private void removeFromObjectTree() {
-    synchronized (myTree.treeLock) {
-      myTree.putNode(myObject, null);
-      if (myParent == null) {
-        myTree.removeRootObject(myObject);
-      }
     }
   }
 

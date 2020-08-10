@@ -35,7 +35,7 @@ final class ObjectTree {
     return myObject2NodeMap.get(object);
   }
 
-  void putNode(@NotNull Disposable object, @Nullable("null means remove") ObjectNode node) {
+  private void putNode(@NotNull Disposable object, @Nullable("null means remove") ObjectNode node) {
     if (node == null) {
       myObject2NodeMap.remove(object);
     }
@@ -104,34 +104,16 @@ final class ObjectTree {
     return newNode;
   }
 
-  final void executeAll(@NotNull Disposable object, boolean processUnregistered, boolean onlyChildren) {
-    ObjectNode node;
-    synchronized (treeLock) {
-      node = getNode(object);
-    }
-    boolean needTrace = (node != null || processUnregistered) && Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
+  private static void runWithTrace(@NotNull Supplier<? extends List<Throwable>> action) {
+    boolean needTrace = Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
     if (needTrace) {
       ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));
     }
 
     try {
-      if (node == null) {
-        if (processUnregistered) {
-          rememberDisposedTrace(object);
-          executeUnregistered(object);
-        }
-      }
-      else {
-        ObjectNode parent = node.getParent();
-        List<Throwable> exceptions = node.execute(null, onlyChildren);
-        if (parent != null && !onlyChildren) {
-          synchronized (treeLock) {
-            parent.removeChild(node);
-          }
-        }
-        if (exceptions != null) {
-          handleExceptions(exceptions);
-        }
+      List<Throwable> exceptions = action.get();
+      if (exceptions != null) {
+        handleExceptions(exceptions);
       }
     }
     finally {
@@ -139,6 +121,34 @@ final class ObjectTree {
         ourTopmostDisposeTrace.remove();
       }
     }
+  }
+
+  void executeAllChildren(@NotNull Disposable object) {
+    ObjectNode node;
+    synchronized (treeLock) {
+      node = getNode(object);
+      if (node == null) {
+        return;
+      }
+    }
+    runWithTrace(() -> node.executeChildren());
+  }
+
+  void executeAll(@NotNull Disposable object, boolean processUnregistered) {
+    ObjectNode node;
+    synchronized (treeLock) {
+      node = getNode(object);
+      if (node == null && !processUnregistered) {
+        return;
+      }
+    }
+    runWithTrace(() -> {
+      if (node == null) {
+        rememberDisposedTrace(object);
+        return executeUnregistered(object);
+      }
+      return node.execute(null);
+    });
   }
 
   private static void handleExceptions(@NotNull List<? extends Throwable> exceptions) {
@@ -188,8 +198,8 @@ final class ObjectTree {
     }
   }
 
-  private void executeUnregistered(@NotNull Disposable disposable) {
-    List<Throwable> exceptions = executeActionWithRecursiveGuard(disposable, ()-> {
+  private List<Throwable> executeUnregistered(@NotNull Disposable disposable) {
+    return executeActionWithRecursiveGuard(disposable, ()-> {
       try {
         //noinspection SSBasedInspection
         disposable.dispose();
@@ -199,9 +209,6 @@ final class ObjectTree {
         return Collections.singletonList(e);
       }
     });
-    if (exceptions != null) {
-      handleExceptions(exceptions);
-    }
   }
 
   @TestOnly
@@ -214,10 +221,6 @@ final class ObjectTree {
         node.assertNoReferencesKept(disposable);
       }
     }
-  }
-
-  void removeRootObject(@NotNull Disposable object) {
-    myRootObjects.remove(object);
   }
 
   void assertIsEmpty(boolean throwError) {
@@ -246,10 +249,11 @@ final class ObjectTree {
     return Logger.getInstance(ObjectTree.class);
   }
 
-  void rememberDisposedTrace(@NotNull Disposable object) {
+  // return old value
+  Object rememberDisposedTrace(@NotNull Disposable object) {
     synchronized (treeLock) {
       Throwable trace = ourTopmostDisposeTrace.get();
-      myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
+      return myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
     }
   }
 
@@ -268,6 +272,21 @@ final class ObjectTree {
       ObjectNode parentNode = getNode(parentDisposable);
       if (parentNode == null) return null;
       return parentNode.findChildEqualTo(object);
+    }
+  }
+
+  void removeObjectFromTree(@NotNull ObjectNode node) {
+    synchronized (treeLock) {
+      Disposable myObject = node.getObject();
+      putNode(myObject, null);
+      ObjectNode parent = node.getParent();
+      if (parent == null) {
+        myRootObjects.remove(myObject);
+      }
+      else {
+        parent.removeChild(node);
+      }
+      node.myParent = null;
     }
   }
 }
