@@ -335,4 +335,32 @@ class X {
 
 }"""
   }
+
+  @Test
+  void 'super resolve for pre'() {
+    highlightingTest """
+class NN { NN(String s) {} }
+
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(pre = { super("") })
+class Rr extends NN {
+    int q
+    
+    def foo() {}
+}"""
+  }
+
+  @Test
+  void 'pre highlighting'() {
+    highlightingTest """
+class NN { NN(String s) {} }
+
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(pre = <error>{ }</error>)
+class Rr extends NN {
+    int q
+    
+    def foo() {}
+}"""
+  }
 }

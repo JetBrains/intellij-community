@@ -89,6 +89,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -444,26 +445,34 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkConstructors(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+  private static void checkConstructors(@NotNull AnnotationHolder holder, @NotNull GrTypeDefinition typeDefinition) {
     if (typeDefinition.isEnum() || typeDefinition.isInterface() || typeDefinition.isAnonymous() || typeDefinition instanceof GrTypeParameter) return;
     final PsiClass superClass = typeDefinition.getSuperClass();
     if (superClass == null) return;
 
     if (InheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
 
-    PsiMethod defConstructor = getDefaultConstructor(superClass);
-    boolean hasImplicitDefConstructor = superClass.getConstructors().length == 0;
-
     final PsiMethod[] constructors = typeDefinition.getCodeConstructors();
+    checkDefaultConstructors(holder, typeDefinition, superClass, constructors);
+    checkRecursiveConstructors(holder, constructors);
+  }
+
+  private static void checkDefaultConstructors(@NotNull AnnotationHolder holder,
+                                               @NotNull GrTypeDefinition typeDefinition,
+                                               @NotNull PsiClass superClass,
+                                               PsiMethod @NotNull[] constructors) {
+    PsiMethod defConstructor = getDefaultConstructor(superClass);
+    boolean needExplicitSuperCall = superClass.getConstructors().length != 0 && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor));
+    if (!needExplicitSuperCall) return;
     final String qName = superClass.getQualifiedName();
-    if (constructors.length == 0) {
-      if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-        final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
-        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName)).range(range)
-          .withFix(QuickFixFactory.getInstance().createCreateConstructorMatchingSuperFix(typeDefinition)).create();
-      }
-      return;
+
+    if (typeDefinition.getConstructors().length == 0) {
+      final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
+        .range(range)
+        .withFix(QuickFixFactory.getInstance().createCreateConstructorMatchingSuperFix(typeDefinition)).create();
     }
+
     for (PsiMethod method : constructors) {
       if (method instanceof GrMethod) {
         final GrOpenBlock block = ((GrMethod)method).getBlock();
@@ -472,14 +481,22 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         if (statements.length > 0) {
           if (statements[0] instanceof GrConstructorInvocation) continue;
         }
-
-        if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-          holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName)).range(GrHighlightUtil.getMethodHeaderTextRange(method)).create();
-        }
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
+          .range(GrHighlightUtil.getMethodHeaderTextRange(method)).create();
       }
     }
 
-    checkRecursiveConstructors(holder, constructors);
+    PsiAnnotation anno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    if (anno == null) return;
+    GrClosableBlock block = GrAnnotationUtil.inferClosureAttribute(anno, "pre");
+    if (block == null) return;
+    GrStatement[] statements = block.getStatements();
+    if (!(statements.length != 0 &&
+          statements[0] instanceof GrMethodCall &&
+          SyntheticKeywordConstructorContributor.isSyntheticConstructorCall((GrMethodCall)statements[0]))) {
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
+        .range(block).create();
+    }
   }
 
   @Override
