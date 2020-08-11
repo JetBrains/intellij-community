@@ -8,6 +8,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +49,12 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   @Deprecated
+  @ApiStatus.Internal
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree() {
     return indexStubTree(key -> ContainerUtil.canonicalStrategy());
   }
 
+  @ApiStatus.Internal
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> keyHashingStrategyFunction) {
     StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
     final List<T> plainList = getPlainListFromAllRoots();
