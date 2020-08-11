@@ -18,6 +18,7 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.math.max
@@ -380,7 +381,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private val JComponent.constraints: CC
     get() = builder.componentConstraints.getOrPut(this) { CC() }
 
-  fun addCommentRow(comment: String, maxLineLength: Int, forComponent: Boolean) {
+  fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean) {
     val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     addCommentRow(commentComponent, forComponent)
   }
