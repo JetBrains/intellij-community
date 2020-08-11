@@ -48,6 +48,7 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -265,6 +266,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
       setLanguageLevel(null);
       myFixture.tearDown();
       myFixture = null;

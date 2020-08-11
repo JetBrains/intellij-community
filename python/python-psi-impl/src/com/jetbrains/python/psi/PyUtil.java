@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -813,10 +814,15 @@ public final class PyUtil {
     if (directory == null) return true;
     VirtualFile vFile = directory.getVirtualFile();
     if (vFile == null) return true;
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
-    return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
+    Project project = directory.getProject();
+    return isRoot(vFile, project);
+  }
+
+  public static boolean isRoot(@NotNull VirtualFile directory, @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    return Comparing.equal(fileIndex.getClassRootForFile(directory), directory) ||
+           Comparing.equal(fileIndex.getContentRootForFile(directory), directory) ||
+           Comparing.equal(fileIndex.getSourceRootForFile(directory), directory);
   }
 
   /**
@@ -964,14 +970,7 @@ public final class PyUtil {
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
-    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
-      if (customPackageIdentifier.isPackage(directory)) {
-        return true;
-      }
-    }
-    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
-      return true;
-    }
+    if (isExplicitPackage(directory)) return true;
     final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
     if (!level.isPython2()) {
       return true;
@@ -991,6 +990,19 @@ public final class PyUtil {
   public static boolean isPackage(@NotNull PsiFileSystemItem anchor, @Nullable PsiElement location) {
     return anchor instanceof PsiFile ? isPackage((PsiFile)anchor) :
            anchor instanceof PsiDirectory && isPackage((PsiDirectory)anchor, location);
+  }
+
+  public static boolean isCustomPackage(@NotNull PsiDirectory directory) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackage(directory)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isExplicitPackage(@NotNull PsiDirectory directory) {
+    return isOrdinaryPackage(directory) || isCustomPackage(directory);
   }
 
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
@@ -1637,6 +1649,10 @@ public final class PyUtil {
     else {
       function.addBefore(newDecorators, function.getFirstChild());
     }
+  }
+
+  public static boolean isOrdinaryPackage(@NotNull PsiDirectory directory) {
+    return directory.findFile(PyNames.INIT_DOT_PY) != null;
   }
 
   /**
