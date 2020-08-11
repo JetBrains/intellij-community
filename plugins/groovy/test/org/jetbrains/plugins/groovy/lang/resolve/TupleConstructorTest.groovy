@@ -344,9 +344,6 @@ class NN { NN(String s) {} }
 @groovy.transform.CompileStatic
 @groovy.transform.TupleConstructor(pre = { super("") })
 class Rr extends NN {
-    int q
-    
-    def foo() {}
 }"""
   }
 
@@ -356,11 +353,19 @@ class Rr extends NN {
 class NN { NN(String s) {} }
 
 @groovy.transform.CompileStatic
-@groovy.transform.TupleConstructor(pre = <error>{ }</error>)
+@groovy.transform.TupleConstructor(<error>pre = { }</error>)
 class Rr extends NN {
-    int q
-    
-    def foo() {}
+}"""
+  }
+
+  @Test
+  void 'pre highlighting 2'() {
+    highlightingTest """
+class NN { }
+
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(pre = { super() }, <error>callSuper = true</error>)
+class Rr extends NN {
 }"""
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
+import org.jetbrains.plugins.groovy.annotator.checkers.TupleConstructorAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -89,7 +91,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -487,15 +488,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
 
     PsiAnnotation anno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    if (anno == null) return;
-    GrClosableBlock block = GrAnnotationUtil.inferClosureAttribute(anno, "pre");
-    if (block == null) return;
-    GrStatement[] statements = block.getStatements();
-    if (!(statements.length != 0 &&
-          statements[0] instanceof GrMethodCall &&
-          SyntheticKeywordConstructorContributor.isSyntheticConstructorCall((GrMethodCall)statements[0]))) {
-      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
-        .range(block).create();
+    if (anno != null) {
+      if (!TupleConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
+        PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, "pre");
+        Objects.requireNonNull(preAttribute);
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
+          .range(preAttribute).create();
+      }
     }
   }
 
