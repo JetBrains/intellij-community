@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.welcome
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@Service
 @State(name = "PyWelcomeSettings", storages = [Storage("pyWelcome.xml")], reportStatistic = true)
 class PyWelcomeSettings : PersistentStateComponent<PyWelcomeSettings.State> {
   companion object {
