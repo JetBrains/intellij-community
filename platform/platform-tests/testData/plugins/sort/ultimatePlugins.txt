@@ -26,7 +26,6 @@
 + -ZKM-
 + -com-intellij-aop-
 + -com-intellij-dsm-
-+ -com-intellij-frameworks-akka-
 + -com-intellij-java-ide-
 + -com-intellij-reactivestreams-
 + -org-jetbrains-debugger-streams-
