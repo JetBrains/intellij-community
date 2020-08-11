@@ -9,7 +9,10 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
+/* Android Studio: removed by Change I4fd91d66
       '-XX:+UseConcMarkSweepGC',
+Android Studio: removed by Change I4fd91d66 */
+      '-XX:+UseG1GC',  // Android Studio: added by Change I4fd91d66
       '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
 /* Android Studio: removed by Change Ie7351d92
