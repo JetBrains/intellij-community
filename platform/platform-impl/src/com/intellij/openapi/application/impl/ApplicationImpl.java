@@ -583,6 +583,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public final boolean isExitInProgress() {
+    return myExitInProgress;
+  }
+
   private void doExit(int flags, boolean restart, String[] beforeRestart) {
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try {

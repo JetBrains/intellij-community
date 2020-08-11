@@ -7,6 +7,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -136,7 +137,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
     app.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
-    val messageBusConnection = app.messageBus.connect()
+    val messageBusConnection = app.messageBus.simpleConnect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
         autoSyncManager.autoSync(true)
@@ -148,7 +149,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       }
 
       override fun projectClosed(project: Project) {
-        autoSyncManager.autoSync()
+        if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+          autoSyncManager.autoSync()
+        }
       }
     })
   }
