@@ -171,7 +171,9 @@ object GHGQLRequests {
                                               "cursor" to pagination?.afterCursor,
                                               "since" to pagination?.since),
                                         TimelineConnection::class.java,
-                                        "repository", "pullRequest", "timelineItems")
+                                        "repository", "pullRequest", "timelineItems").apply {
+          acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+        }
       }
 
       private class TimelineConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPRTimelineItem>)
