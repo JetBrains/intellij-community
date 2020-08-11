@@ -90,6 +90,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   void scheduleForUpdate(VirtualFile file) {
+    if (VfsEventsMerger.LOG != null) {
+      LOG.info("File " + file + " is scheduled for update");
+    }
     if (!(file instanceof DeletedVirtualFileStub)) {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
