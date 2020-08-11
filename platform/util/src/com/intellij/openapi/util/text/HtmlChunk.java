@@ -3,7 +3,10 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -208,6 +211,14 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public @NotNull Element italic() {
     return wrapWith("i");
+  }
+
+  /**
+   * @return an S element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element strikethrough() {
+    return wrapWith("s");
   }
 
   /**
