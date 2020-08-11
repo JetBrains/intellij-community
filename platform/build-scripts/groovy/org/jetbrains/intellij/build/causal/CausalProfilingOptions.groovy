@@ -14,13 +14,16 @@ class CausalProfilingOptions {
     progressPoint: new ProgressPoint("com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase", 306),
     searchScope: "com.intellij",
     scopesToIgnore: [
+      "com.intellij.causal",
+      "com.intellij.TestAll",
+      "com.intellij.concurrency",
+      "com.intellij.codeInsight.daemon.impl",
       "com.intellij.openapi.application",
       "com.intellij.openapi.progress",
       "com.intellij.testFramework",
       "com.intellij.junit4",
       "com.intellij.rt",
       "com.intellij.ide.IdeEventQueue",
-      "com.intellij.util.concurrency.AppDelayQueue",
       "com.intellij.util.TimeoutUtil",
       "com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest"
     ]
