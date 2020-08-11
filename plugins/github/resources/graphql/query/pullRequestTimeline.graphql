@@ -218,25 +218,25 @@ fragment crossReferencedEvent on CrossReferencedEvent {
     }
 }
 
-fragment connectedEvent on ConnectedEvent {
-    actor {
-        ...actorInfo
-    }
-    createdAt
-    subject {
-        ...referenceSubject
-    }
-}
-
-fragment disconnectedEvent on DisconnectedEvent {
-    actor {
-        ...actorInfo
-    }
-    createdAt
-    subject {
-        ...referenceSubject
-    }
-}
+#fragment connectedEvent on ConnectedEvent {
+#    actor {
+#        ...actorInfo
+#    }
+#    createdAt
+#    subject {
+#        ...referenceSubject
+#    }
+#}
+#
+#fragment disconnectedEvent on DisconnectedEvent {
+#    actor {
+#        ...actorInfo
+#    }
+#    createdAt
+#    subject {
+#        ...referenceSubject
+#    }
+#}
 
 query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 100, $cursor: String, $since: DateTime) {
     repository(owner: $repoOwner, name: $repoName) {
@@ -279,8 +279,8 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...headRefRestoredEvent
 
                     ...crossReferencedEvent
-                    ...connectedEvent
-                    ...disconnectedEvent
+                    #...connectedEvent
+                    #...disconnectedEvent
                 }
             }
         }
