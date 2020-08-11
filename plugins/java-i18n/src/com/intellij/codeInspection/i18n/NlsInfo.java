@@ -188,6 +188,7 @@ public abstract class NlsInfo {
    * @return localization status
    */
   public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
+    expression = goUp(expression);
     NlsInfo info = fromMethodReturn(expression);
     if (info != Unspecified.UNKNOWN) return info;
     info = fromInitializer(expression);
@@ -228,18 +229,8 @@ public abstract class NlsInfo {
   }
 
   private static NlsInfo fromInitializer(UExpression expression) {
-    UElement parent;
+    UElement parent = expression.getUastParent();
     PsiElement var = null;
-    while (true) {
-      parent = expression.getUastParent();
-      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression || 
-            parent != null && UastExpressionUtils.isArrayInitializer(parent) ||
-            parent != null && UastExpressionUtils.isNewArray(parent) ||
-            (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS))) {
-        break;
-      }
-      expression = (UExpression)parent;
-    }
     
     if (parent instanceof UVariable) {
       var = parent.getJavaPsi();
@@ -247,8 +238,9 @@ public abstract class NlsInfo {
     else if (parent instanceof UBinaryExpression) {
       UBinaryExpression binOp = (UBinaryExpression)parent;
       UastBinaryOperator operator = binOp.getOperator();
+      UExpression rightOperand = binOp.getRightOperand();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
-          expression.equals(binOp.getRightOperand())) {
+          expressionsAreEquivalent(expression, rightOperand)) {
         UExpression leftOperand = UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand());
         UReferenceExpression lValue = ObjectUtils.tryCast(leftOperand, UReferenceExpression.class);
         if (lValue != null) {
@@ -288,19 +280,28 @@ public abstract class NlsInfo {
       return parent instanceof UCallExpression ? Unspecified.UNKNOWN 
                                                : new Unspecified((PsiVariable)var);
     }
+    if (var instanceof PsiMethod) {
+      return forModifierListOwner((PsiMethod)var);
+    }
     return Unspecified.UNKNOWN;
   }
 
-  private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
-    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    while (true) {
-      if (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS ||
-          parent instanceof UParenthesizedExpression || parent instanceof UIfExpression) {
-        parent = parent.getUastParent();
-      } else {
-        break;
+  private static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
+    return normalize(expr1).equals(normalize(expr2));
+  }
+
+  private static @NotNull UExpression normalize(@NotNull UExpression expression) {
+    if (expression instanceof UPolyadicExpression && ((UPolyadicExpression)expression).getOperator() == UastBinaryOperator.PLUS) {
+      List<UExpression> operands = ((UPolyadicExpression)expression).getOperands();
+      if (operands.size() == 1) {
+        return operands.get(0);
       }
     }
+    return expression;
+  }
+
+  private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
+    UElement parent = expression.getUastParent();
     UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return Unspecified.UNKNOWN;
 
@@ -347,6 +348,23 @@ public abstract class NlsInfo {
     return result.get();
   }
 
+  private static @NotNull UExpression goUp(@NotNull UExpression expression) {
+    UExpression parent = expression;
+    while (true) {
+      UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
+      if (next == null || next instanceof ULambdaExpression || next instanceof UReturnExpression) return parent;
+      if (next instanceof USwitchClauseExpression || next instanceof UNamedExpression) return parent;
+      if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
+      if (next instanceof UCallExpression) {
+        if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
+          return parent;
+        }
+      }
+      if (next instanceof UIfExpression && expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
+      parent = next;
+    }
+  }
+
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
     PsiMethod method;
     PsiType returnType = null;
@@ -355,19 +373,8 @@ public abstract class NlsInfo {
       method = UastUtils.getAnnotationMethod(nameValuePair);
     }
     else {
-      UElement parent = expression;
-      while (!(parent instanceof UReturnExpression)) {
-        UElement next = parent.getUastParent();
-        if (next == null || next instanceof ULambdaExpression) return Unspecified.UNKNOWN;
-        if (next instanceof UCallExpression) {
-          if (!UastExpressionUtils.isArrayInitializer(parent) && !UastExpressionUtils.isNewArrayWithInitializer(parent)) {
-            return Unspecified.UNKNOWN;
-          }
-        }
-        if (next instanceof UIfExpression && parent.equals(((UIfExpression)next).getCondition())) return Unspecified.UNKNOWN;
-        parent = next;
-      }
-      final UReturnExpression returnStmt = (UReturnExpression)parent;
+      UReturnExpression returnStmt = ObjectUtils.tryCast(expression.getUastParent(), UReturnExpression.class);
+      if (returnStmt == null) return Unspecified.UNKNOWN;
       UElement jumpTarget = returnStmt.getJumpTarget();
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();

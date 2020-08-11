@@ -19,6 +19,31 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testPropertyAssignment() {
+    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    myFixture.enableInspections(inspection)
+    myFixture.addClass(
+      """public class X {
+        |native @org.jetbrains.annotations.Nls String getFoo();
+        |native void setFoo(@org.jetbrains.annotations.Nls String s);
+        |}""".trimMargin())
+    myFixture.configureByText("Foo.kt", """
+       class Foo {
+          @org.jetbrains.annotations.Nls var prop = "";
+       
+          fun foo(x : X) {
+            // TODO: prop is resolved to getter 
+            // but Kotlin properties do not propagate annotations to getter ultra-light method 
+            prop = "value"
+            // TODO: foo is not resolved to X.getFoo()
+            x.foo = "value"
+          }
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = com.intellij.codeInspection.i18n.I18nInspection()
     inspection.setIgnoreForAllButNls(true)
