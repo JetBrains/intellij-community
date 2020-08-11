@@ -687,6 +687,7 @@ public class ShelvedChangesViewManager implements Disposable {
       actionGroup.add(new MyToggleDetailsAction());
 
       myToolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      myToolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindow(myProject));
