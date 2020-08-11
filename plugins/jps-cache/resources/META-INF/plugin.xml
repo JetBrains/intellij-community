@@ -26,8 +26,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
-    <notificationAllowlist groupIds="Compile Output Loader;Compile Output Loader Status"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
+    <notificationGroup id="Compile Output Loader Status" displayType="NONE"/>
+    <notificationGroup id="Compile Output Loader" displayType="STICKY_BALLOON"/>
   </extensions>
 
   <projectListeners>

@@ -396,7 +396,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
         nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationAllowlist groupIds="EditorConfig;editorconfig"/>
+    <notificationGroup id="editorconfig" displayType="BALLOON"/>
+    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON"/>
   </extensions>
 
 
