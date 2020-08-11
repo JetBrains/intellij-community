@@ -11,7 +11,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class LangBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.LangBundle";
+  @NonNls public static final String BUNDLE = "messages.LangBundle";
   private static final LangBundle INSTANCE = new LangBundle();
 
   private LangBundle() {
