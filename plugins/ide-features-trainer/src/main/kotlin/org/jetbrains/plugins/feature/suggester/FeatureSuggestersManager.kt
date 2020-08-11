@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
@@ -19,10 +20,19 @@ class FeatureSuggestersManager(val project: Project) {
 
     fun actionPerformed(action: Action) {
         val language = action.language ?: return
-        val langSupport = LanguageSupport.getForLanguage(language)
-        if(langSupport != null) {
+        val langSupport = getLanguageSupport(language)
+        if (langSupport != null) {
             actionsHistory.add(action)
             processSuggesters(langSupport)
+        }
+    }
+
+    private fun getLanguageSupport(language: Language): LanguageSupport? {
+        val langSupport = LanguageSupport.getForLanguage(language)
+        return if (langSupport == null && language.baseLanguage != null) {
+            LanguageSupport.getForLanguage(language.baseLanguage!!)
+        } else {
+            langSupport
         }
     }
 
