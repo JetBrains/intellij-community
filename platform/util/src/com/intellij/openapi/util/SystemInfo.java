@@ -66,7 +66,7 @@ public final class SystemInfo {
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
-  public static final boolean isXWindow = isUnix && !isMac;
+  public static final boolean isXWindow = SystemInfoRt.isXWindow;
   public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow &&

@@ -45,6 +45,8 @@ public final class EnvironmentUtil {
   private static final String LC_ALL = "LC_ALL";
   private static final String LC_CTYPE = "LC_CTYPE";
 
+  private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
+
   public static final String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
@@ -56,6 +58,20 @@ public final class EnvironmentUtil {
   private static @NotNull Map<String, String> getSystemEnv() {
     if (SystemInfoRt.isWindows) {
       return Collections.unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+    }
+    else if (SystemInfoRt.isXWindow) {
+      // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
+      // It shouldn't be passed to child processes as per 'Startup notification protocol'
+      // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
+      // Ideally, JDK should clear this variable, and it actually does, but the snapshot of the environment variables,
+      // returned by System.getenv(), is captured before the removal.
+      Map<String, String> env = System.getenv();
+      if (env.containsKey(DESKTOP_STARTUP_ID)) {
+        env = new HashMap<>(env);
+        env.remove(DESKTOP_STARTUP_ID);
+        env = Collections.unmodifiableMap(env);
+      }
+      return env;
     }
     else {
       return System.getenv();
