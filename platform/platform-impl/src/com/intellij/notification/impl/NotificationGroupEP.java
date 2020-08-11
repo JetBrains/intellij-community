@@ -24,7 +24,7 @@ import java.util.ResourceBundle;
  * To get an instance of registered NotificationGroup use {@link com.intellij.notification.NotificationGroupManager}
  */
 public final class NotificationGroupEP implements PluginAware {
-  public static final ExtensionPointName<NotificationGroupEP> EP_NAME = ExtensionPointName.create("com.intellij.notificationGroup");
+  static final ExtensionPointName<NotificationGroupEP> EP_NAME = ExtensionPointName.create("com.intellij.notificationGroup");
 
   @Attribute("id")
   @RequiredElement
@@ -32,7 +32,7 @@ public final class NotificationGroupEP implements PluginAware {
 
   @Attribute("displayType")
   @RequiredElement
-  public NotificationDisplayType displayType;
+  public DisplayType displayType;
 
   @Attribute("isLogByDefault")
   public boolean isLogByDefault = true;
@@ -94,6 +94,10 @@ public final class NotificationGroupEP implements PluginAware {
     pluginDescriptor = value;
   }
 
+  public @Nullable NotificationDisplayType getDisplayType() {
+    return displayType == null ? null : displayType.getNotificationDisplayType();
+  }
+
   @Override
   public String toString() {
     return "NotificationGroupEP{" +
@@ -107,5 +111,32 @@ public final class NotificationGroupEP implements PluginAware {
            ", notificationIds='" + notificationIds + '\'' +
            ", pluginDescriptor=" + pluginDescriptor +
            '}';
+  }
+
+  private enum DisplayType {
+    /**
+     * No popup
+     */
+    NONE(NotificationDisplayType.NONE),
+    /**
+     *  Expires automatically after 10 seconds.
+     */
+    BALLOON(NotificationDisplayType.BALLOON),
+    /**
+     * Needs to be closed by user
+     */
+    STICKY_BALLOON(NotificationDisplayType.STICKY_BALLOON),
+    /**
+     * Tool window balloon
+     */
+    TOOL_WINDOW(NotificationDisplayType.TOOL_WINDOW);
+
+    private final NotificationDisplayType myNotificationDisplayType;
+
+    DisplayType(NotificationDisplayType type) {myNotificationDisplayType = type;}
+
+    NotificationDisplayType getNotificationDisplayType() {
+      return myNotificationDisplayType;
+    }
   }
 }

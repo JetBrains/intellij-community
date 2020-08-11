@@ -42,8 +42,12 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
   private void registerNotificationGroup(NotificationGroupEP extension) {
     try {
       String groupId = extension.id;
-      NotificationDisplayType displayType = extension.displayType;
-      NotificationGroup notificationGroup = NotificationGroup.create(groupId, displayType, extension.isLogByDefault,
+      NotificationDisplayType type = extension.getDisplayType();
+      if (type == null) {
+        LOG.warn("Enable to create notification group `" + groupId + "`: displayType should be not null");
+        return;
+      }
+      NotificationGroup notificationGroup = NotificationGroup.create(groupId, type, extension.isLogByDefault,
                                                                      extension.toolWindowId, extension.getIcon(),
                                                                      extension.getDisplayName(),
                                                                      extension.getPluginDescriptor().getPluginId());
