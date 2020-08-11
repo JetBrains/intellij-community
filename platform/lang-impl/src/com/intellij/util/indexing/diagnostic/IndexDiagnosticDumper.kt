@@ -16,6 +16,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.concurrent.TimeUnit
 import kotlin.streams.asSequence
 
 object IndexDiagnosticDumper {
@@ -39,7 +40,11 @@ object IndexDiagnosticDumper {
     jacksonObjectMapper().registerKotlinModule().writerWithDefaultPrettyPrinter()
   }
 
-  private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
+  private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
+
+  private const val fileNamePrefix = "diagnostic-"
+
+  private var lastTime: LocalDateTime = LocalDateTime.MIN
 
   @Synchronized
   fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
@@ -47,9 +52,14 @@ object IndexDiagnosticDumper {
       val indexDiagnosticDirectory = indexingDiagnosticDir
       indexDiagnosticDirectory.createDirectories()
 
-      val fileNamePrefix = "diagnostic-"
+      var nowTime = LocalDateTime.now()
+      if (lastTime == nowTime) {
+        // Ensure that the generated diagnostic file does not overwrite an existing file.
+        nowTime = nowTime.plusNanos(TimeUnit.MILLISECONDS.toNanos(1))
+        lastTime = nowTime
+      }
 
-      val timestamp = LocalDateTime.now().format(diagnosticDateTimeFormatter)
+      val timestamp = nowTime.format(diagnosticDateTimeFormatter)
       val diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
