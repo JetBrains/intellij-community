@@ -4,7 +4,7 @@
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="android.game-tools.main" />
     <option name="PROGRAM_PARAMETERS" value="game-tools --mode APP --app-window PROFILER" />
-    <option name="VM_PARAMETERS" value="-ea -Xms512m -Xmx1024m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -Didea.is.internal=true -Didea.platform.prefix=AndroidStudioGameTools -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Didea.jre.check=true -Didea.debug.mode=true -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -Didea.load.plugins=false -Didea.initially.ask.config=force-not" />
+    <option name="VM_PARAMETERS" value="-ea -Xms512m -Xmx1024m -XX:ReservedCodeCacheSize=240m -XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -Didea.is.internal=true -Didea.platform.prefix=AndroidStudioGameTools -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Didea.jre.check=true -Didea.debug.mode=true -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -Didea.load.plugins=false -Didea.initially.ask.config=force-not" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
     <method v="2">
       <option name="Make" enabled="true" />
