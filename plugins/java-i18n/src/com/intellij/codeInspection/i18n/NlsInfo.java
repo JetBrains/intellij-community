@@ -352,8 +352,13 @@ public abstract class NlsInfo {
     UExpression parent = expression;
     while (true) {
       UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
-      if (next == null || next instanceof ULambdaExpression || next instanceof UReturnExpression) return parent;
-      if (next instanceof USwitchClauseExpression || next instanceof UNamedExpression) return parent;
+      if (next == null ||
+          next instanceof ULambdaExpression ||
+          next instanceof UReturnExpression ||
+          next instanceof USwitchClauseExpression ||
+          next instanceof UNamedExpression) {
+        return parent;
+      }
       if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
       if (next instanceof UCallExpression) {
         if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {

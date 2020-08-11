@@ -18,6 +18,19 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.testHighlighting()
   }
+
+  fun testPropagateToReceiver() {
+    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+       public fun String.trimIndent(): String = this
+       fun foo(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
+       fun bar() {
+          foo("foo bar")
+          foo("foo bar".trimIndent())
+       }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
   
   fun testPropertyAssignment() {
     val inspection = com.intellij.codeInspection.i18n.I18nInspection()

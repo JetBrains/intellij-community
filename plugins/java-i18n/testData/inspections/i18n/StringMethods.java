@@ -43,5 +43,9 @@ class StringMethods {
         if (this.getFoo().toLowerCase().equals("bar")) {}
     }
     
+    void test() {
+        test("foo".trim());
+    }
+    
     @NonNls native String getFoo();
 }
