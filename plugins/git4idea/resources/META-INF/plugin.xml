@@ -254,12 +254,14 @@
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
+      <reference id="Git.Stage.Merge"/>
       <reference id="Git.Stage.AcceptTheirs"/>
       <reference id="Git.Stage.AcceptYours"/>
       <reference id="Git.Stage.Add"/>

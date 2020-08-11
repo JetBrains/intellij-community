@@ -4,18 +4,22 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
+import git4idea.conflicts.GitMergeHandler
 import git4idea.conflicts.acceptConflictSide
 import git4idea.conflicts.getConflictOperationLock
+import git4idea.conflicts.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.*
+import git4idea.repo.GitConflict
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
+import kotlin.streams.asSequence
 
-class GitAcceptTheirsAction: GitAcceptConflictSideAction(true)
-class GitAcceptYoursAction: GitAcceptConflictSideAction(false)
+class GitAcceptTheirsAction : GitAcceptConflictSideAction(true)
+class GitAcceptYoursAction : GitAcceptConflictSideAction(false)
 
-abstract class GitAcceptConflictSideAction(private val takeTheirs: Boolean) :
-  GitFileStatusNodeAction(getActionText(takeTheirs), Presentation.NULL_STRING, null) {
+abstract class GitConflictAction(text: Supplier<@Nls String>) :
+  GitFileStatusNodeAction(text, Presentation.NULL_STRING, null) {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
@@ -26,15 +30,25 @@ abstract class GitAcceptConflictSideAction(private val takeTheirs: Boolean) :
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).anyMatch { node ->
-      node.createConflict()?.let { conflict -> getConflictOperationLock(project, conflict).isLocked } == false
-    }
+    e.presentation.isEnabled = isEnabled(project,
+                                         e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).asSequence().mapNotNull { it.createConflict() })
   }
 
   override fun matches(statusNode: GitFileStatusNode): Boolean = statusNode.kind == NodeKind.CONFLICTED
 
   override fun perform(project: Project, nodes: List<GitFileStatusNode>) {
-    val conflicts = nodes.mapNotNull { it.createConflict() }
+    perform(project, createMergeHandler(project), nodes.mapNotNull { it.createConflict() })
+  }
+
+  protected open fun isEnabled(project: Project, conflicts: Sequence<GitConflict>): Boolean {
+    return conflicts.any { conflict -> !getConflictOperationLock(project, conflict).isLocked }
+  }
+
+  protected abstract fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>)
+}
+
+abstract class GitAcceptConflictSideAction(private val takeTheirs: Boolean) : GitConflictAction(getActionText(takeTheirs)) {
+  override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
     acceptConflictSide(project, createMergeHandler(project), conflicts, takeTheirs, project::isReversedRoot)
   }
 }
@@ -42,4 +56,18 @@ abstract class GitAcceptConflictSideAction(private val takeTheirs: Boolean) :
 private fun getActionText(takeTheirs: Boolean): Supplier<@Nls String> {
   return if (takeTheirs) GitBundle.messagePointer("conflicts.accept.theirs.action.text")
   else GitBundle.messagePointer("conflicts.accept.yours.action.text")
+}
+
+class GitMergeConflictAction : GitConflictAction(GitBundle.messagePointer("action.Git.Merge.text")) {
+
+  override fun isEnabled(project: Project, conflicts: Sequence<GitConflict>): Boolean {
+    val handler = createMergeHandler(project)
+    return conflicts.any { conflict ->
+      !getConflictOperationLock(project, conflict).isLocked && handler.canResolveConflict(conflict)
+    }
+  }
+
+  override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
+    showMergeWindow(project, handler, conflicts, project::isReversedRoot)
+  }
 }
