@@ -320,6 +320,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
   }
 
+  public void executeEx(final UsageInfo @NotNull [] usages) {
+    execute(usages);
+  }
+
   protected void execute(final UsageInfo @NotNull [] usages) {
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));

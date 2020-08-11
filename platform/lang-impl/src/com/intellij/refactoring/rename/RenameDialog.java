@@ -335,6 +335,10 @@ public class RenameDialog extends RefactoringDialog {
     invokeRefactoring(processor);
   }
 
+  public RenameProcessor createRenameProcessorEx(@NotNull String newName) {
+    return createRenameProcessor(newName);
+  }
+
   protected RenameProcessor createRenameProcessor(@NotNull String newName) {
     return new RenameProcessor(getProject(), myPsiElement, newName, getRefactoringScope(), isSearchInComments(), isSearchInNonJavaFiles());
   }

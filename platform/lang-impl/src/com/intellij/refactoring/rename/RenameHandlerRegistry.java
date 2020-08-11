@@ -122,7 +122,7 @@ public class RenameHandlerRegistry {
     });
   }
 
-  static String getHandlerTitle(RenameHandler renameHandler) {
+  public static String getHandlerTitle(RenameHandler renameHandler) {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
   }
 
