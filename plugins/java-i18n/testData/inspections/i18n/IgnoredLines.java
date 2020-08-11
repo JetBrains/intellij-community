@@ -11,4 +11,5 @@ class IgnoredContent {
     String s8 = "access$";
     String s9 = "<html>" + s8 + "</html>";
     String s10 = "&lt;";
+    String s11 = <warning descr="Hardcoded string literal: \"More...\"">"More..."</warning>;
 }
