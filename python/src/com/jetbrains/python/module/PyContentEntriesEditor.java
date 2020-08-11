@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final List<PyRootTypeProvider> myRootTypeProviders;
@@ -280,7 +282,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
               return provider.getIcon();
             }
           }
-          return super.updateIcon(entry, file, originalIcon);
+          // JavaModuleSourceRootEditHandler gives every directory under a source root a package icon.
+          // Since we use the same icon for explicit namespace package "roots", we forcibly replace icons
+          // for other "false" packages with the one for a plain directory to avoid confusion.
+          Icon defaultIcon = super.updateIcon(entry, file, originalIcon);
+          if (defaultIcon == PlatformIcons.PACKAGE_ICON) {
+            return PlatformIcons.FOLDER_ICON;
+          }
+          return defaultIcon;
         }
       };
     }

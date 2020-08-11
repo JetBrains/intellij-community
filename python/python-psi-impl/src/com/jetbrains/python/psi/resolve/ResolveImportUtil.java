@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,6 +36,7 @@ import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
  * @author dcheryasov
  */
 public final class ResolveImportUtil {
+
   private ResolveImportUtil() {
   }
 
@@ -44,6 +46,9 @@ public final class ResolveImportUtil {
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
         if (pyFile.getLanguageLevel().isPy3K()) {
+          if (foothold.getManager().isInProject(foothold) && Registry.is("python.explicit.namespace.packages")) {
+            return false;
+          }
           return true;
         }
         return pyFile.hasImportFromFuture(ABSOLUTE_IMPORT);
