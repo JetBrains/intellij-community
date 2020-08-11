@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
@@ -64,7 +65,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     init();
   }
 
-  private void setTextAndMnemonicAndListeners(JRadioButton button, String text, String mnemonic) {
+  private void setTextAndMnemonicAndListeners(JRadioButton button, @NlsContexts.Button String text, String mnemonic) {
     button.setText(text);
     button.setMnemonic(mnemonic.charAt(0));
     button.setDisplayedMnemonicIndex(button.getText().indexOf(mnemonic));
