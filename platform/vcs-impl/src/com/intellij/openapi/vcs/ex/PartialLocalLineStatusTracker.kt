@@ -599,11 +599,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
         reopenRange(editor, range, mousePosition)
       }
     }
-
-    private fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
-      val newRange = tracker.findRange(range)
-      if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
-    }
   }
 
 

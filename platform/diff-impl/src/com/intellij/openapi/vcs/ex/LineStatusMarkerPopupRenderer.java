@@ -106,8 +106,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   public void showAfterScroll(@NotNull Editor editor, @NotNull Range range) {
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      Range newRange = myTracker.findRange(range);
-      if (newRange != null) showHintAt(editor, newRange, null);
+      reopenRange(editor, range, null);
     });
   }
 
@@ -142,6 +141,13 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
     LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable);
+  }
+
+  protected void reopenRange(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
+    Range newRange = myTracker.findRange(range);
+    if (newRange != null) {
+      showHintAt(editor, newRange, mousePosition);
+    }
   }
 
   private void installWordDiff(@NotNull Editor editor,
@@ -338,10 +344,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       if (!myTracker.isValid()) return;
       DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 
-      Range newRange = myTracker.findRange(myRange);
-      if (newRange != null) {
-        showHintAt(myEditor, newRange, myMousePosition);
-      }
+      reopenRange(myEditor, myRange, myMousePosition);
     }
   }
 }

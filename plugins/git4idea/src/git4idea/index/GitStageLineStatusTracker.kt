@@ -592,15 +592,15 @@ class GitStageLineStatusTracker(
       actions.add(ShowPrevChangeMarkerAction(editor, range))
       actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(AddLineStatusRangeAction(editor, range))
-      actions.add(ResetLineStatusRangeAction(editor, range))
+      actions.add(AddLineStatusRangeAction(editor, range, mousePosition))
+      actions.add(ResetLineStatusRangeAction(editor, range, mousePosition))
       actions.add(StageShowDiffAction(editor, range))
       actions.add(CopyLineStatusRangeAction(editor, range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }
 
-    private inner class AddLineStatusRangeAction(editor: Editor, range: Range) :
+    private inner class AddLineStatusRangeAction(editor: Editor, range: Range, private val mousePosition: Point?) :
       RangeMarkerAction(editor, range, null), LightEditCompatible {
       init {
         templatePresentation.setText(GitAddOperation.actionText)
@@ -611,10 +611,11 @@ class GitStageLineStatusTracker(
 
       override fun actionPerformed(editor: Editor, range: Range) {
         tracker.stageChanges(range)
+        reopenRange(editor, range, mousePosition)
       }
     }
 
-    private inner class ResetLineStatusRangeAction(editor: Editor, range: Range) :
+    private inner class ResetLineStatusRangeAction(editor: Editor, range: Range, private val mousePosition: Point?) :
       RangeMarkerAction(editor, range, null), LightEditCompatible {
       init {
         templatePresentation.setText(GitResetOperation.actionText)
@@ -625,6 +626,7 @@ class GitStageLineStatusTracker(
 
       override fun actionPerformed(editor: Editor, range: Range) {
         tracker.unstageChanges(range)
+        reopenRange(editor, range, mousePosition)
       }
     }
 
