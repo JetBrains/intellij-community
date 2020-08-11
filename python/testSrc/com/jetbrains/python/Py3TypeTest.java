@@ -1134,13 +1134,13 @@ public class Py3TypeTest extends PyTestCase {
   // PY-13750
   public void testBuiltinRound() {
     doTest("int", "expr = round(1)");
-    doTest("Union[float, int]", "expr = round(1, 1)");
+    doTest("Union[int, float]", "expr = round(1, 1)");
 
     doTest("int", "expr = round(1.1)");
     doTest("float", "expr = round(1.1, 1)");
 
     doTest("int", "expr = round(True)");
-    doTest("Union[float, int]", "expr = round(True, 1)");
+    doTest("Union[int, float]", "expr = round(True, 1)");
   }
 
   // PY-29665
