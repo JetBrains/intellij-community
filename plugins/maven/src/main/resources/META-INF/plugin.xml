@@ -274,7 +274,8 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationAllowlist groupIds="Maven: non-managed pom.xml"/>
+    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
+    <notificationGroup id="Maven" displayType="BALLOON"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
