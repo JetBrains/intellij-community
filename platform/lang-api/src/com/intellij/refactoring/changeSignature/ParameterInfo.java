@@ -61,6 +61,7 @@ public interface ParameterInfo {
 
   /**
    * Set parameter new name (to be changed to during refactoring)
+   *
    * @param name new name
    */
   void setName(@NlsSafe String name);
