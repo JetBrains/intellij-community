@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,6 +16,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -242,12 +244,12 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static final class AsListToArrayHandler implements RedundantCollectionOperationHandler {
-    private final String myReplacementMethod;
+    @NonNls private final String myReplacementMethod;
     @NotNull private final SmartPsiElementPointer<PsiExpression> myArrayPtr;
     private final SmartPsiElementPointer<PsiExpression> myFromPtr;
     private final SmartPsiElementPointer<PsiExpression> myToPtr;
     @NotNull private final String mySourceComponentType;
-    @NotNull private final String myTargetComponentType;
+    @NotNull @NonNls private final String myTargetComponentType;
 
     private AsListToArrayHandler(PsiExpression from,
                                  PsiExpression to,
@@ -295,7 +297,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiExpression to = myToPtr == null ? null : myToPtr.getElement();
       if ((from == null) != (to == null)) return;
       CommentTracker ct = new CommentTracker();
-      String replacement;
+      @NonNls String replacement;
       String suffix = "";
       if (!mySourceComponentType.equals(myTargetComponentType)) {
         suffix = "," + myTargetComponentType + "[].class";
@@ -363,9 +365,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static class ContainsAllSingletonHandler implements RedundantCollectionOperationHandler {
-    @NotNull
     @Override
-    public String getReplacement() {
+    public @NotNull @NlsSafe String getReplacement() {
       return "contains";
     }
 
@@ -420,7 +421,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final class MapKeySetContainsHandler implements RedundantCollectionOperationHandler {
     private final String myReplacementMethod;
 
-    private MapKeySetContainsHandler(String method) {
+    private MapKeySetContainsHandler(@NonNls String method) {
       myReplacementMethod = method;
     }
 
@@ -557,9 +558,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       }
     }
 
-    @NotNull
+
     @Override
-    public String getReplacement() {
+    public @NotNull @NlsSafe String getReplacement() {
       return "Arrays.sort()";
     }
 
@@ -596,9 +597,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
 
-    @NotNull
     @Override
-    public String getReplacement() {
+    public @NotNull @NlsSafe String getReplacement() {
       return "Collections.emptyIterator()";
     }
 

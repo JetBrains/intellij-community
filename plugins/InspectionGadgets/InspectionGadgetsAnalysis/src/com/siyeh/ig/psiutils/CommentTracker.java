@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -413,7 +414,7 @@ public final class CommentTracker {
    * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
-  public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull String text) {
+  public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
     PsiElement replacement = createElement(element, text);
     return replaceAndRestoreComments(element, replacement);
   }

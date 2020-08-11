@@ -143,8 +143,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
     return expressions;
   }
 
-  @NotNull
-  private static String numberAsText(int num, PsiType type) {
+  private static @NotNull @NonNls String numberAsText(int num, PsiType type) {
     if (PsiType.DOUBLE.equals(type)) return num + ".0";
     if (PsiType.FLOAT.equals(type)) return num + ".0f";
     if (PsiType.LONG.equals(type)) return num + "L";

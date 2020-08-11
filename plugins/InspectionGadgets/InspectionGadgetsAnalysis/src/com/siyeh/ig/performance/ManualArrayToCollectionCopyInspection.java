@@ -132,8 +132,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       PsiReplacementUtil.replaceStatementAndShortenClassNames(loop, newExpression);
     }
 
-    @Nullable
-    private static String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
+    private static @Nullable @NonNls String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
       final PsiStatement body = getBody(foreachStatement);
       if (!(body instanceof PsiExpressionStatement)) return null;
       final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
@@ -151,8 +150,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       return collectionText + ".addAll(java.util.Arrays.asList(" + arrayText + "));";
     }
 
-    @Nullable
-    private static String getCollectionsAddAllText(PsiForStatement forStatement) {
+    private static @Nullable @NonNls String getCollectionsAddAllText(PsiForStatement forStatement) {
       final PsiExpression expression = forStatement.getCondition();
       final PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
       if (condition == null) return null;

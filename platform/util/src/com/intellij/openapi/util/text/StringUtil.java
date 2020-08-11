@@ -1491,7 +1491,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean containsAnyChar(final @NotNull String value, final @NotNull String chars) {
+  public static boolean containsAnyChar(final @NotNull String value, final @NotNull @NonNls String chars) {
     return Strings.containsAnyChar(value, chars);
   }
 
@@ -2300,7 +2300,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String getQualifiedName(@Nullable String packageName, @NotNull String className) {
+  public static @NotNull @NonNls String getQualifiedName(@Nullable @NonNls String packageName, @NotNull @NonNls String className) {
     if (packageName == null || packageName.isEmpty()) {
       return className;
     }

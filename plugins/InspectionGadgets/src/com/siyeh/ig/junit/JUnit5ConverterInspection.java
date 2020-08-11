@@ -179,7 +179,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
               return true;
             });
             if (!inheritors.isEmpty()) {
-              final String problem = "Class " +
+              @Nls final String problem = "Class " +
                                    RefactoringUIUtil.getDescription(psiClass, true) +
                                    " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
                                    StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", ");

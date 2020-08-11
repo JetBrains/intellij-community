@@ -349,8 +349,8 @@ public final class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
-  public static boolean elementContainsCallToMethod(PsiElement context, String containingClassName, PsiType returnType,
-    String methodName, PsiType... parameterTypes) {
+  public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
+    @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
     context.accept(methodCallFinder);
     return methodCallFinder.containsCallToMethod();

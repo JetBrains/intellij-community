@@ -1032,7 +1032,7 @@ public final class ExpressionUtils {
    * @param call to rename
    * @param newName new name
    */
-  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
+  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull @NonNls String newName) {
     bindReferenceTo(call.getMethodExpression(), newName);
   }
 

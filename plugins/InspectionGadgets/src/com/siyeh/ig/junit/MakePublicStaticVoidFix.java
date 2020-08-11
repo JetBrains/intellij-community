@@ -32,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,9 +53,9 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
     final String methodBefore = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, formatOptions, PsiFormatUtilBase.SHOW_TYPE);
 
     String presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
-    final String methodAfter = (presentableVisibility.isEmpty() ? presentableVisibility : presentableVisibility + " ") +
-                               (makeStatic ? "static " : "") +
-                               "void " + method.getName() + "()";
+    final @NonNls String methodAfter = (presentableVisibility.isEmpty() ? presentableVisibility : presentableVisibility + " ") +
+                                       (makeStatic ? "static " : "") +
+                                       "void " + method.getName() + "()";
 
     myName = InspectionGadgetsBundle.message("make.public.static.void.fix.name", methodBefore, methodAfter);
     myMakeStatic = makeStatic;
