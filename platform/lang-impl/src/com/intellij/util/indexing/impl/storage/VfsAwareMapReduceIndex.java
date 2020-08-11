@@ -143,7 +143,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @NotNull
   @Override
-  protected InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
+  protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
     boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();

@@ -219,7 +219,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public final @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
     InputData<Key, Value> data;
     try {
       data = mapInput(inputId, content);

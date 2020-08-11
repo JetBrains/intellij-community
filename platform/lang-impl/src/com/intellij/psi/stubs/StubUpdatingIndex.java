@@ -16,9 +16,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
@@ -27,7 +29,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -233,31 +234,34 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private static final byte IS_BINARY_MASK = 1;
   private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
-  private static void rememberIndexingStamp(@NotNull FileContent content) {
+  @NotNull
+  private static IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
     VirtualFile file = content.getFile();
     boolean isBinary = file.getFileType().isBinary();
     int contentLength = isBinary ? -1 : content.getPsiFile().getTextLength();
     long byteLength = file.getLength();
-    rememberIndexingStamp(file, isBinary, byteLength, contentLength);
 
+    IndexingStampInfo indexingStampInfo = new IndexingStampInfo(file.getTimeStamp(), byteLength, contentLength, isBinary);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Indexing stubs for " + file + "; " + IndexingStampInfo.dumpSize(byteLength, contentLength));
+      LOG.debug("Indexing stubs for " + file + ", " + indexingStampInfo);
     }
+    return indexingStampInfo;
   }
 
-  private static void rememberIndexingStamp(@NotNull VirtualFile file, boolean isBinary, long contentByteLength, int contentCharLength) {
-    try (DataOutputStream stream = INDEXED_STAMP.writeAttribute(file)) {
-      DataInputOutputUtil.writeTIME(stream, file.getTimeStamp());
-      DataInputOutputUtil.writeLONG(stream, contentByteLength);
+  static void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, INDEXED_STAMP)) {
+      if (indexingStampInfo == null) return;
+      DataInputOutputUtil.writeTIME(stream, indexingStampInfo.indexingFileStamp);
+      DataInputOutputUtil.writeLONG(stream, indexingStampInfo.indexingByteLength);
 
-      boolean lengthsAreTheSame = contentByteLength == contentCharLength;
+      boolean lengthsAreTheSame = indexingStampInfo.indexingCharLength == indexingStampInfo.indexingByteLength;
       byte flags = 0;
-      flags = BitUtil.set(flags, IS_BINARY_MASK, isBinary);
+      flags = BitUtil.set(flags, IS_BINARY_MASK, indexingStampInfo.isBinary);
       flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
       stream.writeByte(flags);
 
-      if (!lengthsAreTheSame && !isBinary) {
-        DataInputOutputUtil.writeINT(stream, contentCharLength);
+      if (!lengthsAreTheSame && !indexingStampInfo.isBinary) {
+        DataInputOutputUtil.writeINT(stream, indexingStampInfo.indexingCharLength);
       }
     }
     catch (IOException e) {
@@ -266,9 +270,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   @Nullable
-  static IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
     try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
-      if (stream == null) {
+      if (stream == null || stream.available() <= 0) {
         return null;
       }
       long stamp = DataInputOutputUtil.readTIME(stream);
@@ -288,7 +292,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       else {
         charLength = DataInputOutputUtil.readINT(stream);
       }
-      return new IndexingStampInfo(stamp, byteLength, charLength);
+      return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -404,12 +408,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     @Override
-    protected @NotNull InputData<Integer, SerializedStubTree> mapInput(int inputId, @Nullable FileContent content) {
-      InputData<Integer, SerializedStubTree> data = super.mapInput(inputId, content);
-      if (content != null && !data.getKeyValues().isEmpty()) {
-        rememberIndexingStamp(content);
-      }
-      return data;
+    public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
+      throws MapInputException, ProcessCanceledException {
+      Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      IndexingStampInfo indexingStampInfo = content == null ? null : calculateIndexingStamp(content);
+
+      return () -> {
+        Boolean result = indexUpdateComputable.compute();
+        if (Boolean.TRUE.equals(result)) {
+          saveIndexingStampInfo(indexingStampInfo, inputId);
+        }
+        return result;
+      };
     }
 
     @Override
