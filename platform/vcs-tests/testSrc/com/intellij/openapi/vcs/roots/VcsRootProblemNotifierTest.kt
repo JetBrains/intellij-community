@@ -36,7 +36,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     VcsRootChecker.EXTENSION_POINT_NAME.point.registerExtension(checker, testRootDisposable)
     vcsManager.registerVcs(vcs)
 
-    notifier = VcsRootProblemNotifier.getInstance(myProject)
+    notifier = VcsRootProblemNotifier.createInstance(myProject)
     Registry.get("vcs.root.auto.add.nofity").setValue(true)
   }
 

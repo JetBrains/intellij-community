@@ -54,7 +54,7 @@ public final class VcsRootProblemNotifier {
 
   @NotNull private final Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> getPresentableMapping(rootError.getMapping());
 
-  public static VcsRootProblemNotifier getInstance(@NotNull Project project) {
+  public static VcsRootProblemNotifier createInstance(@NotNull Project project) {
     return new VcsRootProblemNotifier(project);
   }
 
@@ -147,7 +147,7 @@ public final class VcsRootProblemNotifier {
         ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
 
         BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-          Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
+          Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
           if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
             notification.expire();
           }

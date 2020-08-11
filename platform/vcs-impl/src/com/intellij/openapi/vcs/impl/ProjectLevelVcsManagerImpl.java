@@ -958,17 +958,4 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return VcsInitObject.MAPPINGS.getOrder();
     }
   }
-
-  static final class DetectRootsStartupActivity implements VcsStartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      VcsRootScanner.start(project);
-    }
-
-    @Override
-    public int getOrder() {
-      return VcsInitObject.AFTER_COMMON.getOrder();
-    }
-  }
 }
