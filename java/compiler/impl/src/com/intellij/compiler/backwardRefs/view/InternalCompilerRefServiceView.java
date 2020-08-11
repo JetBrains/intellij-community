@@ -15,9 +15,9 @@
  */
 package com.intellij.compiler.backwardRefs.view;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,8 +68,10 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
           append((String)userObject, SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
         else if (userObject instanceof VirtualFile) {
-          append(IdeBundle.message("x.in.y", ((VirtualFile)userObject).getName(), ""));
-          append(((VirtualFile)userObject).getParent().getPath(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          VirtualFile virtualFile = (VirtualFile)userObject;
+          append(virtualFile.getName() + " ");
+          append(JavaCompilerBundle.message("label.in.path.suffix", virtualFile.getParent().getPath()),
+                 SimpleTextAttributes.GRAY_ATTRIBUTES);
         } else if (userObject instanceof PsiFunctionalExpression) {
           append(ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)userObject, true));
         } else if (userObject instanceof PsiClass) {
