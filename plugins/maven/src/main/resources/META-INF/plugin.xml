@@ -527,6 +527,10 @@
             class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction">
     </action>
 
+    <action id="Maven.UseWrapperAction"
+            class="org.jetbrains.idea.maven.project.actions.UseWrapperAction">
+    </action>
+
     <action id="Maven.ToggleSkipTests"
             class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction"
             icon="AllIcons.Nodes.ExceptionClass">

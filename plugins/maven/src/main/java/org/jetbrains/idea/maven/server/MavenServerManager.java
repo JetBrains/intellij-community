@@ -345,6 +345,7 @@ public final class MavenServerManager implements Disposable {
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,
                                              @Nullable String multiModuleProjectDirectory) {
+
     return new MavenEmbedderWrapper(null) {
       @NotNull
       @Override
