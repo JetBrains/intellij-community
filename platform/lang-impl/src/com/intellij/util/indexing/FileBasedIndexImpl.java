@@ -1174,7 +1174,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           CachedFileContent resurrectedFileContent = new CachedFileContent(((DeletedVirtualFileStub)file).getOriginalFile());
           indexingResult = doIndexFileContent(project, resurrectedFileContent);
         } else {
-          indexingResult = new FileIndexingResult(true, Collections.emptyMap(), file.getFileType());
+          indexingResult = new FileIndexingResult(true, Collections.emptyMap(), Collections.emptyMap(), file.getFileType());
         }
       }
       else {
@@ -1185,14 +1185,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ((VirtualFileSystemEntry)file).setFileIndexed(true);
       }
       if (VfsEventsMerger.LOG != null) {
-        VfsEventsMerger.LOG.info("File " + file + " has been indexed for indexes " + indexingResult.timesPerIndexer.keySet());
+        VfsEventsMerger.LOG.info("File " + file +
+                                 " indexes have been updated for indexes " + indexingResult.updateTimesPerIndexer.keySet() +
+                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet());
       }
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       // Indexing time takes only input data mapping time into account.
-      long indexingTime = indexingResult.timesPerIndexer.values().stream().mapToLong(e -> e).sum();
+      long indexingTime =
+        indexingResult.updateTimesPerIndexer.values().stream().mapToLong(e -> e).sum() +
+        indexingResult.deletionTimesPerIndexer.values().stream().mapToLong(e -> e).sum();
       return new FileIndexingStatistics(indexingTime,
                                         indexingResult.fileType,
-                                        indexingResult.timesPerIndexer);
+                                        ContainerUtil.union(indexingResult.updateTimesPerIndexer, indexingResult.deletionTimesPerIndexer));
     }
     finally {
       IndexingStamp.flushCache(fileId);
@@ -1201,14 +1205,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static final class FileIndexingResult {
     public final boolean setIndexedStatus;
-    public final Map<ID<?, ?>, Long> timesPerIndexer;
+    public final Map<ID<?, ?>, Long> updateTimesPerIndexer;
+    public final Map<ID<?, ?>, Long> deletionTimesPerIndexer;
     public final FileType fileType;
 
     private FileIndexingResult(boolean setIndexedStatus,
-                               @NotNull Map<ID<?, ?>, Long> timesPerIndexer,
+                               @NotNull Map<ID<?, ?>, Long> updateTimesPerIndexer,
+                               @NotNull Map<ID<?, ?>, Long> deletionTimesPerIndexer,
                                @NotNull FileType type) {
       this.setIndexedStatus = setIndexedStatus;
-      this.timesPerIndexer = timesPerIndexer;
+      this.updateTimesPerIndexer = updateTimesPerIndexer;
+      this.deletionTimesPerIndexer = deletionTimesPerIndexer;
       fileType = type;
     }
   }
@@ -1226,7 +1233,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
-    Map<ID<?, ?>, Long> perIndexerTimes = new HashMap<>();
+    Map<ID<?, ?>, Long> perIndexerUpdateTimes = new HashMap<>();
+    Map<ID<?, ?>, Long> perIndexerDeletionTimes = new HashMap<>();
     Ref<FileType> fileTypeRef = Ref.create();
 
     getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
@@ -1263,7 +1271,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             if (updateStats == null) {
               setIndexedStatus.set(Boolean.FALSE);
             } else {
-              perIndexerTimes.put(indexId, updateStats.mapInputTime);
+              perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
             }
             currentIndexedStates.remove(indexId);
           }
@@ -1287,7 +1295,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (updateStats == null) {
             setIndexedStatus.set(Boolean.FALSE);
           } else {
-            perIndexerTimes.put(indexId, updateStats.mapInputTime);
+            perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
           }
         }
       }
@@ -1296,7 +1304,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
-    return new FileIndexingResult(setIndexedStatus.get(), perIndexerTimes, fileTypeRef.get());
+    return new FileIndexingResult(setIndexedStatus.get(), perIndexerUpdateTimes, perIndexerDeletionTimes, fileTypeRef.get());
   }
 
   private static byte @NotNull[] getBytesOrNull(@NotNull CachedFileContent content) {
