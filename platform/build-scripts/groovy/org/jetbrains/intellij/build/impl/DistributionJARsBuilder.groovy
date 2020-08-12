@@ -318,6 +318,19 @@ class DistributionJARsBuilder {
     validator.validate()
   }
 
+  @CompileStatic
+  List<String> getProductModules() {
+    List<String> result = new ArrayList<>();
+    for (moduleJar in platform.moduleJars.entrySet()) {
+      // Filter out jars with relative paths in name
+      if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
+        continue
+
+      result.addAll(moduleJar.value)
+    }
+    return result
+  }
+
   /**
    * Build index which is used to search options in the Settings dialog.
    */
