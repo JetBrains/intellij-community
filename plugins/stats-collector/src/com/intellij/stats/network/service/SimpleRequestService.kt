@@ -4,12 +4,13 @@ package com.intellij.stats.network.service
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.reporting.compressBase64Gzip
 import com.intellij.util.io.HttpRequests
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URLConnection
+import java.util.zip.GZIPOutputStream
 
 class SimpleRequestService : RequestService() {
   private companion object {
@@ -18,7 +19,7 @@ class SimpleRequestService : RequestService() {
 
   override fun postZipped(url: String, file: File): ResponseData? {
     return try {
-      val zippedArray = compressBase64Gzip(file.readBytes())
+      val zippedArray = toZippedByteArray(file)
       return HttpRequests.post(url, "application/json").tuner {
         it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
       }.connect { request ->
@@ -48,6 +49,14 @@ class SimpleRequestService : RequestService() {
       LOG.debug(e)
       null
     }
+  }
+
+  private fun toZippedByteArray(file: File): ByteArray {
+    val outputStream = ByteArrayOutputStream()
+    GZIPOutputStream(outputStream).use {
+      it.write(file.readBytes())
+    }
+    return outputStream.toByteArray()
   }
 
   private fun URLConnection.asResponseData(sentDataSize: Int?): ResponseData? {
