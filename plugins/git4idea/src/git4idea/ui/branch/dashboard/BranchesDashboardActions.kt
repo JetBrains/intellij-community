@@ -17,6 +17,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
+import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchType
@@ -123,7 +124,8 @@ internal object BranchesDashboardActions {
       }
 
       val branchInfo = selectedBranches.singleOrNull()
-      if (branchInfo != null) {
+      val headSelected = tree.getSelectedBranchFilters().contains(HEAD)
+      if (branchInfo != null && !headSelected) {
         return when {
           branchInfo.isCurrent -> CurrentBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
           branchInfo.isLocal -> LocalBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
@@ -144,6 +146,11 @@ internal object BranchesDashboardActions {
         return RemoteGlobalActions()
       }
 
+      val currentBranchName = guessRepo.currentBranchName
+      if (currentBranchName != null && headSelected) {
+        return CurrentBranchActions(project, listOf(guessRepo), currentBranchName, guessRepo)
+      }
+
       return null
     }
   }
@@ -151,6 +158,16 @@ internal object BranchesDashboardActions {
   class NewBranchAction : BranchesActionBase({ DvcsBundle.message("new.branch.action.text") },
                                              { DvcsBundle.message("new.branch.action.text") },
                                              com.intellij.dvcs.ui.NewBranchAction.icon) {
+
+    override fun update(e: AnActionEvent) {
+      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
+      if (branchFilters != null && branchFilters.contains(HEAD)) {
+        e.presentation.isEnabled = true
+      }
+      else {
+        super.update(e)
+      }
+    }
 
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.size > 1) {
@@ -164,11 +181,17 @@ internal object BranchesDashboardActions {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val branches = e.getData(GIT_BRANCHES)!!
       val project = e.project!!
-      val repositories = branches.flatMap(BranchInfo::repositories).distinct()
-      val branchName = branches.first().branchName
-      createOrCheckoutNewBranch(project, repositories, "$branchName^0", message("action.Git.New.Branch.dialog.title", branchName))
+      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
+      if (branchFilters != null && branchFilters.contains(HEAD)) {
+        createOrCheckoutNewBranch(project, GitRepositoryManager.getInstance(project).repositories, HEAD)
+      }
+      else {
+        val branches = e.getData(GIT_BRANCHES)!!
+        val repositories = branches.flatMap(BranchInfo::repositories).distinct()
+        val branchName = branches.first().branchName
+        createOrCheckoutNewBranch(project, repositories, "$branchName^0", message("action.Git.New.Branch.dialog.title", branchName))
+      }
     }
   }
 
