@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,7 +100,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   private static final Key<byte[]> BOM_KEY = Key.create("BOM");
   private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
 
-  protected VirtualFile() { }
+  protected VirtualFile() {
+    if (this instanceof Disposable) {
+      throw new IllegalStateException("VirtualFile must not implement Disposable because of life-cycle requirements. " +
+                                      "E.g. VirtualFile should exist throughout the application and may not be disposed half-way.");
+    }
+  }
 
   /**
    * Gets the name of this file.
