@@ -162,6 +162,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         try {
           Stub stub = StubTreeBuilder.buildStubTree(inputData, type);
           if (stub == null) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("No stub present for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
+            }
             return null;
           }
           IndexingStampInfo indexingStampInfo = calculateIndexingStamp(inputData);
@@ -171,6 +174,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
                                                                                    indexingStampInfo);
           if (IndexDebugProperties.DEBUG) {
             assertDeserializedStubMatchesOriginalStub(serializedStubTree, stub);
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Indexing stubs for " + inputData.getFile() + ", " + indexingStampInfo);
           }
           return serializedStubTree;
         }
@@ -251,11 +257,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     int contentLength = isBinary ? -1 : content.getPsiFile().getTextLength();
     long byteLength = file.getLength();
 
-    IndexingStampInfo indexingStampInfo = new IndexingStampInfo(file.getTimeStamp(), byteLength, contentLength, isBinary);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Indexing stubs for " + file + ", " + indexingStampInfo);
-    }
-    return indexingStampInfo;
+    return new IndexingStampInfo(file.getTimeStamp(), byteLength, contentLength, isBinary);
   }
 
   static void saveIndexingStampInfoToAttribute(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
