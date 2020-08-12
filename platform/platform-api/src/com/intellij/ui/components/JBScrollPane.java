@@ -51,9 +51,9 @@ public class JBScrollPane extends JScrollPane {
    * when insets for {@code JScrollPane's} content are being calculated.
    * <p>
    * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
-   * scrollbar
+   * scrollbar.
    * <p>
-   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   * Please use as a marker for scrollbars, that should be transparent and shown over content.
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
@@ -184,9 +184,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   /**
-   * Adds status component which's anchored to the top right corner above the right scrollbar.
-   * This component obeys the <code>Flip</code>
-   * @param statusComponent
+   * Adds status component which is anchored to the top right corner above the right scrollbar.
+   * This component obeys the {@link Flip}.
    */
   public void setStatusComponent(JComponent statusComponent) {
     JComponent old = getStatusComponent();
