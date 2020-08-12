@@ -77,10 +77,10 @@ public class PyIntentionTest extends PyTestCase {
    *
    * @param hint
    */
-  private void doNegativeTest(String hint) {
+  private void doNegativeTest(@NotNull String hint) {
     final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     List<IntentionAction> ints = myFixture.filterAvailableIntentions(hint);
-    assertEmpty(ints);
+    assertEmpty("Intention '" + hint + "' should not be available under caret", ints);
     assertSdkRootsNotParsed(file);
   }
 
@@ -208,6 +208,61 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-15608
   public void testConvertingQuotesOfGluedStringWithDifferentElementQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesNotSuggestedInsideInnerExpressions() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesSuggestedOnFragmentBraces() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesSuggestedOnFragmentFormatPart() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingRawFStringQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotes() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForStringInsideFStringThatWouldRequireEscapingInsideFragment() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForFStringContainingStringWithInconvertibleQuotes() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfStringInsideFString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfFStringContainingOtherStrings() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfFStringContainingEscapedQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfGluedFStringContainingOtherStrings() {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
