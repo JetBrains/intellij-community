@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,15 +9,21 @@ import com.intellij.util.text.DateTimeFormatManager;
 import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.graph.DefaultColorGenerator;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.paint.GraphCellPainter;
+import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +53,17 @@ public enum VcsLogColumn {
     public FilePath getStubValue(@NotNull GraphTableModel model) {
       return VcsUtil.getFilePath(getFirstItem(model.getLogData().getRoots()));
     }
+
+    @Override
+    @NotNull
+    public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table) {
+      return new RootCellRenderer(table.getProperties(), table.getColorManager());
+    }
+
+    @Override
+    void initColumn(@NotNull VcsLogGraphTable table, @NotNull TableColumn column) {
+      column.setResizable(false);
+    }
   },
   COMMIT("Subject", GraphCommitCell.class) {
     @Override
@@ -67,6 +84,18 @@ public enum VcsLogColumn {
     public GraphCommitCell getStubValue(@NotNull GraphTableModel model) {
       return new GraphCommitCell("", Collections.emptyList(), Collections.emptyList());
     }
+
+    @Override
+    @NotNull
+    public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table) {
+      GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
+        @Override
+        protected int getRowHeight() {
+          return table.getRowHeight();
+        }
+      };
+      return new GraphCommitCellRenderer(table.getLogData(), graphCellPainter, table);
+    }
   },
   AUTHOR("Author", String.class) {
     @Override
@@ -78,6 +107,12 @@ public enum VcsLogColumn {
     @NotNull
     public String getValue(@NotNull GraphTableModel model, int row) {
       return CommitPresentationUtil.getAuthorPresentation(model.getCommitMetadata(row));
+    }
+
+    @Override
+    @NotNull
+    public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table) {
+      return new VcsLogStringCellRenderer(true);
     }
   },
   DATE("Date", String.class) {
@@ -102,6 +137,12 @@ public enum VcsLogColumn {
       long timeStamp = preferCommitDate ? commit.getCommitTime() : commit.getAuthorTime();
       return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
     }
+
+    @Override
+    @NotNull
+    public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table) {
+      return new VcsLogStringCellRenderer();
+    }
   },
   HASH("Hash", String.class) {
     @Override
@@ -118,6 +159,12 @@ public enum VcsLogColumn {
     @NotNull
     public String getValue(@NotNull GraphTableModel model, int row) {
       return model.getCommitMetadata(row).getId().toShortString();
+    }
+
+    @Override
+    @NotNull
+    public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table) {
+      return new VcsLogStringCellRenderer();
     }
   };
 
@@ -149,6 +196,12 @@ public enum VcsLogColumn {
   @NotNull
   public Object getStubValue(@NotNull GraphTableModel model) {
     return "";
+  }
+
+  @NotNull
+  abstract public TableCellRenderer createTableCellRenderer(@NotNull VcsLogGraphTable table);
+
+  void initColumn(@NotNull VcsLogGraphTable table, @NotNull TableColumn column) {
   }
 
   /**
