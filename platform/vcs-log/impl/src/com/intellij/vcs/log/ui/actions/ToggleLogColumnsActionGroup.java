@@ -7,7 +7,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     if (e != null && !isPopup(e)) {
       actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
     }
-    for (VcsLogColumn column : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
+    for (VcsLogColumn<?> column : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
       actions.add(new ToggleColumnAction(column));
     }
 
@@ -56,9 +56,9 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   }
 
   private static final class ToggleColumnAction extends ToggleAction implements DumbAware {
-    private final VcsLogColumn myColumn;
+    private final VcsLogColumn<?> myColumn;
 
-    private ToggleColumnAction(@NotNull VcsLogColumn column) {
+    private ToggleColumnAction(@NotNull VcsLogColumn<?> column) {
       super(() -> column.getLocalizedName());
       myColumn = column;
     }

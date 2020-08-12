@@ -10,8 +10,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
-import com.intellij.vcs.log.ui.table.VcsLogColumn
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices
+import com.intellij.vcs.log.ui.table.column.getDefaultDynamicColumns
 
 open class CustomStringsValidationRule(private val id: String, private val values: Collection<String>) : CustomValidationRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
@@ -36,4 +35,4 @@ class VcsLogHighlighterIdValidator :
                                                               CurrentBranchHighlighter.Factory.ID))
 
 class VcsLogColumnNameValidator :
-  CustomStringsValidationRule("vcs_log_column_name", VcsLogColumnModelIndices.DEFAULT_DYNAMIC_COLUMNS.map { it.stableName }.toSet())
+  CustomStringsValidationRule("vcs_log_column_name", getDefaultDynamicColumns().map { it.stableName }.toSet())

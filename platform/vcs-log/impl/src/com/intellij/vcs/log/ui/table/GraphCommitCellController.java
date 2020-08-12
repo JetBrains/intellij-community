@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ide.IdeTooltip;
@@ -21,6 +21,7 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
+import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   @Nullable
   @Override
   public Cursor performMouseClick(int row, @NotNull MouseEvent e) {
-    PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
+    PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE));
     if (printElement != null) {
       return performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
     }
@@ -63,7 +64,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   @Nullable
   @Override
   public Cursor performMouseMove(int row, @NotNull MouseEvent e) {
-    Point pointInCell = myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
+    Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE);
     PrintElement printElement = findPrintElement(row, pointInCell);
     Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
     // if printElement is null, still need to unselect whatever was selected in a graph
@@ -79,7 +80,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Override
   public boolean shouldSelectCell(int row, @NotNull MouseEvent e) {
-    return findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
+    return findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE)) == null;
   }
 
   @Nullable
@@ -169,7 +170,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   private boolean showTooltip(int row, @NotNull Point pointInCell, @NotNull Point point, boolean now) {
-    JComponent tipComponent = getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(VcsLogColumn.COMMIT)), pointInCell, row);
+    JComponent tipComponent = getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(Commit.INSTANCE)), pointInCell, row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
@@ -181,7 +182,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   void showTooltip(int row) {
-    Point topLeftCorner = new Point(myTable.getColumnLeftXCoordinate(myTable.getColumnViewIndex(VcsLogColumn.COMMIT)),
+    Point topLeftCorner = new Point(myTable.getColumnLeftXCoordinate(myTable.getColumnViewIndex(Commit.INSTANCE)),
                                     row * myTable.getRowHeight());
     Point pointInCell = new Point(getTooltipXCoordinate(row), myTable.getRowHeight() / 2);
     showTooltip(row, pointInCell, new Point(topLeftCorner.x + pointInCell.x, topLeftCorner.y + pointInCell.y), true);

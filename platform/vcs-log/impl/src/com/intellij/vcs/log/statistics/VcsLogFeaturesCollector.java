@@ -13,8 +13,8 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
+import com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumn;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +31,7 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 @NonNls
 public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
@@ -82,7 +83,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         VcsLogColumnModelIndices modelIndices = VcsLogColumnModelIndices.getInstance();
         Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> modelIndices.getModelIndex(it));
         Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> modelIndices.getModelIndex(it));
-        for (VcsLogColumn column : VcsLogColumnModelIndices.DEFAULT_DYNAMIC_COLUMNS) {
+        for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {
           String columnName = column.getStableName();
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(modelIndices.getModelIndex(column)),
                            "column", new FeatureUsageData().addData("name", columnName));

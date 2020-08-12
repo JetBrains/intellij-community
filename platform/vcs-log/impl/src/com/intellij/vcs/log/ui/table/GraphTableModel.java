@@ -15,6 +15,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * Columns correspond exactly to {@link VcsLogColumn} enum
- */
 public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
@@ -110,12 +108,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private static VcsLogColumn getColumn(int modelIndex) {
-    return VcsLogColumnModelIndices.getInstance().getColumn(modelIndex);
-  }
-
-  @NotNull
-  public final Object getValueAt(int rowIndex, @NotNull VcsLogColumn column) {
+  public final <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
     if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
@@ -130,6 +123,11 @@ public final class GraphTableModel extends AbstractTableModel {
       ERROR_LOG.error("Failed to get information for the log table", t);
       return column.getStubValue(this);
     }
+  }
+
+  @NotNull
+  private static VcsLogColumn<?> getColumn(int modelIndex) {
+    return VcsLogColumnModelIndices.getInstance().getColumn(modelIndex);
   }
 
   /**

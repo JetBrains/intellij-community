@@ -3,15 +3,11 @@ package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.vcs.log.ui.table.VcsLogColumn
 
 @Service
 internal class VcsLogColumnModelIndices {
   companion object {
-    private val defaultColumns = listOf(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.HASH)
-
-    @JvmField
-    val DEFAULT_DYNAMIC_COLUMNS = defaultColumns.filter { it.isDynamic }
+    private val defaultColumns = listOf(Root, Commit, Author, Date, Hash)
 
     @JvmStatic
     fun getInstance() = service<VcsLogColumnModelIndices>()
@@ -19,9 +15,9 @@ internal class VcsLogColumnModelIndices {
 
   private val modelIndices = HashMap<String, Int>()
 
-  private val currentColumns = ArrayList<VcsLogColumn>()
+  private val currentColumns = ArrayList<VcsLogColumn<*>>()
 
-  private val currentColumnIndices = HashMap<Int, VcsLogColumn>()
+  private val currentColumnIndices = HashMap<Int, VcsLogColumn<*>>()
 
   init {
     defaultColumns.forEach { column ->
@@ -29,15 +25,17 @@ internal class VcsLogColumnModelIndices {
     }
   }
 
-  fun getModelIndex(column: VcsLogColumn): Int = modelIndices[column.id]!!
+  fun getModelIndex(column: VcsLogColumn<*>): Int = modelIndices[column.id]!!
 
-  fun getColumn(modelIndex: Int): VcsLogColumn = currentColumnIndices[modelIndex]!!
+  fun getColumn(modelIndex: Int): VcsLogColumn<*> = currentColumnIndices[modelIndex]!!
 
   fun getModelColumnsCount(): Int = modelIndices.size
 
+  fun getCurrentColumns(): List<VcsLogColumn<*>> = currentColumns
+
   fun getDynamicColumns() = currentColumns.filter { it.isDynamic }
 
-  private fun newColumn(column: VcsLogColumn) {
+  private fun newColumn(column: VcsLogColumn<*>) {
     val newIndex = modelIndices.size
     val modelIndex = modelIndices.getOrPut(column.id) { newIndex }
     if (modelIndex !in currentColumnIndices) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.ui.table.VcsLogColumn
+import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated
 import java.util.*
 
 @Service
@@ -15,9 +15,9 @@ internal class VcsLogColumnsWidthStorage {
     fun getInstance() = service<VcsLogColumnsWidthStorage>()
   }
 
-  private val columnsWidth = EnumMap<VcsLogColumn, VcsLogUiProperty<Int>>(VcsLogColumn::class.java)
+  private val columnsWidth = HashMap<VcsLogColumn<*>, VcsLogUiProperty<Int>>()
 
-  fun saveColumnWidth(properties: VcsLogUiProperties, column: VcsLogColumn, width: Int): Unit = properties.run {
+  fun saveColumnWidth(properties: VcsLogUiProperties, column: VcsLogColumn<*>, width: Int): Unit = properties.run {
     val property = getProperty(column)
     if (exists(property)) {
       if (get(property) != width) {
@@ -26,7 +26,7 @@ internal class VcsLogColumnsWidthStorage {
     }
   }
 
-  fun getColumnWidth(properties: VcsLogUiProperties, column: VcsLogColumn): Int = properties.run {
+  fun getColumnWidth(properties: VcsLogUiProperties, column: VcsLogColumn<*>): Int = properties.run {
     val property = getProperty(column)
     return if (exists(property)) {
       get(property)
@@ -36,11 +36,11 @@ internal class VcsLogColumnsWidthStorage {
     }
   }
 
-  private fun getProperty(column: VcsLogColumn) = columnsWidth.getOrPut(column) { TableColumnProperty(column) }
+  private fun getProperty(column: VcsLogColumn<*>) = columnsWidth.getOrPut(column) { TableColumnProperty(column) }
 
-  class TableColumnProperty(val column: VcsLogColumn) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth") {
+  class TableColumnProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth") {
     fun moveOldSettings(oldMapping: Map<Int, Int>, newMapping: MutableMap<String, Int>) {
-      val oldValue = oldMapping[column.ordinal]
+      val oldValue = oldMapping.map { (column, width) -> VcsLogColumnDeprecated.getVcsLogColumnEx(column) to width }.toMap()[column]
       if (name !in newMapping && oldValue != null) {
         newMapping[name] = oldValue
       }

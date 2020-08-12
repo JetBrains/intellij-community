@@ -9,7 +9,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
+import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,13 +60,12 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
         }
         List<Integer> oldOrder = myState.COLUMN_ORDER;
         if (oldOrder != null && !oldOrder.isEmpty()) {
-          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumn.fromOrdinal(it).getId());
+          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumnDeprecated.getVcsLogColumnEx(it).getId());
           myState.COLUMN_ID_ORDER = oldIdOrder;
           myState.COLUMN_ORDER = new ArrayList<>();
           return oldIdOrder;
         }
-        return ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
-                                 VcsLogColumn::getId);
+        return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Author.INSTANCE, Date.INSTANCE, Commit.INSTANCE), VcsLogColumn::getId);
       })
       .get();
   }

@@ -14,7 +14,8 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +66,8 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
     if (properties != null && supportsColumnsReordering(properties)) {
-      List<VcsLogColumn> columnOrder = getColumnsOrder(properties);
-      return columnOrder.contains(VcsLogColumn.DATE);
+      List<VcsLogColumn<?>> columnOrder = getColumnsOrder(properties);
+      return columnOrder.contains(Date.INSTANCE);
     }
     return false;
   }

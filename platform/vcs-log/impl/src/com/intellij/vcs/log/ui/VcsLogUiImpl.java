@@ -23,8 +23,8 @@ import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -234,7 +234,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (property instanceof TableColumnProperty) {
         getTable().forceReLayout(((TableColumnProperty)property).getColumn());
       }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
+      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
         getTable().repaint();
       }
     }
