@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -62,37 +62,35 @@ open class CommonInjectedFileChangesHandler(
 
     val documentManager = PsiDocumentManager.getInstance(myProject)
     documentManager.commitDocument(myHostDocument) // commit here and after each manipulator update
-    var localInsideFileCursor = 0
     for (host in map.keys) {
       if (host == null) continue
-      val hostText = host.text
-      var insideHost: ProperTextRange? = null
-      val sb = StringBuilder()
-      for ((hostMarker, fragmentMarker, _) in map[host].orEmpty()) {
-        val hostOffset = host.textRange.startOffset
+      val hostRange = host.textRange
+      val hostOffset = hostRange.startOffset
+      val originalText = host.text
+      var currentHost = host;
+      for ((hostMarker, fragmentMarker, _) in map[host].orEmpty().reversed()) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
-        val localInsideFile = ProperTextRange(max(localInsideFileCursor, fragmentMarker.startOffset), fragmentMarker.endOffset)
-        if (insideHost != null) {
-          //append unchanged inter-markers fragment
-          //FIXME: hostText is already encoded but `handleContentChange` will encode it again (see IDEA-248039)
-          sb.append(hostText, insideHost.endOffset, localInsideHost.startOffset)
-        }
+        val localInsideFile = ProperTextRange(fragmentMarker.startOffset, fragmentMarker.endOffset)
 
-        if (localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
-          sb.append(localInsideFile.substring(text))
+        // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
+        if (currentHost != null && localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
+          val decodedText = localInsideFile.substring(text)
+          currentHost = updateInjectionHostElement(currentHost, localInsideHost, decodedText)
+          if (currentHost == null) {
+            failAndReport("Updating host returned null. Original host" + host +
+                          "; original text: " + originalText +
+                          "; updated range in host: " + localInsideHost +
+                          "; decoded text to replace: " + decodedText, e)
+          }
         }
-        localInsideFileCursor = localInsideFile.endOffset
-        insideHost = insideHost?.union(localInsideHost) ?: localInsideHost
       }
-      if (insideHost == null) failAndReport("insideHost is null", e)
-      updateInjectionHostElement(host, insideHost, sb.toString())
-      documentManager.commitDocument(myHostDocument)
     }
   }
 
-  protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost, insideHost: ProperTextRange, content: String) {
-    // NOTE: return value is ignored and it works only because we update one host only once
-    ElementManipulators.handleContentChange(host, insideHost, content)
+  protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
+                                           insideHost: ProperTextRange,
+                                           content: String): PsiLanguageInjectionHost? {
+    return ElementManipulators.handleContentChange(host, insideHost, content)
   }
 
   override fun dispose() {
