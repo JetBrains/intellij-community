@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -13,13 +12,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
-  private final boolean myIncludeInputs;
   @NotNull
   private final SerializationManagerEx mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
-  public SerializedStubTreeDataExternalizer(boolean inputs, @NotNull SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
-    myIncludeInputs = inputs;
+  public SerializedStubTreeDataExternalizer(@NotNull SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
     mySerializationManager = manager;
     myStubIndexesExternalizer = externalizer;
   }
@@ -29,14 +26,12 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
     if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) {
       DataInputOutputUtil.writeINT(out, tree.myTreeByteLength);
       out.write(tree.myTreeBytes, 0, tree.myTreeByteLength);
-      if (myIncludeInputs) {
-        DataInputOutputUtil.writeINT(out, tree.myIndexedStubByteLength);
-        out.write(tree.myIndexedStubBytes, 0, tree.myIndexedStubByteLength);
-      }
+      DataInputOutputUtil.writeINT(out, tree.myIndexedStubByteLength);
+      out.write(tree.myIndexedStubBytes, 0, tree.myIndexedStubByteLength);
     }
     else {
       CompressionUtil.writeCompressed(out, tree.myTreeBytes, 0, tree.myTreeByteLength);
-      if (myIncludeInputs) CompressionUtil.writeCompressed(out, tree.myIndexedStubBytes, 0, tree.myIndexedStubByteLength);
+      CompressionUtil.writeCompressed(out, tree.myIndexedStubBytes, 0, tree.myIndexedStubByteLength);
     }
   }
 
@@ -49,20 +44,15 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
       in.readFully(bytes);
       int indexedStubByteLength;
       byte[] indexedStubBytes;
-      if (myIncludeInputs) {
-        indexedStubByteLength = DataInputOutputUtil.readINT(in);
-        indexedStubBytes = new byte[indexedStubByteLength];
-        in.readFully(indexedStubBytes);
-      } else {
-        indexedStubByteLength = 0;
-        indexedStubBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
-      }
+      indexedStubByteLength = DataInputOutputUtil.readINT(in);
+      indexedStubBytes = new byte[indexedStubByteLength];
+      in.readFully(indexedStubBytes);
       return new SerializedStubTree(bytes, bytes.length, indexedStubBytes, indexedStubByteLength,
                                     null, myStubIndexesExternalizer, mySerializationManager);
     }
     else {
       byte[] treeBytes = CompressionUtil.readCompressed(in);
-      byte[] indexedStubBytes = myIncludeInputs ? CompressionUtil.readCompressed(in) : ArrayUtil.EMPTY_BYTE_ARRAY;
+      byte[] indexedStubBytes = CompressionUtil.readCompressed(in);
       return new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length,
                                     null, myStubIndexesExternalizer, mySerializationManager);
     }

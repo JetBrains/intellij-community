@@ -304,7 +304,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @Override
   public DataExternalizer<SerializedStubTree> getValueExternalizer() {
     ensureSerializationManagerInitialized(mySerializationManager);
-    return new SerializedStubTreeDataExternalizer(true, mySerializationManager, myStubIndexesExternalizer);
+    return new SerializedStubTreeDataExternalizer(mySerializationManager, myStubIndexesExternalizer);
   }
 
   @NotNull
