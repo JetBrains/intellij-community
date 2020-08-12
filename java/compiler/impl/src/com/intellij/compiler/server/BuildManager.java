@@ -154,8 +154,7 @@ public final class BuildManager implements Disposable {
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
-      final int delay = Registry.intValue("compiler.automake.trigger.delay");
-      return HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0? 10 * delay : delay;
+      return Registry.intValue("compiler.automake.trigger.delay");
     }
 
     @Override
@@ -1467,9 +1466,12 @@ public final class BuildManager implements Disposable {
     }
 
     final void schedule() {
+      schedule(false);
+    }
+
+    private void schedule(boolean increasedDelay) {
       cancelPendingExecution();
-      final int delay = Math.max(100, getDelay());
-      myAlarm.addRequest(this, delay);
+      myAlarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
     }
 
     void cancelPendingExecution() {
@@ -1486,7 +1488,8 @@ public final class BuildManager implements Disposable {
 
     @Override
     public final void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning() && mySuspendBackgroundTasksCounter.get() <= 0 && !shouldPostpone() && !myInProgress.getAndSet(true)) {
+      final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
+      if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
           ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
         }
@@ -1500,7 +1503,7 @@ public final class BuildManager implements Disposable {
         }
       }
       else {
-        schedule();
+        schedule(shouldPostponeAllTasks);
       }
     }
   }
