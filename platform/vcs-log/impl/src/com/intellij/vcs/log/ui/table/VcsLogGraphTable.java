@@ -46,6 +46,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -71,6 +72,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
@@ -199,15 +201,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void onColumnOrderSettingChanged() {
     TableColumnModel columnModel = getColumnModel();
 
-    List<Integer> columnOrder = getColumnOrderFromProperties();
+    List<VcsLogColumn> columnOrder = getColumnOrderFromProperties();
     if (columnOrder != null) {
       int columnCount = getVisibleColumnCount();
       for (int i = columnCount - 1; i >= 0; i--) {
         columnModel.removeColumn(columnModel.getColumn(i));
       }
 
-      for (Integer expectedColumnIndex : columnOrder) {
-        columnModel.addColumn(myTableColumns.get(expectedColumnIndex));
+      for (VcsLogColumn column : columnOrder) {
+        columnModel.addColumn(myTableColumns.get(column.ordinal()));
       }
     }
 
@@ -215,21 +217,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @Nullable
-  private List<Integer> getColumnOrderFromProperties() {
-    if (!myProperties.exists(CommonUiProperties.COLUMN_ORDER)) return null;
-
-    List<Integer> columnOrder = myProperties.get(CommonUiProperties.COLUMN_ORDER);
-    if (VcsLogColumn.isValidColumnOrder(columnOrder)) return columnOrder;
+  private List<VcsLogColumn> getColumnOrderFromProperties() {
+    List<VcsLogColumn> columnOrder = getColumnsOrder(myProperties);
+    if (VcsLogColumn.isValidColumnOrder(columnOrder)) {
+      return columnOrder;
+    }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    saveColumnOrderToSettings();
+    VcsLogColumnOrderStorageKt.updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it -> VcsLogColumn.fromOrdinal(it)));
     return null;
-  }
-
-  private void saveColumnOrderToSettings() {
-    if (myProperties.exists(CommonUiProperties.COLUMN_ORDER)) {
-      myProperties.set(CommonUiProperties.COLUMN_ORDER, getVisibleColumns());
-    }
   }
 
   @NotNull
@@ -997,9 +993,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
-      if (getVcsLogColumn(columnIndex) == VcsLogColumn.ROOT || getVcsLogColumn(newIndex) == VcsLogColumn.ROOT) return;
+      VcsLogColumn column = getVcsLogColumn(columnIndex);
+      if (column == null || column == VcsLogColumn.ROOT || getVcsLogColumn(newIndex) == VcsLogColumn.ROOT) {
+        return;
+      }
       super.moveColumn(columnIndex, newIndex);
-      saveColumnOrderToSettings();
+      VcsLogColumnOrderStorageKt.moveColumn(myProperties, column, newIndex);
     }
   }
 

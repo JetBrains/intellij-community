@@ -226,14 +226,8 @@ public enum VcsLogColumn {
     return null;
   }
 
-  static boolean isValidColumnOrder(@NotNull List<Integer> columnOrder) {
-    int columnCount = count();
-    if (!columnOrder.contains(ROOT.ordinal())) return false;
-    if (!columnOrder.contains(COMMIT.ordinal())) return false;
-    for (Integer index : columnOrder) {
-      if (index == null || index < 0 || index >= columnCount) return false;
-    }
-    return true;
+  static boolean isValidColumnOrder(@NotNull List<VcsLogColumn> columnOrder) {
+    return columnOrder.contains(ROOT) && columnOrder.contains(COMMIT);
   }
 
   @NotNull

@@ -18,7 +18,10 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
@@ -26,6 +29,7 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffe
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
 
 @NonNls
 public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
@@ -74,8 +78,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           }
         }
 
-        Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
-        Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
+        Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> it.ordinal());
+        Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> it.ordinal());
         for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
           String columnName = column.getStableName();
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.ordinal()),

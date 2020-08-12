@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.supportsColumnsReordering;
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
@@ -61,9 +64,9 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
   }
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
-    if (properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER)) {
-      List<Integer> columnOrder = properties.get(CommonUiProperties.COLUMN_ORDER);
-      return columnOrder.contains(VcsLogColumn.DATE.ordinal());
+    if (properties != null && supportsColumnsReordering(properties)) {
+      List<VcsLogColumn> columnOrder = getColumnsOrder(properties);
+      return columnOrder.contains(VcsLogColumn.DATE);
     }
     return false;
   }
