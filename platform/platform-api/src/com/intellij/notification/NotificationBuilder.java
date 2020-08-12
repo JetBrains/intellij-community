@@ -2,6 +2,7 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,52 +50,52 @@ public final class NotificationBuilder {
     myContent = content;
   }
 
-  public NotificationBuilder setTitle(@NotNull @NlsContexts.NotificationTitle String title) {
+  public @NotNull NotificationBuilder setTitle(@NotNull @NlsContexts.NotificationTitle String title) {
     myTitle = title;
     return this;
   }
 
-  public NotificationBuilder setContent(@NotNull @NlsContexts.NotificationContent String content) {
+  public @NotNull NotificationBuilder setContent(@NotNull @NlsContexts.NotificationContent String content) {
     myContent = content;
     return this;
   }
 
-  public NotificationBuilder setType(@NotNull NotificationType type) {
+  public @NotNull NotificationBuilder setType(@NotNull NotificationType type) {
     myType = type;
     return this;
   }
 
-  public NotificationBuilder setListener(@Nullable NotificationListener listener) {
+  public @NotNull NotificationBuilder setListener(@Nullable NotificationListener listener) {
     myListener = listener;
     return this;
   }
 
-  public NotificationBuilder setNotificationId(@Nullable @NonNls String notificationId) {
+  public @NotNull NotificationBuilder setNotificationId(@Nullable @NonNls String notificationId) {
     myNotificationId = notificationId;
     return this;
   }
 
-  public NotificationBuilder setImportant(@Nullable Boolean important) {
+  public @NotNull NotificationBuilder setImportant(@Nullable Boolean important) {
     myIsImportant = important;
     return this;
   }
 
-  public NotificationBuilder setIcon(@Nullable Icon icon) {
+  public @NotNull NotificationBuilder setIcon(@Nullable Icon icon) {
     myIcon = icon;
     return this;
   }
 
-  public NotificationBuilder setSubtitle(@NlsContexts.NotificationSubtitle @Nullable String subtitle) {
+  public @NotNull NotificationBuilder setSubtitle(@NlsContexts.NotificationSubtitle @Nullable String subtitle) {
     mySubtitle = subtitle;
     return this;
   }
 
-  public NotificationBuilder setDropDownText(@NotNull @NlsContexts.LinkLabel String dropDownText) {
+  public @NotNull NotificationBuilder setDropDownText(@NotNull @NlsContexts.LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }
 
-  public NotificationBuilder addAction(@NotNull AnAction action) {
+  public @NotNull NotificationBuilder addAction(@NotNull AnAction action) {
     if (myActions == null) {
       myActions = new ArrayList<>();
     }
@@ -102,18 +103,24 @@ public final class NotificationBuilder {
     return this;
   }
 
-  public NotificationBuilder setContextHelpAction(@Nullable AnAction contextHelpAction) {
+  public @NotNull NotificationBuilder setContextHelpAction(@Nullable AnAction contextHelpAction) {
     myContextHelpAction = contextHelpAction;
     return this;
   }
 
-  public NotificationBuilder whenExpired(@Nullable Runnable whenExpired) {
+  public @NotNull NotificationBuilder whenExpired(@Nullable Runnable whenExpired) {
     myWhenExpired = whenExpired;
     return this;
   }
 
-  public Notification build() {
+  public @NotNull Notification build() {
     return new Notification(myGroupId, myIcon, myTitle, mySubtitle, myContent, myType, myListener, myNotificationId,
                             myDropDownText, myActions, myContextHelpAction, myWhenExpired, myIsImportant);
+  }
+
+  public @NotNull Notification buildAndNotify(@NotNull Project project) {
+    Notification notification = build();
+    notification.notify(project);
+    return notification;
   }
 }

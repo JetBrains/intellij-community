@@ -57,6 +57,6 @@ public class OpenEventLogFileAction extends DumbAwareAction {
           final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ConsentConfigurable());
           editor.show();
         }));
-    notificationBuilder.build().notify(project);
+    notificationBuilder.buildAndNotify(project);
   }
 }
