@@ -310,7 +310,7 @@ public abstract class NlsInfo {
       .filter(i -> UastUtils.isUastChildOf(expression, UastLiteralUtils.wrapULiteral(arguments.get(i)), false))
       .findFirst();
 
-    if (!idx.isPresent()) return Unspecified.UNKNOWN;
+    if (idx.isEmpty()) return Unspecified.UNKNOWN;
 
     PsiMethod method = callExpression.resolve();
     if (method == null) return Unspecified.UNKNOWN;

@@ -149,11 +149,11 @@ public final class InstanceOfUtils {
     if (condition == null) return false;
     checker.negate = true;
     OptionalInt argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(true), true);
-    if (!argNum.isPresent()) {
+    if (argNum.isEmpty()) {
       checker.negate = false;
       argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(false), true);
     }
-    if (!argNum.isPresent()) return false;
+    if (argNum.isEmpty()) return false;
     int index = argNum.getAsInt();
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (index >= args.length) return false;

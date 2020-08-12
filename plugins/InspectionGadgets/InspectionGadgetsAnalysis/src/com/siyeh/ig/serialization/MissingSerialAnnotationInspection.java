@@ -46,7 +46,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
       if (field.hasAnnotation(JAVA_IO_SERIAL) || !isConstant(field)) return;
 
       Optional<PsiClass> pClass = getSerializablePsiClass(field);
-      if (!pClass.isPresent()) return;
+      if (pClass.isEmpty()) return;
 
       boolean candidateToBeAnnotated =
         SerializationUtils.isExternalizable(pClass.get()) ? isSerialFieldInExternalizable(field) : isSerialFieldInSerializable(field);
@@ -61,7 +61,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
       if (method.hasAnnotation(JAVA_IO_SERIAL)) return;
 
       Optional<PsiClass> pClass = getSerializablePsiClass(method);
-      if (!pClass.isPresent()) return;
+      if (pClass.isEmpty()) return;
 
       boolean candidateToBeAnnotated =
         SerializationUtils.isExternalizable(pClass.get()) ? isSerialMethodInExternalizable(method) : isSerialMethodInSerializable(method);

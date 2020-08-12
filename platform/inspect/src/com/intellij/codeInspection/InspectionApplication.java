@@ -531,7 +531,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private boolean secondAnalysisFilter(ChangeListManager changeListManager, String text, VirtualFile file, int line) {
     List<Range> ranges = getOrComputeUnchangedRanges(file, changeListManager);
     Optional<Range> first = StreamEx.of(ranges).findFirst(it -> it.start1 <= line && line < it.end1);
-    if (!first.isPresent()) {
+    if (first.isEmpty()) {
       logNotFiltered(text, file, line, -1);
       return true;
     }
