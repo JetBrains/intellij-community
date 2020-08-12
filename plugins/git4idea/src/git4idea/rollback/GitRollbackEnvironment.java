@@ -19,6 +19,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.index.vfs.GitIndexFileSystemRefresher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import git4idea.util.GitFileUtils;
@@ -154,6 +155,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     lfs.refreshIoFiles(filesToRefresh);
+    GitIndexFileSystemRefresher.refreshFilePaths(myProject, toUnindex);
 
     for (GitRepository repo : GitUtil.getRepositoryManager(myProject).getRepositories()) {
       repo.update();

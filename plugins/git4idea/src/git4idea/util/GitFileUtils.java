@@ -19,6 +19,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
+import git4idea.index.vfs.GitIndexFileSystemRefresher;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,7 @@ public final class GitFileUtils {
       addPathsImpl(project, root, paths, false, true);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
+    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
   }
 
   public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
@@ -92,6 +94,7 @@ public final class GitFileUtils {
       addPathsImpl(project, root, paths, true, false);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
+    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
@@ -157,6 +160,7 @@ public final class GitFileUtils {
     if (force) {
       updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     }
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
@@ -166,6 +170,7 @@ public final class GitFileUtils {
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   @NotNull
@@ -224,6 +229,7 @@ public final class GitFileUtils {
       Git.getInstance().runCommand(handler).throwOnError();
     }
     updateUntrackedFilesHolderOnFileReset(project, root, files);
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {

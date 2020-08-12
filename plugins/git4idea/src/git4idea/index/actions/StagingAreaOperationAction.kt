@@ -36,7 +36,6 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
       try {
         operation.processPaths(project, vcsRoot.path, paths)
         VcsFileUtil.markFilesDirty(project, paths)
-        GitIndexFileSystemRefresher.getInstance(project).refresh { paths.contains(it.filePath) }
       }
       catch (ex: VcsException) {
         exceptions.add(ex)
