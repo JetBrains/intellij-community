@@ -332,6 +332,8 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     checkResultByFile("Annotation4_after.java")
   }
 
+  void testEnumInTypeAnnotation() { doTest() }
+
   void testSecondAttribute() throws Exception {
     configureByFile("Annotation6.java")
     checkResultByFile("Annotation6_after.java")
