@@ -14,7 +14,7 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
 
   @Override
   public @NotNull CharSequence decompile(@NotNull VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Decompiler.class);
     if (decompiler instanceof ClassFileDecompilers.Full) {
       PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
       return ((ClassFileDecompilers.Full)decompiler).createFileViewProvider(file, manager, true).getContents();
@@ -29,6 +29,10 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
       }
     }
 
-    return ClsFileImpl.decompile(file);
+    throw new IllegalStateException(decompiler.getClass().getName() +
+                                    " should be on of " +
+                                    ClassFileDecompilers.Full.class.getName() +
+                                    " or " +
+                                    ClassFileDecompilers.Light.class.getName());
   }
 }

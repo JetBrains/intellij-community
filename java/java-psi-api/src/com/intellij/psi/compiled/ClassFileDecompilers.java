@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * An API to extend default IDEA .class file decompiler and handle files compiled from sources other than Java.
@@ -90,7 +89,8 @@ public final class ClassFileDecompilers {
     }
   }
 
-  public @Nullable Decompiler find(@NotNull VirtualFile file) {
-    return EP_NAME.findFirstSafe(decompiler -> (decompiler instanceof Light || decompiler instanceof Full) && decompiler.accepts(file));
+  @SuppressWarnings("unchecked")
+  public <D extends Decompiler> D find(@NotNull VirtualFile file, @NotNull Class<D> decompilerClass) {
+    return (D)EP_NAME.findFirstSafe(d -> decompilerClass.isInstance(d) && d.accepts(file));
   }
 }

@@ -382,8 +382,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
-    if (decompiler instanceof ClassFileDecompilers.Light) {
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Light.class);
+    if (decompiler != null) {
       PluginId pluginId = PluginManagerCore.getPluginByClassName(decompiler.getClass().getName());
       if (pluginId != null) {
         return new PluginException(e, pluginId);
