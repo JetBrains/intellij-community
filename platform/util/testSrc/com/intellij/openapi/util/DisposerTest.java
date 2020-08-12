@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
@@ -109,8 +110,6 @@ public class DisposerTest extends TestCase {
     assertDisposed(selfDisposable);
     assertDisposed(myFolder1);
     assertDisposed(myFolder2);
-
-    assertEquals(0, Disposer.getTree().myObjectsBeingDisposed.size());
   }
 
   public void testDirectCallOfUnregisteredSelfDisposable() {
@@ -192,7 +191,7 @@ public class DisposerTest extends TestCase {
     assertFalse(future.isDone());
     allowToContinueDispose.set(true);
     future.get();
-    assertFalse(Disposer.isDisposing(disposable));
+    assertTrue(Disposer.isDisposed(disposable));
   }
 
   public void testIsDisposingWorksForUnregisteredDisposables() throws ExecutionException, InterruptedException {
@@ -210,7 +209,7 @@ public class DisposerTest extends TestCase {
     assertFalse(future.isDone());
     allowToContinueDispose.set(true);
     future.get();
-    assertFalse(Disposer.isDisposing(disposable));
+    assertTrue(Disposer.isDisposed(disposable));
   }
 
   public void testDisposableParentNotify() {
@@ -421,5 +420,20 @@ public class DisposerTest extends TestCase {
     }
 
     assertTrue(Disposer.isDisposed(parent));
+  }
+
+  public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+
+    for (int i = 0; i < 100; i++) {
+      MyDisposable parent = new MyDisposable("parent");
+      Future<?> future = executor.submit(() -> Disposer.tryRegister(parent, new MyDisposable("child")));
+
+      Disposer.dispose(parent);
+
+      future.get();
+
+      LeakHunter.checkLeak(Disposer.getTree(), MyDisposable.class);
+    }
   }
 }

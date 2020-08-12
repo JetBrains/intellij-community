@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -13,10 +12,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 
 final class ObjectNode {
-  private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
-
-  private static final Logger LOG = Logger.getInstance(ObjectNode.class);
-
   private final ObjectTree myTree;
 
   ObjectNode myParent; // guarded by myTree.treeLock
@@ -67,79 +62,27 @@ final class ObjectNode {
     }
   }
 
-  @Nullable
-  List<Throwable> executeChildren() {
-    return myTree.executeActionWithRecursiveGuard(myObject, () -> {
-      if (myTree.getDisposalInfo(myObject) != null) {
-        return null; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+  void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
+    if (myChildren != null) {
+      for (int i = myChildren.size() - 1; i >= 0; i--) {
+        ObjectNode childNode = myChildren.get(i);
+        childNode.getAndRemoveRecursively(result);
       }
-
-      ObjectNode[] children = getAndClearChildren();
-      List<Throwable> result = null;
-
-      for (int i = children.length - 1; i >= 0; i--) {
-        try {
-          ObjectNode childNode = children[i];
-          result = childNode.execute(result);
-        }
-        catch (Throwable e) {
-          if (result == null) result = new SmartList<>();
-          result.add(e);
-        }
-      }
-
-      return result;
-    });
+    }
+    myTree.removeObjectFromTree(this);
+    // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+    if (myTree.rememberDisposedTrace(myObject) == null) {
+      result.add(myObject);
+    }
+    myChildren = null;
+    myParent = null;
   }
-
-  @Nullable
-  List<Throwable> execute(@Nullable List<Throwable> exceptions) {
-    return myTree.executeActionWithRecursiveGuard(myObject, () -> {
-      List<Throwable> result = exceptions;
-      if (myTree.rememberDisposedTrace(myObject) != null) {
-        return result; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result) {
+    if (myChildren != null) {
+      for (int i = myChildren.size() - 1; i >= 0; i--) {
+        ObjectNode childNode = myChildren.get(i);
+        childNode.getAndRemoveRecursively(result);
       }
-
-      if (myObject instanceof Disposable.Parent) {
-        try {
-          ((Disposable.Parent)myObject).beforeTreeDispose();
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-      }
-
-      ObjectNode[] children = getAndClearChildren();
-
-      for (int i = children.length - 1; i >= 0; i--) {
-        try {
-          ObjectNode childNode = children[i];
-          result = childNode.execute(result);
-        }
-        catch (Throwable e) {
-          if (result == null) result = new SmartList<>();
-          result.add(e);
-        }
-      }
-
-      try {
-        //noinspection SSBasedInspection
-        myObject.dispose();
-      }
-      catch (Throwable e) {
-        if (result == null) result = new SmartList<>();
-        result.add(e);
-      }
-      myTree.removeObjectFromTree(this);
-      return result;
-    });
-  }
-
-  private ObjectNode @NotNull [] getAndClearChildren() {
-    synchronized (myTree.treeLock) {
-      List<ObjectNode> children = myChildren;
-      myChildren = null;
-      return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
     }
   }
 
