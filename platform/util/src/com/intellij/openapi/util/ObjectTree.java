@@ -27,7 +27,7 @@ final class ObjectTree {
   // Disposable -> trace or boolean marker (if trace unavailable)
   private final Map<Disposable, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
-  final Object treeLock = new Object();
+  private final Object treeLock = new Object();
 
   private ObjectNode getNode(@NotNull Disposable object) {
     return myObject2NodeMap.get(object);
@@ -102,7 +102,7 @@ final class ObjectTree {
     return newNode;
   }
 
-  private void runWithTrace(@NotNull Supplier<? extends List<Disposable>> removeFromTreeAction) {
+  private void runWithTrace(@NotNull Supplier<? extends @NotNull List<Disposable>> removeFromTreeAction) {
     boolean needTrace = Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
     if (needTrace) {
       ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));

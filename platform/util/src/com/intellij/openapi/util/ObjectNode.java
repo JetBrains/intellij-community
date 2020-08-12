@@ -18,7 +18,7 @@ final class ObjectNode {
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
-  private Throwable myTrace;
+  private Throwable myTrace; // guarded by myTree.treeLock
 
   ObjectNode(@NotNull ObjectTree tree,
              @Nullable ObjectNode parentNode,
@@ -57,18 +57,11 @@ final class ObjectNode {
   }
 
   ObjectNode getParent() {
-    synchronized (myTree.treeLock) {
-      return myParent;
-    }
+    return myParent;
   }
 
   void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
-    if (myChildren != null) {
-      for (int i = myChildren.size() - 1; i >= 0; i--) {
-        ObjectNode childNode = myChildren.get(i);
-        childNode.getAndRemoveRecursively(result);
-      }
-    }
+    getAndRemoveChildrenRecursively(result);
     myTree.removeObjectFromTree(this);
     // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
     if (myTree.rememberDisposedTrace(myObject) == null) {

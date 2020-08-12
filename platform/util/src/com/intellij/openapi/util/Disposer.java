@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -67,7 +68,7 @@ public final class Disposer {
    * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
    *                                                       if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     RuntimeException e = ourTree.register(parent, child);
     if (e != null) throw e;
   }
