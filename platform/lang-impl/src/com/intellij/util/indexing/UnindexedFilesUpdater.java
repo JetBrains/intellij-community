@@ -41,6 +41,7 @@ import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -84,8 +85,12 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
 
+    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
+    if (suspender != null) {
+      listenToProgressSuspenderForSuspendedTimeDiagnostic(suspender, projectIndexingHistory);
+    }
+
     if (myStartSuspended) {
-      ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
       if (suspender == null) {
         throw new IllegalStateException("Indexing progress indicator must be suspendable!");
       }
@@ -190,6 +195,34 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
     myIndex.dumpIndexStatistics();
+  }
+
+  private void listenToProgressSuspenderForSuspendedTimeDiagnostic(@NotNull ProgressSuspender suspender,
+                                                                   @NotNull ProjectIndexingHistory projectIndexingHistory) {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+
+      private volatile Instant suspensionStart = null;
+
+      @Override
+      public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
+        if (suspender == changedSuspender) {
+          if (suspender.isSuspended()) {
+            suspensionStart = Instant.now();
+          } else {
+            Instant now = Instant.now();
+            Instant start = suspensionStart;
+            suspensionStart = null;
+            if (start != null && start.compareTo(now) < 0) {
+              Duration thisDuration = Duration.between(start, now);
+              Duration currentTotalDuration = projectIndexingHistory.getTimes().getSuspendedDuration();
+              Duration newTotalSuspendedDuration = currentTotalDuration != null ? currentTotalDuration.plus(thisDuration) : thisDuration;
+              projectIndexingHistory.getTimes().setSuspendedDuration(newTotalSuspendedDuration);
+            }
+          }
+        }
+      }
+    });
   }
 
   static boolean isProjectContentFullyScanned(@NotNull Project project) {

@@ -80,6 +80,7 @@ fun ProjectIndexingHistory.IndexingTimes.toJson() =
     nullableJsonDuration(indexExtensionsStart, indexExtensionsEnd),
     JsonDateTime(indexingStart!!),
     JsonDateTime(indexingEnd!!),
+    suspendedDuration?.let { JsonDuration(it.toNanos()) },
     wasInterrupted
   )
 

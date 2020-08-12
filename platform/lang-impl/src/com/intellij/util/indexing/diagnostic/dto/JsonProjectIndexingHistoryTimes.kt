@@ -13,5 +13,6 @@ data class JsonProjectIndexingHistoryTimes(
 
   val indexingStart: JsonDateTime,
   val indexingEnd: JsonDateTime,
+  val totalSuspendedTime: JsonDuration?,
   val wasInterrupted: Boolean
 )

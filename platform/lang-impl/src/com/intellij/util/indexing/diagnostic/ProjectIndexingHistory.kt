@@ -3,6 +3,7 @@ package com.intellij.util.indexing.diagnostic
 
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.createProviderJsonStatistics
+import java.time.Duration
 import java.time.Instant
 
 typealias TimeMillis = Long
@@ -93,6 +94,7 @@ data class ProjectIndexingHistory(val projectName: String) {
     var indexExtensionsEnd: Instant? = null,
     var scanFilesStart: Instant? = null,
     var scanFilesEnd: Instant? = null,
+    var suspendedDuration: Duration? = null,
     var wasInterrupted: Boolean = false
   )
 }
