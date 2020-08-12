@@ -187,6 +187,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
         Dimension size = myBaselineComponent.getPreferredSize();
         return myBaselineComponent.getBaseline(size.width, size.height);
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (size.height == 0) {
+          size.height = getMinimumSize().height;
+        }
+        return size;
+      }
     };
 
     ErrorComponent.convertToLabel(editorPane);
@@ -196,6 +205,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (font != null) {
       editorPane.setFont(font.deriveFont(Font.BOLD, 25));
     }
+
+    editorPane.setText("<html><span>Foo</span></html>");
+    editorPane.setMinimumSize(editorPane.getPreferredSize());
+    editorPane.setText(null);
 
     return editorPane;
   }
