@@ -158,7 +158,7 @@ public class VcsLogTabsManager {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
       myUiProperties.addTab(ui.getId(), myLogWindowKind);
       Disposer.register(ui, () -> {
-        if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
+        if (myProject.isDisposed() || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
 
         myUiProperties.removeTab(ui.getId()); // tab is closed by a user
       });

@@ -183,11 +183,11 @@ public class DisposerTest extends TestCase {
     };
     Disposer.register(myRoot, disposable);
 
-    assertFalse(Disposer.isDisposing(disposable));
+    assertFalse(Disposer.isDisposed(disposable));
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
     Future<?> future = executor.submit(() -> Disposer.dispose(myRoot));
     while (!disposeRun.get());
-    assertTrue(Disposer.isDisposing(disposable));
+    assertTrue(Disposer.isDisposed(disposable));
     assertFalse(future.isDone());
     allowToContinueDispose.set(true);
     future.get();
@@ -201,11 +201,11 @@ public class DisposerTest extends TestCase {
       disposeRun.set(true);
       while (!allowToContinueDispose.get());
     };
-    assertFalse(Disposer.isDisposing(disposable));
+    assertFalse(Disposer.isDisposed(disposable));
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
     Future<?> future = executor.submit(() -> Disposer.dispose(disposable));
     while (!disposeRun.get());
-    assertTrue(Disposer.isDisposing(disposable));
+    assertTrue(Disposer.isDisposed(disposable));
     assertFalse(future.isDone());
     allowToContinueDispose.set(true);
     future.get();

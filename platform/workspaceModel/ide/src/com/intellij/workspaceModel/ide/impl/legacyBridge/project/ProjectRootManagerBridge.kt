@@ -40,7 +40,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
+        if (myProject.isDisposed) return
 
         // Roots changed event should be fired for the global libraries linked with module
         val moduleChanges = event.getChanges(ModuleEntity::class.java)

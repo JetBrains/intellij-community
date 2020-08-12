@@ -63,12 +63,14 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   override fun dispose() = Unit
 
   private fun onBeforeChanged(change: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
   }
 
   private fun onChanged(change: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
   }
 }

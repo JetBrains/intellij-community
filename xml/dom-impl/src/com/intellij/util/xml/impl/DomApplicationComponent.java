@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
@@ -58,7 +57,7 @@ public final class DomApplicationComponent {
 
   private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
     Application app = ApplicationManager.getApplication();
-    if (Disposer.isDisposing(app)) {
+    if (app.isDisposed()) {
       return;
     }
     ep.addChangeListener(onChange, app);

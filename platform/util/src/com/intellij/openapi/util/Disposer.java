@@ -65,8 +65,7 @@ public final class Disposer {
    * it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                                       if {@code parent} is being disposed ({@link #isDisposing(Disposable)}) or
-   *                                                       already disposed ({@link #isDisposed(Disposable)}.
+   *                                                       if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     RuntimeException e = ourTree.register(parent, child);
@@ -106,10 +105,17 @@ public final class Disposer {
     }
   }
 
+  /**
+   * @return true if {@code disposable} is disposed or being disposed (i.e. its {@link Disposable#dispose()} method is executing).
+   */
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.getDisposalInfo(disposable) != null;
   }
 
+  /**
+   * @deprecated use {@link #isDisposed(Disposable)} instead
+   */
+  @Deprecated
   public static boolean isDisposing(@NotNull Disposable disposable) {
     return isDisposed(disposable);
   }

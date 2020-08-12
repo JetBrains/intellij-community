@@ -160,7 +160,7 @@ internal class ModifiableModuleModelBridgeImpl(
   }
 
   override fun disposeModule(module: Module) {
-    if (Disposer.isDisposing(module.project)) {
+    if (module.project.isDisposed()) {
       //if the project is being disposed now, removing module won't work because WorkspaceModelImpl won't fire events and the module won't be disposed
       //it looks like this may happen in tests only so it's ok to skip removal of the module since the project will be disposed anyway
       return
