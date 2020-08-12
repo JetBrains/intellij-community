@@ -2,17 +2,13 @@
 package org.intellij.plugins.markdown.extensions.common
 
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.javafx.MarkdownJavaFXPreviewExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.intellij.plugins.markdown.ui.preview.PreviewColorThemeStyles
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.io.File
 
-internal class BaseStylesExtension :
-  MarkdownJCEFPreviewExtension,
-  MarkdownJavaFXPreviewExtension,
-  ResourceProvider {
+internal class BaseStylesExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
   override val priority = MarkdownBrowserPreviewExtension.Priority.BEFORE_ALL
 
   override val styles: List<String> = listOf("baseStyles/default.css", COLORS_CSS_FILENAME)

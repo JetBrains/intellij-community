@@ -22,9 +22,6 @@ public final class MarkdownPreviewSettings {
   private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo =
     JBCefApp.isSupported() ? new JCEFHtmlPanelProvider().getProviderInfo() : new MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable");
 
-  @Attribute("UseGrayscaleRendering")
-  private boolean myUseGrayscaleRendering = true;
-
   @Attribute("AutoScrollPreview")
   private boolean myIsAutoScrollPreview = true;
 
@@ -36,12 +33,10 @@ public final class MarkdownPreviewSettings {
 
   public MarkdownPreviewSettings(@NotNull SplitFileEditor.SplitEditorLayout splitEditorLayout,
                                  @NotNull MarkdownHtmlPanelProvider.ProviderInfo htmlPanelProviderInfo,
-                                 boolean useGrayscaleRendering,
                                  boolean isAutoScrollPreview,
                                  boolean isVerticalSplit) {
     mySplitEditorLayout = splitEditorLayout;
     myHtmlPanelProviderInfo = htmlPanelProviderInfo;
-    myUseGrayscaleRendering = useGrayscaleRendering;
     myIsAutoScrollPreview = isAutoScrollPreview;
     myIsVerticalSplit = isVerticalSplit;
   }
@@ -54,10 +49,6 @@ public final class MarkdownPreviewSettings {
   @NotNull
   public MarkdownHtmlPanelProvider.ProviderInfo getHtmlPanelProviderInfo() {
     return myHtmlPanelProviderInfo;
-  }
-
-  public boolean isUseGrayscaleRendering() {
-    return myUseGrayscaleRendering;
   }
 
   public boolean isAutoScrollPreview() {
@@ -75,7 +66,6 @@ public final class MarkdownPreviewSettings {
 
     MarkdownPreviewSettings settings = (MarkdownPreviewSettings)o;
 
-    if (myUseGrayscaleRendering != settings.myUseGrayscaleRendering) return false;
     if (myIsAutoScrollPreview != settings.myIsAutoScrollPreview) return false;
     if (myIsVerticalSplit != settings.myIsVerticalSplit) return false;
     if (mySplitEditorLayout != settings.mySplitEditorLayout) return false;
@@ -88,7 +78,6 @@ public final class MarkdownPreviewSettings {
   public int hashCode() {
     int result = mySplitEditorLayout.hashCode();
     result = 31 * result + myHtmlPanelProviderInfo.hashCode();
-    result = 31 * result + (myUseGrayscaleRendering ? 1 : 0);
     result = 31 * result + (myIsAutoScrollPreview ? 1 : 0);
     result = 31 * result + (myIsVerticalSplit ? 1 : 0);
     return result;

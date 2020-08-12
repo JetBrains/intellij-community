@@ -91,8 +91,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       } ?: highlights?.defaultAttributes?.foregroundColor
 
       val current = if (color != null) {
-        //deprecated font tag is used since JavaFX HTML Viewer does not support span tag with style
-        "<font color=\"${color.toHex()}\">${escape(lexer.tokenText)}</font>"
+        "<span style=\"color:${color.toHex()}\">${escape(lexer.tokenText)}</span>"
       }
       else escape(lexer.tokenText)
 

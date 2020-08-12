@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.preview.javafx;
+package org.intellij.plugins.markdown.ui.preview.accessor;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.OpenFileAction;
@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.NettyKt;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference;
-import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
 import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +41,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
-final class SafeOpener {
-  private static final Logger LOG = Logger.getInstance(SafeOpener.class);
+final class SafeLinkOpener {
+  private static final Logger LOG = Logger.getInstance(SafeLinkOpener.class);
 
   private static final Set<String> SCHEMES = ContainerUtil.newTroveSet(
     "http",
@@ -61,20 +60,7 @@ final class SafeOpener {
     "html"
   );
 
-  static {
-    MarkdownAccessor.setSafeOpenerAccessor(new MarkdownAccessor.SafeOpenerAccessor() {
-      @Override
-      public void openLink(@NotNull String link) {
-        SafeOpener.openLink(link);
-      }
-      @Override
-      public boolean isSafeExtension(@Nullable String path) {
-        return SafeOpener.isSafeExtension(path);
-      }
-    });
-  }
-
-  private SafeOpener() {
+  private SafeLinkOpener() {
   }
 
   static void openLink(@NotNull String link) {
@@ -207,7 +193,7 @@ final class SafeOpener {
            || NettyKt.isLocalHost(hostName, false, false);
   }
 
-  private static boolean isSafeExtension(@Nullable String path) {
+  public static boolean isSafeExtension(@Nullable String path) {
     if (path == null) {
       return false;
     }

@@ -74,11 +74,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         .and(new HtmlPolicyBuilder()
                .allowElements("body", "pre", "hr", "code", "tr", "span")
                .allowAttributes(HtmlGenerator.Companion.getSRC_ATTRIBUTE_NAME()).globally()
-               .allowAttributes("class").onElements("code", "tr", "span")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowElements("font")
-               .allowAttributes("color").onElements("font")
+               .allowAttributes("class", "style").onElements("code", "tr", "span")
                .toFactory())
         .and(new HtmlPolicyBuilder()
           .allowElements("div")
@@ -294,7 +290,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       }
       settings.setMarkdownPreviewSettings(new MarkdownPreviewSettings(settings.getMarkdownPreviewSettings().getSplitEditorLayout(),
                                                                       MarkdownPreviewSettings.DEFAULT.getHtmlPanelProviderInfo(),
-                                                                      settings.getMarkdownPreviewSettings().isUseGrayscaleRendering(),
                                                                       settings.getMarkdownPreviewSettings().isAutoScrollPreview(),
                                                                       settings.getMarkdownPreviewSettings().isVerticalSplit()));
 

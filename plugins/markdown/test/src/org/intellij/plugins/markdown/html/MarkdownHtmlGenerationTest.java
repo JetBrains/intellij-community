@@ -16,7 +16,7 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
   private void doTest(@NotNull String htmlText) {
     PsiFile mdFile = myFixture.configureByFile(getTestName(true) + ".md");
 
-    assertTrue(MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject()).contains(htmlText));
+    assertEquals(htmlText, MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject()));
   }
 
   public void testCodeFenceWithLang() {
