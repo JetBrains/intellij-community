@@ -8,6 +8,7 @@ import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 
@@ -15,10 +16,14 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
   @NotNull
   private final SerializationManagerEx mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
+  private final boolean mySaveIndexingStamp;
 
-  public SerializedStubTreeDataExternalizer(@NotNull SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
+  public SerializedStubTreeDataExternalizer(@NotNull SerializationManagerEx manager,
+                                            @NotNull StubForwardIndexExternalizer<?> externalizer,
+                                            boolean saveIndexingStamp) {
     mySerializationManager = manager;
     myStubIndexesExternalizer = externalizer;
+    mySaveIndexingStamp = saveIndexingStamp;
   }
 
   @Override
@@ -32,6 +37,10 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
     else {
       CompressionUtil.writeCompressed(out, tree.myTreeBytes, 0, tree.myTreeByteLength);
       CompressionUtil.writeCompressed(out, tree.myIndexedStubBytes, 0, tree.myIndexedStubByteLength);
+    }
+    IndexingStampInfo indexingStampInfo = tree.getIndexingStampInfo();
+    if (indexingStampInfo != null && mySaveIndexingStamp) {
+      indexingStampInfo.save(out);
     }
   }
 
@@ -47,14 +56,16 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
       indexedStubByteLength = DataInputOutputUtil.readINT(in);
       indexedStubBytes = new byte[indexedStubByteLength];
       in.readFully(indexedStubBytes);
+      IndexingStampInfo indexingStampInfo = mySaveIndexingStamp ? IndexingStampInfo.read((DataInputStream)in) : null;
       return new SerializedStubTree(bytes, bytes.length, indexedStubBytes, indexedStubByteLength,
-                                    null, myStubIndexesExternalizer, mySerializationManager);
+                                    null, myStubIndexesExternalizer, mySerializationManager,  indexingStampInfo);
     }
     else {
       byte[] treeBytes = CompressionUtil.readCompressed(in);
       byte[] indexedStubBytes = CompressionUtil.readCompressed(in);
+      IndexingStampInfo indexingStampInfo = mySaveIndexingStamp ? IndexingStampInfo.read((DataInputStream)in) : null;
       return new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length,
-                                    null, myStubIndexesExternalizer, mySerializationManager);
+                                    null, myStubIndexesExternalizer, mySerializationManager, indexingStampInfo);
     }
   }
 }

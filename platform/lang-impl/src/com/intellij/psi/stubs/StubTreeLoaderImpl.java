@@ -103,7 +103,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     if (size == 1) {
       SerializedStubTree stubTree = datas.values().iterator().next();
 
-      if (vFile instanceof VirtualFileWithId && !checkLengthMatch(project, vFile, wasIndexedAlready, document, saved)) {
+      if (vFile instanceof VirtualFileWithId && !checkLengthMatch(project, vFile, wasIndexedAlready, document, saved, stubTree.getIndexingStampInfo())) {
         return null;
       }
 
@@ -136,23 +136,34 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
                                    VirtualFile vFile,
                                    boolean wasIndexedAlready,
                                    Document document,
-                                   boolean saved) {
+                                   boolean saved,
+                                   @Nullable IndexingStampInfo indexingStampFromIndex) {
     PsiFile cachedPsi = PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(vFile);
-    IndexingStampInfo indexingStampInfo = getIndexingStampInfo(vFile);
-    if (indexingStampInfo != null &&
-        !indexingStampInfo.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
-      diagnoseLengthMismatch(vFile, wasIndexedAlready, document, saved, cachedPsi);
+    IndexingStampInfo indexingStampFromAttributes = getIndexingStampInfoFromAttributes(vFile);
+    if (indexingStampFromAttributes != null &&
+        !indexingStampFromAttributes.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
+      diagnoseLengthMismatch(vFile,
+                             wasIndexedAlready,
+                             document,
+                             saved,
+                             cachedPsi,
+                             indexingStampFromAttributes,
+                             indexingStampFromIndex);
       return false;
     }
     return true;
   }
 
-  private void diagnoseLengthMismatch(@NotNull VirtualFile vFile,
-                                      boolean wasIndexedAlready,
-                                      @Nullable Document document,
-                                      boolean saved,
-                                      @Nullable PsiFile cachedPsi) {
-    String message = "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
+  private static void diagnoseLengthMismatch(@NotNull VirtualFile vFile,
+                                             boolean wasIndexedAlready,
+                                             @Nullable Document document,
+                                             boolean saved,
+                                             @Nullable PsiFile cachedPsi,
+                                             @Nullable IndexingStampInfo indexingStampInfoFromAttributes,
+                                             @Nullable IndexingStampInfo indexingStampInfoFromIndex) {
+    String message = "Outdated stub in index: " + vFile +
+                     ", \n indexing stamp from attributes: " + indexingStampInfoFromAttributes +
+                     ", \n indexing stamp from index: " + indexingStampInfoFromIndex +
                      ", doc=" + document +
                      ", docSaved=" + saved +
                      ", wasIndexedAlready=" + wasIndexedAlready +
@@ -260,8 +271,8 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
-    return StubUpdatingIndex.readSavedIndexingStampInfo(file);
+  protected IndexingStampInfo getIndexingStampInfoFromAttributes(@NotNull VirtualFile file) {
+    return StubUpdatingIndex.readSavedIndexingStampInfoFromAttribute(file);
   }
 
   @Override

@@ -20,8 +20,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.BitUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * An informational object for debugging stub-mismatch related issues. Should be as small as possible since it's stored in files's attributes.
@@ -29,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 class IndexingStampInfo {
+  private static final byte IS_BINARY_MASK = 1;
+  private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
+
   final long indexingFileStamp;
   final long indexingByteLength;
   final int indexingCharLength;
@@ -41,13 +50,54 @@ class IndexingStampInfo {
     this.isBinary = isBinary;
   }
 
+  void save(@NotNull DataOutput stream) throws IOException {
+    DataInputOutputUtil.writeTIME(stream, indexingFileStamp);
+    DataInputOutputUtil.writeLONG(stream, indexingByteLength);
+
+    boolean lengthsAreTheSame = indexingCharLength == indexingByteLength;
+    byte flags = 0;
+    flags = BitUtil.set(flags, IS_BINARY_MASK, isBinary);
+    flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
+    stream.writeByte(flags);
+
+    if (!lengthsAreTheSame && !isBinary) {
+      DataInputOutputUtil.writeINT(stream, indexingCharLength);
+    }
+  }
+
+  @Nullable
+  static IndexingStampInfo read(@Nullable DataInputStream stream) throws IOException {
+    if (stream == null || stream.available() <= 0) {
+      return null;
+    }
+    long stamp = DataInputOutputUtil.readTIME(stream);
+    long byteLength = DataInputOutputUtil.readLONG(stream);
+
+    byte flags = stream.readByte();
+    boolean isBinary = BitUtil.isSet(flags, IS_BINARY_MASK);
+    boolean readOnlyOneLength = BitUtil.isSet(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK);
+
+    int charLength;
+    if (isBinary) {
+      charLength = -1;
+    }
+    else if (readOnlyOneLength) {
+      charLength = (int)byteLength;
+    }
+    else {
+      charLength = DataInputOutputUtil.readINT(stream);
+    }
+    return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
+  }
+
+
   @Override
   public String toString() {
     return "indexing timestamp = " + indexingFileStamp + ", " +
            "binary = " + isBinary + ", byte size = " + indexingByteLength + ", char size = " + indexingCharLength;
   }
 
-  public boolean isUpToDate(@Nullable Document document, @NotNull VirtualFile file, @NotNull PsiFile psi) {
+  boolean isUpToDate(@Nullable Document document, @NotNull VirtualFile file, @NotNull PsiFile psi) {
     if (document == null ||
         FileDocumentManager.getInstance().isDocumentUnsaved(document) ||
         !PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document)) {
@@ -60,7 +110,7 @@ class IndexingStampInfo {
            contentLengthMatches(file.getLength(), document.getTextLength());
   }
 
-  public boolean contentLengthMatches(long byteContentLength, int charContentLength) {
+  boolean contentLengthMatches(long byteContentLength, int charContentLength) {
     if (this.indexingCharLength >= 0 && charContentLength >= 0) {
       return this.indexingCharLength == charContentLength;
     }
