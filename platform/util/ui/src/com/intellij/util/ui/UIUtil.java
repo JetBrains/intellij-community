@@ -24,7 +24,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
-import sun.awt.HeadlessToolkit;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -2355,9 +2354,13 @@ public final class UIUtil {
 
   public static void fixFormattedField(@NotNull JFormattedTextField field) {
     if (SystemInfo.isMac) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      if (toolkit instanceof HeadlessToolkit) return;
-      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final int commandKeyMask;
+      try {
+        commandKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+      }
+      catch (HeadlessException e) {
+        return;
+      }
       final InputMap inputMap = field.getInputMap();
       final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
       inputMap.put(copyKeyStroke, "copy-to-clipboard");
