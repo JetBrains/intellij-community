@@ -50,6 +50,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import javax.swing.JComponent
+import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.collections.set
 
@@ -221,7 +222,7 @@ object UpdateChecker {
    */
   data class CheckPluginsUpdateResult(
     val availableUpdates: Collection<PluginDownloader>?,
-    val availableDisabledUpdates: Collection<IdeaPluginDescriptor>,
+    val availableDisabledUpdates: Collection<PluginDownloader>,
     val customRepositoryPlugins: Collection<IdeaPluginDescriptor>,
     val incompatiblePlugins: Collection<IdeaPluginDescriptor>?
   )
@@ -244,7 +245,7 @@ object UpdateChecker {
     if (updateable.isEmpty()) return EMPTY_CHECK_UPDATE_RESULT
 
     val toUpdate = mutableMapOf<PluginId, PluginDownloader>()
-    val toUpdateDisabled = mutableMapOf<PluginId, IdeaPluginDescriptor>()
+    val toUpdateDisabled = mutableMapOf<PluginId, PluginDownloader>()
 
     val latestCustomPluginsAsMap = HashMap<PluginId, IdeaPluginDescriptor>()
     val state = InstalledPluginsState.getInstance()
@@ -312,7 +313,7 @@ object UpdateChecker {
   private fun validateCompatibleUpdatesForCurrentPlugins(
     updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
-    toUpdateDisabled: MutableMap<PluginId, IdeaPluginDescriptor>,
+    toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
     indicator: ProgressIndicator?
@@ -342,18 +343,13 @@ object UpdateChecker {
     descriptor: IdeaPluginDescriptor,
     buildNumber: BuildNumber?,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
-    toUpdateDisabled: MutableMap<PluginId, IdeaPluginDescriptor>,
+    toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
     indicator: ProgressIndicator?,
     host: String?
   ) {
     val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
     state.onDescriptorDownload(descriptor)
-    if (PluginManagerCore.isDisabled(downloader.id)) {
-      toUpdateDisabled[downloader.id] = downloader.descriptor
-    }
-    else {
-      checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
-    }
+    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, indicator)
   }
 
   /**
@@ -474,7 +470,6 @@ object UpdateChecker {
     @Suppress("NAME_SHADOWING")
     var downloader = downloader
     val pluginId = downloader.id
-    if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
@@ -509,6 +504,17 @@ object UpdateChecker {
     }
   }
 
+  private fun getAllUpdatedPlugins(checkPluginsUpdateResult: CheckPluginsUpdateResult): List<PluginDownloader>? {
+    val notIgnored: (PluginDownloader) -> Boolean = { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
+    val updatedPlugins = checkPluginsUpdateResult.availableUpdates?.filterTo(ArrayList(), notIgnored)
+    val updatedDisabledPlugins = checkPluginsUpdateResult.availableDisabledUpdates.filter(notIgnored)
+    if (updatedPlugins == null) {
+      return updatedDisabledPlugins
+    }
+    updatedPlugins.addAll(updatedDisabledPlugins)
+    return updatedPlugins
+  }
+
   private fun showUpdateResult(project: Project?,
                                checkForUpdateResult: CheckForUpdateResult,
                                checkPluginsUpdateResult: CheckPluginsUpdateResult,
@@ -519,8 +525,7 @@ object UpdateChecker {
     val updatedChannel = checkForUpdateResult.updatedChannel
     val newBuild = checkForUpdateResult.newBuild
 
-    val updatedPlugins =
-      checkPluginsUpdateResult.availableUpdates?.filter { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
+    val updatedPlugins = getAllUpdatedPlugins(checkPluginsUpdateResult)
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
@@ -555,7 +560,8 @@ object UpdateChecker {
       if (showDialog || !canEnableNotifications()) {
         PluginUpdateDialog(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins).show()
       }
-      else {
+      // don't show notification if all updated plugins is disabled
+      else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {
         val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins.map { it.descriptor }) }
 
         val ideFrame = WelcomeFrame.getInstance()

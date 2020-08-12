@@ -213,7 +213,7 @@ public class PluginUpdatesService {
         if (availableUpdates != null) {
           cache.addAll(ContainerUtil.map(availableUpdates, (downloader -> downloader.getDescriptor())));
         }
-        cache.addAll(updates.getAvailableDisabledUpdates());
+        cache.addAll(ContainerUtil.map(updates.getAvailableDisabledUpdates(), (downloader -> downloader.getDescriptor())));
         myCache = cache;
 
         Integer countValue = getCount();
