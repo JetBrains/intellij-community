@@ -32,7 +32,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public static class State {
     public boolean SHOW_DETAILS = false;
     public boolean SHOW_OTHER_BRANCHES = false;
+    @Deprecated
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public boolean SHOW_DIFF_PREVIEW = true;
     public boolean SHOW_ROOT_NAMES = false;
@@ -43,8 +45,12 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
     if (property instanceof TableColumnProperty) {
-      Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
-      if (savedWidth == null) return (T)Integer.valueOf(-1);
+      TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
+      tableColumnProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
+      Integer savedWidth = myState.COLUMN_ID_WIDTH.get(property.getName());
+      if (savedWidth == null) {
+        return (T)Integer.valueOf(-1);
+      }
       return (T)savedWidth;
     }
     return property.match()
@@ -83,7 +89,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       myState.COLUMN_ORDER = (List<Integer>)value;
     }
     else if (property instanceof TableColumnProperty) {
-      myState.COLUMN_WIDTH.put(((TableColumnProperty)property).getColumnIndex(), (Integer)value);
+      myState.COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
     }
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;

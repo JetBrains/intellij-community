@@ -38,7 +38,12 @@ internal class VcsLogColumnsWidthStorage {
 
   private fun getProperty(column: VcsLogColumn) = columnsWidth.getOrPut(column) { TableColumnProperty(column) }
 
-  class TableColumnProperty(val column: VcsLogColumn) : VcsLogUiProperty<Int>("Table.${column.id}ColumnWidth") {
-    val columnIndex = column.ordinal
+  class TableColumnProperty(val column: VcsLogColumn) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth") {
+    fun moveOldSettings(oldMapping: Map<Int, Int>, newMapping: MutableMap<String, Int>) {
+      val oldValue = oldMapping[column.ordinal]
+      if (name !in newMapping && oldValue != null) {
+        newMapping[name] = oldValue
+      }
+    }
   }
 }

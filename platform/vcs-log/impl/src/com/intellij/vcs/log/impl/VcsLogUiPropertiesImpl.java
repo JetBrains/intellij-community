@@ -40,7 +40,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
     public Map<String, List<String>> FILTERS = new TreeMap<>();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    @Deprecated
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
   }
 
   @NotNull
@@ -61,8 +63,12 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       return (T)result;
     }
     if (property instanceof TableColumnProperty) {
-      Integer savedWidth = state.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
-      if (savedWidth == null) return (T)Integer.valueOf(-1);
+      TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
+      tableColumnProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
+      Integer savedWidth = state.COLUMN_ID_WIDTH.get(property.getName());
+      if (savedWidth == null) {
+        return (T)Integer.valueOf(-1);
+      }
       return (T)savedWidth;
     }
     TextFilterSettings filterSettings = getTextFilterSettings();
@@ -109,7 +115,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
     else if (property instanceof TableColumnProperty) {
-      getState().COLUMN_WIDTH.put(((TableColumnProperty)property).getColumnIndex(), (Integer)value);
+      getState().COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
