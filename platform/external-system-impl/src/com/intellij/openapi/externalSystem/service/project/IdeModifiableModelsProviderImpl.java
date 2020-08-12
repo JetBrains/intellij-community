@@ -86,7 +86,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       @Override
       public Library getLibrary(Library library, String libraryName, String libraryLevel) {
         if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryLevel)) {
-          return myLibrariesModel.getLibraryByName(libraryName);
+          return getModifiableProjectLibrariesModel().getLibraryByName(libraryName);
         }
         return library;
       }
