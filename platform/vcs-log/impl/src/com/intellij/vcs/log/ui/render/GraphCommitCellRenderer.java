@@ -99,7 +99,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
-                                    row, VcsLogColumn.COMMIT.ordinal());
+                                    row, VcsLogColumn.COMMIT.getModelIndex());
       return myTemplateComponent.getReferencePainter().getSize().width;
     }
 

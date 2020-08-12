@@ -68,12 +68,12 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @Override
   public Class<?> getColumnClass(int column) {
-    return VcsLogColumn.fromOrdinal(column).getContentClass();
+    return VcsLogColumn.fromModelIndex(column).getContentClass();
   }
 
   @Override
   public String getColumnName(int column) {
-    return VcsLogColumn.fromOrdinal(column).getId();
+    return VcsLogColumn.fromModelIndex(column).getId();
   }
 
   public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
@@ -105,7 +105,7 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
-    return getValueAt(rowIndex, VcsLogColumn.fromOrdinal(columnIndex));
+    return getValueAt(rowIndex, VcsLogColumn.fromModelIndex(columnIndex));
   }
 
   @NotNull

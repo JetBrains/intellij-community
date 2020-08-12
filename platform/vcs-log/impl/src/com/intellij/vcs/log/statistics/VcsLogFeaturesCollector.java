@@ -78,11 +78,11 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           }
         }
 
-        Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> it.ordinal());
-        Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> it.ordinal());
+        Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> it.getModelIndex());
+        Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> it.getModelIndex());
         for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
           String columnName = column.getStableName();
-          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.ordinal()),
+          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.getModelIndex()),
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 
