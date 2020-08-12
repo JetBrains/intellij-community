@@ -89,7 +89,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrTupleConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
@@ -489,9 +489,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     PsiAnnotation anno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (anno != null) {
-      if (!TupleConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
-        PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, "pre");
-        Objects.requireNonNull(preAttribute);
+      PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, "pre");
+      if (preAttribute != null && !TupleConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
         holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
           .range(preAttribute).create();
       }
@@ -606,9 +605,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
     if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "defaults"))) return;
-    List<String> excludes = GeneratedConstructorCollector.getIdentifierList(tupleConstructor, "excludes");
-    List<String> includes = GeneratedConstructorCollector.getIdentifierList(tupleConstructor, "includes");
-    if ((excludes != null && !excludes.contains(field.getName())) || (includes != null && includes.contains(field.getName()))) {
+    if (GrTupleConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
         .create();

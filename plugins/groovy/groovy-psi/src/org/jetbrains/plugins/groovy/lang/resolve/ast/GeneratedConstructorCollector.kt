@@ -3,10 +3,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
-import groovy.transform.Undefined
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -31,7 +30,7 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
   }
 
 
-  fun accept(clazz: PsiClass, includePropertes: Boolean, includeBeans: Boolean, includeFields: Boolean) {
+  fun accept(clazz: PsiClass, includeProperties: Boolean, includeBeans: Boolean, includeFields: Boolean) {
     val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
     fun addParameter(origin: PsiField) {
@@ -44,7 +43,7 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
       collector.add(lightParameter)
     }
 
-    if (includePropertes) {
+    if (includeProperties) {
       for (property in properties) {
         addParameter(property)
       }
@@ -61,6 +60,7 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
 
     if (includeFields) {
       for (field in fields) {
+        if (field.hasModifierProperty(GrModifier.FINAL) && field.initializer != null) continue
         addParameter(field)
       }
     }
@@ -95,32 +95,5 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
       return Triple(properties, setters, fields)
     }
 
-    private fun String.isInternal(): Boolean = contains("$")
-
-    @JvmStatic
-    fun getIdentifierList(annotation: PsiAnnotation, attributeName: String): List<String>? {
-      annotation.takeIf { it.hasAttribute(attributeName) } ?: return null
-      val rawIdentifiers = GrAnnotationUtil.inferStringAttribute(annotation, attributeName)
-      return rawIdentifiers?.split(',')?.mapNotNull { it.trim().takeUnless(CharSequence::isBlank) }?.toList()
-             ?: GrAnnotationUtil.getStringArrayValue(annotation, attributeName, false)
-    }
-
-    private fun collectNamesOrderInformation(tupleConstructor: PsiAnnotation): Pair<(String) -> Boolean, List<String>?> {
-
-      val excludes: List<String> = getIdentifierList(tupleConstructor, "excludes") ?: emptyList()
-
-      val includes: List<String>? = getIdentifierList(tupleConstructor, "includes")
-        ?.takeUnless { Undefined.isUndefined(it.singleOrNull()) }
-
-      val allowInternalNames = GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "allNames") ?: false
-
-      val filter: (String) -> Boolean = { name: String ->
-        val internalFilter = allowInternalNames || !name.isInternal()
-        val excludesFilter = !excludes.contains(name)
-        val includesFilter = includes == null || includes.contains(name)
-        internalFilter && excludesFilter && includesFilter
-      }
-      return filter to includes
-    }
   }
 }

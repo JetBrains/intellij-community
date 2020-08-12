@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrImmutableUtils")
 
 package org.jetbrains.plugins.groovy.transformations.immutable
@@ -84,6 +84,7 @@ fun collectImmutableAnnotations(alias: GrAnnotation, list: MutableList<in GrAnno
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_OPTIONS, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_KNOWN_IMMUTABLE, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, mapOf("defaults" to "false")))
+  list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS, emptyMap()))
 }
 
 fun isImmutable(field: GrField): Boolean {

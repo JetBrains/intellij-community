@@ -178,7 +178,7 @@ class NN {
 
 @groovy.transform.TupleConstructor(defaults = false, includeSuperProperties = true)
 class Rr extends NN {
-    String actionType = ""
+    String actionType
     long referrerCode;
     boolean referrerUrl;
 }
@@ -216,7 +216,7 @@ static void main(String[] args) {
     new Rr({}, 1)
     new Rr({}, 1, true)
     new Rr({}, 1, true, "")
-    new Rr(actionType: {}, referrerUrl: true, referrerCode: 1)
+    new Rr(actionType: {}, referrerUrl: true, referrerCode: 1, prop: "a")
 }"""
   }
 
@@ -366,6 +366,25 @@ class NN { }
 @groovy.transform.CompileStatic
 @groovy.transform.TupleConstructor(pre = { super() }, <error>callSuper = true</error>)
 class Rr extends NN {
+}"""
+  }
+
+
+  @Test
+  void 'final fields in constructor'() {
+    highlightingTest """
+@groovy.transform.CompileStatic
+@groovy.transform.TupleConstructor(includeFields = true)
+class Rr {
+  private final int a = 1
+  private final boolean b
+  String c
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>("", 2)</error>
+    new Rr("", true)
 }"""
   }
 }

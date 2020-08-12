@@ -13,8 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferClosureAttribute
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GeneratedConstructorCollector
 import org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor.Companion.isSyntheticConstructorCall
+import org.jetbrains.plugins.groovy.lang.resolve.ast.getIdentifierList
 
 class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
 
@@ -44,7 +44,7 @@ class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
     if (annotation.qualifiedName != GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) {
       return false
     }
-    val excludes = GeneratedConstructorCollector.getIdentifierList(annotation, "excludes")
+    val excludes = getIdentifierList(annotation, "excludes")
     val includes = AnnotationUtil.findDeclaredAttribute(annotation, "includes")
     if (includes != null && excludes != null && excludes.isNotEmpty()) {
       registerIdentifierListError(holder, AnnotationUtil.findDeclaredAttribute(annotation, "excludes")!!)
