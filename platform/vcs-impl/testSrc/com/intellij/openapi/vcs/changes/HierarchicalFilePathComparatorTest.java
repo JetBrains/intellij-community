@@ -4,16 +4,12 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
-import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 public class HierarchicalFilePathComparatorTest extends TestCase {
   public void testInOneDirectory() {
@@ -238,6 +234,17 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
       "/Test2_1.txt/a",
       "/Test2_1.txt/b"
     );
+
+    assertStrictOrderedPaths(
+      HierarchicalFilePathComparator.NATURAL,
+      "/Test2!1.txt/b",
+      "/Test2!2.txt/a",
+      "/Test2.txt/a",
+      "/Test2-1.txt/b",
+      "/Test2-2.txt/a",
+      "/Test2_1.txt/b",
+      "/Test2_2.txt/a"
+    );
   }
 
   public void testTransitive() {
@@ -257,12 +264,60 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
               "/a/Test1.txt_1", "/a/Test1.txt_12", "/A/Test1.txt", "/A/Test1.txt_1", "/A/Test1.txt_12", "/B/Test1.txt_2", "/b/Test1.txt_22",
               "/b/Test1.txt_2", "/B/Test1.txt_22", "/Test1 12.txt/a/", "/Test1.1.txt/a/", "/Test1-2.txt/a/", "/Test1-12.txt/a/",
               "/Test1 12.txt/A/", "/Test1.1.txt/A/", "/Test1-2.txt/A/", "/Test1-12.txt/A/", "/Test1 12.txt/b/", "/Test1.1.txt/B/",
-              "/Test1-2.txt/b/", "/Test1-12.txt/B/");
+              "/Test1-2.txt/b/", "/Test1-12.txt/B/", "/Test1-12.txt", "/Test1-12.txt/", "/Test1!12.txt", "/Test1.12.txt", "/Test1/12.txt",
+              "/Test1\\12.txt", "/Test1+12.txt", "/Test1A12.txt");
     List<FilePath> filePaths = ContainerUtil.map(paths, it -> filePath(it));
 
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_SENSITIVE);
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
+  }
+
+  public void testNaturalPerformance() {
+    List<FilePath> filePaths = generatePerformanceTestFilePaths();
+    PlatformTestUtil.startPerformanceTest("Natural hierarchical comparator", 7000, () -> {
+      assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);
+    }).assertTiming();
+  }
+
+  public void testCaseInsensitivePerformance() {
+    List<FilePath> filePaths = generatePerformanceTestFilePaths();
+    PlatformTestUtil.startPerformanceTest("Case-insensitive hierarchical comparator", 4000, () -> {
+      assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
+    }).assertTiming();
+  }
+
+  public void testCaseSensitivePerformance() {
+    List<FilePath> filePaths = generatePerformanceTestFilePaths();
+    PlatformTestUtil.startPerformanceTest("Case-sensitive hierarchical comparator", 3000, () -> {
+      assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_SENSITIVE);
+    }).assertTiming();
+  }
+
+  private static List<FilePath> generatePerformanceTestFilePaths() {
+    Random rng = new Random(0);
+    int totalPaths = 300;
+    int maxLength = 5;
+    List<String> chunks = Arrays.asList("Test1.txt", "Test2.txt", "TEST1.TXT", "TEST2.txt", "Test1-txt", "Test2-txt",
+                                        "Test1", "Test2", "Test1A1", "Test1b1", "Test1_txt", "Test2_txt",
+                                        "1", "2", "a", "b", "A", "B", "HierarchicalFilePathComparatorHierarchicalFilePathComparator");
+
+    List<FilePath> result = new ArrayList<>();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < totalPaths; i++) {
+      int length = rng.nextInt(maxLength) + 1;
+
+      sb.setLength(0);
+      for (int j = 0; j < length; j++) {
+        sb.append("/");
+        sb.append(chunks.get(rng.nextInt(chunks.size())));
+      }
+      if (rng.nextBoolean()) {
+        sb.append("/");
+      }
+      result.add(filePath(sb.toString()));
+    }
+    return result;
   }
 
   private static void assertStrictOrderedPaths(@NotNull Comparator<FilePath> comparator, String @NotNull ... paths) {

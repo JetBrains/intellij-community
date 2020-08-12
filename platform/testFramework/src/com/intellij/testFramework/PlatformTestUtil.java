@@ -954,8 +954,8 @@ public final class PlatformTestUtil {
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
         if (equality.equals(value1, value2)) {
-          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
-          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+          if (result12 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value1, value2));
+          if (result21 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value2, value1));
         }
         else {
           if (result12 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));

@@ -17,26 +17,27 @@ public class FileNameComparator implements Comparator<String> {
   }
 
   private static Pair<String, String> normalize(String s1, String s2) {
-    final int minLen = Math.min(s1.length(), s2.length());
-    final StringBuilder sb1 = new StringBuilder(s1);
-    final StringBuilder sb2 = new StringBuilder(s2);
+    int minLen = Math.min(s1.length(), s2.length());
+    StringBuilder sb1 = null;
+    StringBuilder sb2 = null;
     for (int i = 0; i < minLen; i++) {
-      final char ch1 = s1.charAt(i);
-      final char ch2 = sb2.charAt(i);
-      if (ch1 == ch2 && ch1 == '-') {
+      char ch1 = s1.charAt(i);
+      char ch2 = s2.charAt(i);
+      boolean needSwap1 = ch1 == '-' && ch2 != '_';
+      boolean needSwap2 = ch2 == '-' && ch1 != '_';
+
+      if (needSwap1) {
+        if (sb1 == null) sb1 = new StringBuilder(s1);
         sb1.setCharAt(i, '_');
-        sb2.setCharAt(i, '_');
       }
-      else if (ch1 == '-' && ch2 != '_') {
-        sb1.setCharAt(i, '_');
-      }
-      else if (ch2 == '-' && ch1 != '_') {
+      if (needSwap2) {
+        if (sb2 == null) sb2 = new StringBuilder(s2);
         sb2.setCharAt(i, '_');
       }
     }
 
-    s1 = sb1.toString();
-    s2 = sb2.toString();
+    if (sb1 != null) s1 = sb1.toString();
+    if (sb2 != null) s2 = sb2.toString();
     return Pair.create(s1, s2);
   }
 }
