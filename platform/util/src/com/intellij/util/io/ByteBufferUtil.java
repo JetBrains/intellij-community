@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -16,6 +17,7 @@ public final class ByteBufferUtil {
   /**
    * Please use with care. In most cases leaving the job to the GC is enough.
    */
+  @ReviseWhenPortedToJDK("11")
   public static boolean cleanBuffer(@NotNull ByteBuffer buffer) {
     if (!buffer.isDirect()) return true;
 
