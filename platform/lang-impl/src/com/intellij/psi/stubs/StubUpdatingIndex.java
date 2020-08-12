@@ -414,11 +414,16 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       IndexingStampInfo indexingStampInfo = content == null ? null : calculateIndexingStamp(content);
 
       return () -> {
-        Boolean result = indexUpdateComputable.compute();
-        if (Boolean.TRUE.equals(result)) {
-          saveIndexingStampInfo(indexingStampInfo, inputId);
+        try {
+          Boolean result = indexUpdateComputable.compute();
+          if (Boolean.TRUE.equals(result)) {
+            saveIndexingStampInfo(indexingStampInfo, inputId);
+          }
+          return result;
+        } catch (ProcessCanceledException e) {
+          LOG.error("ProcessCanceledException is not expected here", e);
+          throw e;
         }
-        return result;
       };
     }
 

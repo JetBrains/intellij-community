@@ -606,7 +606,7 @@ public final class StubIndexImpl extends StubIndexEx {
         }
         final UpdatableIndex<K, Void, FileContent> index = getIndex(stubIndexKey);
         if (index == null) return;
-        index.updateWithMap(new AbstractUpdateData<K, Void>(fileId) {
+        index.updateWithMap(new AbstractUpdateData<>(fileId) {
           @Override
           protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
                                         @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
