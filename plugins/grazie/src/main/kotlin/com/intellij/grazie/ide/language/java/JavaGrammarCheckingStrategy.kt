@@ -50,7 +50,7 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   private val SINGLE_LINE_COMMENT_TYPES = setOf(END_OF_LINE_COMMENT, C_STYLE_COMMENT)
   override fun getRootsChain(root: PsiElement): List<PsiElement> {
     return if (root.elementType in SINGLE_LINE_COMMENT_TYPES) {
-      StrategyUtils.getNotSoDistantSiblingsOfTypes(root, SINGLE_LINE_COMMENT_TYPES).toList()
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, SINGLE_LINE_COMMENT_TYPES).toList()
     }
     else super.getRootsChain(root)
   }

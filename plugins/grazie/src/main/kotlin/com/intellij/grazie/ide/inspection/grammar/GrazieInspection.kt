@@ -16,7 +16,6 @@ import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescripto
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.utils.lazyConfig
-import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
@@ -81,8 +80,8 @@ class GrazieInspection : LocalInspectionTool() {
             require(roots.isNotEmpty()) { "Roots chain MUST contain at least one element (self)" }
 
             if (!checkIfAlreadyProcessed(roots.first(), session)) {
-              val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.language)
-              val rootsWithoutWhitespaces = roots.filter { !parserDefinition.whitespaceTokens.contains(it.elementType) }
+              val whitespaceTokens = strategy.getWhiteSpaceTokens()
+              val rootsWithoutWhitespaces = roots.filter { it.elementType !in whitespaceTokens }
 
               require(rootsWithoutWhitespaces.all {
                 strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)

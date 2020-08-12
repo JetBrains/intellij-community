@@ -9,7 +9,6 @@ import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.processElements
 import com.intellij.psi.PsiElement
-import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
@@ -31,20 +30,29 @@ internal class GraziePsiElementProcessor<T : PsiElement>(
       val parent = PsiTreeUtil.findCommonParent(roots)
       require(parent != null) { "Chained roots must have a common parent" }
       val processor = GraziePsiElementProcessor<PsiElement>(parent, strategy)
+      val whitespaceTokens = strategy.getWhiteSpaceTokens()
 
       with (processor) {
         var prevOffset = parent.startOffset
+        var isWhitespaceNeeded = false
         for (root in roots) {
-          if (root.elementType == WHITE_SPACE) {
+          if (root.elementType in whitespaceTokens) {
             shifts.add(ElementShift(cumulativeTextLength, root.endOffset - prevOffset))
+            isWhitespaceNeeded = true
+            prevOffset = root.endOffset
+            continue
+          }
+
+          require(strategy.isMyContextRoot(root)) { "PsiElement must be a context root or be in whitespaceTokens of strategy" }
+
+          if (isWhitespaceNeeded) {
+            isWhitespaceNeeded = false
             text.lastOrNull()?.let {
               val index = shifts.size - 1
               cumulativeTextLength += 1
-              shifts[index] = ElementShift(cumulativeTextLength, (root.endOffset - prevOffset) - 1)
+              shifts[index] = ElementShift(cumulativeTextLength, shifts[index].length - 1)
               it.append(' ')
             }
-            prevOffset = root.endOffset
-            continue
           }
 
           text.add(StringBuilder())
@@ -58,7 +66,7 @@ internal class GraziePsiElementProcessor<T : PsiElement>(
         }
       }
 
-      val rootsWithText = roots.filter { it.elementType != WHITE_SPACE }.zip(processor.text) { root, text -> RootWithText(root, text) }
+      val rootsWithText = roots.filter { it.elementType !in whitespaceTokens }.zip(processor.text) { root, text -> RootWithText(root, text) }
       return Result(parent, processor.tokens, processor.shifts, rootsWithText)
     }
   }

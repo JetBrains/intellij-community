@@ -25,7 +25,7 @@ object StrategyUtils {
    * @return extension point
    */
   internal fun getStrategyExtensionPoint(strategy: GrammarCheckingStrategy): LanguageExtensionPoint<GrammarCheckingStrategy> {
-    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("${strategy.getName()} strategy is not registered")
+    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
   internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
@@ -112,9 +112,9 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
-  fun getNotSoDistantSiblingsOfTypes(element: PsiElement, types: Set<IElementType>) = sequence {
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) = sequence {
     fun PsiElement.process(types: Set<IElementType>, next: Boolean) = sequence<PsiElement> {
-      val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language)
+      val whitespaceTokens = strategy.getWhiteSpaceTokens()
       var newLinesBetweenSiblingsCount = 0
 
       var sibling: PsiElement? = this@process
@@ -125,7 +125,7 @@ object StrategyUtils {
             newLinesBetweenSiblingsCount = 0
             candidate
           }
-          in parserDefinition.whitespaceTokens -> {
+          in whitespaceTokens -> {
             newLinesBetweenSiblingsCount += candidate.text.count { char -> char == '\n' }
             if (newLinesBetweenSiblingsCount > 1) null else candidate
           }

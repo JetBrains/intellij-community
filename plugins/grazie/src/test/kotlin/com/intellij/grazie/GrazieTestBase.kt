@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.grazie.grammar.GrammarChecker
+import com.intellij.grazie.grammar.Typo
+import com.intellij.grazie.grammar.check
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.filterFor
 import com.intellij.psi.PsiElement
@@ -41,5 +45,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   fun plain(texts: List<String>): Collection<PsiElement> {
     return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
+  }
+
+  fun check(tokens: Collection<PsiElement>): Set<Typo> {
+    if (tokens.isEmpty()) return emptySet()
+    val strategy = LanguageGrammarChecking.allForLanguage(tokens.first().language).first()
+    return GrammarChecker.check(tokens, strategy)
   }
 }
