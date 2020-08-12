@@ -45,10 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
@@ -139,6 +136,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       @Override
       public KeyDescriptor<String> getSubIndexerVersionDescriptor() {
         return EnumeratorStringDescriptor.INSTANCE;
+      }
+
+      @Override
+      protected @Nullable SerializedStubTree computeValue(@NotNull FileContent inputData) {
+        StubBuilderType subIndexerType = calculateSubIndexer(inputData);
+        if (subIndexerType == null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Stub builder not found for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
+          }
+          return null;
+        }
+        return computeValue(inputData, Objects.requireNonNull(subIndexerType));
       }
 
       @Override
