@@ -10,11 +10,16 @@ internal class VcsLogColumnModelIndices {
   companion object {
     private val defaultColumns = listOf(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.HASH)
 
+    @JvmField
+    val DEFAULT_DYNAMIC_COLUMNS = defaultColumns.filter { it.isDynamic }
+
     @JvmStatic
     fun getInstance() = service<VcsLogColumnModelIndices>()
   }
 
   private val modelIndices = HashMap<String, Int>()
+
+  private val currentColumns = ArrayList<VcsLogColumn>()
 
   private val currentColumnIndices = HashMap<Int, VcsLogColumn>()
 
@@ -30,10 +35,13 @@ internal class VcsLogColumnModelIndices {
 
   fun getModelColumnsCount(): Int = modelIndices.size
 
+  fun getDynamicColumns() = currentColumns.filter { it.isDynamic }
+
   private fun newColumn(column: VcsLogColumn) {
     val newIndex = modelIndices.size
     val modelIndex = modelIndices.getOrPut(column.id) { newIndex }
     if (modelIndex !in currentColumnIndices) {
+      currentColumns.add(column)
       currentColumnIndices[modelIndex] = column
     }
   }

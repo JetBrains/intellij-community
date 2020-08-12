@@ -31,8 +31,6 @@ import java.util.Locale;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
- * Do not reorder: this might affect serialization. Add new columns at the end only.
- * If you want to tweak the order of dynamic columns in menus, change {@link #DYNAMIC_COLUMNS} list.
  * If you want to tweak the default order of columns, change the corresponding implementation of {@link com.intellij.vcs.log.impl.VcsLogUiProperties}.
  */
 public enum VcsLogColumn {
@@ -63,6 +61,11 @@ public enum VcsLogColumn {
     @Override
     void initColumn(@NotNull VcsLogGraphTable table, @NotNull TableColumn column) {
       column.setResizable(false);
+    }
+
+    @Override
+    public boolean isDynamic() {
+      return false;
     }
   },
   COMMIT("Subject", GraphCommitCell.class) {
@@ -95,6 +98,11 @@ public enum VcsLogColumn {
         }
       };
       return new GraphCommitCellRenderer(table.getLogData(), graphCellPainter, table);
+    }
+
+    @Override
+    public boolean isDynamic() {
+      return false;
     }
   },
   AUTHOR("Author", String.class) {
@@ -168,7 +176,6 @@ public enum VcsLogColumn {
     }
   };
 
-  @NotNull public static final List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
   private static final VcsLogColumn @NotNull [] COLUMNS = values(); // to reduce copying overhead
 
   @NotNull private final String myId;
@@ -180,7 +187,7 @@ public enum VcsLogColumn {
   }
 
   public boolean isDynamic() {
-    return DYNAMIC_COLUMNS.contains(this);
+    return true;
   }
 
   @NotNull

@@ -300,7 +300,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void updateDynamicColumnsWidth() {
-    for (VcsLogColumn logColumn : VcsLogColumn.DYNAMIC_COLUMNS) {
+    for (VcsLogColumn logColumn : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
@@ -986,7 +986,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        for (VcsLogColumn logColumn : VcsLogColumn.DYNAMIC_COLUMNS) {
+        for (VcsLogColumn logColumn : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
             VcsLogColumnsWidthStorage.getInstance().saveColumnWidth(myProperties, logColumn, column.getWidth());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
@@ -11,6 +11,7 @@ import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
 import com.intellij.vcs.log.ui.table.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices
 
 open class CustomStringsValidationRule(private val id: String, private val values: Collection<String>) : CustomValidationRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
@@ -35,4 +36,4 @@ class VcsLogHighlighterIdValidator :
                                                               CurrentBranchHighlighter.Factory.ID))
 
 class VcsLogColumnNameValidator :
-  CustomStringsValidationRule("vcs_log_column_name", VcsLogColumn.DYNAMIC_COLUMNS.map { it.stableName }.toSet())
+  CustomStringsValidationRule("vcs_log_column_name", VcsLogColumnModelIndices.DEFAULT_DYNAMIC_COLUMNS.map { it.stableName }.toSet())
