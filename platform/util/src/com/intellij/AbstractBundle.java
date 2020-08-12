@@ -20,7 +20,6 @@ import java.util.function.Supplier;
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <p/>
  * Usage pattern:
- * <pre>
  * <ol>
  *   <li>Create class that extends this class and provides path to the target bundle to the current class constructor;</li>
  *   <li>
@@ -28,7 +27,6 @@ import java.util.function.Supplier;
  *     to its {@link #getMessage(String, Object...)};
  *   </li>
  * </ol>
- * </pre>
  *
  * @author Denis Zhdanov
  */
