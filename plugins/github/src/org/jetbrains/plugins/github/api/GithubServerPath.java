@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
+import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,8 +77,28 @@ public class GithubServerPath {
   }
 
   public boolean matches(@NotNull String gitRemoteUrl) {
-    String url = GithubUrlUtil.removePort(GithubUrlUtil.removeProtocolPrefix(gitRemoteUrl));
-    return StringUtil.startsWithIgnoreCase(url, myHost + StringUtil.notNullize(mySuffix));
+    URI uri = GithubUrlUtil.getUriFromRemoteUrl(gitRemoteUrl);
+    if (uri == null) return false;
+
+    String host = uri.getHost();
+    if (host == null) return false;
+
+    if (!myHost.equalsIgnoreCase(host)) return false;
+
+    String path = uri.getPath();
+    if (path == null) return false;
+
+    List<String> pathParts = StringUtil.split(path, "/", true, true);
+    if (pathParts.size() < 2) return false;
+
+    String suffix = pathParts.size() == 2 ? null : StringUtil.join(pathParts.subList(0, pathParts.size() - 2), "/");
+
+    if (mySuffix != null) {
+      return suffix != null && mySuffix.equalsIgnoreCase("/" + suffix);
+    }
+    else {
+      return suffix == null;
+    }
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path
