@@ -89,11 +89,6 @@ final class IndexConfiguration {
     return myIndices.keySet();
   }
 
-  boolean hasIndex(@NotNull ID<?, ?> name) {
-    assert myFreezed;
-    return myIndices.containsKey(name);
-  }
-
   int getIndexVersion(@NotNull ID<?, ?> id) {
     assert myFreezed;
     return myIndexIdToVersionMap.getInt(id);

@@ -866,24 +866,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     Collection<Document> documents = getUnsavedDocuments();
-    if(true) {
-      Set<Document> transactedDocuments = getTransactedDocuments();
-      if (documents.isEmpty()) {
-        documents = transactedDocuments;
-      }
-      else if (!transactedDocuments.isEmpty()) {
-        documents = new HashSet<>(documents);
-        documents.addAll(transactedDocuments);
-      }
-      Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
-      if (uncommittedDocuments.length > 0) {
-        List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
-        if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
-        else {
-          if (!(documents instanceof HashSet)) documents = new HashSet<>(documents);
+    Set<Document> transactedDocuments = getTransactedDocuments();
+    if (documents.isEmpty()) {
+      documents = transactedDocuments;
+    }
+    else if (!transactedDocuments.isEmpty()) {
+      documents = new HashSet<>(documents);
+      documents.addAll(transactedDocuments);
+    }
+    Document[] uncommittedDocuments = project != null ? PsiDocumentManager.getInstance(project).getUncommittedDocuments() : Document.EMPTY_ARRAY;
+    if (uncommittedDocuments.length > 0) {
+      List<Document> uncommittedDocumentsCollection = Arrays.asList(uncommittedDocuments);
+      if (documents.isEmpty()) documents = uncommittedDocumentsCollection;
+      else {
+        if (!(documents instanceof HashSet)) documents = new HashSet<>(documents);
 
-          documents.addAll(uncommittedDocumentsCollection);
-        }
+        documents.addAll(uncommittedDocumentsCollection);
       }
     }
 
