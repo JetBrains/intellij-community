@@ -113,7 +113,7 @@ public class ConflictsDialog extends DialogWrapper{
     HtmlBuilder buf = new HtmlBuilder();
 
     for (int i = 0; i < Math.min(myConflictDescriptions.length, MAX_CONFLICTS_SHOWN); i++) {
-      buf.append(myConflictDescriptions[i]).br().br();
+      buf.appendRaw(myConflictDescriptions[i]).br().br();
     }
 
     if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
