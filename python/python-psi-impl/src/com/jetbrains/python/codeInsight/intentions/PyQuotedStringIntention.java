@@ -26,7 +26,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Intention to convert between single-quoted and double-quoted strings
  */
 public class PyQuotedStringIntention extends PyBaseIntentionAction {
-  private SmartPsiElementPointer<PsiElement> myConversionTarget;
+  private SmartPsiElementPointer<PyStringElement> myTargetStringElement;
 
   @Override
   @NotNull
@@ -48,12 +48,9 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteral, PyDocStringOwner.class);
     if (docStringOwner != null && docStringOwner.getDocStringExpression() == stringLiteral) return false;
 
+    myTargetStringElement = SmartPointerManager.createPointer(stringElement);
+
     String currentQuote = stringElement.getQuote();
-    boolean allComponentsCanBeConverted = ContainerUtil.all(stringLiteral.getStringElements(),
-                                                            s -> s.getQuote().equals(currentQuote) && canBeConverted(s, true));
-
-    myConversionTarget = SmartPointerManager.createPointer(allComponentsCanBeConverted ? stringLiteral : stringElement);
-
     if (currentQuote.equals("'")) {
       setText(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
     }
@@ -100,12 +97,19 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    @Nullable PsiElement target = myConversionTarget.getElement();
-    if (target instanceof PyStringLiteralExpression) {
-      ((PyStringLiteralExpression)target).getStringElements().forEach(PyQuotedStringIntention::convertStringElement);
+    @Nullable PyStringElement stringElement = myTargetStringElement.getElement();
+    if (stringElement == null) return;
+    PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
+    if (stringLiteral == null) return;
+
+    String originalQuote = stringElement.getQuote();
+    boolean entireLiteralCanBeConverted = ContainerUtil.all(stringLiteral.getStringElements(),
+                                                            s -> s.getQuote().equals(originalQuote) && canBeConverted(s, true));
+    if (entireLiteralCanBeConverted) {
+      stringLiteral.getStringElements().forEach(PyQuotedStringIntention::convertStringElement);
     }
-    else if (target instanceof PyStringElement) {
-      convertStringElement((PyStringElement)target);
+    else {
+      convertStringElement(stringElement);
     }
   }
 
