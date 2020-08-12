@@ -15,6 +15,7 @@ import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
+import java.awt.datatransfer.DataFlavor
 import java.util.concurrent.TimeUnit
 
 class IntroduceVariableSuggester : FeatureSuggester {
@@ -117,7 +118,10 @@ class IntroduceVariableSuggester : FeatureSuggester {
     private fun getCopiedContent(text: String): String? {
         if (text.isBlank()) return null
         val content = text.trim()
-        return if (content == CopyPasteManager.getInstance().contents?.asString()?.trim()) {
+        val copyPasteManager = CopyPasteManager.getInstance()
+        return if (copyPasteManager.areDataFlavorsAvailable(DataFlavor.stringFlavor)
+            && content == CopyPasteManager.getInstance().contents?.asString()?.trim()
+        ) {
             content
         } else {
             null
