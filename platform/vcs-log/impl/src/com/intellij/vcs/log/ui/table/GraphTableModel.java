@@ -15,6 +15,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,17 +64,17 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @Override
   public final int getColumnCount() {
-    return VcsLogColumn.count();
+    return VcsLogColumnModelIndices.getInstance().getModelColumnsCount();
   }
 
   @Override
   public Class<?> getColumnClass(int column) {
-    return VcsLogColumn.fromModelIndex(column).getContentClass();
+    return getColumn(column).getContentClass();
   }
 
   @Override
   public String getColumnName(int column) {
-    return VcsLogColumn.fromModelIndex(column).getId();
+    return getColumn(column).getId();
   }
 
   public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
@@ -105,7 +106,12 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
-    return getValueAt(rowIndex, VcsLogColumn.fromModelIndex(columnIndex));
+    return getValueAt(rowIndex, getColumn(columnIndex));
+  }
+
+  @NotNull
+  private static VcsLogColumn getColumn(int modelIndex) {
+    return VcsLogColumnModelIndices.getInstance().getColumn(modelIndex);
   }
 
   @NotNull

@@ -234,17 +234,4 @@ public enum VcsLogColumn {
   public static VcsLogColumn fromOrdinal(int index) {
     return COLUMNS[index];
   }
-
-  public int getModelIndex() {
-    return ordinal();
-  }
-
-  @NotNull
-  public static VcsLogColumn fromModelIndex(int index) {
-    return COLUMNS[index];
-  }
-
-  public static int count() {
-    return COLUMNS.length;
-  }
 }
