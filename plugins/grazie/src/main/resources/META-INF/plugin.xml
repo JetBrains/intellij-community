@@ -51,7 +51,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
     <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
-    <statistics.counterUsagesCollector groupId="grazie.count" version="1"/>
+    <statistics.counterUsagesCollector groupId="grazie.count" version="2"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationAllowlist groupIds="Proofreading missing languages information"/>
