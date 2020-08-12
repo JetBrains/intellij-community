@@ -9,13 +9,13 @@ import java.io.*
 
 
 class PluginChunkMerger(
-  private val oldFile: File,
-  oldBlockMap: BlockMap = BlockMap(oldFile.inputStream()),
+  oldFile: File,
+  oldBlockMap: BlockMap,
   newBlockMap: BlockMap,
   private val indicator: ProgressIndicator
 ) : ChunkMerger(oldFile, oldBlockMap, newBlockMap) {
   private val newFileSize: Int = newBlockMap.chunks.sumBy { chunk -> chunk.length }
-  private var wroteBytes: Int = 0
+  private var progress: Int = 0
 
   override fun merge(output: OutputStream, newChunkDataSource: Iterator<ByteArray>) {
     indicator.checkCanceled()
@@ -25,18 +25,18 @@ class PluginChunkMerger(
 
   override fun downloadChunkFromNewData(newChunk: Chunk, newChunkDataSource: Iterator<ByteArray>, output: OutputStream) {
     super.downloadChunkFromNewData(newChunk, newChunkDataSource, output)
-    wroteBytes += newChunk.length
+    progress += newChunk.length
     setIndicatorFraction()
   }
 
   override fun downloadChunkFromOldData(oldChunk: Chunk, oldFileRAF: RandomAccessFile, output: OutputStream) {
     super.downloadChunkFromOldData(oldChunk, oldFileRAF, output)
-    wroteBytes += oldChunk.length
+    progress += oldChunk.length
     setIndicatorFraction()
   }
 
   private fun setIndicatorFraction() {
     indicator.checkCanceled()
-    indicator.fraction = wroteBytes.toDouble() / newFileSize.toDouble()
+    indicator.fraction = progress.toDouble() / newFileSize.toDouble()
   }
 }

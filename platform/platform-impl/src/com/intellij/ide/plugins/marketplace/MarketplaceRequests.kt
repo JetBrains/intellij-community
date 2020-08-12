@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.Companion.downloadPluginViaBlockMap
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.downloadPluginViaBlockMap
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger

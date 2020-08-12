@@ -9,7 +9,9 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.Charset
 
-private const val MAX_HTTP_HEADERS_LENGTH: Int = 5000
+// According to Amazon CloudFront documentation the maximum length of a request,
+// including the path, the query string (if any), and headers, is 20,480 bytes.
+private const val MAX_HTTP_HEADERS_LENGTH: Int = 19500
 private const val MAX_STRING_LENGTH: Int = 1024
 
 class PluginChunkDataSource(
@@ -17,27 +19,27 @@ class PluginChunkDataSource(
   newBlockMap: BlockMap,
   private val newPluginUrl: String
 ) : Iterator<ByteArray> {
-  private val oldMap = oldBlockMap.chunks.toSet()
-  private val chunksIterator = newBlockMap.chunks.filter { chunk -> !oldMap.contains(chunk) }.iterator()
+  private val oldSet = oldBlockMap.chunks.toSet()
+  private val chunksIterator = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }.iterator()
   private var curRangeChunkLengths = ArrayList<Int>()
   private var curChunkData = getRange(nextRange())
   private var pointer: Int = 0
 
 
-  override fun hasNext(): Boolean {
-    return curChunkData.size != 0
-  }
+  override fun hasNext() = curChunkData.size != 0
 
   override fun next(): ByteArray {
     return if (curChunkData.size != 0) {
       if (pointer < curChunkData.size) {
         curChunkData[pointer++]
-      } else {
+      }
+      else {
         curChunkData = getRange(nextRange())
         pointer = 0
         next()
       }
-    } else throw NoSuchElementException()
+    }
+    else throw NoSuchElementException()
   }
 
   private fun nextRange(): String {
@@ -53,7 +55,7 @@ class PluginChunkDataSource(
     return range.removeSuffix(",").toString()
   }
 
-  private fun getRange(range: String): ArrayList<ByteArray> {
+  private fun getRange(range: String): MutableList<ByteArray> {
     val result = ArrayList<ByteArray>()
     HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
       val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
@@ -83,8 +85,7 @@ class PluginChunkDataSource(
         val byte = input.read()
         baos.write(byte)
         if (baos.size() >= MAX_STRING_LENGTH) {
-          throw IOException(IdeBundle.message("wrong.http.range.response",
-                                              String(baos.toByteArray(), Charset.defaultCharset())))
+          throw IOException(IdeBundle.message("wrong.http.range.response", String(baos.toByteArray(), Charset.defaultCharset())))
         }
       }
       while (byte.toChar() != '\n')
