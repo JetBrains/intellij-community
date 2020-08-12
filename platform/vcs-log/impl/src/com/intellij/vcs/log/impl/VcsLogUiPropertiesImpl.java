@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnProperty;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -58,8 +60,8 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
-    if (property instanceof CommonUiProperties.TableColumnProperty) {
-      Integer savedWidth = state.COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumnIndex());
+    if (property instanceof TableColumnProperty) {
+      Integer savedWidth = state.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
@@ -106,8 +108,8 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
-    else if (property instanceof CommonUiProperties.TableColumnProperty) {
-      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumnIndex(), (Integer)value);
+    else if (property instanceof TableColumnProperty) {
+      getState().COLUMN_WIDTH.put(((TableColumnProperty)property).getColumnIndex(), (Integer)value);
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
@@ -124,7 +126,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     if (myAppSettings.exists(property) ||
         SUPPORTED_PROPERTIES.contains(property) ||
         property instanceof VcsLogHighlighterProperty ||
-        property instanceof CommonUiProperties.TableColumnProperty) {
+        property instanceof TableColumnProperty) {
       return true;
     }
     return false;

@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.ui.JBColor.namedColor;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnProperty;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";
@@ -231,8 +232,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
-      else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      else if (property instanceof TableColumnProperty) {
+        getTable().forceReLayout(((TableColumnProperty)property).getColumn());
       }
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         getTable().rootColumnUpdated();

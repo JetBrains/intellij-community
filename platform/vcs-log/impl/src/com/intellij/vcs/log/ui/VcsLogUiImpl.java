@@ -37,6 +37,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnProperty;
+
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";
 
@@ -229,8 +231,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (property instanceof VcsLogHighlighterProperty) {
         getTable().repaint();
       }
-      else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      else if (property instanceof TableColumnProperty) {
+        getTable().forceReLayout(((TableColumnProperty)property).getColumn());
       }
       else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
         getTable().repaint();

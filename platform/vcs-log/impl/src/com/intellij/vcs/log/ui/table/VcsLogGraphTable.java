@@ -47,6 +47,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -265,8 +266,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void resetColumnWidth(@NotNull VcsLogColumn column) {
     VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.COLUMN_RESET, null);
-    if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
-      CommonUiProperties.saveColumnWidth(myProperties, column, -1);
+    VcsLogColumnsWidthStorage widthStorage = VcsLogColumnsWidthStorage.getInstance();
+    if (widthStorage.getColumnWidth(myProperties, column) != -1) {
+      widthStorage.saveColumnWidth(myProperties, column, -1);
     }
     else {
       forceReLayout(column);
@@ -300,7 +302,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
-      int width = CommonUiProperties.getColumnWidth(myProperties, logColumn);
+      int width = VcsLogColumnsWidthStorage.getInstance().getColumnWidth(myProperties, logColumn);
       if (width <= 0 || width > getWidth()) {
         if (logColumn.getContentSample() != null || !myInitializedColumns.contains(logColumn)) {
           width = getColumnWidthFromData(column);
@@ -984,7 +986,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         for (VcsLogColumn logColumn : VcsLogColumn.DYNAMIC_COLUMNS) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
-            CommonUiProperties.saveColumnWidth(myProperties, logColumn, column.getWidth());
+            VcsLogColumnsWidthStorage.getInstance().saveColumnWidth(myProperties, logColumn, column.getWidth());
           }
         }
       }
