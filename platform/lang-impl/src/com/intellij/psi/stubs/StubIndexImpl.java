@@ -321,6 +321,7 @@ public final class StubIndexImpl extends StubIndexEx {
         );
         if (list == null) {
           LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
+          myStubProcessingHelper.onInternalError(file);
           continue;
         }
         for (VirtualFile eachFile : filesInScope) {
