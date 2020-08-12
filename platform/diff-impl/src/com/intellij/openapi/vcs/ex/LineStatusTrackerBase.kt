@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 abstract class LineStatusTrackerBase<R : Range>(
@@ -310,9 +309,6 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-
-  @TestOnly
-  fun getDocumentTrackerInTestMode(): DocumentTracker = documentTracker
 
   override fun toString(): String {
     return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
