@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService.downloadPluginViaBlockMap
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -21,7 +20,9 @@ import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
-import java.io.*
+import java.io.File
+import java.io.IOException
+import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URLConnection
 import java.nio.file.Path
