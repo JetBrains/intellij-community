@@ -138,9 +138,13 @@ public abstract class SearchResultPanel {
 
           if (!myGroup.descriptors.isEmpty()) {
             myGroup.titleWithCount();
-            PluginLogo.startBatchMode();
-            myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
-            PluginLogo.endBatchMode();
+            try {
+              PluginLogo.startBatchMode();
+              myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
+            }
+            finally {
+              PluginLogo.endBatchMode();
+            }
           }
 
           myPanel.initialSelection(false);

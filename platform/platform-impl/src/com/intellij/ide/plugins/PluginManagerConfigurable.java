@@ -406,13 +406,16 @@ public class PluginManagerConfigurable
           finally {
             ApplicationManager.getApplication().invokeLater(() -> {
               myMarketplacePanel.stopLoading();
-              PluginLogo.startBatchMode();
+              try {
+                PluginLogo.startBatchMode();
 
-              for (PluginsGroup group : groups) {
-                myMarketplacePanel.addGroup(group);
+                for (PluginsGroup group : groups) {
+                  myMarketplacePanel.addGroup(group);
+                }
               }
-
-              PluginLogo.endBatchMode();
+              finally {
+                PluginLogo.endBatchMode();
+              }
               myMarketplacePanel.doLayout();
               myMarketplacePanel.initialSelection();
             }, ModalityState.any());
@@ -782,116 +785,119 @@ public class PluginManagerConfigurable
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
 
-        PluginLogo.startBatchMode();
+        try {
+          PluginLogo.startBatchMode();
 
-        PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"));
-        installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
-        if (!installing.descriptors.isEmpty()) {
-          installing.sortByName();
-          installing.titleWithCount();
-          myInstalledPanel.addGroup(installing);
-        }
-
-        PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"));
-        downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
-
-        Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
-        ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-        int downloadedEnabled = 0;
-        boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
-        String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
-
-        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-          if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
-            if (descriptor.isBundled()) {
-              if (hideImplDetails && descriptor.isImplementationDetail()) {
-                continue;
-              }
-              String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), otherCategoryTitle);
-              List<IdeaPluginDescriptor> groupDescriptors = bundledGroups.get(category);
-              if (groupDescriptors == null) {
-                bundledGroups.put(category, groupDescriptors = new ArrayList<>());
-              }
-              groupDescriptors.add(descriptor);
-            }
-            else {
-              downloaded.descriptors.add(descriptor);
-              if (descriptor.isEnabled()) {
-                downloadedEnabled++;
-              }
-            }
+          PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"));
+          installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
+          if (!installing.descriptors.isEmpty()) {
+            installing.sortByName();
+            installing.titleWithCount();
+            myInstalledPanel.addGroup(installing);
           }
-        }
 
-        if (!downloaded.descriptors.isEmpty()) {
-          myUpdateAll.setListener(new LinkListener<Object>() {
-            @Override
-            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-              myUpdateAll.setEnabled(false);
+          PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"));
+          downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-              for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-                for (ListPluginComponent plugin : group.plugins) {
-                  plugin.updatePlugin();
+          Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
+          ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+          int downloadedEnabled = 0;
+          boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
+          String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
+
+          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+            if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
+              if (descriptor.isBundled()) {
+                if (hideImplDetails && descriptor.isImplementationDetail()) {
+                  continue;
+                }
+                String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), otherCategoryTitle);
+                List<IdeaPluginDescriptor> groupDescriptors = bundledGroups.get(category);
+                if (groupDescriptors == null) {
+                  bundledGroups.put(category, groupDescriptors = new ArrayList<>());
+                }
+                groupDescriptors.add(descriptor);
+              }
+              else {
+                downloaded.descriptors.add(descriptor);
+                if (descriptor.isEnabled()) {
+                  downloadedEnabled++;
                 }
               }
             }
-          }, null);
-          downloaded.addRightAction(myUpdateAll);
+          }
 
-          downloaded.addRightAction(myUpdateCounter);
+          if (!downloaded.descriptors.isEmpty()) {
+            myUpdateAll.setListener(new LinkListener<Object>() {
+              @Override
+              public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+                myUpdateAll.setEnabled(false);
 
-          downloaded.sortByName();
-          downloaded.titleWithCount(downloadedEnabled);
-          myInstalledPanel.addGroup(downloaded);
-          myPluginModel.addEnabledGroup(downloaded);
-        }
+                for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+                  for (ListPluginComponent plugin : group.plugins) {
+                    plugin.updatePlugin();
+                  }
+                }
+              }
+            }, null);
+            downloaded.addRightAction(myUpdateAll);
 
-        myPluginModel.setDownloadedGroup(myInstalledPanel, downloaded, installing);
+            downloaded.addRightAction(myUpdateCounter);
 
-        List<PluginsGroup> groups = new ArrayList<>();
+            downloaded.sortByName();
+            downloaded.titleWithCount(downloadedEnabled);
+            myInstalledPanel.addGroup(downloaded);
+            myPluginModel.addEnabledGroup(downloaded);
+          }
 
-        for (Entry<String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
-          PluginsGroup group = new PluginsGroup(entry.getKey()) {
-            @Override
-            public void titleWithCount(int enabled) {
-              rightAction.setText(enabled == 0 ? IdeBundle.message("plugins.configurable.enable.all")
-                                               : IdeBundle.message("plugins.configurable.disable.all"));
+          myPluginModel.setDownloadedGroup(myInstalledPanel, downloaded, installing);
+
+          List<PluginsGroup> groups = new ArrayList<>();
+
+          for (Entry<String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
+            PluginsGroup group = new PluginsGroup(entry.getKey()) {
+              @Override
+              public void titleWithCount(int enabled) {
+                rightAction.setText(enabled == 0 ? IdeBundle.message("plugins.configurable.enable.all")
+                                                 : IdeBundle.message("plugins.configurable.disable.all"));
+              }
+            };
+            group.descriptors.addAll(entry.getValue());
+            group.sortByName();
+            group.rightAction = new LinkLabel<>("", null, (__, ___) -> myPluginModel
+              .changeEnableDisable(ContainerUtil.toArray(group.descriptors, IdeaPluginDescriptor[]::new),
+                                   group.rightAction.getText().startsWith("Enable")));
+            group.titleWithEnabled(myPluginModel);
+            groups.add(group);
+          }
+
+          ContainerUtil.sort(groups, (o1, o2) -> StringUtil.compare(o1.title, o2.title, true));
+          PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals(otherCategoryTitle));
+          if (otherGroup != null) {
+            groups.remove(otherGroup);
+            groups.add(otherGroup);
+          }
+
+          for (PluginsGroup group : groups) {
+            myInstalledPanel.addGroup(group);
+            myPluginModel.addEnabledGroup(group);
+          }
+
+          myPluginUpdatesService.connectInstalled(updates -> {
+            if (ContainerUtil.isEmpty(updates)) {
+              clearUpdates(myInstalledPanel);
+              clearUpdates(myInstalledSearchPanel.getPanel());
             }
-          };
-          group.descriptors.addAll(entry.getValue());
-          group.sortByName();
-          group.rightAction = new LinkLabel<>("", null, (__, ___) -> myPluginModel
-            .changeEnableDisable(ContainerUtil.toArray(group.descriptors, IdeaPluginDescriptor[]::new),
-                                 group.rightAction.getText().startsWith("Enable")));
-          group.titleWithEnabled(myPluginModel);
-          groups.add(group);
+            else {
+              applyUpdates(myInstalledPanel, updates);
+              applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+            }
+            selectionListener.accept(myInstalledPanel);
+          });
         }
-
-        ContainerUtil.sort(groups, (o1, o2) -> StringUtil.compare(o1.title, o2.title, true));
-        PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals(otherCategoryTitle));
-        if (otherGroup != null) {
-          groups.remove(otherGroup);
-          groups.add(otherGroup);
+        finally {
+          PluginLogo.endBatchMode();
         }
-
-        for (PluginsGroup group : groups) {
-          myInstalledPanel.addGroup(group);
-          myPluginModel.addEnabledGroup(group);
-        }
-
-        myPluginUpdatesService.connectInstalled(updates -> {
-          if (ContainerUtil.isEmpty(updates)) {
-            clearUpdates(myInstalledPanel);
-            clearUpdates(myInstalledSearchPanel.getPanel());
-          }
-          else {
-            applyUpdates(myInstalledPanel, updates);
-            applyUpdates(myInstalledSearchPanel.getPanel(), updates);
-          }
-          selectionListener.accept(myInstalledPanel);
-        });
-
-        PluginLogo.endBatchMode();
 
         if (myInitUpdates != null) {
           applyUpdates(myInstalledPanel, myInitUpdates);
