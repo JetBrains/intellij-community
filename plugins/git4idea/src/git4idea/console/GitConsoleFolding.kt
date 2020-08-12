@@ -54,6 +54,6 @@ class GitProgressOutputConsoleFolding : ConsoleFolding() {
   }
 
   override fun isEnabledForConsole(consoleView: ConsoleView): Boolean {
-    return consoleView is VcsConsoleView
+    return consoleView.place == VcsConsoleView.CONSOLE_PLACE
   }
 }

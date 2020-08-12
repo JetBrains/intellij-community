@@ -42,6 +42,11 @@ public abstract class ConsoleFolding {
     return getPlaceholderText(lines);
   }
 
+  /**
+   * Return true if provider should be used for a given console.
+   *
+   * @see ConsoleView#getPlace()
+   */
   public boolean isEnabledForConsole(@NotNull ConsoleView consoleView) {
     return true;
   }

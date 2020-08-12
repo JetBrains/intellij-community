@@ -54,4 +54,9 @@ public interface ConsoleView extends ExecutionConsole {
   AnAction @NotNull [] createConsoleActions();
 
   void allowHeavyFilters();
+
+  @NotNull
+  default ConsoleViewPlace getPlace() {
+    return ConsoleViewPlace.UNKNOWN;
+  }
 }
