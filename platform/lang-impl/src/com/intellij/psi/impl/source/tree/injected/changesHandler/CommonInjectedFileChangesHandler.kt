@@ -74,6 +74,7 @@ open class CommonInjectedFileChangesHandler(
         val localInsideFile = ProperTextRange(max(localInsideFileCursor, fragmentMarker.startOffset), fragmentMarker.endOffset)
         if (insideHost != null) {
           //append unchanged inter-markers fragment
+          //FIXME: hostText is already encoded but `handleContentChange` will encode it again (see IDEA-248039)
           sb.append(hostText, insideHost.endOffset, localInsideHost.startOffset)
         }
 
@@ -90,6 +91,7 @@ open class CommonInjectedFileChangesHandler(
   }
 
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost, insideHost: ProperTextRange, content: String) {
+    // NOTE: return value is ignored and it works only because we update one host only once
     ElementManipulators.handleContentChange(host, insideHost, content)
   }
 
