@@ -392,7 +392,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
 
     <schemeExporter
-        name="EditorConfig File"
+        nameKey="scheme.exporter.target.name"
+        nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
     <notificationAllowlist groupIds="EditorConfig;editorconfig"/>

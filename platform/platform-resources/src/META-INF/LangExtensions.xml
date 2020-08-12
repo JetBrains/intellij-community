@@ -1147,23 +1147,28 @@
     <daemon.tooltipActionProvider order="last" id="defaultProvider" implementation="com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProvider" />
 
     <schemeExporter
-        name="IntelliJ IDEA code style XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.intellij.xml"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeExporter
-        name="IntelliJ IDEA color scheme (.icls)"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.color.scheme"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.ColorSchemeExporter"/>
     <schemeExporter
-        name="Color scheme plugin .jar"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.color.scheme.plugin"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.pluginExport.ColorSchemePluginExporter"/>
     <schemeImporter
-        name="IntelliJ IDEA code style XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.intellij.xml"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
     <schemeImporter
-        name="IntelliJ IDEA color scheme (.icls) or settings (.jar)"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.import.source.color.scheme"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
     <schemeExporter
