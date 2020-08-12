@@ -120,7 +120,7 @@ final class LookupUsageTracker {
       if (file != null) {
         VirtualFile vFile = file.getVirtualFile();
         if (vFile != null) {
-          String schema = FileTypeUsageCounterCollector.findSchema(vFile);
+          String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
           if (schema != null) {
             data.addData("schema", schema);
           }
