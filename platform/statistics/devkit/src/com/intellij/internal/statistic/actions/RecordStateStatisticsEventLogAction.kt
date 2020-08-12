@@ -69,7 +69,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
             "action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"),
           Runnable { FileEditorManager.getInstance(project).openFile(virtualFile, true) }))
       }
-      notificationBuilder.build().notify(project)
+      notificationBuilder.buildAndNotify(project)
     }
   }
 

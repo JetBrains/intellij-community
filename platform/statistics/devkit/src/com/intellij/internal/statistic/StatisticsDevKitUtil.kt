@@ -11,6 +11,6 @@ internal object StatisticsDevKitUtil {
 
   fun showNotification(project: Project, type: NotificationType, message: String) {
     val title = StatisticsBundle.message("stats.feature.usage.statistics")
-    NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, title, message, type).build().notify(project)
+    NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, title, message, type).buildAndNotify(project)
   }
 }

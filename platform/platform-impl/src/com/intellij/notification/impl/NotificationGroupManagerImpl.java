@@ -1,19 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class NotificationGroupManagerImpl implements NotificationGroupManager {
@@ -34,7 +34,11 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
 
       @Override
       public void extensionRemoved(@NotNull NotificationGroupEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myRegisteredGroups.remove(extension.id);
+        NotificationGroup group = myRegisteredGroups.get(extension.id);
+        if (Objects.equals(group.getPluginId(), pluginDescriptor.getPluginId())) {
+          myRegisteredGroups.remove(extension.id);
+        }
+        myRegisteredNotificationIds.removeAll(NotificationCollector.parseIds(extension.notificationIds));
       }
     }, null);
   }
@@ -47,15 +51,18 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
         LOG.warn("Enable to create notification group `" + groupId + "`: displayType should be not null");
         return;
       }
+      PluginId pluginId = extension.getPluginDescriptor().getPluginId();
+      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoById(pluginId);
       NotificationGroup notificationGroup = NotificationGroup.create(groupId, type, extension.isLogByDefault,
                                                                      extension.toolWindowId, extension.getIcon(),
-                                                                     extension.getDisplayName(),
-                                                                     extension.getPluginDescriptor().getPluginId());
+                                                                     extension.getDisplayName(), pluginId);
       if (myRegisteredGroups.containsKey(groupId)) {
         LOG.warn("Notification group " + groupId + " is already registered. Plugin descriptor: " + extension.getPluginDescriptor());
       }
       myRegisteredGroups.put(groupId, notificationGroup);
-      myRegisteredNotificationIds.addAll(NotificationCollector.parseIds(extension.notificationIds));
+      if (pluginInfo.isDevelopedByJetBrains()) {
+        myRegisteredNotificationIds.addAll(NotificationCollector.parseIds(extension.notificationIds));
+      }
     }
     catch (Exception e) {
       LOG.warn("Enable to create notification group: " + extension.toString(), e);

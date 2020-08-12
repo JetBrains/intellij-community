@@ -2,7 +2,6 @@
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
-import com.intellij.notification.NotificationGroup.Companion.allRegisteredGroups
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -82,7 +81,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun balloonGroup(@NonNls displayId: String): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -92,7 +91,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun balloonGroup(@NonNls displayId: String, @NotificationTitle title: String?): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -102,7 +101,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun balloonGroup(@NonNls displayId: String, pluginId: PluginId): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -112,7 +111,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun logOnlyGroup(@NonNls displayId: String): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -122,7 +121,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun logOnlyGroup(@NonNls displayId: String, @NotificationTitle title: String?): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -132,7 +131,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun logOnlyGroup(@NonNls displayId: String, pluginId: PluginId): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -143,7 +142,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun toolWindowGroup(@NonNls displayId: String, @NonNls toolWindowId: String, logByDefault: Boolean = true): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -157,7 +156,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
                         @NonNls toolWindowId: String,
                         logByDefault: Boolean = true,
                         @NotificationTitle title: String?): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -167,7 +166,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun toolWindowGroup(@NonNls displayId: String, @NonNls toolWindowId: String, logByDefault: Boolean, pluginId: PluginId): NotificationGroup {
-      val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {
         return notificationGroup
       }
@@ -176,11 +175,16 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
 
     @JvmStatic
     fun findRegisteredGroup(displayId: String): NotificationGroup? {
-      var notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(displayId)
+      var notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup == null) {
         notificationGroup = registeredGroups.get(displayId)
       }
       return notificationGroup
+    }
+
+    private fun findRegisteredNotificationGroup(displayId: String): NotificationGroup? {
+      if (ApplicationManager.getApplication() == null) return null
+      return NotificationGroupManager.getInstance().getNotificationGroup(displayId)
     }
 
     @JvmStatic
