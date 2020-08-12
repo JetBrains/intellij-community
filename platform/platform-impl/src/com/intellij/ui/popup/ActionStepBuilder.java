@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -19,6 +18,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 class ActionStepBuilder {
   private final List<PopupFactoryImpl.ActionItem> myListModel;
@@ -144,9 +145,7 @@ class ActionStepBuilder {
         myCurrentNumber++;
       }
       else if (myHonorActionMnemonics) {
-        if (text != null) {
-          text = TextWithMnemonic.fromPlainText(text, (char)action.getTemplatePresentation().getMnemonic()).toString();
-        }
+        text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
       }
 
       boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
