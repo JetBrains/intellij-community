@@ -171,11 +171,11 @@ public enum VcsLogColumn {
   @NotNull public static final List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
   private static final VcsLogColumn @NotNull [] COLUMNS = values(); // to reduce copying overhead
 
-  @NotNull private final String myName;
+  @NotNull private final String myId;
   @NotNull private final Class<?> myContentClass;
 
-  VcsLogColumn(@NotNull String name, @NotNull Class<?> contentClass) {
-    myName = name;
+  VcsLogColumn(@NotNull String id, @NotNull Class<?> contentClass) {
+    myId = id;
     myContentClass = contentClass;
   }
 
@@ -184,8 +184,8 @@ public enum VcsLogColumn {
   }
 
   @NotNull
-  public String getName() {
-    return myName;
+  public String getId() {
+    return myId;
   }
 
   abstract public String getLocalizedName();
@@ -209,7 +209,7 @@ public enum VcsLogColumn {
    */
   @NotNull
   public String getStableName() {
-    return myName.toLowerCase(Locale.ROOT);
+    return myId.toLowerCase(Locale.ROOT);
   }
 
   @NotNull
