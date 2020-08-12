@@ -51,13 +51,19 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
       .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
       .ifEq(DIFF_PREVIEW_VERTICAL_SPLIT).then(myState.DIFF_PREVIEW_VERTICAL_SPLIT)
       .ifEq(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
-      .ifEq(COLUMN_ORDER).thenGet(() -> {
-        List<Integer> order = myState.COLUMN_ORDER;
-        if (order == null || order.isEmpty()) {
-          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
-                                    VcsLogColumn::ordinal);
+      .ifEq(COLUMN_ID_ORDER).thenGet(() -> {
+        List<String> order = myState.COLUMN_ID_ORDER;
+        if (order != null && !order.isEmpty()) {
+          return order;
         }
-        return order;
+        List<Integer> oldOrder = myState.COLUMN_ORDER;
+        if (oldOrder != null && !oldOrder.isEmpty()) {
+          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumn.fromOrdinal(it).getId());
+          myState.COLUMN_ID_ORDER = oldIdOrder;
+          return oldIdOrder;
+        }
+        return ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
+                                 VcsLogColumn::getId);
       })
       .get();
   }
@@ -88,9 +94,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (PREFER_COMMIT_DATE.equals(property)) {
       myState.PREFER_COMMIT_DATE = (Boolean)value;
     }
-    else if (COLUMN_ORDER.equals(property)) {
+    else if (COLUMN_ID_ORDER.equals(property)) {
       //noinspection unchecked
-      myState.COLUMN_ORDER = (List<Integer>)value;
+      myState.COLUMN_ID_ORDER = (List<String>)value;
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
@@ -103,7 +109,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     return property instanceof CustomBooleanProperty ||
            COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) || DIFF_PREVIEW_VERTICAL_SPLIT.equals(property) ||
-           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
+           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ID_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
   }
 
   @Override
@@ -124,7 +130,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean SHOW_DIFF_PREVIEW = false;
     public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
+    @Deprecated
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
     public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
   }
 

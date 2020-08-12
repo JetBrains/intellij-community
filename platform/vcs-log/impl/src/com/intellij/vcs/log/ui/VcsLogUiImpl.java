@@ -225,7 +225,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
-      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof VcsLogHighlighterProperty) {

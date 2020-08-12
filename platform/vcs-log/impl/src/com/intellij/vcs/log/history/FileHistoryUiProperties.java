@@ -35,7 +35,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     @Deprecated
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
     public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
+    @Deprecated
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    public List<String> COLUMN_ID_ORDER = new ArrayList<>();
     public boolean SHOW_DIFF_PREVIEW = true;
     public boolean SHOW_ROOT_NAMES = false;
   }
@@ -59,13 +61,19 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
       .ifEq(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
       .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myAppSettings.get(PREFER_COMMIT_DATE))
-      .ifEq(COLUMN_ORDER).thenGet(() -> {
-        List<Integer> order = myState.COLUMN_ORDER;
-        if (order == null || order.isEmpty()) {
-          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
-                                    VcsLogColumn::ordinal);
+      .ifEq(COLUMN_ID_ORDER).thenGet(() -> {
+        List<String> order = myState.COLUMN_ID_ORDER;
+        if (order != null && !order.isEmpty()) {
+          return order;
         }
-        return order;
+        List<Integer> oldOrder = myState.COLUMN_ORDER;
+        if (oldOrder != null && !oldOrder.isEmpty()) {
+          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumn.fromOrdinal(it).getId());
+          myState.COLUMN_ID_ORDER = oldIdOrder;
+          return oldIdOrder;
+        }
+        return ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
+                                 VcsLogColumn::getId);
       })
       .get();
   }
@@ -85,8 +93,8 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ALL_BRANCHES.equals(property)) {
       myState.SHOW_OTHER_BRANCHES = (Boolean)value;
     }
-    else if (COLUMN_ORDER.equals(property)) {
-      myState.COLUMN_ORDER = (List<Integer>)value;
+    else if (COLUMN_ID_ORDER.equals(property)) {
+      myState.COLUMN_ID_ORDER = (List<String>)(value);
     }
     else if (property instanceof TableColumnProperty) {
       myState.COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
@@ -112,7 +120,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
     return SHOW_DETAILS.equals(property) ||
            SHOW_ALL_BRANCHES.equals(property) ||
-           COLUMN_ORDER.equals(property) ||
+           COLUMN_ID_ORDER.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) ||
            SHOW_ROOT_NAMES.equals(property) ||
            PREFER_COMMIT_DATE.equals(property) ||

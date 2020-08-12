@@ -229,7 +229,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
         updateFilter();
       }
-      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof TableColumnProperty) {
