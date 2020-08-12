@@ -72,11 +72,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
     List<XValueNodeImpl> values = data.get(file, lineNumber, doc.getModificationStamp());
     if (values != null && !values.isEmpty()) {
-      final int bpLine = getCurrentBreakPointLineInFile(session, file);
-      boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-      final TextAttributes attributes = bpLine == lineNumber && isTopFrame &&
-                                        ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).isFullLineHighlighter()
-                                        ? getTopFrameSelectedAttributes() : getNormalAttributes();
+      final TextAttributes attributes = getAttributes(lineNumber, file, session);
 
       ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
@@ -115,6 +111,16 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return ContainerUtil.getFirstItems(infos, LINE_EXTENSIONS_MAX_COUNT);
     }
     return null;
+  }
+
+  @NotNull
+  public static TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
+    final int bpLine = getCurrentBreakPointLineInFile(session, file);
+    boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
+    return bpLine == lineNumber
+           && isTopFrame
+           && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter()
+           ? getTopFrameSelectedAttributes() : getNormalAttributes();
   }
 
   @Nullable
