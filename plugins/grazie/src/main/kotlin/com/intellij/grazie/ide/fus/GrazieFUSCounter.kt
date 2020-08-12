@@ -7,10 +7,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 
 internal object GrazieFUSCounter {
-  fun languageDetected(lang: Language) = log("language.detected") {
-    addData("language", lang.iso.toString())
-  }
-
   fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
     for (language in languages) {
       log("language.suggested") {
