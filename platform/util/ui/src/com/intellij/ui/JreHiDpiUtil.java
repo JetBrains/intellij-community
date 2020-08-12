@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.java2d.SunGraphicsEnvironment;
 
 import java.awt.*;
 import java.lang.reflect.Method;
@@ -55,8 +54,9 @@ public final class JreHiDpiUtil {
             if (SystemInfo.isJetBrainsJvm) {
               try {
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                if (ge instanceof SunGraphicsEnvironment) {
-                  Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleEnabled");
+                Class<?> sunGraphicsEnvironmentClass = Class.forName("sun.java2d.SunGraphicsEnvironment");
+                if (sunGraphicsEnvironmentClass.isInstance(ge)) {
+                  Method m = ReflectionUtil.getDeclaredMethod(sunGraphicsEnvironmentClass, "isUIScaleEnabled");
                   value = m != null && (Boolean)m.invoke(ge);
                   jreHiDPI_earlierVersion = false;
                 }
