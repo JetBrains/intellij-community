@@ -1185,7 +1185,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ((VirtualFileSystemEntry)file).setFileIndexed(true);
       }
       if (VfsEventsMerger.LOG != null) {
-        VfsEventsMerger.LOG.info("File " + file + " has been indexed");
+        VfsEventsMerger.LOG.info("File " + file + " has been indexed for indexes " + indexingResult.timesPerIndexer.keySet());
       }
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       // Indexing time takes only input data mapping time into account.
