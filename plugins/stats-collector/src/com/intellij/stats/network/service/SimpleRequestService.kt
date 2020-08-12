@@ -19,7 +19,7 @@ class SimpleRequestService : RequestService() {
   override fun postZipped(url: String, file: File): ResponseData? {
     return try {
       val zippedArray = compressBase64Gzip(file.readBytes())
-      return HttpRequests.post(url, null).tuner {
+      return HttpRequests.post(url, "application/json").tuner {
         it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
       }.connect { request ->
         request.write(zippedArray)
