@@ -1462,7 +1462,7 @@ public class PluginManagerConfigurable
     private boolean myState;
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
-      super(option == InstalledSearchOption.NeedUpdate ? IdeBundle.message("plugins.configurable.update.available") : option.name());
+      super(IdeBundle.message("plugins.configurable.InstalledSearchOption." + option.name()));
       myOption = option;
     }
 
