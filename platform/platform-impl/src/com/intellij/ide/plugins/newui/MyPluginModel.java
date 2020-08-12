@@ -256,7 +256,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public void addComponent(@NotNull ListPluginComponent component) {
     if (!component.isMarketplace()) {
       if (myInstallingPlugins.contains(component.myPlugin) &&
-          (myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
+          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
         return;
       }
 
