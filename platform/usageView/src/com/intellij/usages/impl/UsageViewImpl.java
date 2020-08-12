@@ -797,7 +797,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  protected static UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
+  protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRuleProvider provider : providers) {
