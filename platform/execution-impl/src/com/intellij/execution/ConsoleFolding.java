@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,10 @@ public abstract class ConsoleFolding {
   @Nullable
   public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     return getPlaceholderText(lines);
+  }
+
+  public boolean isEnabledForConsole(@NotNull ConsoleView consoleView) {
+    return true;
   }
 
   /**

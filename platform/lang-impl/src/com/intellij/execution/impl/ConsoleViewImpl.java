@@ -1086,11 +1086,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           existingRegion = regions[0];
         }
       }
-      String lastFoldingFqn = USED_FOLDING_FQN_KEY.get(existingRegion);
-      ConsoleFolding lastFolding = lastFoldingFqn != null
-                                   ? ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class,
-                                                                     consoleFolding -> consoleFolding.getClass().getName())
-                                   : null;
+      ConsoleFolding lastFolding = findFoldingByRegion(existingRegion);
       int lastStartLine = Integer.MAX_VALUE;
       if (lastFolding != null) {
         int offset = existingRegion.getStartOffset();
@@ -1150,8 +1146,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     FoldRegion region = placeholder == null ? null : myEditor.getFoldingModel().addFoldRegion(oStart, oEnd, placeholder);
     if (region != null) {
       region.setExpanded(isExpanded);
-      region.putUserData(USED_FOLDING_FQN_KEY, folding.getClass().getName());
+      region.putUserData(USED_FOLDING_FQN_KEY, getFoldingFqn(folding));
     }
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  private ConsoleFolding findFoldingByRegion(@Nullable FoldRegion region) {
+    String lastFoldingFqn = USED_FOLDING_FQN_KEY.get(region);
+    if (lastFoldingFqn == null) return null;
+    ConsoleFolding consoleFolding = ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class, ConsoleViewImpl::getFoldingFqn);
+    return consoleFolding != null && consoleFolding.isEnabledForConsole(this) ? consoleFolding : null;
+  }
+
+  @NotNull
+  private static String getFoldingFqn(@NotNull ConsoleFolding consoleFolding) {
+    return consoleFolding.getClass().getName();
   }
 
   @Nullable
@@ -1162,7 +1172,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     for (ConsoleFolding extension : ConsoleFolding.EP_NAME.getExtensions()) {
-      if (extension.shouldFoldLine(myProject, lineText)) {
+      if (extension.isEnabledForConsole(this) && extension.shouldFoldLine(myProject, lineText)) {
         return extension;
       }
     }
