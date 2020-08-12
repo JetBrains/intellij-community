@@ -40,6 +40,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +199,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   public @NotNull Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
     // call instance method to reset timeout
-    LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
+    MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
+    LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
   }
