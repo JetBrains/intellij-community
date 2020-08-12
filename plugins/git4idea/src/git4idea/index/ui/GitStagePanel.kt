@@ -4,6 +4,7 @@ package git4idea.index.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
@@ -33,8 +34,6 @@ import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
-import git4idea.conflicts.getConflictOperationLock
-import git4idea.conflicts.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
@@ -42,11 +41,9 @@ import git4idea.index.GitStageTrackerListener
 import git4idea.index.actions.*
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.merge.GitMergeUtil
-import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitChangeProvider
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -172,13 +169,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
 
-        val mergeHandler = createMergeHandler(myProject)
-        val conflicts = getConflictsToMerge(mergeHandler)
-        if (conflicts.isEmpty()) {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
+        val dataContext = DataManager.getInstance().getDataContext(this)
+
+        val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
+        val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
+        if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
+          ActionUtil.performActionDumbAwareWithCallbacks(mergeAction, event, dataContext)
         }
         else {
-          showMergeWindow(project, mergeHandler, conflicts, myProject::isReversedRoot)
+          OpenSourceUtil.openSourcesFrom(dataContext, true)
         }
         true
       }
@@ -198,12 +197,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
     override fun showMergeDialog(conflictedFiles: List<VirtualFile>) {
       AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
-    }
-
-    private fun getConflictsToMerge(mergeHandler: GitMergeHandler): List<GitConflict> {
-      return StreamEx.of(selectedStatusNodes()).mapNotNull { it.createConflict() }.filter { conflict ->
-        mergeHandler.canResolveConflict(conflict) && !getConflictOperationLock(myProject, conflict).isLocked
-      }.toList()
     }
   }
 
