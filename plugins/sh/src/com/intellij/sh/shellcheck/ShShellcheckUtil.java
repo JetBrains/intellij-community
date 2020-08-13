@@ -53,8 +53,8 @@ public class ShShellcheckUtil {
   private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
   static final String OLD_SHELLCHECK = "old_shellcheck";
-  static final String SHELLCHECK_VERSION = "0.6.0-1";
-  private static final String SHELLCHECK_VERSION_FOR_UPDATE = "0.6.0";
+  static final String SHELLCHECK_VERSION = "0.7.1-1";
+  private static final String SHELLCHECK_VERSION_FOR_UPDATE = "0.7.1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
                                        "intellij-third-party-dependencies/" +
