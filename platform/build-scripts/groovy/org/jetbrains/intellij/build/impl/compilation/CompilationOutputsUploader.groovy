@@ -99,7 +99,7 @@ class CompilationOutputsUploader {
   private void uploadCompilationCache() {
     File zipFile = buildCompilationCacheZip()
     String cachePath = "caches/$commitHash"
-    if (!uploader.isExist(cachePath)) {
+    if (!uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
     File zipCopy = new File(syncFolder, cachePath)
@@ -129,7 +129,7 @@ class CompilationOutputsUploader {
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      if (!uploader.isExist(sourcePath, false)) {
+      if (!uploader.isExist(sourcePath)) {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
       }
@@ -172,7 +172,7 @@ class CompilationOutputsUploader {
   }
 
   CommitsHistory remoteCommitHistory() {
-    if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
+    if (uploader.isExist(CommitsHistory.JSON_FILE)) {
       def json = uploader.getAsString(CommitsHistory.JSON_FILE)
       new CommitsHistory(json)
     }
@@ -200,11 +200,11 @@ class CompilationOutputsUploader {
       super(serverUrl, messages)
     }
 
-    boolean isExist(@NotNull final String path, boolean logIfExists = true) {
+    boolean isExist(@NotNull final String path, boolean logIfExists = false) {
       int code = doHead(path)
       if (code == 200) {
         if (logIfExists) {
-          log("File '$path' already exist on server, nothing to upload")
+          log("File '$path' already exists on server, nothing to upload")
         }
         return true
       }
