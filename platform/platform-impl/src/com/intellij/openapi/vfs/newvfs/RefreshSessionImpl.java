@@ -7,6 +7,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -190,7 +192,17 @@ class RefreshSessionImpl extends RefreshSession {
         WriteAction.run(() -> {
           app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
             indicator.setText(IdeBundle.message("progress.text.processing.detected.file.changes", events.size()));
+            int progressThresholdMillis = 5_000;
+            ((ProgressWindow) indicator).setDelayInMillis(progressThresholdMillis);
+            long start = System.currentTimeMillis();
+
             fireEventsInWriteAction(events, appliers);
+
+            long elapsed = System.currentTimeMillis() - start;
+            if (elapsed > progressThresholdMillis) {
+              LOG.warn("Long VFS change processing (" + elapsed + "ms, " + events.size() + " events): " +
+                       StringUtil.trimLog(events.toString(), 10_000));
+            }
           });
         });
       }
