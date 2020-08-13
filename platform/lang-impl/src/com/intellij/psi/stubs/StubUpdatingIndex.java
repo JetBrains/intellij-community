@@ -176,7 +176,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
             assertDeserializedStubMatchesOriginalStub(serializedStubTree, stub);
           }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Indexing stubs for " + inputData.getFile() + ", " + indexingStampInfo);
+            LOG.debug("Indexing stubs for " + inputData.getFile() + ", " + fofocalculateIndexingStamp(inputData));
           }
           return serializedStubTree;
         }
