@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -27,7 +28,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.Nls;
@@ -117,7 +117,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else {
       LOG.info("Unknown error: " + errorMessage);
-      GitUIUtil.notifyImportantError(myProject, GitBundle.message("notification.title.error.merging"), errorMessage);
+      VcsNotifier.getInstance(myProject)
+        .notifyError("git.merge.error", GitBundle.message("notification.title.error.merging"), errorMessage);
       return GitUpdateResult.ERROR;
     }
   }
@@ -165,7 +166,8 @@ public class GitMergeUpdater extends GitUpdater {
     GitCommandResult result = Git.getInstance().runCommand(h);
     if (!result.success()) {
       LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
-      GitUIUtil.notifyImportantError(myProject, GitBundle.message("notification.title.couldn.t.reset.merge"),
+      VcsNotifier.getInstance(myProject)
+        .notifyError("git.merge.reset.error", GitBundle.message("notification.title.couldn.t.reset.merge"),
                                      result.getErrorOutputAsHtmlString());
     }
   }

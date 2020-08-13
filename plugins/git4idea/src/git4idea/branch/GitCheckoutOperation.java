@@ -147,7 +147,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           }
           builder.br().appendLink(ROLLBACK_HREF_ATTRIBUTE, GitBundle.message("checkout.operation.rollback"));
 
-          VcsNotifier.getInstance(myProject).notifySuccess("",
+          VcsNotifier.getInstance(myProject).notifySuccess("git.checkout.success", "",
                                                            builder.toString(),
                                                            new RollbackOperationNotificationListener());
         }
@@ -258,7 +258,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         message.append(GitBundle.message("checkout.operation.errors.during.deleting", code(myNewBranch)));
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      VcsNotifier.getInstance(myProject).notifyError(GitBundle.message("checkout.operation.error.during.rollback"),
+      VcsNotifier.getInstance(myProject).notifyError("git.checkout.rollback.error",
+                                                     GitBundle.message("checkout.operation.error.during.rollback"),
                                                      message.toString(),
                                                      true);
     }

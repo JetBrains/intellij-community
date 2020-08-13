@@ -121,18 +121,19 @@ public class GitResetOperation {
     }
 
     if (errors.isEmpty()) {
-      myNotifier.notifySuccess("", GitBundle.message("git.reset.successful.notification.message"));
+      myNotifier.notifySuccess("git.reset.successful", "", GitBundle.message("git.reset.successful.notification.message"));
     }
     else if (!successes.isEmpty()) {
 
-      myNotifier.notifyImportantWarning(GitBundle.message("git.reset.partially.failed.notification.title"),
+      myNotifier.notifyImportantWarning("git.reset.partially.failed",
+                                        GitBundle.message("git.reset.partially.failed.notification.title"),
                                         GitBundle.message("git.reset.partially.failed.notification.msg",
                                                           joinRepos(successes.keySet()),
                                                           joinRepos(errors.keySet()),
                                                           formErrorReport(errors)));
     }
     else {
-      myNotifier.notifyError(GitBundle.message("git.reset.failed.notification.title"), formErrorReport(errors), true);
+      myNotifier.notifyError("git.reset.failed", GitBundle.message("git.reset.failed.notification.title"), formErrorReport(errors), true);
     }
   }
 

@@ -67,11 +67,12 @@ fun unstash(project: Project,
         return
       }
       else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, root, GitBundle.message("unstash.operation.name"), localChangesDetector.relativeFilePaths)
+        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.stash.local.changes.detected", root,
+                                                                   GitBundle.message("unstash.operation.name"), localChangesDetector.relativeFilePaths)
         return
       }
       else if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError(GitBundle.message("notification.title.unstash.failed"), result.errorOutputAsHtmlString, true)
+        VcsNotifier.getInstance(project).notifyError("git.unstash.failed", GitBundle.message("notification.title.unstash.failed"), result.errorOutputAsHtmlString, true)
         return
       }
     }

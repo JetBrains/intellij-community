@@ -209,7 +209,8 @@ class DeepComparator(private val project: Project,
     override fun onSuccess() {
       if (exception != null) {
         nonPickedCommits = null
-        VcsNotifier.getInstance(project).notifyError(GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
+        VcsNotifier.getInstance(project).notifyError("git.could.not.compare.with.branch",
+                                                     GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
                                                      exception!!.message)
         return
       }

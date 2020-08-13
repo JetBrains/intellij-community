@@ -159,7 +159,7 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.getString("save.notification.failed.title"),
+        "git.could.not.save.uncommitted.changes", GitBundle.getString("save.notification.failed.title"),
         mySaver.getSaveMethod().selectBundleMessage(
           GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
           GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))

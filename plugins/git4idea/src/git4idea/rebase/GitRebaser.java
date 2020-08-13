@@ -17,7 +17,6 @@ import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
-import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
@@ -97,9 +96,10 @@ public class GitRebaser {
     task.setProgressIndicator(myProgressIndicator);
     task.executeAsync(new GitTaskResultNotificationHandler(
       myProject,
-      GitBundle.getString("rebase.update.project.notification.abort.success.message"),
-      GitBundle.getString("rebase.update.project.notification.abort.cancel.message"),
-      GitBundle.getString("rebase.update.project.notification.abort.error.message")
+      "git.rebase.abort.rebase",
+      GitBundle.message("rebase.update.project.notification.abort.success.message"),
+      GitBundle.message("rebase.update.project.notification.abort.cancel.message"),
+      GitBundle.message("rebase.update.project.notification.abort.error.message")
     ));
   }
 
@@ -220,21 +220,22 @@ public class GitRebaser {
       }
       catch (VcsException e) {
         LOG.info("Failed to work around 'no changes' error.", e);
-        GitUIUtil.notifyImportantError(
-          myProject,
-          GitBundle.getString("rebase.update.project.notification.failed.title"),
-          GitBundle.message("rebase.update.project.notification.failed.message", e.getMessage())
-        );
+        VcsNotifier.getInstance(myProject)
+          .notifyError(
+            "git.rebase.update.project.error",
+            GitBundle.message("rebase.update.project.notification.failed.title"),
+            GitBundle.message("rebase.update.project.notification.failed.message", e.getMessage()));
         return false;
       }
     }
     else {
       LOG.info("handleRebaseFailure error " + h.errors());
-      GitUIUtil.notifyImportantError(
-        myProject,
-        GitBundle.getString("rebase.update.project.notification.failed.title"),
-        GitUIUtil.stringifyErrors(h.errors())
-      );
+      VcsNotifier.getInstance(myProject)
+        .notifyError(
+          "git.rebase.update.project.error",
+          GitBundle.message("rebase.update.project.notification.failed.title"),
+          "",
+          h.errors());
       return false;
     }
   }
@@ -294,6 +295,7 @@ public class GitRebaser {
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(
         myProject,
+        "git.merge.local.changes.detected",
         root,
         GitBundle.getString("rebase.git.operation.name"),
         localChangesDetector.getRelativeFilePaths()
@@ -302,11 +304,10 @@ public class GitRebaser {
     }
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
-      VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.getString("rebase.update.project.notification.failed.title"),
-        result.getErrorOutputAsHtmlString(),
-        true
-      );
+      VcsNotifier.getInstance(myProject).notifyError("git.rebase.update.project.error",
+                                                     GitBundle.getString("rebase.update.project.notification.failed.title"),
+                                                     result.getErrorOutputAsHtmlString(),
+                                                     true);
       return GitUpdateResult.ERROR;
     }
   }

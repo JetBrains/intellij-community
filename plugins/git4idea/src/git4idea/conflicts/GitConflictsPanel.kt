@@ -207,7 +207,8 @@ internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selecte
   for (conflict in conflicts) {
     val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
     if (file == null) {
-      VcsNotifier.getInstance(project).notifyError(GitBundle.message("conflicts.merge.window.error.title"),
+      VcsNotifier.getInstance(project).notifyError("git.cannot.resolve.conflict",
+                                                   GitBundle.message("conflicts.merge.window.error.title"),
                                                    GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
       continue
     }

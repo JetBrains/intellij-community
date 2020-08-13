@@ -272,17 +272,18 @@ class GitApplyChangesProcess(private val project: Project,
   private fun notifyResult(successfulCommits: List<VcsFullCommitDetails>, skipped: List<VcsFullCommitDetails>) {
     when {
       skipped.isEmpty() -> {
-        vcsNotifier.notifySuccess(GitBundle.message("apply.changes.operation.successful", operationName.capitalize()),
+        vcsNotifier.notifySuccess(null,
+                                  GitBundle.message("apply.changes.operation.successful", operationName.capitalize()),
                                   getCommitsDetails(successfulCommits))
       }
       successfulCommits.isNotEmpty() -> {
         val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord.capitalize(), successfulCommits.size,
                                       successfulCommits.size + skipped.size)
         val description = getCommitsDetails(successfulCommits) + UIUtil.HR + formSkippedDescription(skipped, true)
-        vcsNotifier.notifySuccess(title, description)
+        vcsNotifier.notifySuccess(null, title, description)
       }
       else -> {
-        vcsNotifier.notifyImportantWarning(GitBundle.message("apply.changes.nothing.to.do", operationName),
+        vcsNotifier.notifyImportantWarning(null, GitBundle.message("apply.changes.nothing.to.do", operationName),
                                            formSkippedDescription(skipped, false))
       }
     }
@@ -297,9 +298,9 @@ class GitApplyChangesProcess(private val project: Project,
                                                   commit.subject)
     var description = commitDetails(commit) + UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts", RESOLVE)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyImportantWarning(
-      GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
-      description, resolveLinkListener)
+    vcsNotifier.notifyImportantWarning(null,
+                                       GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
+                                       description, resolveLinkListener)
   }
 
   private fun notifyCommitCancelled(commit: VcsFullCommitDetails, successfulCommits: List<VcsFullCommitDetails>) {
@@ -317,7 +318,7 @@ class GitApplyChangesProcess(private val project: Project,
                           successfulCommits: List<VcsFullCommitDetails>) {
     var description = commitDetails(failedCommit) + UIUtil.BR + content
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyError(GitBundle.message("apply.changes.operation.failed", operationName.capitalize()), description)
+    vcsNotifier.notifyError(null, GitBundle.message("apply.changes.operation.failed", operationName.capitalize()), description)
   }
 
   @Nls

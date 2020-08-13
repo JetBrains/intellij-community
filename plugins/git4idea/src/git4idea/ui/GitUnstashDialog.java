@@ -346,7 +346,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
     if (completed) {
       VcsNotifier.getInstance(myProject)
-        .notifySuccess(VcsBundle.message("patch.apply.success.applied.text"));
+        .notifySuccess("git.unstash.patch.applied", "", VcsBundle.message("patch.apply.success.applied.text"));
       super.doOKAction();
     }
   }
@@ -377,7 +377,7 @@ public class GitUnstashDialog extends DialogWrapper {
     @Override
     protected void notifyUnresolvedRemain() {
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        GitBundle.getString("unstash.dialog.unresolved.conflict.warning.notification.title"),
+        "git.unstash.with.unresolved.conflicts", GitBundle.getString("unstash.dialog.unresolved.conflict.warning.notification.title"),
         GitBundle.getString("unstash.dialog.unresolved.conflict.warning.notification.message"),
         new NotificationListener() {
           @Override

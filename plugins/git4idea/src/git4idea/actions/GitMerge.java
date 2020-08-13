@@ -57,6 +57,11 @@ public class GitMerge extends GitMergeAction {
                            ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
   }
 
+  @Override
+  protected String getNotificationErrorDisplayId() {
+    return "git.merge.failed";
+  }
+
   @NotNull
   protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
     VirtualFile root = dialog.getSelectedRoot();

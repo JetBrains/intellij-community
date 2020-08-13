@@ -26,7 +26,6 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -226,23 +225,27 @@ public class GitFetcher {
                                         @NotNull Collection<? extends Exception> errors) {
     VcsNotifier notifier = VcsNotifier.getInstance(project);
     if (result.isSuccess()) {
-      notifier.notifySuccess(GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
+      notifier.notifySuccess("git.fetch.success", "",
+                             GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
     }
     else if (result.isCancelled()) {
       notifier.notifyMinorWarning("", GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
-        notifier.notifyError(errorNotificationTitle,
+        notifier.notifyError("git.fetch.error",
+                             errorNotificationTitle,
                              GitBundle.message("notification.content.fetch.failed.couldn.t.authorize") + result.getAdditionalInfo());
       }
       else {
-        notifier.notifyError(GitBundle.message("notification.title.fetch.failed"),
+        notifier.notifyError("git.fetch.error",
+                             GitBundle.message("notification.title.fetch.failed"),
                              GitBundle.message("notification.content.couldn.t.authorize") + result.getAdditionalInfo());
       }
     }
     else {
-      GitUIUtil.notifyMessage(project, GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), true, errors);
+      VcsNotifier.getInstance(project)
+        .notifyError("git.fetch.failed", GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
     }
   }
 
@@ -277,11 +280,11 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("notification.content.fetched.successfully"));
+      VcsNotifier.getInstance(myProject).notifySuccess("git.fetch.success", "", GitBundle.message("notification.content.fetched.successfully"));
     }
 
     if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo(GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
+      VcsNotifier.getInstance(myProject).notifyMinorInfo(null, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
     }
 
     return true;

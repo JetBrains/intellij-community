@@ -86,7 +86,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null,
+                                                                         "git.tag.deleted");
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
@@ -117,11 +118,12 @@ class GitDeleteTagOperation extends GitBranchOperation {
     if (result.totalSuccess()) {
       Notification notification =
         STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
-          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null);
+          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null, "git.tag.restored");
       myNotifier.notify(notification);
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
+      myNotifier.notifyError("git.tag.deletion.rollback.error",
+                             GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
@@ -133,7 +135,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+      myNotifier.notifyError("git.tag.deletion.rollback.error",
+                             GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }

@@ -47,8 +47,7 @@ class GitCloneDialogComponent(project: Project,
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
       LOG.error("Unable to create destination directory", destinationValidation.message)
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
 
@@ -59,8 +58,7 @@ class GitCloneDialogComponent(project: Project,
     }
     if (destinationParent == null) {
       LOG.error("Clone Failed. Destination doesn't exist")
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
     val sourceRepositoryURL = getUrl()
@@ -134,6 +132,12 @@ class GitCloneDialogComponent(project: Project,
 
   @RequiresEdt
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
+
+  private fun notifyCloneError(project: Project) {
+    VcsNotifier.getInstance(project).notifyError("git.clone.unable.to.create.destination.dir",
+                                                 VcsBundle.message("clone.dialog.clone.button"),
+                                                 VcsBundle.message("clone.dialog.unable.create.destination.error"))
+  }
 
   private enum class VersionCheckState {
     NOT_CHECKED,

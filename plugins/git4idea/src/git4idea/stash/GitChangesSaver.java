@@ -80,7 +80,7 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        GitBundle.getString("restore.notification.failed.title"),
+        "git.local.changes.not.restored", GitBundle.getString("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
           GitBundle.getString("restore.notification.failed.stash.message"),
           GitBundle.getString("restore.notification.failed.shelf.message")

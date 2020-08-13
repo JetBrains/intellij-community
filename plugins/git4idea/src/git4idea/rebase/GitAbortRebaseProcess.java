@@ -179,6 +179,7 @@ class GitAbortRebaseProcess {
           }
           else {
             myNotifier.notifyError(
+              "git.rebase.abort.failed",
               GitBundle.message("rebase.abort.notification.failed.title"),
               result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
               true);
@@ -228,6 +229,7 @@ class GitAbortRebaseProcess {
                 );
               }
               myNotifier.notifyImportantWarning(
+                "git.rebase.rollback.failed",
                 GitBundle.message("rebase.abort.notification.warning.rollback.failed.title"),
                 description
               );
@@ -249,7 +251,7 @@ class GitAbortRebaseProcess {
         mySaver.load();
       }
       if (myNotifySuccess) {
-        myNotifier.notifySuccess(GitBundle.message("rebase.abort.notification.successful.message"));
+        myNotifier.notifySuccess("git.rebase.abort.succeeded", "", GitBundle.message("rebase.abort.notification.successful.message"));
       }
     }
   }

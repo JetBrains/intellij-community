@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.reset;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -38,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
@@ -102,8 +99,9 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         catch (VcsException e) {
           String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
           LOG.warn(message, e);
-          Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.ERROR, null);
-          VcsNotifier.getInstance(project).notify(notification);
+          VcsNotifier.getInstance(project).notifyError("git.could.not.load.changes.of.commit",
+                                                       "",
+                                                       message);
           return;
         }
 

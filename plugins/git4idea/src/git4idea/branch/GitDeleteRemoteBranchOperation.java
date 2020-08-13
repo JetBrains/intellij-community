@@ -151,7 +151,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     }
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
+        "git.remote.branch.deletion.error", GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
         result.getErrorOutputWithReposIndication(),
         true);
     }
@@ -196,6 +196,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
                                   StringUtil.join(localBranches, ", "));
     }
     VcsNotifier.getInstance(myProject).notifySuccess(
+      "git.remote.branch.deletion.success",
       GitBundle.message("delete.remote.branch.operation.deleted.remote.branch", remoteBranchName),
       message);
   }

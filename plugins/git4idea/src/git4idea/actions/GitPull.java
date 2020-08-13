@@ -77,6 +77,11 @@ public class GitPull extends GitMergeAction {
   }
 
   @Override
+  protected String getNotificationErrorDisplayId() {
+    return "git.pull.failed";
+  }
+
+  @Override
   protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
     if (!dialogState.selectedOptions.contains(GitPullOption.REBASE.getOption())) {
       super.perform(dialogState, project);

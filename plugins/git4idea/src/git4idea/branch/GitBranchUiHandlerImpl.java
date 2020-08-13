@@ -81,8 +81,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.getInstance(myProject).notifyError(title, description,
-      new NotificationListener() {
+    VcsNotifier.getInstance(myProject).notifyError("git.unresolved.conflicts", title, description,
+                                                   new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {

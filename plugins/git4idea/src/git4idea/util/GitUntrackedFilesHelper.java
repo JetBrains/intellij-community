@@ -134,7 +134,7 @@ public final class GitUntrackedFilesHelper {
     });
 
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc,
-                                                                                NotificationType.ERROR, listener);
+                                                                                NotificationType.ERROR, listener, "untracked.files.overwritten");
 
     notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override

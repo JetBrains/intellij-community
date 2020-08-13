@@ -67,11 +67,13 @@ internal class GitCreateBranchOperation(
 
     val vcsNotifier = VcsNotifier.getInstance(myProject)
     if (deleteResult.totalSuccess()) {
-      vcsNotifier.notifySuccess(GitBundle.message("create.branch.operation.rollback.successful"),
+      vcsNotifier.notifySuccess("git.created.branch.rollback.successful",
+                                GitBundle.message("create.branch.operation.rollback.successful"),
                                 GitBundle.message("create.branch.operation.deleted.branch", branchName))
     }
     else {
-      vcsNotifier.notifyError(GitBundle.message("create.branch.operation.error.during.rollback"),
+      vcsNotifier.notifyError("git.created.branch.rollback.error",
+                              GitBundle.message("create.branch.operation.error.during.rollback"),
                               deleteResult.errorOutputWithReposIndication,
                               true)
     }

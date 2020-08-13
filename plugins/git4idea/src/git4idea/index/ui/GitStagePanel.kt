@@ -247,14 +247,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       commitFinished(successfulRoots.isNotEmpty() && failedRoots.isEmpty())
 
       if (successfulRoots.isNotEmpty()) {
-        notifier.notifySuccess(GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
-          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-        }, XmlStringUtil.escapeString(commitMessage)))
+        notifier.notifySuccess("git.stage.commit.successful",
+                               "",
+                               GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
+                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+                               }, XmlStringUtil.escapeString(commitMessage)))
       }
       if (failedRoots.isNotEmpty()) {
-        notifier.notifyError(GitBundle.message("stage.commit.failed", failedRoots.keys.joinToString {
-          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-        }), HtmlBuilder().appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.text(it.localizedMessage) }).toString())
+        notifier.notifyError("git.stage.commit.error",
+                             GitBundle.message("stage.commit.failed",
+                                               failedRoots.keys.joinToString {
+                                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+                                               }), HtmlBuilder().appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.text(it.localizedMessage) }).toString())
       }
     }
   }

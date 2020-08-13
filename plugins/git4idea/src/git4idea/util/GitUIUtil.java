@@ -19,12 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.util.ui.UIUtil.BR;
@@ -46,80 +44,24 @@ public final class GitUIUtil {
   private GitUIUtil() {
   }
 
-  public static void notifyMessages(@NotNull Project project,
-                                    @NotNull @NlsContexts.NotificationTitle String title,
-                                    @Nullable @NlsContexts.NotificationContent String description,
-                                    boolean important,
-                                    @Nullable Collection<String> messages) {
-    String desc = (description != null ? description.replace("\n", BR) : "");
-    if (messages != null && !messages.isEmpty()) {
-      desc += StringUtil.join(messages, "<hr/><br/>"); //NON-NLS
-    }
-    VcsNotifier notificator = VcsNotifier.getInstance(project);
-    if (important) {
-      notificator.notifyError(title, desc);
-    }
-    else {
-      notificator.notifyImportantWarning(title, desc);
-    }
-  }
-
-  public static void notifyMessage(Project project,
-                                   @NotNull @NlsContexts.NotificationTitle String title,
-                                   @Nullable @NlsContexts.NotificationContent String description,
-                                   boolean important,
-                                   @Nullable Collection<? extends Exception> errors) {
-    Collection<String> errorMessages;
-    if (errors == null) {
-      errorMessages = null;
-    }
-    else {
-      errorMessages = new HashSet<>(errors.size());
-      for (Exception error : errors) {
-        if (error instanceof VcsException) {
-          for (String message : ((VcsException)error).getMessages()) {
-            errorMessages.add(message.replace("\n", BR));
-          }
-        }
-        else {
-          errorMessages.add(error.getMessage().replace("\n", BR));
-        }
-      }
-    }
-    notifyMessages(project, title, description, important, errorMessages);
-  }
-
+  /**
+   * @deprecated use {@link VcsNotifier} instead
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Deprecated
   public static void notifyError(Project project,
-                                 @NotNull @NlsContexts.NotificationTitle String title,
-                                 @Nullable @NlsContexts.NotificationContent String description,
+                                 @Nls @NotNull String title,
+                                 @Nls @Nullable String description,
                                  boolean important,
                                  @Nullable Exception error) {
-    notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
-  }
-
-  /**
-   * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
-   * Line separator is also replaced by &lt;br/&gt;
-   */
-  @NlsSafe
-  @NotNull
-  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
-    if (errors == null) {
-      return "";
+    if (important) {
+      VcsNotifier.getInstance(project)
+        .notifyError(null, title, StringUtil.notNullize(description), Collections.singleton(error));
     }
-    StringBuilder content = new StringBuilder();
-    for (VcsException e : errors) {
-      for (String message : e.getMessages()) {
-        content.append(message.replace("\n", BR)).append(BR);
-      }
+    else {
+      VcsNotifier.getInstance(project)
+        .notifyImportantWarning(null, title, StringUtil.notNullize(description), Collections.singleton(error));
     }
-    return content.toString();
-  }
-
-  public static void notifyImportantError(Project project,
-                                          @NotNull @NlsContexts.NotificationTitle String title,
-                                          @Nullable @NlsContexts.NotificationContent String description) {
-    notifyMessage(project, title, description, true, null);
   }
 
   /**
@@ -128,6 +70,7 @@ public final class GitUIUtil {
    * @param comboBox a combobox to examine
    * @return the text field reference
    */
+  @SuppressWarnings("rawtypes")
   public static JTextField getTextField(JComboBox comboBox) {
     return (JTextField)comboBox.getEditor().getEditorComponent();
   }
@@ -141,6 +84,7 @@ public final class GitUIUtil {
    * @param gitRootChooser     git root selector
    * @param currentBranchLabel current branch label (might be null)
    */
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public static void setupRootChooser(@NotNull final Project project,
                                       @NotNull final List<? extends VirtualFile> roots,
                                       @Nullable final VirtualFile defaultRoot,
@@ -215,44 +159,8 @@ public final class GitUIUtil {
    * @param message   the error description
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, @Nls String operation, @NlsContexts.DialogMessage String message) {
+  public static void showOperationError(final Project project, final String operation, @Nls final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
-  }
-
-  /**
-   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
-   * checkbox and change its state to {@code impliedState}. When the {@code checked} checkbox changes states to other state,
-   * than enable {@code changed} and restore its state. Note that the each checkbox should be implied by only one other checkbox.
-   *
-   * @param checked      the checkbox to monitor
-   * @param checkedState the state that triggers disabling changed state
-   * @param changed      the checkbox to change
-   * @param impliedState the implied state of checkbox
-   */
-  public static void imply(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
-    ActionListener l = new ActionListener() {
-      Boolean previousState;
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (checked.isSelected() == checkedState) {
-          if (previousState == null) {
-            previousState = changed.isSelected();
-          }
-          changed.setEnabled(false);
-          changed.setSelected(impliedState);
-        }
-        else {
-          changed.setEnabled(true);
-          if (previousState != null) {
-            changed.setSelected(previousState);
-            previousState = null;
-          }
-        }
-      }
-    };
-    checked.addActionListener(l);
-    l.actionPerformed(null);
   }
 
   /**
@@ -298,42 +206,6 @@ public final class GitUIUtil {
     l.actionPerformed(null);
   }
 
-  /**
-   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
-   * text field and clean it. When the {@code checked} checkbox changes states to other state,
-   * than enable {@code changed} and restore its state. Note that the each text field should be implied by
-   * only one other checkbox.
-   *
-   * @param checked      the checkbox to monitor
-   * @param checkedState the state that triggers disabling changed state
-   * @param changed      the checkbox to change
-   */
-  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextComponent changed) {
-    ActionListener l = new ActionListener() {
-      String previousState;
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (checked.isSelected() == checkedState) {
-          if (previousState == null) {
-            previousState = changed.getText();
-          }
-          changed.setEnabled(false);
-          changed.setText("");
-        }
-        else {
-          changed.setEnabled(true);
-          if (previousState != null) {
-            changed.setText(previousState);
-            previousState = null;
-          }
-        }
-      }
-    };
-    checked.addActionListener(l);
-    l.actionPerformed(null);
-  }
-
   public static String bold(String s) {
     return surround(s, "b");
   }
@@ -348,6 +220,6 @@ public final class GitUIUtil {
 
   @Nls
   public static String getNoCurrentBranch() {
-    return GitBundle.getString("common.no.active.branch");
+    return GitBundle.message("common.no.active.branch");
   }
 }

@@ -49,7 +49,8 @@ public class GitResetHead extends GitRepositoryAction {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.message("resetting.title"),
+            VcsNotifier.getInstance(project).notifyError("git.reset.failed",
+                                                         GitBundle.message("resetting.title"),
                                                          result.getErrorOutputAsHtmlString(),
                                                          true);
           }

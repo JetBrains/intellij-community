@@ -180,7 +180,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess(@NotNull @NlsContexts.NotificationContent String message) {
-    VcsNotifier.getInstance(myProject).notifySuccess(message);
+    VcsNotifier.getInstance(myProject).notifySuccess("git.branch.operation.success", "", message);
   }
 
   protected void notifySuccess() {
@@ -216,7 +216,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-    VcsNotifier.getInstance(myProject).notifyError(title, message);
+    VcsNotifier.getInstance(myProject).notifyError("git.branch.operation.error", title, message);
   }
 
   @NotNull

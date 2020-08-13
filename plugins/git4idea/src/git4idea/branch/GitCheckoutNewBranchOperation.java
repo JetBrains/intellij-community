@@ -130,7 +130,8 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
                  code(myNewBranchName),
                  repositories.size(),
                  successfulRepositoriesJoined());
-      VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("checkout.new.branch.operation.rollback.successful"), message);
+      VcsNotifier.getInstance(myProject).notifySuccess("git.checkout.new.branch.operation.rollback.successful",
+                                                       GitBundle.message("checkout.new.branch.operation.rollback.successful"), message);
     }
     else {
       @NlsContexts.NotificationContent StringBuilder message = new StringBuilder();
@@ -143,7 +144,10 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
       VcsNotifier.getInstance(myProject)
-        .notifyError(GitBundle.message("checkout.new.branch.operation.error.during.rollback"), message.toString(), true);
+        .notifyError("git.checkout.new.branch.operation.rollback.error",
+                     GitBundle.message("checkout.new.branch.operation.error.during.rollback"),
+                     message.toString(),
+                     true);
     }
   }
 

@@ -28,9 +28,23 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
 
   private val operationNameCapitalised = StringUtil.capitalizeWords(operationName, true)
 
-  class Merge : GitAbortOperationAction(Repository.State.MERGING, GitBundle.message("abort.operation.merge.name"), GitCommand.MERGE)
-  class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, GitBundle.message("abort.operation.cherry.pick.name"), GitCommand.CHERRY_PICK)
-  class Revert : GitAbortOperationAction(Repository.State.REVERTING, GitBundle.message("abort.operation.revert.name"), GitCommand.REVERT)
+  protected abstract val notificationSuccessDisplayId: String
+  protected abstract val notificationErrorDisplayId: String
+
+  class Merge : GitAbortOperationAction(Repository.State.MERGING, GitBundle.message("abort.operation.merge.name"), GitCommand.MERGE) {
+    override val notificationSuccessDisplayId = "git.merge.abort.success"
+    override val notificationErrorDisplayId = "git.merge.abort.failed"
+  }
+
+  class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, GitBundle.message("abort.operation.cherry.pick.name"), GitCommand.CHERRY_PICK) {
+    override val notificationSuccessDisplayId = "git.cherry.pick.abort.success"
+    override val notificationErrorDisplayId = "git.cherry.pick.abort.failed"
+  }
+
+  class Revert : GitAbortOperationAction(Repository.State.REVERTING, GitBundle.message("abort.operation.revert.name"), GitCommand.REVERT) {
+    override val notificationSuccessDisplayId = "git.revert.abort.success"
+    override val notificationErrorDisplayId = "git.revert.abort.failed"
+  }
 
   override fun performInBackground(repository: GitRepository) {
     if (!confirmAbort(repository)) return
@@ -65,10 +79,10 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
         val result = Git.getInstance().runCommand(handler)
 
         if (!result.success()) {
-          VcsNotifier.getInstance(project).notifyError(GitBundle.message("abort.operation.failed", operationNameCapitalised), result.errorOutputAsHtmlString, true)
+          VcsNotifier.getInstance(project).notifyError(notificationErrorDisplayId, GitBundle.message("abort.operation.failed", operationNameCapitalised), result.errorOutputAsHtmlString, true)
         }
         else {
-          VcsNotifier.getInstance(project).notifySuccess(GitBundle.message("abort.operation.succeeded", operationNameCapitalised))
+          VcsNotifier.getInstance(project).notifySuccess(notificationSuccessDisplayId, "", GitBundle.message("abort.operation.succeeded", operationNameCapitalised))
 
           GitUtil.updateAndRefreshChangedVfs(repository, startHash)
           RefreshVFsSynchronously.refresh(stagedChanges, true)

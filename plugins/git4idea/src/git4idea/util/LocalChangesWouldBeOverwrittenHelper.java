@@ -29,8 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
@@ -65,23 +64,42 @@ public class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
-  public static void showErrorNotification(@NotNull final Project project, @NotNull final VirtualFile root, @NotNull final String operationName,
+  /**
+   * @deprecated use {@link #showErrorNotification(Project, String, VirtualFile, String, Collection)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
+  @Deprecated
+  public static void showErrorNotification(@NotNull final Project project,
+                                           @NotNull final VirtualFile root,
+                                           @NotNull final String operationName,
+                                           @NotNull final Collection<String> relativeFilePaths) {
+    showErrorNotification(project, null, root, operationName, relativeFilePaths);
+  }
+
+  public static void showErrorNotification(@NotNull final Project project,
+                                           @NonNls @Nullable String displayId,
+                                           @NotNull final VirtualFile root,
+                                           @NotNull final String operationName,
                                            @NotNull final Collection<String> relativeFilePaths) {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
     String notificationTitle = GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName));
-    VcsNotifier.getInstance(project).notifyError(notificationTitle, getErrorNotificationDescription(),
-      new NotificationListener.Adapter() {
-       @Override
-       protected void hyperlinkActivated(@NotNull Notification notification,
-                                         @NotNull HyperlinkEvent e) {
-         showErrorDialog(project, operationName, changes, absolutePaths);
-       }
-      });
+    VcsNotifier.getInstance(project)
+      .notifyError(displayId,
+                   notificationTitle,
+                   getErrorNotificationDescription(),
+                   new NotificationListener.Adapter() {
+                     @Override
+                     protected void hyperlinkActivated(@NotNull Notification notification,
+                                                       @NotNull HyperlinkEvent e) {
+                       showErrorDialog(project, operationName, changes, absolutePaths);
+                     }
+                   }
+      );
   }
 
   /**
-   * @deprecated Use {@link #showErrorNotification(Project, VirtualFile, String, Collection) showErrorNotification()}.
+   * @deprecated Use {@link #showErrorNotification(Project, String, VirtualFile, String, Collection)} instead
    */
   @Deprecated
   public static void showErrorDialog(@NotNull Project project, @NotNull VirtualFile root, @NotNull String operationName,

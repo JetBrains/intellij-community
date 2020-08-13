@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -103,8 +105,8 @@ public class GitCommandResult {
 
   @NotNull
   @NlsSafe
-  public String getErrorOutputAsHtmlString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), "<br/>");
+  public @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), UIUtil.BR);
   }
 
   @NotNull

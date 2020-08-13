@@ -22,6 +22,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.NotNull
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -85,9 +86,9 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  override fun showMessage(@Nls(capitalization = Sentence) text: String) {
+  override fun showMessage(@NlsContexts.NotificationContent @NotNull message: String) {
     invokeAndWaitIfNeeded(modalityState) {
-      inlineComponent.showMessage(text)
+      inlineComponent.showMessage(message)
     }
   }
 

@@ -158,7 +158,10 @@ class GitMergeOperation extends GitBranchOperation {
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
         String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
-        VcsNotifier.getInstance(myProject).notifySuccess("", description, new DeleteMergedLocalBranchNotificationListener());
+        VcsNotifier.getInstance(myProject).notifySuccess("git.delete.branch.on.merge",
+                                                         "",
+                                                         description,
+                                                         new DeleteMergedLocalBranchNotificationListener());
         break;
       case NOTHING:
         super.notifySuccess(message);
@@ -281,8 +284,10 @@ class GitMergeOperation extends GitBranchOperation {
     myConflictedRepositories.clear();
 
     if (!result.totalSuccess()) {
-      VcsNotifier.getInstance(myProject)
-        .notifyError(GitBundle.message("merge.operation.error.during.rollback"), result.getErrorOutputWithReposIndication(), true);
+      VcsNotifier.getInstance(myProject).notifyError("git.merge.rollback.error",
+                                                     GitBundle.message("merge.operation.error.during.rollback"),
+                                                     result.getErrorOutputWithReposIndication(),
+                                                     true);
     }
     LOG.info("rollback finished.");
   }

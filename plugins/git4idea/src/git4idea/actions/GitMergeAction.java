@@ -43,7 +43,6 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdatedRanges;
 import git4idea.update.HashRange;
-import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NonNls;
@@ -89,6 +88,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
   @Nullable
   protected abstract DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
                                                @NotNull VirtualFile defaultRoot);
+
+  protected abstract String getNotificationErrorDisplayId();
 
   @Override
   protected final void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
@@ -203,14 +204,16 @@ abstract class GitMergeAction extends GitRepositoryAction {
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
-          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
+          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null,
+                                                                              "git.files.updated.after.merge");
           notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
             "action.NotificationAction.GitMergeAction.text.view.commits"),
                                                                  notificationData.getViewCommitAction()));
         }
         else {
           notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"),
-                                                                              "", INFORMATION, null);
+                                                                              "", INFORMATION, null,
+                                                                              "git.all.files.are.up.to.date");
         }
         VcsNotifier.getInstance(project).notify(notification);
       }
@@ -219,7 +222,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
-      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, repository.getRoot(), getActionName(),
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.merge.local.changes.detected", repository.getRoot(), getActionName(),
                                                                  localChangesDetector.getRelativeFilePaths());
     }
     else if (untrackedFilesDetector.wasMessageDetected()) {
@@ -227,7 +230,10 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                                 getActionName(), null);
     }
     else {
-      GitUIUtil.notifyError(project, GitBundle.message("merge.action.operation.failed", getActionName()), result.getErrorOutputAsJoinedString(), true, null);
+      VcsNotifier.getInstance(project)
+        .notifyError(getNotificationErrorDisplayId(),
+                     GitBundle.message("merge.action.operation.failed", getActionName()),
+                     result.getErrorOutputAsJoinedString());
       repository.update();
     }
   }

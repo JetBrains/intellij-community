@@ -75,11 +75,15 @@ class GitRenameBranchOperation extends GitBranchOperation {
       repository.update();
     }
     if (result.totalSuccess()) {
-      myNotifier.notifySuccess(GitBundle.message("git.rename.branch.rollback.successful"),
+      myNotifier.notifySuccess("git.branch.rename.rollback.success",
+                               GitBundle.message("git.rename.branch.rollback.successful"),
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
     }
     else {
-      myNotifier.notifyError(GitBundle.message("git.rename.branch.rollback.failed"), result.getErrorOutputWithReposIndication(), true);
+      myNotifier.notifyError("git.branch.rename.rollback.failed",
+                             GitBundle.message("git.rename.branch.rollback.failed"),
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 

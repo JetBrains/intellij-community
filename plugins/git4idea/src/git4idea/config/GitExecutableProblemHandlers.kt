@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.NotNull
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {
@@ -56,7 +58,7 @@ interface ErrorNotifier {
   fun changeProgressTitle(@Nls(capitalization = Title) text: String)
 
   @CalledInAny
-  fun showMessage(@Nls(capitalization = Sentence) text: String)
+  fun showMessage(@NlsContexts.NotificationContent @NotNull message: String)
 
   @CalledInAny
   fun hideProgress()

@@ -196,7 +196,8 @@ public class GitConflictResolver {
   }
 
   protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null,
+                                                                                "git.cannot.resolve.conflict");
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> mergeNoProceed());
@@ -249,7 +250,7 @@ public class GitConflictResolver {
       myParams.myErrorNotificationAdditionalDescription
     );
     VcsNotifier.getInstance(myProject).notifyError(
-      myParams.myErrorNotificationTitle,
+      "git.conflict.resolving.error",myParams.myErrorNotificationTitle,
       new HtmlBuilder().appendRaw(description).br().appendRaw(e.getLocalizedMessage()).toString()
     );
   }

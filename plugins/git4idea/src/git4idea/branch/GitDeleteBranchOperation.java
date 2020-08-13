@@ -136,7 +136,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null);
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null,
+                                                                         "git.branch.deleted");
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
       notification.expire();
       restoreInBackground(notification);
@@ -181,7 +182,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (!result.totalSuccess()) {
-      myNotifier.notifyError(GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
+      myNotifier.notifyError("git.branch.deletion.rollback.error",
+                             GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
@@ -361,7 +363,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
+      myNotifier.notifyError("git.branch.deletion.rollback.error",
+                             GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }

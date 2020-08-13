@@ -365,7 +365,7 @@ public class GitRebaseProcess {
     Collection<VirtualFile> rootsToSave = getRootsFromRepositories(getDirtyRoots(repositoriesToSave));
     String error = saveLocalChanges(rootsToSave);
     if (error != null) {
-      myNotifier.notifyError(GitBundle.message("rebase.notification.not.started.title"), error);
+      myNotifier.notifyError("git.rebase.not.started", GitBundle.message("rebase.notification.not.started.title"), error);
       return false;
     }
     return true;
@@ -400,7 +400,7 @@ public class GitRebaseProcess {
       baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
     }
     String message = GitSuccessfulRebase.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
-    myNotifier.notifyMinorInfo(GitBundle.message("rebase.notification.successful.title"), message);
+    myNotifier.notifyMinorInfo("git.rebase.successful", GitBundle.message("rebase.notification.successful.title"), message);
   }
 
   @Nullable
@@ -419,7 +419,8 @@ public class GitRebaseProcess {
       GitBundle.message("rebase.notification.conflict.title"),
       description,
       NotificationType.WARNING,
-      null
+      null,
+      "git.rebase.stopped.due.to.conflicts"
     );
     notification.addAction(new ResolveAction(conflictingRepository));
     notification.addAction(CONTINUE_ACTION);
@@ -446,7 +447,8 @@ public class GitRebaseProcess {
       GitBundle.message("rebase.notification.editing.title"),
       "",
       NotificationType.INFORMATION,
-      null
+      null,
+      "git.rebase.stopped.for.editing"
     );
     notification.addAction(CONTINUE_ACTION);
     notification.addAction(ABORT_ACTION);
@@ -470,7 +472,8 @@ public class GitRebaseProcess {
       title,
       descriptionBuilder.toString(),
       NotificationType.ERROR,
-      null
+      null,
+      "git.rebase.failed"
     );
     notification.addAction(RETRY_ACTION);
     if (somethingWasRebased || !successful.isEmpty()) {

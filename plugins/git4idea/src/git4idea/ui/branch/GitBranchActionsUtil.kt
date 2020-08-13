@@ -87,7 +87,8 @@ internal fun checkoutOrReset(project: Project,
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
       VcsNotifier.getInstance(project)
-        .notifyError(GitBundle.message("branches.checkout.failed.title"),
+        .notifyError("git.branch.checkout.failed",
+                     GitBundle.message("branches.checkout.failed.title"),
                      GitBundle.message("branches.checkout.failed.description", name))
       return
     }
@@ -102,7 +103,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   if (options.reset) {
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError(GitBundle.message("branches.creation.failed.title"),
+      VcsNotifier.getInstance(project).notifyError("git.branch.creation.failed",
+                                                   GitBundle.message("branches.creation.failed.title"),
                                                    GitBundle.message("branches.checkout.failed.description", name))
       return
     }
@@ -166,8 +168,9 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun onSuccess() {
       if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("branches.selected.branches.updated.title",
-                                                                           successfullyUpdated.size,
+        VcsNotifier.getInstance(myProject).notifySuccess("git.branches.update.successful", "",
+                                                         GitBundle.message("branches.selected.branches.updated.title",
+                                                                                                                            successfullyUpdated.size,
                                                                            successfullyUpdated.joinToString("\n")))
       }
     }

@@ -114,7 +114,8 @@ public final class GitRebaseUpdater extends GitUpdater {
       // so we just notify the user about problems with collecting the updated changes.
       LOG.info("Couldn't mark end for repository " + repository, e);
       VcsNotifier.getInstance(myProject).
-        notifyMinorWarning(GitBundle.message("notification.title.couldnt.collect.updated.files.info"),
+        notifyMinorWarning("git.rebase.collect.updated.changes.error",
+                           GitBundle.message("notification.title.couldnt.collect.updated.files.info"),
                            GitBundle.message("notification.content.couldnt.collect.updated.files.info", repository));
     }
     return result.success();
