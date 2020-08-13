@@ -116,10 +116,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), disposable);
 
-    initColumns();
-    myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
+    initColumnModel();
     onColumnOrderSettingChanged();
     setRootColumnSize();
+    myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
+    VcsLogColumnModelIndices.getInstance().addCurrentColumnsListener(disposable, new MyCurrentColumnsListener());
 
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
@@ -147,15 +148,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     };
   }
 
-  private void initColumns() {
+  private void initColumnModel() {
     TableColumnModel columnModel = new MyTableColumnModel(myProperties);
     setColumnModel(columnModel);
-
-    for (VcsLogColumn<?> column : VcsLogColumnModelIndices.getInstance().getCurrentColumns()) {
-      TableColumn tableColumn = createTableColumn(column);
-      columnModel.addColumn(tableColumn);
-      myTableColumns.put(column, tableColumn);
-    }
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
   }
 
@@ -199,16 +194,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void onColumnOrderSettingChanged() {
-    TableColumnModel columnModel = getColumnModel();
-
     List<VcsLogColumn<?>> columnOrder = getColumnOrderFromProperties();
     if (columnOrder != null) {
+      TableColumnModel columnModel = getColumnModel();
       int columnCount = getVisibleColumnCount();
       for (int i = columnCount - 1; i >= 0; i--) {
         columnModel.removeColumn(columnModel.getColumn(i));
       }
 
       for (VcsLogColumn<?> column : columnOrder) {
+        myTableColumns.computeIfAbsent(column, (k) -> createTableColumn(column));
         columnModel.addColumn(myTableColumns.get(column));
       }
     }
@@ -300,7 +295,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void updateDynamicColumnsWidth() {
-    for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
+    for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getCurrentDynamicColumns()) {
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
@@ -986,7 +981,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
+        for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getCurrentDynamicColumns()) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
             VcsLogColumnsWidthStorage.getInstance().saveColumnWidth(myProperties, logColumn, column.getWidth());
@@ -1028,6 +1023,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public boolean isBorderOpaque() {
       return true;
+    }
+  }
+
+  private class MyCurrentColumnsListener implements VcsLogColumnModelIndices.CurrentColumnsListener {
+    @Override
+    public void columnAdded(@NotNull VcsLogColumn<?> column) {
+      onColumnOrderSettingChanged();
+    }
+
+    @Override
+    public void columnRemoved(@NotNull VcsLogColumn<?> column) {
+      myTableColumns.remove(column);
+      myInitializedColumns.remove(column);
+      onColumnOrderSettingChanged();
     }
   }
 }

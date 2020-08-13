@@ -53,6 +53,9 @@ public final class GraphTableModel extends AbstractTableModel {
     myLogData = logData;
     myRequestMore = requestMore;
     myProperties = properties;
+    VcsLogColumnModelIndices.getInstance().addColumnModelListener(logData, (column, index) -> {
+      fireTableStructureChanged();
+    });
   }
 
   @Override

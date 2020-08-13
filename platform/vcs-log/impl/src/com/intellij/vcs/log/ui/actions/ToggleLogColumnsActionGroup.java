@@ -8,14 +8,16 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.*;
+import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
 
@@ -39,7 +41,10 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     if (e != null && !isPopup(e)) {
       actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
     }
-    for (VcsLogColumn<?> column : VcsLogColumnModelIndices.getInstance().getDynamicColumns()) {
+    for (VcsLogColumn<?> column : getDefaultDynamicColumns()) {
+      actions.add(new ToggleColumnAction(column));
+    }
+    for (VcsLogColumn<?> column : filter(VcsLogCustomColumn.KEY.getExtensionList(), (it) -> it.isDynamic())) {
       actions.add(new ToggleColumnAction(column));
     }
 

@@ -36,6 +36,10 @@ internal class VcsLogColumnsWidthStorage {
     }
   }
 
+  fun removeTableColumnProperty(column: VcsLogColumn<*>) {
+    columnsWidth.remove(column)
+  }
+
   private fun getProperty(column: VcsLogColumn<*>) = columnsWidth.getOrPut(column) { TableColumnProperty(column) }
 
   class TableColumnProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth") {
