@@ -57,7 +57,7 @@ public final class PathUtil {
   }
 
   @NotNull
-  public static String getFileName(@NotNull String path) {
+  public static @NlsSafe String getFileName(@NotNull String path) {
     return PathUtilRt.getFileName(path);
   }
 

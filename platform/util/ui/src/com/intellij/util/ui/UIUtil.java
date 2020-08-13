@@ -2196,20 +2196,20 @@ public final class UIUtil {
     }
   }
 
-  public static @NotNull String toHtml(@NotNull String html) {
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html) {
     return toHtml(html, 0);
   }
 
   @NonNls
-  public static @NotNull String toHtml(@NotNull String html, final int hPadding) {
-    html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
+    @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : JBUIScale.scale(11);
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
-           + addPadding(html, hPadding) + "</html>";
+           + addPadding(withClosedTag, hPadding) + "</html>";
   }
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {

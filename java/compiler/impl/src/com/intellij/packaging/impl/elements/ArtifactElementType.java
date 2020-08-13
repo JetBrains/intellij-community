@@ -86,6 +86,6 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
 
   @Override
   public String getShowContentActionText() {
-    return "Show Content of Included Artifacts";
+    return JavaCompilerBundle.message("show.content.of.included.artifacts");
   }
 }

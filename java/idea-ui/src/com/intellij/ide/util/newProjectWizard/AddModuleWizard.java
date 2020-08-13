@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -13,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,13 +55,12 @@ public class AddModuleWizard extends AbstractProjectWizard {
     initModuleWizard(project, filePath);
   }
 
-  private static String getImportWizardTitle(Project project, ProjectImportProvider... providers) {
-    StringBuilder builder = new StringBuilder("Import ");
-    builder.append(project == null ? "Project" : "Module");
-    if (providers.length == 1) {
-      builder.append(" from ").append(providers[0].getName());
+  private static @NlsContexts.DialogTitle String getImportWizardTitle(Project project, ProjectImportProvider... providers) {
+    int isProject = project == null ? 0 : 1;
+    if (providers.length != 1) {
+      return JavaUiBundle.message("module.wizard.dialog.title", isProject, 0, null);
     }
-    return builder.toString();
+    return JavaUiBundle.message("module.wizard.dialog.title", isProject, 1, providers[0].getName());
   }
 
   private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {

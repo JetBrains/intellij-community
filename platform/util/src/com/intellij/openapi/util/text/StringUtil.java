@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -1986,7 +1987,7 @@ public class StringUtil extends StringUtilRt {
    * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
    */
   @Contract(pure = true)
-  public static @NotNull String escapeXmlEntities(@NotNull String text) {
+  public static @NotNull @NlsSafe String escapeXmlEntities(@NotNull String text) {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
@@ -3109,7 +3110,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null->!null", pure = true)
-  public static String internEmptyString(String s) {
+  public static @NlsSafe String internEmptyString(String s) {
     return s == null ? null : s.isEmpty() ? "" : s;
   }
 

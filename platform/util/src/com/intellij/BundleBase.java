@@ -228,6 +228,7 @@ public abstract class BundleBase {
       }
       i++;
     }
-    return builder.toString();
+    @NlsSafe final String result = builder.toString();
+    return result;
   }
 }

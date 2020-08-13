@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
@@ -21,10 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
@@ -36,8 +34,8 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               java.util.function.Predicate<Library> acceptedLibraries) {
-    super(classpathPanel.getComponent(), "Choose Libraries", classpathPanel.getProject(), true);
+                                               Predicate<Library> acceptedLibraries) {
+    super(classpathPanel.getComponent(), JavaUiBundle.message("project.structure.dialog.title.choose.libraries"), classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
@@ -105,7 +103,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
         return model.getLibraryEditor(library).getName();
       }
     }
-    return library.getName();
+    return Objects.toString(library.getName());
   }
 
   @Override
@@ -134,7 +132,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private static class LibraryEditorDescriptor extends LibrariesTreeNodeBase<Library> {
     protected LibraryEditorDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Library element,
-                                      String libraryName, StructureConfigurableContext context) {
+                                      @NlsSafe String libraryName, StructureConfigurableContext context) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
       Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(element, context);

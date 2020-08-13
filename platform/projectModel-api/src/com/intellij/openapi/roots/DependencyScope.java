@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +47,7 @@ public enum DependencyScope {
   RUNTIME("Runtime", false, true, false, true),
   PROVIDED("Provided", true, false, true, true);
   @NotNull
-  private final String myDisplayName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myDisplayName;
   private final boolean myForProductionCompile;
   private final boolean myForProductionRuntime;
   private final boolean myForTestCompile;
@@ -54,7 +55,7 @@ public enum DependencyScope {
 
   public static final String SCOPE_ATTR = "scope";
 
-  DependencyScope(@NotNull String displayName,
+  DependencyScope(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String displayName,
                   boolean forProductionCompile,
                   boolean forProductionRuntime,
                   boolean forTestCompile,
@@ -110,7 +111,7 @@ public enum DependencyScope {
   }
 
   @Override
-  public String toString() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String toString() {
     return myDisplayName;
   }
 }

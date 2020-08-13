@@ -6,6 +6,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
@@ -15,7 +16,7 @@ import java.util.List;
 @Tag("artifact")
 public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
-  private String myName;
+  private @Nls(capitalization = Nls.Capitalization.Title) String myName;
   private String myOutputPath;
   private String myArtifactType = "plain";
   private boolean myBuildOnMake;
@@ -24,7 +25,7 @@ public class ArtifactState {
   private String myExternalSystemId;
 
   @Attribute(NAME_ATTRIBUTE)
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
     return myName;
   }
 
@@ -38,7 +39,7 @@ public class ArtifactState {
     return myBuildOnMake;
   }
 
-  @Attribute(value = SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
   public String getExternalSystemId() {
     return myExternalSystemId;
   }
@@ -67,7 +68,7 @@ public class ArtifactState {
     myArtifactType = artifactType;
   }
 
-  public void setName(String name) {
+  public void setName(@Nls(capitalization = Nls.Capitalization.Title) String name) {
     myName = name;
   }
 

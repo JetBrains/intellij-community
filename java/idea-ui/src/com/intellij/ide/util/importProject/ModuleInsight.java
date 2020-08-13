@@ -8,6 +8,7 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -92,7 +93,7 @@ public abstract class ModuleInsight {
         if (isIgnoredName(sourceRoot)) {
           continue;
         }
-        myProgress.setText("Scanning " + sourceRoot.getPath());
+        myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.scanning", sourceRoot.getPath()));
 
         final HashSet<String> usedPackages = new HashSet<>();
         mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
@@ -107,7 +108,7 @@ public abstract class ModuleInsight {
       myProgress.popState();
 
       myProgress.pushState();
-      myProgress.setText("Building modules layout...");
+      myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.building.modules.layout"));
       Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
@@ -464,7 +465,8 @@ public abstract class ModuleInsight {
   protected abstract boolean isSourceFile(final File file);
 
   private void scanSourceFile(File file, final Set<? super String> usedPackages) {
-    myProgress.setText2(file.getName());
+    @NlsSafe final String name = file.getName();
+    myProgress.setText2(name);
     try {
       final char[] chars = FileUtil.loadFileText(file);
       scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
@@ -488,14 +490,14 @@ public abstract class ModuleInsight {
           scanRootForLibraries(file);
         }
         else {
-          final String fileName = file.getName();
+          @NlsSafe final String fileName = file.getName();
           if (isLibraryFile(fileName)) {
             if (!myJarToPackagesMap.containsKey(file)) {
               final HashSet<String> libraryPackages = new HashSet<>();
               myJarToPackagesMap.put(file, libraryPackages);
 
               myProgress.pushState();
-              myProgress.setText2(file.getName());
+              myProgress.setText2(fileName);
               try {
                 scanLibraryForDeclaredPackages(file, s -> {
                   if (!libraryPackages.contains(s)) {

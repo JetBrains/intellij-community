@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +48,7 @@ public final class JavadocQuarantineStatusCleaner {
   public static void cleanIfNeeded(VirtualFile @NotNull ... docFolders) {
     if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<String> quarantined = Stream.of(docFolders)
+        List<@NlsSafe String> quarantined = Stream.of(docFolders)
           .filter(f -> f.isInLocalFileSystem() && f.isDirectory() && XAttrUtil.getXAttr(f.getPath(), QUARANTINE_ATTRIBUTE) != null)
           .map(VirtualFile::getPath)
           .collect(Collectors.toList());
@@ -64,11 +65,11 @@ public final class JavadocQuarantineStatusCleaner {
     }
   }
 
-  private static void cleanQuarantineStatusInBackground(List<String> paths) {
+  private static void cleanQuarantineStatusInBackground(List<@NlsSafe String> paths) {
     new Task.Backgroundable(null, JavaUiBundle.message("quarantine.clean.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (String path : paths) {
+        for (@NlsSafe String path : paths) {
           indicator.checkCanceled();
           indicator.setText2(path);
           try (Stream<Path> s = Files.walk(Paths.get(path))) {

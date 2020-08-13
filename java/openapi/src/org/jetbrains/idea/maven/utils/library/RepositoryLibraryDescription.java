@@ -120,7 +120,7 @@ public class RepositoryLibraryDescription {
     return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true, ContainerUtil.emptyList());
   }
 
-  public String getDisplayName(String version) {
+  public @NlsSafe String getDisplayName(String version) {
     if (LatestVersionId.equals(version)) {
       version = LatestVersionDisplayName;
     }

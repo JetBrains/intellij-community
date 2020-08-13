@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,7 +71,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
 
     @NotNull
     @Override
-    public String getRootTypeName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) String getRootTypeName() {
       return myFramework.getDisplayName();
     }
 

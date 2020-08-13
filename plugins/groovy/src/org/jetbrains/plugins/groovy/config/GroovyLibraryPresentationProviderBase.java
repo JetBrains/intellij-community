@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import java.util.List;
@@ -34,9 +35,9 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
   }
 
   @Override
-  public String getDescription(@NotNull GroovyLibraryProperties properties) {
+  public @Nls String getDescription(@NotNull GroovyLibraryProperties properties) {
     final String version = properties.getVersion();
-    return getLibraryCategoryName() + " library" + (version != null ? " of version " + version : ":");
+    return GroovyBundle.message("library.presentation.provider.description", getLibraryCategoryName(), version, version != null ? 0 : 1);
   }
 
   @Override

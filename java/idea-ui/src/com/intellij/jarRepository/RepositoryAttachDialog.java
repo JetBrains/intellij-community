@@ -30,7 +30,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +98,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                    : JavaUiBundle.message("dialog.title.search.library.in.maven.repositories"));
     myProject = project;
     myProgressIcon.suspend();
-    @Nls final String text = JavaUiBundle.message("repository.attach.dialog.caption.label");
+    final String text = JavaUiBundle.message("repository.attach.dialog.caption.label");
     myCaptionLabel.setText(XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(text)));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));

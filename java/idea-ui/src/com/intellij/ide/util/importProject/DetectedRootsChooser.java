@@ -30,7 +30,7 @@ public class DetectedRootsChooser {
   private final ColumnInfo<DetectedRootData,Boolean> myIncludedColumn = new ColumnInfo<DetectedRootData, Boolean>("") {
 
     @Override
-    public Class getColumnClass() {
+    public Class<Boolean> getColumnClass() {
       return Boolean.class;
     }
 
@@ -98,7 +98,7 @@ public class DetectedRootsChooser {
 
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
-      ComboBox<DetectedProjectRoot> comboBox = new ComboBox<>(new CollectionComboBoxModel(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
+      ComboBox<DetectedProjectRoot> comboBox = new ComboBox<>(new CollectionComboBoxModel<>(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
       comboBox.setRenderer(SimpleListCellRenderer.create("", DetectedProjectRoot::getRootTypeName));
       return new DefaultCellEditor(comboBox);
     }

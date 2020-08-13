@@ -15,6 +15,8 @@
  */
 package com.intellij.xml;
 
+import com.intellij.openapi.util.NlsSafe;
+
 /**
  * @author gregsh
  */
@@ -28,8 +30,8 @@ public interface CommonXmlStrings {
   String AMP = "&amp;";
   String NBSP = "&nbsp;";
 
-  String HTML_START = "<html>";
+  @NlsSafe String HTML_START = "<html>";
   String BODY_START = "<body>";
-  String HTML_END = "</html>";
+  @NlsSafe String HTML_END = "</html>";
   String BODY_END = "</body>";
 }

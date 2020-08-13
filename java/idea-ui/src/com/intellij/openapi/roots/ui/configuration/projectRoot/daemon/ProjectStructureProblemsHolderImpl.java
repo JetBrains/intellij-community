@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 
   @Override
-  public void registerProblem(@NotNull String message, @Nullable String description,
+  public void registerProblem(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @Nullable String description,
                               @NotNull ProjectStructureProblemType problemType,
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {

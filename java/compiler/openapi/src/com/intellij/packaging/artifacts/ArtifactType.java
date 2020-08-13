@@ -8,6 +8,7 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +20,9 @@ import java.util.List;
 public abstract class ArtifactType {
   public static final ExtensionPointName<ArtifactType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactType");
   private final String myId;
-  private final String myTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myTitle;
 
-  protected ArtifactType(@NonNls String id, String title) {
+  protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
     myId = id;
     myTitle = title;
   }
@@ -30,7 +31,7 @@ public abstract class ArtifactType {
     return myId;
   }
 
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return myTitle;
   }
 

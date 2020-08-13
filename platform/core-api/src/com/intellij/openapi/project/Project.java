@@ -4,10 +4,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 /**
  * An object representing an IntelliJ project.
@@ -29,7 +26,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return project name
    */
   @NotNull
-  String getName();
+  @Nls String getName();
 
   /**
    * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>

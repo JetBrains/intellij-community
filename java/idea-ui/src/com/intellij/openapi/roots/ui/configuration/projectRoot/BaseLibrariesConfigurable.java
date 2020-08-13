@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -200,7 +201,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     };
   }
 
-  protected abstract String getAddText();
+  protected abstract @NlsActions.ActionText String getAddText();
 
   public abstract StructureLibraryTableModifiableModelProvider getModelProvider();
 

@@ -97,7 +97,7 @@ public final class RepositoryUtils {
       ApplicationManager.getApplication().invokeLater(
         roots == null || roots.isEmpty() ?
         () -> {
-          String message = "No files were downloaded for " + properties.getMavenId();
+          String message = JavaUiBundle.message("notification.content.no.files.were.downloaded", properties.getMavenId());
           Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message(
             "notification.title.repository.library.synchronization"),
                                                     message, NotificationType.ERROR), project);

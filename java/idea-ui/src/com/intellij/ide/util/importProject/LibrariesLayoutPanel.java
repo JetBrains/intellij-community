@@ -2,6 +2,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.util.Collection;
@@ -70,13 +71,23 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected String getDependenciesTitle() {
+  protected @Nls(capitalization = Nls.Capitalization.Title) String getDependenciesTitle() {
     return JavaUiBundle.message("title.library.contents");
   }
 
   @Override
-  protected String getElementTypeName() {
-    return "library";
+  protected @Nls String getElementTypeName() {
+    return JavaUiBundle.message("library");
+  }
+
+  @Override
+  protected @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNameTitle() {
+    return JavaUiBundle.message("configurable.library.prefix");
+  }
+
+  @Override
+  protected @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNamePlural() {
+    return JavaUiBundle.message("title.libraries");
   }
 
   @Override

@@ -2,10 +2,11 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ModuleOutputElementTypeBase<E extends ModulePackagingElementBase> extends ModuleElementTypeBase<E> {
-  public ModuleOutputElementTypeBase(String id, String presentableName) {
+  public ModuleOutputElementTypeBase(String id, @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
     super(id, presentableName);
   }
 

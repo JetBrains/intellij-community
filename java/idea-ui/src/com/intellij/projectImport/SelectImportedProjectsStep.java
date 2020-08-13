@@ -119,7 +119,8 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   public boolean validate() throws ConfigurationException {
     getContext().setList(fileChooser.getMarkedElements());
     if (fileChooser.getMarkedElements().size() == 0) {
-      throw new ConfigurationException("Nothing found to import", "Unable to proceed");
+      throw new ConfigurationException(JavaUiBundle.message("select.imported.projects.dialog.message.nothing.found"),
+                                       JavaUiBundle.message("select.imported.projects.dialog.title.unable.to.proceed"));
     }
     return true;
   }
@@ -137,4 +138,3 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return getBuilder();
   }
 }
-

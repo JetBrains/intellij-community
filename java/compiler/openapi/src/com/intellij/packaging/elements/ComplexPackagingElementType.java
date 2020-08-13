@@ -18,16 +18,17 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ComplexPackagingElementType<E extends ComplexPackagingElement<?>> extends PackagingElementType<E> {
-  protected ComplexPackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName) {
+  protected ComplexPackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
     super(id, presentableName);
   }
 
-  public abstract String getShowContentActionText();
+  public abstract @Nls(capitalization = Nls.Capitalization.Title) String getShowContentActionText();
 
   @Nullable
   public ModificationTracker getAllSubstitutionsModificationTracker(@NotNull Project project) {

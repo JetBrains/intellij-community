@@ -233,7 +233,7 @@ public class LibraryOptionsPanel implements Disposable {
         else if (value instanceof NewLibraryEditor) {
           setIcon(PlatformIcons.LIBRARY_ICON);
           final String name = value.getName();
-          append(name != null ? name : JavaUiBundle.message("library.options.panel.existing.library.combobox.label.unnamed"));
+          append(name != null ? name : JavaUiBundle.message("unnamed.title"));
         }
       }
     });

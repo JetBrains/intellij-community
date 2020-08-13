@@ -16,12 +16,13 @@
 package com.intellij.framework.library;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.util.List;
 
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
   private final Icon myIcon;
-  private final String myLibraryCategoryName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
   /**
@@ -42,7 +43,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @param groupId name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
    * @param localUrls URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
    */
-  protected DownloadableLibraryType(@NotNull String libraryCategoryName,
+  protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
                                @NotNull String libraryTypeId,
                                @NotNull String groupId,
                                URL @NotNull ... localUrls) {
@@ -53,7 +54,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
    */
   @Deprecated
-  public DownloadableLibraryType(@NotNull String libraryCategoryName,
+  public DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
                                  @NotNull String libraryTypeId,
                                  @NotNull String groupId,
                                  @Nullable Icon icon,
@@ -101,9 +102,10 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   @Override
-  public String getDescription(@NotNull LibraryVersionProperties properties) {
+  public @Nls String getDescription(@NotNull LibraryVersionProperties properties) {
     final String versionString = properties.getVersionString();
-    return StringUtil.capitalize(myLibraryCategoryName) + " library" + (versionString != null ? " of version " + versionString : "");
+    final int versionStringPresent = versionString != null ? 0 : 1;
+    return JavaUiBundle.message("downloadable.library.type.description", myLibraryCategoryName, versionString, versionStringPresent);
   }
 
   @Override
