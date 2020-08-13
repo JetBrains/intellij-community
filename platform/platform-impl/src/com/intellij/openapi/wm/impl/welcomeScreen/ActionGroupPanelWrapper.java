@@ -296,7 +296,7 @@ public class ActionGroupPanelWrapper {
       .detachComponent(parentComponent, null);
   }
 
-  private static void setTitle(@Nullable @NlsActions.ActionText String title) {
+  static void setTitle(@Nullable @NlsActions.ActionText String title) {
     JFrame frame = WindowManager.getInstance().findVisibleFrame();
     if (frame != null) {
       frame.setTitle(title);

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -35,7 +34,6 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -44,7 +42,6 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -232,14 +229,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater, WelcomeScreenComponentListener {
-    private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
 
     FlatWelcomeScreen() {
-      mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
       if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() > 0) {
         JComponent recentProjects = createRecentProjects(this);
@@ -318,12 +313,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }));
 
       TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(COMPONENT_CHANGED, this);
-    }
-
-    @Override
-    public JComponent getWelcomePanel() {
-      return mySlidingPanel;
     }
 
     @SuppressWarnings("UseJBColor")
@@ -500,30 +489,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       myUpdatePluginsLink.setVisible(false);
     }
 
-    @Override
-    public void attachComponent(@NotNull Component componentToShow, @Nullable Runnable onDone) {
-      String name = generateOrGetName(componentToShow);
-      mySlidingPanel.add(name, componentToShow);
-      mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, onDone);
-    }
-
-    private String generateOrGetName(@NotNull Component show) {
-      String componentName = show.getName();
-      if (!StringUtil.isEmptyOrSpaces(componentName)) return componentName;
-      return UniqueNameGenerator
-        .generateUniqueName("welcomeScreenSlidingPanel", s -> mySlidingPanel.getLayout().findComponentById(s) == null);
-    }
-
-    @Override
-    public void detachComponent(@NotNull Component componentToDetach, @Nullable Runnable onDone) {
-      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(() -> {
-        if (onDone != null) {
-          onDone.run();
-        }
-        mySlidingPanel.getLayout().removeLayoutComponent(componentToDetach);
-        setTitle(getWelcomeFrameTitle());
-      });
-    }
   }
 
   protected void extendActionsGroup(JPanel panel) {

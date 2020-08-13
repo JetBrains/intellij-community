@@ -297,6 +297,7 @@ public class WelcomeScreenComponentFactory {
     }
   }
 
+  @Nls
   public static String getApplicationTitle() {
     String title = IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName());
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
