@@ -2,7 +2,7 @@
 from _pydevd_frame_eval.pydevd_frame_evaluator_common cimport *
 
 cdef extern from "pystate.h":
-    ctypedef PyObject* _PyFrameEvalFunction(PyFrameObject *frame, int exc)
+    ctypedef PyObject* _PyFrameEvalFunction(PyThreadState *tstate, PyFrameObject *frame, int exc)
     ctypedef struct PyInterpreterState:
         PyInterpreterState *next
         PyInterpreterState *tstate_head
@@ -31,9 +31,9 @@ cdef extern from "pystate.h":
         PyThreadState *prev
         PyThreadState *next
         PyInterpreterState *interp
-        # ...
+    # ...
 
     PyThreadState *PyThreadState_Get()
 
 cdef extern from "ceval.h":
-    PyObject* _PyEval_EvalFrameDefault(PyFrameObject *frame, int exc)
+    PyObject* _PyEval_EvalFrameDefault(PyThreadState *tstate, PyFrameObject *frame, int exc)
