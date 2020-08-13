@@ -139,7 +139,8 @@ class SpaceShareProjectAction : DumbAwareAction() {
           return
         }
 
-        VcsNotifier.getInstance(project).notifyError(
+        VcsNotifier.getInstance(project).notifySuccess(
+          "space.project.shared.successfully",
           SpaceBundle.message("share.project.success.notification.title"),
           formatLink(url, repoInfo.name),
           NotificationListener.URL_OPENING_LISTENER
@@ -184,7 +185,9 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.initializing.repository.title")
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
-      VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
+      VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
+                                                   GitBundle.getString("initializing.title"),
+                                                   result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
     }
@@ -321,6 +324,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
   private fun notifyError(project: Project, @NotificationContent message: String) {
     VcsNotifier.getInstance(project).notifyError(
+      "space.sharing.not.finished",
       SpaceBundle.message("share.project.error.notification.title"),
       message,
       NotificationListener.URL_OPENING_LISTENER
