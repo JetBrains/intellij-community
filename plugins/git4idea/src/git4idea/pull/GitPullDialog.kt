@@ -29,6 +29,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
@@ -153,7 +154,7 @@ class GitPullDialog(private val project: Project,
     val repository = getSelectedRepository()
     val remote = getSelectedRemote()
 
-    val branches = getRemoteBranches(repository, remote)
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
 
     val model = branchField.model as MutableCollectionComboBoxModel
 
