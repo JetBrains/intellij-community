@@ -1013,6 +1013,7 @@
     <statistics.counterUsagesCollector groupId="find" version="3"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring.dialog" version="1"/>
+    <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
 
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
