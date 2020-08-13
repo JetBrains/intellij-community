@@ -743,14 +743,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDecoratorList(PyDecoratorList node) {
-    super.visitPyDecoratorList(node);
-
-    for (PyDecorator decorator : node.getDecorators()) {
-      if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
-        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
-                                       " not support arbitrary expressions as a decorator", decorator);
-      }
+  public void visitPyDecorator(PyDecorator decorator) {
+    super.visitPyDecorator(decorator);
+    if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
+                                     " not support arbitrary expressions as a decorator", decorator);
     }
   }
 }

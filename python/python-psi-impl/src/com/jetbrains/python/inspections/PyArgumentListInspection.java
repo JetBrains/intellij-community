@@ -59,39 +59,36 @@ public class PyArgumentListInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDecoratorList(final PyDecoratorList node) {
-      final PyDecorator[] decorators = node.getDecorators();
-      for (PyDecorator deco : decorators) {
-        if (deco.hasArgumentList()) continue;
-        final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
-        if (callableType != null) {
-          final PyCallable callable = callableType.getCallable();
-          if (callable == null) return;
-          final int firstParamOffset = callableType.getImplicitOffset();
-          final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
-          if (params == null) return;
+    public void visitPyDecorator(PyDecorator deco) {
+      if (deco.hasArgumentList()) return;
+      final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        if (callable == null) return;
+        final int firstParamOffset = callableType.getImplicitOffset();
+        final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
+        if (params == null) return;
 
-          final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
-          if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
-            // no parameters left to pass function implicitly, or wrong param type
-            registerProblem(deco, PyPsiBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
-          }
-          else { // possible unfilled params
-            for (int i = firstParamOffset; i < params.size(); i++) {
-              final PyCallableParameter parameter = params.get(i);
-              if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
-                continue;
-              }
-              // param tuples, non-starred or non-default won't do
-              if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
-                final String parameterName = parameter.getName();
-                registerProblem(deco, PyPsiBundle.message("INSP.parameter.$0.unfilled", parameterName == null ? "(...)" : parameterName));
-              }
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
+        if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
+          // no parameters left to pass function implicitly, or wrong param type
+          registerProblem(deco, PyPsiBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
+        }
+        else { // possible unfilled params
+          for (int i = firstParamOffset; i < params.size(); i++) {
+            final PyCallableParameter parameter = params.get(i);
+            if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
+              continue;
+            }
+            // param tuples, non-starred or non-default won't do
+            if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
+              final String parameterName = parameter.getName();
+              registerProblem(deco, PyPsiBundle.message("INSP.parameter.$0.unfilled", parameterName == null ? "(...)" : parameterName));
             }
           }
         }
-        // else: this case is handled by arglist visitor
       }
+      // else: this case is handled by arglist visitor
     }
   }
 

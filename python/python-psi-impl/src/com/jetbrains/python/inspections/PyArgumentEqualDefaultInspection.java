@@ -66,14 +66,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decorators = node.getDecorators();
-
-      for (PyDecorator decorator: decorators) {
-        if (decorator.hasArgumentList()) {
-          PyExpression[] arguments = decorator.getArguments();
-          checkArguments(decorator, arguments);
-        }
+    public void visitPyDecorator(final PyDecorator decorator) {
+      if (decorator.hasArgumentList()) {
+        PyExpression[] arguments = decorator.getArguments();
+        checkArguments(decorator, arguments);
       }
     }
 

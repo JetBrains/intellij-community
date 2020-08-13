@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,14 +53,12 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDecoratorList(PyDecoratorList node) {
-      super.visitPyDecoratorList(node);
-      for (PyDecorator decorator : node.getDecorators()) {
-        final PyExpression callee = decorator.getCallee();
-        checkCallable(decorator, callee);
-        if (decorator.hasArgumentList()) {
-          checkCallable(decorator, decorator);
-        }
+    public void visitPyDecorator(PyDecorator decorator) {
+      super.visitPyDecorator(decorator);
+      final PyExpression callee = decorator.getCallee();
+      checkCallable(decorator, callee);
+      if (decorator.hasArgumentList()) {
+        checkCallable(decorator, decorator);
       }
     }
 

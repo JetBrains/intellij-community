@@ -24,7 +24,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -77,14 +76,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDecoratorList(PyDecoratorList node) {
-    PyDecorator[] decos = node.getDecorators();
-    for (PyDecorator deco : decos) {
-      highlightDecorator(deco);
-    }
-  }
-
-  private void highlightDecorator(@NotNull PyDecorator node) {
+  public void visitPyDecorator(PyDecorator node) {
     final PsiElement atSign = node.getFirstChild();
     if (atSign != null) {
       addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);
