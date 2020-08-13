@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.table.TableCellRenderer
@@ -13,6 +14,7 @@ import javax.swing.table.TableCellRenderer
  * @see VcsLogDefaultColumn
  * @see VcsLogCustomColumn
  */
+@ApiStatus.Experimental
 interface VcsLogColumn<T> {
   /**
    * Column identifier. Used to persist column properties (e.g. width, order).
