@@ -7,7 +7,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -27,6 +30,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -55,6 +60,10 @@ public class PyImportOptimizer implements ImportOptimizer {
   @Override
   @NotNull
   public Runnable processFile(@NotNull final PsiFile file) {
+    if (isInsideTestResourceRoot(file)) {
+      return EmptyRunnable.INSTANCE;
+    }
+
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
     final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, session);
     session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new SimplePyUnresolvedReferencesInspection());
@@ -73,6 +82,13 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
       LOG.debug("----------------- OPTIMIZE IMPORTS FINISHED -----------------");
     };
+  }
+
+  private static boolean isInsideTestResourceRoot(@NotNull PsiFile file) {
+    final DirectoryIndex directoryIndex = DirectoryIndex.getInstance(file.getProject());
+    final DirectoryInfo directoryInfo = directoryIndex.getInfoForFile(file.getVirtualFile());
+    final JpsModuleSourceRootType<?> sourceRootType = directoryIndex.getSourceRootType(directoryInfo);
+    return JavaResourceRootType.TEST_RESOURCE.equals(sourceRootType);
   }
 
   private static final class ImportSorter {
