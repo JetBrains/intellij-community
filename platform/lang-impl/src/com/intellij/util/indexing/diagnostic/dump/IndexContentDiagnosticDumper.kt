@@ -25,12 +25,6 @@ object IndexContentDiagnosticDumper {
     val indexedFilePaths = arrayListOf<IndexedFilePath>()
     val providerNameToOriginalFileIds = hashMapOf<String, MutableSet<Int>>()
     val filesFromUnsupportedFileSystem = arrayListOf<IndexedFilePath>()
-    val fileBasedIndexExtensions = FileBasedIndexExtension.EXTENSION_POINT_NAME.extensionList
-    val infrastructureExtensions = FileBasedIndexInfrastructureExtension.EP_NAME.extensions().asSequence()
-      .mapNotNull { it.createFileIndexingStatusProcessor(project) }
-      .toList()
-
-    val providedIndexIdToIndexedFiles = hashMapOf<String, MutableSet<Int>>()
 
     for ((index, provider) in providers.withIndex()) {
       indicator.text2 = provider.debugName
@@ -38,13 +32,6 @@ object IndexContentDiagnosticDumper {
       providerNameToOriginalFileIds[provider.debugName] = providerFileIds
       provider.iterateFiles(project, { fileOrDir ->
         if (!fileOrDir.isDirectory) {
-          val fileId = FileBasedIndex.getFileId(fileOrDir)
-          for (extension in fileBasedIndexExtensions) {
-            if (infrastructureExtensions.any { it.hasIndexForFile(fileOrDir, fileId, extension) }) {
-              providedIndexIdToIndexedFiles.getOrPut(extension.name.name) { hashSetOf() } += fileId
-            }
-          }
-
           val indexedFilePath = createIndexedFilePath(fileOrDir, project)
           if (PortableFilePaths.isSupportedFileSystem(fileOrDir)) {
             indexedFilePaths += indexedFilePath
@@ -62,7 +49,6 @@ object IndexContentDiagnosticDumper {
     }
     return IndexContentDiagnostic(
       indexedFilePaths,
-      providedIndexIdToIndexedFiles,
       filesFromUnsupportedFileSystem,
       providerNameToOriginalFileIds
     )
