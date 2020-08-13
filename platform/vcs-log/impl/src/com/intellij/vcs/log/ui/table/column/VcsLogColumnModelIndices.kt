@@ -10,6 +10,16 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 import kotlin.collections.HashMap
 
+/**
+ * Service stores information about the currently available [VcsLogColumn]s.
+ * Allows to get the [VcsLogColumn] model index and the [VcsLogColumn] by index.
+ *
+ * Model indices in the service are only incremented, i.e. each new [VcsLogColumn] will have an index greater than the previous ones.
+ *
+ * This model is used for all Logs (Log, FileHistory, Log tabs).
+ *
+ * [VcsLogColumn] indices are automatically updated on plugins loading/unloading.
+ */
 @Service
 internal class VcsLogColumnModelIndices : Disposable {
   companion object {
@@ -52,6 +62,9 @@ internal class VcsLogColumnModelIndices : Disposable {
 
   fun getModelColumnsCount(): Int = modelIndices.size
 
+  /**
+   * @return currently available columns (default + enabled plugin columns).
+   */
   fun getCurrentColumns(): List<VcsLogColumn<*>> = currentColumns
 
   fun getCurrentDynamicColumns() = currentColumns.filter { it.isDynamic }
@@ -87,10 +100,16 @@ internal class VcsLogColumnModelIndices : Disposable {
   override fun dispose() {
   }
 
+  /**
+   * Allows to handle model update
+   */
   interface ColumnModelListener : EventListener {
     fun newColumn(column: VcsLogColumn<*>, modelIndex: Int)
   }
 
+  /**
+   * Allows to handle currently available columns
+   */
   interface CurrentColumnsListener : EventListener {
     @JvmDefault
     fun columnAdded(column: VcsLogColumn<*>) {
