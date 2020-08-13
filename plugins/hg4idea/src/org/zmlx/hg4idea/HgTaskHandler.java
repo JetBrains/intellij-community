@@ -77,11 +77,11 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
         }
         catch (HgCommandException e) {
-            HgErrorUtil.handleException(project, e);
+            HgErrorUtil.handleException(project, "hg.merge.error", e);
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project)
-            .notifyError(HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
+            .notifyError("hg.exception.during.merge.commit", HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
         }
       });
     }

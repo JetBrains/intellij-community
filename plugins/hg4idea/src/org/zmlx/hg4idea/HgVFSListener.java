@@ -338,7 +338,10 @@ public final class HgVFSListener extends VcsVFSListener {
         });
         NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError(HgBundle.message("hg4idea.rename.error"), HgBundle.message("hg4idea.rename.error.msg"), viewFilesAction, retryAction);
+          .notifyError("hg.rename.failed",
+                       HgBundle.message("hg4idea.rename.error"),
+                       HgBundle.message("hg4idea.rename.error.msg"),
+                       viewFilesAction, retryAction);
       }
 
       @Override

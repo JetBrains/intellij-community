@@ -77,7 +77,9 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       if (vcs == null) {
         return result;
       }
-      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.changesets.error"),
+      new HgCommandResultNotifier(project).notifyError("hg4idea.changesets.error",
+                                                       result,
+                                                       HgBundle.message("hg4idea.changesets.error"),
                                                        HgBundle.message("hg4idea.changesets.error.msg", repositoryURL),
                                                        new NotificationListener() {
                                                          @Override

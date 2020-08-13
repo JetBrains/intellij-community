@@ -144,11 +144,17 @@ public class HgBranchPopupActions {
           repository.update();
           if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
             new HgCommandResultNotifier(myProject)
-              .notifyError(result, HgBundle.message("hg4idea.branch.creation.error"), HgBundle.message("hg4idea.branch.creation.error.msg", name));
+              .notifyError("hg.branch.creation.error",
+                           result,
+                           HgBundle.message("hg4idea.branch.creation.error"),
+                           HgBundle.message("hg4idea.branch.creation.error.msg", name));
           }
         }
         catch (HgCommandException exception) {
-          HgErrorUtil.handleException(myProject, HgBundle.message("hg4idea.branch.cannot.create"), exception);
+          HgErrorUtil.handleException(myProject,
+                                      "hg.branch.creation.error",
+                                      HgBundle.message("hg4idea.branch.cannot.create"),
+                                      exception);
         }
       }
     }

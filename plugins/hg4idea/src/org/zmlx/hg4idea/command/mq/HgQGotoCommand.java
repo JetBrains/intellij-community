@@ -39,7 +39,9 @@ public class HgQGotoCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qgoto", Collections.singletonList(name));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QGotoFromPatches.error"),
+        .notifyError("hg.qgoto.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QGotoFromPatches.error"),
                      HgBundle.message("action.hg4idea.QGotoFromPatches.error.msg", name));
     }
     myRepository.update();

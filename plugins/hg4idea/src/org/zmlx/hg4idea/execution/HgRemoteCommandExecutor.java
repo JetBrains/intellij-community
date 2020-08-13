@@ -56,7 +56,9 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     if (!myIgnoreAuthorizationRequest && HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
-          .notifyError(result, HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
+          .notifyError("hg.remote.auth.error",
+                       result,
+                       HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
                        HgBundle.message("hg4idea.command.executor.remote.auth.failed.msg"));
         return null;
       }

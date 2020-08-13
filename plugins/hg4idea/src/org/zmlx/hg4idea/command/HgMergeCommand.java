@@ -97,8 +97,10 @@ public class HgMergeCommand {
           HgCommandResult result = hgMergeCommand.mergeSynchronously();
           if (HgErrorUtil.isAncestorMergeError(result)) {
             //skip and notify
-            VcsNotifier.getInstance(project).notifyMinorWarning(HgBundle.message("action.hg4idea.merge.skipped.title", repositoryRoot.getPresentableName()),
-                                                                HgBundle.message("action.hg4idea.merge.skipped"));
+            VcsNotifier.getInstance(project)
+              .notifyMinorWarning("hg.merging.with.ancestor.skipped",
+                                  HgBundle.message("action.hg4idea.merge.skipped.title", repositoryRoot.getPresentableName()),
+                                  HgBundle.message("action.hg4idea.merge.skipped"));
             return;
           }
           new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
@@ -108,10 +110,14 @@ public class HgMergeCommand {
         }
         catch (VcsException exception) {
           if (exception.isWarning()) {
-            VcsNotifier.getInstance(project).notifyWarning(HgBundle.message("action.hg4idea.merge.warning"), exception.getMessage());
+            VcsNotifier.getInstance(project).notifyWarning("hg.merge.warning",
+                                                           HgBundle.message("action.hg4idea.merge.warning"),
+                                                           exception.getMessage());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError(HgBundle.message("action.hg4idea.merge.exception"), exception.getMessage());
+            VcsNotifier.getInstance(project).notifyError("hg.merge.exception",
+                                                         HgBundle.message("action.hg4idea.merge.exception"),
+                                                         exception.getMessage());
           }
         }
       }

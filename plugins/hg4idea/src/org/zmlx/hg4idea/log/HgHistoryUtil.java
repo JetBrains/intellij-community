@@ -120,7 +120,9 @@ public final class HgHistoryUtil {
     }
     catch (VcsException e) {
       if (!silent) {
-        VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), e.getMessage());
+        VcsNotifier.getInstance(project).notifyError("hg.log.command.execution.error",
+                                                     HgBundle.message("hg4idea.error.log.command.execution"),
+                                                     e.getMessage());
       }
       throw e;
     }
@@ -337,7 +339,9 @@ public final class HgHistoryUtil {
         }
         else {
           String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
-          VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), message);
+          VcsNotifier.getInstance(project).notifyError("hg.log.command.execution.error",
+                                                       HgBundle.message("hg4idea.error.log.command.execution"),
+                                                       message);
         }
         return Collections.emptyList();
       }

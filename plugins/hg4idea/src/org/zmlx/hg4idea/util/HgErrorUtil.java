@@ -15,7 +15,7 @@ package org.zmlx.hg4idea.util;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -141,13 +141,18 @@ public final class HgErrorUtil {
     return !StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:"); //NON-NLS
   }
 
-  public static void handleException(@Nullable Project project, @NotNull Exception e) {
-    handleException(project, CommonBundle.message("title.error"), e);
+  public static void handleException(@Nullable Project project,
+                                     @NonNls @Nullable String notificationDisplayId,
+                                     @NotNull Exception e) {
+    handleException(project, notificationDisplayId, CommonBundle.message("title.error"), e);
   }
 
-  public static void handleException(@Nullable Project project, @NotNull @NlsContexts.NotificationTitle String title, @NotNull Exception e) {
+  public static void handleException(@Nullable Project project,
+                                     @NonNls @Nullable String notificationDisplayId,
+                                     @NotificationTitle @NotNull String title,
+                                     @NotNull Exception e) {
     LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
+    new HgCommandResultNotifier(project).notifyError(notificationDisplayId, null, title, e.getMessage());
   }
 
   @Deprecated

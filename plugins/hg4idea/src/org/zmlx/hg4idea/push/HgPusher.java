@@ -20,7 +20,6 @@ import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -87,13 +86,15 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
       String successDescription = HgBundle.message("action.hg4idea.push.success.msg",
                                                    commitsNum,
                                                    repo.getPresentableName());
-      VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
+      VcsNotifier.getInstance(project).notifySuccess("hg.pushed.successfully", successTitle, successDescription);
     }
     else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-      VcsNotifier.getInstance(project).notifySuccess(HgBundle.message("action.hg4idea.push.nothing"));
+      VcsNotifier.getInstance(project).notifySuccess("hg.nothing.to.push", "", HgBundle.message("action.hg4idea.push.nothing"));
     }
     else {
-      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("action.hg4idea.push.error"),
+      new HgCommandResultNotifier(project).notifyError("hg.push.error",
+                                                       result,
+                                                       HgBundle.message("action.hg4idea.push.error"),
                                                        HgBundle.message("action.hg4idea.push.error.msg", repo.getPresentableName()));
     }
   }

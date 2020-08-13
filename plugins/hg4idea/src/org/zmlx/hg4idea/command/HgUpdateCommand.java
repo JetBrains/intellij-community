@@ -160,11 +160,13 @@ public class HgUpdateCommand {
     boolean success = !HgErrorUtil.isCommandExecutionFailed(result);
     boolean hasUnresolvedConflicts = HgConflictResolver.hasConflicts(project, repository);
     if (!success) {
-      new HgCommandResultNotifier(project).notifyError(result, "", HgBundle.message("hg4idea.update.failed"));
+      new HgCommandResultNotifier(project)
+        .notifyError("hg.update.error", result, "", HgBundle.message("hg4idea.update.failed"));
     }
     else if (hasUnresolvedConflicts) {
       new VcsNotifier(project)
-        .notifyImportantWarning(HgBundle.message("hg4idea.update.unresolved.conflicts"),
+        .notifyImportantWarning("hg.update.unresolved.conflicts.error",
+                                HgBundle.message("hg4idea.update.unresolved.conflicts"),
                                 HgBundle.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }
     getRepositoryManager(project).updateRepository(repository);

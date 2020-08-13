@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -31,22 +31,24 @@ import java.util.List;
 public final class HgCommandResultNotifier {
 
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance(HgCommandResultNotifier.class);
 
   public HgCommandResultNotifier(Project project) {
     myProject = project;
   }
 
-  public void notifyError(@Nullable HgCommandResult result,
+  public void notifyError(@NonNls @Nullable String displayId,
+                          @Nullable HgCommandResult result,
                           @NlsContexts.NotificationTitle @NotNull String failureTitle,
                           @NlsContexts.NotificationContent @NotNull String failureDescription) {
-    notifyError(result, failureTitle, failureDescription, null);
+    notifyError(displayId, result, failureTitle, failureDescription, null);
   }
 
-  public void notifyError(@Nullable HgCommandResult result,
+  @SuppressWarnings("HardCodedStringLiteral")
+  public void notifyError(@NonNls @Nullable String displayId,
+                          @Nullable HgCommandResult result,
                           @NlsContexts.NotificationTitle @NotNull String failureTitle,
                           @NlsContexts.NotificationContent @NotNull String failureDescription,
-                          @Nullable NotificationListener listener) {
+                          NotificationListener listener) {
     List<String> err = result != null ? result.getErrorLines() : Collections.emptyList();
     HtmlBuilder sb = new HtmlBuilder();
     if (!StringUtil.isEmptyOrSpaces(failureDescription)) {
@@ -61,6 +63,6 @@ public final class HgCommandResultNotifier {
     }
     String errorMessage = sb.wrapWithHtmlBody().toString();
 
-    VcsNotifier.getInstance(myProject).notifyError(failureTitle, errorMessage, listener);
+    VcsNotifier.getInstance(myProject).notifyError(displayId, failureTitle, errorMessage, listener);
   }
 }

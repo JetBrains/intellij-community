@@ -208,7 +208,7 @@ public final class HgStatusCommand {
         String title = HgBundle.message("action.hg4idea.status.error");
         LOG.warn(title + errors.toString());
         String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
-        VcsNotifier.getInstance(myProject).logInfo(title, message);
+        VcsNotifier.getInstance(myProject).logInfo("hg.status.command.error", title, message);
         return changes;
       }
       LOG.debug(errors.toString());
