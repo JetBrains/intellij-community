@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -34,6 +35,10 @@ public class PythonUiService {
   public void showBalloonWarning(Project project, @PopupContent String message) {}
 
   public void showBalloonError(Project project, @PopupContent String message) {}
+
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return null;
+  }
 
   public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
     return null;

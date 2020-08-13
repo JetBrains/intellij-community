@@ -8,7 +8,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -17,6 +16,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -82,12 +82,12 @@ public class CreateClassQuickFix implements LocalQuickFix {
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
 
 
-    final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(anchor.getContainingFile().getVirtualFile());
-    if (!(editor instanceof TextEditor)) {
-      return;
+    final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, anchor.getContainingFile().getVirtualFile());
+    if (editor instanceof TextEditor) {
+      builder.run(((TextEditor)editor).getEditor(), false);
+    }else {
+      builder.runNonInteractively(false);
     }
-
-    builder.run(((TextEditor)editor).getEditor(), false);
   }
 
 }
