@@ -31,7 +31,10 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.ToolbarTextButtonWrapper;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitActionGroupToMainAndMore;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createErrorsLink;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createEventLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 

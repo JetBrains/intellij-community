@@ -66,6 +66,7 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.collectAllActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getLinkNormalColor;

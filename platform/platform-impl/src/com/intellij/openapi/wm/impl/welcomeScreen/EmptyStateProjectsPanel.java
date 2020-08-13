@@ -23,7 +23,9 @@ import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitActionGroupToMainAndMore;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
 public class EmptyStateProjectsPanel extends JPanel {
 
