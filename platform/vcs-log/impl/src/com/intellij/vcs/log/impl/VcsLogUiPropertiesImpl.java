@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 /**
  * Stores UI configuration based on user activity and preferences.

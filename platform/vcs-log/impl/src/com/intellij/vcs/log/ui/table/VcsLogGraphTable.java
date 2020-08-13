@@ -47,6 +47,8 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt;
+import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -72,7 +74,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.isValidColumnOrder;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {

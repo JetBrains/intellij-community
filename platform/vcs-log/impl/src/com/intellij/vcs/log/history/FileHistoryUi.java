@@ -40,7 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.ui.JBColor.namedColor;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";

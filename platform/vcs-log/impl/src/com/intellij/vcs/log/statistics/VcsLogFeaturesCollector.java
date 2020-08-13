@@ -30,7 +30,7 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffe
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 @NonNls

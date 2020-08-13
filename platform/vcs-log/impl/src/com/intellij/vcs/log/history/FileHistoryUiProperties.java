@@ -12,14 +12,14 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnsVisibilityStorage.TableColumnVisibilityProperty;
+import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsVisibilityStorage.TableColumnVisibilityProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 @State(name = "Vcs.Log.History.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {

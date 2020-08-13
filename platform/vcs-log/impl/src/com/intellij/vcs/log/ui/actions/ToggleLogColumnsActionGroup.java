@@ -8,8 +8,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnsVisibilityStorage;
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
+import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsVisibilityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.*;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.*;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
 

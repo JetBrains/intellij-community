@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.ui.table.column
+package com.intellij.vcs.log.ui.table.column.storage
 
 import com.intellij.openapi.Disposable
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices
 import java.util.*
 
 internal class VcsLogColumnsPropertyStorage<T>(

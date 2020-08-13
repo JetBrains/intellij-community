@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";
