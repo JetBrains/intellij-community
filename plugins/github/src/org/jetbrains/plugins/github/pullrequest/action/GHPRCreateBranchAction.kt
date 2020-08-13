@@ -158,7 +158,8 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val vcsNotifier = project.service<VcsNotifier>()
     val pullRequestAuthor = ghPullRequest.author
     if (pullRequestAuthor == null) {
-      vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
+      vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+                              GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
                               GithubBundle.message("pull.request.branch.checkout.resolve.author.failed"))
       return
     }
@@ -174,7 +175,8 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       if (sshForkUrl != null) {
         failedMessage += "\n$sshForkUrl"
       }
-      vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"), failedMessage)
+      vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+                              GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"), failedMessage)
       return
     }
 
@@ -183,8 +185,9 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     if (fetchResult.showNotificationIfFailed(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"))) {
       val setUpstream = git.setUpstream(repository, forkBranchName, branchName)
       if (!setUpstream.success()) {
-        vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
-                                                   setUpstream.errorOutputAsJoinedString)
+        vcsNotifier.notifyError("github.pull.request.cannot.set.tracking.branch",
+                                GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
+                                setUpstream.errorOutputAsJoinedString)
       }
     }
   }
