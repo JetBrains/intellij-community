@@ -464,7 +464,7 @@ class TestingTasksImpl extends TestingTasks {
       }
 
       if (isRunningInBatchMode()) {
-        def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.project.modules.find { it.name == mainModule })
+        def mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
         batchtest {
           fileset dir: mainModuleTestsOutput, includes: options.batchTestIncludes
         }
