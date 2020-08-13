@@ -165,7 +165,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     });
     connection.subscribe(LightEditService.TOPIC, new LightEditServiceListener() {
       @Override
-      public void lightEditWindowOpened() {
+      public void lightEditWindowOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
