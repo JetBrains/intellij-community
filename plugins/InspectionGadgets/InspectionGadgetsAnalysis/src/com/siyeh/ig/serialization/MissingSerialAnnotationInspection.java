@@ -48,8 +48,14 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
       Optional<PsiClass> pClass = getSerializablePsiClass(field);
       if (pClass.isEmpty()) return;
 
-      boolean candidateToBeAnnotated =
-        SerializationUtils.isExternalizable(pClass.get()) ? isSerialFieldInExternalizable(field) : isSerialFieldInSerializable(field);
+      boolean candidateToBeAnnotated;
+      if (pClass.get().isRecord()) {
+        candidateToBeAnnotated = isSerialFieldInExternalizable(field);
+      }
+      else {
+        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass.get()) ? isSerialFieldInExternalizable(field)
+                                                                                   : isSerialFieldInSerializable(field);
+      }
       if (candidateToBeAnnotated) {
         registerError(field.getNameIdentifier(), field);
       }
@@ -63,8 +69,14 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
       Optional<PsiClass> pClass = getSerializablePsiClass(method);
       if (pClass.isEmpty()) return;
 
-      boolean candidateToBeAnnotated =
-        SerializationUtils.isExternalizable(pClass.get()) ? isSerialMethodInExternalizable(method) : isSerialMethodInSerializable(method);
+      boolean candidateToBeAnnotated;
+      if (pClass.get().isRecord()) {
+        candidateToBeAnnotated = isSerialMethodInExternalizable(method);
+      }
+      else {
+        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass.get()) ? isSerialMethodInExternalizable(method)
+                                                                                   : isSerialMethodInSerializable(method);
+      }
       if (candidateToBeAnnotated) {
         PsiIdentifier methodIdentifier = method.getNameIdentifier();
         if (methodIdentifier == null) return;
