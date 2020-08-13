@@ -127,7 +127,7 @@ public final class ExecutionUtil {
         toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, _listener);
       }
       else {
-        Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
+        Messages.showErrorDialog(project, UIUtil.toHtml(_description), title);
       }
 
       NotificationListener notificationListener = _listener == null ? null : (notification, event) -> {
