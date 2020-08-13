@@ -8,6 +8,13 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 
+/**
+ * Allows to manage [VcsLogColumn] visibility settings.
+ * Settings for each [VcsLogColumn] are stored independently for each [VcsLogUiProperties] (state for FileHistory may differ from Log).
+ *
+ * User can change visibility in Presentation Settings (eye icon in Log).
+ * @see com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup
+ */
 @Service
 internal class VcsLogColumnsVisibilityStorage : Disposable {
   companion object {
