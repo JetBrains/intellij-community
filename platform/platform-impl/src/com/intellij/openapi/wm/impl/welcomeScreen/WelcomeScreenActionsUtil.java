@@ -22,6 +22,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
@@ -144,7 +145,9 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static Couple<DefaultActionGroup> splitActionGroupToMainAndMore(@NotNull ActionGroup actionGroup, int mainButtonsNum) {
+  static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
+                                                        @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
+                                                        int mainButtonsNum) {
     DefaultActionGroup group = new DefaultActionGroup();
     collectAllActions(group, actionGroup);
     AnAction[] actions = group.getChildren(null);
@@ -159,10 +162,10 @@ public class WelcomeScreenActionsUtil {
     for (AnAction child : actions) {
       if (!isActionAvailable(child)) continue;
       if (main.getChildrenCount() < mainButtonsNum) {
-        main.addAction(child);
+        main.addAction(wrapper.apply(child));
       }
       else {
-        more.addAction(child);
+        more.addAction(wrapper.apply(child));
       }
     }
     return Couple.of(main, more);

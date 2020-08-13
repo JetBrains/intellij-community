@@ -32,7 +32,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.ToolbarTextButtonWrapper;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitActionGroupToMainAndMore;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createErrorsLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createEventLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
@@ -49,7 +49,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       @Override
       protected JComponent buildComponent() {
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
-          return JBUI.Panels.simplePanel(new EmptyStateProjectsPanel())
+          return JBUI.Panels.simplePanel(new EmptyStateProjectsPanel(parentDisposable))
             .addToBottom(createNotificationsPanel(parentDisposable))
             .withBackground(getMainAssociatedComponentBackground());
         }
@@ -128,8 +128,9 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       @NotNull
       private ActionToolbar createActionsToolbar() {
         Couple<DefaultActionGroup> mainAndMore =
-          splitActionGroupToMainAndMore((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
-                                        PRIMARY_BUTTONS_NUM);
+          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+                              action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
+                              PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
           ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
         ActionGroup moreActionGroup = mainAndMore.getSecond();
