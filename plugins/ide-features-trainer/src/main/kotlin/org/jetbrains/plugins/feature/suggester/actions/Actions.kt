@@ -2,6 +2,9 @@ package org.jetbrains.plugins.feature.suggester.actions
 
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.feature.suggester.suggesters.Selection
@@ -9,12 +12,15 @@ import java.lang.ref.WeakReference
 
 sealed class Action(open val timeMillis: Long) {
     abstract val language: Language?
+    abstract val project: Project?
 }
 
 //--------------------------------------PSI ACTIONS----------------------------------------------------------------------------------------
 sealed class PsiAction(open val parent: PsiElement?, override val timeMillis: Long) : Action(timeMillis) {
     override val language: Language?
         get() = parent?.language
+    override val project: Project?
+        get() = parent?.project
 }
 
 //-------------------------------------AFTER PSI ACTIONS-----------------------------------------------------------------------------------
@@ -94,6 +100,8 @@ sealed class EditorAction(
 ) : Action(timeMillis) {
     override val language: Language?
         get() = psiFileRef.get()?.language
+    override val project: Project?
+        get() = psiFileRef.get()?.project
 }
 
 //-------------------------------------AFTER EDITOR ACTIONS--------------------------------------------------------------------------------
@@ -138,6 +146,12 @@ data class EditorTextInsertedAction(
 data class EditorTextRemovedAction(
     val text: String,
     val offset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class EditorFindAction(
     override val psiFileRef: WeakReference<PsiFile>,
     override val documentRef: WeakReference<Document>,
     override val timeMillis: Long
@@ -189,3 +203,31 @@ data class BeforeEditorTextRemovedAction(
     override val documentRef: WeakReference<Document>,
     override val timeMillis: Long
 ) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class BeforeEditorFindAction(
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+//-------------------------------------OTHER ACTIONS---------------------------------------------------------------------------------------
+
+data class EditorFocusGainedAction(
+    val editor: Editor,
+    override val timeMillis: Long
+) : Action(timeMillis) {
+    override val language: Language?
+        get() = psiFile?.language
+
+    override val project: Project?
+        get() = editor.project
+
+    val document: Document
+        get() = editor.document
+
+    val psiFile: PsiFile?
+        get() {
+            val project = project ?: return null
+            return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+        }
+}

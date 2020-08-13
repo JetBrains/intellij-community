@@ -3,8 +3,12 @@ package org.jetbrains.plugins.feature.suggester
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.lang.Language
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.feature.suggester.actions.Action
+import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -17,6 +21,10 @@ class FeatureSuggestersManager(val project: Project) {
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
     private val settings = FeatureSuggesterSettings.instance()
+
+    init {
+        initFocusListener()
+    }
 
     fun actionPerformed(action: Action) {
         val language = action.language ?: return
@@ -58,6 +66,19 @@ class FeatureSuggestersManager(val project: Project) {
             // send event for testing
             project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
         }
+    }
+
+    private fun initFocusListener() {
+        val eventMulticaster = EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx
+        eventMulticaster?.addFocusChangeListener(FocusChangeListener { editor ->
+            if (editor.project != project) return@FocusChangeListener
+            actionPerformed(
+                EditorFocusGainedAction(
+                    editor = editor,
+                    timeMillis = System.currentTimeMillis()
+                )
+            )
+        }, project)
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {

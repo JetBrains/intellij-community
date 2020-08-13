@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actions.BackspaceAction
-import com.intellij.openapi.editor.actions.CopyAction
-import com.intellij.openapi.editor.actions.CutAction
-import com.intellij.openapi.editor.actions.PasteAction
+import com.intellij.openapi.editor.actions.*
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.suggesters.asString
@@ -76,6 +73,16 @@ object EditorActionsListener : AnActionListener {
                     )
                 )
             }
+            is IncrementalFindAction -> {
+                handleAction(
+                    project,
+                    EditorFindAction(
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
         }
     }
 
@@ -134,6 +141,16 @@ object EditorActionsListener : AnActionListener {
                     )
                 )
             }
+            is IncrementalFindAction -> {
+                handleAction(
+                    project,
+                    BeforeEditorFindAction(
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
         }
     }
 
@@ -148,5 +165,6 @@ object EditorActionsListener : AnActionListener {
     private fun AnAction.isSupportedAction(): Boolean {
         return this is CopyAction || this is CutAction
                 || this is PasteAction || this is BackspaceAction
+                || this is IncrementalFindAction
     }
 }
