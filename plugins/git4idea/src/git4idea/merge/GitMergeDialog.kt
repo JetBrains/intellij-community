@@ -162,7 +162,7 @@ class GitMergeDialog(private val project: Project,
       }
 
       branches[repository] = repository.branches
-        .let { it.localBranches.sorted() + it.remoteBranches.sorted() }
+        .let { it.localBranches + it.remoteBranches }
         .map { it.name }
     }
 
@@ -231,7 +231,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val branches = GitBranchUtil.sortBranchNames(getBranches())
+    val branches = splitAndSortBranches(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
@@ -246,6 +246,22 @@ class GitMergeDialog(private val project: Project,
     }
 
     model.selectedItem = matchingBranch
+  }
+
+  private fun splitAndSortBranches(branches: List<String>): List<String> {
+    val local = mutableListOf<String>()
+    val remote = mutableListOf<String>()
+
+    for (branch in branches) {
+      if (branch.startsWith(REMOTE_REF)) {
+        remote += branch.substring(REMOTE_REF.length)
+      }
+      else {
+        local += branch
+      }
+    }
+
+    return GitBranchUtil.sortBranchNames(local) + GitBranchUtil.sortBranchNames(remote)
   }
 
   private fun getBranches(): List<String> {
@@ -494,5 +510,6 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private const val REMOTE_REF = "remotes/"
   }
 }
