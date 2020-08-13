@@ -188,7 +188,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.endObject();
   }
 
-  protected static void convertProblem(@NotNull JsonWriter writer, @NotNull Element problem) throws IOException {
+  public static void convertProblem(@NotNull JsonWriter writer, @NotNull Element problem) throws IOException {
     writer.beginObject();
     writer.name(FILE).value(problem.getChildText(FILE));
     writeInt(writer, problem, LINE);

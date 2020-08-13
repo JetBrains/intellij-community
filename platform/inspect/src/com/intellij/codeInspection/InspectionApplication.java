@@ -314,6 +314,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       context.startPathProfiling();
     }
     im.setProfile(myInspectionProfile.getName());
+    if ("sa".equals(myOutputFormat) && myOutPath != null) {
+      context.setProblemConsumer(new AsyncInspectionToolResultWriter(Paths.get(myOutPath)));
+    }
     return context;
   }
 
