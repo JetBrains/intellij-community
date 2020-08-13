@@ -334,21 +334,20 @@ class DocRenderer implements EditorCustomElementRenderer {
       if (!documentationManager.hasActiveDockedDocWindow()) {
         component.startWait();
       }
-      documentationManager.navigateByLink(component, linkUrl);
+      documentationManager.navigateByLink(component, context, linkUrl);
     }
     if (documentationManager.getDocInfoHint() == null) {
       editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
     }
     if (documentationManager.hasActiveDockedDocWindow()) {
-      documentationManager.setAllowContentUpdateFromContext(false);
       Disposable disposable = Disposer.newDisposable();
       editor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(@NotNull CaretEvent e) {
-          documentationManager.resetAutoUpdateState();
           Disposer.dispose(disposable);
         }
       }, disposable);
+      documentationManager.muteAutoUpdateTill(disposable);
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,6 +39,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   private final static Logger LOG = Logger.getInstance(DockablePopupManager.class);
   protected ToolWindow myToolWindow;
   private Runnable myAutoUpdateRequest;
+  private boolean myAutoUpdateMuted;
   @NotNull protected final Project myProject;
 
   public DockablePopupManager(@NotNull Project project) {
@@ -205,7 +207,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   void restartAutoUpdate(final boolean state) {
-    if (state && myToolWindow != null) {
+    boolean enabled = state && myToolWindow != null && !myAutoUpdateMuted;
+    if (enabled) {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = this::updateComponent;
 
@@ -218,6 +221,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         myAutoUpdateRequest = null;
       }
     }
+  }
+
+  public void muteAutoUpdateTill(@NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myAutoUpdateMuted = true;
+    resetAutoUpdateState();
+    Disposer.register(disposable, () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myAutoUpdateMuted = false;
+      resetAutoUpdateState();
+    });
   }
 
   public void resetAutoUpdateState() {
