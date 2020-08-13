@@ -71,9 +71,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
   }
 
   private static boolean canBeConverted(@NotNull PyStringElement stringElement, boolean checkContainingFString) {
-    if (stringElement.isTripleQuoted() || !stringElement.isTerminated() || stringElement.getContentRange().isEmpty()) {
-      return false;
-    }
+    if (stringElement.isTripleQuoted() || !stringElement.isTerminated()) return false;
     if (checkContainingFString) {
       PyFormattedStringElement parentFString = PsiTreeUtil.getParentOfType(stringElement, PyFormattedStringElement.class, true,
                                                                            PyStatement.class);

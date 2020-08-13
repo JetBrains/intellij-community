@@ -266,6 +266,11 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
+  // PY-38315
+  public void testConvertingQuotesOfEmptyString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
   public void testConvertLambdaToFunction() {
     doTest(PyPsiBundle.message("INTN.convert.lambda.to.function"));
   }
