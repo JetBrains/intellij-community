@@ -12,7 +12,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PlatformUtils;
@@ -33,10 +36,11 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
-import com.jetbrains.python.psi.impl.references.PyOperatorReference;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
@@ -249,31 +253,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
       final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
       return new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements);
-    }
-
-    @Override
-    public Iterable<LocalQuickFix> getCreateMemberFromUsageFixes(
-      TypeEvalContext typeEvalContext, PyType type, PsiReference reference, String refText
-    ) {
-      List<LocalQuickFix> result = new ArrayList<>();
-      PsiElement element = reference.getElement();
-      if (type instanceof PyClassTypeImpl) {
-        PyClass cls = ((PyClassType)type).getPyClass();
-        if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
-          if (element.getParent() instanceof PyCallExpression) {
-            result.add(new AddMethodQuickFix(refText, cls.getName(), true));
-          }
-          else if (!(reference instanceof PyOperatorReference)) {
-            result.add(new AddFieldQuickFix(refText, "None", type.getName(), true));
-          }
-        }
-      }
-      else if (type instanceof PyModuleType) {
-        PyFile file = ((PyModuleType)type).getModule();
-        result.add(new AddFunctionQuickFix(refText, file.getName()));
-        getCreateClassFix(typeEvalContext, refText, element);
-      }
-      return result;
     }
 
     @Override

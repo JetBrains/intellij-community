@@ -39,6 +39,9 @@ import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.PyInspectionsUtil;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddFunctionQuickFix;
+import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -342,7 +345,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
           if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) {
             return;
           }
-          ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(myTypeEvalContext, type, reference, refText));
+          ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(type, reference, refText));
           if (type instanceof PyClassType) {
             final PyClassType classType = (PyClassType)type;
             if (reference instanceof PyOperatorReference) {
@@ -896,11 +899,28 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  Iterable<LocalQuickFix> getCreateMemberFromUsageFixes(
-    TypeEvalContext typeEvalContext, PyType type, PsiReference reference, String refText
-  ) {
-    return Collections.emptyList();
+  Iterable<LocalQuickFix> getCreateMemberFromUsageFixes(PyType type, PsiReference reference, String refText) {
+    List<LocalQuickFix> result = new ArrayList<>();
+    PsiElement element = reference.getElement();
+    if (type instanceof PyClassTypeImpl) {
+      PyClass cls = ((PyClassType)type).getPyClass();
+      if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
+        if (element.getParent() instanceof PyCallExpression) {
+          result.add(new AddMethodQuickFix(refText, cls.getName(), true));
+        }
+        else if (!(reference instanceof PyOperatorReference)) {
+          result.add(new AddFieldQuickFix(refText, "None", type.getName(), true));
+        }
+      }
+    }
+    else if (type instanceof PyModuleType) {
+      PyFile file = ((PyModuleType)type).getModule();
+      result.add(new AddFunctionQuickFix(refText, file.getName()));
+      getCreateClassFix(myTypeEvalContext, refText, element);
+    }
+    return result;
   }
+
 
   Iterable<LocalQuickFix> getAddSelfFixes(TypeEvalContext typeEvalContext, PyElement node, PyReferenceExpression expr) {
     return Collections.emptyList();

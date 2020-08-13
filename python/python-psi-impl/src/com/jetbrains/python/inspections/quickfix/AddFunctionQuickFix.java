@@ -12,14 +12,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -27,7 +26,6 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -59,7 +57,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.create.function.in.module");
+    return PyPsiBundle.message("QFIX.create.function.in.module");
   }
 
   @Override
@@ -128,7 +126,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
-      PyUiUtil.showBalloon(project, PyPsiBundle.message("QFIX.failed.to.add.function"), MessageType.ERROR);
+      PythonUiService.getInstance().showBalloonError(project, PyPsiBundle.message("QFIX.failed.to.add.function"));
     }
   }
 
