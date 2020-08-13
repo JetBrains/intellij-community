@@ -95,14 +95,10 @@ class TestingOptions {
   boolean enableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
-   * Specifies a directory to define tests based on pattern matching.
+   * Pattern to match tests in {@link #mainModule} or default main module tests compilation outputs.
+   * Tests from each matched class will be executed in a fresh JVM.
    *
-   * Note that it should not include package folders.
-   */
-  String batchTestDir = System.getProperty("intellij.build.test.batchTest.dir")
-
-  /**
-   * Pattern to match tests in {@link #batchTestDir}.
+   * E.g. "com/intellij/util/ui/standalone/**Test.class"
    */
   String batchTestIncludes = System.getProperty("intellij.build.test.batchTest.includes")
 
