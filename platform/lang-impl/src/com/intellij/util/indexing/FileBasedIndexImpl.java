@@ -1295,7 +1295,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (updateStats == null) {
             setIndexedStatus.set(Boolean.FALSE);
           } else {
-            perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
+            perIndexerDeletionTimes.put(indexId, updateStats.mapInputTime);
           }
         }
       }
