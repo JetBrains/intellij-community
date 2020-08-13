@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightModifierList extends LightModifierList {
+public class LombokLightModifierList extends LightModifierList implements SyntheticElement {
   private static final Set<String> ALL_MODIFIERS = new HashSet<>(Arrays.asList(PsiModifier.MODIFIERS));
 
   private final Map<String, PsiAnnotation> myAnnotations;
@@ -114,10 +114,6 @@ public class LombokLightModifierList extends LightModifierList {
     }
 
     LombokLightModifierList that = (LombokLightModifierList) o;
-
-    if (getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
-      return false;
-    }
 
     return myAnnotations.equals(that.myAnnotations);
   }

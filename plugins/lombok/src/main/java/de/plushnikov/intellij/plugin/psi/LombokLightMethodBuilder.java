@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethodBuilder extends LightMethodBuilder {
+public class LombokLightMethodBuilder extends LightMethodBuilder implements SyntheticElement {
   private PsiMethod myMethod;
   private ASTNode myASTNode;
   private PsiCodeBlock myBodyCodeBlock;
@@ -288,11 +288,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
       return false;
     }
 
-    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
-      return false;
-    }
-
-    return Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
+    return isValid() == that.isValid() && Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
   }
 
   @Override

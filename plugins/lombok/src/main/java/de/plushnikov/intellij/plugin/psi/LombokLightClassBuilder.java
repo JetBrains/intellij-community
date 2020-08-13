@@ -14,12 +14,12 @@ import javax.swing.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class LombokLightClassBuilder extends LightPsiClassBuilder implements PsiExtensibleClass {
+public class LombokLightClassBuilder extends LightPsiClassBuilder implements PsiExtensibleClass, SyntheticElement {
   private boolean myIsEnum;
   private final String myQualifiedName;
   private final Icon myBaseIcon;
   private final LombokLightModifierList myModifierList;
-  private Collection<PsiField> myFields = new ArrayList<>();
+  private final Collection<PsiField> myFields = new ArrayList<>();
 
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
@@ -187,15 +187,21 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
     LombokLightClassBuilder that = (LombokLightClassBuilder) o;
 
-    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
-      return false;
-    }
-
-    return myQualifiedName.equals(that.myQualifiedName);
+    return isValid() == that.isValid() && myQualifiedName.equals(that.myQualifiedName);
   }
 
   @Override
   public int hashCode() {
     return myQualifiedName.hashCode();
+  }
+
+  @Override
+  public boolean isValid() {
+    return super.isValid() && areAllFieldsAndMethodsValid();
+  }
+
+  private boolean areAllFieldsAndMethodsValid() {
+    return Arrays.stream(getFields()).allMatch(PsiElement::isValid)
+      && Arrays.stream(getMethods()).allMatch(PsiElement::isValid);
   }
 }

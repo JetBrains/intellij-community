@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightFieldBuilder extends LightFieldBuilder {
+public class LombokLightFieldBuilder extends LightFieldBuilder implements SyntheticElement {
   private String myName;
   private final LombokLightIdentifier myNameIdentifier;
   private final LombokLightModifierList myModifierList;
@@ -138,13 +139,25 @@ public class LombokLightFieldBuilder extends LightFieldBuilder {
           (null != containingClass && containingClass.isEquivalentTo(anotherContainingClass));
       }
 
-      if(getNavigationElement() != this && !getNavigationElement().equals(anotherLightField.getNavigationElement())) {
-        stillEquivalent = false;
-      }
-
       return stillEquivalent;
     } else {
       return super.isEquivalentTo(another);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    LombokLightFieldBuilder that = (LombokLightFieldBuilder) o;
+    return isValid() == that.isValid() &&
+      Objects.equals(myName, that.myName) &&
+      Objects.equals(myNameIdentifier, that.myNameIdentifier) &&
+      Objects.equals(myModifierList, that.myModifierList);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myName, myNameIdentifier, myModifierList);
   }
 }
