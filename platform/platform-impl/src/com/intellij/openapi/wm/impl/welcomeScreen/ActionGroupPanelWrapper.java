@@ -3,17 +3,14 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -25,13 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.getPreferredFocusedComponent;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public class ActionGroupPanelWrapper {
@@ -42,6 +42,7 @@ public class ActionGroupPanelWrapper {
                                                                       final Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
+
     actionsListPanel.setBackground(getProjectsBackground());
     final java.util.List<AnAction> groups = flattenActionGroups(action);
     final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
@@ -249,5 +250,56 @@ public class ActionGroupPanelWrapper {
 
   private static void setParentGroupName(@NotNull final String groupName, @NotNull final AnAction childAction) {
     childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
+  }
+
+  public static AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
+    if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
+      AtomicReference<Component> createdPanel = new AtomicReference<>();
+      final Pair<JPanel, JBList<AnAction>> panel =
+        createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
+      createdPanel.set(panel.first);
+      final Runnable onDone = () -> {
+        setTitle(action.getTemplateText());
+        final JBList<AnAction> list = panel.second;
+        ScrollingUtil.ensureSelectionExists(list);
+        final ListSelectionListener[] listeners =
+          ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+
+        //avoid component cashing. This helps in case of LaF change
+        for (ListSelectionListener listener : listeners) {
+          listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
+        }
+        JComponent toFocus = getPreferredFocusedComponent(panel);
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
+      };
+      panel.first.setName(action.getClass().getName());
+      final Presentation p = action.getTemplatePresentation();
+      return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+            .attachComponent(panel.first, onDone);
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          action.update(e);
+        }
+      };
+    }
+    return action;
+  }
+
+  private static void goBack(@Nullable Component parentComponent) {
+    if (parentComponent == null) return;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+      .detachComponent(parentComponent, null);
+  }
+
+  private static void setTitle(@Nullable @NlsActions.ActionText String title) {
+    JFrame frame = WindowManager.getInstance().findVisibleFrame();
+    if (frame != null) {
+      frame.setTitle(title);
+    }
   }
 }

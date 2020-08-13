@@ -19,7 +19,6 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JBProtocolCommand;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -60,8 +58,6 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
@@ -70,11 +66,9 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
-import static com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper.createActionGroupPanel;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getLinkNormalColor;
@@ -450,7 +444,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUI.scale(EmptyIcon.create(16));
             icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
           }
-          action = wrapGroups(action, this);
+          action = ActionGroupPanelWrapper.wrapGroups(action, this);
           ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
           // Don't allow focus, as the containing panel is going to focusable.
           link.setFocusable(false);
@@ -480,45 +474,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
         return myTouchbarActions;
       return null;
-    }
-
-    public AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
-      if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        AtomicReference<Component> createdPanel = new AtomicReference<>();
-        final Pair<JPanel, JBList<AnAction>> panel =
-          createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
-        createdPanel.set(panel.first);
-        final Runnable onDone = () -> {
-          setTitle(action.getTemplateText());
-          final JBList<AnAction> list = panel.second;
-          ScrollingUtil.ensureSelectionExists(list);
-          final ListSelectionListener[] listeners =
-            ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
-
-          //avoid component cashing. This helps in case of LaF change
-          for (ListSelectionListener listener : listeners) {
-            listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
-          }
-          JComponent toFocus = getPreferredFocusedComponent(panel);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
-        };
-        panel.first.setName(action.getClass().getName());
-        final Presentation p = action.getTemplatePresentation();
-        return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
-              .attachComponent(panel.first, onDone);
-          }
-        };
-      }
-      return action;
-    }
-
-    private void goBack(@Nullable Component parentComponent) {
-      if (parentComponent == null) return;
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
-        .detachComponent(parentComponent, null);
     }
 
     @Override
