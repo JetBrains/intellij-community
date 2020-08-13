@@ -6,7 +6,6 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.table.TableCellRenderer
-import javax.swing.table.TableColumn
 
 /**
  * Column that is displayed in the VCS Log (e.g. Author, Date, Hash).
@@ -31,6 +30,13 @@ interface VcsLogColumn<T> {
    * Allow user to hide [VcsLogColumn] in Presentation Settings
    */
   val isDynamic: Boolean
+
+  /**
+   * Allow user to resize [VcsLogColumn]
+   */
+  @JvmDefault
+  val isResizable: Boolean
+    get() = true
 
   /**
    * [Class] of [T].
@@ -58,13 +64,6 @@ interface VcsLogColumn<T> {
    * @return [TableCellRenderer] which will be used to draw the column rows
    */
   fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer
-
-  /**
-   * Allows to customize created [column] (e.g. make it not resizable)
-   */
-  @JvmDefault
-  fun initColumn(table: VcsLogGraphTable, column: TableColumn) {
-  }
 
   /**
    * @return a value which should be used if [getValue] were not calculated (e.g. exception is thrown)

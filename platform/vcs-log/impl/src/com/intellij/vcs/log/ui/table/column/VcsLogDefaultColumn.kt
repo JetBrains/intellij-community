@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import javax.swing.table.TableCellRenderer
-import javax.swing.table.TableColumn
 
 internal fun isValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): Boolean {
   return Root in columnOrder && Commit in columnOrder
@@ -51,11 +50,9 @@ internal object Root : VcsLogDefaultColumn<FilePath>(
   FilePath::class.java,
   false
 ) {
-  override fun getValue(model: GraphTableModel, row: Int): FilePath = model.visiblePack.getFilePath(row)
+  override val isResizable = false
 
-  override fun initColumn(table: VcsLogGraphTable, column: TableColumn) {
-    column.resizable = false
-  }
+  override fun getValue(model: GraphTableModel, row: Int): FilePath = model.visiblePack.getFilePath(row)
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = RootCellRenderer(table.properties, table.colorManager)
 

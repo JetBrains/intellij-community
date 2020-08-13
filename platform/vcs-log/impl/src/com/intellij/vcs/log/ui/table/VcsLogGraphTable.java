@@ -276,7 +276,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull
   private TableColumn createTableColumn(VcsLogColumn<?> column) {
     TableColumn tableColumn = new TableColumn(VcsLogColumnModelIndices.getInstance().getModelIndex(column));
-    column.initColumn(this, tableColumn);
+    tableColumn.setResizable(column.isResizable());
     tableColumn.setCellRenderer(column.createTableCellRenderer(this));
     return tableColumn;
   }
