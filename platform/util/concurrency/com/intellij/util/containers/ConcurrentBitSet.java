@@ -27,7 +27,7 @@ public final class ConcurrentBitSet {
     clear();
   }
 
-  private static final Unsafe UNSAFE = AtomicFieldUpdater.getUnsafe();
+  private static final Unsafe UNSAFE = (Unsafe)AtomicFieldUpdater.getUnsafe();
   private static final int base = UNSAFE.arrayBaseOffset(int[].class);
   private static final int shift;
 

@@ -12,6 +12,9 @@ import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
@@ -76,20 +79,37 @@ public final class ThrowableInterner {
   private static final int UNKNOWN = -1;
   private static final int LUCKILY_NOT_NEEDED = -2;
   private static final int BACKTRACE_INFO_LENGTH;
+  private static final MethodHandle getObjectHandle;
+  private static final MethodHandle putObjectHandle;
 
   static {
     BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
+    MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+    Object unsafe = AtomicFieldUpdater.getUnsafe();
+    try {
+      getObjectHandle = lookup.findVirtual(unsafe.getClass(), "getObject", MethodType.methodType(Object.class, Object.class, long.class)).bindTo(unsafe);
+      putObjectHandle = lookup.findVirtual(unsafe.getClass(), "putObject", MethodType.methodType(void.class, Object.class, long.class, Object.class)).bindTo(unsafe);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     if (BACKTRACE_FIELD != null) {
       BACKTRACE_FIELD_OFFSET = LUCKILY_NOT_NEEDED;
     }
     else if ((SystemInfo.isOracleJvm || SystemInfo.isJetBrainsJvm) && SystemInfo.isJavaVersionAtLeast(7, 0, 0)) {
-      Field firstField = Throwable.class.getDeclaredFields()[1];
-      long firstFieldOffset = AtomicFieldUpdater.getUnsafe().objectFieldOffset(firstField);
-      BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : UNKNOWN;
-      if (BACKTRACE_FIELD_OFFSET == UNKNOWN
-          || !firstField.getName().equals("detailMessage")
-          || !(AtomicFieldUpdater.getUnsafe().getObject(new Throwable(), (long)BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
-        throw new RuntimeException("Unknown layout: "+firstField+";"+firstFieldOffset+". Please specify -Didea.disposer.debug=off in idea.properties to suppress");
+      try {
+        Field firstField = Throwable.class.getDeclaredFields()[1];
+        MethodHandle objectFieldOffset = lookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
+        long firstFieldOffset = (long)objectFieldOffset.invoke(unsafe, firstField);
+        BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : UNKNOWN;
+        if (BACKTRACE_FIELD_OFFSET == UNKNOWN
+            || !firstField.getName().equals("detailMessage")
+            || !(getObjectHandle.invoke((Object)new Throwable(), (long)BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
+          throw new RuntimeException("Unknown layout: "+firstField+";"+firstFieldOffset+". Please specify -Didea.disposer.debug=off in idea.properties to suppress");
+        }
+      }
+      catch (Throwable throwable) {
+        throw new RuntimeException(throwable);
       }
     }
     else {
@@ -104,9 +124,9 @@ public final class ThrowableInterner {
     try {
       backtrace = BACKTRACE_FIELD != null ? BACKTRACE_FIELD.get(throwable) :
                   BACKTRACE_FIELD_OFFSET == UNKNOWN ? null :
-                  AtomicFieldUpdater.getUnsafe().getObject(throwable, (long)BACKTRACE_FIELD_OFFSET);
+                  getObjectHandle.invokeExact((Object)throwable, (long)BACKTRACE_FIELD_OFFSET);
     }
-    catch (IllegalAccessException e) {
+    catch (Throwable e) {
       return null;
     }
     // obsolete jdk
@@ -120,7 +140,7 @@ public final class ThrowableInterner {
         BACKTRACE_FIELD.set(throwable, null);
       }
       else if (BACKTRACE_FIELD_OFFSET != UNKNOWN) {
-        AtomicFieldUpdater.getUnsafe().putObject(throwable, (long)BACKTRACE_FIELD_OFFSET, null);
+        putObjectHandle.invokeExact((Object)throwable, (long)BACKTRACE_FIELD_OFFSET, null);
       }
     }
     catch (Throwable e) {

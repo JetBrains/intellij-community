@@ -73,7 +73,7 @@ public final class X11UiUtil {
 
         // reflect on Xlib method wrappers and important structures
         Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        x11.unsafe = AtomicFieldUpdater.getUnsafe();
+        x11.unsafe = (Unsafe)AtomicFieldUpdater.getUnsafe();
         x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
