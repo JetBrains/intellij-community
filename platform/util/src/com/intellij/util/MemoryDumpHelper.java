@@ -2,20 +2,23 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * An utility class to capture heap dumps of the current process
@@ -33,21 +36,18 @@ public final class MemoryDumpHelper {
     Method dumpHeap;
 
     try {
-      final Class hotSpotMxBeanClass = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+      Class<?> hotSpotMxBeanClass = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
 
-      mxBean = AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-        @Override
-        public Object run() throws Exception {
-          MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-          Set<ObjectName> s = server.queryNames(new ObjectName(HOT_SPOT_BEAN_NAME), null);
-          Iterator<ObjectName> itr = s.iterator();
-          if (itr.hasNext()) {
-            ObjectName name = itr.next();
-            return ManagementFactory.newPlatformMXBeanProxy(server, name.toString(), hotSpotMxBeanClass);
-          }
-          else {
-            return null;
-          }
+      mxBean = AccessController.doPrivileged((PrivilegedExceptionAction<Object>)() -> {
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        Set<ObjectName> s = server.queryNames(new ObjectName(HOT_SPOT_BEAN_NAME), null);
+        Iterator<ObjectName> itr = s.iterator();
+        if (itr.hasNext()) {
+          ObjectName name = itr.next();
+          return ManagementFactory.newPlatformMXBeanProxy(server, name.toString(), hotSpotMxBeanClass);
+        }
+        else {
+          return null;
         }
       });
 
@@ -78,7 +78,6 @@ public final class MemoryDumpHelper {
   /**
    * Save a memory dump in a binary format to a file.
    * @param dumpPath the name of the snapshot file
-   * @throws Exception
    */
   public static synchronized void captureMemoryDump(@NotNull String dumpPath) throws Exception {
     ourDumpHeap.invoke(ourMXBean, dumpPath, true);
@@ -89,13 +88,13 @@ public final class MemoryDumpHelper {
   }
 
   public static synchronized void captureMemoryDumpZipped(@NotNull Path zipFile) throws Exception {
-    Path tempFile = Files.createTempFile("heapDump.", ".hprof");
+    File tempFile = new File(FileUtilRt.getTempDirectory(), "heapDump." + UUID.randomUUID()+ ".hprof");
     try {
-      captureMemoryDump(tempFile.toString());
-      ZipUtil.compressFile(tempFile, zipFile);
+      captureMemoryDump(tempFile.getPath());
+      ZipUtil.compressFile(tempFile, zipFile.toFile());
     }
     finally {
-      Files.deleteIfExists(tempFile);
+      FileUtil.delete(tempFile);
     }
   }
 }
