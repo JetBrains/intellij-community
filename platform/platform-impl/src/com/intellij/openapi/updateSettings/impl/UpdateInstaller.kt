@@ -23,6 +23,7 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -61,10 +62,15 @@ internal object UpdateInstaller {
         }
       }
       HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
-      ZipFile(patchFile).use {
-        if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
-          throw IOException("Corrupted patch file: ${patchFile.name}")
+      try {
+        ZipFile(patchFile).use {
+          if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+            throw IOException("Corrupted patch file: ${patchFile.name}")
+          }
         }
+      }
+      catch (e: ZipException) {
+        throw IOException("Corrupted patch file: ${patchFile.name}", e)
       }
       files += patchFile
     }
