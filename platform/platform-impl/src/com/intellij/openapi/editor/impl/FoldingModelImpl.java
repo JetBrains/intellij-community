@@ -402,7 +402,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
             positionToUse = savedPosition.position;
           }
           else {
-            offsetToUse = collapsedAtSaved.getStartOffset();
+            offsetToUse = collapsedAtSaved.getPlaceholderText().isEmpty() ? collapsedAtSaved.getEndOffset() // rendered docs
+                                                                          : collapsedAtSaved.getStartOffset();
           }
         }
 
