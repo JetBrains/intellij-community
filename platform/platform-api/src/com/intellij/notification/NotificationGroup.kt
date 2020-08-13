@@ -217,6 +217,10 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     return createNotification("", content, type)
   }
 
+  fun createNotification(@NotificationContent content: String, type: NotificationType, displayId: String): Notification {
+    return createNotification("", content, type, null, displayId)
+  }
+
   fun createNotification(
     @NotificationTitle title: String,
     @NotificationContent content: String,

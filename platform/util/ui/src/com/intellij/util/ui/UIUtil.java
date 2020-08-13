@@ -84,6 +84,7 @@ public final class UIUtil {
   public static final String BORDER_LINE = "<hr size=1 noshade>";
   @NlsSafe public static final String BR = "<br/>";
   @NlsSafe public static final String HR = "<hr/>";
+  @NlsSafe public static final String LINE_SEPARATOR = "\n";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
