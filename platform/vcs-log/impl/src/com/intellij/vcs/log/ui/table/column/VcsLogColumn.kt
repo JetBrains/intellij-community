@@ -8,32 +8,66 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 
+/**
+ * Column that is displayed in the VCS Log (e.g. Author, Date, Hash).
+ *
+ * @see VcsLogDefaultColumn
+ * @see VcsLogCustomColumn
+ */
 interface VcsLogColumn<T> {
+  /**
+   * Column identifier. Used to persist column properties (e.g. width, order).
+   */
   @get:NonNls
   val id: String
 
+  /**
+   * Localized column name. Used to display the column name in the user interface.
+   */
   @get:Nls
   val localizedName: String
 
+  /**
+   * Allow user to hide [VcsLogColumn] in Presentation Settings
+   */
   val isDynamic: Boolean
 
+  /**
+   * [Class] of [T].
+   * If [contentSample] is null and [contentClass] is [String], Log will calculate the width of [VcsLogCustomColumn] using some top rows,
+   * otherwise preferred width will be used.
+   */
   val contentClass: Class<*>
 
   /**
-   * @return content sample to estimate the width of the column,
-   * or null if content width may vary significantly and width cannot be estimated from the sample
+   * Content sample to estimate the width of the column,
+   * or null if content width may vary significantly and width cannot be estimated from the sample.
    */
   @JvmDefault
   val contentSample: String?
     get() = null
 
+  /**
+   * @return value for given [row] which will be displayed by [TableCellRenderer] created in [createTableCellRenderer]
+   *
+   * @see getStubValue
+   */
   fun getValue(model: GraphTableModel, row: Int): T
 
+  /**
+   * @return [TableCellRenderer] which will be used to draw the column rows
+   */
   fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer
 
+  /**
+   * Allows to customize created [column] (e.g. make it not resizable)
+   */
   @JvmDefault
   fun initColumn(table: VcsLogGraphTable, column: TableColumn) {
   }
 
+  /**
+   * @return a value which should be used if [getValue] were not calculated (e.g. exception is thrown)
+   */
   fun getStubValue(model: GraphTableModel): T
 }
