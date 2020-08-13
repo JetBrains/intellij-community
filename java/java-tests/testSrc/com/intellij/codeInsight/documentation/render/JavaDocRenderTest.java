@@ -160,6 +160,19 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     }
   }
 
+  public void testTypingAfterCollapse() {
+    configure("/**\n" +
+              " * doc<caret>\n" +
+              " */\n" +
+              "class C {}", false);
+    toggleItem();
+    type("  ");
+    checkResultByText("/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "  <caret>class C {}");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
