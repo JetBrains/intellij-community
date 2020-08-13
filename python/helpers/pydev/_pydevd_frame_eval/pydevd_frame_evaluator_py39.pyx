@@ -42,18 +42,18 @@ def get_func_code_info_py(code_obj) -> FuncCodeInfo:
     return get_func_code_info(<PyCodeObject *> code_obj)
 
 
-cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc):
+cdef PyObject * get_bytecode_while_frame_eval(PyThreadState *tstate, PyFrameObject * frame_obj, int exc):
     '''
     This function makes the actual evaluation and changes the bytecode to a version
     where programmatic breakpoints are added.
     '''
     if GlobalDebuggerHolder is None or _thread_local_info is None or exc:
         # Sometimes during process shutdown these global variables become None
-        return _PyEval_EvalFrameDefault(frame_obj, exc)
+        return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
     # co_filename: str = <str>frame_obj.f_code.co_filename
     # if co_filename.endswith('threading.py'):
-    #     return _PyEval_EvalFrameDefault(frame_obj, exc)
+    #     return _PyEval_EvalFrameDefaultWrapper(tstate, frame_obj, exc)
 
     cdef ThreadInfo thread_info
     cdef int STATE_SUSPEND = 2
@@ -67,21 +67,21 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
     except:
         thread_info = get_thread_info()
         if thread_info is None:
-            return _PyEval_EvalFrameDefault(frame_obj, exc)
+            return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
     if thread_info.inside_frame_eval:
-        return _PyEval_EvalFrameDefault(frame_obj, exc)
+        return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
     if not thread_info.fully_initialized:
         thread_info.initialize_if_possible()
         if not thread_info.fully_initialized:
-            return _PyEval_EvalFrameDefault(frame_obj, exc)
+            return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
     # Can only get additional_info when fully initialized.
     cdef PyDBAdditionalThreadInfo additional_info = thread_info.additional_info
     if thread_info.is_pydevd_thread or additional_info.is_tracing:
         # Make sure that we don't trace pydevd threads or inside our own calls.
-        return _PyEval_EvalFrameDefault(frame_obj, exc)
+        return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
     # frame = <object> frame_obj
     # DEBUG = frame.f_code.co_filename.endswith('_debugger_case_multiprocessing.py')
@@ -99,7 +99,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
                 not hasattr(main_debugger, "stop_on_failed_tests") or \
                 not hasattr(main_debugger, "signature_factory"):
             # Debugger isn't fully initialized here yet
-            return _PyEval_EvalFrameDefault(frame_obj, exc)
+            return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
         frame = <object> frame_obj
 
         if thread_info.thread_trace_func is None:
@@ -158,7 +158,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
         thread_info.inside_frame_eval -= 1
         additional_info.is_tracing = False
 
-    return _PyEval_EvalFrameDefault(frame_obj, exc)
+    return _PyEval_EvalFrameDefault(tstate, frame_obj, exc)
 
 
 def frame_eval_func():
