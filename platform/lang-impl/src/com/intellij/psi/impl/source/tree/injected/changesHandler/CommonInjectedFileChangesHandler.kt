@@ -33,7 +33,8 @@ open class CommonInjectedFileChangesHandler(
     val result = ArrayList<MarkersMapping>(shreds.size)
 
     val smartPointerManager = SmartPointerManager.getInstance(myProject)
-    var curOffset = -1
+    var currentOffsetInHostFile = -1
+    var currentOffsetInInjectedFile = -1
     for (shred in shreds) {
       val rangeMarker = fragmentMarkerFromShred(shred)
       val rangeInsideHost = shred.rangeInsideHost
@@ -44,11 +45,14 @@ open class CommonInjectedFileChangesHandler(
 
       origMarker.isGreedyToRight = true
       rangeMarker.isGreedyToRight = true
-      if (origMarker.startOffset > curOffset) {
+      if (origMarker.startOffset > currentOffsetInHostFile) {
         origMarker.isGreedyToLeft = true
+      }
+      if (rangeMarker.startOffset > currentOffsetInInjectedFile) {
         rangeMarker.isGreedyToLeft = true
       }
-      curOffset = origMarker.endOffset
+      currentOffsetInHostFile = origMarker.endOffset
+      currentOffsetInInjectedFile = rangeMarker.endOffset
     }
     return result
   }
