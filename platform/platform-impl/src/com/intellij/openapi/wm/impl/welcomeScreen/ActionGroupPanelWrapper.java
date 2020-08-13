@@ -63,7 +63,7 @@ public class ActionGroupPanelWrapper {
                            @Nullable
                            @Override
                            public String getTextFor(AnAction value) {
-                             return getActionText(value);
+                             return value.getTemplateText();
                            }
 
                            @Nullable
@@ -101,7 +101,7 @@ public class ActionGroupPanelWrapper {
                            @Override
                            protected void customizeComponent(JList<? extends AnAction> list, AnAction value, boolean isSelected) {
                              if (myTextLabel != null) {
-                               myTextLabel.setText(getActionText(value));
+                               myTextLabel.setText(value.getTemplateText());
                                myTextLabel.setIcon(value.getTemplatePresentation().getIcon());
                              }
                            }
@@ -228,7 +228,7 @@ public class ActionGroupPanelWrapper {
     String groupName;
     for (AnAction anAction : action.getChildren(null)) {
       if (anAction instanceof ActionGroup) {
-        groupName = getActionText(anAction);
+        groupName = anAction.getTemplateText();
         for (AnAction childAction : ((ActionGroup)anAction).getChildren(null)) {
           if (groupName != null) {
             setParentGroupName(groupName, childAction);
@@ -241,10 +241,6 @@ public class ActionGroupPanelWrapper {
       }
     }
     return groups;
-  }
-
-  private static String getActionText(@NotNull final AnAction value) {
-    return value.getTemplatePresentation().getText();
   }
 
   private static String getParentGroupName(@NotNull final AnAction value) {
