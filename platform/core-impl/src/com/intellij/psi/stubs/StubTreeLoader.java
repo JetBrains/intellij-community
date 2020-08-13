@@ -46,7 +46,7 @@ public abstract class StubTreeLoader {
   }
 
   @Nullable
-  protected IndexingStampInfo getIndexingStampInfoFromAttributes(@NotNull VirtualFile file) {
+  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -58,7 +58,7 @@ public abstract class StubTreeLoader {
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     boolean compiled = psiFile instanceof PsiCompiledElement;
     Document document = compiled ? null : FileDocumentManager.getInstance().getDocument(file);
-    IndexingStampInfo indexingStampInfo = getIndexingStampInfoFromAttributes(file);
+    IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
     boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());

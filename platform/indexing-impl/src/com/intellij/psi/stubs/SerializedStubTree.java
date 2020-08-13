@@ -38,16 +38,13 @@ public final class SerializedStubTree {
   private final @NotNull SerializationManagerEx mySerializationManager;
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
-  private final @Nullable IndexingStampInfo myIndexingStampInfo;
-
   public SerializedStubTree(byte @NotNull [] treeBytes,
                             int treeByteLength,
                             byte @NotNull [] indexedStubBytes,
                             int indexedStubByteLength,
                             @Nullable Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs,
                             @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
-                            @NotNull SerializationManagerEx serializationManager,
-                            @Nullable IndexingStampInfo indexingStampInfo) {
+                            @NotNull SerializationManagerEx serializationManager) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
@@ -55,13 +52,11 @@ public final class SerializedStubTree {
     myIndexedStubs = indexedStubs;
     myStubIndexesExternalizer = stubIndexesExternalizer;
     mySerializationManager = serializationManager;
-    myIndexingStampInfo = indexingStampInfo;
   }
 
   public static @NotNull SerializedStubTree serializeStub(@NotNull Stub rootStub,
                                                           @NotNull SerializationManagerEx serializationManager,
-                                                          @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer,
-                                                          @Nullable IndexingStampInfo indexingStampInfo) throws IOException {
+                                                          @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer) throws IOException {
     final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     serializationManager.serialize(rootStub, bytes);
     byte[] treeBytes = bytes.getInternalBuffer();
@@ -79,8 +74,7 @@ public final class SerializedStubTree {
       indexedStubByteLength,
       indexedStubs,
       forwardIndexExternalizer,
-      serializationManager,
-      indexingStampInfo
+      serializationManager
     );
   }
 
@@ -110,13 +104,8 @@ public final class SerializedStubTree {
       reSerializedIndexByteLength,
       myIndexedStubs,
       newForwardIndexSerializer,
-      newSerializationManager,
-      myIndexingStampInfo);
-  }
-
-  @Nullable
-  IndexingStampInfo getIndexingStampInfo() {
-    return myIndexingStampInfo;
+      newSerializationManager
+    );
   }
 
   @ApiStatus.Internal
@@ -162,8 +151,7 @@ public final class SerializedStubTree {
                                   myIndexedStubByteLength,
                                   myIndexedStubs,
                                   myStubIndexesExternalizer,
-                                  mySerializationManager,
-                                  myIndexingStampInfo);
+                                  mySerializationManager);
   }
 
   @Override
