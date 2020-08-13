@@ -19,11 +19,15 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JBProtocolCommand;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -42,6 +46,7 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -65,6 +70,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
 import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
@@ -232,7 +238,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
+  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater, WelcomeScreenComponentListener {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     private LinkLabel<Object> myUpdatePluginsLink;
@@ -318,6 +324,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }));
 
       TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(COMPONENT_CHANGED, this);
     }
 
     @Override
@@ -443,7 +450,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUI.scale(EmptyIcon.create(16));
             icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
           }
-          action = wrapGroups(action);
+          action = wrapGroups(action, this);
           ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
           // Don't allow focus, as the containing panel is going to focusable.
           link.setFocusable(false);
@@ -475,11 +482,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return null;
     }
 
-    private AnAction wrapGroups(AnAction action) {
+    public AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, () -> goBack(), this);
+        AtomicReference<Component> createdPanel = new AtomicReference<>();
+        final Pair<JPanel, JBList<AnAction>> panel =
+          createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
+        createdPanel.set(panel.first);
         final Runnable onDone = () -> {
-          setTitle(ProjectBundle.message("dialog.title.new.project"));
+          setTitle(action.getTemplateText());
           final JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);
           final ListSelectionListener[] listeners =
@@ -492,24 +502,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           JComponent toFocus = getPreferredFocusedComponent(panel);
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
         };
-        final String name = action.getClass().getName();
-        mySlidingPanel.add(name, panel.first);
+        panel.first.setName(action.getClass().getName());
         final Presentation p = action.getTemplatePresentation();
         return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, onDone);
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+              .attachComponent(panel.first, onDone);
           }
         };
       }
       return action;
     }
 
-    private void goBack() {
-      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(() -> {
-        mySlidingPanel.getRootPane().setDefaultButton(null);
-        setTitle(getWelcomeFrameTitle());
-      });
+    private void goBack(@Nullable Component parentComponent) {
+      if (parentComponent == null) return;
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+        .detachComponent(parentComponent, null);
     }
 
     @Override
@@ -534,6 +543,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     public void hidePluginUpdates() {
       myUpdatePluginsLink.setListener(null, null);
       myUpdatePluginsLink.setVisible(false);
+    }
+
+    @Override
+    public void attachComponent(@NotNull Component componentToShow, @Nullable Runnable onDone) {
+      String name = generateOrGetName(componentToShow);
+      mySlidingPanel.add(name, componentToShow);
+      mySlidingPanel.getLayout().swipe(mySlidingPanel, name, JBCardLayout.SwipeDirection.FORWARD, onDone);
+    }
+
+    private String generateOrGetName(@NotNull Component show) {
+      String componentName = show.getName();
+      if (!StringUtil.isEmptyOrSpaces(componentName)) return componentName;
+      return UniqueNameGenerator
+        .generateUniqueName("welcomeScreenSlidingPanel", s -> mySlidingPanel.getLayout().findComponentById(s) == null);
+    }
+
+    @Override
+    public void detachComponent(@NotNull Component componentToDetach, @Nullable Runnable onDone) {
+      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(() -> {
+        if (onDone != null) {
+          onDone.run();
+        }
+        mySlidingPanel.getLayout().removeLayoutComponent(componentToDetach);
+        setTitle(getWelcomeFrameTitle());
+      });
     }
   }
 
