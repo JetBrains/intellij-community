@@ -476,19 +476,24 @@ object UpdateChecker {
     if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
-      val oldDownloader = ourUpdatedPlugins[pluginId]
-      if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+      if (PluginManagerCore.isDisabled(pluginId)) {
         descriptor = downloader.descriptor
-        if (descriptor is PluginNode && descriptor.isIncomplete) {
-          if (downloader.prepareToInstall(indicator ?: EmptyProgressIndicator())) {
-            descriptor = downloader.descriptor
-          }
-          ourUpdatedPlugins[pluginId] = downloader
-        }
       }
       else {
-        downloader = oldDownloader
-        descriptor = oldDownloader.descriptor
+        val oldDownloader = ourUpdatedPlugins[pluginId]
+        if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+          descriptor = downloader.descriptor
+          if (descriptor is PluginNode && descriptor.isIncomplete) {
+            if (downloader.prepareToInstall(indicator ?: EmptyProgressIndicator())) {
+              descriptor = downloader.descriptor
+            }
+            ourUpdatedPlugins[pluginId] = downloader
+          }
+        }
+        else {
+          downloader = oldDownloader
+          descriptor = oldDownloader.descriptor
+        }
       }
 
       if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
