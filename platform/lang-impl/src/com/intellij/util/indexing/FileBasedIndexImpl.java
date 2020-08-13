@@ -1170,7 +1170,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       boolean isIndexesDeleted;
 
-      if (!file.isValid() || isTooLarge(file)) {
+      boolean isValid = file.isValid();
+      if (!isValid || isTooLarge(file)) {
         isIndexesDeleted = true;
         ProgressManager.checkCanceled();
         removeDataFromIndicesForFile(fileId, file);
@@ -1192,7 +1193,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (VfsEventsMerger.LOG != null) {
         VfsEventsMerger.LOG.info("File " + file +
                                  " indexes have been updated for indexes " + indexingResult.updateTimesPerIndexer.keySet() +
-                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet() + ". Indexes was wiped = " + isIndexesDeleted);
+                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet() +
+                                 ". Indexes was wiped = " + isIndexesDeleted +
+                                 "; is file valid = " + isValid);
       }
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       // Indexing time takes only input data mapping time into account.
