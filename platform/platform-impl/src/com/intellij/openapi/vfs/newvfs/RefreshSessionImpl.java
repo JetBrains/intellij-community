@@ -163,9 +163,10 @@ class RefreshSessionImpl extends RefreshSession {
       }
       else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 && t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L) {
         snapshot.logResponsivenessSinceCreation(String.format(
-          "Refresh session (queue size: %s, file types: %s, result: %s, tries: %s, events: %d)",
+          "Refresh session (queue size: %s, root types: %s, result: %s, tries: %s, events: %d)",
           workQueue.size(),
-          workQueue.stream().collect(Collectors.groupingBy(f -> f.isDirectory() ? "dir" : String.valueOf(f.getExtension()), Collectors.counting())),
+          workQueue.stream().collect(
+            Collectors.groupingBy(f -> !f.isDirectory() ? "file" : f.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir", Collectors.counting())),
           myCancelled ? "cancelled" : "done",
           count,
           myEvents.size()));
