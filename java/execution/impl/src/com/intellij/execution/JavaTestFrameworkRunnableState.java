@@ -45,7 +45,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -63,9 +62,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
@@ -337,7 +339,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      try (PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter writer = new PrintWriter(tempFile, StandardCharsets.UTF_8)) {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
@@ -597,7 +599,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void writeClassesPerModule(String packageName,
                                        JavaParameters javaParameters,
                                        Map<Module, List<String>> perModule,
-                                       @NotNull String filters) throws FileNotFoundException, UnsupportedEncodingException {
+                                       @NotNull String filters) throws IOException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
@@ -607,7 +609,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       //like plugin and corresponding IDE register the same components twice
       boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
 
-      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, StandardCharsets.UTF_8)) {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
           wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);

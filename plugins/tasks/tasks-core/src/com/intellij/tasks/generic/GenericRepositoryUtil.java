@@ -17,13 +17,14 @@ package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -71,7 +72,7 @@ public class GenericRepositoryUtil {
       }
       // TODO: add proper escape|unescape property to template variables
       if (escape && !name.equals(GenericRepository.SERVER_URL)) {
-        m.appendReplacement(sb, URLEncoder.encode(replacement, "utf-8"));
+        m.appendReplacement(sb, URLEncoder.encode(replacement, StandardCharsets.UTF_8));
       }
       else {
         m.appendReplacement(sb, replacement);
