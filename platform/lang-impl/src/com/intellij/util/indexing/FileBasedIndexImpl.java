@@ -1167,7 +1167,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (file.isValid() && content.getTimeStamp() != file.getTimeStamp()) {
         content = new CachedFileContent(file);
       }
+
+      boolean isIndexesDeleted;
+
       if (!file.isValid() || isTooLarge(file)) {
+        isIndexesDeleted = true;
         ProgressManager.checkCanceled();
         removeDataFromIndicesForFile(fileId, file);
         if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
@@ -1178,6 +1182,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
       }
       else {
+        isIndexesDeleted = false;
         indexingResult = doIndexFileContent(project, content);
       }
 
@@ -1187,7 +1192,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (VfsEventsMerger.LOG != null) {
         VfsEventsMerger.LOG.info("File " + file +
                                  " indexes have been updated for indexes " + indexingResult.updateTimesPerIndexer.keySet() +
-                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet());
+                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet() + ". Indexes was wiped = " + isIndexesDeleted);
       }
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       // Indexing time takes only input data mapping time into account.
