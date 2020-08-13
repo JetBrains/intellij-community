@@ -77,8 +77,9 @@ public final class LightEditServiceImpl implements LightEditService,
 
   private void init() {
     boolean notify = false;
+    Project project = getOrCreateProject();
     if (myFrameWrapper == null) {
-      myFrameWrapper = LightEditFrameWrapper.allocate(() -> closeEditorWindow());
+      myFrameWrapper = LightEditFrameWrapper.allocate(project, () -> closeEditorWindow());
       LOG.info("Frame created");
       restoreSession();
       notify = true;
@@ -89,7 +90,6 @@ public final class LightEditServiceImpl implements LightEditService,
       notify = true;
     }
     if (notify) {
-      Project project = Objects.requireNonNull(myFrameWrapper.getProject());
       ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowOpened(project);
     }
   }
