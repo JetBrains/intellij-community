@@ -237,14 +237,17 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
     }
   }
 
-  private fun checkRangesAreValid() {
-    val ranges = tracker.getRanges()!!
-    val content1 = vcsDocument.charsSequence
-    val content2 = document.charsSequence
-    val lineOffsets1 = LineOffsetsUtil.create(content1)
-    val lineOffsets2 = LineOffsetsUtil.create(content2)
+  protected fun checkRangesAreValid() {
+    val diffRanges = tracker.getRanges()!!.map { com.intellij.diff.util.Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
+    checkRangesAreValid(vcsDocument, document, diffRanges)
+  }
 
-    val diffRanges = ranges.map { com.intellij.diff.util.Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
+  protected fun checkRangesAreValid(document1: Document, document2: Document, diffRanges: List<com.intellij.diff.util.Range>) {
+    val content1 = document1.charsSequence
+    val content2 = document2.charsSequence
+    val lineOffsets1 = LineOffsetsUtil.create(document1)
+    val lineOffsets2 = LineOffsetsUtil.create(document2)
+
     val iterable = DiffIterableUtil.fair(DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount))
 
     for (range in iterable.iterateUnchanged()) {
@@ -254,7 +257,7 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
     }
   }
 
-  private fun checkCantTrim() {
+  protected fun checkCantTrim() {
     val ranges = tracker.getRanges()!!
     for (range in ranges) {
       if (range.type != Range.MODIFIED) continue
@@ -273,14 +276,14 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
     }
   }
 
-  private fun checkCantMerge() {
+  protected fun checkCantMerge() {
     val ranges = tracker.getRanges()!!
     for (i in 0 until ranges.size - 1) {
       TestCase.assertFalse(ranges[i].line2 == ranges[i + 1].line1)
     }
   }
 
-  private fun checkInnerRanges() {
+  protected fun checkInnerRanges() {
     val ranges = tracker.getRanges()!!
 
     for (range in ranges) {

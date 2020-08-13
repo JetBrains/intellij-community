@@ -59,7 +59,8 @@ class GitStageLineStatusTracker(
   override val document: Document
 ) : LocalLineStatusTracker<StagedRange> {
   override val vcsDocument: Document = LineStatusTrackerBase.createVcsDocument(document)
-  private var stagedDocument: Document = LineStatusTrackerBase.createVcsDocument(document)
+  var stagedDocument: Document = LineStatusTrackerBase.createVcsDocument(document)
+    private set
 
   override val disposable: Disposable = Disposer.newDisposable()
   private val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
@@ -238,7 +239,7 @@ class GitStageLineStatusTracker(
     }
   }
 
-  private fun stageChanges(range: Range) {
+  fun stageChanges(range: Range) {
     val newRange = blockOperations.findBlock(range) ?: return
     runBulkStage(listOf(newRange))
   }
@@ -253,7 +254,7 @@ class GitStageLineStatusTracker(
     }
   }
 
-  private fun unstageChanges(range: Range) {
+  fun unstageChanges(range: Range) {
     val newRange = blockOperations.findBlock(range) ?: return
     runBulkUnstage(listOf(newRange))
   }
