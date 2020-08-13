@@ -77,6 +77,10 @@ public class LombokLightParameter extends LightParameter {
       return false;
     }
 
+    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
+      return false;
+    }
+
     return thisType.getCanonicalText().equals(thatType.getCanonicalText());
   }
 

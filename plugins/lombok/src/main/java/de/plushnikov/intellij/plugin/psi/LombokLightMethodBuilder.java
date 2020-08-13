@@ -287,6 +287,11 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     if (!getParameterList().equals(that.getParameterList())) {
       return false;
     }
+
+    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
+      return false;
+    }
+
     return Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
   }
 

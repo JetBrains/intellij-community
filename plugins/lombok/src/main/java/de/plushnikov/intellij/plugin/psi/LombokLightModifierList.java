@@ -115,6 +115,10 @@ public class LombokLightModifierList extends LightModifierList {
 
     LombokLightModifierList that = (LombokLightModifierList) o;
 
+    if (getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
+      return false;
+    }
+
     return myAnnotations.equals(that.myAnnotations);
   }
 

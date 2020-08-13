@@ -7,6 +7,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder;
 import java.util.Arrays;
 
 public class LombokLightParameterListBuilder extends LightParameterListBuilder {
+
   public LombokLightParameterListBuilder(PsiManager manager, Language language) {
     super(manager, language);
   }
@@ -23,6 +24,10 @@ public class LombokLightParameterListBuilder extends LightParameterListBuilder {
     LombokLightParameterListBuilder that = (LombokLightParameterListBuilder) o;
 
     if (getParametersCount() != that.getParametersCount()) {
+      return false;
+    }
+
+    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
       return false;
     }
 

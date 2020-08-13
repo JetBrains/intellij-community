@@ -138,6 +138,10 @@ public class LombokLightFieldBuilder extends LightFieldBuilder {
           (null != containingClass && containingClass.isEquivalentTo(anotherContainingClass));
       }
 
+      if(getNavigationElement() != this && !getNavigationElement().equals(anotherLightField.getNavigationElement())) {
+        stillEquivalent = false;
+      }
+
       return stillEquivalent;
     } else {
       return super.isEquivalentTo(another);

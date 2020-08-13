@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.light.LightIdentifier;
 
+import java.util.Objects;
+
 /**
  * Date: 12.10.13 Time: 23:27
  */
@@ -47,7 +49,11 @@ public class LombokLightIdentifier extends LightIdentifier {
 
     LombokLightIdentifier that = (LombokLightIdentifier) o;
 
-    return !(myText != null ? !myText.equals(that.myText) : that.myText != null);
+    if(getNavigationElement() != this && !getNavigationElement().equals(that.getNavigationElement())) {
+      return false;
+    }
+
+    return Objects.equals(myText, that.myText);
 
   }
 
