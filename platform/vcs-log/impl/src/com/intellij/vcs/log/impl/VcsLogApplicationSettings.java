@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnsVisibilityStorage.TableColumnVisibilityProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,11 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
         value = ((CustomBooleanProperty)property).defaultValue();
       }
       return (T)value;
+    }
+    if (property instanceof TableColumnVisibilityProperty) {
+      TableColumnVisibilityProperty visibilityProperty = (TableColumnVisibilityProperty)property;
+      Boolean isVisible = myState.COLUMN_ID_VISIBILITY.get(visibilityProperty.getName());
+      return isVisible != null ? (T)isVisible : (T)Boolean.TRUE;
     }
     return property.match()
       .ifEq(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
@@ -100,6 +106,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
       //noinspection unchecked
       myState.COLUMN_ID_ORDER = (List<String>)value;
     }
+    else if (property instanceof TableColumnVisibilityProperty) {
+      myState.COLUMN_ID_VISIBILITY.put(property.getName(), (Boolean)value);
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -111,7 +120,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     return property instanceof CustomBooleanProperty ||
            COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) || DIFF_PREVIEW_VERTICAL_SPLIT.equals(property) ||
-           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ID_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
+           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ID_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property) ||
+           property instanceof TableColumnVisibilityProperty;
   }
 
   @Override
@@ -135,6 +145,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     @Deprecated
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public List<String> COLUMN_ID_ORDER = new ArrayList<>();
+    public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
     public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
   }
 

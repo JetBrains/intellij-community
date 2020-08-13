@@ -15,17 +15,15 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.column.Date;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnsVisibilityStorage;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnOrderStorageKt.supportsColumnsReordering;
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
@@ -66,8 +64,7 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
     if (properties != null && supportsColumnsReordering(properties)) {
-      List<VcsLogColumn<?>> columnOrder = getColumnsOrder(properties);
-      return columnOrder.contains(Date.INSTANCE);
+      return VcsLogColumnsVisibilityStorage.getInstance().isVisible(properties, Date.INSTANCE);
     }
     return false;
   }

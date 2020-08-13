@@ -7,8 +7,10 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(COLUMN_ID_ORDER)
 
 /**
- * Provides a list of [VcsLogColumn] ordered based on the saved state.
- * Some [VcsLogColumn] may not be included in the list, which means that the [VcsLogColumn] should not be displayed in the interface.
+ * Provides a list of visible [VcsLogColumn] ordered based on the saved state.
+ * If [VcsLogColumn] is visible and its state were not saved, it will go after ordered columns.
+ *
+ * Columns visibility is checked using [VcsLogColumnsVisibilityStorage].
  *
  * @see moveColumn
  * @see addColumn
@@ -17,7 +19,10 @@ internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(COLUMN_ID_O
  */
 internal fun VcsLogUiProperties.getColumnsOrder(): List<VcsLogColumn<*>> {
   val currentColumns = VcsLogColumnModelIndices.getInstance().getCurrentColumns()
-  return get(COLUMN_ID_ORDER).mapNotNull { id -> currentColumns.find { it.id == id } }
+  val savedOrder = get(COLUMN_ID_ORDER).mapNotNull { id -> currentColumns.find { it.id == id } }
+  val visibilityStorage = VcsLogColumnsVisibilityStorage.getInstance()
+  val visibleColumns = (currentColumns - savedOrder).filter { visibilityStorage.isVisible(this, it) }
+  return savedOrder + visibleColumns
 }
 
 internal fun VcsLogUiProperties.moveColumn(column: VcsLogColumn<*>, newIndex: Int) = updateOrder { order ->
@@ -34,7 +39,7 @@ internal fun VcsLogUiProperties.removeColumn(column: VcsLogColumn<*>) = updateOr
 }
 
 internal fun VcsLogUiProperties.updateOrder(newOrder: List<VcsLogColumn<*>>) {
-  set(COLUMN_ID_ORDER, newOrder.map { it.id })
+  set(COLUMN_ID_ORDER, newOrder.map { it.id }.distinct())
 }
 
 private fun VcsLogUiProperties.updateOrder(update: (MutableList<VcsLogColumn<*>>) -> Unit) {

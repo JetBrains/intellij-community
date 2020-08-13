@@ -41,7 +41,6 @@ internal class VcsLogColumnModelIndices : Disposable {
 
       override fun extensionRemoved(extension: VcsLogCustomColumn<*>, pluginDescriptor: PluginDescriptor) {
         forgetColumn(extension)
-        VcsLogColumnsWidthStorage.getInstance().removeTableColumnProperty(extension)
       }
     }
     VcsLogCustomColumn.KEY.point.addExtensionPointListener(customColumnListener, true, this)
@@ -93,8 +92,12 @@ internal class VcsLogColumnModelIndices : Disposable {
   }
 
   interface CurrentColumnsListener : EventListener {
-    fun columnAdded(column: VcsLogColumn<*>)
+    @JvmDefault
+    fun columnAdded(column: VcsLogColumn<*>) {
+    }
 
-    fun columnRemoved(column: VcsLogColumn<*>)
+    @JvmDefault
+    fun columnRemoved(column: VcsLogColumn<*>) {
+    }
   }
 }

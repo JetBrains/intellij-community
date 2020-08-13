@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnProperty;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -48,10 +48,10 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
-    if (property instanceof TableColumnProperty) {
-      TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
+    if (property instanceof TableColumnWidthProperty) {
+      TableColumnWidthProperty tableColumnWidthProperty = (TableColumnWidthProperty)property;
       if (!state.COLUMN_WIDTH.isEmpty()) {
-        tableColumnProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
+        tableColumnWidthProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
         state.COLUMN_WIDTH = new HashMap<>();
       }
       Integer savedWidth = state.COLUMN_ID_WIDTH.get(property.getName());
@@ -103,7 +103,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
-    else if (property instanceof TableColumnProperty) {
+    else if (property instanceof TableColumnWidthProperty) {
       getState().COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
     }
     else {
@@ -121,7 +121,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     if (myAppSettings.exists(property) ||
         SUPPORTED_PROPERTIES.contains(property) ||
         property instanceof VcsLogHighlighterProperty ||
-        property instanceof TableColumnProperty) {
+        property instanceof TableColumnWidthProperty) {
       return true;
     }
     return false;

@@ -12,13 +12,14 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnsVisibilityStorage.TableColumnVisibilityProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnProperty;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 @State(name = "Vcs.Log.History.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
@@ -35,10 +36,10 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (property instanceof TableColumnProperty) {
-      TableColumnProperty tableColumnProperty = (TableColumnProperty)property;
+    if (property instanceof TableColumnWidthProperty) {
+      TableColumnWidthProperty tableColumnWidthProperty = (TableColumnWidthProperty)property;
       if (!myState.COLUMN_WIDTH.isEmpty()) {
-        tableColumnProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
+        tableColumnWidthProperty.moveOldSettings(myState.COLUMN_WIDTH, myState.COLUMN_ID_WIDTH);
         myState.COLUMN_WIDTH = new HashMap<>();
       }
       Integer savedWidth = myState.COLUMN_ID_WIDTH.get(property.getName());
@@ -46,6 +47,11 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
         return (T)Integer.valueOf(-1);
       }
       return (T)savedWidth;
+    }
+    if (property instanceof TableColumnVisibilityProperty) {
+      TableColumnVisibilityProperty visibilityProperty = (TableColumnVisibilityProperty)property;
+      Boolean isVisible = myState.COLUMN_ID_VISIBILITY.get(visibilityProperty.getName());
+      return isVisible != null ? (T)isVisible : (T)Boolean.TRUE;
     }
     return property.match()
       .ifEq(SHOW_DETAILS).then(myState.SHOW_DETAILS)
@@ -88,8 +94,11 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (COLUMN_ID_ORDER.equals(property)) {
       myState.COLUMN_ID_ORDER = (List<String>)(value);
     }
-    else if (property instanceof TableColumnProperty) {
+    else if (property instanceof TableColumnWidthProperty) {
       myState.COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
+    }
+    else if (property instanceof TableColumnVisibilityProperty) {
+      myState.COLUMN_ID_VISIBILITY.put(property.getName(), (Boolean)value);
     }
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;
@@ -116,7 +125,8 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
            SHOW_DIFF_PREVIEW.equals(property) ||
            SHOW_ROOT_NAMES.equals(property) ||
            PREFER_COMMIT_DATE.equals(property) ||
-           property instanceof TableColumnProperty;
+           property instanceof TableColumnWidthProperty ||
+           property instanceof TableColumnVisibilityProperty;
   }
 
   @Override
@@ -155,6 +165,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     @Deprecated
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public List<String> COLUMN_ID_ORDER = new ArrayList<>();
+    public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
     public boolean SHOW_DIFF_PREVIEW = true;
     public boolean SHOW_ROOT_NAMES = false;
   }
