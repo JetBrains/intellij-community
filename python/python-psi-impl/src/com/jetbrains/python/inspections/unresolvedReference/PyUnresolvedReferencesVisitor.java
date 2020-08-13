@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -42,6 +43,7 @@ import com.jetbrains.python.inspections.PyInspectionsUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.AddFunctionQuickFix;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
+import com.jetbrains.python.inspections.quickfix.CreateClassQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -374,7 +376,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         description = PyPsiBundle.message("INSP.unresolved.ref.$0", refText);
 
         ContainerUtil.addAll(fixes, getAutoImportFixes(node, reference, element));
-        ContainerUtil.addIfNotNull(fixes, getCreateClassFix(myTypeEvalContext, refText, element));
+        ContainerUtil.addIfNotNull(fixes, getCreateClassFix(refText, element));
       }
     }
     ProblemHighlightType hl_type;
@@ -916,7 +918,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     else if (type instanceof PyModuleType) {
       PyFile file = ((PyModuleType)type).getModule();
       result.add(new AddFunctionQuickFix(refText, file.getName()));
-      getCreateClassFix(myTypeEvalContext, refText, element);
+      getCreateClassFix(refText, element);
     }
     return result;
   }
@@ -930,7 +932,26 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.emptyList();
   }
 
-  LocalQuickFix getCreateClassFix(TypeEvalContext typeEvalContext, @NonNls String refText, PsiElement element) {
+  LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
+    if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText) &&
+        PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
+      PsiElement anchor = element;
+      if (element instanceof PyQualifiedExpression) {
+        final PyExpression expr = ((PyQualifiedExpression)element).getQualifier();
+        if (expr != null) {
+          final PyType type = myTypeEvalContext.getType(expr);
+          if (type instanceof PyModuleType) {
+            anchor = ((PyModuleType)type).getModule();
+          }
+          else {
+            anchor = null;
+          }
+        }
+        if (anchor != null) {
+          return new CreateClassQuickFix(refText, anchor);
+        }
+      }
+    }
     return null;
   }
 

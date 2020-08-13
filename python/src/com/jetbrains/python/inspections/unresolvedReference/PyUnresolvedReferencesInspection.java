@@ -10,7 +10,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -38,13 +37,11 @@ import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -364,30 +361,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return true;
       }
       return false;
-    }
-
-    @Override
-    public LocalQuickFix getCreateClassFix(TypeEvalContext typeEvalContext, @NonNls String refText, PsiElement element) {
-      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText) &&
-          PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
-        PsiElement anchor = element;
-        if (element instanceof PyQualifiedExpression) {
-          final PyExpression expr = ((PyQualifiedExpression)element).getQualifier();
-          if (expr != null) {
-            final PyType type = typeEvalContext.getType(expr);
-            if (type instanceof PyModuleType) {
-              anchor = ((PyModuleType)type).getModule();
-            }
-            else {
-              anchor = null;
-            }
-          }
-          if (anchor != null) {
-            return new CreateClassQuickFix(refText, anchor);
-          }
-        }
-      }
-      return null;
     }
 
     private static boolean isCall(PyElement node) {

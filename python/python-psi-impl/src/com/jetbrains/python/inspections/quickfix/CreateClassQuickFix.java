@@ -15,8 +15,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -45,15 +45,15 @@ public class CreateClassQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     if (myAnchor instanceof PyFile) {
-      return PyBundle.message("QFIX.create.class.in.module", myClassName, ((PyFile)myAnchor).getName());
+      return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, ((PyFile)myAnchor).getName());
     }
-    return PyBundle.message("QFIX.create.class.0", myClassName);
+    return PyPsiBundle.message("QFIX.create.class.0", myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.create.class");
+    return PyPsiBundle.message("QFIX.create.class");
   }
 
   @Override
