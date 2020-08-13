@@ -173,5 +173,11 @@
       <separator/>
       <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
     </group>
+
+    <action id="Github.PullRequest.Diff.Comment.Create"
+            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
+      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <add-to-group group-id="Diff.EditorPopupMenu"/>
+    </action>
   </actions>
 </idea-plugin>
