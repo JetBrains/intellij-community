@@ -79,7 +79,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
     final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);
-    buffer.append(
+    buffer.appendRaw(
       JavaUiBundle.message("library.project.structure.invalid.roots.description",
                            link,
                            rootName,
