@@ -229,16 +229,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     @Override
-    public LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
-      PyCallExpression callExpression = PsiTreeUtil.getParentOfType(expr, PyCallExpression.class);
-      if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
-                                     ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
-        return new UnresolvedRefCreateFunctionQuickFix(callExpression, expr);
-      }
-      return null;
-    }
-
-    @Override
     public LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
       if (refText.equals("true") || refText.equals("false")) {
         return new UnresolvedRefTrueFalseQuickFix(expr);

@@ -40,10 +40,7 @@ import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.PyInspectionsUtil;
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
-import com.jetbrains.python.inspections.quickfix.AddFunctionQuickFix;
-import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
-import com.jetbrains.python.inspections.quickfix.CreateClassQuickFix;
+import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -894,6 +891,11 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
+    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(expr, PyCallExpression.class);
+    if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
+                                   ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
+      return new UnresolvedRefCreateFunctionQuickFix(callExpression, expr);
+    }
     return null;
   }
 

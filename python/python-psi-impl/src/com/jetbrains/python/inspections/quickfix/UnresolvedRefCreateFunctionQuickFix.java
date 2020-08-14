@@ -7,17 +7,15 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -45,13 +43,13 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return PyBundle.message("QFIX.NAME.unresolved.reference.create.function", myFunctionName);
+    return PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", myFunctionName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.unresolved.reference.create.function");
+    return PyPsiBundle.message("QFIX.unresolved.reference.create.function");
   }
 
   @Override
@@ -126,11 +124,6 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     );
     builder.replaceElement(function.getStatementList(), PyNames.PASS);
 
-    final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(insertAnchor.getContainingFile().getVirtualFile());
-    if (!(editor instanceof TextEditor)) {
-      return;
-    }
-
-    builder.run(((TextEditor)editor).getEditor(), false);
+    PythonTemplateRunner.runTemplateInSelectedEditor(project, insertAnchor, builder);
   }
 }
