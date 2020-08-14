@@ -86,7 +86,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private PsiElement myCodeFragmentMember; // parent of myCodeFragment
 
-  protected String myMethodName; // name for extracted method
+  protected @NonNls String myMethodName; // name for extracted method
   protected PsiType myReturnType; // return type for extracted method
   protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
   protected VariableData[] myVariableDatum; // parameter data for extracted method
@@ -242,7 +242,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     if (PsiTreeUtil.getParentOfType(myElements[0].isPhysical() ? myElements[0] : myCodeFragmentMember, PsiAnnotation.class) != null) {
-      throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
+      throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.error.annotation.value"), myElements[0]);
     }
 
     myControlFlowWrapper = new ControlFlowWrapper(codeFragment, myElements);
@@ -551,15 +551,15 @@ public class ExtractMethodProcessor implements MatchProvider {
         return true;
       });
       if (!extractedReferences.isEmpty()) {
-        throw new PrepareFailedException("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment", extractedReferences.get(0));
+        throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.error.local.class.defined.outside"), extractedReferences.get(0));
       }
       if (!remainingReferences.isEmpty()) {
-        throw new PrepareFailedException("Cannot extract method because the selected code fragment defines local classes used outside of the fragment", remainingReferences.get(0));
+        throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.error.local.class.used.outside"), remainingReferences.get(0));
       }
       if (classExtracted) {
         for (PsiVariable variable : myControlFlowWrapper.getUsedVariables()) {
           if (isDeclaredInside(variable) && !variable.equals(myOutputVariable) && PsiUtil.resolveClassInType(variable.getType()) == localClass) {
-            throw new PrepareFailedException("Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment", variable);
+            throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.error.local.class.variable.used.outside"), variable);
           }
         }
       }
@@ -675,7 +675,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           final String paramName = parameter.name;
           final PsiLocalVariable variable = vars.get(paramName);
           if (variable != null) {
-            conflicts.putValue(variable, "Variable with name " + paramName + " is already defined in the selected scope");
+            conflicts.putValue(variable, JavaRefactoringBundle.message("extract.method.conflict.variable", paramName));
           }
         }
       }
@@ -821,7 +821,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public void testPrepare(PsiType returnType, boolean makeStatic) throws PrepareFailedException{
     if (makeStatic) {
       if (!isCanBeStatic()) {
-        throw new PrepareFailedException("Failed to make static", myElements[0]);
+        throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.error.make.static"), myElements[0]);
       }
       myInputVariables.setPassFields(true);
       myStatic = true;
@@ -1944,7 +1944,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           return processor.execute(psiClasses[0]);
         }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
-        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
+        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), RefactoringBundle.message("choose.destination.class"), processor, preselection)
           .showInBestPositionFor(myEditor);
         return true;
       }

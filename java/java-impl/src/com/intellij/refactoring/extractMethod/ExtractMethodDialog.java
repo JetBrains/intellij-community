@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -524,7 +525,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     myParamTable.setMinimumSize(JBUI.size(500, 100));
     myCenterPanel.add(myParamTable, BorderLayout.CENTER);
     final JTable table = UIUtil.findComponentOfType(myParamTable, JTable.class);
-    myCenterPanel.add(SeparatorFactory.createSeparator("&Parameters", table), BorderLayout.NORTH);
+    final TitledSeparator separator = SeparatorFactory.createSeparator(JavaRefactoringBundle.message("extract.method.dialog.separator.parameters"), table);
+    myCenterPanel.add(separator, BorderLayout.NORTH);
     if (table != null) {
       table.addFocusListener(new FocusAdapter() {
         @Override
@@ -690,7 +692,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     Set<String> usedNames = new HashSet<>();
     for (VariableData data : myInputVariables) {
       if (data.passAsParameter && !usedNames.add(data.name)) {
-        conflicts.putValue(null, "Conflicting parameter name: " + data.name);
+        conflicts.putValue(null, JavaRefactoringBundle.message("extract.method.conflict.parameter", data.name));
       }
     }
   }

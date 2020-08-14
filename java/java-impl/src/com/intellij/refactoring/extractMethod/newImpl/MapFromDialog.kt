@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.generation.GenerateMembersUtil
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -100,8 +101,7 @@ object MapFromDialog {
           val paramName = parameter.name
           val variable = vars[paramName]
           if (variable != null) {
-            //TODO bundle
-            conflicts.putValue(variable, "Variable with name $paramName is already defined in the selected scope")
+            conflicts.putValue(variable, JavaRefactoringBundle.message("extract.method.conflict.variable", paramName))
           }
         }
       }

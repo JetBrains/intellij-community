@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
@@ -47,7 +48,8 @@ class PreviewTree implements Disposable {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setCellRenderer(new PreviewTreeRenderer());
-    tree.setName("ExtractMethodPreview");
+    @NlsSafe String treeName = "ExtractMethodPreview";
+    tree.setName(treeName);
     tree.getSelectionModel().addTreeSelectionListener(
       e -> ApplicationManager.getApplication().invokeLater(
         () -> onSelectionUpdate()));
