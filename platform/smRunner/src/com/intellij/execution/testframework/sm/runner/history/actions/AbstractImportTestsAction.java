@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
@@ -138,6 +139,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
       myProject = project;
+      class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new FileInputStream(VfsUtilCore.virtualToIoFile(myFile))) {
         SAXParserFactory.newInstance().newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
@@ -169,7 +171,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
           }
 
           @Override
-          public void endElement(String uri, String localName, String qName) {
+          public void endElement(String uri, String localName, String qName) throws SAXException {
             if (isConfigContent) {
               builder.append("</").append(qName).append(">");
             }
@@ -195,12 +197,19 @@ public abstract class AbstractImportTestsAction extends AnAction {
                 }
                 myTargetId = config.getAttributeValue("target");
               }
-              catch (Exception ignore) { }
+              catch (Exception e) { 
+                LOG.debug(e);
+              }
+              throw new TerminateParsingException();
             }
           }
         });
       }
-      catch (Exception ignore) {
+      catch (TerminateParsingException ignored) {
+        //expected termination
+      }
+      catch (Exception e) {
+        LOG.debug(e);
       }
     }
 
