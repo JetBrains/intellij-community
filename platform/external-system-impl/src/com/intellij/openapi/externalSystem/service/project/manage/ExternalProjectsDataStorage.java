@@ -154,7 +154,9 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
     catch (Throwable e) {
       markDirtyAllExternalProjects();
-      LOG.error(e);
+      // Android Studio (b/297169765): Android Gradle model API changes should not trigger crash reports
+      // There is no API to specify the model changes, so deserialization fails with an exception that we ignore.
+      LOG.warn("Failed to deserialize data nodes.", e);
     }
 
     mergeLocalSettings();
