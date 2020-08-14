@@ -6,15 +6,12 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -56,11 +53,7 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
       CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(parameterList);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
       builder.replaceRange(TextRange.create(parameter.getTextLength() - 4, parameter.getTextLength()), "None");
-      final VirtualFile virtualFile = function.getContainingFile().getVirtualFile();
-      if (virtualFile == null) return;
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
-      if (editor == null) return;
-      builder.run(editor, false);
+      PythonTemplateRunner.runTemplate(function.getContainingFile(), builder);
     }
   }
 }
