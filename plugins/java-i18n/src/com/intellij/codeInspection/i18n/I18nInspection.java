@@ -151,7 +151,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (!nonNlsLiteralPattern.equals(DEFAULT_NON_NLS_LITERAL_PATTERN)) {
       node.addContent(new Element("option")
                         .setAttribute("name", NON_NLS_LITERAL_PATTERN)
-                        .setAttribute("value", DEFAULT_NON_NLS_LITERAL_PATTERN));
+                        .setAttribute("value", nonNlsLiteralPattern));
     }
   }
 
