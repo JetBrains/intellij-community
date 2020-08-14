@@ -7,6 +7,7 @@ import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.PsiAction
@@ -55,11 +56,15 @@ class SurroundWithSuggester : FeatureSuggester {
                     || langSupport.isWhileStatement(newChild) && oldChild.text == "whil"
                 ) {
                     surroundingStatementData = SurroundingStatementData(newChild)
-                } else if (surroundingStatementData != null) {
+                }
+            }
+            is BeforeChildReplacedAction -> {
+                if (surroundingStatementData == null) return NoSuggestion
+                with(lastAction) {
                     if (newChild is PsiErrorElement
                         && newChild.isMissedCloseBrace()
                     ) {
-                        surroundingStatementData!!.apply {
+                        surroundingStatementData!!.run {
                             expectedCloseBraceErrorElement = newChild
                             val statements = surroundingStatement.getStatements()
                             initialStatementsCount = statements.size
