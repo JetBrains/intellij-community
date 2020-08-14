@@ -147,7 +147,7 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
     }
     catch (Throwable e) {
       markDirtyAllExternalProjects();
-      LOG.error(e);
+      LOG.warn("Failed to deserialize data nodes.", e);
     }
 
     mergeLocalSettings();
