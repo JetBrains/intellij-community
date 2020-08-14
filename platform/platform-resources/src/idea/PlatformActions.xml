@@ -952,6 +952,7 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
+      <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction"/>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
