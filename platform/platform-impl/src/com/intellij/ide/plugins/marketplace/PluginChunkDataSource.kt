@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.IdeBundle
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
+import com.jetbrains.plugin.blockmap.core.Chunk
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -12,6 +13,7 @@ import java.nio.charset.Charset
 // According to Amazon CloudFront documentation the maximum length of a request,
 // including the path, the query string (if any), and headers, is 20,480 bytes.
 private const val MAX_HTTP_HEADERS_LENGTH: Int = 19500
+private const val MAX_RANGE_BYTES: Int = 10_000_000
 private const val MAX_STRING_LENGTH: Int = 1024
 
 class PluginChunkDataSource(
@@ -20,8 +22,9 @@ class PluginChunkDataSource(
   private val newPluginUrl: String
 ) : Iterator<ByteArray> {
   private val oldSet = oldBlockMap.chunks.toSet()
-  private val chunksIterator = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }.iterator()
-  private var curRangeChunkLengths = ArrayList<Int>()
+  private val chunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
+  private var pos = 0
+  private var chunkSequences = ArrayList<ArrayList<Chunk>>()
   private var curChunkData = getRange(nextRange())
   private var pointer: Int = 0
 
@@ -44,15 +47,30 @@ class PluginChunkDataSource(
 
   private fun nextRange(): String {
     val range = StringBuilder()
-    curRangeChunkLengths.clear()
-    var rangeHeaderLength = 0
-    while (chunksIterator.hasNext() && range.length <= MAX_HTTP_HEADERS_LENGTH) {
-      val newChunk = chunksIterator.next()
-      range.append("${newChunk.offset}-${newChunk.offset + newChunk.length - 1},")
-      curRangeChunkLengths.add(newChunk.length)
-      rangeHeaderLength += newChunk.length
+    chunkSequences.clear()
+    var bytes = 0
+    while (pos < chunks.size && range.length <= MAX_HTTP_HEADERS_LENGTH) {
+      val chunkSequence = nextChunkSequence(bytes)
+      chunkSequences.add(chunkSequence)
+      bytes += chunkSequence.last().offset + chunkSequence.last().length - chunkSequence[0].offset
+      range.append("${chunkSequence[0].offset}-${chunkSequence.last().offset + chunkSequence.last().length - 1},")
     }
     return range.removeSuffix(",").toString()
+  }
+
+  private fun nextChunkSequence(bytes: Int): ArrayList<Chunk> {
+    val result = ArrayList<Chunk>()
+    result.add(chunks[pos])
+    pos++
+    var sum = result[0].length
+    while (pos < chunks.size - 1
+           && chunks[pos].offset == chunks[pos - 1].offset + chunks[pos - 1].length
+           && sum + bytes < MAX_RANGE_BYTES) {
+      result.add(chunks[pos])
+      sum += chunks[pos].length
+      pos++
+    }
+    return result
   }
 
   private fun getRange(range: String): MutableList<ByteArray> {
@@ -60,9 +78,9 @@ class PluginChunkDataSource(
     HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
       val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
       request.inputStream.buffered().use { input ->
-        for (length in curRangeChunkLengths) {
+        for (sequence in chunkSequences) {
           val openingEmptyLine = nextLine(input)
-          if (openingEmptyLine != System.lineSeparator()) {
+          if (openingEmptyLine.trim().isNotEmpty()) {
             throw IOException(IdeBundle.message("http.multirange.response.doesnt.include.line.separator"))
           }
           val boundaryLine = nextLine(input)
@@ -78,12 +96,14 @@ class PluginChunkDataSource(
             throw IOException(IdeBundle.message("http.multirange.response.includes.incorrect.header", contentRangeLine, "Content-Range"))
           }
           val closingEmptyLine = nextLine(input)
-          if (closingEmptyLine != System.lineSeparator()) {
+          if (closingEmptyLine.trim().isNotEmpty()) {
             throw IOException(IdeBundle.message("http.multirange.response.doesnt.include.line.separator"))
           }
-          val data = ByteArray(length)
-          for (i in 0 until length) data[i] = input.read().toByte()
-          result.add(data)
+          for (chunk in sequence) {
+            val data = ByteArray(chunk.length)
+            for (i in 0 until chunk.length) data[i] = input.read().toByte()
+            result.add(data)
+          }
         }
       }
     }
