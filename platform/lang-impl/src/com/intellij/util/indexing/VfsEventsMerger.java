@@ -219,14 +219,16 @@ final class VfsEventsMerger {
       PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %m\n");
       myAppender = new RollingFileAppender(pattern, logPath.toFile().getAbsolutePath());
       myAppender.setMaxFileSize("20MB");
-      myAppender.setMaxBackupIndex(10);
+      myAppender.setMaxBackupIndex(50);
     }
 
 
     @Override
     public @NotNull Logger getLoggerInstance(@NotNull String category) {
       final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+      logger.removeAllAppenders();
       logger.addAppender(myAppender);
+      logger.setAdditivity(false);
       logger.setLevel(Level.INFO);
       return new Log4jBasedLogger(logger);
     }
