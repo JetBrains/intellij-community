@@ -33,8 +33,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(classpathCombo, jrePath, false));
 
-    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(myProject, classpathCombo);
-    JUnitTestKindFragment testKind = new JUnitTestKindFragment(myProject, moduleSelector);
+    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
+    JUnitTestKindFragment testKind = new JUnitTestKindFragment(getProject(), moduleSelector);
     fragments.add(testKind);
 
     String group = JUnitBundle.message("test.group");
