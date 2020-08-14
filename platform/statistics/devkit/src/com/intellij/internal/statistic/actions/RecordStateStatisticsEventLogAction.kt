@@ -7,12 +7,11 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.DEFAULT_RECORDER
-import com.intellij.internal.statistic.StatisticsDevKitUtil.STATISTICS_NOTIFICATION_GROUP_ID
+import com.intellij.internal.statistic.StatisticsDevKitUtil.STATISTICS_NOTIFICATION_GROUP
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.getConfig
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.rollOver
 import com.intellij.internal.statistic.eventLog.getEventLogProvider
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -61,15 +60,15 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     val logFile = getConfig().getActiveLogFile()
     val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
     ApplicationManager.getApplication().invokeLater {
-      val notificationBuilder = NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",
-                                                    NotificationType.INFORMATION)
+      val notification = STATISTICS_NOTIFICATION_GROUP.createNotification("Finished collecting and recording events",
+                                                                          NotificationType.INFORMATION)
       if (virtualFile != null) {
-        notificationBuilder.addAction(NotificationAction.createSimple(
+        notification.addAction(NotificationAction.createSimple(
           StatisticsBundle.messagePointer(
             "action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"),
           Runnable { FileEditorManager.getInstance(project).openFile(virtualFile, true) }))
       }
-      notificationBuilder.buildAndNotify(project)
+      notification.notify(project)
     }
   }
 
@@ -84,11 +83,11 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
       if (getEventLogProvider(recorderId!!).isRecordEnabled()) {
         return true
       }
-      NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, StatisticsBundle.message("stats.logging.is.disabled"),
-                          NotificationType.WARNING)
-        .addAction(NotificationAction.createSimple(StatisticsBundle.messagePointer("stats.enable.data.sharing"),
-                                                   Runnable { SingleConfigurableEditor(project, ConsentConfigurable()).show() }))
-        .build().notify(project)
+      val notification = STATISTICS_NOTIFICATION_GROUP.createNotification(StatisticsBundle.message("stats.logging.is.disabled"),
+                                                                          NotificationType.WARNING)
+      notification.addAction(NotificationAction.createSimple(StatisticsBundle.messagePointer("stats.enable.data.sharing"),
+                                                             Runnable { SingleConfigurableEditor(project, ConsentConfigurable()).show() }))
+      notification.notify(project)
       return false
     }
   }

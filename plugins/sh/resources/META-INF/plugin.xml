@@ -96,7 +96,7 @@ Adds support for working with shell script files
       <className>com.intellij.sh.ShExplainShellIntention</className>
       <category>Shell script</category>
     </intentionAction>
-    <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.title.case"/>
+    <notificationAllowlist groupIds="Shell Script"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>

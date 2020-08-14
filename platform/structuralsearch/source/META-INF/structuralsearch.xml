@@ -35,7 +35,6 @@
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ReferenceFilter"/>
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TextFilter"/>
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TypeFilter"/>
-    <notificationGroup id="Structural Search" displayType="STICKY_BALLOON"/>
   </extensions>
 
   <actions>

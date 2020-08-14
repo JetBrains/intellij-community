@@ -98,7 +98,18 @@ public class Notification {
                       @Nullable @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    this(groupId, icon, title, subtitle, content, type, listener, null, null, null, null, null, null);
+    myGroupId = groupId;
+    myTitle = StringUtil.notNullize(title);
+    myContent = StringUtil.notNullize(content);
+    myType = type;
+    myListener = listener;
+    myTimestamp = System.currentTimeMillis();
+
+    myIcon = icon;
+    mySubtitle = subtitle;
+
+    this.displayId = null;
+    id = calculateId(this);
   }
 
   public Notification(@NotNull @NonNls String groupId,
@@ -129,37 +140,14 @@ public class Notification {
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    this(groupId, null, title, null, content, type, listener, displayId, null, null, null, null, null);
-  }
-
-  Notification(@NotNull @NonNls String groupId,
-               @Nullable Icon icon,
-               @Nullable @NotificationTitle String title,
-               @Nullable @NotificationSubtitle String subtitle,
-               @Nullable @NotificationContent String content,
-               @NotNull NotificationType type,
-               @Nullable NotificationListener listener,
-               @Nullable @NonNls String notificationId,
-               @Nullable String dropDownText,
-               @Nullable List<AnAction> actions,
-               @Nullable AnAction contextHelpAction,
-               @Nullable Runnable whenExpired,
-               @Nullable Boolean important) {
     myGroupId = groupId;
-    myIcon = icon;
-    myTitle = StringUtil.notNullize(title);
-    mySubtitle = subtitle;
-    myContent = StringUtil.notNullize(content);
+    myTitle = title;
+    myContent = content;
     myType = type;
     myListener = listener;
-    displayId = notificationId;
-    myDropDownText = dropDownText;
-    myActions = actions;
-    myContextHelpAction = contextHelpAction;
-    myWhenExpired = whenExpired;
-    myImportant = important;
-
     myTimestamp = System.currentTimeMillis();
+
+    this.displayId = displayId;
     id = calculateId(this);
   }
 

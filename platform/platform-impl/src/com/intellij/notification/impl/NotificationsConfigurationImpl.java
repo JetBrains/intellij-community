@@ -7,7 +7,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   public synchronized NotificationSettings[] getAllSettings() {
     Collection<NotificationSettings> settings = new HashSet<>(myIdToSettingsMap.values());
-    Iterable<NotificationGroup> notificationGroups = NotificationGroup.getAllRegisteredGroups();
-    for (NotificationGroup group : notificationGroups) {
+    for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
       if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
       settings.add(getSettings(group.getDisplayId()));
     }

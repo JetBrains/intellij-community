@@ -45,7 +45,6 @@
 
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="com.intellij.space.vcs.clone.SpaceCloneExtension"/>
 
-    <notificationGroup id="Space" displayType="BALLOON"/>
     <postStartupActivity implementation="com.intellij.space.vcs.PostStartupActivity"/>
     <postStartupActivity implementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
 

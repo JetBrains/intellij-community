@@ -373,7 +373,6 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
     ContainerUtil.immutableSet(
       "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
-      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
-      "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind"
     );
 }

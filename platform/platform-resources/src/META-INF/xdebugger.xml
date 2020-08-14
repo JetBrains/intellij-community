@@ -72,8 +72,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
-    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
-    <notificationGroup id="Attach to Process action" displayType="BALLOON"/>
+    <notificationAllowlist groupIds="Debugger messages;Attach to Process action"/>
   </extensions>
 
   <actions>
