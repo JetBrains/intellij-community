@@ -225,7 +225,7 @@ private class ParameterValuesPage(
       c.insets = Insets(0, 4, 0, 0)
       val documentManager = PsiDocumentManager.getInstance(project)
       val document = documentManager.getDocument(data.valueFragment)!!
-      val textField = MyTextField(language, project, document, null).apply {  // Android Studio: b/162426982
+      val textField = MyTextField(language, project, document, data.placeholderText).apply {
         setPreferredWidth(textFieldWidth)
 
         ComponentValidator(this@ParameterValuesPage)
