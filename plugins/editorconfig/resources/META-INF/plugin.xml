@@ -18,10 +18,9 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <depends>com.intellij.modules.lang</depends>
 
-  <actions>
+  <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
-    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction"
-            text="EditorConfig File" description="Create new EditorConfig file">
+    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
   </actions>
