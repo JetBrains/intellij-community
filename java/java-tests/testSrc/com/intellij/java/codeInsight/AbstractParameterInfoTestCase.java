@@ -15,7 +15,6 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.Language;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     super.tearDown();
   }
 
-  protected void configureJava(@Language("JAVA") String text) {
+  protected void configureJava(String text) {
     myFixture.configureByText(JavaFileType.INSTANCE, text);
   }
 
@@ -62,7 +61,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     assertEquals(hintText, myHintFixture.getCurrentHintText());
   }
 
-  public void checkResult(@Language("JAVA") String text) {
+  public void checkResult(String text) {
     myFixture.checkResult(text);
   }
 
