@@ -82,7 +82,9 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
           renameSilentlyToCorrupted()
         }
         // in test mode log will throw error, renameSilentlyToCorrupted is called before
-        LOG.error(e)
+        // Android Studio (b/297169765): Android Gradle model API changes should not trigger crash reports
+        // There is no API to specify the model changes, so deserialization fails with an exception that we ignore.
+        LOG.warn(e)
         return null
       }
       if (result == null && renameToCorruptedOnError) {
