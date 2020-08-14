@@ -19,7 +19,7 @@ public class <warning descr="Non-serializable class 'NonSerializableWithSerializ
     }
 }
 
-`record R() {
+record R() {
 
     private void readObject(java.io.ObjectInputStream str) {
     }
