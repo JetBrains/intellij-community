@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast.api;
 
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import com.intellij.util.ThrowableConsumer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
@@ -8,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavacFileData {
   public static final String CUSTOM_DATA_PLUGIN_ID = "ast.reference.collector"; // fake plugin name to fit into customOutputData API
@@ -98,13 +104,13 @@ public class JavacFileData {
 
   private static void saveRefs(final DataOutput out, TObjectIntHashMap<JavacRef> refs) throws IOException {
     final IOException[] exception = new IOException[]{null};
-    out.writeInt(refs.size());
+    DataInputOutputUtilRt.writeINT(out, refs.size());
     if (!refs.forEachEntry(new TObjectIntProcedure<JavacRef>() {
       @Override
       public boolean execute(JavacRef ref, int count) {
         try {
           writeJavacRef(out, ref);
-          out.writeInt(count);
+          DataInputOutputUtilRt.writeINT(out, count);
         }
         catch (IOException e) {
           exception[0] = e;
@@ -119,31 +125,30 @@ public class JavacFileData {
   }
 
   private static TObjectIntHashMap<JavacRef> readRefs(final DataInput in) throws IOException {
-    int size = in.readInt();
+    final int size = DataInputOutputUtilRt.readINT(in);
     TObjectIntHashMap<JavacRef> deserialized = new TObjectIntHashMap<JavacRef>(size);
-    while (size-- > 0) {
-      final JavacRef key = readJavacRef(in);
-      final int value = in.readInt();
-      deserialized.put(key, value);
+    for (int i = 0; i < size; i++) {
+      deserialized.put(readJavacRef(in), DataInputOutputUtilRt.readINT(in));
     }
     return deserialized;
   }
 
-
   private static void saveDefs(final DataOutput out, List<? extends JavacDef> defs) throws IOException {
-    out.writeInt(defs.size());
-    for (JavacDef t : defs) {
-      writeJavacDef(out, t);
-    }
+    DataInputOutputUtilRt.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
+      @Override
+      public void consume(JavacDef def) throws IOException {
+        writeJavacDef(out, def);
+      }
+    });
   }
 
   private static List<JavacDef> readDefs(final DataInput in) throws IOException {
-    int size = in.readInt();
-    List<JavacDef> result = new ArrayList<JavacDef>(size);
-    while (size-- > 0) {
-      result.add(readJavacDef(in));
-    }
-    return result;
+    return DataInputOutputUtilRt.readSeq(in, new ThrowableComputable<JavacDef, IOException>() {
+      @Override
+      public JavacDef compute() throws IOException {
+        return readJavacDef(in);
+      }
+    });
   }
 
   private static JavacDef readJavacDef(@NotNull DataInput in) throws IOException {
@@ -250,53 +255,56 @@ public class JavacFileData {
   }
 
   private static void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
-    output.writeInt(modifiers.size());
-    for (Modifier modifier : modifiers) {
-      output.writeUTF(modifier.name());
-    }
+    DataInputOutputUtilRt.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
+      @Override
+      public void consume(Modifier modifier) throws IOException {
+        output.writeUTF(modifier.name());
+      }
+    });
   }
 
   private static Set<Modifier> readModifiers(final DataInput input) throws IOException {
-    int size = input.readInt();
-    final List<Modifier> modifierList = new ArrayList<Modifier>(size);
-    while (size-- > 0) {
-      modifierList.add(Modifier.valueOf(input.readUTF()));
-    }
+    final List<Modifier> modifierList = DataInputOutputUtilRt.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+      @Override
+      public Modifier compute() throws IOException {
+        return Modifier.valueOf(input.readUTF());
+      }
+    });
     return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
   }
 
   private static void saveCasts(@NotNull final DataOutput output, @NotNull List<? extends JavacTypeCast> casts) throws IOException {
-    output.writeInt(casts.size());
-    for (JavacTypeCast cast : casts) {
-      writeJavacRef(output, cast.getOperandType());
-      writeJavacRef(output, cast.getCastType());
-    }
+    DataInputOutputUtilRt.writeSeq(output, casts, new ThrowableConsumer<JavacTypeCast, IOException>() {
+      @Override
+      public void consume(JavacTypeCast cast) throws IOException {
+        writeJavacRef(output, cast.getOperandType());
+        writeJavacRef(output, cast.getCastType());
+      }
+    });
   }
 
   @NotNull
   private static List<JavacTypeCast> readCasts(@NotNull final DataInput input) throws IOException {
-    int size = input.readInt();
-    List<JavacTypeCast> result = new ArrayList<JavacTypeCast>(size);
-    while (size-- > 0) {
-      final JavacRef.JavacClass operandType = (JavacRef.JavacClass)readJavacRef(input);
-      final JavacRef.JavacClass castType = (JavacRef.JavacClass)readJavacRef(input);
-      result.add(new JavacTypeCast(operandType, castType));
-    }
-    return result;
+    return DataInputOutputUtilRt.readSeq(input, new ThrowableComputable<JavacTypeCast, IOException>() {
+      @Override
+      public JavacTypeCast compute() throws IOException {
+        return new JavacTypeCast((JavacRef.JavacClass)readJavacRef(input), (JavacRef.JavacClass)readJavacRef(input));
+      }
+    });
   }
 
   @NotNull
   private static Set<JavacRef> readImplicitToString(@NotNull DataInputStream in) throws IOException {
-    int size = ((DataInput)in).readInt();
-    final Set<JavacRef> result = new THashSet<JavacRef>(size);
-    while (size-- > 0) {
+    int size = DataInputOutputUtilRt.readINT(in);
+    THashSet<JavacRef> result = new THashSet<JavacRef>(size);
+    for (int i = 0; i < size; i++) {
       result.add(readJavacRef(in));
     }
     return result;
   }
 
   private static void saveImplicitToString(@NotNull DataOutputStream out, @NotNull Set<? extends JavacRef> refs) throws IOException {
-    ((DataOutput)out).writeInt(refs.size());
+    DataInputOutputUtilRt.writeINT(out, refs.size());
     for (JavacRef ref : refs) {
       writeJavacRef(out, ref);
     }
