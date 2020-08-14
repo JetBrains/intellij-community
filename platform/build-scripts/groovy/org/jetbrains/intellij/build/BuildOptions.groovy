@@ -129,6 +129,9 @@ class BuildOptions {
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
+  static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
+  boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
+
   /**
    * If {@code true} the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
    * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
