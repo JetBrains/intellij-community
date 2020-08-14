@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -33,13 +33,13 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPr
   public String getName() {
     final PyReferenceExpression element = myElement.getElement();
     if (element == null) return "";
-    return PyBundle.message("QFIX.unresolved.reference", element.getText(), myQualifier);
+    return PyPsiBundle.message("QFIX.unresolved.reference", element.getText(), myQualifier);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.add.qualifier");
+    return PyPsiBundle.message("QFIX.add.qualifier");
   }
 
   @Override

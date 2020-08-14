@@ -13,10 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -930,7 +927,51 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
 
   Iterable<LocalQuickFix> getAddSelfFixes(TypeEvalContext typeEvalContext, PyElement node, PyReferenceExpression expr) {
-    return Collections.emptyList();
+    List<LocalQuickFix> result = new ArrayList<>();
+    final PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+    if (containedClass != null && function != null) {
+      final PyParameter[] parameters = function.getParameterList().getParameters();
+      if (parameters.length == 0) return Collections.emptyList();
+      final String qualifier = parameters[0].getText();
+      final PyDecoratorList decoratorList = function.getDecoratorList();
+      boolean isClassMethod = false;
+      if (decoratorList != null) {
+        for (PyDecorator decorator : decoratorList.getDecorators()) {
+          final PyExpression callee = decorator.getCallee();
+          if (callee != null && PyNames.CLASSMETHOD.equals(callee.getText())) {
+            isClassMethod = true;
+          }
+        }
+      }
+      for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
+        if (!isClassMethod && Comparing.strEqual(node.getName(), target.getName())) {
+          result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
+        }
+      }
+      for (PyStatement statement : containedClass.getStatementList().getStatements()) {
+        if (statement instanceof PyAssignmentStatement) {
+          PyExpression lhsExpression = ((PyAssignmentStatement)statement).getLeftHandSideExpression();
+          if (lhsExpression != null && lhsExpression.getText().equals(expr.getText())) {
+            PyExpression assignedValue = ((PyAssignmentStatement)statement).getAssignedValue();
+            if (assignedValue instanceof PyCallExpression) {
+              PyType type = typeEvalContext.getType(assignedValue);
+              if (type instanceof PyClassTypeImpl) {
+                if (((PyCallExpression)assignedValue).isCalleeText(PyNames.PROPERTY)) {
+                  result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
+                }
+              }
+            }
+          }
+        }
+      }
+      for (PyFunction method : containedClass.getMethods()) {
+        if (expr.getText().equals(method.getName())) {
+          result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
+        }
+      }
+    }
+    return result;
   }
 
   Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {

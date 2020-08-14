@@ -8,7 +8,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -18,7 +17,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -29,16 +31,16 @@ import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
-import com.jetbrains.python.inspections.quickfix.*;
+import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
+import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix;
+import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddParameterQuickFix;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
-import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
@@ -232,55 +234,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
       final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
       return new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements);
-    }
-
-    @Override
-    public Iterable<LocalQuickFix> getAddSelfFixes(TypeEvalContext typeEvalContext, PyElement node, PyReferenceExpression expr) {
-      List<LocalQuickFix> result = new ArrayList<>();
-      final PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
-      if (containedClass != null && function != null) {
-        final PyParameter[] parameters = function.getParameterList().getParameters();
-        if (parameters.length == 0) return Collections.emptyList();
-        final String qualifier = parameters[0].getText();
-        final PyDecoratorList decoratorList = function.getDecoratorList();
-        boolean isClassMethod = false;
-        if (decoratorList != null) {
-          for (PyDecorator decorator : decoratorList.getDecorators()) {
-            final PyExpression callee = decorator.getCallee();
-            if (callee != null && PyNames.CLASSMETHOD.equals(callee.getText())) {
-              isClassMethod = true;
-            }
-          }
-        }
-        for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
-          if (!isClassMethod && Comparing.strEqual(node.getName(), target.getName())) {
-            result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
-          }
-        }
-        for (PyStatement statement : containedClass.getStatementList().getStatements()) {
-          if (statement instanceof PyAssignmentStatement) {
-            PyExpression lhsExpression = ((PyAssignmentStatement)statement).getLeftHandSideExpression();
-            if (lhsExpression != null && lhsExpression.getText().equals(expr.getText())) {
-              PyExpression assignedValue = ((PyAssignmentStatement)statement).getAssignedValue();
-              if (assignedValue instanceof PyCallExpression) {
-                PyType type = typeEvalContext.getType(assignedValue);
-                if (type instanceof PyClassTypeImpl) {
-                  if (((PyCallExpression)assignedValue).isCalleeText(PyNames.PROPERTY)) {
-                    result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
-                  }
-                }
-              }
-            }
-          }
-        }
-        for (PyFunction method : containedClass.getMethods()) {
-          if (expr.getText().equals(method.getName())) {
-            result.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
-          }
-        }
-      }
-      return result;
     }
 
     @Override
