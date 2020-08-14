@@ -101,6 +101,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
     tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
     contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBUI.emptyInsets();
+    tabsOverlapBorder = UIManager.getBoolean("TabbedPane.tabsOverlapBorder");
   }
 
   private void modifyFontSize() {
