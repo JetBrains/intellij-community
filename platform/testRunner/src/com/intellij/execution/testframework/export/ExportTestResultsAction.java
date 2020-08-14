@@ -107,7 +107,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
                    && Messages.showOkCancelDialog(project,
                                                   ExecutionBundle.message("export.test.results.file.exists.message", filename),
                                                   ExecutionBundle.message("export.test.results.file.exists.title"),
-                                                  TestRunnerBundle.message("inspections.settings.overwrite.action.text"),
+                                                  TestRunnerBundle.message("export.test.results.overwrite.button.text"),
                                                   CommonBundle.getCancelButtonText(),
                                                   Messages.getQuestionIcon()
       ) != Messages.OK;
