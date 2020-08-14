@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import gnu.trove.THashSet;
@@ -21,7 +20,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 final class JavacReferenceCollectorListener implements TaskListener {
-  private final Consumer<? super JavacFileData> myDataConsumer;
+  private final JavacReferenceCollector.Consumer<? super JavacFileData> myDataConsumer;
   private final JavacTask myJavacTask;
   private final JavacTreeRefScanner myAstScanner;
   private final boolean myAtLeastJdk8;
@@ -34,7 +33,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new HashMap<String, ReferenceCollector>(10);
 
-  static void installOn(JavaCompiler.CompilationTask task, Consumer<? super JavacFileData> dataConsumer) {
+  static void installOn(JavaCompiler.CompilationTask task, JavacReferenceCollector.Consumer<? super JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
     Method addTaskMethod; // jdk >= 8
     try {
@@ -63,7 +62,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private JavacReferenceCollectorListener(Consumer<? super JavacFileData> dataConsumer,
+  private JavacReferenceCollectorListener(JavacReferenceCollector.Consumer<? super JavacFileData> dataConsumer,
                                           JavacTask javacTask,
                                           boolean atLeastJdk8) {
     myDataConsumer = dataConsumer;
