@@ -582,7 +582,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3051
   public void testUnresolvedRefTrueFalse() {
-    doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.replace.$0", "True"), true, true);
+    doInspectionTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.unresolved.reference.replace.$0", "True"), true, true);
   }
 
   public void testUnnecessaryBackslashInArgumentList() {

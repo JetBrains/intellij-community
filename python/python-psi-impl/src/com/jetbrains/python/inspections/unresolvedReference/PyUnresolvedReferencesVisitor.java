@@ -900,6 +900,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
+    if (refText.equals("true") || refText.equals("false")) {
+      return new UnresolvedRefTrueFalseQuickFix(expr);
+    }
     return null;
   }
 

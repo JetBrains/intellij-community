@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -31,13 +31,13 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference.replace.$0", newName);
+    return PyPsiBundle.message("QFIX.unresolved.reference.replace.$0", newName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.replace.with.true.or.false");
+    return PyPsiBundle.message("QFIX.replace.with.true.or.false");
   }
 
   @Override

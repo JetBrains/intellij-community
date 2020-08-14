@@ -228,14 +228,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return null;
     }
 
-    @Override
-    public LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
-      if (refText.equals("true") || refText.equals("false")) {
-        return new UnresolvedRefTrueFalseQuickFix(expr);
-      }
-      return null;
-    }
-
     private static LocalQuickFix getInstallPackageAction(String packageName, Module module, Sdk sdk) {
       final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
       final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
