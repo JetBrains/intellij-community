@@ -55,3 +55,5 @@ object Main {
         }
     }
 }
+
+const val globalVariable: Int = 322

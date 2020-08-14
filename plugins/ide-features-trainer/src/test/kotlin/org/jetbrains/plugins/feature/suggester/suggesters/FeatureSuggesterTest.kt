@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.find.FindManager
+import com.intellij.find.FindModel
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -11,10 +13,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorCopyPasteHelper
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.*
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 
 abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
 
@@ -56,6 +63,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun moveCaretToLogicalPosition(lineIndex: Int, columnIndex: Int) {
         editor.caretModel.moveToLogicalPosition(LogicalPosition(lineIndex, columnIndex))
+    }
+
+    fun moveCaretToOffset(offset: Int) {
+        editor.caretModel.moveToOffset(offset)
     }
 
     fun selectBetweenLogicalPositions(
@@ -126,6 +137,62 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         commitAllDocuments()
     }
 
+    fun performFindInFileAction(
+        stringToFind: String,
+        fromOffset: Int = 0,
+        isForward: Boolean = true,
+        isCaseSensitive: Boolean = false
+    ): List<TextRange> {
+        myFixture.performEditorAction("Find")
+        val findModel = FindManager.getInstance(project).findInFileModel
+        findModel.stringToFind = stringToFind
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
+        val findResults: List<TextRange> =
+            findInFile(project, psiFile, findModel, fromOffset, isForward, isCaseSensitive)
+        if (findResults.isNotEmpty()) {
+            val firstOccurrence = findResults.first()
+            moveCaretToOffset(firstOccurrence.endOffset - 1)
+        }
+        return findResults
+    }
+
+    fun findInFile(
+        project: Project,
+        psiFile: PsiFile,
+        findModel: FindModel,
+        fromOffset: Int = 0,
+        isForward: Boolean = true,
+        isCaseSensitive: Boolean = false
+    ): List<TextRange> {
+        val document = PsiDocumentManager.getInstance(project).getDocument(psiFile) ?: return emptyList()
+        val text = document.charsSequence
+        val textLength = document.textLength
+        val findManager = FindManager.getInstance(project)
+        findModel.apply {
+            this.isForward = isForward
+            this.isCaseSensitive = isCaseSensitive
+        }
+        var offset = fromOffset
+        val virtualFile = psiFile.virtualFile
+        val findResults: MutableList<TextRange> = arrayListOf()
+        while (offset < textLength) {
+            val result = findManager.findString(text, offset, findModel, virtualFile)
+            if (!result.isStringFound) break
+            findResults.add(TextRange(result.startOffset, result.endOffset))
+            val prevOffset = offset
+            offset = result.endOffset
+            if (prevOffset == offset) {
+                // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+                ++offset
+            }
+        }
+        return findResults
+    }
+
+    fun focusEditor() {
+        (editor as FocusListener).focusGained(FocusEvent(editor.component, 0))
+    }
+
     fun type(text: String) {
         for (ch in text) {
             myFixture.type(ch)
@@ -151,4 +218,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         (0 until symbolsNumber).forEach { _ -> deleteSymbolAtCaret() }
     }
 
+    fun logicalPositionToOffset(lineIndex: Int, columnIndex: Int): Int {
+        return editor.logicalPositionToOffset(LogicalPosition(lineIndex, columnIndex))
+    }
 }
