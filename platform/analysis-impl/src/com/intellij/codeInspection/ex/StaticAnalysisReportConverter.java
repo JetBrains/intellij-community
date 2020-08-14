@@ -13,32 +13,26 @@ import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-final class StaticAnalysisReportConverter extends JsonInspectionsReportConverter {
+public final class StaticAnalysisReportConverter extends JsonInspectionsReportConverter {
   @Override
   public String getFormatName() {
     return "sa";
   }
 
   @Override
-  public void projectData(@NotNull Project project, @Nullable String outputPath) throws ConversionException {
+  public void projectData(@NotNull Project project, @Nullable String outputPath) {
     if (outputPath == null) {
       return;
     }
     ProjectDescriptionUtilKt.writeProjectDescription(Paths.get(outputPath).resolve("projectStructure.json"), project);
-    writeInspectionsMeta(Paths.get(outputPath).resolve("inspectionsMeta.json"));
   }
 
-  private static void writeInspectionsMeta(Path target) throws ConversionException {
-    String path = System.getProperty("inspection.external.metafile.path");
-    if (path == null) {
-      return;
-    }
-    Path meta = Paths.get(path);
-    if (Files.notExists(meta)) {
+  public static void writeInspectionsMeta(Path source, Path target) throws ConversionException {
+    if (Files.notExists(source)) {
       return;
     }
     try {
-      Files.copy(meta, target, REPLACE_EXISTING);
+      Files.copy(source, target, REPLACE_EXISTING);
     }
     catch (IOException e) {
       throw new ConversionException(e);

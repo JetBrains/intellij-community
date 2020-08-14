@@ -21,7 +21,7 @@ class AsyncInspectionToolResultWriter(val outputPath: Path): InspectionProblemCo
   val writer = GlobalScope.runWriter()
 
   fun CoroutineScope.runWriter(): Job? {
-    val path = outputPath.resolve("async.json")
+    val path = outputPath.resolve("results.json")
     val gson = GsonBuilder().setPrettyPrinting().create()
     val writer = Files.newBufferedWriter(path, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
