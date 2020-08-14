@@ -129,8 +129,8 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
     protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
                                                                       @NotNull Class<Psi> type,
                                                                       @Nullable String nameHint) {
-      var manager = element.getManager();
-      var count = manager.getModificationTracker().getModificationCount();
+      PsiManager manager = element.getManager();
+      long count = manager.getModificationTracker().getModificationCount();
       if (type.equals(PsiField.class)) {
         //noinspection unchecked
         return (List<Psi>)Collections.singletonList(new LightFieldBuilder(manager, AUGMENTED_FIELD, PsiType.BOOLEAN) {
