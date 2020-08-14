@@ -33,7 +33,6 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
 import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
-import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix;
 import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddParameterQuickFix;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -211,11 +210,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return GenerateBinaryStubsFix.generateFixes(importStatementBase);
       }
       return Collections.emptyList();
-    }
-
-    @Override
-    public LocalQuickFix getRenameUnresolvedRefQuickFix() {
-      return new PyRenameUnresolvedRefQuickFix();
     }
 
     @Override

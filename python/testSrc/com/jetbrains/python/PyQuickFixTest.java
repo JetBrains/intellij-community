@@ -485,7 +485,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-6595
   public void testRenameUnresolvedReference() {
-    doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.rename.unresolved.reference"), true, true);
+    doInspectionTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.rename.unresolved.reference"), true, true);
   }
 
   // PY-3120

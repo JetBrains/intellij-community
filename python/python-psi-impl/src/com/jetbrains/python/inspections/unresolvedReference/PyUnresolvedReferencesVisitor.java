@@ -300,7 +300,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         ContainerUtil.addAll(fixes, getAddSelfFixes(myTypeEvalContext, node, expr));
         ContainerUtil.addIfNotNull(fixes, getCreateFunctionQuickFix(expr));
         ContainerUtil.addIfNotNull(fixes, getAddParameterQuickFix(refName, expr));
-        ContainerUtil.addIfNotNull(fixes, getRenameUnresolvedRefQuickFix());
+        fixes.add(new PyRenameUnresolvedRefQuickFix());
       }
       // unqualified:
       // may be module's
@@ -877,10 +877,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   Iterable<LocalQuickFix> getImportStatementQuickFixes(PsiElement element) {
     return Collections.emptyList();
-  }
-
-  LocalQuickFix getRenameUnresolvedRefQuickFix() {
-    return null;
   }
 
   LocalQuickFix getAddParameterQuickFix(String refName, PyReferenceExpression expr) {
