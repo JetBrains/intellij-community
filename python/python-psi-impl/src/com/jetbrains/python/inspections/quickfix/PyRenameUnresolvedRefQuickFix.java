@@ -87,6 +87,8 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
     if (editor != null) {
       Template template = builder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
+    } else {
+      builder.runNonInteractively(true);
     }
   }
 
