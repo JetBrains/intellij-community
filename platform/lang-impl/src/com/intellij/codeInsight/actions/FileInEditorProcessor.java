@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -262,10 +263,10 @@ public class FileInEditorProcessor {
 
       if (notifications.isEmpty() && !myNoChangesDetected) {
         if (myProcessChangesTextOnly) {
-          builder.append("No lines changed: changes since last revision are already properly formatted").br();
+          builder.append(LangBundle.message("formatter.in.editor.message.already.formatted")).br();
         }
         else {
-          builder.append("No lines changed: content is already properly formatted").br();
+          builder.append(LangBundle.message("formatter.in.editor.message.content.already.formatted")).br();
         }
       }
       else {
@@ -276,13 +277,13 @@ public class FileInEditorProcessor {
           builder.append(joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo));
 
           if (myProcessChangesTextOnly) {
-            builder.append(" in changes since last revision");
+            builder.append(LangBundle.message("formatter.in.editor.message.changes.since.last.revision"));
           }
 
           builder.br();
         }
         else if (myNoChangesDetected) {
-          builder.append("No lines changed: no changes since last revision").br();
+          builder.append(LangBundle.message("formatter.in.editor.message.no.changes.since.last.revision")).br();
         }
 
         String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
@@ -295,7 +296,7 @@ public class FileInEditorProcessor {
       String color = ColorUtil.toHtmlColor(JBColor.gray);
 
       builder.append(HtmlChunk.span("color:"+color)
-        .child(HtmlChunk.raw("<a href=''>Show</a> reformat dialog: ")).addText(shortcutText));
+                              .child(HtmlChunk.raw(LangBundle.message("formatter.in.editor.link.show.reformat.dialog"))).addText(shortcutText));
 
       return builder.wrapWith("html").toString();
     }

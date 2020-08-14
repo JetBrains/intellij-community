@@ -1060,7 +1060,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
     @Override
     @NotNull
-    public String getDescription() {
+    public @NonNls String getDescription() {
       return "TempFileType";
     }
 

@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -41,20 +42,19 @@ import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.Setti
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
-  private static final String ID = "configure.code.style.on.selected.fragment";
 
   @Nls
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
+    return getFamilyName();
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "ConfigureCodeStyleOnSelectedFragment";
+    return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
   }
 
   @Override
@@ -312,7 +312,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       };
 
       private ApplyToSettings() {
-        super("Save");
+        super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.button"));
         putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
@@ -337,7 +337,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
     private class ApplyToSettingsAndReformat extends AbstractAction {
       ApplyToSettingsAndReformat() {
-        super("Save and Reformat File");
+        super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.and.reformat.file"));
       }
 
       @Override
