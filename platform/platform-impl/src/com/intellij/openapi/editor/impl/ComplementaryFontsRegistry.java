@@ -30,13 +30,15 @@ public final class ComplementaryFontsRegistry {
     new LinkedHashMap<String, FallBackInfo>(), new LinkedHashMap<String, FallBackInfo>(),
     new LinkedHashMap<String, FallBackInfo>(), new LinkedHashMap<String, FallBackInfo>()
   };
-  public static final FallBackInfo DEFAULT_FONT_INFO = new FallBackInfo("", Font.PLAIN, Font.PLAIN);
+  // This is the font that will be used to show placeholder glyphs for characters no installed font can display.
+  // Glyph with code 0 will be used as a placeholder from this font.
+  private static final FallBackInfo UNDISPLAYABLE_FONT_INFO = new FallBackInfo("JetBrains Mono", Font.PLAIN, Font.PLAIN);
   private static final TIntHashSet[] ourUndisplayableChars = new TIntHashSet[] { // per font style
     new TIntHashSet(), new TIntHashSet(), new TIntHashSet(), new TIntHashSet()
   };
-  private static String ourLastFontFamily = "";
-  private static int ourLastFontStyle = Font.PLAIN;
-  private static FallBackInfo ourLastFallBackInfo = DEFAULT_FONT_INFO;
+  private static String ourLastFontFamily = null;
+  private static int ourLastFontStyle = -1;
+  private static FallBackInfo ourLastFallBackInfo = null;
 
   // This matches style detection in JDK (class sun.font.Font2D)
   private static final @NonNls String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
@@ -305,7 +307,7 @@ public final class ComplementaryFontsRegistry {
                                                  FontRenderContext context) {
     if (style < 0 || style > 3) style = Font.PLAIN;
     synchronized (lock) {
-      FallBackInfo fallBackInfo = DEFAULT_FONT_INFO;
+      FallBackInfo fallBackInfo = UNDISPLAYABLE_FONT_INFO;
       TIntHashSet undisplayableChars = ourUndisplayableChars[style];
       if (!undisplayableChars.contains(codePoint)) {
         boolean canDisplayFirst = false;
@@ -320,7 +322,7 @@ public final class ComplementaryFontsRegistry {
             }
           }
         }
-        if (fallBackInfo == DEFAULT_FONT_INFO) {
+        if (fallBackInfo == UNDISPLAYABLE_FONT_INFO) {
           List<String> fontNames = ourFontNames[style];
           for (int i = 0; i < fontNames.size(); i++) {
             String name = fontNames.get(i);
@@ -335,7 +337,7 @@ public final class ComplementaryFontsRegistry {
               }
             }
           }
-          if (fallBackInfo == DEFAULT_FONT_INFO && !canDisplayFirst) {
+          if (fallBackInfo == UNDISPLAYABLE_FONT_INFO && !canDisplayFirst) {
             undisplayableChars.add(codePoint);
           }
         }
