@@ -13,7 +13,7 @@ public class UseWrapperAction extends ToggleAction {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return useWrapper();
+    return canUseWrapper();
   }
 
   @Override
@@ -21,11 +21,11 @@ public class UseWrapperAction extends ToggleAction {
     setSelected(state);
   }
 
-  public static boolean useWrapper() {
+  public static boolean canUseWrapper() {
     return !PropertiesComponent.getInstance().getBoolean(DISABLE_MAVEN_WRAPPER);
   }
 
-  public static void setSelected(boolean state) {
+  private static void setSelected(boolean state) {
     PropertiesComponent.getInstance().setValue(DISABLE_MAVEN_WRAPPER, !state);
   }
 }

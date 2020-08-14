@@ -160,13 +160,13 @@ class MavenSyncConsole(private val myProject: Project) {
     override fun setFraction(fraction: Double) = doIfImportInProcess {
       val newFraction = (fraction * 100).toLong()
       if (myFraction == newFraction) return@doIfImportInProcess
-
+      myFraction = newFraction;
       mySyncView.onEvent(mySyncId,
                          ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
                                                 System.currentTimeMillis(),
                                                 SyncBundle.message("maven.sync.wrapper.dowloading"),
                                                 100,
-                                                (fraction * 100).toLong(),
+                                                 myFraction,
                                                 "%"
                          ))
     }
