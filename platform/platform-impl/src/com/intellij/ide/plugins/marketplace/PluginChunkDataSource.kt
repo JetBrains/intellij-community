@@ -61,15 +61,26 @@ class PluginChunkDataSource(
       val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
       request.inputStream.buffered().use { input ->
         for (length in curRangeChunkLengths) {
-          // parsing http get range response
-          do {
-            val str = nextLine(input)
+          val openingEmptyLine = nextLine(input)
+          if (openingEmptyLine != System.lineSeparator()) {
+            throw IOException(IdeBundle.message("http.multirange.response.doesnt.include.line.separator"))
           }
-          while (!str.contains(boundary))
-          // skip useless lines: Content-Type, Content-Length and empty line
-          nextLine(input)
-          nextLine(input)
-          nextLine(input)
+          val boundaryLine = nextLine(input)
+          if (!boundaryLine.contains(boundary)) {
+            throw IOException(IdeBundle.message("http.multirange.response.doesnt.contain.boundary", boundaryLine, boundary))
+          }
+          val contentTypeLine = nextLine(input)
+          if (!contentTypeLine.startsWith("Content-Type")) {
+            throw IOException(IdeBundle.message("http.multirange.response.includes.incorrect.header", contentTypeLine, "Content-Type"))
+          }
+          val contentRangeLine = nextLine(input)
+          if (!contentRangeLine.startsWith("Content-Range")) {
+            throw IOException(IdeBundle.message("http.multirange.response.includes.incorrect.header", contentRangeLine, "Content-Range"))
+          }
+          val closingEmptyLine = nextLine(input)
+          if (closingEmptyLine != System.lineSeparator()) {
+            throw IOException(IdeBundle.message("http.multirange.response.doesnt.include.line.separator"))
+          }
           val data = ByteArray(length)
           for (i in 0 until length) data[i] = input.read().toByte()
           result.add(data)
