@@ -184,7 +184,11 @@ class CompilationOutputsUploader {
   private File writeCommitHistory(CommitsHistory commitsHistory) {
     File commitHistoryFile = new File(syncFolder, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
-    commitHistoryFile.write(commitsHistory.toJson())
+    def json = commitsHistory.toJson()
+    commitHistoryFile.write(json)
+    context.messages.block(CommitsHistory.JSON_FILE) {
+      context.messages.info(json)
+    }
     return commitHistoryFile
   }
 
