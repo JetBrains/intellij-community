@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -82,7 +83,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
                                  InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
                                  InspectionGadgetsBundle.message("method.name.regex")));
     table2.setEnabled(!ignoreFromMethodCall);
-    final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, "Choose class");
+    final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class"));
     final JPanel wrapperPanel = new JPanel(new BorderLayout());
     wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder(
       InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title"), false));

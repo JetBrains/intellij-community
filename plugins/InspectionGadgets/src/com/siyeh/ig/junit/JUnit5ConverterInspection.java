@@ -221,7 +221,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(UsageInfo.EMPTY_ARRAY));
-        CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+        CleanupInspectionUtil.getInstance().applyFixes(myProject, InspectionGadgetsBundle.message("junit5.converter.fixes.presentation.text"),
+                                                       descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 
       @Override

@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -136,7 +137,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
+    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
     panel.add(tablePanel, BorderLayout.CENTER);

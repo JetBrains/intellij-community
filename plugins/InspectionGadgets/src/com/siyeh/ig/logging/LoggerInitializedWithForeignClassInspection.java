@@ -75,7 +75,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
+    final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
   }
 
   @Override
