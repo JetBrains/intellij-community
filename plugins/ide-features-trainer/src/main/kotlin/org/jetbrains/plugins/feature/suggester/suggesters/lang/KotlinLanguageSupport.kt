@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.findDescendantOfType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
@@ -63,5 +64,13 @@ class KotlinLanguageSupport : LanguageSupport {
         } else {
             null
         }
+    }
+
+    override fun isFileStructureElement(element: PsiElement): Boolean {
+        return (element is KtProperty && !element.isLocal) || element is KtNamedFunction || element is KtClass
+    }
+
+    override fun isIdentifier(element: PsiElement): Boolean {
+        return element is LeafPsiElement && element.elementType.toString() == "IDENTIFIER"
     }
 }

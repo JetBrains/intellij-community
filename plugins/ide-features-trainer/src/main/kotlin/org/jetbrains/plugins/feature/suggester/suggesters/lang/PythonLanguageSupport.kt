@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.findDescendantOfType
 import com.jetbrains.python.psi.*
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
@@ -61,5 +62,13 @@ class PythonLanguageSupport : LanguageSupport {
         } else {
             null
         }
+    }
+
+    override fun isFileStructureElement(element: PsiElement): Boolean {
+        return (element is PyTargetExpression && element.getParentOfType<PyFunction>() == null) || element is PyFunction || element is PyClass
+    }
+
+    override fun isIdentifier(element: PsiElement): Boolean {
+        return element is LeafPsiElement && element.elementType.toString() == "Py:IDENTIFIER"
     }
 }

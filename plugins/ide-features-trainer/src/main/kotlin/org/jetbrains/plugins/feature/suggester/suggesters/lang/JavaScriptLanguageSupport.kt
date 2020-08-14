@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
+import com.intellij.lang.ecmascript6.psi.ES6Class
 import com.intellij.lang.javascript.psi.*
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.findDescendantOfType
 import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
 
@@ -61,5 +63,14 @@ class JavaScriptLanguageSupport : LanguageSupport {
         } else {
             null
         }
+    }
+
+    override fun isFileStructureElement(element: PsiElement): Boolean {
+        return (element is JSVariable && element.getParentOfType<JSFunction>() == null)
+                || element is JSFunction || element is ES6Class
+    }
+
+    override fun isIdentifier(element: PsiElement): Boolean {
+        return element is LeafPsiElement && element.elementType.toString() == "JS:IDENTIFIER"
     }
 }

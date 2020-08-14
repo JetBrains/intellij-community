@@ -62,4 +62,12 @@ class JavaLanguageSupport : LanguageSupport {
             null
         }
     }
+
+    override fun isFileStructureElement(element: PsiElement): Boolean {
+        return element is PsiField || element is PsiMethod || element is PsiClass
+    }
+
+    override fun isIdentifier(element: PsiElement): Boolean {
+        return element is PsiIdentifier
+    }
 }

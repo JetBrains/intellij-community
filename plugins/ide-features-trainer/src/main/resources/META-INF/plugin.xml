@@ -2,10 +2,15 @@
     <id>org.intellij.featureSuggester</id>
     <name>IDEA Feature Suggester</name>
     <vendor email="support@jetbrains.com"
-            url="http://www.jetbrains.com">JetBrains</vendor>
+            url="http://www.jetbrains.com">JetBrains
+    </vendor>
 
     <description>Provides feature suggesting utility that helps users</description>
-    <change-notes>Plugin has been rewritten and updated to be compatible with last version of IDEA</change-notes>
+    <change-notes><![CDATA[
+    <p>
+      Added support for suggesting Introduce variable and Unwrap actions in JavaScript.
+    </p>
+    ]]></change-notes>
     <category>Code tools</category>
 
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -26,13 +31,19 @@
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.intellij">
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester"/>
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester"/>
-        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>
+        <!--        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>-->
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.SurroundWithSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.FileStructureSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

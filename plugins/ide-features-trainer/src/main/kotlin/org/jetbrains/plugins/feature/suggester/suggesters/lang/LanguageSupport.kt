@@ -47,4 +47,11 @@ interface LanguageSupport {
      * element must be a variable declaration @see [isVariableDeclaration]
      */
     fun getVariableName(element: PsiElement): String?
+
+    /**
+     * Return true if element is class, method or non local property definition
+     */
+    fun isFileStructureElement(element: PsiElement): Boolean
+
+    fun isIdentifier(element: PsiElement): Boolean
 }
