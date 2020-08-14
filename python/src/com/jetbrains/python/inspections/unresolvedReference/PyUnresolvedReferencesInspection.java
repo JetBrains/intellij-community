@@ -33,7 +33,6 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
 import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
-import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddParameterQuickFix;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -210,18 +209,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return GenerateBinaryStubsFix.generateFixes(importStatementBase);
       }
       return Collections.emptyList();
-    }
-
-    @Override
-    public LocalQuickFix getAddParameterQuickFix(String refName, PyReferenceExpression expr) {
-      final PyFunction parentFunction = PsiTreeUtil.getParentOfType(expr, PyFunction.class);
-      final PyDecorator decorator = PsiTreeUtil.getParentOfType(expr, PyDecorator.class);
-      final PyAnnotation annotation = PsiTreeUtil.getParentOfType(expr, PyAnnotation.class);
-      final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(expr, PyImportStatement.class);
-      if (parentFunction != null && decorator == null && annotation == null && importStatement == null) {
-        return new UnresolvedReferenceAddParameterQuickFix(refName);
-      }
-      return null;
     }
 
     private static LocalQuickFix getInstallPackageAction(String packageName, Module module, Sdk sdk) {

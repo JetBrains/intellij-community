@@ -880,6 +880,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   LocalQuickFix getAddParameterQuickFix(String refName, PyReferenceExpression expr) {
+    final PyFunction parentFunction = PsiTreeUtil.getParentOfType(expr, PyFunction.class);
+    final PyDecorator decorator = PsiTreeUtil.getParentOfType(expr, PyDecorator.class);
+    final PyAnnotation annotation = PsiTreeUtil.getParentOfType(expr, PyAnnotation.class);
+    final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(expr, PyImportStatement.class);
+    if (parentFunction != null && decorator == null && annotation == null && importStatement == null) {
+      return new UnresolvedReferenceAddParameterQuickFix(refName);
+    }
     return null;
   }
 

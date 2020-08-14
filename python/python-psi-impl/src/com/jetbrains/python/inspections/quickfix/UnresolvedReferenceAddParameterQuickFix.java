@@ -14,7 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -35,13 +35,13 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference.add.param.$0", myName);
+    return PyPsiBundle.message("QFIX.unresolved.reference.add.param.$0", myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.unresolved.reference.add.param");
+    return PyPsiBundle.message("QFIX.unresolved.reference.add.param");
   }
 
   @Override

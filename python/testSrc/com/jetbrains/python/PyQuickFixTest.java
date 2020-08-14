@@ -480,7 +480,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testAddParameter() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.unresolved.reference.add.param.$0", "test"), true, true);
+                     PyPsiBundle.message("QFIX.unresolved.reference.add.param.$0", "test"), true, true);
   }
 
   // PY-6595
