@@ -714,18 +714,20 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         }
       }
 
-      if (myOnTheFly) {
-        fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
-        if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-          fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
-        }
+      if (!(sourcePsi instanceof PsiLiteralExpression) || !isSwitchCase(expression)) {
+        if (myOnTheFly) {
+          fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
+          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
+            fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
+          }
 
-        if (sourcePsi instanceof PsiLiteralExpression && !isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
-          fixes.add(createIntroduceConstantFix());
+          if (sourcePsi instanceof PsiLiteralExpression && !isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
+            fixes.add(createIntroduceConstantFix());
+          }
         }
-      }
-      else {
-        fixes.add(new I18nizeBatchQuickFix());
+        else {
+          fixes.add(new I18nizeBatchQuickFix());
+        }
       }
 
       LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
@@ -733,6 +735,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                                                           description, myOnTheFly, farr,
                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       myProblems.add(problem);
+    }
+
+    private boolean isSwitchCase(@NotNull UInjectionHost expression) {
+      if (expression.getUastParent() instanceof USwitchClauseExpression) {
+        return ((USwitchClauseExpression)expression.getUastParent()).getCaseValues().stream()
+          .anyMatch(value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+      }
+      return false;
     }
 
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
