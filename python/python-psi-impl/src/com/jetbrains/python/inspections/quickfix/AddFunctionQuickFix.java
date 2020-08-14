@@ -8,16 +8,13 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.psi.*;
@@ -36,9 +33,10 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Adds a missing top-level function to a module.
  * <br/>
  * User: dcheryasov
+ *
  * @see AddMethodQuickFix AddMethodQuickFix
  */
-public class AddFunctionQuickFix  implements LocalQuickFix {
+public class AddFunctionQuickFix implements LocalQuickFix {
 
   private final String myIdentifier;
   private final String myModuleName;
@@ -120,7 +118,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         PyFunction function = builder.buildFunction();
 
         // add to the bottom
-        function = (PyFunction) file.add(function);
+        function = (PyFunction)file.add(function);
         showTemplateBuilder(function, file);
       });
     }
@@ -146,11 +144,6 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
     // TODO: detect expected return type from call site context: PY-1863
     builder.replaceElement(method.getStatementList(), "return None");
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return;
-    final Editor editor = FileEditorManager.getInstance(file.getProject()).openTextEditor(
-      new OpenFileDescriptor(file.getProject(), virtualFile), true);
-    if (editor == null) return;
-    builder.run(editor, false);
+    PythonTemplateRunner.runTemplate(file, builder);
   }
 }
