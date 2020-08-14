@@ -334,4 +334,10 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3");
   }
+
+  public void testAddCaretPerSelectedLineIncompleteSelection() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
+    checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
 }
