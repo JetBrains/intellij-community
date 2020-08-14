@@ -62,7 +62,9 @@ public class InvokeCompletion extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Invoke basic completion at " + MadTestingUtil.getPositionDescription(offset, getDocument()));
+
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, env);
