@@ -12,7 +12,7 @@ import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigMergeSectionsQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.section.merge-duplicate.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.section.merge-duplicate.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return

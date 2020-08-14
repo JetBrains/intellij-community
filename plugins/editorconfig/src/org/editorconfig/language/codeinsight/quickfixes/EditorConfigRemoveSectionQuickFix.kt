@@ -9,7 +9,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 
 class EditorConfigRemoveSectionQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.section.remove.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.section.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return

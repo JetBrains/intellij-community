@@ -67,7 +67,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
       update(file, project)
     }
 
-    return result.text(EditorConfigBundle["notification.rename.message"])
+    return result.text(EditorConfigBundle.get("notification.rename.message"))
   }
 
   private fun findEditorConfig(file: VirtualFile) =

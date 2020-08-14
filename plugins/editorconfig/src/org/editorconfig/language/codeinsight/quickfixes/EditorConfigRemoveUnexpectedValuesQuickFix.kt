@@ -15,7 +15,7 @@ import kotlin.math.abs
 import kotlin.math.min
 
 class EditorConfigRemoveUnexpectedValuesQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.value.list.remove.others"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.value.list.remove.others")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val list = descriptor.psiElement as EditorConfigOptionValueList
