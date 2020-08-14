@@ -12,4 +12,6 @@ class IgnoredContent {
     String s9 = "<html>" + s8 + "</html>";
     String s10 = "&lt;";
     String s11 = <warning descr="Hardcoded string literal: \"More...\"">"More..."</warning>;
+    String s12 = "CamelCase" + "camelCase";
+    String s13 = <warning descr="Hardcoded string literal: \"Camel\"">"Camel"</warning> + <warning descr="Hardcoded string literal: \"case\"">"case"</warning>;
 }
