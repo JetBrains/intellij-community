@@ -182,7 +182,8 @@ public final class PyTypeHintGenerationUtil {
     if (editor != null) {
       editor.getCaretModel().moveToOffset(initialCaretOffset);
       templateBuilder.run(editor, true);
-    } else {
+    }
+    else {
       templateBuilder.runNonInteractively(true);
     }
   }
@@ -247,7 +248,6 @@ public final class PyTypeHintGenerationUtil {
         openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
       }
     });
-
   }
 
   private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
@@ -256,18 +256,21 @@ public final class PyTypeHintGenerationUtil {
     final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
     final Project project = insertedComment.getProject();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    for (TextRange range : typeRanges) {
+      final String individualType = range.substring(annotation);
+      final String replacementText = testMode ? "[" + individualType + "]" : individualType;
+      templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
+    }
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
-      final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
-      for (TextRange range : typeRanges) {
-        final String individualType = range.substring(annotation);
-        final String replacementText = testMode ? "[" + individualType + "]" : individualType;
-        templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
-      }
       templateBuilder.run(editor, true);
+    }
+    else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
