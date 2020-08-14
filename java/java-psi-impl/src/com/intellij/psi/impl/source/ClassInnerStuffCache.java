@@ -2,7 +2,8 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -10,10 +11,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
-  private final NotNullLazyValue<Interner<PsiMember>> myInterner = NotNullLazyValue.createValue(() -> Interner.createWeakInterner());
+  private final Ref<Pair<Long, Interner<PsiMember>>> myInterner = Ref.create();
 
   public ClassInnerStuffCache(@NotNull PsiExtensibleClass aClass) {
     myClass = aClass;
@@ -118,9 +116,14 @@ public class ClassInnerStuffCache {
 
   private <T extends PsiMember> T internMember(T m) {
     if (m == null) return null;
+    long modCount = myClass.getManager().getModificationTracker().getModificationCount();
     synchronized (myInterner) {
+      Pair<Long, Interner<PsiMember>> pair = myInterner.get();
+      if (pair == null || pair.first.longValue() != modCount) {
+        myInterner.set(pair = Pair.create(modCount, Interner.createWeakInterner()));
+      }
       //noinspection unchecked
-      return (T)myInterner.getValue().intern(m);
+      return (T)pair.second.intern(m);
     }
   }
 
