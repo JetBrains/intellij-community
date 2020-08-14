@@ -172,16 +172,18 @@ public final class PyTypeHintGenerationUtil {
     final Project project = annotated.getProject();
     final int initialCaretOffset = annotated.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = annotated.getContainingFile().getVirtualFile();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
+    final String annotation = annotated.getAnnotationValue();
+    final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
+    //noinspection ConstantConditions
+    templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
-      final String annotation = annotated.getAnnotationValue();
-      final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
-      //noinspection ConstantConditions
-      templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
       templateBuilder.run(editor, true);
+    } else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
