@@ -22,6 +22,7 @@ import java.util.List;
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
  *
+ * @see #getContentManager() to add new tabs into the toolwindow.
  * @see ToolWindowEP
  */
 public interface ToolWindow extends BusyObject {
@@ -175,6 +176,8 @@ public interface ToolWindow extends BusyObject {
   void installWatcher(ContentManager contentManager);
 
   /**
+   * Callers should not add new components into hierarchy using this method. Use {@link #getContentManager()}.
+   *
    * @return component which represents window content.
    */
   @NotNull
