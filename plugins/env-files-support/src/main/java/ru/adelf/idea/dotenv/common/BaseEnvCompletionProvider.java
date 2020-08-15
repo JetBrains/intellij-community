@@ -17,7 +17,7 @@ abstract public class BaseEnvCompletionProvider extends CompletionContributor im
     protected void fillCompletionResultSet(@NotNull CompletionResultSet completionResultSet, @NotNull Project project) {
         for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(project).entrySet()) {
             LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey())
-                    .withLookupString(entry.getKey().toLowerCase());
+                    .withCaseSensitivity(false);
 
             if(StringUtils.isNotEmpty(entry.getValue())) {
                 lockup = lockup.withTailText(" = " + entry.getValue(), true);
