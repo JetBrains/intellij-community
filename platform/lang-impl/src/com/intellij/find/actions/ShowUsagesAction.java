@@ -730,7 +730,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
-    /** save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
+    /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
     popup[0].setUserData(Collections.singletonList(toolbar));
     return popup[0];
   }
