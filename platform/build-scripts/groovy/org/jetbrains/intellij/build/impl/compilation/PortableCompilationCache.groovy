@@ -93,9 +93,8 @@ class PortableCompilationCache {
     def uploadCompilationOutputsOnly = bool(UPLOAD_COMPILATION_OUTPUTS_PROPERTY, false)
     def commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit")
     context.messages.buildStatus(commitHash)
-    new CompilationOutputsUploader(
-      context, remoteCacheUploadUrl, remoteGitUrl, commitHash, syncFolder, uploadCompilationOutputsOnly
-    )
+    new CompilationOutputsUploader(context, remoteCacheUploadUrl, remoteGitUrl, commitHash,
+                                   syncFolder, uploadCompilationOutputsOnly, forceRebuild)
   }()
 
   PortableCompilationCache(CompilationContext context) {
