@@ -29,7 +29,16 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
     if (GrazieConfig.get().enabledLanguages != enabledLanguages) {
       GrazieConfig.update { state ->
-        state.copy(enabledLanguages = enabledLanguages, userEnabledRules = enabledRules)
+        val checkingContext = state.checkingContext.copy(
+          isCheckInStringLiteralsEnabled = true,
+          isCheckInCommentsEnabled = true,
+          isCheckInDocumentationEnabled = true
+        )
+        state.copy(
+          enabledLanguages = enabledLanguages,
+          userEnabledRules = enabledRules,
+          checkingContext = checkingContext
+        )
       }
 
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
