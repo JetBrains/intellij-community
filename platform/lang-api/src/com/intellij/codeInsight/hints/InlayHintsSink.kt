@@ -11,7 +11,15 @@ interface InlayHintsSink {
    * @see [com.intellij.openapi.editor.InlayModel.addInlineElement]
    * @param placeAtTheEndOfLine being placed at the end of a line hint doesn't allow to place a caret behind it
    */
-  fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation, placeAtTheEndOfLine: Boolean = false)
+  fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation, placeAtTheEndOfLine: Boolean)
+
+  // Left for binary compatibility
+  @Deprecated("Use addInlineElement(Int, Boolean, InlayPresentation, Boolean) instead",
+              ReplaceWith("addInlineElement(offset, relatesToPrecedingText, presentation, false)"))
+  @JvmDefault
+  fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation) {
+    addInlineElement(offset, relatesToPrecedingText, presentation, false)
+  }
 
   /**
    * Adds block element to underlying editor.

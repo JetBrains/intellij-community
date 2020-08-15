@@ -73,7 +73,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   sink.addBlockElement(offset, false, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
                 else -> {
-                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1))
+                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
                 }
               }
             }

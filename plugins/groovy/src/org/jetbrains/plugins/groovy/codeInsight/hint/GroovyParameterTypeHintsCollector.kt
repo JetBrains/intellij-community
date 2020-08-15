@@ -32,13 +32,13 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
       val type: PsiType = getRepresentableType(element) ?: return true
       val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }
-      sink.addInlineElement(element.textOffset, false, typeRepresentation)
+      sink.addInlineElement(element.textOffset, false, typeRepresentation, false)
     }
     if (element is GrClosableBlock && element.parameterList.isEmpty) {
       val itParameter: GrParameter = element.allParameters.singleOrNull() ?: return true
       val type: PsiType = getRepresentableType(itParameter) ?: return true
       val textRepresentation: InlayPresentation = factory.roundWithBackground(factory.buildRepresentation(type, " it -> "))
-      sink.addInlineElement(element.lBrace.endOffset, true, textRepresentation)
+      sink.addInlineElement(element.lBrace.endOffset, true, textRepresentation, false)
     }
     if (settings.showTypeParameterList &&
         element is GrMethod &&
@@ -48,10 +48,10 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       val typeParameterList = virtualMethod?.typeParameterList?.takeIf { it.typeParameters.isNotEmpty() } ?: return true
       val representation = factory.buildRepresentation(typeParameterList)
       if (element.modifierList.hasModifierProperty(DEF)) {
-        sink.addInlineElement(element.modifierList.getModifier(DEF)!!.textRange.endOffset, true, representation)
+        sink.addInlineElement(element.modifierList.getModifier(DEF)!!.textRange.endOffset, true, representation, false)
       }
       else {
-        sink.addInlineElement(element.textRange.startOffset, true, representation)
+        sink.addInlineElement(element.textRange.startOffset, true, representation, false)
       }
     }
     return true
