@@ -17,7 +17,7 @@ public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFil
   private BinaryFileTypeDecompilers() {
     super(EP_NAME);
     Application app = ApplicationManager.getApplication();
-    if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
+    if (!app.isHeadlessEnvironment() && !app.isUnitTestMode()) {
       EP_NAME.addChangeListener(() -> notifyDecompilerSetChange(), null);
     }
   }
