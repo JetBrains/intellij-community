@@ -89,18 +89,18 @@ public class RenameHandlerRegistry {
   }
 
   private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {
-    final List<RenameHandler> availableHandlers = new SmartList<>();
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
       if (renameHandler.isRenaming(dataContext)) {
-        availableHandlers.add(renameHandler);
+        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     if (availableHandlers.size() == 1) {
-      return availableHandlers;
+      return new SmartList<>(availableHandlers.values());
     }
-    for (Iterator<RenameHandler> iterator = availableHandlers.iterator(); iterator.hasNext(); ) {
-      RenameHandler renameHandler = iterator.next();
-      if (renameHandler instanceof MemberInplaceRenameHandler) {
+    for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<String, RenameHandler> entry = iterator.next();
+      if (entry.getValue() instanceof MemberInplaceRenameHandler) {
         iterator.remove();
         break;
       }
@@ -108,7 +108,7 @@ public class RenameHandlerRegistry {
     if (availableHandlers.isEmpty() && myDefaultElementRenameHandler.isRenaming(dataContext)) {
       return Collections.singletonList(myDefaultElementRenameHandler);
     }
-    return availableHandlers;
+    return new SmartList<>(availableHandlers.values());
   }
 
   @TestOnly
