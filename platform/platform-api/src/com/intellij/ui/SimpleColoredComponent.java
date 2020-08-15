@@ -35,10 +35,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -49,6 +47,8 @@ import java.util.Objects;
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
+  private static final HashMap<Integer, Float> ourWidthsCache = new HashMap<>();
+
   private static final Logger LOG = Logger.getInstance(SimpleColoredComponent.class);
 
   public static final int FRAGMENT_ICON = -2;
@@ -1315,12 +1315,26 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         if (needFontFallback(font, text)) {
           renderer = new LayoutTextRenderer(createTextLayout(text, font, frc));
         } else {
-          renderer = new SimpleTextRenderer(text, (float)font.getStringBounds(text, frc).getWidth());
+          renderer = new SimpleTextRenderer(text, calculateTextWidth(text, font, frc));
         }
         this.renderer = renderer;
       }
       return renderer;
     }
+  }
+
+  private static float calculateTextWidth(String text, Font font, FontRenderContext frc) {
+    //todo[kb]: rethink hash function. There is a hypothetical chance of a collision when we mix hashCode of String and font + frc
+    int hash = Objects.hash(text, font, frc);
+    Float result = ourWidthsCache.get(hash);
+    if (result == null) {
+      if (ourWidthsCache.size() > Registry.intValue("ide.ui.string.width.cache.size")) {
+        ourWidthsCache.clear();
+      }
+      result = (float)font.getStringBounds(text, frc).getWidth();
+      ourWidthsCache.put(hash, result);
+    }
+    return result;
   }
 
   private interface TextRenderer {
