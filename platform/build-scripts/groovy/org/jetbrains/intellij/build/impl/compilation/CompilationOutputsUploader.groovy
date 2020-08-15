@@ -30,6 +30,7 @@ class CompilationOutputsUploader {
   private final String remoteCacheUrl
   private final String syncFolder
   private final boolean uploadCompilationOutputsOnly
+  private final boolean forcedUpload
 
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
 
@@ -42,7 +43,8 @@ class CompilationOutputsUploader {
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
                              String remoteGitUrl, String commitHash,
-                             String syncFolder, boolean uploadCompilationOutputsOnly) {
+                             String syncFolder, boolean uploadCompilationOutputsOnly,
+                             boolean forcedUpload) {
     this.syncFolder = syncFolder
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
@@ -50,6 +52,7 @@ class CompilationOutputsUploader {
     this.commitHash = commitHash
     this.context = context
     this.uploadCompilationOutputsOnly = uploadCompilationOutputsOnly
+    this.forcedUpload = forcedUpload
   }
 
   def upload() {
@@ -99,7 +102,7 @@ class CompilationOutputsUploader {
   private void uploadCompilationCache() {
     File zipFile = buildCompilationCacheZip()
     String cachePath = "caches/$commitHash"
-    if (!uploader.isExist(cachePath, true)) {
+    if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
     File zipCopy = new File(syncFolder, cachePath)
