@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xdebugger.impl;
+package com.intellij.xdebugger.impl.inline;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -14,20 +13,17 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.MathUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +48,8 @@ public final class XDebuggerInlayUtil {
       FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file);
       if (editor instanceof TextEditor) {
         Editor e = ((TextEditor)editor).getEditor();
-        CharSequence text = e.getDocument().getImmutableCharSequence();
-        int insertOffset = getIdentifierEndOffset(text, offset);
         //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
-        e.getInlayModel().addAfterLineEndElement(insertOffset, true, new InlineDebugHintRenderer(inlayText, onClick));
+        e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(inlayText, onClick));
       }
     });
   }
@@ -81,7 +75,7 @@ public final class XDebuggerInlayUtil {
         if (editor instanceof TextEditor) {
           Editor e = ((TextEditor)editor).getEditor();
           e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength(), MyRenderer.class).forEach(Disposer::dispose);
-          e.getInlayModel().getAfterLineEndElementsInRange(0, e.getDocument().getTextLength(), InlineDebugHintRenderer.class).forEach(Disposer::dispose);
+          e.getInlayModel().getAfterLineEndElementsInRange(0, e.getDocument().getTextLength(), InlineDebugRenderer.class).forEach(Disposer::dispose);
         }
       }
     });
@@ -188,82 +182,6 @@ public final class XDebuggerInlayUtil {
       @Override
       public int compareTo(@NotNull ValueInfo o) {
         return refStartOffset - o.refStartOffset;
-      }
-    }
-  }
-
-  private static final class InlineDebugHintRenderer implements EditorCustomElementRenderer {
-    private final SimpleColoredText myText;
-    private @Nullable final Consumer<Inlay> myOnClick;
-
-    private InlineDebugHintRenderer(SimpleColoredText text, @Nullable Consumer<Inlay> onClick) {
-      myText = text;
-      myOnClick = onClick;
-    }
-
-    private static FontInfo getFontInfo(@NotNull Editor editor) {
-      EditorColorsScheme colorsScheme = editor.getColorsScheme();
-      FontPreferences fontPreferences = colorsScheme.getFontPreferences();
-      TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
-      int fontStyle = attributes == null ? Font.PLAIN : attributes.getFontType();
-      return ComplementaryFontsRegistry.getFontAbleToDisplay('a', fontStyle, fontPreferences,
-                                                             FontInfo.getFontRenderContext(editor.getContentComponent()));
-    }
-
-    @Override
-    public void onClick(Inlay inlay) {
-      if (myOnClick != null) {
-        myOnClick.accept(inlay);
-      }
-    }
-
-    @Override
-    public @Nullable ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-      return null;
-    }
-
-    @Override
-    public int calcWidthInPixels(@NotNull Inlay inlay) {
-      FontInfo fontInfo = getFontInfo(inlay.getEditor());
-      return fontInfo.fontMetrics().stringWidth(myText.toString() + " ");
-    }
-
-    private static final float BACKGROUND_ALPHA = 0.55f;
-
-    @Override
-    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
-      Editor editor = inlay.getEditor();
-      TextAttributes inlineAttributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES);
-      if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
-
-      FontInfo fontInfo = getFontInfo(editor);
-      g.setFont(fontInfo.getFont());
-      FontMetrics metrics = fontInfo.fontMetrics();
-
-      int gap = 1;//(r.height < fontMetrics.lineHeight + 2) ? 1 : 2;
-      int margin = metrics.charWidth(' ') / 4;
-      Color backgroundColor = inlineAttributes.getBackgroundColor();
-      if (backgroundColor != null) {
-        float alpha =  BACKGROUND_ALPHA;
-        GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        GraphicsUtil.paintWithAlpha(g, alpha);
-        g.setColor(backgroundColor);
-        g.fillRoundRect(r.x + margin, r.y + gap, r.width - (2 * margin), r.height - gap * 2, 6, 6);
-        config.restore();
-      }
-
-      int curX = r.x + (2 * margin);
-      for (int i = 0; i < myText.getTexts().size(); i++) {
-        String curText = myText.getTexts().get(i);
-        SimpleTextAttributes attr = myText.getAttributes().get(i);
-
-        Color fgColor = inlineAttributes.getForegroundColor();
-        if (Registry.is("debugger.show.values.colorful") && attr.getFgColor() != null) {
-          fgColor = attr.getFgColor();
-        }
-        g.setColor(fgColor);
-        g.drawString(curText, curX, r.y + metrics.getAscent());
-        curX += fontInfo.fontMetrics().stringWidth(curText);
       }
     }
   }

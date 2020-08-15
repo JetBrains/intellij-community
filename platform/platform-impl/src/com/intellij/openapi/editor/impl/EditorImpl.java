@@ -554,7 +554,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
-    myMouseListeners.add(new DefaultInlayMouseHandler());
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
@@ -4844,16 +4843,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
       }
       return ContextMenuPopupHandler.getGroupForId(contextMenuGroupId);
-    }
-  }
-
-  private class DefaultInlayMouseHandler implements EditorMouseListener {
-    @Override
-    public void mouseClicked(@NotNull EditorMouseEvent event) {
-      Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
-      if (inlay != null) {
-        inlay.getRenderer().onClick(inlay);
-      }
     }
   }
 

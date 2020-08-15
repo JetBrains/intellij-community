@@ -87,7 +87,6 @@ public interface EditorCustomElementRenderer {
     return null;
   }
 
-  default void onClick(Inlay inlay) {}
 
   /**
    * Allows to show an icon in gutter and process corresponding mouse events for block custom elements (other types of custom elements are

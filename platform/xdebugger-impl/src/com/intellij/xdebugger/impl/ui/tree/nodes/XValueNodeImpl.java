@@ -25,10 +25,10 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPopup;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
@@ -206,7 +206,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           Pair<XValue, String> descriptor = Pair.create(container, name);
           Rectangle bounds = inlay.getBounds();
           Point point = new Point(bounds.x, bounds.y + bounds.height);
-          DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, editor, point, project, () -> { });
+          XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, inlay, editor, point, project, () -> { });
         };
         XDebuggerInlayUtil.createLineEndInlay(myTree.getProject(), position.getFile(), offset, presentation, onClick);
 
