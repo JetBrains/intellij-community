@@ -84,7 +84,7 @@ public final class ClassFileDecompilers {
 
   private ClassFileDecompilers() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
+    if (!app.isHeadlessEnvironment() && !app.isUnitTestMode()) {
       EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange(), null);
     }
   }
