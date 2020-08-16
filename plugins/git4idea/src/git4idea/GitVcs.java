@@ -368,6 +368,12 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
+  public boolean isWithCustomLocalChanges() {
+    return GitStageManagerKt.stageRegistryOption().asBoolean() &&
+           GitStageManagerKt.stageLocalChangesRegistryOption().asBoolean();
+  }
+
+  @Override
   public @Nullable String getCompareWithTheSameVersionActionName() {
     return ActionsBundle.message("action.Diff.ShowDiff.text");
   }

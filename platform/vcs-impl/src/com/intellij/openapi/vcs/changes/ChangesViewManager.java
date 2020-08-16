@@ -133,7 +133,11 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+      if (!vcsManager.hasActiveVcss()) return false;
+      AbstractVcs singleVcs = vcsManager.getSingleVCS();
+      if (singleVcs != null && singleVcs.isWithCustomLocalChanges()) return false;
+      return true;
     }
   }
 
