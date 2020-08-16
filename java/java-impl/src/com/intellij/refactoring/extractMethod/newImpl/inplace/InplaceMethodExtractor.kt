@@ -158,8 +158,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     revertState()
   }
 
-  override fun collectAdditionalElementsToRename(stringUsages: MutableList<Pair<PsiElement, TextRange>>) {}
-
   override fun shouldSelectAll(): Boolean = false
 
   override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
