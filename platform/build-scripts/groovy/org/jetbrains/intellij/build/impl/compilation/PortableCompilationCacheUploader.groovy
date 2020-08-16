@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
-class CompilationOutputsUploader {
+class PortableCompilationCacheUploader {
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
@@ -35,16 +35,16 @@ class CompilationOutputsUploader {
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
-  private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+  private final Uploader uploader = new Uploader(remoteCacheUrl, context.messages)
 
   private final String remoteGitUrl
   private final String commitHash
   private final CommitsHistory commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
-                             String remoteGitUrl, String commitHash,
-                             String syncFolder, boolean uploadCompilationOutputsOnly,
-                             boolean forcedUpload) {
+  PortableCompilationCacheUploader(CompilationContext context, String remoteCacheUrl,
+                                   String remoteGitUrl, String commitHash,
+                                   String syncFolder, boolean uploadCompilationOutputsOnly,
+                                   boolean forcedUpload) {
     this.syncFolder = syncFolder
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
@@ -69,8 +69,8 @@ class CompilationOutputsUploader {
       def start = System.nanoTime()
       if (!uploadCompilationOutputsOnly) {
         executor.submit {
-          // Upload jps caches started first because of the significant size of the output
-          uploadCompilationCache()
+          // Jps Caches upload is started first because of significant size
+          uploadJpsCaches()
         }
       }
 
@@ -92,15 +92,15 @@ class CompilationOutputsUploader {
     }
   }
 
-  File buildCompilationCacheZip() {
+  File buildJpsCacheZip() {
     File dataStorageRoot = context.compilationData.dataStorageRoot
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
     return zipFile
   }
 
-  private void uploadCompilationCache() {
-    File zipFile = buildCompilationCacheZip()
+  private void uploadJpsCaches() {
+    File zipFile = buildJpsCacheZip()
     String cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
@@ -118,14 +118,14 @@ class CompilationOutputsUploader {
   }
 
   private void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+                                        Uploader uploader, NamedThreadPoolExecutor executor) {
     sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
       uploadCompilationOutput(it, uploader, executor)
     }
   }
 
   private void uploadCompilationOutput(CompilationOutput compilationOutput,
-                                       JpsCompilationPartsUploader uploader,
+                                       Uploader uploader,
                                        NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = compilationOutput.remotePath
@@ -167,7 +167,7 @@ class CompilationOutputsUploader {
         return
       }
       if (cacheUploaded != metadataUploaded) {
-        context.messages.error("JPS cache is uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
+        context.messages.error("JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
       }
     }
     if (!overrideRemoteHistory) commitsHistory += remoteCommitHistory()
@@ -202,8 +202,8 @@ class CompilationOutputsUploader {
   }
 
   @CompileStatic
-  private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
-    private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
+  private static class Uploader extends CompilationPartsUploader {
+    private Uploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
       super(serverUrl, messages)
     }
 
