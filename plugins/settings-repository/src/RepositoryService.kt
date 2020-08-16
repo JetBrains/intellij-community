@@ -45,7 +45,7 @@ interface RepositoryService {
         null
       }
       catch (e: IOException) {
-        if (e.message != null) icsMessage("init.failed.message", e.message!!) else icsMessage("init.failed.message.without.details")
+        e.message?.let { icsMessage("init.failed.message", it) } ?: icsMessage("init.failed.message.without.details")
       }
     }
     else {

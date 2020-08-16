@@ -92,12 +92,8 @@ private class SyncAction(private val syncType: SyncType,
       LOG.warn(e)
 
       if (!upstreamSet || e is NoRemoteRepositoryException) {
-        val message = if (e.message != null) {
-          icsMessage("set.upstream.failed.message", e.message!!)
-        }
-        else {
-          icsMessage("set.upstream.failed.message.without.details")
-        }
+        val message = e.message?.let { icsMessage("set.upstream.failed.message", it) } ?:
+                      icsMessage("set.upstream.failed.message.without.details")
         return listOf(createError(message))
       }
       else {
