@@ -82,7 +82,10 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       else {
         TerminalOptionsProvider.instance.shellPath
       }
-      return shellPath ?: findDefaultShellPath(workingDirectoryLazy::value)
+      if (shellPath.isNullOrBlank()) {
+        return findDefaultShellPath(workingDirectoryLazy::value)
+      }
+      return shellPath
     }
     set(value) {
       val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
