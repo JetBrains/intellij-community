@@ -12,11 +12,6 @@ import java.util.List;
 
 public interface MemoryAgent {
   /**
-   * Maximal number of objects that will be retrieved by {@code findReferringObjects} call
-   */
-  int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
-
-  /**
    * Maximal number of paths that will be retrieved by {@code findPathsToClosestGCRoots} call
    */
   int DEFAULT_GC_ROOTS_PATHS_LIMIT = 10;
@@ -34,10 +29,6 @@ public interface MemoryAgent {
   long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference) throws EvaluateException;
 
   long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
-    throws EvaluateException;
-
-  @NotNull
-  ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int limit)
     throws EvaluateException;
 
   @NotNull

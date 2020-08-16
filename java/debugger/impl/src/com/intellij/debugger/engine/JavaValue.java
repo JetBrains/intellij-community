@@ -16,7 +16,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
-import com.intellij.debugger.memory.agent.MemoryAgentReferringObjectsProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -571,9 +570,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         MemoryAgentCapabilities capabilities = MemoryAgent.get(getEvaluationContext().getDebugProcess()).capabilities();
         if (capabilities.canFindPathsToClosestGcRoots()) {
           provider = new MemoryAgentPathsToClosestGCRootsProvider(MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT);
-        } else if (capabilities.canGetReferringObjects()) {
-          provider = new MemoryAgentReferringObjectsProvider(MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
         }
+
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);
       }
     };

@@ -181,6 +181,10 @@ object MemoryAgentReferringObjectCreator {
       }
   }
 
+  /***
+   * For a detailed algorithm description see
+   * https://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html#jvmtiHeapReferenceInfoField
+   */
   private fun getFieldByJVMTIFieldIndex(reference: ObjectReference, index: Int): Field? {
     if (index < 0) {
       return null

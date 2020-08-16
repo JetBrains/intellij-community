@@ -41,14 +41,6 @@ final class MemoryAgentOperations {
   }
 
   @NotNull
-  static ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ObjectReference reference, int limit) throws EvaluateException {
-    IntegerValue limitValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(limit);
-    Value value = callMethod(evaluationContext, MemoryAgentNames.Methods.FIND_GC_ROOTS, Arrays.asList(reference, limitValue));
-    return GcRootsPathsParser.INSTANCE.parse(value);
-  }
-
-  @NotNull
   static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
                                                         @NotNull ObjectReference reference, int number) throws EvaluateException {
     IntegerValue numberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(number);
@@ -89,7 +81,6 @@ final class MemoryAgentOperations {
       return builder
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
-        .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
         .setCanFindPathsToClosestGcRoots(
           checkAgentCapability(
             context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS
