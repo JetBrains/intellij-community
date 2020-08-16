@@ -30,7 +30,7 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-class CompilationOutputsDownloader implements AutoCloseable {
+class PortableCompilationCacheDownloader implements AutoCloseable {
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
@@ -67,7 +67,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
+  PortableCompilationCacheDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
@@ -90,7 +90,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     executor.reportErrors(context.messages)
   }
 
-  void downloadCachesAndOutput() {
+  void download() {
     if (availableCommitDepth != -1) {
       String lastCachedCommit = lastCommits[availableCommitDepth]
       if (lastCachedCommit == null) {
@@ -102,7 +102,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
       // cache is not needed as we are not going to compile anything.
       if (!availableForHeadCommit || anyLocalChanges()) {
         executor.submit {
-          saveCache(lastCachedCommit)
+          saveJpsCache(lastCachedCommit)
         }
       }
 
@@ -125,29 +125,29 @@ class CompilationOutputsDownloader implements AutoCloseable {
     sourcesStateProcessor.parseSourcesStateFile(getClient.doGet("$remoteCacheUrl/metadata/$commitHash"))
   }
 
-  private void saveCache(String commitHash) {
+  private void saveJpsCache(String commitHash) {
     File cacheArchive = null
     try {
-      cacheArchive = downloadCache(commitHash)
+      cacheArchive = downloadJpsCache(commitHash)
 
       def cacheDestination = context.compilationData.dataStorageRoot
 
       long start = System.currentTimeMillis()
       new Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
-      context.messages.info("Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
+      context.messages.info("Jps Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
     }
     finally {
       cacheArchive?.delete()
     }
   }
 
-  private File downloadCache(String commitHash) {
+  private File downloadJpsCache(String commitHash) {
     File cacheArchive = File.createTempFile('cache', '.zip')
 
-    context.messages.info('Downloading cache...')
+    context.messages.info('Downloading Jps Cache...')
     long start = System.currentTimeMillis()
     getClient.doGet("$remoteCacheUrl/caches/$commitHash", cacheArchive)
-    context.messages.info("Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
+    context.messages.info("Jps Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
 
     return cacheArchive
   }
