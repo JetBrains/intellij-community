@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -73,8 +74,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     return mySession;
   }
 
-  protected final void registerProblem(final PsiElement element,
-                                       final String message) {
+  protected final void registerProblem(@Nullable PsiElement element,
+                                       @NotNull @InspectionMessage String message) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }
@@ -83,9 +84,9 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     }
   }
 
-  protected final void registerProblem(@Nullable final PsiElement element,
-                                       @NotNull final String message,
-                                       final LocalQuickFix @NotNull ... quickFixes) {
+  protected final void registerProblem(@Nullable PsiElement element,
+                                       @NotNull @InspectionMessage String message,
+                                       LocalQuickFix @NotNull ... quickFixes) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }
@@ -94,9 +95,9 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     }
   }
 
-  protected final void registerProblem(final PsiElement element,
-                                       final String message,
-                                       final ProblemHighlightType type) {
+  protected final void registerProblem(@Nullable PsiElement element,
+                                       @NotNull @InspectionMessage String message,
+                                       @NotNull ProblemHighlightType type) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }
@@ -111,11 +112,11 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
    * @see ProblemDescriptor
    */
   protected final void registerProblem(
-    @NotNull final PsiElement psiElement,
-    @NotNull final String descriptionTemplate,
-    final ProblemHighlightType highlightType,
-    @Nullable final HintAction hintAction,
-    final LocalQuickFix... fixes) {
+    @NotNull PsiElement psiElement,
+    @NotNull @InspectionMessage String descriptionTemplate,
+    @NotNull ProblemHighlightType highlightType,
+    @Nullable HintAction hintAction,
+    LocalQuickFix @NotNull... fixes) {
     registerProblem(psiElement, descriptionTemplate, highlightType, hintAction, null, fixes);
   }
 
@@ -125,12 +126,12 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
    * @see ProblemDescriptor
    */
   protected final void registerProblem(
-    @NotNull final PsiElement psiElement,
-    @NotNull final String descriptionTemplate,
-    final ProblemHighlightType highlightType,
-    @Nullable final HintAction hintAction,
-    @Nullable final TextRange rangeInElement,
-    final LocalQuickFix... fixes) {
+    @NotNull PsiElement psiElement,
+    @NotNull @InspectionMessage String descriptionTemplate,
+    @NotNull ProblemHighlightType highlightType,
+    @Nullable HintAction hintAction,
+    @Nullable TextRange rangeInElement,
+    LocalQuickFix @NotNull... fixes) {
     if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
       myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));
