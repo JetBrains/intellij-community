@@ -670,6 +670,10 @@
       "key": "Table.lightSelectionInactiveForeground"
     },
     {
+      "key": "Table.alternativeRowBackground",
+      "description": "Contrast background color for lists with tall rows, e.g. View | Tool Windows | Endpoints"
+    },
+    {
       "key": "Table.stripeColor"
     },
     {
