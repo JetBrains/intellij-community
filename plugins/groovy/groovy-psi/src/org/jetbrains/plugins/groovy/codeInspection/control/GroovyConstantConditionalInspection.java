@@ -39,7 +39,7 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
     @Override
     @NotNull
     public String buildErrorString(Object... args) {
-        return "'#ref' can be simplified #loc";
+        return GroovyBundle.message("inspection.message.ref.can.be.simplified");
     }
 
     static String calculateReplacementExpression(

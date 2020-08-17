@@ -37,7 +37,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "#ref is unnecessary as the last statement in a method with no return value #loc";
+    return GroovyBundle.message("inspection.message.ref.is.unnecessary.as.last.statement.in.method.with.no.return.value");
   }
 
   @NotNull

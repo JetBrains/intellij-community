@@ -32,7 +32,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression with identical branches #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.with.identical.branches");
   }
 
   @Override

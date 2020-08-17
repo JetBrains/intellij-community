@@ -37,7 +37,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "#ref is unnecessary as the last statement in a loop #loc";
+    return GroovyBundle.message("inspection.message.ref.is.unnecessary.as.last.statement.in.loop");
 
   }
 

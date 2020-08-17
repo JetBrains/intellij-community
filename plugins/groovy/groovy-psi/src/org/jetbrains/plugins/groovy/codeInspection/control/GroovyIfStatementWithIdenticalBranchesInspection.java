@@ -18,7 +18,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
 
   @Override
   public String buildErrorString(Object... args) {
-    return "'#ref' statement with identical branches #loc";
+    return GroovyBundle.message("inspection.message.ref.statement.with.identical.branches");
   }
 
   @Override

@@ -42,7 +42,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   @Override
   public String buildErrorString(Object... args) {
     final GrConditionalExpression exp = (GrConditionalExpression) args[0];
-    return "'" + exp.getText() + "' can be simplified to '" + calculateReplacementExpression(exp) + "'  #loc";
+    return GroovyBundle.message("inspection.message.0.can.be.simplified.to.1", exp.getText(), calculateReplacementExpression(exp));
   }
 
   private static String calculateReplacementExpression(GrConditionalExpression exp) {

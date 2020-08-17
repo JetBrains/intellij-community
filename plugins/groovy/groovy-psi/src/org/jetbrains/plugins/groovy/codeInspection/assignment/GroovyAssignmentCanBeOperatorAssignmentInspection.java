@@ -57,8 +57,9 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   @NotNull
   public String buildErrorString(Object... infos) {
     final GrAssignmentExpression assignmentExpression =
-        (GrAssignmentExpression) infos[0];
-    return "<code>#ref</code> could be simplified to '" + calculateReplacementExpression(assignmentExpression) + "' #loc";
+      (GrAssignmentExpression)infos[0];
+    return GroovyBundle
+      .message("inspection.message.assignment.replaceable.with.operator.assignment", calculateReplacementExpression(assignmentExpression));
   }
 
   @Override

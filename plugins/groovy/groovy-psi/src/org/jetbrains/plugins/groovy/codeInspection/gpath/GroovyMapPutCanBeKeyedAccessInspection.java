@@ -42,7 +42,7 @@ public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Call to '#ref' can be keyed access #loc";
+    return GroovyBundle.message("inspection.message.call.to.ref.can.be.keyed.access");
   }
 
   @NotNull

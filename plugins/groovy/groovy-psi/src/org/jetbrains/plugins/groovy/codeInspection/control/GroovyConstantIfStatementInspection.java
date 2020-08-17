@@ -34,7 +34,7 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... args) {
-    return "#ref statement can be simplified #loc";
+    return GroovyBundle.message("inspection.message.ref.statement.can.be.simplified");
   }
 
   @NotNull

@@ -38,7 +38,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression can be elvis #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.can.be.elvis");
   }
 
   @Override

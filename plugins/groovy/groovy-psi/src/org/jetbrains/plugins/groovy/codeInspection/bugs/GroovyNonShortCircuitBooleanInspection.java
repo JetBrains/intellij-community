@@ -36,7 +36,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Non short-circuit boolean expression #loc";
+    return GroovyBundle.message("inspection.message.non.short.circuit.boolean.expression");
 
   }
 

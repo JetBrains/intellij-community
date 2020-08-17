@@ -40,7 +40,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Double negation #ref #loc";
+    return GroovyBundle.message("inspection.message.double.negation.ref");
   }
 
   @Override

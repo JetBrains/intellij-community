@@ -40,7 +40,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression can be call #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.can.be.call");
   }
 
   @Override
