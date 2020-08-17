@@ -17,21 +17,6 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Pat
   protected fun serializePath(path: P): String = gson.toJson(path)
   protected fun deserializePath(path: String): P = gson.fromJson(path, pathClass)
 
-  interface Path {
-    /**
-     * [sessionId] is required to differentiate files between launches.
-     * This is necessary to make the files appear in "Recent Files" correctly.
-     * Without this field files are saved in [com.intellij.openapi.fileEditor.impl.EditorHistoryManager] via pointers and urls are saved to disk
-     * After reopening the project manager will try to restore the files and will not find them since necessary components are not ready yet
-     * and despite this history entry will still be created using a url-only [com.intellij.openapi.vfs.impl.IdentityVirtualFilePointer] via
-     * [com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.getOrCreateIdentity] where pointers are cached.
-     * As a result all previously opened files will be seen by history manager as non-existent.
-     * Including this [sessionId] helps distinguish files between launches.
-     */
-    val sessionId: String
-    val projectHash: String
-  }
-
   fun serializePathSafe(path: P): String? {
     try {
       return serializePath(path)
@@ -63,6 +48,21 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Pat
   override fun extractPresentableUrl(path: String) = (findFileByPath(path) as? VirtualFilePathWrapper)?.presentablePath ?: path
 
   override fun refresh(asynchronous: Boolean) {}
+
+  interface Path {
+    /**
+     * [sessionId] is required to differentiate files between launches.
+     * This is necessary to make the files appear in "Recent Files" correctly.
+     * Without this field files are saved in [com.intellij.openapi.fileEditor.impl.EditorHistoryManager] via pointers and urls are saved to disk
+     * After reopening the project manager will try to restore the files and will not find them since necessary components are not ready yet
+     * and despite this history entry will still be created using a url-only [com.intellij.openapi.vfs.impl.IdentityVirtualFilePointer] via
+     * [com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.getOrCreateIdentity] where pointers are cached.
+     * As a result all previously opened files will be seen by history manager as non-existent.
+     * Including this [sessionId] helps distinguish files between launches.
+     */
+    val sessionId: String
+    val projectHash: String
+  }
 
   companion object {
     private val LOG = logger<ComplexPathVirtualFileSystem<Path>>()
