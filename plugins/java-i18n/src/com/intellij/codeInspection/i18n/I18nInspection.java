@@ -666,7 +666,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       
       String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
 
-      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>());
+      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>(), myOnTheFly);
       if (targetInfo instanceof NlsInfo.Localized) {
         AddAnnotationFix fix =
           new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
@@ -688,7 +688,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
-      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets);
+      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets, myOnTheFly);
       if (!(info instanceof NlsInfo.Localized)) {
         return;
       }
@@ -815,7 +815,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private NlsInfo getExpectedNlsInfo(@NotNull Project project,
                                      @NotNull UExpression expression,
                                      @Nullable String value,
-                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
+                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
+                                     boolean onTheFly) {
     if (ignoreForNonAlpha && value != null && !StringUtil.containsAlphaCharacters(value)) {
       return NlsInfo.nonLocalized();
     }
@@ -845,6 +846,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           }
           if (shouldIgnoreUsage(project, value, nonNlsTargets, usage)) {
             break;
+          }
+          if (!onTheFly) { //keep only potential annotation candidate
+            nonNlsTargets.clear();
           }
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
