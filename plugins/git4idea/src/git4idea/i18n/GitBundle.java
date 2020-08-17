@@ -25,8 +25,12 @@ public final class GitBundle extends DynamicBundle {
     return INSTANCE.getLazyMessage(key, params);
   }
 
+  /**
+   * @deprecated prefer {@link #message(String, Object...)} instead
+   */
   @NotNull
-  public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+  @Deprecated
+  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }
 }
