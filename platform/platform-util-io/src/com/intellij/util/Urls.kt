@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.NonNls
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
@@ -18,6 +19,7 @@ import java.util.regex.Pattern
 // about ";" see WEB-100359
 private val URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)")
 
+@NonNls
 object Urls {
   @JvmStatic
   fun newUri(scheme: String?, path: String): Url = UrlImpl(scheme, null, path)
