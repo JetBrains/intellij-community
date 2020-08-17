@@ -62,6 +62,7 @@ fun InspectionApplication.runAnalysisByTargets(path: Path,
     if (!targetPath.exists()) Files.createDirectory(targetPath)
     val context = createGlobalInspectionContext(project)
     context.problemConsumer = AsyncInspectionToolResultWriter(targetPath)
+    context.setExternalProfile(constructProfile(target, baseProfile))
     val syncResults = launchTarget(targetPath, context, project, scope)
     converter.convert(targetPath.toString(), targetPath.toString(), emptyMap(), syncResults.map { it.toFile() })
 
