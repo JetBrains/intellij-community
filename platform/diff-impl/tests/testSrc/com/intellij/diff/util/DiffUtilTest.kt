@@ -115,20 +115,20 @@ class DiffUtilTest : DiffTestCase() {
     doTest("/path/to/file1.txt", "/path/to/file1.txt", "file1.txt (/path/to)")
     doTest("/path/to/dir1/", "/path/to/dir1/", "/path/to/dir1")
 
-    doTest("file1.txt", "file2.txt", "file1.txt <-> file2.txt")
-    doTest("/path/to/file1.txt", "/path/to/file2.txt", "file1.txt <-> file2.txt (/path/to)")
-    doTest("/path/to/dir1/", "/path/to/dir2/", "dir1 <-> dir2 (/path/to)")
+    doTest("file1.txt", "file2.txt", "file1.txt - file2.txt")
+    doTest("/path/to/file1.txt", "/path/to/file2.txt", "file1.txt - file2.txt (/path/to)")
+    doTest("/path/to/dir1/", "/path/to/dir2/", "dir1 - dir2 (/path/to)")
 
-    doTest("/path/to/file1.txt", "/path/to_another/file1.txt", "file1.txt (/path/to <-> /path/to_another)")
-    doTest("/path/to/file1.txt", "/path/to_another/file2.txt", "file1.txt <-> file2.txt (/path/to <-> /path/to_another)")
-    doTest("/path/to/dir1/", "/path/to_another/dir2/", "dir1 <-> dir2 (/path/to <-> /path/to_another)")
+    doTest("/path/to/file1.txt", "/path/to_another/file1.txt", "file1.txt (/path/to - /path/to_another)")
+    doTest("/path/to/file1.txt", "/path/to_another/file2.txt", "file1.txt - file2.txt (/path/to - /path/to_another)")
+    doTest("/path/to/dir1/", "/path/to_another/dir2/", "dir1 - dir2 (/path/to - /path/to_another)")
 
-    doTest("file1.txt", "/path/to/file1.txt", "file1.txt <-> /path/to/file1.txt")
-    doTest("file1.txt", "/path/to/file2.txt", "file1.txt <-> /path/to/file2.txt")
+    doTest("file1.txt", "/path/to/file1.txt", "file1.txt - /path/to/file1.txt")
+    doTest("file1.txt", "/path/to/file2.txt", "file1.txt - /path/to/file2.txt")
 
-    doTest("/path/to/dir1/", "/path/to/file2.txt", "dir1/ <-> file2.txt (/path/to)")
-    doTest("/path/to/file1.txt", "/path/to/dir2/", "file1.txt <-> dir2/ (/path/to)")
-    doTest("/path/to/dir1/", "/path/to_another/file2.txt", "dir1/ <-> file2.txt (/path/to <-> /path/to_another)")
+    doTest("/path/to/dir1/", "/path/to/file2.txt", "dir1/ - file2.txt (/path/to)")
+    doTest("/path/to/file1.txt", "/path/to/dir2/", "file1.txt - dir2/ (/path/to)")
+    doTest("/path/to/dir1/", "/path/to_another/file2.txt", "dir1/ - file2.txt (/path/to - /path/to_another)")
   }
 
   fun `test applyModification`() {
