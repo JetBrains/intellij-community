@@ -454,11 +454,21 @@ public abstract class HgUtil {
   @NotNull
   public static String getDisplayableBranchOrBookmarkText(@NotNull HgRepository repository) {
     HgRepository.State state = repository.getState();
-    String branchText = "";
-    if (state != HgRepository.State.NORMAL) {
-      branchText += state.toString() + " ";
+
+    String branchName = StringUtil.notNullize(repository.getCurrentBranchName());
+
+    if (state == HgRepository.State.MERGING) {
+      return HgBundle.message("hg4idea.status.bar.widget.text.merge", branchName);
     }
-    return branchText + repository.getCurrentBranchName();
+    else if (state == HgRepository.State.REBASING) {
+      return HgBundle.message("hg4idea.status.bar.widget.text.rebase", branchName);
+    }
+    else if (state == HgRepository.State.GRAFTING) {
+      return HgBundle.message("hg4idea.status.bar.widget.text.graft", branchName);
+    }
+    else {
+      return branchName;
+    }
   }
 
   @NotNull

@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
@@ -173,20 +174,24 @@ public final class GitBranchUtil {
       return DvcsUtil.getShortHash(currentRevision);
     }
 
-    String prefix = "";
-    if (state == GitRepository.State.MERGING || state == GitRepository.State.REBASING) {
-      prefix = state.toString() + " ";
-    }
-    else if (state == GitRepository.State.GRAFTING) {
-      prefix = "Cherry-picking in "; //NON-NLS
-    }
-    else if (state == GitRepository.State.REVERTING) {
-      prefix = "Reverting in "; //NON-NLS
-    }
-
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branch.getName());
-    return prefix + branchName;
+
+    if (state == GitRepository.State.MERGING) {
+      return GitBundle.message("git.status.bar.widget.text.merge", branchName);
+    }
+    else if (state == GitRepository.State.REBASING) {
+      return GitBundle.message("git.status.bar.widget.text.rebase", branchName);
+    }
+    else if (state == GitRepository.State.GRAFTING) {
+      return GitBundle.message("git.status.bar.widget.text.cherry.pick", branchName);
+    }
+    else if (state == GitRepository.State.REVERTING) {
+      return GitBundle.message("git.status.bar.widget.text.revert", branchName);
+    }
+    else {
+      return branchName;
+    }
   }
 
   /**

@@ -49,47 +49,22 @@ public interface Repository extends Disposable {
     /**
      * During merge (for instance, merge failed with conflicts that weren't immediately resolved).
      */
-    MERGING {
-      @NotNull
-      @Override
-      public String toString() {
-        return "Merging";
-      }
-    },
+    MERGING,
 
     /**
      * During rebase.
      */
-    REBASING {
-      @NotNull
-      @Override
-      public String toString() {
-        return "Rebasing";
-      }
-    },
+    REBASING,
 
     /**
      * During Cherry-pick/grafting.
      */
-    GRAFTING {
-      @NotNull
-      @Override
-      public String toString() {
-        return "Grafting";
-      }
-    },
+    GRAFTING,
 
     /**
      * During revert operation in git.
      */
-    REVERTING {
-      @NotNull
-      @Override
-      public String toString() {
-        return "Reverting";
-      }
-    },
-
+    REVERTING,
 
     /**
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
