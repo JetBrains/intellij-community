@@ -18,6 +18,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -56,7 +57,7 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
     }, selectedClass != null ? selectedClass.getQualifiedName() : "");
 
     myProject = project;
-    myChooserTitle = "Choose Class";
+    myChooserTitle = JavaBundle.message("class.filter.editor.choose.class.title");
     addActionListener(new ChooseClassAction());
   }
 

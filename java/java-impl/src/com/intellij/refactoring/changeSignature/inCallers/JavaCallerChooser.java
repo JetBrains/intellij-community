@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.ui.treeStructure.Tree;
@@ -36,12 +37,12 @@ public class JavaCallerChooser extends AbstractJavaMemberCallerChooser<PsiMethod
   }
 
   @Override
-  protected String getEmptyCalleeText() {
+  protected @NlsContexts.Label String getEmptyCalleeText() {
     return JavaRefactoringBundle.message("changeSignature.empty.caller.method.text");
   }
 
   @Override
-  protected String getEmptyCallerText() {
+  protected @NlsContexts.Label String getEmptyCallerText() {
     return JavaRefactoringBundle.message("changeSignature.empty.callee.method.text");
   }
 

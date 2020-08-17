@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -1029,10 +1026,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  private static PsiElement createReplacement(final String refText, final Project project,
-                                                 final String prefix,
-                                                 final String suffix,
-                                                 final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
+  private static PsiElement createReplacement(final @NonNls String refText, final Project project,
+                                              final String prefix,
+                                              final String suffix,
+                                              final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
     String text = refText;
     if (parent != null) {
       final String allText = parent.getContainingFile().getText();
@@ -1095,7 +1092,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final boolean replaceWrite = anyAssignmentLHS && replaceAll;
     return new IntroduceVariableSettings() {
       @Override
-      public String getEnteredName() {
+      public @NlsSafe String getEnteredName() {
         return variableName;
       }
 
@@ -1308,7 +1305,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         currentOccurrences.addAll(occurrences);
         if (currentOccurrences.size() == 1) return;
         PsiElement current = parent.getParent();
-        String keyword = null;
+        @NonNls String keyword = null;
         while (current != nextParent) {
           if (current instanceof PsiIfStatement || current instanceof PsiWhileStatement || current instanceof PsiForStatement ||
               current instanceof PsiTryStatement) {

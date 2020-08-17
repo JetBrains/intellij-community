@@ -16,9 +16,11 @@
 
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiType;
 
 public interface IntroduceVariableSettings {
+  @NlsSafe
   String getEnteredName();
 
   boolean isReplaceAllOccurrences();
