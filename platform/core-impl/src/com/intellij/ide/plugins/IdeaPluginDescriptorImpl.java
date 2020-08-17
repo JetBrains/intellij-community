@@ -13,10 +13,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ref.GCWatcher;
 import org.jdom.Content;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -436,7 +433,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return builder.toString();
   }
 
-  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable String errorMessage, @Nullable PluginId disabledDependency) {
+  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable @Nls String errorMessage, @Nullable PluginId disabledDependency) {
     boolean wasIncomplete = incomplete;
     incomplete = true;
     setEnabled(false);

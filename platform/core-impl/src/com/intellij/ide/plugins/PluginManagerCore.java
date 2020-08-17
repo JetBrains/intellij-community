@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -1404,11 +1405,11 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static String toPresentableName(@Nullable IdeaPluginDescriptor descriptor) {
+  private static @NlsSafe String toPresentableName(@Nullable IdeaPluginDescriptor descriptor) {
     return toPresentableName(descriptor == null ? null : descriptor.getName());
   }
 
-  private static @NotNull String toPresentableName(@Nullable String s) {
+  private static @NotNull @NlsSafe String toPresentableName(@Nullable String s) {
     return "\"" + (s == null ? "" : s) + "\"";
   }
 

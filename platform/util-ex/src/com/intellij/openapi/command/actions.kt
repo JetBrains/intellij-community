@@ -2,9 +2,10 @@
 package com.intellij.openapi.command
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 
 inline fun executeCommand(project: Project? = null,
-                          name: String? = null,
+                          @NlsContexts.Command name: String? = null,
                           groupId: String? = null,
                           crossinline command: () -> Unit) {
   CommandProcessor.getInstance().executeCommand(project, Runnable { command() }, name, groupId)
