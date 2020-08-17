@@ -28,6 +28,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,7 +355,7 @@ public class AtomicConversionRule extends TypeConversionRule {
     return null;
   }
 
-  private static String getBoxedWrapper(final PsiType from, final PsiType to, @NotNull String arg) {
+  private static @NonNls String getBoxedWrapper(final PsiType from, final PsiType to, @NotNull @NonNls String arg) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass atomicClass = resolveResult.getElement();
     LOG.assertTrue(atomicClass != null);

@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
-  private String myStringToReplace = null;
-  private String myReplaceByString = "$";
+  private @NonNls String myStringToReplace = null;
+  private @NonNls String myReplaceByString = "$";
   private PsiExpression myExpression;
   private PsiType myConversionType;
 
@@ -40,19 +40,19 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     return this;
   }
 
-  public void setStringToReplace(String stringToReplace) {
+  public void setStringToReplace(@NonNls String stringToReplace) {
     myStringToReplace = stringToReplace;
   }
 
-  public void setReplaceByString(String replaceByString) {
+  public void setReplaceByString(@NonNls String replaceByString) {
     myReplaceByString = replaceByString;
   }
 
-  public String getStringToReplace() {
+  public @NonNls String getStringToReplace() {
     return myStringToReplace;
   }
 
-  public String getReplaceByString() {
+  public @NonNls String getReplaceByString() {
     return myReplaceByString;
   }
 

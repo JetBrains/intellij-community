@@ -171,7 +171,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                         toMakeFinal);
   }
 
-  private static String createThreadLocalInitializerReplacement(PsiType to,
+  private static @NonNls String createThreadLocalInitializerReplacement(PsiType to,
                                                                   PsiType from,
                                                                   PsiExpression initializer,
                                                                   String boxedTypeName) {
@@ -196,7 +196,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
            "}";
   }
 
-  private static String toPrimitive(String replaceByArg, PsiType from, PsiElement context) {
+  private static @NonNls String toPrimitive(@NonNls String replaceByArg, PsiType from, PsiElement context) {
     return PsiUtil.isLanguageLevel5OrHigher(context)
            ? replaceByArg
            : from instanceof PsiPrimitiveType ? "((" +
@@ -208,7 +208,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                 "Value()" : "((" + from.getCanonicalText() + ")" + replaceByArg + ")";
   }
 
-  private static String toBoxed(String replaceByArg, PsiType from, PsiElement context) {
+  private static @NonNls String toBoxed(@NonNls String replaceByArg, PsiType from, PsiElement context) {
     return PsiUtil.isLanguageLevel5OrHigher(context)
            ? replaceByArg
            : from instanceof PsiPrimitiveType ? "new " + ((PsiPrimitiveType)from).getBoxedTypeName() +
@@ -218,12 +218,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                 : replaceByArg;
   }
 
-  private static String getBoxedWrapper(final PsiType from,
-                                        final PsiType to,
-                                        @NotNull String arg,
-                                        TypeMigrationLabeler labeler,
-                                        PsiElement context,
-                                        @Nullable String tryType) {
+  private static @NonNls String getBoxedWrapper(final PsiType from,
+                                                final PsiType to,
+                                                @NotNull @NonNls String arg,
+                                                TypeMigrationLabeler labeler,
+                                                PsiElement context,
+                                                @Nullable String tryType) {
     if (from instanceof PsiPrimitiveType) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
       final PsiClass threadLocalClass = resolveResult.getElement();

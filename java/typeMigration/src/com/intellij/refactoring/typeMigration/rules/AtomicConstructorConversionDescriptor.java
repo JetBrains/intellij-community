@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -26,10 +27,10 @@ class AtomicConstructorConversionDescriptor extends ArrayInitializerAwareConvers
   @NotNull
   private final AtomicConversionType myType;
 
-  AtomicConstructorConversionDescriptor(String stringToReplace,
-                                               String replaceByString,
-                                               PsiExpression expression,
-                                               @NotNull AtomicConversionType type) {
+  AtomicConstructorConversionDescriptor(@NonNls String stringToReplace,
+                                        @NonNls String replaceByString,
+                                        PsiExpression expression,
+                                        @NotNull AtomicConversionType type) {
     super(stringToReplace, replaceByString, expression);
     myType = type;
   }

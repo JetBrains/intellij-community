@@ -4,6 +4,7 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,12 +34,12 @@ import java.util.*;
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
-  private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
+  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
     new HashMap<>();
 
-  public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
-  public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
-  public static final String STREAM_COLLECT_TO_LIST = "$it$.collect(java.util.stream.Collectors.toList())";
+  public static final Set<@NonNls String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
+  public static final @NonNls String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
+  public static final @NonNls String STREAM_COLLECT_TO_LIST = "$it$.collect(java.util.stream.Collectors.toList())";
 
   static class TypeConversionDescriptorFactory {
     private final String myStringToReplace;
@@ -47,7 +48,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     private final boolean myChainedMethod;
     private final boolean myFluentIterableReturnType;
 
-    TypeConversionDescriptorFactory(String stringToReplace, String replaceByString, boolean withLambdaParameter) {
+    TypeConversionDescriptorFactory(@NonNls String stringToReplace, @NonNls String replaceByString, boolean withLambdaParameter) {
       this(stringToReplace, replaceByString, withLambdaParameter, false, false);
     }
 
@@ -114,7 +115,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   @Nullable
-  private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull String methodName,
+  private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull @NlsSafe String methodName,
                                                                      @NotNull PsiMethod method,
                                                                      @NotNull PsiType from,
                                                                      @Nullable PsiExpression context) {
