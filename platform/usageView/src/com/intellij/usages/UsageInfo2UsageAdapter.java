@@ -33,6 +33,8 @@ import com.intellij.usages.rules.*;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,6 +94,18 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myOffset = data.x;
     myLineNumber = data.y;
     myModificationStamp = getCurrentModificationStamp();
+  }
+
+  @Override
+  public UsageInfo @NotNull [] getMergedInfos() {
+    Object infos = myMergedUsageInfos;
+    return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
+  }
+
+  @NotNull
+  @Override
+  public Promise<UsageInfo[]> getMergedInfosAsync() {
+    return Promises.resolvedPromise(getMergedInfos());
   }
 
   private static int getLineNumber(@NotNull Document document, final int startOffset) {
@@ -438,12 +452,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       List<UsageInfo> list = Arrays.asList(getMergedInfos());
       sink.put(UsageView.USAGE_INFO_LIST_KEY, list);
     }
-  }
-
-  @Override
-  public UsageInfo @NotNull [] getMergedInfos() {
-    Object infos = myMergedUsageInfos;
-    return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
 
   private long myModificationStamp;

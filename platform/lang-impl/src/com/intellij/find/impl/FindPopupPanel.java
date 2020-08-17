@@ -78,6 +78,8 @@ import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -719,30 +721,38 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     final Runnable updatePreviewRunnable = () -> {
       if (Disposer.isDisposed(myDisposable)) return;
       int[] selectedRows = myResultsPreviewTable.getSelectedRows();
-      final List<UsageInfo> selection = new SmartList<>();
+      final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
       String file = null;
       for (int row : selectedRows) {
         Object value = myResultsPreviewTable.getModel().getValueAt(row, 0);
         UsageInfoAdapter adapter = (UsageInfoAdapter) value;
         file = adapter.getPath();
         if (adapter.isValid()) {
-          selection.addAll(Arrays.asList(adapter.getMergedInfos()));
+          selectedUsagePromises.add(adapter.getMergedInfosAsync());
         }
       }
-      myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selection.size()));
-      FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-      myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
-      myUsagePreviewPanel.updateLayout(selection);
-      myUsagePreviewTitle.clear();
-      if (myUsagePreviewPanel.getCannotPreviewMessage(selection) == null && file != null) {
-        myUsagePreviewTitle.append(PathUtil.getFileName(file), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(file), true);
-        String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
-        if (locationPath != null) {
-          myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
-                                     new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+
+      final String selectedFile = file;
+      Promises.collectResults(selectedUsagePromises).onSuccess(data -> {
+        final List<UsageInfo> selectedUsages = new SmartList<>();
+        for (UsageInfo[] usageInfos : data) {
+          Collections.addAll(selectedUsages, usageInfos);
         }
-      }
+        myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
+        FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
+        myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
+        myUsagePreviewPanel.updateLayout(selectedUsages);
+        myUsagePreviewTitle.clear();
+        if (myUsagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
+          myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
+          String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
+          if (locationPath != null) {
+            myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
+                                       new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+          }
+        }
+      });
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
