@@ -484,7 +484,7 @@ public final class DiffUtil {
     return result.toString();
   }
 
-  public static void showSuccessPopup(@NotNull String message,
+  public static void showSuccessPopup(@NotNull @Nls String message,
                                       @NotNull RelativePoint point,
                                       @NotNull Disposable disposable,
                                       @Nullable Runnable hyperlinkHandler) {
@@ -582,7 +582,7 @@ public final class DiffUtil {
   }
 
   @Nullable
-  private static JComponent createTitle(@NotNull String title,
+  private static JComponent createTitle(@NotNull @Nls String title,
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
@@ -600,17 +600,17 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title) {
+  public static JComponent createTitle(@NotNull @Nls String title) {
     return createTitle(title, null, null, null, false, null);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+  public static JComponent createTitle(@NotNull @Nls String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title,
+  public static JComponent createTitle(@NotNull @Nls String title,
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
@@ -705,6 +705,7 @@ public final class DiffUtil {
     return panel;
   }
 
+  @Nls
   @NotNull
   public static String getStatusText(int totalCount, int excludedCount, @NotNull ThreeState isContentsEqual) {
     if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
@@ -1454,7 +1455,7 @@ public final class DiffUtil {
   @CalledInAwt
   public static boolean executeWriteCommand(@Nullable Project project,
                                             @NotNull Document document,
-                                            @Nullable String commandName,
+                                            @Nullable @NlsContexts.Command String commandName,
                                             @Nullable String commandGroupId,
                                             @NotNull UndoConfirmationPolicy confirmationPolicy,
                                             boolean underBulkUpdate,

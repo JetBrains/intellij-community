@@ -9,6 +9,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingA
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +60,13 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
 
+  @Nls
   @Nullable
   protected String getText(@NotNull IgnorePolicy option) {
     return null;
   }
 
+  @Nls
   @Nullable
   protected String getText(@NotNull HighlightPolicy option) {
     return null;

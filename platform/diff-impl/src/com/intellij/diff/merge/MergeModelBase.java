@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.CalledInAwt;
@@ -204,7 +204,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
   }
 
-  public boolean executeMergeCommand(@Nullable String commandName,
+  public boolean executeMergeCommand(@Nullable @NlsContexts.Command String commandName,
                                      @Nullable String commandGroupId,
                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
                                      boolean underBulkUpdate,

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,7 +160,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   private GutterIconRenderer createIconRenderer(@NotNull final ThreeSide sourceSide,
                                                 @NotNull final ThreeSide modifiedSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull final @Nls String tooltipText,
                                                 @NotNull final Icon icon,
                                                 @NotNull final Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {

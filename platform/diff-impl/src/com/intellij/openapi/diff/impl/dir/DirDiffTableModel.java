@@ -35,6 +35,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -297,7 +298,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void reportException(@Nullable String htmlContent) {
+  private void reportException(@Nullable @Nls String htmlContent) {
     if (myDisposed || htmlContent == null) return;
     Runnable balloonShower = () -> {
       Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(htmlContent, MessageType.WARNING, null).
@@ -427,6 +428,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
+  @Nls
   public String getTitle() {
     if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&

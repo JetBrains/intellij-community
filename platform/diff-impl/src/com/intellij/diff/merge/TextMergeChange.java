@@ -255,7 +255,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @NotNull
-  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+  private static GutterIconRenderer createIconRenderer(@NotNull final @Nls String text,
                                                        @NotNull final Icon icon,
                                                        boolean ctrlClickVisible,
                                                        @NotNull final Runnable perform) {

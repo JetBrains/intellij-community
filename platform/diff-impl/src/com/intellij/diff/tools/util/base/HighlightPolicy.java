@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.openapi.diff.DiffBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -33,6 +34,7 @@ public enum HighlightPolicy {
     myTextKey = textKey;
   }
 
+  @Nls
   @NotNull
   public String getText() {
     return DiffBundle.message(myTextKey);

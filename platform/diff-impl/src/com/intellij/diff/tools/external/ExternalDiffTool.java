@@ -128,9 +128,9 @@ public final class ExternalDiffTool {
   }
 
   private static <T> T computeWithModalProgress(@Nullable Project project,
-                                        @NotNull @Nls String title,
-                                        boolean canBeCancelled,
-                                        @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
+                                                @NotNull @Nls String title,
+                                                boolean canBeCancelled,
+                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
     throws Exception {
     return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, canBeCancelled) {
       @Override

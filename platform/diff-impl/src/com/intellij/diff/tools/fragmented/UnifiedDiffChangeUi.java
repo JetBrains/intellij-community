@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -105,7 +106,7 @@ public class UnifiedDiffChangeUi {
   }
 
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull final @Nls String tooltipText,
                                                 @NotNull final Icon icon) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override

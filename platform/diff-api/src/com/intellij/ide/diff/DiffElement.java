@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.pom.Navigatable;
@@ -42,15 +43,19 @@ import java.util.concurrent.Callable;
 public abstract class DiffElement<T> {
   public static final DiffElement<?>[] EMPTY_ARRAY = new DiffElement[0];
 
+  @NlsSafe
   public abstract String getPath();
 
+  @NlsSafe
   @NotNull
   public abstract String getName();
 
+  @NlsSafe
   public String getPresentableName() {
     return getName();
   }
 
+  @NlsSafe
   public String getPresentablePath() {
     return getPresentableName();
   }
