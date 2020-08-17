@@ -176,12 +176,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
       fileset(dir: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin")
     }
 
-    context.ant.copy(todir: "$targetDirectory/plugins/Compose/lib") {
-      fileset(dir: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-compose/") {
-        exclude(name: "BUILD")
-      }
-    }
-
     /* Disabled in Android Studio:
     context.ant.move(file: "$targetDirectory/lib/annotations.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
     //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
