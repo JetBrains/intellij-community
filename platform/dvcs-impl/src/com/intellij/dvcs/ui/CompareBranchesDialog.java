@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.TabbedPaneImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public class CompareBranchesDialog {
 
   @NotNull private final JPanel myLogPanel;
   @NotNull private final TabbedPaneImpl myTabbedPane;
-  @NotNull private final String myTitle;
+  @NotNull private final @NlsContexts.DialogTitle String myTitle;
 
   @NotNull private final WindowWrapper.Mode myMode;
 

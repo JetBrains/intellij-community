@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -140,7 +141,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     myLabel.setText(XmlStringUtil.wrapInHtml(diffBetween + "&emsp;" + HtmlChunk.link("", swapBranches))); // NON-NLS
   }
 
-  public void setEmptyText(@NotNull String text) {
+  public void setEmptyText(@NotNull @NlsContexts.Label String text) {
     myChangesBrowser.getViewer().setEmptyText(text);
   }
 

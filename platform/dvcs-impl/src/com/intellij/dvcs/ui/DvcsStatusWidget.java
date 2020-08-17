@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -33,7 +34,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @NotNull private final String myPrefix;
 
   @Nullable private String myText;
-  @Nullable private String myTooltip;
+  @Nullable private @NlsContexts.Tooltip String myTooltip;
   @Nullable private Icon myIcon;
 
   protected DvcsStatusWidget(@NotNull Project project, @NotNull String prefix) {
@@ -174,6 +175,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     rememberRecentRoot(repository.getRoot().getPath());
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   @CalledInAwt
   private String getToolTip(@Nullable T repository) {

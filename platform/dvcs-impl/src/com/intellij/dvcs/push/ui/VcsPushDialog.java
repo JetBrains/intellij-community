@@ -425,6 +425,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
+    @Nls
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());

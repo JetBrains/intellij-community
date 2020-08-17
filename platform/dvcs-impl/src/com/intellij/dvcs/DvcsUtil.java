@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -89,11 +90,13 @@ public final class DvcsUtil {
     return VcsImplUtil.getShortVcsRootName(project, root);
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortRepositoryName(@NotNull Repository repository) {
     return VcsImplUtil.getShortVcsRootName(repository.getProject(), repository.getRoot());
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortNames(@NotNull Collection<? extends Repository> repositories) {
     return StringUtil.join(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository), ", ");

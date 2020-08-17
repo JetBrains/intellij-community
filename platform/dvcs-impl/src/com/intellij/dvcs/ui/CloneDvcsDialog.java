@@ -39,6 +39,8 @@ import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -284,7 +286,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning().withOKEnabled());
+            @Nls String message = errorMessageBuilder.toString(); //NON-NLS
+            myRepositoryListLoadingErrors.add(new ValidationInfo(message).asWarning().withOKEnabled());
           }
           startTrackingValidation();
         }
@@ -459,7 +462,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     @NotNull private final Path myDefaultParentPath;
     private boolean myModifiedByUser = false;
 
-    private MyTextFieldWithBrowseButton(@NotNull String defaultParentPath) {
+    private MyTextFieldWithBrowseButton(@NotNull @NonNls String defaultParentPath) {
       myDefaultParentPath = Paths.get(defaultParentPath).toAbsolutePath();
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

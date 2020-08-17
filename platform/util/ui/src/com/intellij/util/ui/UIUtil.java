@@ -2993,14 +2993,17 @@ public final class UIUtil {
     }, "play sound").start();
   }
 
+  @NlsSafe
   public static @NotNull String leftArrow() {
     return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }

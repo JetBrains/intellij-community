@@ -639,7 +639,7 @@ public final class PushLog extends JPanel implements DataProvider {
         }
       }
       else {
-        renderer.append(userObject == null ? "" : userObject.toString());
+        renderer.append(userObject == null ? "" : userObject.toString()); //NON-NLS
       }
     }
   }

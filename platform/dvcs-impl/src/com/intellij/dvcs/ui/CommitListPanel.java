@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -39,7 +40,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
   private final List<VcsFullCommitDetails> myCommits;
   private final TableView<VcsFullCommitDetails> myTable;
 
-  public CommitListPanel(@NotNull List<? extends VcsFullCommitDetails> commits, @Nullable String emptyText) {
+  public CommitListPanel(@NotNull List<? extends VcsFullCommitDetails> commits, @Nullable @NlsContexts.Label String emptyText) {
     myCommits = new ArrayList<>(commits);
 
     myTable = new TableView<>();
@@ -203,7 +204,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
     @NotNull private final String myMaxString;
 
-    CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    CommitColumnInfo(@NotNull @NlsContexts.ColumnName String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }

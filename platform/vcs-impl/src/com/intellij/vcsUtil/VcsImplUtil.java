@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
@@ -48,6 +49,7 @@ public final class VcsImplUtil {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
     VirtualFile projectDir = project.getBaseDir();
