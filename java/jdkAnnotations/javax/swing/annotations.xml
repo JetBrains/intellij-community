@@ -81,6 +81,9 @@
   <item name="javax.swing.JEditorPane JEditorPane(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.JEditorPane void scrollToReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='javax.swing.JEditorPane void setContentType(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
