@@ -183,7 +183,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
@@ -1104,12 +1104,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited) {
-    return parse(semicolonDelimited, token -> new ExtensionFileNameMatcher(token));
+  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimitedExtensions) {
+    return parse(semicolonDelimitedExtensions, ext -> new ExtensionFileNameMatcher(ext));
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited, Function<? super String, ? extends FileNameMatcher> matcherFactory) {
+  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
     if (semicolonDelimited == null) {
       return Collections.emptyList();
     }
@@ -1344,7 +1344,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private <T, E extends Throwable> T withReadLock(ThrowableComputable<T, E> computable) throws E {
+  private <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> computable) throws E {
     return ConcurrencyUtil.withLock(myPendingInitializationLock.readLock(), computable);
   }
 
