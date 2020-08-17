@@ -107,7 +107,7 @@ public interface ExtensionPoint extends DomElement {
    *
    * @return {@code null} if {@code qualifiedName} is set.
    */
-  @Nullable
+  @Nullable @NlsSafe
   String getNamePrefix();
 
   /**
