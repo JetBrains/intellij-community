@@ -24,18 +24,18 @@
 #end
 ##
 #macro(addEqualsPrologue)
-if(this == $paramName) return true;
+if(this == $paramName) { return true; }
   #addInstanceOfToText()
   #if ($superHasEquals)
-    if(!super.equals($paramName)) return false;
+    if(!super.equals($paramName)) { return false; }
   #end
 #end
 ##
 #macro(addInstanceOfToText)
   #if ($checkParameterWithInstanceof)
-  if(!($paramName instanceof $classname)) return false;
+  if(!($paramName instanceof $classname)) { return false; }
   #else
-  if($paramName == null || getClass() != ${paramName}.getClass()) return false;
+  if($paramName == null || getClass() != ${paramName}.getClass()) { return false; }
   #end
 #end
 #macro(addPrimitiveFieldComparisonCondition $field)
