@@ -33,12 +33,12 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
    */
-  public abstract void setValue(@NonNls @NotNull String name, @Nullable String value);
+  public abstract void setValue(@NonNls @NotNull String name, @NonNls @Nullable String value);
 
   /**
    * Set value or unset if equals to default value
    */
-  public abstract void setValue(@NonNls @NotNull String name, @Nullable String value, @Nullable String defaultValue);
+  public abstract void setValue(@NonNls @NotNull String name, @NonNls @Nullable String value, @Nullable String defaultValue);
 
   /**
    * Set value or unset if equals to default value

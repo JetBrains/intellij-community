@@ -199,7 +199,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return myProject;
   }
 
-  public final String getCommandName() {
+  public final @Command String getCommandName() {
     return myCommandName;
   }
 
