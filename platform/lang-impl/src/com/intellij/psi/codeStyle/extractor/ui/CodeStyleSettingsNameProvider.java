@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -166,7 +166,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     switch (settingsType) {
       case BLANK_LINES_SETTINGS: return ApplicationBundle.message("title.blank.lines");
       case SPACING_SETTINGS: return ApplicationBundle.message("title.spaces");
-      case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("wrapping.and.braces");
+      case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
       case INDENT_SETTINGS: return ApplicationBundle.message("title.tabs.and.indents");
       case LANGUAGE_SPECIFIC: return "Language-specific"; //TODO should load from ApplciationBundle here
       default: throw new IllegalArgumentException("Unknown settings type: " + settingsType);

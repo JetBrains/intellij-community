@@ -8,6 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -145,7 +146,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaFileType.INSTANCE;
   }
 
-    @Override
+  @Override
   protected void customizeSettings() {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE);
     if (provider != null) {
@@ -154,7 +155,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected String getTabTitle() {
+  protected @TabTitle @NotNull String getTabTitle() {
     return JavaBundle.message("title.javadoc");
   }
 

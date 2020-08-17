@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -306,7 +307,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Override
-  protected String getTabTitle() {
+  protected @TabTitle @NotNull String getTabTitle() {
     return ApplicationBundle.message("title.blank.lines");
   }
 }
