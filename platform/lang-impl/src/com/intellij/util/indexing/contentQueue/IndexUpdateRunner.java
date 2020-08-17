@@ -221,7 +221,8 @@ public final class IndexUpdateRunner {
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
       synchronized (indexingJob.myStatistics) {
-        indexingJob.myStatistics.addTooLargeForIndexingFile(new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength()));
+        TooLargeForIndexingFile tooLargeForIndexingFile = new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength());
+        indexingJob.myStatistics.addTooLargeForIndexingFile(e.getFile(), tooLargeForIndexingFile, indexingJob.myProject);
       }
       FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
       return;
@@ -250,7 +251,11 @@ public final class IndexUpdateRunner {
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
         synchronized (indexingJob.myStatistics) {
-          indexingJob.myStatistics.addFileStatistics(fileIndexingStatistics, contentLoadingTime, loadingResult.fileLength);
+          indexingJob.myStatistics.addFileStatistics(file,
+                                                     fileIndexingStatistics,
+                                                     contentLoadingTime,
+                                                     loadingResult.fileLength,
+                                                     indexingJob.myProject);
         }
       }
       indexingJob.oneMoreFileProcessed();

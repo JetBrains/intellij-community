@@ -17,6 +17,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
   val statsPerFileType = aggregateStatsPerFileType()
   val allStatsPerIndexer = aggregateStatsPerIndexer()
   val (statsPerIndexer, fastIndexers) = allStatsPerIndexer.partition { it.partOfTotalIndexingTime.percentages > 0.01 }
+  val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
 
   return JsonFileProviderIndexStatistics(
     fileSetName,
@@ -26,7 +27,8 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     statsPerFileType.sortedByDescending { it.partOfTotalIndexingTime.percentages },
     statsPerIndexer.sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    fastIndexers.map { it.indexId }.sorted()
+    fastIndexers.map { it.indexId }.sorted(),
+    indexedFilePaths
   )
 }
 

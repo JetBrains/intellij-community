@@ -29,6 +29,10 @@ object IndexDiagnosticDumper {
   val indexingDiagnosticsLimitOfFiles: Int get() =
     SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
 
+  @JvmStatic
+  val shouldDumpPathsOfIndexedFiles: Boolean get() =
+    SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
   val indexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
     Paths.get(logPath).resolve("indexing-diagnostic")

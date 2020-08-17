@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
+import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
+
 /**
  * Accumulates indexing statistics for a set of indexable files.
  *
@@ -20,6 +25,8 @@ class IndexingJobStatistics(val fileSetName: String) {
 
   val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
+  val indexedFiles = arrayListOf<IndexedFilePath>()
+
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
     var numberOfFiles: Int,
@@ -33,7 +40,13 @@ class IndexingJobStatistics(val fileSetName: String) {
     var totalBytes: BytesNumber
   )
 
-  fun addFileStatistics(fileStatistics: FileIndexingStatistics, contentLoadingTime: Long, fileSize: Long) {
+  fun addFileStatistics(
+    file: VirtualFile,
+    fileStatistics: FileIndexingStatistics,
+    contentLoadingTime: Long,
+    fileSize: Long,
+    project: Project
+  ) {
     numberOfIndexedFiles++
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
@@ -51,11 +64,21 @@ class IndexingJobStatistics(val fileSetName: String) {
     stats.indexingTime.addTime(fileStatistics.indexingTime)
     stats.totalBytes += fileSize
     stats.numberOfFiles++
+    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+      indexedFiles += IndexedFilePaths.createIndexedFilePath(file, project)
+    }
   }
 
-  fun addTooLargeForIndexingFile(tooLargeForIndexingFile: TooLargeForIndexingFile) {
+  fun addTooLargeForIndexingFile(
+    file: VirtualFile,
+    tooLargeForIndexingFile: TooLargeForIndexingFile,
+    project: Project
+  ) {
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
     tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
+    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+      indexedFiles += IndexedFilePaths.createIndexedFilePath(file, project)
+    }
   }
 }
