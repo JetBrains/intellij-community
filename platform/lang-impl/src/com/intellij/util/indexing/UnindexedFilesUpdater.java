@@ -358,20 +358,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     finally {
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
-      dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
+      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
-  }
-
-  private static void dumpProjectIndexingHistoryIfNecessary(@NotNull ProjectIndexingHistory projectIndexingHistory) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    if (projectIndexingHistory.getTimes().getWasInterrupted() && !IndexDiagnosticDumper.getShouldDumpDiagnosticsForInterruptedUpdaters()) {
-      return;
-    }
-    NonUrgentExecutor.getInstance().execute(() -> {
-      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory);
-    });
   }
 
   /**
