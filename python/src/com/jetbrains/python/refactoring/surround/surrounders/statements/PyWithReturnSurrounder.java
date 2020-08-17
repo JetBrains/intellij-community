@@ -4,16 +4,18 @@ package com.jetbrains.python.refactoring.surround.surrounders.statements;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyWithReturnSurrounder extends PyStatementSurrounder {
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "return";
+
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return (elements.length == 1) &&
@@ -38,6 +40,7 @@ public class PyWithReturnSurrounder extends PyStatementSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return PyBundle.message("surround.with.return.template");
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }
