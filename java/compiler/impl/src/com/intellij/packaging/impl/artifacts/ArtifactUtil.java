@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,7 +304,7 @@ public final class ArtifactUtil {
 
   public static boolean processDirectoryChildren(@NotNull CompositePackagingElement<?> parent,
                                                  @NotNull PackagingElementPath pathToParent,
-                                                 @NotNull String relativePath,
+                                                 @NotNull @NonNls String relativePath,
                                                  @NotNull final PackagingElementResolvingContext context,
                                                  @NotNull final ArtifactType artifactType,
                                                  @NotNull final PackagingElementProcessor<PackagingElement<?>> processor) {

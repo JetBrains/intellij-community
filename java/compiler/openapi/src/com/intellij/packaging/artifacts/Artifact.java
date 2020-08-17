@@ -16,6 +16,7 @@
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -42,8 +43,7 @@ public interface Artifact extends UserDataHolder, ProjectModelBuildableElement {
   @NotNull
   CompositePackagingElement<?> getRootElement();
 
-  @Nullable
-  String getOutputPath();
+  @Nullable @NlsSafe String getOutputPath();
 
   Collection<? extends ArtifactPropertiesProvider> getPropertiesProviders();
 
@@ -52,6 +52,5 @@ public interface Artifact extends UserDataHolder, ProjectModelBuildableElement {
   @Nullable
   VirtualFile getOutputFile();
 
-  @Nullable
-  String getOutputFilePath();
+  @Nullable @NlsSafe String getOutputFilePath();
 }
