@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -132,7 +132,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    * @param underlyingFacet underlying facet. Must be passed to {@link Facet} constructor
    * @return a created facet
    */
-  public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
+  public abstract F createFacet(@NotNull Module module, final @Nls String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   /**
    * @return {@code true} if only one facet of this type is allowed within the containing module (if this type doesn't have the underlying
