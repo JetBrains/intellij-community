@@ -153,7 +153,7 @@ public class WelcomeScreenActionsUtil {
     AnAction[] actions = group.getChildren(null);
 
     DefaultActionGroup main = new DefaultActionGroup();
-    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.empty.projects.more.text"), true) {
+    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true) {
       @Override
       public boolean hideIfNoVisibleChildren() {
         return true;
