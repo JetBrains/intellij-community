@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -51,7 +52,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Replace with conditional call";
+      return GroovyBundle.message("intention.family.name.replace.with.conditional.call");
     }
 
     @Override

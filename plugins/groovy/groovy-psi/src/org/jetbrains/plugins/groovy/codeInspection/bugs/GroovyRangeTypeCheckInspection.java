@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -8,6 +8,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -76,7 +77,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Fix range class";
+          return GroovyBundle.message("intention.family.name.fix.range.class");
         }
       };
     }

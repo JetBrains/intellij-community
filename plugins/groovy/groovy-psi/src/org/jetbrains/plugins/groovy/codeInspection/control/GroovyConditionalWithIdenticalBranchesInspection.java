@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -43,7 +44,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Collapse conditional expression";
+      return GroovyBundle.message("intention.family.name.collapse.conditional.expressions");
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -127,7 +128,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override

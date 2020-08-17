@@ -22,6 +22,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -57,7 +58,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove unnecessary continue";
+      return GroovyBundle.message("intention.family.name.remove.unnecessary.continue");
     }
 
     @Override

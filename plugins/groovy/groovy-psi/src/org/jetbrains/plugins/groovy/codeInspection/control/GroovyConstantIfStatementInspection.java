@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -52,7 +53,7 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Simplify";
+      return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override

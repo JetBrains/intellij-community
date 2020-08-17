@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.codeInspection.ProblemDescriptor
@@ -19,7 +19,7 @@ class ParameterCastFix(
 
   private val myName: String = GroovyBundle.message("parameter.cast.fix", position + 1, myType.presentableText)
   override fun getName(): String = myName
-  override fun getFamilyName(): String = "Add parameter cast"
+  override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.parameter.cast")
 
   private val myExpression: Pointer<GrExpression> = expression.createSmartPointer()
 
