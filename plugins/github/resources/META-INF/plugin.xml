@@ -177,6 +177,10 @@
     <action id="Github.PullRequest.Diff.Comment.Create"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
       <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
     </action>
   </actions>
