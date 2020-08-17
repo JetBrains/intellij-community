@@ -305,7 +305,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiMethod method = (PsiMethod)candidate.getElement();
       if (!method.isValid()) continue;
       if (candidate instanceof MethodCandidateInfo && !((MethodCandidateInfo)candidate).getSiteSubstitutor().isValid()) continue;
-      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(o, candidate, method == realResolve);
+      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate, method == realResolve);
       assert substitutor != null;
 
       if (!method.isValid() || !substitutor.isValid()) {
@@ -487,7 +487,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
+  private static PsiSubstitutor getCandidateInfoSubstitutor(CandidateInfo candidate, boolean resolveResult) {
     return candidate instanceof MethodCandidateInfo &&
            ((MethodCandidateInfo)candidate).isInferencePossible()
            ? ((MethodCandidateInfo)candidate)
@@ -800,7 +800,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiElement parameterOwner = context.getParameterOwner();
       PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);
