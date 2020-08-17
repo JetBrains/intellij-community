@@ -4,6 +4,7 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -224,11 +225,13 @@ public final class VcsLogUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortHash(@NotNull String hashString) {
     return getShortHash(hashString, SHORT_HASH_LENGTH);
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortHash(@NotNull String hashString, int shortHashLength) {
     return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
