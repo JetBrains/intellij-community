@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,12 @@ public enum LineSeparator {
   LineSeparator(@NotNull String separatorString) {
     mySeparatorString = separatorString;
     myBytes = separatorString.getBytes(StandardCharsets.UTF_8);
+  }
+
+  @NlsSafe
+  @Override
+  public String toString() {
+    return super.toString();
   }
 
   @NotNull

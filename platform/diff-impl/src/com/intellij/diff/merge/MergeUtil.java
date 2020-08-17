@@ -2,6 +2,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.merge.MergeTool.MergeViewer;
@@ -26,7 +27,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
@@ -150,7 +150,8 @@ public final class MergeUtil {
       return true;
     }
     return MessageDialogBuilder
-      .yesNo(actionName, DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway", actionName.toLowerCase(Locale.ENGLISH)))
+      .yesNo(actionName, DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway",
+                                            actionName.toLowerCase(DynamicBundle.getLocale())))
       .yesText(DiffBundle.message("button.discard.changes.and.do", actionName))
       .noText(DiffBundle.message("button.continue.merge"))
       .ask(parent);

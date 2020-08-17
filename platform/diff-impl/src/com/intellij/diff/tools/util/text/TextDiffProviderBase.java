@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-
 public class TextDiffProviderBase implements TextDiffProvider {
   private final IgnorePolicySettingAction myIgnorePolicySettingAction;
   private final HighlightPolicySettingAction myHighlightPolicySettingAction;
@@ -82,7 +80,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
     @NotNull
     @Override
     protected String getText(@NotNull IgnorePolicy option) {
-      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+      String text = TextDiffProviderBase.this.getText(option);
+      if (text != null) return text;
+      return super.getText(option);
     }
   }
 
@@ -95,7 +95,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
     @NotNull
     @Override
     protected String getText(@NotNull HighlightPolicy option) {
-      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+      String text = TextDiffProviderBase.this.getText(option);
+      if (text != null) return text;
+      return super.getText(option);
     }
   }
 
