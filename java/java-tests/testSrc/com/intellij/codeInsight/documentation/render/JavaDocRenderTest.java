@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,6 +174,13 @@ public class JavaDocRenderTest extends AbstractEditorTest {
                       "  <caret>class C {}");
   }
 
+  public void testAddedCommentIsNotCollapsed() {
+    configure("class C {}", true);
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
+    updateRenderedItems(false);
+    verifyFoldingState("[]");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
@@ -180,6 +188,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void updateRenderedItems(boolean collapseNewRegions) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
     DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }
