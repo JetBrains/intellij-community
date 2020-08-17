@@ -24,6 +24,9 @@
   <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, org.jdom.Namespace) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.jdom.Attribute java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='org.jdom.Attribute org.jdom.Attribute setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -94,6 +97,9 @@
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.jdom.Element java.lang.String getName()'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>
