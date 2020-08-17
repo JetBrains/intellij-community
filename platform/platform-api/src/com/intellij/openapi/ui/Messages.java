@@ -1049,7 +1049,7 @@ public class Messages {
                                                                   boolean checked,
                                                                   boolean checkboxEnabled,
                                                                   @Nullable Icon icon,
-                                                                  String initialValue,
+                                                                  @Nullable String initialValue,
                                                                   @Nullable InputValidator validator) {
     return MessagesService.getInstance()
       .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
