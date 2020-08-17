@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.SimpleColoredText;
@@ -22,8 +24,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -43,15 +50,50 @@ public final class XDebuggerInlayUtil {
     return startOffset;
   }
 
-  public static void createLineEndInlay(@NotNull Project project, @NotNull VirtualFile file, int offset, SimpleColoredText inlayText, @Nullable Consumer<Inlay> onClick) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-      if (editor instanceof TextEditor) {
-        Editor e = ((TextEditor)editor).getEditor();
-        //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
-        e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(inlayText, onClick));
-      }
-    });
+  public static boolean createLineEndInlay(XValueNodeImpl valueNode,
+                                           @NotNull XDebugSession session,
+                                           @NotNull VirtualFile file,
+                                           @NotNull XSourcePosition position,
+                                           Document document) {
+    XValue container = valueNode.getValueContainer();
+    SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(valueNode);
+    if (valuePresentation != null) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+
+        TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(position.getLine(), position.getFile(), session);
+
+        SimpleColoredText variablePresentation = XDebuggerEditorLinePainter
+          .computeVariablePresentationWithChanges(valueNode, valueNode.getName(), valuePresentation, attributes, position.getLine(), session.getProject());
+
+
+        int offset = document.getLineEndOffset(position.getLine());
+        Project project = session.getProject();
+
+        FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file);
+        if (editor instanceof TextEditor) {
+          Editor e = ((TextEditor)editor).getEditor();
+
+          XDebuggerTreeCreator creator =
+            new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), position, ((XDebugSessionImpl)session).getValueMarkers());
+
+          Consumer<Inlay> onClick = (inlay) -> {
+            String name = "valueName";
+            if (container instanceof XNamedValue) {
+              name = ((XNamedValue)container).getName();
+            }
+            Pair<XValue, String> descriptor = Pair.create(container, name);
+            Rectangle bounds = inlay.getBounds();
+            Point point = new Point(bounds.x, bounds.y + bounds.height);
+            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, inlay, e, point, project, () -> {
+            });
+          };
+          //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
+          e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(variablePresentation, onClick));
+        }
+      });
+      return true;
+    }
+    return false;
   }
 
 

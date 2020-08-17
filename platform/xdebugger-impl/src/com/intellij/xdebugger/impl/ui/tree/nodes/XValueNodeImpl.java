@@ -186,33 +186,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     if (Registry.is("debugger.show.values.use.inlays")) {
-      XValue container = getValueContainer();
-      SimpleColoredText presentation = XDebuggerEditorLinePainter.createPresentation(this);
-      if (presentation != null) {
-        TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(position.getLine(), position.getFile(), session);
-        presentation.insert(0,  getName() + ": ", SimpleTextAttributes.fromTextAttributes(attributes));
-
-        int offset = document.getLineEndOffset(position.getLine());
-        Consumer<Inlay> onClick = (inlay) -> {
-          XValueMarkers<?, ?> valueMarkers = session == null ? null : ((XDebugSessionImpl)session).getValueMarkers();
-          Project project = session.getProject();
-          XDebuggerTreeCreator creator =
-            new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), position, valueMarkers);
-          Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-          String name = "valueName";
-          if (container instanceof XNamedValue) {
-            name = ((XNamedValue)container).getName();
-          }
-          Pair<XValue, String> descriptor = Pair.create(container, name);
-          Rectangle bounds = inlay.getBounds();
-          Point point = new Point(bounds.x, bounds.y + bounds.height);
-          XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, inlay, editor, point, project, () -> { });
-        };
-        XDebuggerInlayUtil.createLineEndInlay(myTree.getProject(), position.getFile(), offset, presentation, onClick);
-
+      if (XDebuggerInlayUtil.createLineEndInlay(this, session, position.getFile(), position, document)) {
         return true;
       }
-
     }
 
 

@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
@@ -119,10 +118,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
       String curText = myText.getTexts().get(i);
       SimpleTextAttributes attr = myText.getAttributes().get(i);
 
-      Color fgColor = inlineAttributes.getForegroundColor();
-      if (Registry.is("debugger.show.values.colorful") && attr.getFgColor() != null) {
-        fgColor = attr.getFgColor();
-      }
+      Color fgColor = hovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
       g.setColor(fgColor);
       g.drawString(curText, curX, r.y + metrics.getAscent());
       curX += fontInfo.fontMetrics().stringWidth(curText);

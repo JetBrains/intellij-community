@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
@@ -65,11 +66,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return null;
     }
 
-    Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
-    if (oldValues == null) {
-      oldValues = new HashMap<>();
-      project.putUserData(CACHE, oldValues);
-    }
+    Map<Variable, VariableValue> oldValues = getOldValues(project);
     List<XValueNodeImpl> values = data.get(file, lineNumber, doc.getModificationStamp());
     if (values != null && !values.isEmpty()) {
       final TextAttributes attributes = getAttributes(lineNumber, file, session);
@@ -83,26 +80,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         if (StringUtil.isEmpty(text.toString())) {
           continue;
         }
-        final VariableText res = new VariableText();
+
+        final VariableText res = computeVariablePresentationWithChanges(value, name, text, attributes, lineNumber, oldValues);
         result.add(res);
-        res.add(new LineExtensionInfo("  " + name + ": ", attributes));
-
-        Variable var = new Variable(name, lineNumber);
-        VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
-        if (variableValue.valueNodeHashCode != value.hashCode()) {
-          variableValue.old = variableValue.actual;
-          variableValue.actual = text.toString();
-          variableValue.valueNodeHashCode = value.hashCode();
-        }
-
-        if (!variableValue.isChanged()) {
-          for (String s : text.getTexts()) {
-            res.add(new LineExtensionInfo(s, attributes));
-          }
-        }
-        else {
-          variableValue.produceChangedParts(res.infos);
-        }
       }
       final List<LineExtensionInfo> infos = new ArrayList<>();
       for (VariableText text : result) {
@@ -111,6 +91,67 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return ContainerUtil.getFirstItems(infos, LINE_EXTENSIONS_MAX_COUNT);
     }
     return null;
+  }
+
+  public static SimpleColoredText computeVariablePresentationWithChanges(XValueNodeImpl value,
+                                                                         String name,
+                                                                         SimpleColoredText text,
+                                                                         TextAttributes attributes,
+                                                                         int lineNumber,
+                                                                         Project project) {
+    Map<Variable, VariableValue> oldValues = getOldValues(project);
+    VariableText variableText = computeVariablePresentationWithChanges(value, name, text, attributes, lineNumber, oldValues);
+
+    SimpleColoredText coloredText = new SimpleColoredText();
+    for (LineExtensionInfo info : variableText.infos) {
+      TextAttributes textAttributes = new TextAttributes(info.getColor(), info.getBgColor(), info.getEffectColor(),info.getEffectType(), info.getFontType());
+      coloredText.append(info.getText(), SimpleTextAttributes.fromTextAttributes(textAttributes));
+    }
+    return coloredText;
+  }
+
+  @NotNull
+  private static VariableText computeVariablePresentationWithChanges(XValueNodeImpl value,
+                                                                     String name,
+                                                                     SimpleColoredText text,
+                                                                     TextAttributes attributes,
+                                                                     int lineNumber,
+                                                                     Map<Variable, VariableValue> oldValues) {
+    final VariableText res = new VariableText();
+    res.add(new LineExtensionInfo("  " + name + ": ", attributes));
+
+    Variable var = new Variable(name, lineNumber);
+    VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
+    if (variableValue.valueNodeHashCode != value.hashCode()) {
+      variableValue.old = variableValue.actual;
+      variableValue.actual = text.toString();
+      variableValue.valueNodeHashCode = value.hashCode();
+    }
+
+    if (!variableValue.isChanged()) {
+      ArrayList<String> texts = text.getTexts();
+      for (int i = 0; i < texts.size(); i++) {
+        String s = texts.get(i);
+        TextAttributes attr = Registry.is("debugger.show.values.colorful")
+                              ? text.getAttributes().get(i).toTextAttributes()
+                              : attributes;
+        res.add(new LineExtensionInfo(s, attr));
+      }
+    }
+    else {
+      variableValue.produceChangedParts(res.infos);
+    }
+    return res;
+  }
+
+  @NotNull
+  public static Map<Variable, VariableValue> getOldValues(@NotNull Project project) {
+    Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
+    if (oldValues == null) {
+      oldValues = new HashMap<>();
+      project.putUserData(CACHE, oldValues);
+    }
+    return oldValues;
   }
 
   @NotNull
