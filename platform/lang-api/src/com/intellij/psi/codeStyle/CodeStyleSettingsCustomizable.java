@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
@@ -218,13 +207,12 @@ public interface CodeStyleSettingsCustomizable {
     ALIGN_SUBSEQUENT_SIMPLE_METHODS,
     INDENT_BREAK_FROM_CASE
   }
-  
+
   enum CommenterOption {
     LINE_COMMENT_ADD_SPACE,
     LINE_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_AT_FIRST_COLUMN
   }
-  
 
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
   String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
@@ -316,7 +304,7 @@ public interface CodeStyleSettingsCustomizable {
     ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
     ApplicationBundle.message("wrapping.wrap.on.typing.default")
   };
-  int [] WRAP_ON_TYPING_VALUES = {
+  int[] WRAP_ON_TYPING_VALUES = {
     CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue
@@ -326,30 +314,31 @@ public interface CodeStyleSettingsCustomizable {
 
   void showStandardOptions(@NonNls String... optionNames);
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @Nls @Nullable String groupName,
+                                Object... options) {
   }
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        @Nullable OptionAnchor anchor,
-                        @Nullable String anchorFieldName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @Nls @Nullable String groupName,
+                                @Nullable OptionAnchor anchor,
+                                @NonNls @Nullable String anchorFieldName,
+                                Object... options) {
   }
 
-  default void renameStandardOption(String fieldName, String newTitle) {
+  default void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
   }
 
   /**
    * Moves a standard option to another group.
+   *
    * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
-  default void moveStandardOption(String fieldName, String newGroup) {
+  default void moveStandardOption(@NonNls @NotNull String fieldName, @Nls @NotNull String newGroup) {
   }
 }

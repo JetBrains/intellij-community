@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -11,6 +12,8 @@ import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentatio
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation.SettingsGroup;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,13 +108,22 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title, @Nullable String groupName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NotNull @NonNls String fieldName,
+                               @NotNull @NlsContexts.Label String title,
+                               @Nls @Nullable String groupName,
+                               Object... options) {
     showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title,
-                               @Nullable String groupName, @Nullable OptionAnchor anchor, @Nullable String anchorFieldName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @NonNls @Nullable String anchorFieldName,
+                               Object... options) {
     if (options.length == 2) {
       addSetting(new SettingsGroup(groupName), new CodeStyleSelectSettingPresentation(fieldName, title, (int[])options[1],
                                                                                         (String[])options[0]), anchor, anchorFieldName);
@@ -121,7 +133,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
+  public void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
     for (SettingsType settingsType : SettingsType.values()) {
       Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
@@ -139,7 +151,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void moveStandardOption(String fieldName, String newGroup) {
+  public void moveStandardOption(@NonNls @NotNull String fieldName, @Nls @NotNull String newGroup) {
     for (SettingsType settingsType : SettingsType.values()) {
       Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
