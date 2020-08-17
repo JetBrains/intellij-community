@@ -486,19 +486,16 @@ public class SMTestProxy extends AbstractTestProxy {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
-    if (myState instanceof TestComparisionFailedState) {
-      CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
-      states.addFailure((TestFailedState)myState);
-      states.addFailure(failedState);
-      fireOnNewPrintable(failedState);
-      myState = states;
-    }
-    else if (myState instanceof CompoundTestFailedState) {
+    if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(failedState);
       fireOnNewPrintable(failedState);
     }
     else if (myState instanceof TestFailedState) {
-      ((TestFailedState)myState).addError(localizedMessage, stackTrace, myPrinter);
+      CompoundTestFailedState states = new CompoundTestFailedState();
+      states.addFailure((TestFailedState)myState);
+      states.addFailure(failedState);
+      fireOnNewPrintable(failedState);
+      myState = states;
     }
     else {
       myState = testError ? new TestErrorState(localizedMessage, stackTrace) : failedState;
@@ -547,7 +544,7 @@ public class SMTestProxy extends AbstractTestProxy {
       ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
     }
     else if (myState instanceof TestFailedState) {
-      final CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
+      final CompoundTestFailedState states = new CompoundTestFailedState();
       states.addFailure((TestFailedState)myState);
       states.addFailure(comparisionFailedState);
       myState = states;
@@ -715,10 +712,7 @@ public class SMTestProxy extends AbstractTestProxy {
     addAfterLastPassed(new Printable() {
       @Override
       public void printOn(final Printer printer) {
-        String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
-        if (errorText != null) {
-          TestFailedState.printError(printer, Collections.singletonList(errorText));
-        }
+        new TestFailedState(output, stackTrace).printOn(printer);
       }
     });
   }
