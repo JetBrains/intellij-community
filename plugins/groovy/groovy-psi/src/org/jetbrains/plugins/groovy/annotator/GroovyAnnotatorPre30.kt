@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
@@ -39,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
-  private fun error(typeArgumentList: PsiElement, msg: String) {
+  private fun error(typeArgumentList: PsiElement, msg: @InspectionMessage String) {
     holder.newAnnotation(HighlightSeverity.ERROR, msg).range(typeArgumentList).create()
   }
 
