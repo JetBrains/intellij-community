@@ -18,7 +18,9 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
     if (!ActiveWindowsWatcher.isTheCurrentWindowOnTheActivatedList(w)) {
       assert w != null;
       Window window = w;
-      while (window != SwingUtilities.getWindowAncestor(window)) {
+      while (SwingUtilities.getWindowAncestor(window) != null
+             && window != SwingUtilities.getWindowAncestor(window))
+      {
         window = SwingUtilities.getWindowAncestor(window);
       }
 
