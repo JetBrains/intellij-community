@@ -480,7 +480,7 @@ public final class DiffUtil {
     return result.wrapWithHtmlBody().toString();
   }
 
-  public static void showSuccessPopup(@NotNull @Nls String message,
+  public static void showSuccessPopup(@NotNull @NlsContexts.PopupContent String message,
                                       @NotNull RelativePoint point,
                                       @NotNull Disposable disposable,
                                       @Nullable Runnable hyperlinkHandler) {
@@ -578,7 +578,7 @@ public final class DiffUtil {
   }
 
   @Nullable
-  private static JComponent createTitle(@Nullable @Nls String title,
+  private static JComponent createTitle(@Nullable @NlsContexts.Label String title,
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
@@ -596,17 +596,17 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createTitle(@Nullable @Nls String title) {
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title) {
     return createTitle(title, null, null, null, false, null);
   }
 
   @NotNull
-  public static JComponent createTitle(@Nullable @Nls String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull @Nls String title,
+  public static JComponent createTitle(@NotNull @NlsContexts.Label String title,
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,

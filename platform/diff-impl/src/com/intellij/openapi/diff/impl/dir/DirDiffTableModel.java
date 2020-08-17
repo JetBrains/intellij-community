@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
@@ -428,7 +429,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  @Nls
+  @NlsContexts.DialogTitle
   public String getTitle() {
     if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&

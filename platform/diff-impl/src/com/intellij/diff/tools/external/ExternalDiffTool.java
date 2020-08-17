@@ -19,12 +19,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +132,7 @@ public final class ExternalDiffTool {
   }
 
   private static <T> T computeWithModalProgress(@Nullable Project project,
-                                                @NotNull @Nls String title,
+                                                @NotNull @NlsContexts.ProgressTitle String title,
                                                 boolean canBeCancelled,
                                                 @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
     throws Exception {

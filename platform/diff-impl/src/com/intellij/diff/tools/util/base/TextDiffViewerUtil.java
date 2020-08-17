@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -190,7 +189,7 @@ public final class TextDiffViewerUtil {
     protected abstract void setValue(@NotNull T option);
 
     @NotNull
-    protected abstract @NlsActions.ActionText String getText(@NotNull T option);
+    protected abstract @Nls String getText(@NotNull T option);
 
     private class MyAction extends AnAction implements DumbAware {
       @NotNull private final T myOption;

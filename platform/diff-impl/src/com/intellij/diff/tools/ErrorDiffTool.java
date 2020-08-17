@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -40,7 +41,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,8 +161,8 @@ public class ErrorDiffTool implements FrameDiffTool {
   }
 
   @NotNull
-  public static JComponent createReloadMessagePanel(@Nullable DiffContext context, @NotNull @Nls String message,
-                                                    @NotNull @Nls String reloadMessage, @Nullable Runnable beforeReload) {
+  public static JComponent createReloadMessagePanel(@Nullable DiffContext context, @NotNull @NlsContexts.Label String message,
+                                                    @NotNull @NlsContexts.Label String reloadMessage, @Nullable Runnable beforeReload) {
     if (context instanceof DiffContextEx) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       Color linkColor = chooseNotNull(scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor(),

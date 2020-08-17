@@ -27,7 +27,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,16 +61,16 @@ public abstract class DiffRequestFactory {
   // Titles
   //
 
-  @Nls
+  @NlsContexts.Label
   @Nullable
   @Contract("null->null; !null->!null")
   public abstract String getContentTitle(@Nullable VirtualFile file);
 
-  @Nls
+  @NlsContexts.DialogTitle
   @NotNull
   public abstract String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2);
 
-  @Nls
+  @NlsContexts.DialogTitle
   @NotNull
   public abstract String getTitle(@NotNull VirtualFile file);
 
@@ -85,7 +84,7 @@ public abstract class DiffRequestFactory {
                                                   @NotNull Document output,
                                                   @NotNull List<String> textContents,
                                                   @Nullable @NlsContexts.DialogTitle String title,
-                                                  @NotNull List<@Nls String> titles,
+                                                  @NotNull List<@NlsContexts.Label String> titles,
                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
@@ -93,7 +92,7 @@ public abstract class DiffRequestFactory {
                                                   @NotNull VirtualFile output,
                                                   @NotNull List<byte[]> byteContents,
                                                   @Nullable @NlsContexts.DialogTitle String title,
-                                                  @NotNull List<@Nls String> contentTitles,
+                                                  @NotNull List<@NlsContexts.Label String> contentTitles,
                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
@@ -101,14 +100,15 @@ public abstract class DiffRequestFactory {
                                                   @NotNull VirtualFile output,
                                                   @NotNull List<byte[]> byteContents,
                                                   @Nullable @NlsContexts.DialogTitle String title,
-                                                  @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException;
+                                                  @NotNull List<@NlsContexts.Label String> contentTitles)
+    throws InvalidDiffRequestException;
 
   @NotNull
   public abstract TextMergeRequest createTextMergeRequest(@Nullable Project project,
                                                           @NotNull VirtualFile output,
                                                           @NotNull List<byte[]> byteContents,
                                                           @Nullable @NlsContexts.DialogTitle String title,
-                                                          @NotNull List<@Nls String> contentTitles,
+                                                          @NotNull List<@NlsContexts.Label String> contentTitles,
                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
@@ -116,7 +116,7 @@ public abstract class DiffRequestFactory {
                                                         @NotNull VirtualFile output,
                                                         @NotNull List<byte[]> byteContents,
                                                         @Nullable @NlsContexts.DialogTitle String title,
-                                                        @NotNull List<@Nls String> contentTitles,
+                                                        @NotNull List<@NlsContexts.Label String> contentTitles,
                                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
@@ -130,7 +130,7 @@ public abstract class DiffRequestFactory {
                                                            @NotNull VirtualFile output,
                                                            @NotNull List<? extends VirtualFile> contents,
                                                            @Nullable @NlsContexts.DialogTitle String title,
-                                                           @NotNull List<@Nls String> contentTitles,
+                                                           @NotNull List<@NlsContexts.Label String> contentTitles,
                                                            @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
@@ -138,6 +138,6 @@ public abstract class DiffRequestFactory {
                                                                    @NotNull VirtualFile output,
                                                                    @NotNull List<? extends VirtualFile> contents,
                                                                    @Nullable @NlsContexts.DialogTitle String title,
-                                                                   @NotNull List<@Nls String> contentTitles,
+                                                                   @NotNull List<@NlsContexts.Label String> contentTitles,
                                                                    @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 }

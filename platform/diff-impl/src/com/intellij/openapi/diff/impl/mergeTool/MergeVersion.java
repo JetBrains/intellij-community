@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +117,7 @@ public interface MergeVersion {
     }
 
     private static void setDocumentText(@NotNull Document document,
-                                        @NotNull String text,
+                                        @NotNull @NonNls String text,
                                         @Nullable @NlsContexts.Command String commandName,
                                         @Nullable Project project) {
       CommandProcessor.getInstance().executeCommand(project, () ->
