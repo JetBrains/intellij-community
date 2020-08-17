@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
@@ -141,7 +142,7 @@ public final class CommonJavaFragments {
           return;
         }
         if (value.getPathOrName() == null && value.getVersion() == null) {
-          append(value.getDescription());
+          append(StringUtil.notNullize(value.getDescription()));
           return;
         }
         if (index == -1) {
@@ -153,7 +154,9 @@ public final class CommonJavaFragments {
             append(version.getDescription() + " ");
           }
         }
-        append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        if (value.getDescription() != null) {
+          append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
     });
     UIUtil.setMonospaced(comboBox);

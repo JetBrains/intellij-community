@@ -243,8 +243,8 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     String getPathOrName();
     @Nullable
     default String getVersion() { return null; }
-    @NotNull
-    default @NlsSafe String getDescription() { return getPresentableText(); }
+
+    default @NlsSafe @Nullable String getDescription() { return getPresentableText(); }
     int getOrder();
   }
 
@@ -276,7 +276,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     }
 
     @Override
-    public @NotNull String getDescription() {
+    public @Nullable String getDescription() {
       return mySdk.getVersionString();
     }
 
@@ -357,7 +357,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     }
 
     @Override
-    public @NotNull String getDescription() {
+    public @Nullable String getDescription() {
       return myDefaultJreSelector.getNameAndDescription().second;
     }
 
