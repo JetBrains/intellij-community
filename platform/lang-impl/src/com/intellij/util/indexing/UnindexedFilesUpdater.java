@@ -164,20 +164,17 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
       try {
-        long totalTime = System.nanoTime();
         IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, providerFiles, subTaskIndicator);
+          statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
         } catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
           statistics = e.myStatistics;
-        } finally {
-          totalTime = System.nanoTime() - totalTime;
         }
 
         try {
-          projectIndexingHistory.addProviderStatistics(provider.getDebugName(), providerFiles.size(), totalTime, statistics);
+          projectIndexingHistory.addProviderStatistics(statistics);
         }
         catch (Exception e) {
           LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);

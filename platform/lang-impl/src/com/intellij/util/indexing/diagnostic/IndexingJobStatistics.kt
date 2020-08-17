@@ -1,20 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
-import java.util.concurrent.atomic.AtomicInteger
+/**
+ * Accumulates indexing statistics for a set of indexable files.
+ *
+ * This class is not thread-safe. It must be synchronized by the clients.
+ */
+class IndexingJobStatistics(val fileSetName: String) {
 
-class IndexingJobStatistics {
+  var totalIndexingTime: TimeNano = 0
 
-  private val _statsPerIndexer = hashMapOf<String, StatsPerIndexer>()
-  val statsPerIndexer: Map<String /* ID.name() */, StatsPerIndexer>
-    @Synchronized get() = _statsPerIndexer.toMap()
+  var numberOfIndexedFiles: Int = 0
 
-  private val _statsPerFileType = hashMapOf<String, StatsPerFileType>()
-  val statsPerFileType: Map<String /* File type name */, StatsPerFileType>
-    @Synchronized get() = _statsPerFileType.toMap()
+  var numberOfTooLargeForIndexingFiles: Int = 0
 
-  val numberOfTooLargeForIndexingFiles = AtomicInteger()
-  val tooLargeForIndexingFiles = LimitedPriorityQueue<TooLargeForIndexingFile>(5, compareBy { it.fileSize })
+  val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
+
+  val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
+
+  val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
@@ -29,14 +33,10 @@ class IndexingJobStatistics {
     var totalBytes: BytesNumber
   )
 
-  @Synchronized
-  fun addFileStatistics(
-    fileStatistics: FileIndexingStatistics,
-    contentLoadingTime: Long,
-    fileSize: Long
-  ) {
+  fun addFileStatistics(fileStatistics: FileIndexingStatistics, contentLoadingTime: Long, fileSize: Long) {
+    numberOfIndexedFiles++
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
-      val stats = _statsPerIndexer.getOrPut(indexId.name) {
+      val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(TimeStats(), 0, 0)
       }
       stats.indexingTime.addTime(time)
@@ -44,12 +44,18 @@ class IndexingJobStatistics {
       stats.totalBytes += fileSize
     }
     val fileTypeName = fileStatistics.fileType.name
-    val stats = _statsPerFileType.getOrPut(fileTypeName) {
+    val stats = statsPerFileType.getOrPut(fileTypeName) {
       StatsPerFileType(TimeStats(), TimeStats(), 0, 0)
     }
     stats.contentLoadingTime.addTime(contentLoadingTime)
     stats.indexingTime.addTime(fileStatistics.indexingTime)
     stats.totalBytes += fileSize
     stats.numberOfFiles++
+  }
+
+  fun addTooLargeForIndexingFile(tooLargeForIndexingFile: TooLargeForIndexingFile) {
+    numberOfIndexedFiles++
+    numberOfTooLargeForIndexingFiles++
+    tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
   }
 }

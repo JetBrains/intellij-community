@@ -90,14 +90,18 @@ public final class IndexUpdateRunner {
 
   @NotNull
   public IndexingJobStatistics indexFiles(@NotNull Project project,
+                                          @NotNull String fileSetName,
                                           @NotNull Collection<VirtualFile> files,
                                           @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
-    IndexingJobStatistics statistics = new IndexingJobStatistics();
+    IndexingJobStatistics statistics = new IndexingJobStatistics(fileSetName);
+    long startTime = System.nanoTime();
     try {
       doIndexFiles(project, files, indicator, statistics);
     }
     catch (RuntimeException e) {
       throw new IndexingInterruptedException(e, statistics);
+    } finally {
+      statistics.setTotalIndexingTime(System.nanoTime() - startTime);
     }
     return statistics;
   }
@@ -216,8 +220,9 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      indexingJob.myStatistics.getNumberOfTooLargeForIndexingFiles().incrementAndGet();
-      indexingJob.myStatistics.getTooLargeForIndexingFiles().addElement(new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength()));
+      synchronized (indexingJob.myStatistics) {
+        indexingJob.myStatistics.addTooLargeForIndexingFile(new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength()));
+      }
       FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
       return;
     }
@@ -244,7 +249,9 @@ public final class IndexUpdateRunner {
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
-        indexingJob.myStatistics.addFileStatistics(fileIndexingStatistics, contentLoadingTime, loadingResult.fileLength);
+        synchronized (indexingJob.myStatistics) {
+          indexingJob.myStatistics.addFileStatistics(fileIndexingStatistics, contentLoadingTime, loadingResult.fileLength);
+        }
       }
       indexingJob.oneMoreFileProcessed();
     }

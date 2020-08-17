@@ -161,7 +161,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
           LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
           IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
           try {
-            indexUpdateRunner.indexFiles(project, files, indicator);
+            indexUpdateRunner.indexFiles(project, "Refreshed files", files, indicator);
           } catch (IndexUpdateRunner.IndexingInterruptedException e) {
             ExceptionUtil.rethrow(e.getCause());
           }

@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
-import com.intellij.util.indexing.diagnostic.dto.createProviderJsonStatistics
+import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
 import java.time.Instant
 
@@ -26,14 +26,9 @@ data class ProjectIndexingHistory(val projectName: String) {
   var totalNumberOfTooLargeFiles: Int = 0
   val totalTooLargeFiles = LimitedPriorityQueue<TooLargeForIndexingFile>(5, compareBy { it.fileSize })
 
-  fun addProviderStatistics(
-    providerDebugName: String,
-    numberOfFiles: Int,
-    totalTime: TimeNano,
-    statistics: IndexingJobStatistics
-  ) {
+  fun addProviderStatistics(statistics: IndexingJobStatistics) {
     // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.createProviderJsonStatistics(providerDebugName, numberOfFiles, totalTime)
+    providerStatistics += statistics.toJsonStatistics()
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
@@ -45,7 +40,7 @@ data class ProjectIndexingHistory(val projectName: String) {
       totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTime.sumTime
       totalStats.biggestFileTypeContributors.addElement(
         BiggestFileTypeContributor(
-          providerDebugName,
+          statistics.fileSetName,
           fileTypeStats.numberOfFiles,
           fileTypeStats.totalBytes,
           fileTypeStats.indexingTime.sumTime
@@ -60,7 +55,7 @@ data class ProjectIndexingHistory(val projectName: String) {
       totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
     }
 
-    totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles.get()
+    totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles
     statistics.tooLargeForIndexingFiles.biggestElements.forEach { totalTooLargeFiles.addElement(it) }
   }
 
