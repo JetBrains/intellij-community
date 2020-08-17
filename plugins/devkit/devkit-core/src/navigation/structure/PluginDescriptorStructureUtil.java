@@ -308,14 +308,11 @@ public final class PluginDescriptorStructureUtil {
       return possibleOnlyAttrValue;
     }
 
-    // check if tag doesn't have attributes and subtags and use it's text content as a location in such cases
+    // check if tag doesn't have attributes and subtags and use its text content as a location in such cases
     if (attrDescriptions.isEmpty() && genericInfo.getFixedChildrenDescriptions().isEmpty()) {
       if (element instanceof GenericDomValue) {
         return ((GenericDomValue<?>)element).getRawText();
       }
-      /*if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getStringValue();
-      }*/
     }
 
     return null;
