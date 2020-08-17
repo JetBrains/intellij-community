@@ -31,7 +31,7 @@ object MarketplacePluginDownloadService {
 
   private const val FILENAME = "filename="
 
-  private const val MAXIMUM_DOWNLOAD_PERCENT = 0.6 // 100% = 1.0
+  private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
 
   private val objectMapper by lazy { ObjectMapper() }
 
