@@ -199,7 +199,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the name without extension
    */
-  public @NotNull String getNameWithoutExtension() {
+  public @NlsSafe @NotNull String getNameWithoutExtension() {
     return FileUtilRt.getNameWithoutExtension(getNameSequence()).toString();
   }
 
