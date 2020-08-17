@@ -41,8 +41,8 @@ public class GroovyDslAnnotator implements Annotator {
     if (status == ACTIVE) return;
 
     final String message = status == MODIFIED
-                           ? "DSL descriptor file has been changed and isn't currently executed."
-                           : "DSL descriptor file has been disabled due to a processing error.";
+                           ? GroovyBundle.message("inspection.message.dsl.descriptor.file.has.been.changed.and.isnt.currently.executed")
+                           : GroovyBundle.message("inspection.message.dsl.descriptor.file.has.been.disabled.due.to.processing.error");
 
     AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.WARNING, message)
       .fileLevel()
@@ -66,7 +66,7 @@ public class GroovyDslAnnotator implements Annotator {
     @Override
     @NotNull
     public String getText() {
-      return "Activate back";
+      return GroovyBundle.message("intention.name.activate.back");
     }
 
     @Override

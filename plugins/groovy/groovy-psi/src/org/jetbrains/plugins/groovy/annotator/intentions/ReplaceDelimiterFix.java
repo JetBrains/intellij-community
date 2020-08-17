@@ -23,7 +23,7 @@ public class ReplaceDelimiterFix extends Intention {
   @NotNull
   @Override
   public String getText() {
-    return "Replace ':' with 'in'";
+    return GroovyBundle.message("intention.name.replace.with.in");
   }
 
   @NotNull
