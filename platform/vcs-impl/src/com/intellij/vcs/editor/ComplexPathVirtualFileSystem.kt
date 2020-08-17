@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.editor
 
-import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -9,13 +8,13 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 
-abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Path> : DeprecatedVirtualFileSystem() {
-  protected abstract val pathClass: Class<P>
-  protected open val gson = Gson()
-
+abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Path>(
+  private val pathSerializer: PathSerializer<P>
+) : DeprecatedVirtualFileSystem() {
   protected abstract fun findFile(project: Project, path: P): VirtualFile?
-  protected fun serializePath(path: P): String = gson.toJson(path)
-  protected fun deserializePath(path: String): P = gson.fromJson(path, pathClass)
+
+  protected fun serializePath(path: P): String = pathSerializer.serialize(path)
+  protected fun deserializePath(path: String): P = pathSerializer.deserialize(path)
 
   fun serializePathSafe(path: P): String? {
     try {
@@ -62,6 +61,11 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Pat
      */
     val sessionId: String
     val projectHash: String
+  }
+
+  interface PathSerializer<P : Path> {
+    fun serialize(path: P): String
+    fun deserialize(rawPath: String): P
   }
 
   companion object {

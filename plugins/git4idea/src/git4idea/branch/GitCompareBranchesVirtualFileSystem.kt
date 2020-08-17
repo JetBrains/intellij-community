@@ -8,13 +8,16 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
+import com.intellij.vcs.editor.GsonPathSerializer
 import com.intellij.vcs.log.VcsLogRangeFilter
 import java.lang.reflect.Type
 
-internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSystem<GitCompareBranchesVirtualFileSystem.Path>() {
-  override val pathClass: Class<Path> = Path::class.java
-  override val gson: Gson = GsonBuilder().registerTypeAdapter(VirtualFile::class.java, VirtualFileSerializer()).create()
-
+internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSystem<GitCompareBranchesVirtualFileSystem.Path>(
+  GsonPathSerializer(
+    pathClass = Path::class.java,
+    gson = GsonBuilder().registerTypeAdapter(VirtualFile::class.java, VirtualFileSerializer()).create()
+  )
+) {
   override fun getProtocol(): String = PROTOCOL
 
   override fun findFile(project: Project, path: Path): VirtualFile? {

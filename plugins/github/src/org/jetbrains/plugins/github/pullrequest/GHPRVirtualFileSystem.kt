@@ -6,15 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
+import com.intellij.vcs.editor.GsonPathSerializer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.SimpleGHPRIdentifier
 
-internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>() {
-
-  override val pathClass: Class<GHPRFilePath> get() = GHPRFilePath::class.java
-
+internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>(
+  GsonPathSerializer(GHPRFilePath::class.java)
+) {
   override fun getProtocol() = PROTOCOL
 
   override fun findFile(project: Project, path: GHPRFilePath): VirtualFile? {
