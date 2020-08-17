@@ -373,9 +373,13 @@ public final class AnnotationsHighlightUtil {
         if (nextElement instanceof PsiTypeElement) {
           PsiTypeElement typeElement = (PsiTypeElement)nextElement;
           PsiType type = typeElement.getType();
+          //see JLS 9.7.4 Where Annotations May Appear
           if (PsiType.VOID.equals(type)) {
             String message = JavaErrorBundle.message("annotation.not.allowed.void");
             return annotationError(annotation, message);
+          }
+          if (typeElement.isInferredType()) {
+            return annotationError(annotation, JavaErrorBundle.message("annotation.not.allowed.var"));
           }
           if (!(type instanceof PsiPrimitiveType || type instanceof PsiArrayType)) {
             PsiJavaCodeReferenceElement ref = getOutermostReferenceElement(typeElement.getInnermostComponentReferenceElement());
