@@ -320,7 +320,10 @@ public final class StubIndexImpl extends StubIndexEx {
           myStubProcessingHelper.retrieveStubIdList(indexKey, key, file, project)
         );
         if (list == null) {
-          LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
+          LOG.error("StubUpdatingIndex & "
+                    + indexKey
+                    + " stub index mismatch. No stub index key is present"
+                    + (StubProcessingHelper.REPORT_SENSITIVE_DATA_ON_ERROR ? (" " + key) : ""));
           myStubProcessingHelper.onInternalError(file);
           continue;
         }

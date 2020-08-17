@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -21,6 +22,10 @@ import java.util.Map;
 import java.util.Set;
 
 public final class StubProcessingHelper extends StubProcessingHelperBase {
+  private static final boolean SKIP_INDEX_REPAIR_ON_ERROR = SystemProperties.is("skip.index.repair");
+  static final boolean REPORT_SENSITIVE_DATA_ON_ERROR =
+    ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+
   private final ThreadLocal<Set<VirtualFile>> myFilesHavingProblems = new ThreadLocal<>();
 
   @Nullable
@@ -41,7 +46,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
       if (stubIdList == null) {
         String mainMessage = "Stub ids not found for key in index = " + indexKey.getName() + ", " + getFileTypeInfo(file, project);
         String additionalMessage;
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (REPORT_SENSITIVE_DATA_ON_ERROR) {
           Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> map = null;
           try {
             tree.restoreIndexedStubs();
@@ -64,6 +69,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   @Override
   protected void onInternalError(final VirtualFile file) {
+    if (SKIP_INDEX_REPAIR_ON_ERROR) return;
     Set<VirtualFile> set = myFilesHavingProblems.get();
     if (set == null) myFilesHavingProblems.set(set = new THashSet<>());
     set.add(file);
@@ -74,6 +80,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   @Nullable
   Set<VirtualFile> takeAccumulatedFilesWithIndexProblems() {
+    if (SKIP_INDEX_REPAIR_ON_ERROR) return null;
     Set<VirtualFile> filesWithProblems = myFilesHavingProblems.get();
     if (filesWithProblems != null) myFilesHavingProblems.set(null);
     return filesWithProblems;
