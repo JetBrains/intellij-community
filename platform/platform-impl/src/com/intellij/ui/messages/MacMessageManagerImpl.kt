@@ -35,7 +35,7 @@ import java.util.*
 
 internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProvider {
   override fun getMessageManager(): MacMessages {
-    if (!SystemInfo.isMacOSBigSur || Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+    if (Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
       return service<JBMacMessages>()
     }
     else {
@@ -105,6 +105,8 @@ private class NativeMacMessageManager : MacMessages() {
           Foundation.invoke(Foundation.invoke(alert, "window"), "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
         }
 
+        setAppIcon(alert)
+
         // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
         //if (focusedOptionIndex != -1) {
         //  invoke(invoke(alert, "window"), "makeFirstResponder:",
@@ -150,6 +152,8 @@ private class NativeMacMessageManager : MacMessages() {
           Foundation.invoke(alert, "setAlertStyle:", 2)
         }
 
+        setAppIcon(alert)
+
         // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
         //ID window = invoke(alert, "window");
         //invoke(window, "makeFirstResponder:",
@@ -168,6 +172,11 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
                           Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), focusedWindow)
       }
+    }
+
+    private fun setAppIcon(alert: ID?) {
+      Foundation.invoke(alert, "setIcon:",
+                        Foundation.invoke(Foundation.invoke("NSApplication", "sharedApplication"), "applicationIconImage"))
     }
 
     private val windowDidBecomeMainCallback = object : Callback {
@@ -312,19 +321,16 @@ private class NativeMacMessageManager : MacMessages() {
       val documentRoot = findDocumentRoot(window)
       val nativeFocusedWindow = MacUtil.findWindowFromJavaWindow(window)
       val paramsArray = paramsWrapper.getParamsAsId(nativeFocusedWindow)
-      window.addWindowListener(object : WindowAdapter() {
+      val windowListener = object : WindowAdapter() {
         override fun windowClosed(e: WindowEvent) {
-          super.windowClosed(e)
-          //if (blockedDocumentRoots.get(documentRoot) != null) {
-          //   LOG.assertTrue(blockedDocumentRoots.get(documentRoot) < 2);
-          //}
           windowToQueue.remove(documentRoot)
           if (blockedDocumentRoots.containsKey(documentRoot)) {
             blockedDocumentRoots.removeInt(documentRoot)
             throw MessageException("Owner window has been removed")
           }
         }
-      })
+      }
+      window.addWindowListener(windowListener)
       val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSAlertDelegate_"), "alloc"), "init")
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
       runOrPostponeForWindow(documentRoot!!, Runnable {
@@ -333,6 +339,7 @@ private class NativeMacMessageManager : MacMessages() {
       })
       startModal(documentRoot, nativeFocusedWindow)
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
+      window.removeWindowListener(windowListener)
       return documentRoot
     }
 
@@ -474,13 +481,11 @@ private class DialogParamsWrapper(private val dialogType: DialogType) {
 private fun getParamsForAlertDialog(params: Map<Enum<*>, Any>): ID {
   return Foundation.invoke(
     "NSArray", "arrayWithObjects:",
-    // message as title
-    params[CommonDialogParamType.message],
+    params[CommonDialogParamType.title],
     params[AlertDialogParamType.defaultText],
     params[AlertDialogParamType.alternateText],
     params[AlertDialogParamType.otherText],
-    // do not specify message
-    Foundation.nsString(""),
+    params[CommonDialogParamType.message],
     params[CommonDialogParamType.nativeFocusedWindow],
     Foundation.nsString(""),
     params[CommonDialogParamType.errorStyle],
