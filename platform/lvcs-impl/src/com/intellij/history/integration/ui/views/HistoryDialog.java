@@ -437,7 +437,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), false);
       if (p.isToClipboard()) {
         writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
-        showNotification("Patch copied to clipboard");
+        showNotification(message("message.patch.copied.to.clipboard"));
       }
       else {
         Path file = Paths.get(p.getFileName());

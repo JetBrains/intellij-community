@@ -113,7 +113,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       isCompletelyBroken = true;
     }
 
-    notifyUser("Local History storage file has become corrupted and will be rebuilt.");
+    notifyUser(LocalHistoryBundle.message("notification.content.local.history.broken"));
   }
 
 
