@@ -197,7 +197,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {
-      // true by default is no settings is available (e.g. during the initial IDE setup wizard) and not overridden
+      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden
       return isCustomDecorationAvailable()
              && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
     }
