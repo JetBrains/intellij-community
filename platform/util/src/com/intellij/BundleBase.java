@@ -93,7 +93,7 @@ public abstract class BundleBase {
 
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
-                                             @Nullable String defaultValue,
+                                             @Nullable @Nls String defaultValue,
                                              Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
@@ -168,8 +168,9 @@ public abstract class BundleBase {
     return "!" + key + "!";
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
-  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
+  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {

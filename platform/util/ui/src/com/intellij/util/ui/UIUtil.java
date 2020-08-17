@@ -766,13 +766,14 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(lines);
   }
 
-  public static void setActionNameAndMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
+    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
-  public static void assignMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void assignMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
@@ -875,6 +876,7 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
     if (s.indexOf('&') != -1) {
       s = StringUtil.replace(s, "&", "");
@@ -3492,7 +3494,7 @@ public final class UIUtil {
   /**
    * This method (as opposed to {@link JEditorPane#scrollToReference}) supports also targets using {@code id} HTML attribute.
    */
-  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull String reference) {
+  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull @NonNls String reference) {
     Document document = editor.getDocument();
     if (document instanceof HTMLDocument) {
       Element elementById = ((HTMLDocument) document).getElement(reference);

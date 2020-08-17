@@ -71,15 +71,15 @@ public abstract class AbstractBundle {
   }
 
   public @Nls String messageOrDefault(@NotNull String key,
-                                 @Nullable String defaultValue,
-                                 Object @NotNull ... params) {
+                                      @Nullable @Nls String defaultValue,
+                                      Object @NotNull ... params) {
     return messageOrDefault(getResourceBundle(), key, defaultValue, params);
   }
 
   @Contract("null, _, _, _ -> param3")
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
-                                             @Nullable String defaultValue,
+                                             @Nullable @Nls String defaultValue,
                                              Object @NotNull ... params) {
     if (bundle == null) {
       return defaultValue;
@@ -95,6 +95,7 @@ public abstract class AbstractBundle {
   }
 
   public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+    @SuppressWarnings("HardCodedStringLiteral")
     String value = messageOrDefault(bundle, key, key, params);
     if (key.equals(value)) return null;
     return value;
