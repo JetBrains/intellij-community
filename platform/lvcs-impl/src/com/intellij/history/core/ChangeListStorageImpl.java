@@ -4,15 +4,11 @@ package com.intellij.history.core;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -23,9 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,31 +107,33 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       isCompletelyBroken = true;
     }
 
-    notifyUser(LocalHistoryBundle.message("notification.content.local.history.broken"));
+    notifyUser();
   }
 
 
-  private static void notifyUser(@NlsContexts.NotificationContent String message) {
+  private static void notifyUser() {
+    /*
     final String logFile = PathManager.getLogPath();
-    /*String createIssuePart = "<br>" +
+    String createIssuePart = "<br>" +
                              "<br>" +
                              "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
-                             "to the <a href=\"url\">YouTrack issue</a>";*/
-    Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                              LocalHistoryBundle.message("notification.title.local.history.broken"),
-                                              message /*+ createIssuePart*/,
-                                              NotificationType.ERROR,
-                                              (notification, event) -> {
-                                                if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                  if ("url".equals(event.getDescription())) {
-                                                    BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
-                                                  }
-                                                  else {
-                                                    File file = new File(logFile);
-                                                    RevealFileAction.openFile(file);
-                                                  }
-                                                }
-                                              }), null);
+                             "to the <a href=\"url\">YouTrack issue</a>";
+    NotificationListener createIssueListener = (notification, event) -> {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        if ("url".equals(event.getDescription())) {
+          BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
+        }
+        else {
+          File file = new File(logFile);
+          RevealFileAction.openFile(file);
+        }
+      }
+    };
+    */
+    new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                     LocalHistoryBundle.message("notification.title.local.history.broken"),
+                     LocalHistoryBundle.message("notification.content.local.history.broken") /*+ createIssuePart*/,
+                     NotificationType.ERROR /*, createIssueListener*/).notify(null);
   }
 
   @Override
