@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -374,13 +375,13 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                           request);
   }
 
-  public static @NotNull String getRequestTitle(@NotNull Change change) {
+  public static @NotNull @Nls String getRequestTitle(@NotNull Change change) {
     FilePath bPath = ChangesUtil.getBeforePath(change);
     FilePath aPath = ChangesUtil.getAfterPath(change);
     return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
   }
 
-  public static @NotNull String getRevisionTitle(@Nullable ContentRevision revision, @NotNull String defaultValue) {
+  public static @NotNull @Nls String getRevisionTitle(@Nullable ContentRevision revision, @NotNull @Nls String defaultValue) {
     if (revision == null) {
       return defaultValue;
     }
@@ -450,18 +451,22 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return hashCode(myChange);
   }
 
+  @Nls
   public static String getYourVersion() {
     return DiffBundle.message("merge.version.title.our");
   }
 
+  @Nls
   public static String getServerVersion() {
     return DiffBundle.message("merge.version.title.their");
   }
 
+  @Nls
   public static String getBaseVersion() {
     return DiffBundle.message("merge.version.title.base");
   }
 
+  @Nls
   public static String getMergedVersion() {
     return DiffBundle.message("merge.version.title.merged");
   }

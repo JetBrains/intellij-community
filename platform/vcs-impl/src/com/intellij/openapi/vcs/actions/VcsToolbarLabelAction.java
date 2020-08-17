@@ -4,12 +4,13 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsToolbarLabelAction extends ToolbarLabelAction {
-  private static final String DEFAULT_LABEL = "VCS:";
+  private static final @NlsContexts.Label String DEFAULT_LABEL = "VCS:";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -20,6 +21,7 @@ public class VcsToolbarLabelAction extends ToolbarLabelAction {
     e.getPresentation().setText(getConsolidatedVcsName(project));
   }
 
+  @NlsContexts.Label
   private static String getConsolidatedVcsName(@Nullable Project project) {
     String name = DEFAULT_LABEL;
     if (project != null) {

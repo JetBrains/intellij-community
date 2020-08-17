@@ -24,10 +24,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,8 +79,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * Returns the name of the VCS as it should be displayed in the UI.
    * @see #getShortName()
    */
+  @Nls
   @NotNull
-  @NonNls
   public abstract String getDisplayName();
 
   /**
@@ -91,6 +88,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
    * By default returns the same as {@link #getDisplayName()}.
    */
+  @Nls
   @NotNull
   public String getShortName() {
     return getDisplayName();

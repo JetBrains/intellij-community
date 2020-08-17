@@ -5,11 +5,11 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.UIBundle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import javax.swing.*;
 
 public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;
-  private @Nls String myDoNotShowAgainMessage;
+  private @Checkbox String myDoNotShowAgainMessage;
   private final @ActionText String myOkActionName;
   private final @ActionText String myCancelActionName;
 
@@ -69,7 +69,7 @@ public class ConfirmationDialog extends OptionsMessageDialog {
     init();
   }
 
-  public void setDoNotShowAgainMessage(@Nls String doNotShowAgainMessage) {
+  public void setDoNotShowAgainMessage(@Checkbox String doNotShowAgainMessage) {
     myDoNotShowAgainMessage = doNotShowAgainMessage;
     myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
   }

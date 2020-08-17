@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -66,27 +67,27 @@ public class ReplaceFileConfirmationDialog {
 
   }
 
-  @Nls
+  @NlsContexts.Button
   protected String getCancelButtonText() {
     return CommonBundle.getCancelButtonText();
   }
 
-  @Nls
+  @NlsContexts.Button
   private String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
-  @Nls
+  @NlsContexts.Button
   protected String getOkButtonTextForOneFile() {
     return VcsBundle.message("button.text.overwrite.modified.file");
   }
 
-  @Nls
+  @NlsContexts.Button
   protected String getOkButtonTextForFiles() {
     return VcsBundle.message("button.text.overwrite.modified.files");
   }
 
-  @Nls
+  @NlsContexts.DialogMessage
   protected String createMessage(Collection modifiedFiles) {
     if (modifiedFiles.size() == 1) {
       VirtualFile virtualFile = ((VirtualFile)modifiedFiles.iterator().next());

@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,10 +23,10 @@ import java.awt.event.MouseEvent;
 
 public abstract class TextFieldAction extends AnAction implements CustomComponentAction, DumbAware {
   protected JTextField myField;
-  private final @Nls String myDescription;
+  private final @ActionDescription String myDescription;
   private final Icon myIcon;
 
-  protected TextFieldAction(@Nls String text, @Nls String description, Icon icon, final int initSize) {
+  protected TextFieldAction(@ActionText String text, @ActionDescription String description, Icon icon, final int initSize) {
     super(text, description, icon);
     myDescription = description;
     myIcon = icon;

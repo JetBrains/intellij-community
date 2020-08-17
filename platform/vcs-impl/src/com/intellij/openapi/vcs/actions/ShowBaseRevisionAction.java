@@ -22,6 +22,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -107,7 +108,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
       myLabel.setBackground(getBackground());
     }
 
-    public void setText(String text) {
+    public void setText(@Nls String text) {
       myLabel.setText(text);
     }
 
