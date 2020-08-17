@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,8 +194,8 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantWarning(
-    @Nls @NotNull String title,
-    @Nls @NotNull String message,
+    @NotificationTitle @NotNull String title,
+    @NotificationContent @NotNull String message,
     NotificationAction... actions
   ) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, actions);
