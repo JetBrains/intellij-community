@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
@@ -294,13 +296,14 @@ public class PyArgumentListInspection extends PyInspection {
       );
   }
 
+  @NlsSafe
   @NotNull
-  private static String addPossibleCalleesRepresentation(@NotNull String prefix,
+  private static String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
                                                          @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                          @NotNull TypeEvalContext context,
                                                          boolean isOnTheFly) {
-    final String separator = isOnTheFly ? "<br>" : " ";
-    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
+    final @NlsSafe String separator = isOnTheFly ? "<br>" : " ";
+    final @NlsSafe String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
 
     if (isOnTheFly) {
       return XmlStringUtil.wrapInHtml(
@@ -316,10 +319,11 @@ public class PyArgumentListInspection extends PyInspection {
     }
   }
 
+
   @NotNull
-  private static String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                               @NotNull TypeEvalContext context,
-                                                               boolean isOnTheFly) {
+  private static @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
@@ -330,8 +334,8 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   @Nullable
-  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
-                                                              @NotNull TypeEvalContext context) {
+  private static @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
+                                                                       @NotNull TypeEvalContext context) {
     final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
     final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
     if (callableParameters == null) return null;
