@@ -53,8 +53,8 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore double-checked locking on volatile fields", this,
-        "ignoreOnVolatileVariables"
+    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields"), this,
+                                          "ignoreOnVolatileVariables"
     );
   }
 

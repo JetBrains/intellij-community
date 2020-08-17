@@ -67,8 +67,8 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel =
         new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox("Ignore conditional operators", "ignoreLazyOperators");
-    optionsPanel.addCheckbox("Ignore obscure operators", "ignoreObscureOperators");
+    optionsPanel.addCheckbox(GroovyBundle.message("checkbox.ignore.conditional.operators"), "ignoreLazyOperators");
+    optionsPanel.addCheckbox(GroovyBundle.message("checkbox.ignore.obscure.operators"), "ignoreObscureOperators");
     return optionsPanel;
   }
 
