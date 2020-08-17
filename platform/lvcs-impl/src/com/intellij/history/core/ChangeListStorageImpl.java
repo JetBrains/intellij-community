@@ -12,12 +12,14 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.AbstractStorage;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import java.text.MessageFormat;
 
 public final class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 6;
-  private static final String STORAGE_FILE = "changes";
+  private static final @NonNls String STORAGE_FILE = "changes";
 
   private final Path myStorageDir;
   private LocalHistoryStorage myStorage;
@@ -80,7 +82,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     return ManagingFS.getInstance().getCreationTimestamp();
   }
 
-  private void handleError(Throwable e, @Nullable String message) {
+  private void handleError(Throwable e, @Nullable @NonNls String message) {
     long storageTimestamp = -1;
 
     long vfsTimestamp = getVFSTimestamp();
@@ -115,7 +117,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
 
-  private static void notifyUser(String message) {
+  private static void notifyUser(@NlsContexts.NotificationContent String message) {
     final String logFile = PathManager.getLogPath();
     /*String createIssuePart = "<br>" +
                              "<br>" +

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     actionPerformed(e.getRequiredData(CommonDataKeys.PROJECT), Objects.requireNonNull(getGateway()), e);
   }
 
+  @NlsActions.ActionText
   protected String getText(@NotNull AnActionEvent e) {
     return e.getPresentation().getTextWithMnemonic();
   }

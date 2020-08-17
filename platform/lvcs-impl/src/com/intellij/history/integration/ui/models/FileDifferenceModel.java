@@ -23,6 +23,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.DateFormatUtil;
 
@@ -37,6 +38,7 @@ public abstract class FileDifferenceModel {
     isRightContentCurrent = currentRightContent;
   }
 
+  @NlsContexts.DialogTitle
   public String getTitle() {
     Entry e = getRightEntry();
     if (e == null) e = getLeftEntry();
@@ -44,13 +46,15 @@ public abstract class FileDifferenceModel {
     return FileUtil.toSystemDependentName(e.getPath());
   }
 
+  @NlsContexts.Label
   public String getLeftTitle(RevisionProcessingProgress p) {
     if (!hasLeftEntry()) return LocalHistoryBundle.message("file.does.not.exist");
     return formatTitle(getLeftEntry(), isLeftContentAvailable(p));
   }
 
+  @NlsContexts.Label
   public String getRightTitle(RevisionProcessingProgress p) {
-    if (!hasRightEntry()) return LocalHistoryBundle.message("file.does.not.exist"); 
+    if (!hasRightEntry()) return LocalHistoryBundle.message("file.does.not.exist");
     if (!isRightContentAvailable(p)) {
       return formatTitle(getRightEntry(), false);
     }
@@ -58,6 +62,7 @@ public abstract class FileDifferenceModel {
     return formatTitle(getRightEntry(), true);
   }
 
+  @NlsContexts.Label
   private static String formatTitle(Entry e, boolean isAvailable) {
     String result = DateFormatUtil.formatDateTime(e.getTimestamp()) + " - " + e.getName();
     if (!isAvailable) {

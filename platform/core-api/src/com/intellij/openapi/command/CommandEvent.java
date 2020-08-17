@@ -3,6 +3,7 @@ package com.intellij.openapi.command;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.util.EventObject;
 public class CommandEvent extends EventObject {
   private final Runnable myCommand;
   private final Project myProject;
-  private final String myCommandName;
+  private final @NlsContexts.Command String myCommandName;
   private final Object myCommandGroupId;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
   private final boolean myShouldRecordActionForActiveDocument;
@@ -61,6 +62,7 @@ public class CommandEvent extends EventObject {
     return myProject;
   }
 
+  @NlsContexts.Command
   public String getCommandName() {
     return myCommandName;
   }
