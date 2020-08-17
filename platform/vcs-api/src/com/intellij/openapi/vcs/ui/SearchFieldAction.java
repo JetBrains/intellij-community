@@ -10,6 +10,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   private final JPanel myComponent;
   private final SearchTextField myField;
 
-  public SearchFieldAction(String text) {
+  public SearchFieldAction(@Nls String text) {
     super(VcsBundle.messagePointer("action.SearchFieldAction.text.find"));
     myField = new SearchTextField(true) {
       @Override

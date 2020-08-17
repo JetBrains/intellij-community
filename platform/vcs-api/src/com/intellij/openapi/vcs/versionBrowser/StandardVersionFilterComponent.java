@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.versionBrowser;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.setVisible(false);
   }
 
+  @Nls
   protected String getChangeNumberTitle() {
     return VcsBundle.message("border.changes.filter.change.number.filter");
   }

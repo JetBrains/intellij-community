@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -276,7 +277,7 @@ public class VcsUtil {
    * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
    */
   @Deprecated
-  public static void showStatusMessage(@NotNull Project project, @Nullable String message) {
+  public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
     SwingUtilities.invokeLater(() -> {
       if (project.isOpen()) {
         StatusBar.Info.set(message, project);
@@ -369,7 +370,7 @@ public class VcsUtil {
    */
   @Deprecated
   public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
-                                                  @NotNull String progressTitle,
+                                                  @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                   boolean canBeCanceled,
                                                   @Nullable Project project) throws VcsException {
     if (ApplicationManager.getApplication().isDispatchThread()) {

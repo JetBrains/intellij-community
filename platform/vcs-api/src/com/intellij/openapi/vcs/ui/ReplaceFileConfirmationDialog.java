@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,9 +36,9 @@ import java.util.Collection;
 public class ReplaceFileConfirmationDialog {
   private final FileStatusManager myFileStatusManager;
   ProgressIndicator myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-  private final String myActionName;
+  @Nls private final String myActionName;
 
-  public ReplaceFileConfirmationDialog(Project project, String actionName) {
+  public ReplaceFileConfirmationDialog(Project project, @Nls String actionName) {
     myFileStatusManager = FileStatusManager.getInstance(project);
     myActionName = actionName;
   }
@@ -65,22 +66,27 @@ public class ReplaceFileConfirmationDialog {
 
   }
 
+  @Nls
   protected String getCancelButtonText() {
     return CommonBundle.getCancelButtonText();
   }
 
+  @Nls
   private String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
+  @Nls
   protected String getOkButtonTextForOneFile() {
     return VcsBundle.message("button.text.overwrite.modified.file");
   }
 
+  @Nls
   protected String getOkButtonTextForFiles() {
     return VcsBundle.message("button.text.overwrite.modified.files");
   }
 
+  @Nls
   protected String createMessage(Collection modifiedFiles) {
     if (modifiedFiles.size() == 1) {
       VirtualFile virtualFile = ((VirtualFile)modifiedFiles.iterator().next());

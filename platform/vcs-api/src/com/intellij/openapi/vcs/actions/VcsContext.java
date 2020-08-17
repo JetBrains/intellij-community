@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -88,5 +89,6 @@ public interface VcsContext extends PlaceProvider<String> {
 
   Change @Nullable [] getSelectedChanges();
 
+  @NlsActions.ActionText
   String getActionName();
 }

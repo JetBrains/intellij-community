@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,10 +22,10 @@ import java.awt.event.MouseEvent;
 
 public abstract class TextFieldAction extends AnAction implements CustomComponentAction, DumbAware {
   protected JTextField myField;
-  private final String myDescription;
+  private final @Nls String myDescription;
   private final Icon myIcon;
 
-  protected TextFieldAction(String text, String description, Icon icon, final int initSize) {
+  protected TextFieldAction(@Nls String text, @Nls String description, Icon icon, final int initSize) {
     super(text, description, icon);
     myDescription = description;
     myIcon = icon;

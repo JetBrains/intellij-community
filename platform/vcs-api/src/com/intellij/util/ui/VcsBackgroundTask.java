@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
@@ -35,24 +36,29 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
   private final Collection<? extends T> myItems;
   private final List<VcsException> myExceptions = new ArrayList<>();
 
-  public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
-                           final Collection<? extends T> itemsToProcess, final boolean canBeCanceled) {
+  public VcsBackgroundTask(Project project,
+                           @NotNull @NlsContexts.ProgressTitle String title,
+                           @NotNull final PerformInBackgroundOption backgroundOption,
+                           Collection<? extends T> itemsToProcess,
+                           boolean canBeCanceled) {
     super(project, title, canBeCanceled, backgroundOption);
     myItems = itemsToProcess;
   }
 
-  public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
-                           final Collection<? extends T> itemsToProcess) {
+  public VcsBackgroundTask(Project project,
+                           @NotNull @NlsContexts.ProgressTitle String title,
+                           @NotNull PerformInBackgroundOption backgroundOption,
+                           Collection<? extends T> itemsToProcess) {
     this(project, title, backgroundOption, itemsToProcess, false);
   }
 
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
-    for(T item: myItems) {
+    for (T item : myItems) {
       try {
         process(item);
       }
-      catch(VcsException ex) {
+      catch (VcsException ex) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new RuntimeException(ex);
         }
