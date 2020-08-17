@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
@@ -29,6 +30,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, D
   private JButton myClearAuthButton;
   private JBCheckBox myRunUnderTerminal;
   private TextFieldWithBrowseButton myCommandLineClient;
+  private JBLabel PathToExec;
 
   public GeneralSettingsPanel(@NotNull Project project) {
     myProject = project;
