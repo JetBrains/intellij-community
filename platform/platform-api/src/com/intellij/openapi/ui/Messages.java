@@ -1055,6 +1055,15 @@ public class Messages {
       .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
   }
 
+
+  void foo(String s) {
+
+  }
+
+  void bar(String t) {
+    foo(t);
+  }
+
   @Nullable
   public static String showEditableChooseDialog(@DialogMessage String message,
                                                 @DialogTitle String title,
