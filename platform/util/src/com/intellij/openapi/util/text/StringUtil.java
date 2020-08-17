@@ -2882,17 +2882,17 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull Class<?> aClass) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull Class<?> aClass) {
     return StringUtilRt.getShortName(aClass);
   }
 
   @Contract(pure = true)
-  public static @NotNull @NonNls String getShortName(@NotNull @NonNls String fqName) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName) {
     return StringUtilRt.getShortName(fqName);
   }
 
   @Contract(pure = true)
-  public static @NotNull @NonNls String getShortName(@NotNull @NonNls String fqName, char separator) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
