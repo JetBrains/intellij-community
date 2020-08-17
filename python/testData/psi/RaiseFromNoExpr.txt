@@ -16,5 +16,5 @@ PyFile:RaiseFromNoExpr.py
           PsiElement(Py:IDENTIFIER)('AttributeError')
         PsiWhiteSpace(' ')
         PsiElement(Py:FROM_KEYWORD)('from')
-        PsiErrorElement:expression expected
+        PsiErrorElement:Expression expected
           <empty list>

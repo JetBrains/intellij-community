@@ -7,6 +7,6 @@ FunctionTypeComment:a.functionTypeComment
       PsiElement(Py:RPAR)(')')
     PsiWhiteSpace(' ')
     PsiElement(Py:RARROW)('->')
-    PsiErrorElement:expression expected
+    PsiErrorElement:Expression expected
       <empty list>
   PsiWhiteSpace(' ')

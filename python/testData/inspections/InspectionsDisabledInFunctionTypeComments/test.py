@@ -4,5 +4,5 @@
 
 
 def <weak_warning descr="Missing docstring">g</weak_warning>():
-    # type: <error descr="unexpected tokens">"foo"</error>
+    # type: <error descr="Unexpected tokens">"foo"</error>
     pass

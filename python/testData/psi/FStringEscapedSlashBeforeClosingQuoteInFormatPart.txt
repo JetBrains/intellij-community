@@ -15,6 +15,6 @@ PyFile:FStringEscapedSlashBeforeClosingQuoteInFormatPart.py
           PyFStringFragmentFormatPart
             PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
             PsiElement(Py:FSTRING_TEXT)('\\')
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''')

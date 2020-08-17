@@ -18,6 +18,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
@@ -139,12 +140,12 @@ public class ExpressionParsing extends Parsing {
           }
           // Can be the end of an enclosing f-string, so leave it in the stream
           else {
-            builder.mark().error(message("PARSE.0.expected", openingQuotes));
+            builder.mark().error(message("PARSE.expected.fstring.quote", openingQuotes));
           }
           break;
         }
         else if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
-          builder.mark().error(message("PARSE.0.expected", openingQuotes));
+          builder.mark().error(message("PARSE.expected.fstring.quote", openingQuotes));
           break;
         }
         else {
@@ -191,11 +192,11 @@ public class ExpressionParsing extends Parsing {
       if (hasFormatPart) {
         parseFStringFragmentFormatPart();
       }
-      String errorMessage = "} expected";
+      @ParsingError String errorMessage = message("PARSE.expected.fstring.rbrace");
       if (!hasFormatPart && !atToken(PyTokenTypes.FSTRING_END)) {
-        errorMessage = ": or " + errorMessage;
+        errorMessage = message("PARSE.expected.fstring.colon.or.rbrace");
         if (!hasTypeConversion) {
-          errorMessage = "type conversion, " + errorMessage;
+          errorMessage = message("PARSE.expected.fstring.type.conversion.or.colon.or.rbrace");
         }
       }
 
