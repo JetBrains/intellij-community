@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -16,6 +17,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +60,7 @@ public final class PluginDescriptorStructureUtil {
   private PluginDescriptorStructureUtil() {
   }
 
-  public static @NotNull String getTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @Nls String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return safeGetTagDisplayText(tag);
@@ -89,7 +91,7 @@ public final class PluginDescriptorStructureUtil {
     return toDisplayName(element.getXmlElementName()); // default
   }
 
-  public static @NotNull String safeGetTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String safeGetTagDisplayText(@Nullable XmlTag tag) {
     return tag != null ? toDisplayName(tag.getLocalName()) : DevKitBundle.message("error.plugin.xml.tag.invalid");
   }
 
@@ -319,7 +321,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
 
-  private static @Nullable String toShortName(@Nullable String fqName) {
+  private static @Nullable @NlsSafe String toShortName(@Nullable String fqName) {
     if (fqName == null || fqName.contains(" ")) {
       return null;
     }
@@ -330,7 +332,7 @@ public final class PluginDescriptorStructureUtil {
     return fqName;
   }
 
-  private static @NotNull String toDisplayName(@NotNull String tagName) {
+  private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
     String[] words = NameUtil.nameToWords(result);
