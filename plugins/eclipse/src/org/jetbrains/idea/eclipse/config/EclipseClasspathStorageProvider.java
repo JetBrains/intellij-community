@@ -70,26 +70,20 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
               libraryEntry.getRootUrls(OrderRootType.CLASSES).length != 1 ||
               library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
             throw new ConfigurationException(
-              "Library '" +
-              entry.getPresentableName() +
-              "' from module '" +
-              moduleName +
-              "' dependencies is incompatible with eclipse format which supports only one library content root");
+              EclipseBundle.message("incompatible.eclipse.module.format.message.library.root", entry.getPresentableName(), moduleName));
           }
         }
       }
     }
     if (model.getContentRoots().length == 0) {
-      throw new ConfigurationException("Module '" + moduleName + "' has no content roots thus is not compatible with eclipse format");
+      throw new ConfigurationException(EclipseBundle.message("incompatible.eclipse.module.format.message.no.content.roots", moduleName));
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
     if (output == null ||
         !StringUtil.startsWith(VfsUtilCore.urlToPath(output), contentRoot) &&
         PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
-      throw new ConfigurationException("Module '" +
-                                       moduleName +
-                                       "' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
+      throw new ConfigurationException(EclipseBundle.message("incompatible.eclipse.module.format.message.output", moduleName));
     }
   }
 

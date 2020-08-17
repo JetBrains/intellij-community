@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -32,7 +33,7 @@ public final class EclipseJDOMUtil {
     }
   }
 
-  public static void output(@NotNull Element element, @NotNull Writer writer, @NotNull Project project) throws IOException {
+  public static void output(@NotNull Element element, @NotNull @NonNls Writer writer, @NotNull Project project) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
     writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     writer.write(lineSeparator);

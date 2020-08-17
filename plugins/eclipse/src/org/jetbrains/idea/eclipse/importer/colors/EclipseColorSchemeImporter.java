@@ -33,6 +33,7 @@ import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,7 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
   //
   // These attributes are referenced only symbolically since they are located outside this module's dependencies.
   //
-  private final static String[] EXTERNAL_ATTRIBUTES = {
+  private final static String @NonNls [] EXTERNAL_ATTRIBUTES = {
     "BREAKPOINT_ATTRIBUTES",
     "EXECUTIONPOINT_ATTRIBUTES",
     "NOT_TOP_FRAME_ATTRIBUTES",
