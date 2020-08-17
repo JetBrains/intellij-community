@@ -56,6 +56,7 @@ public final class LightEditServiceImpl implements LightEditService,
   private final LightEditorManagerImpl myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
+  private boolean myEditorWindowClosing = false;
 
   @Override
   public @NotNull LightEditConfiguration getState() {
@@ -228,7 +229,13 @@ public final class LightEditServiceImpl implements LightEditService,
       Project project = Objects.requireNonNull(myFrameWrapper.getProject());
       myFrameWrapper.getFrame().setVisible(false);
       saveSession();
-      myEditorManager.releaseEditors();
+      myEditorWindowClosing = true;
+      try {
+        myEditorManager.closeAllEditors();
+      }
+      finally {
+        myEditorWindowClosing = false;
+      }
       LOG.info("Window closed");
       ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowClosed(project);
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
@@ -393,7 +400,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void afterClose(@NotNull LightEditorInfo editorInfo) {
-    if (myEditorManager.getEditorCount() == 0) {
+    if (myEditorManager.getEditorCount() == 0 && !myEditorWindowClosing) {
       closeEditorWindow();
     }
   }
