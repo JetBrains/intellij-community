@@ -76,6 +76,7 @@ public class VcsNotifier {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, actions);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   @NotNull
   public Notification notifyWeakError(@NotificationContent @NotNull String message) {
     return notifyWeakError("", message);
@@ -167,6 +168,7 @@ public class VcsNotifier {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   @NotNull
   public Notification notifyWarning(
     @NotificationTitle @NotNull String title,
