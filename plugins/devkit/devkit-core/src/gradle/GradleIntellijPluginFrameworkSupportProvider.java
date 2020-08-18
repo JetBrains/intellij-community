@@ -76,7 +76,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       @NotNull
       @Override
       public String getPresentableName() {
-        return "IntelliJ Platform Plugin";
+        return DevKitBundle.message("module.wizard.gradle.presentable.name");
       }
 
       @NotNull
@@ -137,7 +137,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       Lazy.EXECUTOR.execute(() -> {
         try {
           // sadly plugins.gradle.org has no API and doesn't support meta-versions like latest.
-          // Let's parse HTML with REGEXPs muhahaha
+          // Let's parse HTML with REGEXPs
           String content = HttpRequests.request("https://plugins.gradle.org/plugin/org.jetbrains.intellij")
             .productNameAsUserAgent()
             .readString(new EmptyProgressIndicator(modalityState));
@@ -154,7 +154,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     }
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText("Learn how to <a>build plugins with Gradle</a>");
+    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.gradle.learn.title"));
     linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
     return linkLabel;
   }
