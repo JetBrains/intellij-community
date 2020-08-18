@@ -25,6 +25,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" scope="TEST" />
   </component>
 </module>
