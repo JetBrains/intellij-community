@@ -61,6 +61,14 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
 
 internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) : FacetModelBase() {
 
+  init {
+    val existingEntities = moduleBridge.entityStorage.current.entities(FacetEntity::class.java)
+      .filter { it.moduleId == moduleBridge.moduleEntityId }
+    for (facetEntity in existingEntities) {
+      getOrCreateFacet(facetEntity)
+    }
+  }
+
   override fun getAllFacets(): Array<Facet<*>> {
     val facetEntities = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)!!.facets
     return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
