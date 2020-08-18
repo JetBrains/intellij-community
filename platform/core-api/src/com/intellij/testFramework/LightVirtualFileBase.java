@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,13 +19,13 @@ import java.io.IOException;
  */
 public abstract class LightVirtualFileBase extends VirtualFile {
   private FileType myFileType;
-  private String myName;
+  private @NlsSafe String myName;
   private long myModStamp;
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private VirtualFile myOriginalFile;
 
-  public LightVirtualFileBase(final String name, final FileType fileType, final long modificationStamp) {
+  public LightVirtualFileBase(final @NlsSafe String name, final FileType fileType, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
@@ -92,8 +93,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 
