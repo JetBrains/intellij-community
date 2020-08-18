@@ -28,7 +28,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,31 +80,27 @@ public final class EnvironmentUtil {
   private EnvironmentUtil() { }
 
   @ApiStatus.Internal
-  public static synchronized CompletableFuture<Map<String, String>> loadEnvironment(boolean loadShellEnvironment) {
-    CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
-    if (getter != null) {
-      return getter;
-    }
-
-    if (loadShellEnvironment && SystemInfoRt.isMac) {
-      getter = CompletableFuture.supplyAsync(() -> {
+  public static void loadEnvironment(@NotNull Runnable callback) {
+    if (SystemInfoRt.isMac) {
+      ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
         try {
           Map<String, String> env = getShellEnv();
           setCharsetVar(env);
           return Collections.unmodifiableMap(env);
         }
-        catch (Throwable e) {
-          LOG.warn("can't get shell environment", e);
-          throw new CompletionException(e);
+        catch (Throwable t) {
+          LOG.warn("can't get shell environment", t);
+          return getSystemEnv();
         }
-      }, AppExecutorUtil.getAppExecutorService());
+        finally {
+          callback.run();
+        }
+      }, AppExecutorUtil.getAppExecutorService()));
     }
     else {
-      getter = CompletableFuture.completedFuture(getSystemEnv());
+      ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
+      callback.run();
     }
-
-    ourEnvGetter.set(getter);
-    return getter;
   }
 
   /**
@@ -127,15 +122,18 @@ public final class EnvironmentUtil {
    * @return unmodifiable map of the process environment.
    */
   public static @NotNull Map<String, String> getEnvironmentMap() {
-    try {
-      CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
-      if (getter == null) {
-        getter = loadEnvironment(false);
+    CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
+    if (getter == null) {
+      getter = CompletableFuture.completedFuture(getSystemEnv());
+      if (!ourEnvGetter.compareAndSet(null, getter)) {
+        getter = ourEnvGetter.get();
       }
+    }
+    try {
       return getter.join();
     }
     catch (Throwable t) {
-      return getSystemEnv();
+      throw new IllegalStateException(t);
     }
   }
 
