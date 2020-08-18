@@ -15,11 +15,13 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
@@ -54,7 +56,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
     registerParserDefinition(new PlainTextParserDefinition());
 
-    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
+    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
@@ -92,6 +94,9 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     registerApplicationExtensionPoint(SuperMethodsSearch.EP_NAME, QueryExecutor.class);
     addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
+
+    registerApplicationDynamicExtensionPoint("com.intellij.filetype.decompiler", BinaryFileTypeDecompilers.class);
+    registerApplicationDynamicExtensionPoint("com.intellij.psi.classFileDecompiler", ClassFileDecompilers.Decompiler.class);
   }
 
   // overridden in upsource
