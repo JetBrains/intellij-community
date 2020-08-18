@@ -494,6 +494,14 @@ public final class ExternalSystemUtil {
             }
 
             @Override
+            public void onCancel(@NotNull ExternalSystemTaskId id) {
+              finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                         BuildBundle.message("build.status.cancelled"),
+                                                                         new FailureResultImpl()));
+              processHandler.notifyProcessTerminated(1);
+            }
+
+            @Override
             public void onSuccess(@NotNull ExternalSystemTaskId id) {
               finishSyncEventSupplier.set(
                 () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), BuildBundle.message("build.status.finished"), new SuccessResultImpl()));
