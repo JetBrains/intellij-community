@@ -38,7 +38,10 @@ import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.*
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
+import git4idea.index.actions.StagingAreaOperation
+import git4idea.index.actions.performStageOperation
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository

@@ -16,8 +16,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -29,7 +27,6 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 

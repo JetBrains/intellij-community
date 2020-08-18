@@ -44,9 +44,6 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
 import java.awt.*
