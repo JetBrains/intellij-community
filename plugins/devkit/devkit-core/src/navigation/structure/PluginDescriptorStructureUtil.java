@@ -17,7 +17,6 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public final class PluginDescriptorStructureUtil {
   private PluginDescriptorStructureUtil() {
   }
 
-  public static @NotNull @Nls String getTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return safeGetTagDisplayText(tag);
