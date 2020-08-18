@@ -48,7 +48,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.1.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.1.3:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.2.0:jar",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
     ],
