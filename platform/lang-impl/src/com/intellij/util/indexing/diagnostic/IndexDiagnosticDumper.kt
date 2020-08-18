@@ -104,6 +104,7 @@ object IndexDiagnosticDumper {
           files
             .asSequence()
             .filterNot { it in survivedHistories }
+            .filter { it.toString().endsWith(".json") }
             .forEach { it.delete() }
         }
     }
