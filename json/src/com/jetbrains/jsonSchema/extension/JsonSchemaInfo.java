@@ -85,6 +85,9 @@ public class JsonSchemaInfo {
 
   @NotNull
   public String getDescription() {
+    if (getName() != null) {
+      return getName();
+    }
     if (myProvider != null) {
       String providerName = myProvider.getPresentableName();
       return sanitizeName(providerName);
@@ -100,9 +103,8 @@ public class JsonSchemaInfo {
 
     return ContainerUtil.reverse(StringUtil.split(url, "/"))
       .stream()
-      .map(p -> sanitizeName(p))
       .filter(p -> !isVeryDumbName(p))
-      .findFirst().orElse(sanitizeName(myUrl));
+      .findFirst().orElse(myUrl);
   }
 
   @Nullable

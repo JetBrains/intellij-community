@@ -62,7 +62,7 @@ public class JsonSchemaStatusPopup {
     UserDefinedJsonSchemaConfiguration mapping = configuration.findMappingForFile(virtualFile);
     if (!showOnlyEdit || mapping == null) {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
-      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
+      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareToIgnoreCase);
       Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
       List<JsonSchemaInfo> otherList = ContainerUtil.emptyList();
 

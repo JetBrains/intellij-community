@@ -203,7 +203,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                   && !remoteSource.endsWith("!");
       String providerName = useRemoteSource ? remoteSource : provider.getPresentableName();
       String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-      String name = useRemoteSource ? bar + new JsonSchemaInfo(remoteSource).getDescription() : (shortName.contains(JsonBundle.message("schema.of.version", "")) ? shortName : (bar + shortName));
+      String name = useRemoteSource ? bar + provider.getName() : (shortName.contains(JsonBundle.message("schema.of.version", "")) ? shortName : (bar + shortName));
       String kind = !useRemoteSource && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
                     ? JsonBundle.message("schema.widget.bundled.postfix")
                     : "";
