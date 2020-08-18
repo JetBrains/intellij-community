@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -53,8 +53,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
               val test = index.isInTestSourceContent(useVFile)
               val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
               if (dirs.isEmpty()) {
-                return if (quick) ERR else ErrorWithFixes(
-                  JavaErrorBundle.message("package.not.found", target.qualifiedName))
+                return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("package.not.found", target.qualifiedName))
               }
               val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
               return when {
@@ -116,10 +115,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           else -> emptyList()
         }
         return when (useModule) {
-          null -> ErrorWithFixes(
-            JavaErrorBundle.message("module.access.from.unnamed", packageName, targetName), fixes)
-          else -> ErrorWithFixes(
-            JavaErrorBundle.message("module.access.from.named", packageName, targetName, useName), fixes)
+          null -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.unnamed", packageName, targetName), fixes)
+          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.named", packageName, targetName, useName), fixes)
         }
       }
 
@@ -129,14 +126,12 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
             JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
             listOf(AddRequiresDirectiveFix(useModule, targetName)))
-          else -> ErrorWithFixes(
-            JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
+          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
         }
       }
     }
     else if (useModule != null) {
-      return if (quick) ERR else ErrorWithFixes(
-        JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
+      return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
     }
 
     return null
@@ -151,7 +146,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           val index = ModuleRootManager.getInstance(module).fileIndex
           val test = index.isInTestSourceContent(useVFile)
           val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-          return dirs.asSequence().any { index.getOrderEntryForFile(it.virtualFile) !is JdkOrderEntry }
+          return dirs.any { index.getOrderEntryForFile(it.virtualFile) !is JdkOrderEntry }
         }
       }
     }
