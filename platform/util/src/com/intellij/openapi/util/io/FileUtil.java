@@ -1305,7 +1305,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempFile(prefix, suffix);
   }
 
@@ -1321,7 +1321,10 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
+  public static File createTempFile(@NotNull File dir,
+                                    @NotNull @NonNls String prefix,
+                                    @Nullable @NonNls String suffix,
+                                    boolean create) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create);
   }
 
