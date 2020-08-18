@@ -68,6 +68,21 @@
       <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}" />
     </annotation>
   </item>
+  <item name='java.awt.BorderLayout CENTER'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout EAST'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout NORTH'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout SOUTH'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout WEST'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
