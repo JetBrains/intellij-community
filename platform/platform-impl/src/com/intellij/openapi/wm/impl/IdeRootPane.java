@@ -77,7 +77,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = createMenuBar();
+    IdeMenuBar menu = IdeMenuBar.createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
     if (!isDecoratedMenu() && !FrameInfoHelper.isFloatingMenuBarSupported()) {
@@ -87,7 +87,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame, menu);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
@@ -115,10 +115,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
-  }
-
-  protected @NotNull IdeMenuBar createMenuBar() {
-    return IdeMenuBar.createMenuBar();
   }
 
   protected @NotNull Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
@@ -231,6 +227,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       myCustomFrameTitlePane.updateMenuActions(false);
       myCustomFrameTitlePane.repaint();
     }
+  }
+
+  protected @Nullable ActionGroup getMainMenuActionGroup() {
+    return null;
   }
 
   private static @NotNull JComponent createToolbar() {

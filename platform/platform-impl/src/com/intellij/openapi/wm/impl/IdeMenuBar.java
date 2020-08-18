@@ -23,6 +23,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -447,8 +448,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  @Nullable
-  public ActionGroup getMainMenuActionGroup() {
+  public @Nullable ActionGroup getMainMenuActionGroup() {
+    IdeRootPane rootPane = ObjectUtils.tryCast(getRootPane(), IdeRootPane.class);
+    ActionGroup group = rootPane != null ? rootPane.getMainMenuActionGroup() : null;
+    if (group != null) {
+      return group;
+    }
     return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
   }
 
