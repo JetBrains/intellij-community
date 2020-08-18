@@ -100,7 +100,8 @@ object GHHtmlErrorPanel {
   private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
     if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
-      val builder = StringBuilder(githubError.message)
+      val message = githubError.message?.removePrefix("[")?.removeSuffix("]")
+      val builder = StringBuilder(message)
       val errors = githubError.errors
       if (!errors.isNullOrEmpty()) {
         builder.append(": ").append(newLineSeparator)
