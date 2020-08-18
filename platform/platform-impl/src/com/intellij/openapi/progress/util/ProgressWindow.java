@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -240,6 +241,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   protected void showDialog() {
     if (!isRunning() || isCanceled()) {
+      return;
+    }
+
+    if (ApplicationManagerEx.getApplicationEx().isExitInProgress() && Registry.is("ide.instant.shutdown")) {
       return;
     }
 
