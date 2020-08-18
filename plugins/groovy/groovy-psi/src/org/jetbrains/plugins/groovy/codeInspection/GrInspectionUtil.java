@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public final class GrInspectionUtil {
     return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
   }
 
-  public static void replaceExpression(GrExpression expression, String newExpression) {
+  public static void replaceExpression(GrExpression expression, @NlsSafe String newExpression) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrExpression newCall = factory.createExpressionFromText(newExpression, expression.getContext());
     expression.replaceWithExpression(newCall, true);
