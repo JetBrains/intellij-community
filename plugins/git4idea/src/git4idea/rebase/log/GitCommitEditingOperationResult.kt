@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.log
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.Hash
 import git4idea.commands.Git
 import git4idea.findProtectedRemoteBranchContainingCommit
@@ -52,7 +53,7 @@ internal sealed class GitCommitEditingOperationResult {
 
     sealed class UndoResult {
       object Success : UndoResult()
-      class Error(val errorHtml: String) : UndoResult()
+      class Error(@NlsContexts.NotificationContent val errorHtml: String) : UndoResult()
     }
 
     sealed class UndoPossibility {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.i18n.GitBundle
 import java.util.function.Supplier
@@ -10,7 +11,7 @@ internal open class GitRebaseEntry(val action: Action, val commit: String, val s
 
   override fun toString() = "$action $commit $subject"
 
-  sealed class Action(private val command: String, val visibleName: Supplier<String>) {
+  sealed class Action(private val command: String, val visibleName: Supplier<@NlsContexts.Button String>) {
     object PICK : Action("pick", GitBundle.messagePointer("rebase.entry.action.name.pick"))
     object EDIT : Action("edit", GitBundle.messagePointer("rebase.entry.action.name.edit"))
     object DROP : Action("drop", GitBundle.messagePointer("rebase.entry.action.name.drop"))
