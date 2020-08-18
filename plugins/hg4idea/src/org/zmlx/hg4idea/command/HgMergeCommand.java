@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -48,7 +49,7 @@ public class HgMergeCommand {
     this.repo = repo;
   }
 
-  private void setRevision(@NotNull String revision) {
+  private void setRevision(@NotNull @NonNls String revision) {
     this.revision = revision;
   }
 
@@ -76,13 +77,13 @@ public class HgMergeCommand {
   }
 
   public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final String branchName,
+                               @NotNull final @NonNls String branchName,
                                @NotNull final UpdatedFiles updatedFiles) {
     mergeWith(repository, branchName, updatedFiles, null);
   }
 
   public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final String branchName,
+                               @NotNull final @NonNls String branchName,
                                @NotNull final UpdatedFiles updatedFiles, @Nullable final Runnable onSuccessHandler) {
     final Project project = repository.getProject();
     final VirtualFile repositoryRoot = repository.getRoot();

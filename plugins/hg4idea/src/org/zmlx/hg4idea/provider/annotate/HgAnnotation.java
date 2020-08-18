@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -97,6 +98,7 @@ public class HgAnnotation extends FileAnnotation {
     return getToolTip(lineNumber, true);
   }
 
+  @Nls
   @Nullable
   private String getToolTip(int lineNumber, boolean asHtml) {
     if ( myLines.size() <= lineNumber || lineNumber < 0 ) {
@@ -116,7 +118,7 @@ public class HgAnnotation extends FileAnnotation {
     atb.appendLine(HgBundle.message("hg4idea.annotation.date", revision.getRevisionDate()));
     String message = revision.getCommitMessage();
     if (message != null) atb.appendCommitMessageBlock(message);
-    return atb.toString();
+    return atb.toString(); //NON-NLS
   }
 
   @Override

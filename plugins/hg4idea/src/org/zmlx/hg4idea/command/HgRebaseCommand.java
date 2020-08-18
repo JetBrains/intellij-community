@@ -17,6 +17,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -51,7 +52,7 @@ public class HgRebaseCommand {
   }
 
   @Nullable
-  private HgCommandResult performRebase(String @NotNull ... args) {
+  private HgCommandResult performRebase(@NonNls String @NotNull ... args) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
       final List<String> list = ContainerUtil.newArrayList(args);
       list.add("--config");

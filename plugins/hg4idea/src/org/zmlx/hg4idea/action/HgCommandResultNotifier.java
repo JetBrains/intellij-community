@@ -15,10 +15,10 @@ package org.zmlx.hg4idea.action;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -35,14 +35,14 @@ public final class HgCommandResultNotifier {
   }
 
   public void notifyError(@Nullable HgCommandResult result,
-                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureTitle,
-                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureDescription) {
+                          @NlsContexts.NotificationTitle @NotNull String failureTitle,
+                          @NlsContexts.NotificationContent @NotNull String failureDescription) {
     notifyError(result, failureTitle, failureDescription, null);
   }
 
   public void notifyError(@Nullable HgCommandResult result,
-                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureTitle,
-                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureDescription,
+                          @NlsContexts.NotificationTitle @NotNull String failureTitle,
+                          @NlsContexts.NotificationContent @NotNull String failureDescription,
                           @Nullable NotificationListener listener) {
     List<String> err;
     String errorMessage;
