@@ -52,6 +52,12 @@ public final class EnvironmentUtil {
   private static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
 
+  /**
+   * Holds the number of shell levels the current shell is running on top of.
+   * Tested with bash/zsh/fish/tcsh/csh/ksh.
+   */
+  private static final String SHLVL = "SHLVL";
+
   private static final AtomicReference<CompletableFuture<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
   private EnvironmentUtil() { }
@@ -92,7 +98,7 @@ public final class EnvironmentUtil {
 
   @ApiStatus.Internal
   public static void loadEnvironment(@NotNull Runnable callback) {
-    if (SystemInfoRt.isMac) {
+    if (shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
         try {
           Map<String, String> env = getShellEnv();
@@ -112,6 +118,25 @@ public final class EnvironmentUtil {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       callback.run();
     }
+  }
+
+  private static boolean shouldLoadShellEnv() {
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+    // The method is called too early when the IDE starts up, at this point the registry values have not been loaded yet from the service.
+    // Using a system property is a good alternative.
+    if (!Boolean.parseBoolean(System.getProperty("ij.load.shell.env", "true"))) {
+      LOG.info("loading shell env is turned off");
+      return false;
+    }
+    String value = System.getenv(SHLVL);
+    // On macOS, login shell session is not run when a user logs in, thus "SHLVL > 0" likely means that IDE is run from a terminal.
+    if (StringUtilRt.parseInt(value, 0) > 0) {
+      LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + "=" + value + ")");
+      return false;
+    }
+    return true;
   }
 
   private static @NotNull Map<String, String> getSystemEnv() {
