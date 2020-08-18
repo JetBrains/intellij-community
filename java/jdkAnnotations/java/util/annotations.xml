@@ -2826,6 +2826,9 @@
   <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Objects T requireNonNull(T, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.util.Objects T requireNonNullElse(T, T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;!null, _ -&gt; param1; null, !null -&gt; param2; null, null -&gt; fail&quot;"/>

@@ -255,6 +255,7 @@
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.lang.Class java.lang.String getPackageName()'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1276,6 +1277,9 @@
   </item>
   <item name="java.lang.String void getChars(int, int, char[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.System java.lang.String getProperty(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>
