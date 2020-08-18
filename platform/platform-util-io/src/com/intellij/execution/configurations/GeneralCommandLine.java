@@ -233,11 +233,11 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(String @NotNull ... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     withParameters(parameters);
   }
 
@@ -253,7 +253,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  public void addParameter(@NotNull String parameter) {
+  public void addParameter(@NotNull @NonNls String parameter) {
     myProgramParams.add(parameter);
   }
 
