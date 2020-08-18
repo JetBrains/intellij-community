@@ -3,6 +3,7 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -14,10 +15,10 @@ import java.util.regex.Pattern;
 public final class TextWithMnemonic {
   public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
-  @NotNull private final String myText;
+  @NotNull private final @Nls String myText;
   private final int myMnemonicIndex;
 
-  private TextWithMnemonic(@NotNull String text, int mnemonicIndex) {
+  private TextWithMnemonic(@NotNull @Nls String text, int mnemonicIndex) {
     myText = StringUtil.internEmptyString(text);
     myMnemonicIndex = mnemonicIndex;
   }
@@ -26,7 +27,7 @@ public final class TextWithMnemonic {
    * @return plain text without mnemonic
    */
   @NotNull
-  public String getText() {
+  public @Nls String getText() {
     return myText;
   }
 
@@ -84,7 +85,7 @@ public final class TextWithMnemonic {
    * @param textToAppend text to append. Appended text is treated as a plain text, without mnemonic, so mnemonic position is unchanged.
    * @return TextWithMnemonic object which text is the concatenation of this object text and supplied text.
    */
-  public TextWithMnemonic append(@NotNull String textToAppend) {
+  public TextWithMnemonic append(@NotNull @Nls String textToAppend) {
     return new TextWithMnemonic(myText + textToAppend, myMnemonicIndex);
   }
 
@@ -115,7 +116,7 @@ public final class TextWithMnemonic {
    */
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonic fromPlainText(@NotNull String text) {
+  public static TextWithMnemonic fromPlainText(@NotNull @Nls String text) {
     return new TextWithMnemonic(text, -1);
   }
 
@@ -131,13 +132,13 @@ public final class TextWithMnemonic {
    */
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonic parse(@NotNull String text) {
+  public static TextWithMnemonic parse(@NotNull @Nls String text) {
     if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
       text = text.replace(UIUtil.MNEMONIC, '&');
     }
 
     if (text.contains("_") || text.contains("&")) {
-      StringBuilder plainText = new StringBuilder();
+      @Nls StringBuilder plainText = new StringBuilder();
       int mnemonicIndex = -1;
 
       int backShift = 0;

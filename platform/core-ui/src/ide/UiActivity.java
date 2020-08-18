@@ -14,7 +14,7 @@ import java.util.List;
 public class UiActivity implements ComparableObject {
   private final List<String> myElements = new ArrayList<>();
 
-  public UiActivity(String @NotNull ... elements) {
+  public UiActivity(@NonNls String @NotNull ... elements) {
     this(elements, null);
   }
 

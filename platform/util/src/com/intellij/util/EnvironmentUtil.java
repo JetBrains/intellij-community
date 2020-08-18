@@ -46,7 +46,7 @@ public final class EnvironmentUtil {
 
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
 
-  public static final String BASH_EXECUTABLE_NAME = "bash";
+  public static final @NonNls String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
   private static final String SHELL_LOGIN_ARGUMENT = "-l";
@@ -235,7 +235,7 @@ public final class EnvironmentUtil {
     protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull Path batchFile, List<String> args) throws Exception {
       Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
       try {
-        List<String> cl = new ArrayList<>();
+        List<@NonNls String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
         cl.add("call");
@@ -317,7 +317,7 @@ public final class EnvironmentUtil {
    * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
    */
   @ApiStatus.Experimental
-  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
+  public static @NotNull List<String> buildShellProcessCommand(@NotNull @NonNls String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
     List<String> commands = new ArrayList<>();
     commands.add(shellScript);
     if (isLogin && !(shellScript.endsWith("/tcsh") || shellScript.endsWith("/csh"))) {
@@ -434,7 +434,7 @@ public final class EnvironmentUtil {
     String language = locale.getLanguage();
     String country = locale.getCountry();
 
-    String languageTerritory = "en_US";
+    @NonNls String languageTerritory = "en_US";
     if (!language.isEmpty() && !country.isEmpty()) {
       String languageTerritoryFromLocale = language + '_' + country;
       if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {

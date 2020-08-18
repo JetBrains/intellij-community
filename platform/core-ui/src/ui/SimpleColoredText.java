@@ -4,6 +4,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 public class SimpleColoredText implements ColoredTextContainer {
   private final ArrayList<@NlsContexts.Label String> myTexts;
   private final ArrayList<SimpleTextAttributes> myAttributes;
-  private String myCachedToString = null;
+  private @Nls String myCachedToString = null;
 
   public SimpleColoredText() {
     myTexts = new ArrayList<>(3);
@@ -51,7 +52,7 @@ public class SimpleColoredText implements ColoredTextContainer {
     }
   }
 
-  public String toString() {
+  public @Nls String toString() {
     if (myCachedToString == null) {
       myCachedToString = StringUtil.join(myTexts,"");
     }
