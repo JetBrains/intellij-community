@@ -239,7 +239,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
     String getPresentableText();
-    @Nullable
+    @Nullable @NlsSafe
     String getPathOrName();
     @Nullable
     default String getVersion() { return null; }
