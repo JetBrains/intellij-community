@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.actions.UseWrapperAction
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
@@ -179,11 +180,12 @@ class MavenWrapperSupport {
   companion object {
     @JvmStatic
     fun hasWrapperConfigured(baseDir: VirtualFile): Boolean {
-      return !getWrapperDistributionUrl(baseDir).isNullOrEmpty()
+      return UseWrapperAction.canUseWrapper() && !getWrapperDistributionUrl(baseDir).isNullOrEmpty()
     }
 
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
+      if (UseWrapperAction.canUseWrapper()) return null
       val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
 
       val properties = Properties()
