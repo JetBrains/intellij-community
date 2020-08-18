@@ -26,7 +26,6 @@ import static com.intellij.openapi.util.NlsContexts.Command;
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
-  private static final @Command String DEFAULT_COMMAND_NAME = CoreBundle.message("command.name.undefined");
   private static final String DEFAULT_GROUP_ID = null;
 
   public interface Builder {
@@ -58,7 +57,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final class BuilderImpl implements Builder {
     private final Project myProject;
     private final PsiFile[] myFiles;
-    private @Command String myCommandName = DEFAULT_COMMAND_NAME;
+    private @Command String myCommandName = getDefaultCommandName();
     private String myGroupId = DEFAULT_GROUP_ID;
     private UndoConfirmationPolicy myPolicy;
     private boolean myGlobalUndoAction;
@@ -176,7 +175,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   protected WriteCommandAction(@Nullable Project project, PsiFile @NotNull ... files) {
-    this(project, DEFAULT_COMMAND_NAME, files);
+    this(project, getDefaultCommandName(), files);
   }
 
   /**
@@ -342,13 +341,17 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   /**
-   * If run a write command using this method then "Undo" action always shows "Undefined" text - {@link #DEFAULT_COMMAND_NAME}.
+   * If run a write command using this method then "Undo" action always shows "Undefined" text.
    *
    * Please use {@link #runWriteCommandAction(Project, String, String, Runnable, PsiFile...)} instead.
    */
   @TestOnly
   public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
-    runWriteCommandAction(project, DEFAULT_COMMAND_NAME, DEFAULT_GROUP_ID, runnable);
+    runWriteCommandAction(project, getDefaultCommandName(), DEFAULT_GROUP_ID, runnable);
+  }
+
+  private static @Command String getDefaultCommandName() {
+    return CoreBundle.message("command.name.undefined");
   }
 
   public static void runWriteCommandAction(Project project,
