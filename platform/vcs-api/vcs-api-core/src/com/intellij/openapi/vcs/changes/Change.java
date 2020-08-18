@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,6 +216,7 @@ public class Change {
   }
 
   @Nullable
+  @Nls
   public String getOriginText(final Project project) {
     cacheRenameOrMove(project);
     if (isMoved()) {
@@ -226,11 +228,13 @@ public class Change {
   }
 
   @Nullable
+  @Nls
   protected String getRenamedText() {
     return VcsBundle.message("change.file.renamed.from.text", myBeforeRevision.getFile().getName());
   }
 
   @Nullable
+  @Nls
   protected String getMovedText(final Project project) {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
