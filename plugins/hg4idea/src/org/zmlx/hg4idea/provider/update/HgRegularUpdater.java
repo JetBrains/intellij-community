@@ -193,7 +193,7 @@ public class HgRegularUpdater implements HgUpdater {
           LOG.warn("Couldn't find repository info for " + repoRoot.getName());
           return;
         }
-        new HgCommitCommand(project, hgRepository, "Automated merge").executeInCurrentThread();
+        new HgCommitCommand(project, hgRepository, "Automated merge").executeInCurrentThread(); //NON-NLS
       }
       catch (HgCommandException e) {
         throw new VcsException(e);
