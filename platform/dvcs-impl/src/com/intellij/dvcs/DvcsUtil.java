@@ -6,6 +6,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -430,34 +431,36 @@ public final class DvcsUtil {
     return joinShortNames(repositories, -1);
   }
 
+  @Nls
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
     return joinWithAnd(ContainerUtil.map(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository)),
                        limit);
   }
 
+  @Nls
   @NotNull
-  public static String joinWithAnd(@NotNull List<String> strings, int limit) {
+  public static String joinWithAnd(@NotNull List<@Nls String> strings, int limit) {
     int size = strings.size();
     if (size == 0) return "";
     if (size == 1) return strings.get(0);
-    if (size == 2) return strings.get(0) + " and " + strings.get(1);
+    if (size == 2) return DvcsBundle.message("sequence.concatenation.a.and.b", strings.get(0), strings.get(1));
 
     boolean isLimited = limit >= 2 && limit < size;
     int listCount = (isLimited ? limit : size) - 1;
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < listCount; i++) {
-      if (i != 0) sb.append(", ");
+      if (i != 0) sb.append(DvcsBundle.message("sequence.concatenation.separator"));
       sb.append(strings.get(i));
     }
 
     if (isLimited) {
-      sb.append(" and ").append(size - limit + 1).append(" others");
+      sb.append(DvcsBundle.message("sequence.concatenation.tail.n.others", size - limit + 1));
     }
     else {
-      sb.append(" and ").append(strings.get(size - 1));
+      sb.append(DvcsBundle.message("sequence.concatenation.tail", strings.get(size - 1)));
     }
-    return sb.toString();
+    return sb.toString(); //NON-NLS
   }
 }
