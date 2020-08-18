@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.loadLastCommitMessage
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -115,6 +116,7 @@ abstract class GitCommitPanel(private val project: Project,
   override fun dispose() {
   }
 
+  @Nls
   private fun getCommitText(): String {
     if (isAmend) return ActionsBundle.message("action.Vcs.ToggleAmendCommitMode.text")
     else return GitBundle.getString("commit.action.name")

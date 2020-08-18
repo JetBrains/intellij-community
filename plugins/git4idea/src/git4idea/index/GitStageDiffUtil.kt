@@ -36,6 +36,7 @@ import git4idea.index.vfs.GitIndexVirtualFileCache
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 
 fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatusNode): ChangeDiffRequestChain.Producer {
@@ -164,14 +165,14 @@ class MergedProducer(private val project: Project,
   }
 }
 
-private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, title: String? = null) :
+private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, @Nls title: String? = null) :
   SimpleDiffRequest(title, contents, titles) {
 
-  constructor(content1: DiffContent, content2: DiffContent, title1: String, title2: String, title: String? = null) :
+  constructor(content1: DiffContent, content2: DiffContent, @Nls title1: String, @Nls title2: String, @Nls title: String? = null) :
     this(listOf(content1, content2), listOf(title1, title2), title)
 
   constructor(content1: DiffContent, content2: DiffContent, content3: DiffContent,
-              title1: String, title2: String, title3: String, title: String? = null) :
+              @Nls title1: String, @Nls title2: String, @Nls title3: String, @Nls title: String? = null) :
     this(listOf(content1, content2, content3), listOf(title1, title2, title3), title)
 
   override fun onAssigned(isAssigned: Boolean) {
@@ -254,10 +255,12 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
 private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean = status.has(contentVersion)
 private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath = status.path(contentVersion)
 
+@Nls
 private fun getTitle(statusNode: GitFileStatusNode): String {
   return DiffRequestFactoryImpl.getTitle(statusNode.filePath, statusNode.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
 }
 
+@Nls
 private fun getTitle(status: GitFileStatus): String {
   return DiffRequestFactoryImpl.getTitle(status.path, status.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
 }

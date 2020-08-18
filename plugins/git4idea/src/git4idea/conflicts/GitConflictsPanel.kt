@@ -219,7 +219,8 @@ internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selecte
   }
 }
 
-internal fun getConflictType(conflict: GitConflict): @Nls String {
+@Nls
+internal fun getConflictType(conflict: GitConflict): String {
   val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
   val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
   return when {
