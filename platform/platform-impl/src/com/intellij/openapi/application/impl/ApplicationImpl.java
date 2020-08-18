@@ -606,7 +606,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       stopServicePreloading();
 
-      if (Registry.is("ide.instant.shutdown")) {
+      if (isInstantShutdownPossible()) {
         for (Frame frame : Frame.getFrames()) {
           frame.setVisible(false);
         }
@@ -645,6 +645,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     finally {
       myExitInProgress = false;
     }
+  }
+
+  private static boolean isInstantShutdownPossible() {
+    if (!Registry.is("ide.instant.shutdown")) {
+      return false;
+    }
+
+    return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
   private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,
