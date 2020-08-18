@@ -41,17 +41,26 @@ class CausalProfilingOptions {
    */
   final String searchScope
 
+  final Collection<String> additionalSearchScopes = []
+
   /**
    * Such prefixes that if class fqn has at least one of them, then this class will never be selected for experiment.
-   * Note that any string returned by this method should have string returned by {@link #searchScope} as a prefix.
+   * Note that any string returned by this method should have string returned by {@link #searchScope},
+   * or any string returned by {@link #additionalSearchScopes}, as a prefix.
    */
-  final Collection<String> scopesToIgnore
+  final Collection<String> scopesToIgnore = []
 
   String buildAgentArgsString() {
-    def agentArgs = "pkg=${searchScope}_progress-point=${progressPoint.classFqn}:${progressPoint.lineNumber}"
+    def agentArgs = "progress-point=${progressPoint.classFqn}:${progressPoint.lineNumber}_search=${searchScope}".toString()
+
+    def jointAdditionalSearchScopes = additionalSearchScopes.join("|")
+    if (!jointAdditionalSearchScopes.isEmpty()) {
+      agentArgs += "|${jointAdditionalSearchScopes}"
+    }
+
     def jointScopesToIgnore = scopesToIgnore.join("|")
     if (!jointScopesToIgnore.isEmpty()) {
-      return agentArgs << "_ignore=${jointScopesToIgnore}"
+      agentArgs += "_ignore=${jointScopesToIgnore}"
     }
     return agentArgs
   }
