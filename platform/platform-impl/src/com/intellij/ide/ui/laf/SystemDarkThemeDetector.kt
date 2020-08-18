@@ -41,14 +41,21 @@ internal abstract class SystemDarkThemeDetector {
     }
   }
 
-  private class MacOSDetector (override val detectionSupported: Boolean = JnaLoader.isLoaded()): AsyncDetector() {
+  private class MacOSDetector (override val detectionSupported: Boolean = JnaLoader.isLoaded() && SystemInfo.isMacOSMojave)
+      : AsyncDetector() {
+    companion object {
+      const val AQUA_THEME_NAME      = "NSAppearanceNameAqua"
+      const val DARK_AQUA_THEME_NAME = "NSAppearanceNameDarkAqua"
+    }
+
     override fun isDark(): Boolean {
       val pool = Foundation.NSAutoreleasePool()
       try {
         val appearanceID = Foundation.invoke(Foundation.invoke("NSApplication", "sharedApplication"), "effectiveAppearance")
-        val appearanceName = Foundation.invoke(appearanceID, "name")
-
-        return Foundation.toStringViaUTF8(appearanceName)?.contains("Dark") ?: false
+        val appearanceName = Foundation.invoke(appearanceID, "bestMatchFromAppearancesWithNames",
+                          Foundation.NSArray.createArrayOfStrings(AQUA_THEME_NAME, DARK_AQUA_THEME_NAME))
+        val ret = Foundation.invoke(appearanceName, "isEqualToString", Foundation.nsString(DARK_AQUA_THEME_NAME))
+        return ret.toInt() == 0
       }
       finally{
         pool.drain()

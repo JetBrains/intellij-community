@@ -298,7 +298,7 @@ public final class Foundation {
   }
 
   public static ID autorelease(ID id){
-    return Foundation.invoke(id, "autorelease");
+    return invoke(id, "autorelease");
   }
 
   public static boolean isMainThread() {
@@ -435,6 +435,9 @@ public final class Foundation {
   }
 
   public static class NSArray {
+    private static final ID nsStringCls = getObjcClass("NSArray");
+    private static final Pointer arrayWithObjects = createSelector("arrayWithObjects");
+
     private final ID myDelegate;
 
     public NSArray(ID delegate) {
@@ -456,6 +459,19 @@ public final class Foundation {
         result.add(at(i));
       }
       return result;
+    }
+
+    public static ID createArray(ID @NotNull... ids) {
+      return invoke(nsStringCls, arrayWithObjects, ids, ID.NIL);
+    }
+
+    public static ID createArrayOfStrings(String @NotNull... values) {
+      ID[] ids = new ID[values.length];
+      for (int i = 0; i < values.length; i++) {
+        ids[i] = nsString(values[i]);
+      }
+
+      return createArray(ids);
     }
   }
 
