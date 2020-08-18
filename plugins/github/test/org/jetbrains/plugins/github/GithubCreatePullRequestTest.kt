@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.notification.NotificationType
@@ -13,6 +13,7 @@ import git4idea.test.git
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GithubCreatePullRequestTest : GithubGitRepoTest() {
@@ -41,9 +42,9 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
     createChanges()
     repository.update()
 
-    val coordinatesSet = gitHelper.getPossibleRemoteUrlCoordinates(myProject)
+    val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
-    val coordinates = coordinatesSet.first()
+    val coordinates = coordinatesSet.first().gitRemote
 
     GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, mainAccount.account)
 
@@ -63,9 +64,9 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
     cloneRepo(fork)
     createChanges()
 
-    val coordinatesSet = gitHelper.getPossibleRemoteUrlCoordinates(myProject)
+    val coordinatesSet = myProject.service<GHProjectRepositoriesManager>().knownRepositories
     assertSize(1, coordinatesSet)
-    val coordinates = coordinatesSet.first()
+    val coordinates = coordinatesSet.first().gitRemote
 
     service<GithubSettings>().createPullRequestCreateRemote = ThreeState.YES
     GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, secondaryAccount.account)

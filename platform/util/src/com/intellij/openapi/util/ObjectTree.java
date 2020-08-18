@@ -252,8 +252,8 @@ final class ObjectTree {
   }
 
   void clearDisposedObjectTraces() {
-    myDisposedObjects.clear();
     synchronized (treeLock) {
+      myDisposedObjects.clear();
       for (ObjectNode value : myObject2NodeMap.values()) {
         value.clearTrace();
       }

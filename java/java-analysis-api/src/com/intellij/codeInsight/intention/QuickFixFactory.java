@@ -385,6 +385,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
 
   @NotNull
+  public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements);
+
+  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element);
 
   @NotNull

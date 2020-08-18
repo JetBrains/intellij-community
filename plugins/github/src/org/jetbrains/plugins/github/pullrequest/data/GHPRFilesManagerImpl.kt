@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 import java.util.*
 
@@ -21,8 +22,8 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   private val filesEventDispatcher = EventDispatcher.create(FileListener::class.java)
 
-  private val files = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
-  private val diffFiles = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRDiffVirtualFile>()
+  private val files = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
+  private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRDiffVirtualFile>()
 
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
@@ -30,6 +31,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }.let {
       filesEventDispatcher.multicaster.onBeforeFileOpened(it)
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      GHPRStatisticsCollector.logTimelineOpened(project)
     }
   }
 
@@ -38,6 +40,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      GHPRStatisticsCollector.logDiffOpened(project)
     }
   }
 
@@ -49,8 +52,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     val file = findTimelineFile(details)
     if (file != null) {
       file.details = details
-      // TODO: clear cached icons at com.intellij.util.IconUtil.getIcon
-      // TODO: update tooltip
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }
@@ -62,7 +63,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun dispose() {
-    for ((_, file) in files) {
+    for (file in (files.values + diffFiles.values)) {
       FileEditorManager.getInstance(project).closeFile(file)
       file.isValid = false
     }

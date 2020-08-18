@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
+import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
 
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
@@ -71,7 +72,7 @@ fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFi
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
 }
 
-fun Row.attachSubRowsEnabled(component: JBRadioButton) {
+fun Row.attachSubRowsEnabled(component: AbstractButton) {
   subRowsEnabled = component.isSelected
   component.addChangeListener {
     subRowsEnabled = component.isSelected

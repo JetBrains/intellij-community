@@ -666,6 +666,7 @@
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
+    <statistics.counterUsagesCollector groupId="editor.typing" version="1"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
@@ -863,7 +864,7 @@
       <description>Defines whether to show "What's new" notification after IDE update or not.</description>
     </experimentalFeature>
 
-    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
+    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="0">
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
@@ -1027,6 +1028,8 @@
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.fileTypes.FileTypeListener" />
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
   </projectListeners>

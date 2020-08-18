@@ -11,6 +11,7 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import git4idea.fetch.GitFetchSupport
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -74,7 +75,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val (lastCommit, graph) = commits
       val commitsDiffsRequests = mutableMapOf<GHCommit, CompletableFuture<Pair<String, String>>>()
       for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
-        commitsDiffsRequests[commit] = loadCommitDiffs(it, mergeBaseOid, commit.oid)
+        commitsDiffsRequests[commit] = loadCommitDiffs(ProgressWrapper.wrap(it), mergeBaseOid, commit.oid)
       }
 
       CompletableFuture.allOf(*commitsDiffsRequests.values.toTypedArray()).joinCancellable()

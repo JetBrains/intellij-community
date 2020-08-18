@@ -4,9 +4,9 @@ package com.intellij.ide.customize;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDependency;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -88,12 +88,11 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
       }
       final IdeaPluginDescriptor descriptor = foundDescriptor;
 
-      List<PluginId> dependentPluginIds = ContainerUtil
-        .filter(ContainerUtil.notNullize(((PluginNode)descriptor).getDepends()), id -> !id.getIdString().startsWith("(optional)"));
-
-      List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>(dependentPluginIds.size());
+      List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>();
       boolean failedToFindDependencies = false;
-      for (PluginId id : dependentPluginIds) {
+      for (IdeaPluginDependency dep : descriptor.getDependencies()) {
+        if (dep.isOptional()) continue;
+        PluginId id = dep.getPluginId();
         if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id) != null) {
           continue;
         }

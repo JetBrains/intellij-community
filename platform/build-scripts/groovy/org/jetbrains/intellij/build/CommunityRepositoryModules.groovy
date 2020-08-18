@@ -258,7 +258,11 @@ Android Studio: exclude smali */
       withModule("intellij.statsCollector.completionRanker")
     },
 Android Studio: exclude intellij.statsCollector */
-    plugin("intellij.jps.cache")
+    plugin("intellij.jps.cache"),
+    plugin("intellij.space") {
+      withProjectLibrary("space-idea-sdk")
+      withProjectLibrary("jackson-datatype-joda")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {

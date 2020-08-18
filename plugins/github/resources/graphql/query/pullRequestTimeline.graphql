@@ -32,6 +32,13 @@ fragment readyForReviewEvent on ReadyForReviewEvent {
     createdAt
 }
 
+fragment convertToDraftEvent on ConvertToDraftEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+}
+
 fragment renamedEvent on RenamedTitleEvent {
     actor {
         ...actorInfo
@@ -184,22 +191,50 @@ fragment baseRefChangedEvent on BaseRefChangedEvent {
     createdAt
 }
 
+fragment referenceSubject on ReferencedSubject {
+    __typename
+    ... on PullRequest {
+        title
+        number
+        state
+        isDraft
+        url
+    }
+    ... on Issue {
+        title
+        number
+        state
+        url
+    }
+}
+
 fragment crossReferencedEvent on CrossReferencedEvent {
     actor {
         ...actorInfo
     }
     createdAt
     source {
-        ... on PullRequest {
-            title
-            number
-            url
-        }
-        ... on Issue {
-            title
-            number
-            url
-        }
+        ...referenceSubject
+    }
+}
+
+fragment connectedEvent on ConnectedEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+    subject {
+        ...referenceSubject
+    }
+}
+
+fragment disconnectedEvent on DisconnectedEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+    subject {
+        ...referenceSubject
     }
 }
 
@@ -234,6 +269,7 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...reviewDismissedEvent
 
                     ...readyForReviewEvent
+                    ...convertToDraftEvent
 
                     ...baseRefChangedEvent
                     ...baseRefForcePushedEvent
@@ -243,6 +279,8 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...headRefRestoredEvent
 
                     ...crossReferencedEvent
+                    ...connectedEvent
+                    ...disconnectedEvent
                 }
             }
         }

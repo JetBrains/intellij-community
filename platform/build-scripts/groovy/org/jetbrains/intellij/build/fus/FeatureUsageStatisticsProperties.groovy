@@ -8,5 +8,5 @@ import groovy.transform.Immutable
 @Immutable
 class FeatureUsageStatisticsProperties {
   final String recorderId
-  final String whiteListProviderUri
+  final String metadataProviderUri
 }

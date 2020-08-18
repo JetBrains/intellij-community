@@ -56,7 +56,10 @@ public class GitExecutableManager {
 
   private static GitVersion doGetGitVersion(@NotNull GitExecutable executable) throws VcsException, ParseException {
     GitVersion.Type type = null;
-    if (executable instanceof GitExecutable.Wsl) {
+    if (executable instanceof GitExecutable.Unknown) {
+      type = GitVersion.Type.UNDEFINED;
+    }
+    else if (executable instanceof GitExecutable.Wsl) {
       WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
       type = WSLUtil.isWsl1(distribution) == ThreeState.YES ? GitVersion.Type.WSL1
                                                             : GitVersion.Type.WSL2;
@@ -107,20 +110,22 @@ public class GitExecutableManager {
 
   @NotNull
   public GitExecutable getExecutable(@NotNull String pathToGit) {
-    GitExecutable.Wsl executable = getWslExecutable(pathToGit);
-    if (executable != null) return executable;
+    Pair<String, WSLDistribution> pair = parseWslPath(pathToGit);
+    if (pair != null) {
+      if (pair.second != null) {
+        return new GitExecutable.Wsl(pair.first, pair.second);
+      }
+      else {
+        return new GitExecutable.Unknown("wsl-unknown", pair.first,
+                                         GitBundle.message("git.executable.unknown.wsl.distribution.error.message"));
+      }
+    }
 
     return new GitExecutable.Local(pathToGit);
   }
 
   public static boolean supportWslExecutable() {
     return WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
-  }
-
-  @Nullable
-  private static GitExecutable.Wsl getWslExecutable(@NotNull String pathToGit) {
-    Pair<String, WSLDistribution> pair = parseWslPath(pathToGit);
-    return pair != null ? new GitExecutable.Wsl(pair.first, pair.second) : null;
   }
 
   @Nullable
@@ -134,7 +139,7 @@ public class GitExecutableManager {
   }
 
   @Nullable
-  private static Pair<String, WSLDistribution> parseWslPath(@NotNull String path) {
+  private static Pair<String, @Nullable WSLDistribution> parseWslPath(@NotNull String path) {
     if (!supportWslExecutable()) return null;
     if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
 
@@ -146,7 +151,10 @@ public class GitExecutableManager {
     String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
 
     WSLDistribution distribution = WSLUtil.getDistributionByMsId(distName);
-    if (distribution == null) return null;
+    if (distribution == null) {
+      LOG.debug(String.format("Unknown WSL distribution: %s, known distributions: %s", distName,
+                              StringUtil.join(WSLUtil.getAvailableDistributions(), WSLDistribution::getMsId, ", ")));
+    }
     return Pair.create(wslPath, distribution);
   }
 

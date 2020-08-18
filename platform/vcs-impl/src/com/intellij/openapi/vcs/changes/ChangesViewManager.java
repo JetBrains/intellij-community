@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -48,6 +49,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -127,6 +129,14 @@ public class ChangesViewManager implements ChangesViewEx,
     @Override
     public void preloadTabContent(@NotNull Content content) {
       content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
+    }
+  }
+
+  public static class ContentPredicate implements NotNullFunction<Project, Boolean> {
+    @NotNull
+    @Override
+    public Boolean fun(Project project) {
+      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     }
   }
 

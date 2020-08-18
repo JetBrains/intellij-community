@@ -12,6 +12,7 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val createdAt: Date
   val state: GHPullRequestReviewCommentState
   val isResolved: Boolean
+  val isOutdated: Boolean
   val commit: GHCommitHash?
   val filePath: String
   val diffHunk: String
@@ -19,5 +20,5 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   fun update(thread: GHPullRequestReviewThread)
   fun addComment(comment: GHPRReviewCommentModel)
 
-  fun addStateChangeListener(listener: () -> Unit)
+  fun addAndInvokeStateChangeListener(listener: () -> Unit)
 }

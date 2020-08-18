@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,7 +31,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +38,7 @@ import java.net.URI;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
@@ -93,7 +94,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
       for (PsiFileSystemItem context : defaultContexts) {
         if (context == null) {
-          LOG.error(myFileReferenceSet.getClass() + " provided a null context");
+          LOG.error(PluginException.createByClass("Null context", null, myFileReferenceSet.getClass()));
         }
       }
       result.addAll(defaultContexts);
@@ -129,7 +130,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       LOG.error("Recursion occurred for " + getClass() + " on " + getElement().getText());
       return ResolveResult.EMPTY_ARRAY;
     }
-    final Collection<ResolveResult> result = new THashSet<>();
+    Collection<ResolveResult> result = new LinkedHashSet<>();
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result, caseSensitive);
     }

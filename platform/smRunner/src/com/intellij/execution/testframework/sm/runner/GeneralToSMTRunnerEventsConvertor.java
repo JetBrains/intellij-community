@@ -296,6 +296,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onUncapturedOutput(final @NotNull String text, final Key outputType) {
     final SMTestProxy currentProxy = findCurrentTestOrSuite();
     currentProxy.addOutput(text, outputType);
+    myEventPublisher.onUncapturedOutput(currentProxy, text, outputType);
   }
 
   @Override
@@ -424,6 +425,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       return;
     }
     testProxy.addOutput(text, outputType);
+    myEventPublisher.onTestOutput(testProxy, testOutputEvent);
   }
 
   @Override

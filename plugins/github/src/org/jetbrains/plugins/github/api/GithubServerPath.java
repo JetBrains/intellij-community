@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -161,12 +161,17 @@ public class GithubServerPath {
     return getSchema() + URLUtil.SCHEME_SEPARATOR;
   }
 
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object o) {
+    return equals(o, false);
+  }
+
+  public boolean equals(Object o, boolean ignoreProtocol) {
     if (this == o) return true;
     if (!(o instanceof GithubServerPath)) return false;
     GithubServerPath path = (GithubServerPath)o;
-    return Objects.equals(myUseHttp, path.myUseHttp) &&
+    return (ignoreProtocol || Objects.equals(myUseHttp, path.myUseHttp)) &&
            Objects.equals(myHost, path.myHost) &&
            Objects.equals(myPort, path.myPort) &&
            Objects.equals(mySuffix, path.mySuffix);
@@ -174,6 +179,6 @@ public class GithubServerPath {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myUseHttp, myHost, myPort, mySuffix);
+    return Objects.hash(myHost, myPort, mySuffix);
   }
 }

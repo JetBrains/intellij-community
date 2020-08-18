@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @CompileStatic
 class GradleRunner {
-  private final File gradleProjectDir
+  final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
   private final String javaHome

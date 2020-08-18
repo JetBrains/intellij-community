@@ -3,13 +3,13 @@ class Outer {
     public PublicRecord1 {}
   }
   public record PublicRecord2() {
-    protected <error descr="Canonical constructor access level cannot be stronger than the record access level ('public')">PublicRecord2</error>() {}
+    protected <error descr="Canonical constructor access level cannot be more restrictive than the record access level ('public')">PublicRecord2</error>() {}
   }
   public record PublicRecord3() {
-    <error descr="Canonical constructor access level cannot be stronger than the record access level ('public')">PublicRecord3</error>() {}
+    <error descr="Canonical constructor access level cannot be more restrictive than the record access level ('public')">PublicRecord3</error>() {}
   }
   public record PublicRecord4() {
-    private <error descr="Compact constructor access level cannot be stronger than the record access level ('public')">PublicRecord4</error> {}
+    private <error descr="Compact constructor access level cannot be more restrictive than the record access level ('public')">PublicRecord4</error> {}
   }
   protected record ProtectedRecord1() {
     public ProtectedRecord1 {}
@@ -18,10 +18,10 @@ class Outer {
     protected ProtectedRecord2() {}
   }
   protected record ProtectedRecord3() {
-    <error descr="Canonical constructor access level cannot be stronger than the record access level ('protected')">ProtectedRecord3</error>() {}
+    <error descr="Canonical constructor access level cannot be more restrictive than the record access level ('protected')">ProtectedRecord3</error>() {}
   }
   protected record ProtectedRecord4() {
-    private <error descr="Compact constructor access level cannot be stronger than the record access level ('protected')">ProtectedRecord4</error> {}
+    private <error descr="Compact constructor access level cannot be more restrictive than the record access level ('protected')">ProtectedRecord4</error> {}
   }
   record PackageRecord1() {
     public PackageRecord1 {}
@@ -33,7 +33,7 @@ class Outer {
     PackageRecord3() {}
   }
   record PackageRecord4() {
-    private <error descr="Compact constructor access level cannot be stronger than the record access level ('package-private')">PackageRecord4</error> {}
+    private <error descr="Compact constructor access level cannot be more restrictive than the record access level ('package-private')">PackageRecord4</error> {}
   }
   private record PrivateRecord1() {
     public PrivateRecord1 {}
@@ -59,7 +59,7 @@ class Outer {
       LocalRecord3() {}
     }
     record LocalRecord4() {
-      private <error descr="Compact constructor access level cannot be stronger than the record access level ('package-private')">LocalRecord4</error> {}
+      private <error descr="Compact constructor access level cannot be more restrictive than the record access level ('package-private')">LocalRecord4</error> {}
     }
   }
 }

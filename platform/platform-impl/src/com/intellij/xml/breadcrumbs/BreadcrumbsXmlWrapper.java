@@ -18,12 +18,10 @@ import javax.swing.*;
  */
 public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel {
   private final VirtualFile myFile;
-  private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     super(editor);
     myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-    myBreadcrumbsCollector = findCollectorFor(myProject, myFile, this);
   }
 
   @Deprecated
@@ -34,11 +32,12 @@ public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel {
   @Nullable
   @Override
   protected Iterable<? extends Crumb> computeCrumbs(int offset) {
-    if (myBreadcrumbsCollector == null) return null;
+    FileBreadcrumbsCollector breadcrumbsCollector = findCollectorFor(myProject, myFile, this);
+    if (breadcrumbsCollector == null) return null;
 
     Document document = myEditor.getDocument();
     Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
-    return myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
+    return breadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
   }
 
   public void navigate(NavigatableCrumb crumb, boolean withSelection) {

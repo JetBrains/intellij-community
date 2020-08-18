@@ -12,7 +12,6 @@
         <li>Ability to create a project with the special file and directory structure.</li>
         <li>JavaFX-aware coding assistance (code completion, search, navigation and refactoring in JavaFX-specific source files).</li>
         <li>Integration with <a href="http://www.oracle.com/technetwork/java/javafx/tools/index.html">JavaFX Scene Builder</a>.</li>
-        <li>JavaFX application packaging capabilities.</li>
         </ul>
       ]]>
    </description>

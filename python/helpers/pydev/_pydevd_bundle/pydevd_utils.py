@@ -341,6 +341,12 @@ def is_test_item_or_set_up_caller(trace):
         # This can happen when the exception has been raised inside a test item or set up caller.
         return False
 
+    abs_path, _, _ = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(trace.tb_next.tb_frame)
+    if not in_project_roots(abs_path):
+        # The next stack frame must be the frame of a project scope function, otherwise we risk stopping
+        # at a line a few times since multiple test framework functions we are looking for may appear in the stack.
+        return False
+
     # Set up and tear down methods can be checked immediately, since they are shared by both `pytest` and `unittest`.
     unittest_set_up_and_tear_down_methods = ('_callSetUp', '_callTearDown')
     if frame.f_code.co_name in unittest_set_up_and_tear_down_methods:
@@ -361,24 +367,35 @@ def is_test_item_or_set_up_caller(trace):
         if frame.f_code.co_name in ('pytest_pyfunc_call', 'call_fixture_func', '_eval_scope_callable', '_teardown_yield_fixture'):
             return True
     else:
+        import unittest
+        test_case_obj = frame.f_locals.get('self')
+
+        # Check for `_FailedTest` is important to detect cases when tests cannot be run on the first place,
+        # e.g. there was an import error in the test module. Can happen both in Python 3.8 and earlier versions.
+        if isinstance(test_case_obj, getattr(getattr(unittest, 'loader', None), '_FailedTest', None)):
+            return False
+
         if frame.f_code.co_name in ('_callTestMethod', 'runTest', 'subTest'):
             # unittest and nose
             return True
-        elif not IS_PY38_OR_GREATER and frame.f_code.co_name == 'run':
-            # unittest for Python versions < 3.8
-            import unittest
-            return isinstance(frame.f_locals.get('self'), unittest.TestCase)
+        elif frame.f_code.co_name == 'run':
+            if not IS_PY38_OR_GREATER:
+                # unittest for Python versions < 3.8
+                return isinstance(test_case_obj, unittest.TestCase)
 
     return False
 
 
-def should_stop_on_failed_test(trace):
+# noinspection SpellCheckingInspection
+def should_stop_on_failed_test(exc_info):
     """Check if the debugger should stop on failed test. Some failed tests can be marked as expected failures
     and should be ignored because of that.
 
-    :param trace: stack trace object from a test item caller
+    :param exc_info: exception type, value, and traceback
     :return: `False` if test is marked as an expected failure, ``True`` otherwise.
     """
+    exc_type, _, trace = exc_info
+
     # unittest
     test_item = trace.tb_frame.f_locals.get('method') if IS_PY38_OR_GREATER else trace.tb_frame.f_locals.get('testMethod')
     if test_item:
@@ -387,10 +404,19 @@ def should_stop_on_failed_test(trace):
     # pytest
     testfunction = trace.tb_frame.f_locals.get('testfunction')
     if testfunction and hasattr(testfunction, 'pytestmark'):
+        # noinspection PyBroadException
         try:
             for attr in testfunction.pytestmark:
+                # noinspection PyUnresolvedReferences
                 if attr.name == 'xfail':
-                    return False
+                    # noinspection PyUnresolvedReferences
+                    exc_to_ignore = attr.kwargs.get('raises')
+                    if not exc_to_ignore:
+                        return True
+                    elif hasattr(exc_to_ignore, '__iter__'):
+                        return exc_type not in exc_to_ignore
+                    else:
+                        return exc_type is not exc_to_ignore
         except BaseException:
             pass
     return True

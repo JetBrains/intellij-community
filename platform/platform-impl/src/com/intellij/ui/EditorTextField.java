@@ -63,6 +63,9 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
+/**
+ * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
+ */
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
@@ -84,6 +87,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
+  private boolean myShowPlaceholderWhenFocused;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;
@@ -154,6 +158,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setFontInheritedFromLAF(boolean b) {
     myInheritSwingFont = b;
     setDocument(myDocument); // reinit editor.
+  }
+
+  public void setShowPlaceholderWhenFocused(boolean b) {
+    myShowPlaceholderWhenFocused = b;
+    if (myEditor != null) {
+      myEditor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+    }
   }
 
   @NotNull
@@ -552,6 +563,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.getContentComponent().addMouseListener(this);
 
     editor.setPlaceholder(myHintText);
+    editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
     initOneLineMode(editor);
 

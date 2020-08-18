@@ -3,7 +3,6 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -448,7 +447,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return ActivityCategory.MODULE_EXTENSION;
   }
 
-  private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  // This method needs to be synchronized because XmlExtensionAdapter.createInstance takes a lock on itself, and if it's called without
+  // EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
+  // (EP->adapter in one thread, adapter->EP in the other thread)
+  private synchronized @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
       return adapter.createInstance(componentManager);
     }
@@ -929,7 +931,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
   final synchronized void registerExtensions(@NotNull List<Element> extensionElements,
-                                             @NotNull IdeaPluginDescriptor pluginDescriptor,
+                                             @NotNull PluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
                                              @Nullable List<Runnable> listenerCallbacks) {
     if (this.componentManager != componentManager) {

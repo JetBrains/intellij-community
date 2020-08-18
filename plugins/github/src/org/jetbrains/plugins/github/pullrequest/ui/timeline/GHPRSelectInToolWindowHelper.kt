@@ -3,16 +3,16 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 class GHPRSelectInToolWindowHelper(private val project: Project,
-                                   private val remoteUrl: GitRemoteUrlCoordinates,
+                                   private val repository: GHRepositoryCoordinates,
                                    private val pullRequest: GHPRIdentifier) {
 
   fun selectCommit(oid: String) {
-    project.service<GHPRToolWindowTabsManager>().showTab(remoteUrl) { twctr ->
+    project.service<GHPRToolWindowTabsManager>().showTab(repository) { twctr ->
       twctr?.viewPullRequest(pullRequest) {
         it?.selectCommit(oid)
       }
@@ -20,7 +20,7 @@ class GHPRSelectInToolWindowHelper(private val project: Project,
   }
 
   fun selectChange(oid: String?, filePath: String) {
-    project.service<GHPRToolWindowTabsManager>().showTab(remoteUrl) { twctr ->
+    project.service<GHPRToolWindowTabsManager>().showTab(repository) { twctr ->
       twctr?.viewPullRequest(pullRequest) {
         it?.selectChange(oid, filePath)
         twctr.openPullRequestDiff(pullRequest, false)

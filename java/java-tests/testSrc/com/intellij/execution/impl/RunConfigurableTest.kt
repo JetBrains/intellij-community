@@ -27,7 +27,8 @@ import kotlin.test.assertFalse
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             FOLDER, //1
-                            CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, TEMPORARY_CONFIGURATION, FOLDER, //2
+                            CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION,
+                            TEMPORARY_CONFIGURATION, FOLDER, //2
                             TEMPORARY_CONFIGURATION, FOLDER, //3
                             CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
                             FOLDER, //4
@@ -41,12 +42,6 @@ internal class RunConfigurableTest {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule(runPostStartUpActivities = false)
-
-    private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
-      init {
-        createComponent()
-      }
-    }
   }
 
   @JvmField
@@ -61,8 +56,12 @@ internal class RunConfigurableTest {
     val runManager = RunManagerImpl(projectRule.project)
     runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
     runManager.loadState(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml")))
-    val result = MockRunConfigurable(runManager)
-    Disposer.register(projectRule.project, runManager)
+
+    val result = object : ProjectRunConfigurationConfigurable(projectRule.project) {
+      override val runManager = runManager
+    }
+    result.createComponent()
+    Disposer.register(disposableRule.disposable, runManager)
     Disposer.register(runManager, result)
     result
   }
@@ -190,7 +189,9 @@ internal class RunConfigurableTest {
     checkPositionToMove(17, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(17, 18, BELOW))
   }
 
-  private fun checkPositionToMove(selectedRow: Int, direction: Int, expected: Trinity<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>?) {
+  private fun checkPositionToMove(selectedRow: Int,
+                                  direction: Int,
+                                  expected: Trinity<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>?) {
     tree.setSelectionRow(selectedRow)
     assertThat(configurable.getAvailableDropPosition(direction)).isEqualTo(expected)
   }

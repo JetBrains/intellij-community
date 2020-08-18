@@ -184,12 +184,14 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
   fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String): Self =
     annotationParam(parameterName, uAnnotationQualifiedNamePattern(annotationQualifiedName))
 
-
   fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String): Self =
     annotationParam(string().equalTo(annotationQualifiedName), parameterName)
 
   fun annotationParams(@NonNls annotationQualifiedName: String, @NonNls parameterNames: ElementPattern<String>): Self =
     annotationParams(uAnnotationQualifiedNamePattern(string().equalTo(annotationQualifiedName)), parameterNames)
+
+  fun annotationParams(@NonNls annotationQualifiedNames: List<String>, @NonNls parameterNames: ElementPattern<String>): Self =
+    annotationParams(uAnnotationQualifiedNamePattern(string().oneOf(annotationQualifiedNames)), parameterNames)
 
   fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
     filterWithContext { it, context -> it.getUCallExpression()?.let { callPattern.accepts(it, context) } ?: false }

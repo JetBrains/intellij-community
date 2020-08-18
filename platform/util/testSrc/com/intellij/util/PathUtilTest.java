@@ -143,6 +143,8 @@ public class PathUtilTest {
   @Test
   public void comparator() {
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("", "")).isEqualTo(0);
+    assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/", "")).isPositive();
+    assertThat(OSAgnosticPathUtil.COMPARATOR.compare("", "\\")).isNegative();
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/", Character.toString('/'))).isEqualTo(0);
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("//", "\\\\")).isEqualTo(0);
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/a/b", "\\a\\b")).isEqualTo(0);
@@ -154,10 +156,25 @@ public class PathUtilTest {
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/a/b", "/a/b/c")).isNegative();
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/a/b", "/a/bc")).isNegative();
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/a/b", "/a/b.c")).isNegative();
+    assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/a/b/c", "/a/b.c")).isNegative();
 
     List<String> paths = Arrays.asList("/a/bC", "/a/b-c", "/a/b", "/a/b/c", null);
     Collections.shuffle(paths);
     Collections.sort(paths, OSAgnosticPathUtil.COMPARATOR);
     assertThat(paths).containsExactly(null, "/a/b", "/a/b/c", "/a/b-c", "/a/bC");
+  }
+
+  @Test
+  public void startsWith() {
+    assertThat(OSAgnosticPathUtil.startsWith("", "")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("/", "/")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("/", "\\")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("", "\\")).isFalse();
+    assertThat(OSAgnosticPathUtil.startsWith("/a\\b", "\\a")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("/a\\b", "\\a/")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("/ab", "\\a")).isFalse();
+    assertThat(OSAgnosticPathUtil.startsWith("/ab", "/a")).isFalse();
+    assertThat(OSAgnosticPathUtil.startsWith("/a/b\\c", "/a\\b")).isTrue();
+    assertThat(OSAgnosticPathUtil.startsWith("/a/bc", "/a\\b")).isFalse();
   }
 }

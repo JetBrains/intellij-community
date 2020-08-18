@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
@@ -6,13 +6,16 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
+import com.intellij.ui.components.DefaultLinkButtonUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class HeadlessLafManagerImpl extends LafManager {
   public HeadlessLafManagerImpl() {
-    UIManager.getLookAndFeelDefaults().put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+    defaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
   }
 
   @Override

@@ -124,7 +124,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendor(currentValueString);
     }
     else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(currentValueString);
+      currentPlugin.addDepends(currentValueString, false);
     }
     else if (qName.equals(CHANGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValueString);

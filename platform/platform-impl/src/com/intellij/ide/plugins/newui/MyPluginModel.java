@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -13,6 +14,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-public abstract class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
+public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
 
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
@@ -76,7 +78,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
-  protected MyPluginModel() {
+  public MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
     if (myStatusBar == null && window != null) {
@@ -323,7 +325,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
                              @NotNull IdeaPluginDescriptor descriptor,
                              @Nullable IdeaPluginDescriptor updateDescriptor,
                              @NotNull ModalityState modalityState) {
-    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
+    final IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(actionDescriptor))) {
       return;
@@ -351,10 +353,20 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     PluginNode pluginNode;
     if (actionDescriptor instanceof PluginNode) {
       pluginNode = (PluginNode)actionDescriptor;
+      if (!pluginNode.detailsLoaded()) {
+        Ref<PluginNode> fullNode = new Ref<>();
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> fullNode.set(MarketplaceRequests.getInstance().loadPluginDetails(((PluginNode) actionDescriptor))),
+            IdeBundle.message("progress.title.loading.plugin.details"), true, null, parentComponent)
+        ) {
+          return;
+        }
+        pluginNode = fullNode.get();
+      }
     }
     else {
       pluginNode = new PluginNode(actionDescriptor.getPluginId(), actionDescriptor.getName(), "-1");
-      pluginNode.setDepends(Arrays.asList(actionDescriptor.getDependentPluginIds()), actionDescriptor.getOptionalDependentPluginIds());
+      pluginNode.setDependencies(actionDescriptor.getDependencies());
       pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
     }
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
@@ -1039,7 +1051,9 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
   }
 
   @NotNull
-  abstract protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins();
+  protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+  }
 
   @NotNull
   private List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {

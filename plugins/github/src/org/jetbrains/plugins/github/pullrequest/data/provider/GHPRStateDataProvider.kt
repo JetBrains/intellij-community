@@ -34,6 +34,9 @@ interface GHPRStateDataProvider {
   @CalledInAny
   fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit>
 
+  @CalledInAwt
+  fun markReadyForReview(progressIndicator: ProgressIndicator): CompletableFuture<Unit>
+
   @CalledInAny
   fun merge(progressIndicator: ProgressIndicator, commitMessage: Pair<String, String>, currentHeadRef: String): CompletableFuture<Unit>
 

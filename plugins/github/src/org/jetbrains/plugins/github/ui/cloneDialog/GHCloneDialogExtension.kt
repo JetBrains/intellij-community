@@ -86,28 +86,26 @@ private class GHCloneDialogExtensionComponent(project: Project) : BaseCloneDialo
   override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
     listOf(createLoginAction(account), createLoginWithTokenAction(account))
 
-      private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
-        val isExistingAccount = account != null
-        return AccountMenuItem.Action(
-          if (isExistingAccount) message("login.action") else message("login.via.github.action"),
-          {
-            switchToLogin(account)
-            getLoginPanel()?.setPrimaryLoginUi()
-          },
-          showSeparatorAbove = !isExistingAccount
-        )
-      }
-
-  private fun createLoginWithTokenAction(account: GithubAccount?): AccountMenuItem.Action {
+  private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
     val isExistingAccount = account != null
     return AccountMenuItem.Action(
-      if (isExistingAccount) message("login.with.token.action") else message("accounts.add.with.token"),
+      message("login.via.github.action"),
+      {
+        switchToLogin(account)
+        getLoginPanel()?.setPrimaryLoginUi()
+      },
+      showSeparatorAbove = !isExistingAccount
+    )
+  }
+
+  private fun createLoginWithTokenAction(account: GithubAccount?): AccountMenuItem.Action =
+    AccountMenuItem.Action(
+      message("login.with.token.action"),
       {
         switchToLogin(account)
         getLoginPanel()?.setTokenUi()
       }
     )
-  }
 
   private fun getLoginPanel(): GHCloneDialogLoginPanel? = content as? GHCloneDialogLoginPanel
 }

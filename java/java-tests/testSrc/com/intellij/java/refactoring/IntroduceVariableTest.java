@@ -149,6 +149,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testReturnOrAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testFieldInitializer() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testFieldInitializerDenormalized() { doTest("temp", true, false, false, "int"); }
   public void testAssignTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testEnsureCodeBlockAroundBreakStatement() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testEnsureCodeBlockForThrows() { doTest("temp", true, false, false, JAVA_LANG_STRING); }

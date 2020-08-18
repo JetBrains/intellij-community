@@ -3,6 +3,7 @@ package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
@@ -267,22 +268,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLogSystemEventId() {
-    getSystemEventIdFile().delete()
-    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
-                                                 TestFeatureUsageEventWriter())
-    logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
-    logger.logAsync(EventLogGroup("group.id.2", 1), "test.action.2", false)
-    logger.dispose()
-    val logged = logger.testWriter.logged
-    UsefulTestCase.assertSize(2, logged)
-    assertEquals(logged[0].event.data["system_event_id"], 0.toLong())
-    assertEquals(logged[1].event.data["system_event_id"], 1.toLong())
-  }
-
-
-  @Test
-  fun testLogSystemEventIdFromFile() {
-    getSystemEventIdFile().writeText("42")
+    val statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance()
+    val oldSystemEventId = statisticsPersistenceComponent.getEventId(TEST_RECORDER)
+    statisticsPersistenceComponent.setEventId(TEST_RECORDER, 42L)
     val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
                                                  TestFeatureUsageEventWriter())
     logger.logAsync(EventLogGroup("group.id.1", 1), "test.action.1", false)
@@ -292,6 +280,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     UsefulTestCase.assertSize(2, logged)
     assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
     assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
+    statisticsPersistenceComponent.setEventId(TEST_RECORDER, oldSystemEventId)
   }
 
   @Test
@@ -464,10 +453,6 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   enum class TestEnum { FOO, BAR }
 
-  private fun getSystemEventIdFile() =
-    EventLogConfiguration.getEventLogSettingsPath().resolve("test_system_event_id").toFile()
-
-
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
     val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(logger, callback, *expected)
@@ -512,12 +497,14 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 }
 
+private const val TEST_RECORDER = "TEST"
+
 class TestFeatureUsageFileEventLogger(session: String,
                                       build: String,
                                       bucket: String,
                                       recorderVersion: String,
                                       writer: TestFeatureUsageEventWriter) :
-  StatisticsFileEventLogger("TEST", session, build, bucket, recorderVersion, writer) {
+  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer) {
   val testWriter = writer
 
   override fun dispose() {

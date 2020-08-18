@@ -79,6 +79,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
+
+    setSelected(myComponent, isSelected && isSelectable);
+    setSelected(myTextLabel, isSelected && isSelectable);
+    setSelected(myNextStepLabel, isSelected && isSelectable);
+
     if (step instanceof BaseListPopupStep) {
       Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
       Color fg = ((BaseListPopupStep<E>)step).getForegroundFor(value);
@@ -114,10 +119,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myNextStepLabel.setVisible(false);
     }
-
-    setSelected(myComponent, isSelected && isSelectable);
-    setSelected(myTextLabel, isSelected && isSelectable);
-    setSelected(myNextStepLabel, isSelected && isSelectable);
 
     if (myShortcutLabel != null) {
       myShortcutLabel.setEnabled(isSelectable);

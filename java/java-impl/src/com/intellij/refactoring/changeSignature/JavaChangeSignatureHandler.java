@@ -83,7 +83,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && 
                                     (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass)) &&
-                                    !method.equals(JavaPsiRecordUtil.findCanonicalConstructor(containingClass));
+                                    !JavaPsiRecordUtil.isCanonicalConstructor(method);
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
 

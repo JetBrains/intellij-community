@@ -178,7 +178,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                         // TODO: fix script runtime path
                         val config = evaluateModel(targetJar, "")
                         _error.value = null
-                        _config.value = config
+                        //_config.value = config
                     } else {
                         _error.value = "Compilation failed, $compile"
                     }

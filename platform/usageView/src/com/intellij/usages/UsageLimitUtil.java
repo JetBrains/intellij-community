@@ -16,13 +16,12 @@ public final class UsageLimitUtil {
   }
 
   @NotNull
-  public static Result showTooManyUsagesWarning(@NotNull final Project project,
-                                                @NotNull final String message,
-                                                @NotNull final UsageViewPresentation usageViewPresentation) {
+  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final String message) {
     int result = runOrInvokeAndWait(() -> {
-      String title = UsageViewBundle.message("find.excessive.usages.title", usageViewPresentation.getUsagesWord(2));
-      return Messages.showOkCancelDialog(project, message,
-                                         title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
+      String title = UsageViewBundle.message("find.excessive.usages.title");
+      return Messages.showOkCancelDialog(project, message, title,
+                                         UsageViewBundle.message("button.text.continue"),
+                                         UsageViewBundle.message("button.text.abort"),
                                          Messages.getWarningIcon());
     });
     return result == Messages.OK ? Result.CONTINUE : Result.ABORT;

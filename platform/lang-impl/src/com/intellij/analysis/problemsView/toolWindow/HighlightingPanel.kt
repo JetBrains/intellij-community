@@ -47,11 +47,12 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   override fun getToolWindowIcon(count: Int): Icon? {
     if (Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled")) return null
-    val problem = (treeModel.root as? HighlightingFileRoot)?.getChildren()?.any {
+    val root = treeModel.root as? HighlightingFileRoot ?: return Toolwindows.ToolWindowProblemsEmpty
+    val problem = root.getChildren(root.file).any {
       val severity = (it as? ProblemNode)?.severity
       severity != null && severity >= HighlightSeverity.ERROR.myVal
     }
-    return if (problem == true) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
+    return if (problem) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
   }
 
   override fun selectionChangedTo(selected: Boolean) {
@@ -114,7 +115,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     val document = ProblemsView.getDocument(project, file) ?: return statusAnalyzing(file)
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)
     val model = editor.markupModel as? EditorMarkupModel ?: return statusAnalyzing(file)
-    val status = model.errorStripeRenderer?.getStatus(editor) ?: return statusAnalyzing(file)
+    val status = model.errorStripeRenderer?.getStatus(editor) ?: return statusComplete(file)
     return when (status.analyzingType) {
       AnalyzingType.SUSPENDED -> Status(status.title, status.details, request = true)
       AnalyzingType.COMPLETE -> statusComplete(file, state.hideBySeverity.isNotEmpty())
@@ -132,7 +133,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     return Status(title, request = true)
   }
 
-  private fun statusComplete(file: VirtualFile, filtered: Boolean): Status {
+  private fun statusComplete(file: VirtualFile, filtered: Boolean = false): Status {
     val title = ProblemsViewBundle.message("problems.view.highlighting.problems.not.found", file.name)
     if (filtered) {
       val details = ProblemsViewBundle.message("problems.view.highlighting.problems.not.found.filter")

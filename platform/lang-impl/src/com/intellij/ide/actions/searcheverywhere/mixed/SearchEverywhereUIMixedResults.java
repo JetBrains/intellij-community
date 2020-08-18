@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
@@ -183,9 +184,26 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
              : element2.getContributor() == myStubCommandContributor ? -1 : 0;
     };
 
-    myListModel.setElementsComparator(commandsComparator
-                                        .thenComparing(SearchEverywhereFoundElementInfo.COMPARATOR)
-                                        .reversed());
+    Comparator<SearchEverywhereFoundElementInfo> recentFilesComparator = (element1, element2) -> {
+      boolean firstIsRecent = element1.getContributor() instanceof RecentFilesSEContributor;
+      boolean secondIsRecent = element2.getContributor() instanceof RecentFilesSEContributor;
+
+      if (firstIsRecent && secondIsRecent) {
+        return Integer.compare(element1.getPriority(), element2.getPriority());
+      }
+
+      if (!firstIsRecent && !secondIsRecent) {
+        return 0;
+      }
+
+      return firstIsRecent ? 1 : -1;
+    };
+
+    Comparator<SearchEverywhereFoundElementInfo> comparator = commandsComparator;
+    if (Registry.is("search.everywhere.recent.at.top")) comparator = comparator.thenComparing(recentFilesComparator);
+    comparator = comparator.thenComparing(SearchEverywhereFoundElementInfo.COMPARATOR).reversed();
+    myListModel.setElementsComparator(comparator);
+
     addListDataListener(myListModel);
 
     return new JBList<>(myListModel);
@@ -1354,7 +1372,7 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
               tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
               if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.USAGES_LIMIT &&
                   tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, presentation, null);
+                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null);
                 return !progressIndicator.isCanceled();
               }
               return true;

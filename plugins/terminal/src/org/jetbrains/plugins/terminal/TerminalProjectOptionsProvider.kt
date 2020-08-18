@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,37 +13,37 @@ import java.io.File
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
-@State(name = "TerminalProjectOptionsProvider", storages = [(Storage("terminal.xml"))])
+@State(name = "TerminalProjectNonSharedOptionsProvider", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
-  private val myState = State()
+  private val state = State()
 
   override fun getState(): State? {
-    return myState
+    return state
   }
 
-  override fun loadState(state: State) {
-    myState.myStartingDirectory = state.myStartingDirectory
-    myState.myShellPath = state.myShellPath
-    myState.envDataOptions = state.envDataOptions
+  override fun loadState(newState: State) {
+    state.startingDirectory = newState.startingDirectory
+    state.shellPath = newState.shellPath
+    state.envDataOptions = newState.envDataOptions
   }
 
   fun getEnvData(): EnvironmentVariablesData {
-    return myState.envDataOptions.get()
+    return state.envDataOptions.get()
   }
 
   fun setEnvData(envData: EnvironmentVariablesData) {
-    myState.envDataOptions.set(envData)
+    state.envDataOptions.set(envData)
   }
 
   class State {
-    var myStartingDirectory: String? = null
-    var myShellPath: String? = null
+    var startingDirectory: String? = null
+    var shellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
     var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
-  var startingDirectory: String? by ValueWithDefault(myState::myStartingDirectory) { defaultStartingDirectory }
+  var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
@@ -75,7 +72,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return dir?.canonicalPath
   }
 
-  var shellPath: String by ValueWithDefault(myState::myShellPath) { defaultShellPath() }
+  var shellPath: String by ValueWithDefault(state::shellPath) { defaultShellPath() }
 
   fun defaultShellPath(): String {
     if (SystemInfo.isWindows) {
@@ -111,11 +108,15 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      val provider = ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
-      val appEnvData = TerminalOptionsProvider.instance.getEnvData()
-      if (provider.getEnvData() == EnvironmentVariablesData.DEFAULT && appEnvData != EnvironmentVariablesData.DEFAULT) {
-        provider.setEnvData(appEnvData)
-        TerminalOptionsProvider.instance.setEnvData(EnvironmentVariablesData.DEFAULT)
+      val provider = project.getService(TerminalProjectOptionsProvider::class.java)
+      val oldState = project.getService(TerminalProjectOptionsProviderOld::class.java).getAndClear()
+      if (oldState != null &&
+          provider.state.startingDirectory == null &&
+          provider.state.shellPath == null &&
+          provider.state.envDataOptions.get() == EnvironmentVariablesData.DEFAULT) {
+        provider.state.startingDirectory = oldState.myStartingDirectory
+        provider.state.shellPath = oldState.myShellPath
+        provider.state.envDataOptions.set(oldState.envDataOptions.get())
       }
       return provider
     }

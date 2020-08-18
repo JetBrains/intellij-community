@@ -225,4 +225,22 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public boolean hasOverhead() {
     return true;
   }
+
+  /**
+   * for kotlin compatibility only
+   * @deprecated to be removed in IDEA 2021
+   */
+  @Deprecated
+  @Override
+  public boolean isApplicable(Type type) {
+    if (!(type instanceof ReferenceType)) {
+      return false;
+    }
+
+    if (JAVA_LANG_STRING.equals(type.name())) {
+      return false; // do not render 'String' objects for performance reasons
+    }
+
+    return overridesToString(type);
+  }
 }

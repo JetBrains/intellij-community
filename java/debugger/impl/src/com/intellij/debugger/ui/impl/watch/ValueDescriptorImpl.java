@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -38,6 +39,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -292,7 +294,21 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
     getRenderer(debugProcess)
-      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer));
+      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
+      .exceptionally(throwable -> {
+        throwable = DebuggerUtilsAsync.unwrap(throwable);
+        String message;
+        if (throwable instanceof CancellationException) {
+          message = JavaDebuggerBundle.message("error.context.has.changed");
+        }
+        else {
+          message = JavaDebuggerBundle.message("internal.debugger.error");
+          LOG.error(new Throwable(throwable));
+        }
+        setValueLabelFailed(new EvaluateException(message));
+        labelListener.labelChanged();
+        return null;
+      });
 
     return "";
   }
@@ -353,7 +369,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         myIsExpandable = res;
       }
       else {
-        LOG.error(ex);
+        ex = DebuggerUtilsAsync.unwrap(ex);
+        if (!(ex instanceof CancellationException)) {
+          LOG.error(new Throwable(ex));
+        }
       }
       labelListener.labelChanged();
     });

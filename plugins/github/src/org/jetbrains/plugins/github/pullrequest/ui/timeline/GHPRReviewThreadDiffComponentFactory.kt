@@ -12,60 +12,17 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
-import com.intellij.ui.ClickListener
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.PathUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
-import java.awt.Cursor
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.SwingConstants
 
-class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTypeRegistry,
-                                           private val project: Project,
-                                           private val editorFactory: EditorFactory,
-                                           private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper) {
+class GHPRReviewThreadDiffComponentFactory(private val project: Project, private val editorFactory: EditorFactory) {
 
-  fun createComponent(filePath: String, diffHunk: String, commit: String?): JComponent = JBUI.Panels
-    .simplePanel(createDiff(filePath, diffHunk))
-    .addToTop(createFileName(filePath, commit))
-    .andTransparent()
-
-  private fun createFileName(filePath: String, commit: String?): JComponent {
-    val name = PathUtil.getFileName(filePath)
-    val path = PathUtil.getParentPath(filePath)
-    val fileType = fileTypeRegistry.getFileTypeByFileName(name)
-
-    return NonOpaquePanel(HorizontalLayout(UI.scale(5))).apply {
-      add(JLabel(name, fileType.icon, SwingConstants.LEFT).apply {
-        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        object : ClickListener() {
-          override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-            selectInToolWindowHelper.selectChange(commit, filePath)
-            return true
-          }
-        }.installOn(this)
-      })
-
-      if (!path.isBlank())
-        add(JLabel(path).apply {
-          foreground = UIUtil.getContextHelpForeground()
-        })
-    }
-  }
-
-  private fun createDiff(filePath: String, diffHunk: String): JComponent {
+  fun createComponent(diffHunk: String): JComponent {
     try {
-      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
+      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk("_", diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 

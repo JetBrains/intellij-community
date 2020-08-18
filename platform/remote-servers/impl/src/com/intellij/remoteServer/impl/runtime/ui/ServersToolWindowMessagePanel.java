@@ -31,7 +31,9 @@ class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.Me
   ServersToolWindowMessagePanel() {
     myMessageArea.setBackground(UIUtil.getPanelBackground());
     myMessageArea.setBorder(JBUI.Borders.empty());
-    myMessageArea.setCaretPosition(0);
+    if (myMessageArea.getCaret() != null) {
+      myMessageArea.setCaretPosition(0);
+    }
     myMessageArea.setEditable(false);
   }
 

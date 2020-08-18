@@ -4,7 +4,7 @@ package com.intellij.codeInsight.breadcrumbs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class FileBreadcrumbsCollector {
   
-  public static final ExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
-    ExtensionPointName.create("com.intellij.fileBreadcrumbsCollector");
+  public static final ProjectExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.fileBreadcrumbsCollector");
 
   /**
    * Checks if this collector handles the given file.
@@ -59,6 +59,6 @@ public abstract class FileBreadcrumbsCollector {
         }
       }
     }
-    return ContainerUtil.getLastItem(EP_NAME.getExtensionList(project));
+    return ContainerUtil.getLastItem(EP_NAME.getPoint(project).getExtensionList());
   }
 }

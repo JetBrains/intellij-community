@@ -667,7 +667,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
     @Override
     public String getToolTipText(MouseEvent event) {
-      String toolTipText = getToolTipText();
+      String toolTipText = super.getToolTipText(event);
       if (toolTipText != null) {
         return toolTipText;
       }

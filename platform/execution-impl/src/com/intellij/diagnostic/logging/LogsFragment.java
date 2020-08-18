@@ -69,6 +69,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
     myFilesTable.setShowHorizontalLines(false);
     myFilesTable.setShowVerticalLines(false);
     myFilesTable.setIntercellSpacing(new Dimension(0, 0));
+    myFilesTable.setupEasyFocusTraversing();
 
     myComponent = ToolbarDecorator.createDecorator(myFilesTable)
       .setToolbarPosition(ActionToolbarPosition.BOTTOM)

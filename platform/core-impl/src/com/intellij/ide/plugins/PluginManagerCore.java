@@ -436,7 +436,9 @@ public final class PluginManagerCore {
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
         // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
-        MethodHandle addURL = MethodHandles.lookup().findVirtual(loader.getClass(), "addURL", MethodType.methodType(void.class, URL.class));
+        Class<?> loaderClass = loader.getClass();
+        if (loaderClass.getName().endsWith(".BootstrapClassLoaderUtil$TransformingLoader")) loaderClass = loaderClass.getSuperclass();
+        MethodHandle addURL = MethodHandles.lookup().findVirtual(loaderClass, "addURL", MethodType.methodType(void.class, URL.class));
         for (Path pathElement : classPath) {
           addURL.invoke(loader, localFileToUrl(pathElement, descriptor));
         }
@@ -706,7 +708,7 @@ public final class PluginManagerCore {
 
   public static void getDescriptorsToMigrate(@NotNull Path dir,
                                              @Nullable BuildNumber compatibleBuildNumber,
-                                             @Nullable String bundledPluginsPath,
+                                             @Nullable Path bundledPluginsPath,
                                              @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
                                              List<IdeaPluginDescriptorImpl> pluginsToMigrate,
                                              List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
@@ -715,11 +717,7 @@ public final class PluginManagerCore {
       () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
     );
     int flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR | DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult);
-    if (bundledPluginsPath != null) {
-      context.loadBundledPlugins = true;
-      context.bundledPluginsPath = bundledPluginsPath;
-    }
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult, bundledPluginsPath);
     PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir);
 
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {

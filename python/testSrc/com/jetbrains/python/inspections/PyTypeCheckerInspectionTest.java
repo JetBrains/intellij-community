@@ -1128,4 +1128,15 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
     );
   }
+
+  // PY-42205
+  public void testNonReferenceCallee() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class CallableTest:\n" +
+                         "    def __call__(self, arg=None):\n" +
+                         "        pass\n" +
+                         "CallableTest()(\"bad 1\")")
+    );
+  }
 }

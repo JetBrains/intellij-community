@@ -284,7 +284,7 @@ public class WindowsDefenderChecker {
         String canonical = path.toRealPath().toString();
         boolean found = false;
         for (Pattern pattern : excludedPatterns) {
-          if (pattern.matcher(canonical).matches()) {
+          if (pattern.matcher(canonical).matches() || pattern.matcher(path.toString()).matches()) {
             found = true;
             result.put(path, true);
             break;
@@ -310,14 +310,10 @@ public class WindowsDefenderChecker {
         PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
       }
     });
-    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
-      }
-    });
+  }
 
+  public String getNotificationText(Set<? extends Path> nonExcludedPaths) {
+    return DiagnosticBundle.message("virus.scanning.warn.message", StringUtil.join(nonExcludedPaths, "<br/>"));
   }
 
   public String getConfigurationInstructionsUrl() {

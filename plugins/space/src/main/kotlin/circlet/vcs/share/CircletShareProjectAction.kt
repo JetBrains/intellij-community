@@ -1,34 +1,50 @@
 package circlet.vcs.share
 
-import circlet.actions.*
-import circlet.client.*
-import circlet.client.api.*
-import circlet.components.*
-import circlet.settings.*
-import circlet.vcs.*
-import com.intellij.*
-import com.intellij.dvcs.repo.*
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.fileEditor.*
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vfs.*
-import com.intellij.util.containers.*
-import com.intellij.vcsUtil.*
-import git4idea.*
-import git4idea.actions.*
-import git4idea.commands.*
-import git4idea.i18n.*
-import git4idea.repo.*
-import git4idea.util.*
-import libraries.coroutines.extra.*
-import libraries.klogging.*
-import runtime.*
-import java.util.HashSet
+import circlet.actions.CircletActionUtils
+import circlet.client.api.RepoDetails
+import circlet.client.api.identifier
+import circlet.client.api.impl.vcsPasswords
+import circlet.client.td
+import circlet.components.circletWorkspace
+import circlet.settings.CircletSettings
+import circlet.settings.CloneType
+import circlet.vcs.CircletHttpPasswordState
+import circlet.vcs.CircletProjectContext
+import circlet.vcs.CircletSetGitHttpPasswordDialog
+import com.intellij.CommonBundle
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcsUtil.VcsFileUtil
+import git4idea.GitUtil
+import git4idea.actions.GitInit
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
+import git4idea.util.GitFileUtils
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
+import libraries.klogging.KLogger
+import libraries.klogging.logger
+import runtime.Ui
+import java.util.*
 
 class CircletShareProjectAction : DumbAwareAction() {
     private val log: KLogger = logger<CircletShareProjectAction>()
@@ -128,9 +144,9 @@ class CircletShareProjectAction : DumbAwareAction() {
         val client = circletWorkspace.workspace.value?.client ?: return CircletHttpPasswordState.NotSet
         val me = circletWorkspace.workspace.value?.me?.value ?: return CircletHttpPasswordState.NotSet
         val td = client.td
-        val gitHttpPassword = td.getVcsPassword(me.id)
+        val gitHttpPassword = client.api.vcsPasswords().getVcsPassword(me.identifier)
         if (gitHttpPassword == null) {
-            val passwordDialog = CircletSetGitHttpPasswordDialog(me, td, client.repoService)
+            val passwordDialog = CircletSetGitHttpPasswordDialog(me, client)
             if (passwordDialog.showAndGet() && passwordDialog.result is CircletHttpPasswordState.Set) {
                 return passwordDialog.result
             }

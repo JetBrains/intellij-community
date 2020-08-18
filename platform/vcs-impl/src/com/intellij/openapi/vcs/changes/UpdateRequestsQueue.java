@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -27,11 +28,11 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 @SomeQueue
 public final class UpdateRequestsQueue {
-  private final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
+  private static final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
-  private final Runnable myDelegate;
+  private final BooleanSupplier myDelegate;
   private final Object myLock = new Object();
   private volatile boolean myStarted;
   private volatile boolean myStopped;
@@ -42,7 +43,9 @@ public final class UpdateRequestsQueue {
   private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
 
-  public UpdateRequestsQueue(@NotNull Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, @NotNull Runnable delegate) {
+  public UpdateRequestsQueue(@NotNull Project project,
+                             @NotNull ChangeListManagerImpl.Scheduler scheduler,
+                             @NotNull BooleanSupplier delegate) {
     myProject = project;
     myScheduler = scheduler;
     myDelegate = delegate;
@@ -188,7 +191,7 @@ public final class UpdateRequestsQueue {
   private final class MyRunnable implements Runnable {
     @Override
     public void run() {
-      final List<Runnable> copy = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
+      final List<Runnable> copy = new ArrayList<>();
       try {
         synchronized (myLock) {
           if (!myRequestSubmitted) return;
@@ -213,8 +216,17 @@ public final class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        myDelegate.run();
-        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
+        boolean success = myDelegate.getAsBoolean(); // CLM.updateImmediately
+        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", was success: " + success +
+                  ", runnable: " + hashCode());
+
+        if (!success) {
+          // Refresh was cancelled, will fire events later
+          synchronized (myLock) {
+            myWaitingUpdateCompletionQueue.addAll(0, copy);
+            copy.clear();
+          }
+        }
       }
       finally {
         synchronized (myLock) {

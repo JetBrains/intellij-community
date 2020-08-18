@@ -103,8 +103,7 @@ public class ClsParsingUtil {
   static PsiExpression psiToClsExpression(@NotNull PsiExpression expr, @NotNull ClsElementImpl parent) {
     if (expr instanceof PsiLiteralExpression) {
       PsiFile file = parent.getContainingFile();
-      if (!(file instanceof ClsFileImpl)) throw new ClassCastException("Unexpected: " + file);
-      boolean forDecompiling = ((ClsFileImpl)file).isForDecompiling();
+      boolean forDecompiling = file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling();
       PsiType type = forDecompiling ? PsiType.NULL : expr.getType();
       Object value = forDecompiling ? null : ((PsiLiteralExpression)expr).getValue();
       return new ClsLiteralExpressionImpl(parent, expr.getText(), type, value);
@@ -144,8 +143,7 @@ public class ClsParsingUtil {
     }
 
     PsiFile file = parent.getContainingFile();
-    if (!(file instanceof ClsFileImpl)) throw new ClassCastException("Unexpected: " + file);
-    if (((ClsFileImpl)file).isForDecompiling()) {
+    if (file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling()) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
     }
 

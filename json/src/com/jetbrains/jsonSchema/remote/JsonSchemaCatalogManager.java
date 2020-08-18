@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -18,12 +20,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class JsonSchemaCatalogManager {
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.azurewebsites.net/api/json/catalog.json";
+  private static final Set<String> SCHEMA_URLS_WITH_TOO_MANY_VARIANTS = ImmutableSet.of(
+    "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json"
+  );
+
   private final @NotNull Project myProject;
   private final @NotNull JsonSchemaRemoteContentProvider myRemoteContentProvider;
   private @Nullable VirtualFile myCatalog = null;
@@ -61,20 +68,20 @@ public class JsonSchemaCatalogManager {
     }
 
     String name = file.getName();
+    String schemaUrl = null;
     if (myResolvedMappings.containsKey(name)) {
-      String urlString = myResolvedMappings.get(name);
-      if (EMPTY.equals(urlString)) return null;
-      return JsonFileResolver.resolveSchemaByReference(file, urlString);
+      schemaUrl = myResolvedMappings.get(name);
+      if (EMPTY.equals(schemaUrl)) return null;
     }
-
-    if (myCatalog != null) {
-      String urlString = resolveSchemaFile(file, myCatalog, myProject);
-      if (NO_CACHE.equals(urlString)) return null;
-      myResolvedMappings.put(name, urlString == null ? EMPTY : urlString);
-      return JsonFileResolver.resolveSchemaByReference(file, urlString);
+    else if (myCatalog != null) {
+      schemaUrl = resolveSchemaFile(file, myCatalog, myProject);
+      if (NO_CACHE.equals(schemaUrl)) return null;
+      myResolvedMappings.put(name, StringUtil.notNullize(schemaUrl, EMPTY));
     }
-
-    return null;
+    if (SCHEMA_URLS_WITH_TOO_MANY_VARIANTS.contains(schemaUrl)) {
+      return null;
+    }
+    return JsonFileResolver.resolveSchemaByReference(file, schemaUrl);
   }
 
   public List<JsonSchemaCatalogEntry> getAllCatalogEntries() {

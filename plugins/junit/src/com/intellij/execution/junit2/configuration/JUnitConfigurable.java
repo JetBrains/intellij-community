@@ -265,7 +265,12 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
     }
 
-    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()) {
+      @Override
+      protected boolean productionOnly() {
+        return false;
+      }
+    });
 
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);

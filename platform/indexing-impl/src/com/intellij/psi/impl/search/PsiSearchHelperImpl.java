@@ -342,8 +342,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       };
 
-      List<VirtualFile> directoryNearTargetFiles =
-        ContainerUtil.filter(allFiles, f -> directoryNearTargetScope.contains(f) && !targets.contains(f));
+      List<VirtualFile> directoryNearTargetFiles = ReadAction.compute(() ->
+        ContainerUtil.filter(allFiles, f -> directoryNearTargetScope.contains(f) && !targets.contains(f))
+      );
       if (!directoryNearTargetFiles.isEmpty()) {
         priorities.add(directoryNearTargetFiles);
         allFiles.removeAll(directoryNearTargetFiles);

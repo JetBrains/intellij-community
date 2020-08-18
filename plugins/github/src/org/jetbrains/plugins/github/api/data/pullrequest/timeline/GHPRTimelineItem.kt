@@ -24,7 +24,10 @@ ReadyForReviewEvent
 BaseRefChangedEvent | BaseRefForcePushedEvent
 HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent
 
+//comment reference
 CrossReferencedEvent
+//issue will be closed
+ConnectedEvent | DisconnectedEvent
 */
 
 /*MAYBE
@@ -32,7 +35,6 @@ LockedEvent | UnlockedEvent
 MarkedAsDuplicateEvent | UnmarkedAsDuplicateEvent
 ConvertToDraftEvent
 
-CommentDeletedEvent
 ???PullRequestCommitCommentThread
 ???PullRequestReviewThread
 AddedToProjectEvent
@@ -51,12 +53,12 @@ PullRequestReviewThread
 PinnedEvent | UnpinnedEvent
 SubscribedEvent | UnsubscribedEvent
 MilestonedEvent | DemilestonedEvent
-ConnectedEvent | DisconnectedEvent
 AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
  */
 /*IGNORE
 ReferencedEvent
 MentionedEvent
+CommentDeletedEvent
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true,
               defaultImpl = Unknown::class)
@@ -67,6 +69,7 @@ MentionedEvent
 
   JsonSubTypes.Type(name = "ReviewDismissedEvent", value = GHPRReviewDismissedEvent::class),
   JsonSubTypes.Type(name = "ReadyForReviewEvent", value = GHPRReadyForReviewEvent::class),
+  JsonSubTypes.Type(name = "ConvertToDraftEvent", value = GHPRConvertToDraftEvent::class),
 
   JsonSubTypes.Type(name = "RenamedTitleEvent", value = GHPRRenamedTitleEvent::class),
 
@@ -90,12 +93,14 @@ MentionedEvent
   JsonSubTypes.Type(name = "HeadRefForcePushedEvent", value = GHPRHeadRefForcePushedEvent::class),
   JsonSubTypes.Type(name = "HeadRefRestoredEvent", value = GHPRHeadRefRestoredEvent::class),
 
-  JsonSubTypes.Type(name = "CrossReferencedEvent", value = GHPRCrossReferencedEvent::class)
+  JsonSubTypes.Type(name = "CrossReferencedEvent", value = GHPRCrossReferencedEvent::class),
+  JsonSubTypes.Type(name = "ConnectedEvent", value = GHPRConnectedEvent::class),
+  JsonSubTypes.Type(name = "DisconnectedEvent", value = GHPRDisconnectedEvent::class)
 )
 interface GHPRTimelineItem {
   class Unknown(val __typename: String) : GHPRTimelineItem
 
   companion object {
-    val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent")
+    val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent", "CommentDeletedEvent")
   }
 }

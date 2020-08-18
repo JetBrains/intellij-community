@@ -242,7 +242,7 @@ class PyDBFrame:
                                 should_stop, frame = result
                         if main_debugger.stop_on_failed_tests and main_debugger.is_test_item_or_set_up_caller(trace) \
                                 and not is_exception_in_test_unit_can_be_ignored(exception):
-                            should_stop, frame = should_stop_on_failed_test(trace), frame
+                            should_stop, frame = should_stop_on_failed_test(arg), frame
                             info.pydev_message = "python-AssertionError"
                     except:
                         should_stop = False

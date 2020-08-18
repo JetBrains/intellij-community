@@ -1135,6 +1135,20 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-42205
+  public void testNonReferenceCallee() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(1);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: CallableTest, arg=None",
+                                                              new String[]{"arg=None"},
+                                                              new String[]{"self: CallableTest, "});
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.

@@ -65,7 +65,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
     Toolkit.getDefaultToolkit().addAWTEventListener(myEventListener, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
-  private void layoutButtons() {
+  protected void layoutButtons() {
     Dimension size = myButton.getPreferredSize();
     Insets insets = myButton.getBorder().getBorderInsets(myButton);
     setPreferredSize(new Dimension(size.width + 8 - insets.right, size.height + 8 - insets.top));

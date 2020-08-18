@@ -179,6 +179,10 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
+  public void setupEasyFocusTraversing() {
+    myTable.setupEasyFocusTraversing();
+  }
+
   protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable {
     private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<>();
     public static final int CHECK_MARK = 0;

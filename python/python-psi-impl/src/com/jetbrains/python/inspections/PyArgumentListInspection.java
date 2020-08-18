@@ -55,7 +55,7 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
-      inspectPyArgumentList(node, getHolder(), myTypeEvalContext);
+      inspectPyArgumentList(node, getHolder(), getResolveContext());
     }
 
     @Override
@@ -97,13 +97,13 @@ public class PyArgumentListInspection extends PyInspection {
 
   public static void inspectPyArgumentList(@NotNull PyArgumentList node,
                                            @NotNull ProblemsHolder holder,
-                                           @NotNull TypeEvalContext context,
+                                           @NotNull PyResolveContext resolveContext,
                                            int implicitOffset) {
     if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
@@ -115,7 +115,7 @@ public class PyArgumentListInspection extends PyInspection {
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
           if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
-              decoratedClassInitCall(call.getCallee(), function, context)) {
+              decoratedClassInitCall(call.getCallee(), function, resolveContext)) {
             return;
           }
 
@@ -129,21 +129,23 @@ public class PyArgumentListInspection extends PyInspection {
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
-  public static void inspectPyArgumentList(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder, @NotNull TypeEvalContext context) {
-    inspectPyArgumentList(node, holder, context, 0);
+  public static void inspectPyArgumentList(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder, @NotNull PyResolveContext resolveContext) {
+    inspectPyArgumentList(node, holder, resolveContext, 0);
   }
 
   private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
                                                 @NotNull PyFunction function,
-                                                @NotNull TypeEvalContext context) {
+                                                @NotNull PyResolveContext resolveContext) {
     if (callee instanceof PyReferenceExpression && PyUtil.isInitMethod(function)) {
-      final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference();
+      final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference(resolveContext);
 
       return Arrays
         .stream(classReference.multiResolve(false))
         .map(ResolveResult::getElement)
         .anyMatch(
-          element -> element instanceof PyClass && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, context)
+          element ->
+            element instanceof PyClass &&
+            PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, resolveContext.getTypeEvalContext())
         );
     }
 

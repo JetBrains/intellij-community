@@ -10,6 +10,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @State(
   name = "UsagesStatistic",
   storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
@@ -26,7 +29,11 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   private static final String IS_ALLOWED_ATTR = "allowed";
   private static final String IS_ALLOWED_EAP_ATTR = "allowedEap";
   private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
+  private static final String SYSTEM_EVENT_ATTR = "system-event-id";
+  private static final String EVENT_ID_ATTR = "id";
+  private static final String RECORDER_ATTR = "recorder";
   private long mySentTime = 0;
+  private final Map<String, Long> myRecorderToSystemEventIds = new HashMap<>();
 
   public long getLastTimeSent() {
     return mySentTime;
@@ -63,6 +70,19 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) || Boolean.parseBoolean(isShowNotificationValue));
+
+    myRecorderToSystemEventIds.clear();
+    for (Element path : element.getChildren(SYSTEM_EVENT_ATTR)) {
+      final String recorder = path.getAttributeValue(RECORDER_ATTR);
+      if (StringUtil.isNotEmpty(recorder)) {
+        try {
+          long eventId = Long.parseLong(path.getAttributeValue(EVENT_ID_ATTR, "0"));
+          myRecorderToSystemEventIds.put(recorder, eventId);
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
   }
 
   @Override
@@ -81,6 +101,14 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     if (!isAllowedForEAP) {
       element.setAttribute(IS_ALLOWED_EAP_ATTR, "false");
     }
+
+    for (Map.Entry<String, Long> entry : myRecorderToSystemEventIds.entrySet()) {
+      final Element event = new Element(SYSTEM_EVENT_ATTR);
+      event.setAttribute(RECORDER_ATTR, entry.getKey());
+      event.setAttribute(EVENT_ID_ATTR, String.valueOf(entry.getValue()));
+      element.addContent(event);
+    }
+
     return element;
   }
 
@@ -118,5 +146,14 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   @Nullable
   public static ConsentOptionsProvider getConsentOptionsProvider() {
     return ServiceManager.getService(ConsentOptionsProvider.class);
+  }
+
+  public long getEventId(@NotNull String recorderId) {
+    Long eventId = myRecorderToSystemEventIds.get(recorderId);
+    return eventId != null ? eventId : 0;
+  }
+
+  public void setEventId(@NotNull String recorderId, long eventId) {
+    myRecorderToSystemEventIds.put(recorderId, eventId);
   }
 }

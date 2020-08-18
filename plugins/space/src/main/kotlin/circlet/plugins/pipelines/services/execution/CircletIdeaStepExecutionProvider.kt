@@ -4,6 +4,7 @@ import circlet.pipelines.common.api.StepExecId
 import circlet.pipelines.engine.api.ContainerExecutionData
 import circlet.pipelines.engine.api.GraphLifecycleListener
 import circlet.pipelines.engine.api.StepExecutionScheduler
+import circlet.pipelines.engine.api.storage.AStepExecutionEntity
 import circlet.pipelines.engine.api.storage.AutomationStorageTransaction
 import circlet.pipelines.engine.api.utils.AutomationTracer
 import circlet.pipelines.engine.toFlowGraph
@@ -43,20 +44,26 @@ class CircletIdeaStepExecutionProvider(
     listeners,
     statusHub,
     object : FinishConditionsChecker {
-        override fun markExecutionFinishedCondition(tx: AutomationStorageTransaction,
-                                                    stepExecutionId: Long,
-                                                    exitCode: Int,
-                                                    reason: String?) {
-            TODO("Not yet implemented")
-        }
+      override fun markExecutionFinishedCondition(tx: AutomationStorageTransaction,
+                                                  stepExecutionId: StepExecId,
+                                                  exitCode: Int,
+                                                  reason: String?) {
+        TODO("Not yet implemented")
+      }
 
-        override fun markMessagesReceivedCondition(tx: AutomationStorageTransaction, stepExecutionId: Long) {
-            TODO("Not yet implemented")
-        }
+      override fun markMessagesReceivedCondition(tx: AutomationStorageTransaction, stepExecutionId: StepExecId) {
+        TODO("Not yet implemented")
+      }
 
-        override fun markSnapshotCreatedCondition(tx: AutomationStorageTransaction, stepExecutionId: Long) {
-            TODO("Not yet implemented")
-        }
+      override fun markSnapshotCreatedCondition(tx: AutomationStorageTransaction, stepExecutionId: StepExecId) {
+        TODO("Not yet implemented")
+      }
+
+      override fun subscribeOnAllConditionsMarked(lifetime: Lifetime,
+                                                  handler: (AutomationStorageTransaction, AStepExecutionEntity<*>, Int, String?) -> Unit) {
+        TODO("Not yet implemented")
+      }
+
 
     },
     object: StepExecutionCustomMessages {

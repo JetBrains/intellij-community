@@ -906,6 +906,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val nodeToAdd = DefaultMutableTreeNode(configurationConfigurable)
     treeModel.insertNodeInto(nodeToAdd, node!!, if (selectedNode != null) node.getIndex(selectedNode) + 1 else node.childCount)
     TreeUtil.selectNode(tree, nodeToAdd)
+    IdeFocusManager.getInstance(project).requestFocus(configurationConfigurable.nameTextField, true)
+    configurationConfigurable.nameTextField.selectionStart = 0
+    configurationConfigurable.nameTextField.selectionEnd = settings.name.length
     return configurationConfigurable
   }
 
@@ -1138,7 +1141,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)
-        IdeFocusManager.getInstance(project).requestFocus(configurable.nameTextField, true)
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length
       }

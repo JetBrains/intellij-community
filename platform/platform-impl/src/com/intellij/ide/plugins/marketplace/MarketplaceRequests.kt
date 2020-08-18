@@ -80,6 +80,10 @@ open class MarketplaceRequests {
     "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
+  private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
   private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
@@ -101,16 +105,19 @@ open class MarketplaceRequests {
   ).addParameters(param)
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
-    HttpRequests
-      .request(createFeatureUrl(param))
-      .throwStatusCodeException(false)
-      .productNameAsUserAgent()
-      .connect {
-        objectMapper.readValue(
-          it.inputStream,
-          object : TypeReference<List<FeatureImpl>>() {}
-        )
-      }
+    if (param.isEmpty()) emptyList()
+    else {
+      HttpRequests
+        .request(createFeatureUrl(param))
+        .throwStatusCodeException(false)
+        .productNameAsUserAgent()
+        .connect {
+          objectMapper.readValue(
+            it.inputStream,
+            object : TypeReference<List<FeatureImpl>>() {}
+          )
+        }
+    }
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get features from Marketplace", e)
@@ -208,9 +215,12 @@ open class MarketplaceRequests {
   }
 
 
-  fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
+  fun loadPluginDetails(pluginNode: PluginNode): PluginNode {
+    val externalPluginId = pluginNode.externalPluginId
+    val externalUpdateId = pluginNode.externalUpdateId
+    if (externalPluginId == null || externalUpdateId == null) return pluginNode
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
+    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate)
   }
 
   @Throws(IOException::class)
@@ -250,20 +260,23 @@ open class MarketplaceRequests {
   }
 
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
-    val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
-    val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
-    HttpRequests
-      .post(url, HttpRequests.JSON_CONTENT_TYPE)
-      .productNameAsUserAgent()
-      .throwStatusCodeException(false)
-      .connect {
-        it.write(data)
-        objectMapper
-          .readValue(
-            it.inputStream,
-            object : TypeReference<List<IdeCompatibleUpdate>>() {}
-          )
-      }
+    if (ids.isEmpty()) emptyList()
+    else {
+      val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
+      val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
+      HttpRequests
+        .post(url, HttpRequests.JSON_CONTENT_TYPE)
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          it.write(data)
+          objectMapper
+            .readValue(
+              it.inputStream,
+              object : TypeReference<List<IdeCompatibleUpdate>>() {}
+            )
+        }
+    }
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get compatible updates from Marketplace", e)
@@ -299,6 +312,29 @@ open class MarketplaceRequests {
     logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
+
+  var jetBrainsPluginsIds: Set<String>? = null
+    private set
+
+  fun loadJetBrainsPluginsIds() =
+    if (jetBrainsPluginsIds == null) {
+      jetBrainsPluginsIds = try {
+        HttpRequests
+          .request(JETBRAINS_PLUGINS_URL)
+          .productNameAsUserAgent()
+          .throwStatusCodeException(false)
+          .connect {
+            objectMapper.readValue(
+              it.inputStream,
+              object : TypeReference<List<MarketplaceSearchPluginData>>() {}
+            ).map { searchPluginData -> searchPluginData.id }.toSet()
+          }
+      }
+      catch (e: Exception) {
+        logWarnOrPrintIfDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
+        null
+      }
+    } else {}
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
 

@@ -42,6 +42,7 @@ object GHPRReviewThreadsPanel {
           for (i in e.index1 downTo e.index0) {
             panel.remove(i)
           }
+          updateVisibility()
           panel.revalidate()
           panel.repaint()
         }
@@ -50,12 +51,14 @@ object GHPRReviewThreadsPanel {
           for (i in e.index0..e.index1) {
             panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
           }
+          updateVisibility()
           panel.revalidate()
           panel.repaint()
         }
 
         override fun contentsChanged(e: ListDataEvent) {
           if (model.loaded) panel.remove(loadingPanel)
+          updateVisibility()
           panel.validate()
           panel.repaint()
         }
@@ -67,6 +70,10 @@ object GHPRReviewThreadsPanel {
       else for (i in 0 until model.size) {
         panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
       }
+      updateVisibility()
+    }
+
+    private fun updateVisibility() {
       panel.isVisible = panel.componentCount > 0
     }
   }

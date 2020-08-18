@@ -7,6 +7,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 interface GHPRChangesProvider {
   val changes: List<Change>
   val changesByCommits: Map<GHCommit, List<Change>>
+  val linearHistory: Boolean
 
   fun findChangeDiffData(change: Change): GHPRChangeDiffData?
 

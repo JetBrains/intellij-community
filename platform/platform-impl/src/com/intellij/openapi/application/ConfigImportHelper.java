@@ -623,7 +623,7 @@ public final class ConfigImportHelper {
     boolean headless;
     BuildNumber compatibleBuildNumber = null;
     MarketplaceRequests marketplaceRequests = null;
-    String bundledPluginPath = null;
+    Path bundledPluginPath = null;
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
     ConfigImportOptions(Logger log) {

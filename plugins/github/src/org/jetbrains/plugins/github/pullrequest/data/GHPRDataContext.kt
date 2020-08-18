@@ -12,8 +12,8 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
-                               val repositoryCoordinates: GHRepositoryCoordinates,
+internal class GHPRDataContext(val parsedRepositoryCoordinates: GHRepositoryCoordinates,
+                               val gitRemoteCoordinates: GitRemoteUrlCoordinates,
                                val searchHolder: GHPRSearchQueryHolder,
                                val listLoader: GHListLoader<GHPullRequestShort>,
                                val listUpdatesChecker: GHPRListUpdatesChecker,

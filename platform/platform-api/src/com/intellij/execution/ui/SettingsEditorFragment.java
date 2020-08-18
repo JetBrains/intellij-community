@@ -3,16 +3,21 @@ package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
@@ -34,6 +39,9 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
   private final Predicate<Settings> myInitialSelection;
+  private @Nullable String myHint;
+  private @Nullable JComponent myHintComponent;
+  private @Nullable Function<C, JComponent> myEditorGetter;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -126,11 +134,27 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public void setSelected(boolean selected) {
     myComponent.setVisible(selected);
+    if (myHintComponent != null) {
+      myHintComponent.setVisible(selected);
+    }
     fireEditorStateChanged();
   }
 
   public void toggle(boolean selected) {
     setSelected(selected);
+    if (selected) {
+      IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
+    }
+  }
+
+  public void setEditorGetter(@Nullable Function<C, JComponent> editorGetter) {
+    myEditorGetter = editorGetter;
+  }
+
+  protected JComponent getEditorComponent() {
+    JComponent component = component();
+    if (myEditorGetter != null) return myEditorGetter.apply(component());
+    return component instanceof LabeledComponent ? ((LabeledComponent<?>)component).getComponent() : component;
   }
 
   public int getCommandLinePosition() {
@@ -161,6 +185,23 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public @Nullable String getChildrenGroupName() {
     return null;
+  }
+
+  public @Nullable String getHint() {
+    return myHint;
+  }
+
+  public void setHint(@Nullable String hint) {
+    myHint = hint;
+  }
+
+  public @Nullable JComponent getHintComponent() {
+    if (myHintComponent == null && myHint != null) {
+      JLabel comment = ComponentPanelBuilder.createNonWrappingCommentComponent(myHint);
+      comment.setFocusable(false);
+      myHintComponent = LabeledComponent.create(comment, "", BorderLayout.WEST);
+    }
+    return myHintComponent;
   }
 
   @Override

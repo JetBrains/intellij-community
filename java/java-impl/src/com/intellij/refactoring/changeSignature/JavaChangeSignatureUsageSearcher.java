@@ -166,7 +166,7 @@ class JavaChangeSignatureUsageSearcher {
     if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
       PsiClass aClass = method.getContainingClass();
       PsiRecordComponent[] components = null;
-      if (aClass != null && method.equals(JavaPsiRecordUtil.findCanonicalConstructor(aClass))) {
+      if (aClass != null && JavaPsiRecordUtil.isCanonicalConstructor(method)) {
         components = aClass.getRecordComponents();
       } 
       PsiParameter[] parameters = method.getParameterList().getParameters();

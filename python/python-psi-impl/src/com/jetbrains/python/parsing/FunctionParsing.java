@@ -83,9 +83,7 @@ public class FunctionParsing extends Parsing {
       SyntaxTreeBuilder.Marker decoratorMarker = myBuilder.mark();
       myBuilder.advanceLexer();
 
-      if (!getExpressionParser().parseSingleExpression(false)) {
-        myBuilder.error(message("PARSE.expected.expression"));
-      }
+      myContext.getFunctionParser().parseDecoratorExpression();
       if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
         decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
         nextToken();
@@ -99,6 +97,15 @@ public class FunctionParsing extends Parsing {
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
     //else decoListMarker.rollbackTo();
     parseDeclarationAfterDecorator(decoratorStartMarker);
+  }
+
+  /**
+   * Parses decorator expression after {@code @} according to PEP-614
+   */
+  public void parseDecoratorExpression() {
+    if (!getExpressionParser().parseSingleExpression(false)) {
+      myBuilder.error(message("PARSE.expected.expression"));
+    }
   }
 
   private void parseDeclarationAfterDecorator(SyntaxTreeBuilder.Marker endMarker) {

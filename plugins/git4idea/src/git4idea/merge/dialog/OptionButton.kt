@@ -4,77 +4,106 @@ package git4idea.merge.dialog
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.ui.InplaceButton
-import com.intellij.util.ui.GraphicsUtil
+import com.intellij.ui.components.JBLayeredPane
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NonNls
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.geom.RoundRectangle2D
-import javax.swing.JLabel
-import javax.swing.JPanel
+import java.awt.*
+import java.awt.event.*
+import javax.swing.JButton
+import javax.swing.JLayeredPane
 
 internal class OptionButton<T>(val option: T,
                                @NonNls val flag: String,
-                               val removeClickListener: () -> Unit) : JPanel() {
+                               val removeClickListener: () -> Unit) : JBLayeredPane() {
+
+  private val flagBtn = createFlagButton()
+  private val removeBtn = createCloseButton()
+  private val evtListener = createEventListener()
+
   init {
-    background = JBUI.CurrentTheme.ActionButton.hoverBackground()
+    add(flagBtn, JLayeredPane.DEFAULT_LAYER, 0)
+    add(removeBtn, JLayeredPane.POPUP_LAYER, 1)
 
-    val hInset = "${JBUI.scale(10)}px"
-    val vInset = "${JBUI.scale(5)}px"
+    UiNotifyConnector(this, object : Activatable {
+      override fun showNotify() {
+        Toolkit.getDefaultToolkit()
+          .addAWTEventListener(evtListener, AWTEvent.MOUSE_MOTION_EVENT_MASK or AWTEvent.MOUSE_EVENT_MASK)
+      }
 
-    layout = MigLayout(LC().insets(vInset, hInset, vInset, hInset).noGrid())
-
-    val componentsHeight = "${JBUI.scale(14)}px"
-
-    add(JLabel(flag), CC().alignY("baseline").maxHeight(componentsHeight).gapAfter("${JBUI.scale(5)}px"))
-    add(createRemoveButton(), CC().alignY("baseline").height(componentsHeight))
+      override fun hideNotify() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(evtListener)
+      }
+    })
   }
 
-  override fun paintComponent(g: Graphics?) {
-    val r = Rectangle(size)
-    val shape = RoundRectangle2D.Float(r.x.toFloat() + 0.5f, r.y.toFloat() + 0.5f,
-                                       r.width.toFloat() - 1f, r.height.toFloat() - 1f, 3f, 3f)
-
-    GraphicsUtil.setupRoundedBorderAntialiasing(g)
-
-    val g2 = g as Graphics2D
-    g2.color = background
-    g2.fill(shape)
+  override fun doLayout() {
+    super.doLayout()
+    layoutButtons()
   }
 
-  private fun createRemoveButton(): InplaceButton {
-    val iconButton = IconButton(GitBundle.message("merge.option.remove"), Actions.Close, Actions.CloseHovered)
-    return InplaceButton(iconButton) { removeClickListener() }.apply {
-      isFocusable = true
+  override fun getMinimumSize() = size
 
-      addFocusListener(object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent?) {
-          iconButton.setActive(true)
-          repaint()
-        }
+  override fun getPreferredSize() = size
 
-        override fun focusLost(e: FocusEvent?) {
-          iconButton.setActive(false)
-          repaint()
-        }
-      })
+  override fun getSize(): Dimension {
+    val btnSize = flagBtn.preferredSize
+    val insets = flagBtn.border.getBorderInsets(flagBtn)
+    val removeBtnSize = JBUI.scale(16)
 
-      addKeyListener(object : KeyAdapter() {
-        override fun keyPressed(e: KeyEvent?) {
-          if (e?.keyCode == KeyEvent.VK_SPACE) {
-            removeClickListener()
-          }
+    return Dimension(btnSize.width + removeBtnSize / 2 - insets.right,
+                     btnSize.height + removeBtnSize / 2 - insets.top)
+  }
+
+  private fun createFlagButton() = object : JButton(flag) {
+    override fun paintComponent(g: Graphics) {
+      putClientProperty("JButton.borderColor", if (hasFocus()) null else getBackgroundColor())
+      super.paintComponent(g)
+    }
+  }.apply {
+    preferredSize = JBDimension(preferredSize.width, JBUI.scale(30), true)
+
+    putClientProperty("JButton.backgroundColor", getBackgroundColor())
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent) {
+        if (KeyEvent.VK_BACK_SPACE == e.keyCode || KeyEvent.VK_DELETE == e.keyCode) {
+          removeClickListener()
         }
-      })
+      }
+    })
+  }
+
+  private fun createCloseButton() = InplaceButton(
+    IconButton(GitBundle.message("merge.option.remove"), Actions.DeleteTag, Actions.DeleteTagHover),
+    ActionListener { removeClickListener() }).apply {
+    isVisible = false
+    isOpaque = false
+  }
+
+  private fun createEventListener() = AWTEventListener { event ->
+    val me = event as MouseEvent
+    val component = me.component
+    if (component === flagBtn || component === removeBtn || component === this@OptionButton) {
+      if (MouseEvent.MOUSE_ENTERED == me.id || MouseEvent.MOUSE_MOVED == me.id) {
+        removeBtn.isVisible = true
+      }
+    }
+    else if (MouseEvent.MOUSE_MOVED == me.id) {
+      removeBtn.isVisible = false
     }
   }
+
+  private fun layoutButtons() {
+    val btnSize = flagBtn.preferredSize
+    val insets = flagBtn.border.getBorderInsets(flagBtn)
+    val removeBtnSize = JBUI.scale(16)
+
+    flagBtn.setBounds(0, removeBtnSize / 2 - insets.top, btnSize.width, btnSize.height)
+    removeBtn.setBounds(btnSize.width - removeBtnSize / 2 - insets.right, 0, removeBtnSize, removeBtnSize)
+  }
+
+  private fun getBackgroundColor() = JBUI.CurrentTheme.ActionButton.hoverBackground()
 }

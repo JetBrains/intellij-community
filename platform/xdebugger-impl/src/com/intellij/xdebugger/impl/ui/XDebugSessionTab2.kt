@@ -183,8 +183,12 @@ class XDebugSessionTab2(
     splitter.revalidate()
     splitter.repaint()
 
-    focusTraversalPolicy.components = getComponents().asSequence().toList()
+    updateTraversalPolicy()
     session.rebuildViews()
+  }
+
+  private fun updateTraversalPolicy() {
+    focusTraversalPolicy.components = getComponents().asSequence().toList()
   }
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
@@ -225,7 +229,9 @@ class XDebugSessionTab2(
   }
   private fun getComponents(): Iterator<Component> {
     return iterator {
-      yield(xThreadsFramesView.threads)
+      if (threadsIsVisible)
+        yield(xThreadsFramesView.threads)
+
       yield(xThreadsFramesView.frames)
       val vars = variables ?: return@iterator
 
@@ -284,7 +290,10 @@ class XDebugSessionTab2(
 
       add(object : ToggleAction() {
         override fun setSelected(e: AnActionEvent, state: Boolean) {
-          threadsIsVisible = state
+          if (threadsIsVisible != state) {
+            threadsIsVisible = state
+            updateTraversalPolicy()
+          }
           xThreadsFramesView.setThreadsVisible(state)
           Toggleable.setSelected(e.presentation, state)
         }

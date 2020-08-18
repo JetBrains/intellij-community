@@ -619,8 +619,14 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
-      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
+      try {
+        def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
+        layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
+      }
+      catch (Exception e) {
+        buildContext.messages.warning('Failed to bundle default version of feature usage statistics metadata')
+        e.printStackTrace()
+      }
     }
 
     def libDirectoryMapping = new ProjectStructureMapping()

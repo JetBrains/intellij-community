@@ -109,6 +109,18 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
+  class NoAuth internal constructor(githubSettings: GithubSettings) : Base(githubSettings) {
+    override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+      indicator.checkCanceled()
+      return createRequestBuilder(request)
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+        }
+        .useProxy(true)
+        .execute(request, indicator)
+    }
+  }
+
   abstract class Base(private val githubSettings: GithubSettings) : GithubApiRequestExecutor() {
     protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
@@ -243,6 +255,9 @@ sealed class GithubApiRequestExecutor {
     internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
       return WithBasicAuth(GithubSettings.getInstance(), login, password, twoFactorCodeSupplier)
     }
+
+    @CalledInAny
+    fun create() = NoAuth(GithubSettings.getInstance())
 
     companion object {
       @JvmStatic

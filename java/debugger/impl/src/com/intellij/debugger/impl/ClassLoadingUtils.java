@@ -121,8 +121,16 @@ public class ClassLoadingUtils {
       }
       catch (VMMismatchException e) {
         LOG.error("Class vm: " + arrayClass.virtualMachine() +
+                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
                   "\nReference vm: " + reference.virtualMachine() +
-                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct().joining(", ")
+                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
+                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
+                    .map(m -> {
+                      return m +
+                             " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
+                             " same as ref vm = " + (m.virtualMachine() == reference.virtualMachine());
+                    })
+                    .joining(", ")
           , e);
       }
     }

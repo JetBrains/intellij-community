@@ -344,7 +344,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
       int labelIndex = ContainerUtil.indexOf(statements.subList(ifIndex, statements.size()), st -> st instanceof PsiSwitchLabelStatement);
       int limit = labelIndex != -1 ? labelIndex + ifIndex : siblingStatements.length;
-      parentBlock.deleteChildRange(siblingStatements[ifIndex + 1], siblingStatements[limit - 1]);
+      int startOffset = ifIndex + 1;
+      int endOffset = limit - 1;
+      if (startOffset <= endOffset) {
+        parentBlock.deleteChildRange(siblingStatements[startOffset], siblingStatements[endOffset]);
+      }
     }
   }
 

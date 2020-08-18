@@ -3,11 +3,11 @@ package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ShortenCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -73,9 +73,9 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
   }
 
   @Nullable
-  private static String getJdkRoot(JrePathEditor pathEditor, Module module) {
+  private String getJdkRoot(JrePathEditor pathEditor, Module module) {
     if (!pathEditor.isAlternativeJreSelected() && module != null) {
-      Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      Sdk sdk = JavaParameters.getJdkToRunModule(module, productionOnly());
       return sdk != null ? sdk.getHomePath() : null;
     }
     String jrePathOrName = pathEditor.getJrePathOrName();
@@ -89,6 +89,10 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
       }
     }
     return null;
+  }
+
+  protected boolean productionOnly() {
+    return true;
   }
 
   @Nullable

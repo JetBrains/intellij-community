@@ -18,6 +18,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProviderOld"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <statistics.counterUsagesCollector groupId="terminalShell" version="3"/>

@@ -22,6 +22,7 @@ public final class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
   public static final String FILE_PROTOCOL = "file";
   public static final String HTTP_PROTOCOL = "http";
+  public static final String HTTPS_PROTOCOL = "https";
   public static final String JAR_PROTOCOL = "jar";
   public static final String JRT_PROTOCOL = "jrt";
   public static final String JAR_SEPARATOR = "!/";

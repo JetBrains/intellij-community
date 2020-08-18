@@ -154,6 +154,60 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     })
   }
 
+  void "test abbreviations on top"() {
+    def abbreviationManager = AbbreviationManager.getInstance()
+    def actionManager = ActionManager.getInstance()
+    def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
+
+    try {
+      abbreviationManager.register("cp", "CloseProject")
+      def future = ui.findElementsForPattern("cp")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      assert firstItem.value.action == actionManager.getAction("CloseProject")
+    }
+    finally {
+      abbreviationManager.remove("cp", "CloseProject")
+    }
+
+    try {
+      abbreviationManager.register("cp", "ScanSourceCommentsAction")
+      def future = ui.findElementsForPattern("cp")
+      def res = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      def firstItem = res[0]
+      assert firstItem.value.action == actionManager.getAction("ScanSourceCommentsAction")
+    }
+    finally {
+      abbreviationManager.remove("cp", "ScanSourceCommentsAction")
+    }
+  }
+
+  void "test recent files at the top of results"() {
+    withMixingEnabled({
+      def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
+      def file2 = myFixture.addFileToProject("AppFile.txt", "")
+      def file3 = myFixture.addFileToProject("ActionPerformerPreviewFile.txt", "")
+      def file4 = myFixture.addFileToProject("AppInfoFile.txt", "")
+      def file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
+      def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
+      def wrongFile = myFixture.addFileToProject("wrong.txt", "")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createFileContributor(project),
+        new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      ])
+
+      def future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
+
+      myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
+      future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
+    })
+  }
+
   private SearchEverywhereUIBase createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 

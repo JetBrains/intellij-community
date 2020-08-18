@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public final class PluginDependency {
+public final class PluginDependency implements IdeaPluginDependency {
   public final PluginId id;
   public boolean isOptional;
 
@@ -21,6 +21,16 @@ public final class PluginDependency {
     this.id = id;
     this.configFile = configFile;
     this.isDisabledOrBroken = isDisabledOrBroken;
+  }
+
+  @Override
+  public PluginId getPluginId() {
+    return id;
+  }
+
+  @Override
+  public boolean isOptional() {
+    return isOptional;
   }
 
   @Override

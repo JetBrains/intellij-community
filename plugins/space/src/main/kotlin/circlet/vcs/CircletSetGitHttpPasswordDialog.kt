@@ -1,31 +1,45 @@
 package circlet.vcs
 
-import circlet.client.api.*
-import com.intellij.credentialStore.*
-import com.intellij.ide.passwordSafe.*
-import com.intellij.openapi.*
-import com.intellij.openapi.rd.*
-import com.intellij.openapi.ui.*
+import circlet.client.api.TD_MemberProfile
+import circlet.client.api.identifier
+import circlet.client.api.impl.vcsPasswords
+import circlet.client.repoService
+import circlet.platform.client.KCircletClient
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.generateServiceName
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.*
-import com.intellij.ui.*
-import com.intellij.ui.components.*
-import com.intellij.ui.components.panels.*
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBPasswordField
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.*
-import com.intellij.util.*
-import com.intellij.util.io.*
-import com.intellij.util.ui.*
-import git4idea.commands.*
-import libraries.coroutines.extra.*
-import libraries.klogging.*
-import runtime.*
-import java.util.concurrent.*
-import javax.swing.*
+import com.intellij.util.UriUtil
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBUI
+import git4idea.commands.GitHttpAuthenticator
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.usingSource
+import libraries.klogging.logger
+import runtime.RpcException
+import runtime.Ui
+import runtime.message
+import java.util.concurrent.CancellationException
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 internal class CircletSetGitHttpPasswordDialog(
-    private val me: TD_MemberProfile,
-    private val td: TeamDirectory,
-    private val repoService: RepositoryService
+  private val me: TD_MemberProfile,
+  private val client: KCircletClient
 ) : DialogWrapper(null, false) {
     private val log = logger<CircletSetGitHttpPasswordDialog>()
 
@@ -58,14 +72,15 @@ internal class CircletSetGitHttpPasswordDialog(
                 try {
                     val password = passwordField.password
                     log.info("Trying to set HTTP Git password")
-                    td.setVcsPassword(me.id, String(password))
-                    val httpPassword = td.getVcsPassword(me.id)
+                    client.api.vcsPasswords().setVcsPassword(me.identifier, String(password))
+                    val httpPassword = client.api.vcsPasswords().getVcsPassword(me.identifier)
                     log.info("Password set")
 
                     result = if (httpPassword == null) CircletHttpPasswordState.NotSet else CircletHttpPasswordState.Set(httpPassword)
 
                     if (rememberPassword.isSelected) {
                         val username = me.username
+                        val repoService = client.repoService
                         val httpUrl = repoService.getRepoUrlPatterns().httpUrl
 
                         if (httpUrl != null) {

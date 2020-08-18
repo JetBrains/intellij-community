@@ -221,7 +221,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
 
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
-    options.bundledPluginPath = oldBundledPluginsDir.toFile().path
+    options.bundledPluginPath = oldBundledPluginsDir
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).doesNotExist()
   }

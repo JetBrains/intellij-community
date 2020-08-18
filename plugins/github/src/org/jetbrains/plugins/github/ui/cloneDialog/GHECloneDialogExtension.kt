@@ -82,7 +82,7 @@ private class GHECloneDialogExtensionComponent(project: Project) : BaseCloneDial
   private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
     val isExistingAccount = account != null
     return AccountMenuItem.Action(
-      if (isExistingAccount) message("login.action") else message("accounts.add"),
+      message("login.to.github.enterprise.action"),
       { switchToLogin(account) },
       showSeparatorAbove = !isExistingAccount
     )

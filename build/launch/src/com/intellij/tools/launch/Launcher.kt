@@ -3,6 +3,7 @@ package com.intellij.tools.launch
 import com.intellij.tools.launch.impl.ClassPathBuilder
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.nio.file.Files
 
 object Launcher {
 
@@ -16,10 +17,7 @@ object Launcher {
     val classPathFile = classPathBuilder.build()
 
     // We should create config folder to avoid import settings dialog.
-    //val configFolder = paths.configFolder
-    //if (!configFolder.exists()) {
-    //  configFolder.mkdirs()
-    //}
+    Files.createDirectories(paths.configFolder.toPath())
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
@@ -27,10 +25,16 @@ object Launcher {
       "-classpath", classPathFile.canonicalPath,
       "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
+      "-Djb.privacy.policy.text=\"<!--999.999-->\"",
+      "-Djb.consents.confirmation.enabled=false",
+      "-Didea.suppress.statistics.report=true",
+      "-Drsch.send.usage.stat=false",
+      "-Duse.linux.keychain=false",
+      "-Didea.initially.ask.config=force-not",
+      "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
-      "-Didea.log.config.file=bin/log.xml",
       "-Didea.is.internal=true",
       "-Didea.debug.mode=true",
       "-Didea.jre.check=true",

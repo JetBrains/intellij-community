@@ -136,7 +136,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   /**
    * Adds a custom (one line) component to the top right location of the main component.
    * Useful for adding control like {@link com.intellij.ui.components.labels.LinkLabel} or
-   * {@link com.intellij.ui.components.labels.DropDownLink}
+   * {@link com.intellij.ui.components.DropDownLink}
    *
    * @param topRightComponent the component to be added
    * @return <code>this</code>

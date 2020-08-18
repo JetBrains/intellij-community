@@ -27,7 +27,8 @@ object GHPRReviewCommentComponent {
 
   fun create(reviewDataProvider: GHPRReviewDataProvider,
              comment: GHPRReviewCommentModel,
-             avatarIconsProvider: GHAvatarIconsProvider): JComponent {
+             avatarIconsProvider: GHAvatarIconsProvider,
+             showResolvedMarker: Boolean = true): JComponent {
 
     val avatarLabel: LinkLabel<*> = LinkLabel.create("") {
       comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
@@ -55,7 +56,7 @@ object GHPRReviewCommentComponent {
     }
 
 
-    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
+    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(textPane,
                                                       { reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
@@ -91,7 +92,8 @@ object GHPRReviewCommentComponent {
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
-                           private val bodyPane: HtmlEditorPane) {
+                           private val bodyPane: HtmlEditorPane,
+                           private val showResolvedMarker: Boolean) {
     init {
       model.addChangesListener {
         update()
@@ -118,14 +120,15 @@ object GHPRReviewCommentComponent {
         }
       }
 
-      resolvedLabel.isVisible = model.isFirstInResolvedThread
+      resolvedLabel.isVisible = model.isFirstInResolvedThread && showResolvedMarker
     }
   }
 
-  fun factory(reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
+  fun factory(reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider,
+              showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewDataProvider, comment, avatarIconsProvider)
+      create(reviewDataProvider, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
     }
   }
 }

@@ -19,9 +19,13 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import java.awt.Color
 import java.awt.Component
@@ -35,6 +39,34 @@ import javax.swing.event.DocumentEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
+    if (isDraft) GithubIcons.PullRequestDraft
+    else when (state) {
+      GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+      GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+      GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+    }
+
+  fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): String =
+    if (isDraft) GithubBundle.message("pull.request.state.draft")
+    else when (state) {
+      GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
+      GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
+      GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")
+    }
+
+  fun getIssueStateIcon(state: GithubIssueState): Icon =
+    when (state) {
+      GithubIssueState.open -> GithubIcons.IssueOpened
+      GithubIssueState.closed -> GithubIcons.IssueClosed
+    }
+
+  fun getIssueStateText(state: GithubIssueState): String =
+    when (state) {
+      GithubIssueState.open -> GithubBundle.message("issue.state.open")
+      GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
+    }
 
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
     component.addPropertyChangeListener("UI", PropertyChangeListener {

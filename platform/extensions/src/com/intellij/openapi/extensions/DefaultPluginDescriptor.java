@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Date;
 
-public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
+public final class DefaultPluginDescriptor implements PluginDescriptor {
   private final @NotNull PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
 

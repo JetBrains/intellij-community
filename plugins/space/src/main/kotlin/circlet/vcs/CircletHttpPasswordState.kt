@@ -1,6 +1,7 @@
 package circlet.vcs
 
-import circlet.client.api.*
+import circlet.client.api.SshKeyData
+import circlet.client.api.td.VcsHostingPassword
 
 sealed class CircletHttpPasswordState {
     object NotChecked : CircletHttpPasswordState()

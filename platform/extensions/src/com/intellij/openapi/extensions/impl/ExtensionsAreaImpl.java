@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -173,7 +172,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
-    IdeaPluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
+    PluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
     doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, false);
   }
 
@@ -264,7 +263,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtensions(@NotNull Map<String, List<Element>> extensions,
-                                 @NotNull IdeaPluginDescriptor pluginDescriptor,
+                                 @NotNull PluginDescriptor pluginDescriptor,
                                  @Nullable List<Runnable> listenerCallbacks) {
     extensions.forEach((name, list) -> {
       ExtensionPointImpl<?> point = extensionPoints.get(name);
@@ -276,7 +275,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean registerExtensions(@NotNull String pointName,
                                     @NotNull List<Element> extensions,
-                                    @NotNull IdeaPluginDescriptor pluginDescriptor,
+                                    @NotNull PluginDescriptor pluginDescriptor,
                                     @Nullable List<Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = extensionPoints.get(pointName);
     if (point == null) {

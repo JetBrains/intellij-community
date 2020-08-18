@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
@@ -38,9 +39,8 @@ public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
   public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
-    @NotNull
     @Override
-    protected NotificationGroup compute() {
+    protected @NotNull NotificationGroup compute() {
       return new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
     }
   };
@@ -56,13 +56,13 @@ public final class FileWatcher {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
     }
 
-    private void addDirtyPath(@NotNull String path) {
+    void addDirtyPath(String path) {
       if (!dirtyPathsRecursive.contains(path)) {
         dirtyPaths.add(path);
       }
     }
 
-    private void addDirtyPathRecursive(@NotNull String path) {
+    void addDirtyPathRecursive(String path) {
       dirtyPaths.remove(path);
       dirtyPathsRecursive.add(path);
     }
@@ -75,7 +75,6 @@ public final class FileWatcher {
 
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
-  private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
   private final ExecutorService myFileWatcherExecutor = executor();
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
@@ -83,19 +82,16 @@ public final class FileWatcher {
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
 
-  FileWatcher(@NotNull ManagingFS managingFS) {
+  FileWatcher(@NotNull ManagingFS managingFS, @NotNull Runnable postInitCallback) {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
-    myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
     myFileWatcherExecutor.execute(() -> {
-      try {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.initialize(myManagingFS, myNotificationSink);
-        }
-      }
-      catch (RuntimeException | Error e) {
-        LOG.error(e);
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
+        watcher.initialize(myManagingFS, myNotificationSink);
+      });
+      if (isOperational()) {
+        postInitCallback.run();
       }
     });
   }
@@ -115,13 +111,13 @@ public final class FileWatcher {
       LOG.error(e);
     }
 
-    for (PluggableFileWatcher watcher : myWatchers) {
+    PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
       watcher.dispose();
-    }
+    });
   }
 
   public boolean isOperational() {
-    for (PluggableFileWatcher watcher : myWatchers) {
+    for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
       if (watcher.isOperational()) return true;
     }
     return false;
@@ -132,7 +128,7 @@ public final class FileWatcher {
     if (lastTask != null && !lastTask.isDone()) {
       return true;
     }
-    for (PluggableFileWatcher watcher : myWatchers) {
+    for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
@@ -158,19 +154,18 @@ public final class FileWatcher {
     return result != null ? result : Collections.emptyList();
   }
 
-  /**
-   * Clients should take care of not calling this method in parallel.
-   */
-  void setWatchRoots(@NotNull CanonicalPathMap pathMap) {
+  void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
     Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
+        CanonicalPathMap pathMap = pathMapSupplier.get();
+        if (pathMap == null) return;
         myPathMap = pathMap;
         myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
         Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
-        for (PluggableFileWatcher watcher : myWatchers) {
+        PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
           watcher.setWatchRoots(roots.first, roots.second);
-        }
+        });
       }
       catch (RuntimeException | Error e) {
         LOG.error(e);
@@ -219,9 +214,9 @@ public final class FileWatcher {
         }
       }
 
-      for (PluggableFileWatcher watcher : myWatchers) {
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
         watcher.resetChangedPaths();
-      }
+      });
 
       return dirtyPaths;
     }
@@ -333,7 +328,7 @@ public final class FileWatcher {
   public void startup(@Nullable Consumer<? super String> notifier) throws Exception {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
+      for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
         watcher.startup();
       }
       return null;
@@ -343,7 +338,7 @@ public final class FileWatcher {
   @TestOnly
   public void shutdown() throws Exception {
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
+      for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
         watcher.shutdown();
       }
       myTestNotifier = null;
