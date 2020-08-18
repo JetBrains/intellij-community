@@ -37,7 +37,9 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
     try {
       Map<Integer, SerializedStubTree> data = StubIndexImpl.getStubUpdatingIndex().getIndexedFileData(id);
       if (data.size() != 1) {
-        LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree");
+        LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
+                  "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                  "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
         onInternalError(file);
         return null;
       }
