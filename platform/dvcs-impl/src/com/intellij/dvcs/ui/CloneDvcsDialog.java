@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -274,7 +275,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         if (mySpinnerProgressManager.getDisposed()) return;
         if (!myNewRepositories.isEmpty()) {
           // otherwise editor content will be reset
-          myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
+          @NlsSafe String text = myRepositoryUrlField.getText();
+          myRepositoryUrlCombobox.setSelectedItem(text);
           myRepositoryUrlComboboxModel.addAll(myRepositoryUrlComboboxModel.getSize(), myNewRepositories);
           myRepositoryUrlField.setVariants(myRepositoryUrlComboboxModel.getItems());
         }

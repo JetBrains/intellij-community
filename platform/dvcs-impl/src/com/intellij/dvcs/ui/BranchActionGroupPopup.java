@@ -453,8 +453,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;
       assert numberOfHiddenNodes > 0;
-      myToExpandText = "Show " + numberOfHiddenNodes + " More...";
-      myToCollapseText = "Show " + (hasFavorites ? "Only Favorites" : "Less");
+      myToExpandText = DvcsBundle.message("action.branch.popup.show.n.nodes.more", numberOfHiddenNodes);
+      myToCollapseText = hasFavorites ? DvcsBundle.message("action.branch.popup.show.only.favorites")
+                                      : DvcsBundle.message("action.branch.popup.show.less");
       setExpanded(
         settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
     }

@@ -143,25 +143,25 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     return new ColumnInfo[] {
-      new CommitColumnInfo("Hash", hash.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.hash"), hash.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getHash(commit);
         }
       },
-      new ColumnInfo<VcsFullCommitDetails, String>("Subject") {
+      new ColumnInfo<VcsFullCommitDetails, String>(DvcsBundle.message("column.commit.list.subject")) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return commit.getSubject();
         }
       },
-      new CommitColumnInfo("Author", author.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.author"), author.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getAuthor(commit);
         }
       },
-      new CommitColumnInfo("Author time", time.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.author.time"), time.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getTime(commit);

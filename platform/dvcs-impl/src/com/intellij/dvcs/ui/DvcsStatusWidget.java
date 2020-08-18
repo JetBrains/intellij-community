@@ -18,10 +18,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -29,17 +26,16 @@ import java.awt.event.MouseEvent;
 public abstract class DvcsStatusWidget<T extends Repository> extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe {
   protected static final Logger LOG = Logger.getInstance(DvcsStatusWidget.class);
-  private static final String MAX_STRING = "VCS: Rebasing feature-12345 in custom development branch";
 
-  @NotNull private final String myPrefix;
+  @NotNull private final String myVcsName;
 
   @Nullable private String myText;
   @Nullable private @NlsContexts.Tooltip String myTooltip;
   @Nullable private Icon myIcon;
 
-  protected DvcsStatusWidget(@NotNull Project project, @NotNull String prefix) {
+  protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
     super(project);
-    myPrefix = prefix;
+    myVcsName = vcsName;
 
     project.getMessageBus().connect(this)
       .subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
@@ -165,7 +161,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     T repository = guessCurrentRepository(project);
     if (repository == null) return;
 
-    int maxLength = MAX_STRING.length() - 1; // -1, because there are arrows indicating that it is a popup
+    // -1, because there are arrows indicating that it is a popup
+    int maxLength = DvcsBundle.message("branch.popup.maximum.branch.length.sample").length() - 1;
     myText = StringUtil.shortenTextWithEllipsis(getFullBranchName(repository), maxLength, 5);
     myTooltip = getToolTip(repository);
     myIcon = getIcon(repository);
@@ -180,10 +177,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @CalledInAwt
   private String getToolTip(@Nullable T repository) {
     if (repository == null) return null;
-    String branchName = myPrefix + " Branch: " + getFullBranchName(repository);
+    String message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", myVcsName, getFullBranchName(repository));
     if (isMultiRoot(repository.getProject())) {
-      return branchName + "\n" + "Root: " + repository.getRoot().getName();
+      message += "\n";
+      message += DvcsBundle.message("tooltip.branch.widget.root.name.text", repository.getRoot().getName());
     }
-    return branchName;
+    return message;
   }
 }
