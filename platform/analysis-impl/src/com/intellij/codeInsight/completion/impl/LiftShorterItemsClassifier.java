@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.*;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   private final boolean myLiftBefore;
   private int myCount = 0;
 
-  public LiftShorterItemsClassifier(String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
+  public LiftShorterItemsClassifier(@NonNls String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
     super(next, name);
     myCondition = condition;
     myLiftBefore = liftBefore;
