@@ -15,6 +15,7 @@
  */
 package com.intellij.pom;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ElementDescriptionLocation;
@@ -35,5 +36,5 @@ public abstract class PomDescriptionProvider implements ElementDescriptionProvid
   }
 
   @Nullable
-  public abstract String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location);
+  public abstract @NlsContexts.DetailedDescription String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location);
 }

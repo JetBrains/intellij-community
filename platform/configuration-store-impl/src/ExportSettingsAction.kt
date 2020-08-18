@@ -29,6 +29,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -279,7 +280,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
   return trimDefaultName()
 }
 
-private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, defaultName: String): String {
+private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
       DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader), "exportable.$defaultName.presentable.name", defaultName)

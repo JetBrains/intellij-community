@@ -123,6 +123,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       icon = Messages.getQuestionIcon()
     ))
 
+  @NlsContexts.Button
   private fun getRestartActionName(): String =
     if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
     else IdeBundle.message("ide.shutdown.action")

@@ -17,6 +17,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -210,11 +211,11 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myCbUseTab.setVisible(visible);
   }
 
-  private static String getIndentLabel() {
+  private static @NlsContexts.Label String getIndentLabel() {
     return ApplicationBundle.message("editbox.indent.indent");
   }
 
-  private static String getTabSizeLabel() {
+  private static @NlsContexts.Label String getTabSizeLabel() {
     return ApplicationBundle.message("editbox.indent.tab.size");
   }
 

@@ -1335,7 +1335,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static String getTempDirectory() {
+  public static @NlsSafe String getTempDirectory() {
     return FileUtilRt.getTempDirectory();
   }
 

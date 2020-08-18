@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -197,7 +198,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   @NotNull
-  private String getSoftMarginsString(@NotNull List<Integer> intList) {
+  private @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
     if (intList.size() > 0) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }

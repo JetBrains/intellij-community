@@ -33,6 +33,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +48,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -368,8 +369,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private @Nullable HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                               @NotNull HighlightInfoType highlightInfoType,
-                                                              @NotNull String message,
-                                                              @Nullable String toolTip,
+                                                              @NotNull @NlsContexts.DetailedDescription String message,
+                                                              @Nullable @NlsContexts.Tooltip String toolTip,
                                                               @NotNull PsiElement psiElement,
                                                               @NotNull List<IntentionAction> quickFixes,
                                                               @NotNull String toolID) {
@@ -535,7 +536,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element) {
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
-    @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
+    @NlsSafe String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
 
     ProblemGroup problemGroup = descriptor.getProblemGroup();
     String problemName = problemGroup != null ? problemGroup.getProblemName() : null;
@@ -556,7 +557,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
              + "</a> " + myShortcutText;
     }
 
-    @NonNls String tooltip = null;
+    @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
       tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
     }

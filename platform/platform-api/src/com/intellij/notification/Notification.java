@@ -63,9 +63,9 @@ public class Notification {
   private Icon myIcon;
   private final NotificationType myType;
 
-  private String myTitle;
+  private @NotificationTitle String myTitle;
   private String mySubtitle;
-  private String myContent;
+  private @NotificationContent String myContent;
   private NotificationListener myListener;
   private String myDropDownText;
   private List<AnAction> myActions;
@@ -191,7 +191,7 @@ public class Notification {
   }
 
   @NotNull
-  public String getTitle() {
+  public @NotificationTitle String getTitle() {
     return myTitle;
   }
 
@@ -223,7 +223,7 @@ public class Notification {
   }
 
   @NotNull
-  public String getContent() {
+  public @NotificationContent String getContent() {
     return myContent;
   }
 

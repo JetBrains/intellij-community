@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -368,7 +369,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private String getCurrentHint() {
+  private @NlsContexts.Label String getCurrentHint() {
     assert myIsCorrectThread.get();
     String hint = myHint;
     int warnings = myWarnings.get();

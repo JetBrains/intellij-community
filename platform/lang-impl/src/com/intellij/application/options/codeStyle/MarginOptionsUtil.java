@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -15,11 +16,11 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getWrapOnTypingOptions;
 
 final class MarginOptionsUtil {
-  public static String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
+  public static @NlsContexts.Label String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
     return getDefaultValueText(Integer.toString(settings.getDefaultRightMargin()));
   }
 
-  static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
+  static @NlsContexts.Label String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
     List<Integer> softMargins = settings.getDefaultSoftMargins();
     return getDefaultValueText(
       (softMargins.size() > 0
@@ -27,7 +28,7 @@ final class MarginOptionsUtil {
        : ApplicationBundle.message("settings.soft.margins.empty.list")));
   }
 
-  static String getDefaultWrapOnTypingText(@NotNull CodeStyleSettings settings) {
+  static @NlsContexts.Label String getDefaultWrapOnTypingText(@NotNull CodeStyleSettings settings) {
     return getDefaultValueText(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ? "Yes" : "No");
   }
 
@@ -44,7 +45,7 @@ final class MarginOptionsUtil {
     }));
   }
 
-  static String getDefaultValueText(@NotNull String value) {
+  static @NlsContexts.Label String getDefaultValueText(@NotNull String value) {
     return ApplicationBundle.message("settings.default.value.prefix", value);
   }
 }

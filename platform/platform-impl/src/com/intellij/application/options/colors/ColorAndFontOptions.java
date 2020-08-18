@@ -1525,7 +1525,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return page != null;
   }
 
-  public static String getScopesGroup() {
+  public static @NlsContexts.ConfigurableName String getScopesGroup() {
     return ApplicationBundle.message("title.scope.based");
   }
 }

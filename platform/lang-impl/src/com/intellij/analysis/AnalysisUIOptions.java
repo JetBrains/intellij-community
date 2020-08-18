@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -124,9 +125,9 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     @NotNull private final InspectionResultsView myView;
 
     InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
-                                             @NotNull String text,
-                                             @NotNull String description,
-                                             @NotNull Icon icon) {
+                                      @NotNull @NlsActions.ActionText String text,
+                                      @NotNull @NlsActions.ActionDescription String description,
+                                      @NotNull Icon icon) {
       super(text, description, icon);
       myView = view;
     }

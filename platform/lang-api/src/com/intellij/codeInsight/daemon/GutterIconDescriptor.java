@@ -64,7 +64,7 @@ public abstract class GutterIconDescriptor {
     private static final Option[] NO_OPTIONS = new Option[0];
 
     private final String myId;
-    private final String myName;
+    private final @GutterName String myName;
     private final Icon myIcon;
 
     public Option(@NotNull String id,

@@ -45,7 +45,7 @@ public abstract class TemplateContextType {
    * @return context presentable name for templates editor
    */
   @NotNull
-  public String getPresentableName() {
+  public @Label String getPresentableName() {
     return myPresentableName;
   }
 

@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -182,7 +183,7 @@ public class FileInEditorProcessor {
     showHint(editor, messageBuilder.getMessage(), messageBuilder.createHyperlinkListener());
   }
 
-  public static void showHint(@NotNull Editor editor, @NotNull String info, @Nullable HyperlinkListener hyperlinkListener) {
+  public static void showHint(@NotNull Editor editor, @NotNull @NlsContexts.HintText String info, @Nullable HyperlinkListener hyperlinkListener) {
     JComponent component = HintUtil.createInformationLabel(info, hyperlinkListener, null, null);
     LightweightHint hint = new LightweightHint(component);
 
@@ -315,7 +316,7 @@ public class FileInEditorProcessor {
   }
 
   private abstract static class MessageBuilder {
-    public abstract String getMessage();
+    public abstract @NlsContexts.HintText String getMessage();
 
     @NotNull
     public abstract Runnable getHyperlinkRunnable();

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     analyze(project, scope);
   }
 
-  protected @NotNull String getDialogTitle() {
+  protected @NotNull @NlsContexts.DialogTitle String getDialogTitle() {
     return CodeInsightBundle.message("specify.analysis.scope", myTitle.get());
   }
 

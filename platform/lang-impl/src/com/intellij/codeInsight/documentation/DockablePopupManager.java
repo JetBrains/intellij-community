@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -84,7 +85,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract void doUpdateComponent(@NotNull PsiElement element);
 
-  protected abstract String getTitle(PsiElement element);
+  protected abstract @NlsContexts.TabTitle String getTitle(PsiElement element);
 
   protected abstract String getToolwindowId();
 

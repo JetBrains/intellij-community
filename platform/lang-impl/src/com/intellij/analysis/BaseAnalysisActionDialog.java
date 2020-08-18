@@ -40,7 +40,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @NotNull private final AnalysisUIOptions myOptions;
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
-  private final String myAnalysisNoon;
+  private final @NlsContexts.Separator String myAnalysisNoon;
   private final Project myProject;
   private final ButtonGroup myGroup = new ButtonGroup();
   private final JCheckBox myInspectTestSource = new JCheckBox();
@@ -73,7 +73,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                @NotNull String analysisNoon,
+                                @NotNull @NlsContexts.Separator String analysisNoon,
                                 @NotNull Project project,
                                 @NotNull List<? extends ModelScopeItem> items,
                                 @NotNull AnalysisUIOptions options,
@@ -82,7 +82,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                  @NotNull String analysisNoon,
+                                  @NotNull @NlsContexts.Separator String analysisNoon,
                                   @NotNull Project project,
                                   @NotNull List<? extends ModelScopeItem> items,
                                   @NotNull AnalysisUIOptions options,

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
@@ -153,7 +154,7 @@ public class RightMarginForm {
     return myTopPanel;
   }
 
-  private static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
+  private static @NlsContexts.Label String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
     List<Integer> margins = settings.getDefaultSoftMargins();
     String marginsString =
       margins.size() <= 2 ?

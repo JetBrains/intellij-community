@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 
 import java.util.Collection;
 
@@ -10,7 +11,7 @@ public interface ModulesCombo {
   Module getSelectedModule();
   void setSelectedModule(Module module);
   void setModules(Collection<? extends Module> modules);
-  void allowEmptySelection(String noModuleText);
+  void allowEmptySelection(@NlsContexts.ListItem String noModuleText);
 
   String getSelectedModuleName();
   void setSelectedModule(Project project, String name);

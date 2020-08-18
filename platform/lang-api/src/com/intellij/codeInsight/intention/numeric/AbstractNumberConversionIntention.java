@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractNumberConversionIntention implements IntentionAction {
-  private static final String TITLE = "Convert number to...";
+  private static final @IntentionName String TITLE = "Convert number to...";
   private @IntentionName String myText;
 
   @IntentionName
@@ -109,7 +110,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
         }, file);
       }
 
-      private String getName() {
+      private @NlsContexts.Command String getName() {
         return getActionName(myConverter, myResult);
       }
 

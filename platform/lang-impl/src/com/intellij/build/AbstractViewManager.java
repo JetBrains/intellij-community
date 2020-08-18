@@ -224,7 +224,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
   }
 
-  private String getPinnedTabName(MultipleBuildsView buildsView) {
+  private @NlsContexts.TabTitle String getPinnedTabName(MultipleBuildsView buildsView) {
     Map<BuildDescriptor, BuildView> buildsMap = buildsView.getBuildsMap();
 
     BuildDescriptor buildInfo = buildsMap.keySet()

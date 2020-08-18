@@ -17,6 +17,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -81,7 +82,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   }
 
   private ContinuationOption createContinuationOption(
-    @NotNull String labelText,
+    @NotNull @NlsContexts.Label String labelText,
     Function<? super CommonCodeStyleSettings.IndentOptions, Integer> getter,
     BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> setter,
     int defaultValue
@@ -223,7 +224,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     myCbKeepIndentsOnEmptyLines.setVisible(visible);
   }
 
-  public static String getContinuationIndentLabel() {
+  public static @NlsContexts.Label String getContinuationIndentLabel() {
     return ApplicationBundle.message("editbox.indent.continuation.indent");
   }
 }

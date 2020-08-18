@@ -36,10 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -901,7 +898,7 @@ public final class FindUtil {
   public static <T> UsageView showInUsageView(@Nullable PsiElement sourceElement,
                                               T @NotNull [] targets,
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
-                                              @NotNull String title,
+                                              @NlsContexts.TabTitle @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
                                               @NotNull Project project) {
     if (targets.length == 0) return null;
@@ -940,7 +937,7 @@ public final class FindUtil {
   @Nullable
   public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
                                           PsiElement @NotNull [] targets,
-                                          @NotNull String title,
+                                          @NotNull @NlsContexts.TabTitle String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
     PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};

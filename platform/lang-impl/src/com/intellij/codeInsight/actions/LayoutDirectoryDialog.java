@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 public class LayoutDirectoryDialog extends LayoutProjectCodeDialog implements DirectoryFormattingOptions {
   public LayoutDirectoryDialog(@NotNull Project project,
-                               String title,
-                               String text,
+                               @NlsContexts.DialogTitle String title,
+                               @NlsContexts.Label String text,
                                boolean enableOnlyVCSChangedTextCb)
   {
     super(project, title, text, enableOnlyVCSChangedTextCb);
