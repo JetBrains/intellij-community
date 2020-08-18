@@ -65,7 +65,7 @@ public class Log4jBasedLogger extends Logger {
 
   @Override
   public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
-    String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
+    @NonNls String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
     myLogger.error(fullMessage, t);
   }
 

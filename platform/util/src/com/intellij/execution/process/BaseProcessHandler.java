@@ -5,6 +5,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   protected final T myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
-  protected final String myPresentableName;
+  protected final @NonNls String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
   /**

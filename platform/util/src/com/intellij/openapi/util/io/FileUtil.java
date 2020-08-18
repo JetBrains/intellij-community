@@ -1280,26 +1280,26 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix);
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull String prefix, @Nullable String suffix, boolean deleteOnExit)
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit)
     throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix, deleteOnExit);
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull File dir, @NotNull String prefix, @Nullable String suffix)
+  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix)
     throws IOException {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix);
   }
 
   @NotNull
   public static File createTempDirectory(@NotNull File dir,
-                                         @NotNull String prefix,
-                                         @Nullable String suffix,
+                                         @NotNull @NonNls String prefix,
+                                         @Nullable @NonNls String suffix,
                                          boolean deleteOnExit) throws IOException {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
@@ -1316,19 +1316,19 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix);
   }
 
   @NotNull
-  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean create) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create);
   }
 
   @NotNull
   public static File createTempFile(@NotNull File dir,
-                                    @NotNull String prefix,
-                                    @Nullable String suffix,
+                                    @NotNull @NonNls String prefix,
+                                    @Nullable @NonNls String suffix,
                                     boolean create,
                                     boolean deleteOnExit) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create, deleteOnExit);

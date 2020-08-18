@@ -41,7 +41,7 @@ public abstract class AbstractBundle {
   }
 
   @Contract(pure = true)
-  public @NotNull @Nls String getMessage(@NotNull String key, Object @NotNull ... params) {
+  public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
     return message(getResourceBundle(), key, params);
   }
 
@@ -58,19 +58,19 @@ public abstract class AbstractBundle {
    * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
    */
   @Contract(pure = true)
-  public @NotNull @Nls String getPartialMessage(@NotNull String key, int unassignedParams, Object @NotNull ... params) {
+  public @NotNull @Nls String getPartialMessage(@NotNull @NonNls String key, int unassignedParams, Object @NotNull ... params) {
     return BundleBase.partialMessage(getResourceBundle(), key, unassignedParams, params);
   }
 
-  public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull String key, Object @NotNull ... params) {
+  public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
     return () -> getMessage(key, params);
   }
 
-  public @Nullable @Nls String messageOfNull(@NotNull String key, Object @NotNull ... params) {
+  public @Nullable @Nls String messageOfNull(@NotNull @NonNls String key, Object @NotNull ... params) {
     return messageOrNull(getResourceBundle(), key, params);
   }
 
-  public @Nls String messageOrDefault(@NotNull String key,
+  public @Nls String messageOrDefault(@NotNull @NonNls String key,
                                       @Nullable @Nls String defaultValue,
                                       Object @NotNull ... params) {
     return messageOrDefault(getResourceBundle(), key, defaultValue, params);
@@ -78,7 +78,7 @@ public abstract class AbstractBundle {
 
   @Contract("null, _, _, _ -> param3")
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
-                                             @NotNull String key,
+                                             @NotNull @NonNls String key,
                                              @Nullable @Nls String defaultValue,
                                              Object @NotNull ... params) {
     if (bundle == null) {
@@ -90,18 +90,18 @@ public abstract class AbstractBundle {
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
-  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
     return BundleBase.message(bundle, key, params);
   }
 
-  public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
     @SuppressWarnings("HardCodedStringLiteral")
     String value = messageOrDefault(bundle, key, key, params);
     if (key.equals(value)) return null;
     return value;
   }
 
-  public boolean containsKey(@NotNull String key) {
+  public boolean containsKey(@NotNull @NonNls String key) {
     return getResourceBundle().containsKey(key);
   }
 
@@ -136,13 +136,13 @@ public abstract class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache =
     ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
-  public @NotNull ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  public @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
     return DefaultBundleService.isDefaultBundle()
            ? getResourceBundle(pathToBundle, loader, ourDefaultCache.get(loader))
            : getResourceBundle(pathToBundle, loader, ourCache.get(loader));
   }
 
-  public ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader, Map<String, ResourceBundle> map) {
+  public ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, Map<String, ResourceBundle> map) {
     ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
       try {
@@ -159,7 +159,7 @@ public abstract class AbstractBundle {
     return result;
   }
 
-  protected ResourceBundle findBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+  protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 }

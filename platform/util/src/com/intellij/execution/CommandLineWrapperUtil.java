@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.ClassPath;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -88,7 +89,7 @@ public final class CommandLineWrapperUtil {
       return arg;
     }
 
-    StringBuilder sb = new StringBuilder(arg.length() * 2);
+    @NonNls StringBuilder sb = new StringBuilder(arg.length() * 2);
     for (int i = 0; i < arg.length(); i++) {
       char c = arg.charAt(i);
       if (c == ' ' || c == '#' || c == '\'') sb.append('"').append(c).append('"');

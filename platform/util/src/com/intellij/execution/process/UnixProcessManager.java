@@ -10,6 +10,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -211,7 +212,7 @@ public final class UnixProcessManager {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
-        String s;
+        @NonNls String s;
         while ((s = stdOutput.readLine()) != null) {
           processor.process(s);
         }
@@ -243,7 +244,7 @@ public final class UnixProcessManager {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
     else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
-      final String command = isShortenCommand ? "comm" : "command";
+      @NonNls String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else {

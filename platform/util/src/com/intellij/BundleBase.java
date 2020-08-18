@@ -143,6 +143,7 @@ public abstract class BundleBase {
     catch (IllegalAccessException e) {
       LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
     }
+    //noinspection HardCodedStringLiteral
     return "undefined";
   }
 
@@ -157,7 +158,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  static String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue) {
+  static @Nls String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
     if (defaultValue != null) {
       return defaultValue;
     }
@@ -165,6 +166,7 @@ public abstract class BundleBase {
     if (assertOnMissedKeys) {
       LOG.error("'" + key + "' is not found in " + bundle);
     }
+    //noinspection HardCodedStringLiteral
     return "!" + key + "!";
   }
 
