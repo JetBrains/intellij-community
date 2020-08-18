@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
@@ -286,7 +287,7 @@ public abstract class NlsInfo {
     return Unspecified.UNKNOWN;
   }
 
-  private static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
+  static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
     return normalize(expr1).equals(normalize(expr2));
   }
 
@@ -348,7 +349,7 @@ public abstract class NlsInfo {
     return result.get();
   }
 
-  private static @NotNull UExpression goUp(@NotNull UExpression expression) {
+  static @NotNull UExpression goUp(@NotNull UExpression expression) {
     UExpression parent = expression;
     while (true) {
       UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
@@ -357,6 +358,9 @@ public abstract class NlsInfo {
           next instanceof UReturnExpression ||
           next instanceof USwitchClauseExpression ||
           next instanceof UNamedExpression) {
+        return parent;
+      }
+      if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
         return parent;
       }
       if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;

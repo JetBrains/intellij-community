@@ -32,6 +32,21 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testPropagateThroughLocal() {
+    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+       fun foo(@org.jetbrains.annotations.Nls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
+       fun bar() {
+          var text = <warning descr="Hardcoded string literal: \"foo\""><warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text' initializer is redundant">"foo"</warning></warning>
+          text = <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>
+          foo(text)
+       }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testPropertyAssignment() {
     val inspection = com.intellij.codeInspection.i18n.I18nInspection()
     inspection.setIgnoreForAllButNls(true)

@@ -10,7 +10,7 @@ class NlsIndirect {
         s = "bar";
         useOk(s);
         
-        String s1 = flag ? input : <warning descr="Hardcoded string literal: \"baz\"">"baz"</warning>;
+        String s1 = flag ? <warning descr="Reference to non-localized string is used where localized string is expected">input</warning> : <warning descr="Hardcoded string literal: \"baz\"">"baz"</warning>;
         if (Math.random() > 0.5) {
             use(s1);
         } else {

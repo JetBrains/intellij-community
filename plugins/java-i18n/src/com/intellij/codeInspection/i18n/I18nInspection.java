@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,7 +39,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.RegExp;
@@ -417,7 +417,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         for (String e : ignored) {
           if (!e.isEmpty()) initialList.add(e);
         }
-        myPanel = new AddDeleteListPanel<String>(null, initialList) {
+        myPanel = new AddDeleteListPanel<>(null, initialList) {
           @Override
           protected String findItemToAdd() {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -768,48 +768,45 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private static List<UExpression> findIndirectUsages(UExpression expression) {
-    PsiElement sourcePsi = expression.getSourcePsi();
-    if (!(sourcePsi instanceof PsiLiteralExpression)) {
-      return Collections.emptyList();
-    }
-
-    while (true) {
-      PsiElement psiParent = sourcePsi.getParent();
-      if (psiParent instanceof PsiPolyadicExpression || psiParent instanceof PsiParenthesizedExpression ||
-          (psiParent instanceof PsiConditionalExpression && ((PsiConditionalExpression)psiParent).getCondition() != sourcePsi)) {
-        sourcePsi = psiParent;
-      }
-      else {
-        break;
-      }
-    }
-
-    PsiExpression passThrough = ExpressionUtils.getPassThroughExpression((PsiExpression)sourcePsi);
-    PsiElement parent = passThrough.getParent();
-    List<UExpression> expressions = new ArrayList<>();
-    if (!passThrough.equals(sourcePsi)) {
-      expressions.add(UastContextKt.toUElement(passThrough, UExpression.class));
-    }
-
-    PsiLocalVariable local = null;
-    if (parent instanceof PsiLocalVariable) {
-      local = (PsiLocalVariable)parent;
-    }
-    else if (parent instanceof PsiAssignmentExpression &&
-             passThrough.equals(((PsiAssignmentExpression)parent).getRExpression()) &&
-             ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ) {
-      local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
-    }
-
-    if (local != null && NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
-      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-      if (codeBlock instanceof PsiCodeBlock) {
-        for (PsiElement e : DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, passThrough)) {
-          ContainerUtil.addIfNotNull(expressions, UastContextKt.toUElement(e, UExpression.class));
+    UExpression passThrough = NlsInfo.goUp(expression);
+    UElement uastParent = passThrough.getUastParent();
+    ULocalVariable uVar = null;
+    if (uastParent instanceof ULocalVariable) {
+      uVar = (ULocalVariable)uastParent;
+    } else if (uastParent instanceof UBinaryExpression &&
+               ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN &&
+               NlsInfo.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
+      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
+      if (left instanceof UResolvable) {
+        PsiElement target = ((UResolvable)left).resolve();
+        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
+        if (uVar == null && target != null) {
+          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
         }
       }
     }
-    return expressions;
+    if (uVar != null) {
+      PsiElement psiVar = uVar.getSourcePsi();
+      PsiElement psi = passThrough.getSourcePsi();
+      if (psi != null && psiVar != null) {
+        if (psiVar instanceof PsiLocalVariable) {
+          // Java
+          PsiLocalVariable local = (PsiLocalVariable)psiVar;
+          if (NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
+            PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+            if (codeBlock instanceof PsiCodeBlock) {
+              PsiElement[] refs = DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, psi);
+              return ContainerUtil.mapNotNull(refs, ref -> UastContextKt.toUElement(ref, UExpression.class));
+            }
+          }
+        } else {
+          // Kotlin
+          Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
+          return ContainerUtil.mapNotNull(refs, ref -> UastContextKt.toUElement(ref.getElement(), UExpression.class));
+        }
+      }
+    }
+    return Collections.singletonList(passThrough);
   }
 
   private NlsInfo getExpectedNlsInfo(@NotNull Project project,
