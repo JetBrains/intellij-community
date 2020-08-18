@@ -198,9 +198,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   // Getters
   //
 
-
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
+  public List<? extends DocumentContent> getContents() {
     //noinspection unchecked
     return (List)myRequest.getContents();
   }
@@ -270,7 +269,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @CalledInAwt
   @NotNull
-  protected LineCol transferPosition(@NotNull Side baseSide, @NotNull LineCol position) {
+  public LineCol transferPosition(@NotNull Side baseSide, @NotNull LineCol position) {
     if (mySyncScrollSupport == null) return position;
     int line = mySyncScrollSupport.getScrollable().transfer(baseSide, position.line);
     return new LineCol(line, position.column);
