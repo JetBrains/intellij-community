@@ -136,14 +136,14 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vFile));
     }
 
-    PsiJavaCodeReferenceElement refElement = null;
     if (reference != null) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement instanceof PsiJavaCodeReferenceElement) {
-        refElement = (PsiJavaCodeReferenceElement)referenceElement;
+      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE && 
+          !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
+        reference = null;
       }
     }
-    InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
+    InlineMethodDialog dialog = new InlineMethodDialog(project, method, reference, editor, allowInlineThisOnly);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.doAction();
     }

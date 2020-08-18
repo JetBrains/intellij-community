@@ -15,16 +15,16 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
-  private final PsiJavaCodeReferenceElement myReferenceElement;
+  private final PsiReference myReference;
   private final Editor myEditor;
   private final boolean myAllowInlineThisOnly;
   private final PsiMethod myMethod;
   private final int myOccurrencesNumber;
 
-  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor, boolean allowInlineThisOnly) {
+  public InlineMethodDialog(Project project, PsiMethod method, PsiReference ref, Editor editor, boolean allowInlineThisOnly) {
     super(project, true, method);
     myMethod = method;
-    myReferenceElement = ref;
+    myReference = ref;
     myEditor = editor;
     myAllowInlineThisOnly = allowInlineThisOnly;
     myInvokedOnReference = ref != null;
@@ -75,7 +75,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   protected void doAction() {
     super.doAction();
     invokeRefactoring(
-      new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
+      new InlineMethodProcessor(getProject(), myMethod, myReference, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
                                 isSearchForTextOccurrences(), !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
