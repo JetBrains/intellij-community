@@ -26,6 +26,7 @@ import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsDecompilerImpl;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
@@ -97,6 +98,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     registerApplicationDynamicExtensionPoint("com.intellij.filetype.decompiler", BinaryFileTypeDecompilers.class);
     registerApplicationDynamicExtensionPoint("com.intellij.psi.classFileDecompiler", ClassFileDecompilers.Decompiler.class);
+    addExtension(ClassFileDecompilers.getInstance().EP_NAME, new ClsDecompilerImpl());
   }
 
   // overridden in upsource
