@@ -18,6 +18,7 @@ package git4idea.reset;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -124,11 +125,11 @@ public class GitNewResetDialog extends DialogWrapper {
   @NotNull
   @Nls
   private static String getTargetText(@NotNull VcsFullCommitDetails commit) {
-    String commitMessage = StringUtil.escapeXmlEntities(StringUtil.shortenTextWithEllipsis(commit.getSubject(), 20, 0));
-    String commitDetails = String.format("<code>%s \"%s\"</code>", //NON-NLS
-                                         XmlStringUtil.wrapInHtmlTag(commit.getId().toShortString(), "b"),
-                                         commitMessage);
-    String author = XmlStringUtil.wrapInHtmlTag(VcsUserUtil.getShortPresentation(commit.getAuthor()), "code");
+    String commitMessage = StringUtil.shortenTextWithEllipsis(commit.getSubject(), 20, 0);
+    HtmlChunk commitDetails = HtmlChunk.tag("code").children(
+      HtmlChunk.text(commit.getId().toShortString()).bold(),
+      HtmlChunk.text(" \"" + commitMessage + "\""));
+    HtmlChunk author = HtmlChunk.tag("code").addText(VcsUserUtil.getShortPresentation(commit.getAuthor()));
     return GitBundle.message("git.reset.dialog.description.commit.details.by.author", commitDetails, author);
   }
 

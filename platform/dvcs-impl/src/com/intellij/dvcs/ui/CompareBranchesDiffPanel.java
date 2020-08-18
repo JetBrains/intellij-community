@@ -32,6 +32,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -51,13 +53,12 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
 import static java.util.Collections.emptyList;
 
 public class CompareBranchesDiffPanel extends JPanel {
-  private final String myBranchName;
+  private final @NlsSafe String myBranchName;
   private final Project myProject;
-  private final String myCurrentBranchName;
+  private final @NlsSafe String myCurrentBranchName;
   private final DvcsCompareSettings myVcsSettings;
 
   @Nullable private CommitCompareInfo myCompareInfo;
@@ -121,8 +122,8 @@ public class CompareBranchesDiffPanel extends JPanel {
 
   private void updateLabelText() {
     boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-    String branchNameText = wrapInHtmlTag(wrapInHtmlTag(myBranchName, "code"), "b");
-    String currentBranchNameText = wrapInHtmlTag(wrapInHtmlTag(myCurrentBranchName, "code"), "b");
+    HtmlChunk branchNameText = HtmlChunk.text(myBranchName).code().bold();
+    HtmlChunk currentBranchNameText = HtmlChunk.text(myCurrentBranchName).code().bold();
     String diffBetween;
     if (swapSides) {
       diffBetween = DvcsBundle.message("compare.branches.diff.panel.diff.between.files.in.branch.and.current.working.tree.on.branch",
@@ -136,7 +137,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     }
 
     String swapBranches = DvcsBundle.message("compare.branches.diff.panel.swap.branches");
-    myLabel.setText(XmlStringUtil.wrapInHtml(diffBetween + "&emsp;<a href=\"\">" + swapBranches + "</a>")); // NON-NLS
+    myLabel.setText(XmlStringUtil.wrapInHtml(diffBetween + "&emsp;" + HtmlChunk.link("", swapBranches))); // NON-NLS
   }
 
   public void setEmptyText(@NotNull String text) {

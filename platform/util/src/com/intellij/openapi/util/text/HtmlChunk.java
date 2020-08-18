@@ -198,6 +198,14 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @return a CODE element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element code() {
+    return wrapWith("code");
+  }
+
+  /**
    * @return a B element that wraps this element
    */
   @Contract(pure = true)
