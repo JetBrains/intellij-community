@@ -76,20 +76,24 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
         return Collections.unmodifiableCollection(hits);
       }
 
-      Set<VirtualFile> resultFiles = new HashSet<>();
       PsiSearchHelper helper = PsiSearchHelper.getInstance(myProject);
-      helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
-        ContainerUtil.addIfNotNull(resultFiles, file);
-        return true;
-      });
-
-      // in case our word splitting is incorrect
       CacheManager cacheManager = CacheManager.getInstance(myProject);
-      VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
-                                                                         myFindModel.isCaseSensitive());
 
-      Collections.addAll(resultFiles, filesWithWord);
-      return Collections.unmodifiableCollection(resultFiles);
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> {
+        Set<VirtualFile> resultFiles = new HashSet<>();
+
+        helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
+          ContainerUtil.addIfNotNull(resultFiles, file);
+          return true;
+        });
+
+        // in case our word splitting is incorrect
+        VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
+                                                                           myFindModel.isCaseSensitive());
+
+        Collections.addAll(resultFiles, filesWithWord);
+        return Collections.unmodifiableCollection(resultFiles);
+      });
     }
 
     @Override
