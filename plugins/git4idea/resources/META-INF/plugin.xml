@@ -502,7 +502,7 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageManager"/>
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
-    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.lst.GitStageLineStatusTrackerProvider"/>
+    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
