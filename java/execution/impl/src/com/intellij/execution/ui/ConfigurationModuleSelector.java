@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
@@ -72,7 +73,7 @@ public class ConfigurationModuleSelector {
     modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
   }
 
-  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, String noModule) {
+  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, @NlsContexts.ListItem String noModule) {
     myProject = project;
     myModulesList = modulesComboBox;
     myModulesDescriptionsComboBox = null;
