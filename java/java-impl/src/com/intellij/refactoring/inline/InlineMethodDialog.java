@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -124,5 +125,12 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("inline.method.title");
+  }
+
+  @Override
+  protected int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner) {
+    return getNumberOfOccurrences(nameIdentifierOwner, 
+                                  this::ignoreOccurrence, 
+                                  scope -> MethodReferencesSearch.search((PsiMethod)nameIdentifierOwner, scope, true));
   }
 }

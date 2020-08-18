@@ -26,8 +26,8 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -143,7 +143,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myReference != null) {
       usages.add(new UsageInfo(myReference));
     }
-    for (PsiReference reference : ReferencesSearch.search(myMethod, myRefactoringScope)) {
+    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
