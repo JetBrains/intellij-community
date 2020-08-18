@@ -161,7 +161,7 @@ public abstract class AbstractFieldPanel extends JPanel {
   }
 
   @NotNull
-  protected String getIconTooltip() {
+  protected @NlsContexts.Tooltip String getIconTooltip() {
     return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }

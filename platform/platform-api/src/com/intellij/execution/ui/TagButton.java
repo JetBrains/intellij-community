@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBUI;
@@ -18,7 +19,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
   private final InplaceButton myCloseButton;
 
-  public TagButton(String text, Runnable action) {
+  public TagButton(@NlsContexts.Button String text, Runnable action) {
     myButton = new JButton(text) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -57,7 +58,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myCloseButton.setBounds(new Rectangle(p, iconSize));
   }
 
-  protected void updateButton(String text, Icon icon) {
+  protected void updateButton(@NlsContexts.Button String text, Icon icon) {
     myButton.setText(text);
     myButton.setIcon(icon);
     layoutButtons();

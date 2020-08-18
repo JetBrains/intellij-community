@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class ActionPresentationData implements ActionPresentation {
    * @param icon        the icon for the action, displayed on the toolbar button.
    */
 
-  public ActionPresentationData(@NotNull String text, String description, Icon icon) {
+  public ActionPresentationData(@NotNull @Nls String text, @Nls String description, Icon icon) {
     myText = text;
     myDescription = description;
     myIcon = icon;

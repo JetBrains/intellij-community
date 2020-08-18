@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.FList;
@@ -24,8 +25,8 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   private final ListCellRenderer<? super T> myRenderer;
   private boolean mySeparator;
   private Icon myIcon;
-  private String myText;
-  private String myToolTipText;
+  private @NlsContexts.ListItem String myText;
+  private @NlsContexts.Tooltip String myToolTipText;
   private Color myForeground;
   private Color myBackground;
   private Font myFont;
@@ -74,7 +75,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
    */
   @Deprecated
   @NotNull
-  public static Component createSeparator(@Nullable String text) {
+  public static Component createSeparator(@Nullable @NlsContexts.Separator String text) {
     TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(JBUI.Borders.emptyLeft(2));
     separator.setOpaque(false);
@@ -104,11 +105,11 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     myIcon = icon;
   }
 
-  public final void setText(@Nullable String text) {
+  public final void setText(@Nullable @NlsContexts.ListItem String text) {
     myText = text;
   }
 
-  public final void setToolTipText(@Nullable String toolTipText) {
+  public final void setToolTipText(@Nullable @NlsContexts.Tooltip String toolTipText) {
     myToolTipText = toolTipText;
   }
 

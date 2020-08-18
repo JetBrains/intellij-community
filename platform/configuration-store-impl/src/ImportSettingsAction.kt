@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.getParentPath
 import com.intellij.util.io.copy
 import com.intellij.util.io.exists
@@ -114,7 +115,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     }
   }
 
-  private fun confirmRestart(message: String): Boolean =
+  private fun confirmRestart(@NlsContexts.DialogMessage message: String): Boolean =
     (Messages.OK == showOkCancelDialog(
       title = IdeBundle.message("title.restart.needed"),
       message = message,

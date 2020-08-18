@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public final class CertificateWrapper {
    * @param name - Common name of desired subject field
    * @return field value of {@link #NOT_AVAILABLE}, if it doesn't exist
    */
-  public @NotNull String getSubjectField(@NotNull CommonField name) {
+  public @NotNull @NlsSafe String getSubjectField(@NotNull CommonField name) {
     String field = mySubjectFields.get(name.getShortName());
     return field == null ? NOT_AVAILABLE : field;
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -21,11 +22,11 @@ public final class JBLabelDecorator extends JBLabel {
     super(image);
   }
 
-  private JBLabelDecorator(@NotNull String text) {
+  private JBLabelDecorator(@NotNull @NlsContexts.Label String text) {
     super(text);
   }
 
-  private JBLabelDecorator(@NotNull String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  private JBLabelDecorator(@NotNull @NlsContexts.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
@@ -33,7 +34,7 @@ public final class JBLabelDecorator extends JBLabel {
     super(image, horizontalAlignment);
   }
 
-  private JBLabelDecorator(@NotNull String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  private JBLabelDecorator(@NotNull @NlsContexts.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 
@@ -41,7 +42,7 @@ public final class JBLabelDecorator extends JBLabel {
     return new JBLabelDecorator();
   }
 
-  public static JBLabelDecorator createJBLabelDecorator(String text) {
+  public static JBLabelDecorator createJBLabelDecorator(@NlsContexts.Label String text) {
     return new JBLabelDecorator(text);
   }
 

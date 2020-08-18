@@ -43,10 +43,7 @@ import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -790,7 +787,7 @@ public abstract class DialogWrapper {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
-    Pair<Integer, String> pair = extractMnemonic(button.getText());
+    Pair<Integer, @Nls String> pair = extractMnemonic(button.getText());
     button.setText(pair.second);
     int mnemonic = pair.first;
 
@@ -818,7 +815,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, @Nls String> extractMnemonic(@Nullable @Nls String text) {
     if (text == null) return pair(0, null);
 
     int mnemonic = 0;

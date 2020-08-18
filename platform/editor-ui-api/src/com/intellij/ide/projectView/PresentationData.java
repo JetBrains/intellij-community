@@ -23,6 +23,7 @@ import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FontUtil;
@@ -47,7 +48,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   private Icon myIcon;
 
   private String myLocationString;
-  private String myPresentableText;
+  private @NlsSafe String myPresentableText;
 
   private String myTooltip;
   private TextAttributesKey myAttributesKey;
@@ -73,7 +74,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(String presentableText, String locationString, Icon icon,
+  public PresentationData(@NlsSafe String presentableText, @NlsSafe String locationString, Icon icon,
                           @Nullable TextAttributesKey attributesKey) {
     myIcon = icon;
     myLocationString = locationString;

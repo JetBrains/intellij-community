@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class ValidFileCellAppearance extends BaseTextCommentCellAppearance {
     return getSubname(false);
   }
 
-  private String getSubname(boolean headOrTail) {
+  private @NlsContexts.Label String getSubname(boolean headOrTail) {
     String presentableUrl = myFile.getPresentableUrl();
     int separatorIndex = getSplitUrlIndex(presentableUrl);
     if (headOrTail)

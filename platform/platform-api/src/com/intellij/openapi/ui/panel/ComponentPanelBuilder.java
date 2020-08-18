@@ -43,7 +43,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
   private boolean myCommentAllowAutoWrapping = true;
-  private String myHTDescription;
+  private @NlsContexts.Tooltip String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
   private JComponent myTopRightComponent;

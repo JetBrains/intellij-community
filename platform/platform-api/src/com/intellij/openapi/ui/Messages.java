@@ -1185,7 +1185,7 @@ public class Messages {
   public static class InputDialog extends MessageDialog {
     protected JTextComponent myField;
     private final InputValidator myValidator;
-    private final String myComment;
+    private final @DetailedDescription String myComment;
 
     public InputDialog(@Nullable Project project,
                        @DialogMessage String message,

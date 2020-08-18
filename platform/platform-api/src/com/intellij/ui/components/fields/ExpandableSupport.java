@@ -4,6 +4,7 @@ package com.intellij.ui.components.fields;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Expandable;
@@ -35,8 +36,8 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   private final Function<? super String, String> onShow;
   private final Function<? super String, String> onHide;
   private JBPopup popup;
-  private String title;
-  private String comment;
+  private @NlsContexts.PopupTitle String title;
+  private @NlsContexts.PopupAdvertisement String comment;
 
   public ExpandableSupport(@NotNull Source source, Function<? super String, String> onShow, Function<? super String, String> onHide) {
     this.source = source;
@@ -85,7 +86,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   /**
    * @param title a text for the popup's header or {@code null} if header is not needed
    */
-  public final void setTitle(String title) {
+  public final void setTitle(@NlsContexts.PopupTitle String title) {
     this.title = title;
   }
 
@@ -99,7 +100,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   /**
    * @param comment a text for the popup's footer or {@code null} if footer is not needed
    */
-  public final void setComment(String comment) {
+  public final void setComment(@NlsContexts.PopupAdvertisement String comment) {
     this.comment = comment;
   }
 

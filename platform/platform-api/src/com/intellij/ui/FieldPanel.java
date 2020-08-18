@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,11 +23,11 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     createComponent();
   }
 
-  public FieldPanel(String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public FieldPanel(@NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     this(new ExtendableTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 
-  public FieldPanel(JTextField textField, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public FieldPanel(JTextField textField, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
     myTextField = textField;
     createComponent();

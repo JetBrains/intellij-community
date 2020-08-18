@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -17,7 +18,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
 
   protected abstract String getSecondaryText();
 
-  protected abstract String getPrimaryText();
+  protected abstract @NlsContexts.Label String getPrimaryText();
 
   @Override
   public void customize(@NotNull final SimpleColoredComponent component) {

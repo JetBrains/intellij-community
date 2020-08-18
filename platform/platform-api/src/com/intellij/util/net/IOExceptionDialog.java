@@ -19,7 +19,7 @@ public final class IOExceptionDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(IOExceptionDialog.class);
   private final JTextArea myErrorLabel;
 
-  public IOExceptionDialog(String title, String errorText)  {
+  public IOExceptionDialog(@NlsContexts.DialogTitle String title, String errorText)  {
     super((Project)null, true);
     setTitle(title);
     setOKButtonText(UIBundle.message("io.error.dialog.retry"));

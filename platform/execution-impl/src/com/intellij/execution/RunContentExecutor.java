@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class RunContentExecutor implements Disposable {
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
   private Computable<Boolean> myStopEnabled;
-  private String myTitle = "Output";
+  private @NlsContexts.TabTitle String myTitle = "Output";
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
   private boolean myFocusToolWindow = true;

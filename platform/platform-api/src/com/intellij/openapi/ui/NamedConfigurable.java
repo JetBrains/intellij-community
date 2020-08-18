@@ -10,6 +10,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   public abstract void setDisplayName(String name);
   public abstract T getEditableObject();
-  public abstract String getBannerSlogan();
+  public abstract @Nls(capitalization = Nls.Capitalization.Title) String getBannerSlogan();
 
   @Override
   public final JComponent createComponent() {
@@ -81,7 +82,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
       myOptionsPanel.add(myOptionsComponent, BorderLayout.CENTER);
     }
     else {
-      Logger.getInstance(getClass().getName()).error("Options component is null for "+getClass());
+      Logger.getInstance(getClass().getName()).error("Options component is null for " + getClass());
     }
     updateName();
     return myWholePanel;

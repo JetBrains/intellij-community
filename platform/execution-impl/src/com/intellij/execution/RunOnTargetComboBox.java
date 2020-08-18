@@ -7,6 +7,7 @@ import com.intellij.ide.wizard.AbstractWizardStepEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SeparatorWithText;
@@ -94,16 +95,16 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   }
 
   public static abstract class Item {
-    private final String displayName;
+    private final @NlsContexts.Label String displayName;
     private final Icon icon;
 
 
-    public Item(String displayName, Icon icon) {
+    public Item(@NlsContexts.Label String displayName, Icon icon) {
       this.displayName = displayName;
       this.icon = icon;
     }
 
-    public String getDisplayName() {
+    public @NlsContexts.Label String getDisplayName() {
       return displayName;
     }
 

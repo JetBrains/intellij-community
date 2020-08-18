@@ -98,7 +98,7 @@ public final class Presentation implements Cloneable {
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private PropertyChangeSupport myChangeSupport;
-  @NotNull private Supplier<String> myDescriptionSupplier = () -> null;
+  @NotNull private Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
   private Icon myIcon;
   private Icon myDisabledIcon;
   private Icon myHoveredIcon;
@@ -226,7 +226,7 @@ public final class Presentation implements Cloneable {
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
   }
 
-  public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
+  public static String restoreTextWithMnemonic(@Nullable @ActionDescription String text, final int mnemonic) {
     if (text == null) return null;
     TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
     for (int i = 0; i < text.length(); i++) {
@@ -241,7 +241,7 @@ public final class Presentation implements Cloneable {
     return myDescriptionSupplier.get();
   }
 
-  public void setDescription(@NotNull Supplier<String> dynamicDescription) {
+  public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
     Supplier<String> oldDescription = myDescriptionSupplier;
     myDescriptionSupplier = dynamicDescription;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());

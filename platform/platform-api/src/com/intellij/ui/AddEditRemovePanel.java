@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
@@ -287,7 +288,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     public abstract int getColumnCount();
     @Nullable
-    public abstract String getColumnName(int columnIndex);
+    public abstract @ColumnName String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 
     public Class getColumnClass(int columnIndex) { return String.class; }

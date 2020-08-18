@@ -18,6 +18,7 @@ package com.intellij.util.config;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class ToggleBooleanProperty extends ToggleAction {
   private final AbstractProperty.AbstractPropertyContainer myProperties;
   private final AbstractProperty<Boolean> myProperty;
 
-  public ToggleBooleanProperty(String text, String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
+  public ToggleBooleanProperty(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
     super(text, description, icon);
     myProperties = properties;
     myProperty = property;

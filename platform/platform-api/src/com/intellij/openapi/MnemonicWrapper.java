@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -183,9 +184,9 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return UISettings.getShadowInstance().getDisableMnemonicsInControls();
   }
 
-  abstract String getText();
+  abstract @Nls String getText();
 
-  abstract void setText(String text);
+  abstract void setText(@Nls String text);
 
   abstract int getMnemonicCode();
 

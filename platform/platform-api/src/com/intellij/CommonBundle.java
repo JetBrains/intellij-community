@@ -41,7 +41,7 @@ public final class CommonBundle extends DynamicBundle {
   @Contract("null, _, _, _ -> param3")
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
-                                        @Nullable String defaultValue,
+                                        @Nullable @Nls String defaultValue,
                                         Object @NotNull ... params) {
     return AbstractBundle.messageOrDefault(bundle, key, defaultValue, params);
   }

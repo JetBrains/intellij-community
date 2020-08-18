@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -135,15 +136,15 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   public static class TextSection {
     private static final TextAttributes DEFAULT_TEXT_ATTRIBUTES = new TextAttributes(null, null, null, null, Font.PLAIN);
     private static final String DEFAULT_TEXT = "";
-    private final String TEXT;
+    private final @Nls String TEXT;
     private final TextAttributes ATTRIBUTES;
 
-    public TextSection(String text, TextAttributes attributes) {
+    public TextSection(@Nls String text, TextAttributes attributes) {
       ATTRIBUTES = attributes == null ? DEFAULT_TEXT_ATTRIBUTES : attributes;
       TEXT = text == null ? DEFAULT_TEXT : text;
     }
 
-    public String getText() {
+    public @Nls String getText() {
       return TEXT;
     }
 
@@ -173,7 +174,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
 
     public abstract void addSection(TextSection section);
 
-    public void addText(String text, TextAttributes attributes) {
+    public void addText(@Nls String text, TextAttributes attributes) {
       addSection(new TextSection(text, attributes));
     }
 
