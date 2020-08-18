@@ -222,7 +222,7 @@ public final class IndexUpdateRunner {
       indexingJob.oneMoreFileProcessed();
       synchronized (indexingJob.myStatistics) {
         TooLargeForIndexingFile tooLargeForIndexingFile = new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength());
-        indexingJob.myStatistics.addTooLargeForIndexingFile(e.getFile(), tooLargeForIndexingFile, indexingJob.myProject);
+        indexingJob.myStatistics.addTooLargeForIndexingFile(e.getFile(), tooLargeForIndexingFile);
       }
       FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
       return;
@@ -254,8 +254,8 @@ public final class IndexUpdateRunner {
           indexingJob.myStatistics.addFileStatistics(file,
                                                      fileIndexingStatistics,
                                                      contentLoadingTime,
-                                                     loadingResult.fileLength,
-                                                     indexingJob.myProject);
+                                                     loadingResult.fileLength
+          );
         }
       }
       indexingJob.oneMoreFileProcessed();

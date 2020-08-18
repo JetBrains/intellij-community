@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
-import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
@@ -25,7 +23,7 @@ class IndexingJobStatistics(val fileSetName: String) {
 
   val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
-  val indexedFiles = arrayListOf<IndexedFilePath>()
+  val indexedFiles = arrayListOf<String /* File short path */>()
 
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
@@ -44,8 +42,7 @@ class IndexingJobStatistics(val fileSetName: String) {
     file: VirtualFile,
     fileStatistics: FileIndexingStatistics,
     contentLoadingTime: Long,
-    fileSize: Long,
-    project: Project
+    fileSize: Long
   ) {
     numberOfIndexedFiles++
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
@@ -65,20 +62,30 @@ class IndexingJobStatistics(val fileSetName: String) {
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFilePaths.createIndexedFilePath(file, project)
+      indexedFiles += getFilePath(file)
     }
   }
 
   fun addTooLargeForIndexingFile(
     file: VirtualFile,
-    tooLargeForIndexingFile: TooLargeForIndexingFile,
-    project: Project
+    tooLargeForIndexingFile: TooLargeForIndexingFile
   ) {
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
     tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFilePaths.createIndexedFilePath(file, project)
+      indexedFiles += getFilePath(file)
     }
+  }
+
+  private fun getFilePath(file: VirtualFile): String {
+    val fileSystem = file.fileSystem
+    if (fileSystem is ArchiveFileSystem) {
+      val localArchiveFile = fileSystem.getLocalByEntry(file)
+      if (localArchiveFile != null) {
+        return localArchiveFile.name + ":" + file.name
+      }
+    }
+    return file.name
   }
 }
