@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -147,16 +148,34 @@ public final class CommonJavaFragments {
         }
         if (index == -1) {
           append("java ");
+          String shortVersion = appendShortVersion(value);
+          if (value.getPathOrName() != null && !value.getPathOrName().equals(shortVersion)) {
+            append(value.getPathOrName() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          else if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
+        else {
+          if (value.getPathOrName() != null) {
+            append(value.getPathOrName() + " ");
+          }
+          else appendShortVersion(value);
+          if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+      }
+
+      private @Nullable @NlsSafe String appendShortVersion(JrePathEditor.JreComboBoxItem value) {
         if (value.getVersion() != null) {
           JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
           if (version != null) {
             append(version.getDescription() + " ");
+            return version.getDescription();
           }
         }
-        if (value.getDescription() != null) {
-          append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
+        return null;
       }
     });
     UIUtil.setMonospaced(comboBox);

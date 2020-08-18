@@ -326,6 +326,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     }
 
     @Override
+    public @NlsSafe @Nullable String getDescription() {
+      return null;
+    }
+
+    @Override
     public int getOrder() {
       return 2;
     }
