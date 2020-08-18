@@ -232,9 +232,8 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-    EnvironmentUtil.loadEnvironment(true)
-      .thenRun(subActivity::end);
+    Activity subActivity = StartUpMeasurer.startActivity("environment loading");
+    EnvironmentUtil.loadEnvironment(subActivity::end);
 
     if (!configImportNeeded) {
       runPreAppClass(log);
