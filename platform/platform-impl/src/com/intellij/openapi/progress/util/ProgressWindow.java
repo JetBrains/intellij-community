@@ -53,9 +53,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Nullable protected final Project myProject;
   final boolean myShouldShowCancel;
-  String myCancelText;
+  @NlsContexts.Button String myCancelText;
 
-  private String myTitle;
+  @ProgressTitle private String myTitle;
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
@@ -334,11 +334,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @ProgressTitle
   public String getTitle() {
     return myTitle;
   }
 
-  public void setCancelButtonText(@NotNull String text) {
+  public void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }
