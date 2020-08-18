@@ -59,6 +59,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -70,7 +71,8 @@ public class HgVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final @NonNls String VCS_NAME = "hg4idea";
-  public static final @Nls String DISPLAY_NAME = "Mercurial";
+  public static final Supplier<@Nls String> DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.name");
+  public static final Supplier<@Nls String> SHORT_DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.short.name");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
@@ -120,13 +122,13 @@ public class HgVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return DISPLAY_NAME.get();
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return "Hg";
+    return SHORT_DISPLAY_NAME.get();
   }
 
   @Override

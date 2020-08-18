@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.vcs.VcsLocaleHelper;
@@ -68,7 +69,7 @@ public final class ShellCommand {
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          for (String line : LineHandlerHelper.splitText(event.getText())) {
+          for (@NlsSafe String line : LineHandlerHelper.splitText(event.getText())) {
             if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
               indicator.setText2(line);
             }

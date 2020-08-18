@@ -62,7 +62,7 @@ public class HgMergeCommand {
       arguments.add("--rev");
       arguments.add(revision);
     }
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Merge")) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.merge"))) {
       HgCommandResult result = commandExecutor.executeInCurrentThread(repo.getRoot(), "merge", arguments);
       repo.update();
       return result;

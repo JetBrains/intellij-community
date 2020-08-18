@@ -38,12 +38,12 @@ public final class HgCommandResult {
   }
 
   @NotNull
-  public List<String> getOutputLines() {
+  public List<@NlsSafe String> getOutputLines() {
     return myProcessOutput.getStdoutLines();
   }
 
   @NotNull
-  public List<String> getErrorLines() {
+  public List<@NlsSafe String> getErrorLines() {
     return myProcessOutput.getStderrLines();
   }
 

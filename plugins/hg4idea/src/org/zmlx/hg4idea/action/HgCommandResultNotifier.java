@@ -16,13 +16,16 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
+import java.util.Collections;
 import java.util.List;
 
 public final class HgCommandResultNotifier {
@@ -44,25 +47,20 @@ public final class HgCommandResultNotifier {
                           @NlsContexts.NotificationTitle @NotNull String failureTitle,
                           @NlsContexts.NotificationContent @NotNull String failureDescription,
                           @Nullable NotificationListener listener) {
-    List<String> err;
-    String errorMessage;
-    if (StringUtil.isEmptyOrSpaces(failureDescription)) {
-      failureDescription = failureTitle;
+    List<String> err = result != null ? result.getErrorLines() : Collections.emptyList();
+    HtmlBuilder sb = new HtmlBuilder();
+    if (!StringUtil.isEmptyOrSpaces(failureDescription)) {
+      sb.append(failureDescription);
     }
-    if (result == null) {
-      errorMessage = failureDescription;
-    } else {
-      err = result.getErrorLines();
-      if (err.isEmpty()) {
-        LOG.assertTrue(!StringUtil.isEmptyOrSpaces(failureDescription),
-                       "Failure title, failure description and errors log can not be empty at the same time");
-        errorMessage = failureDescription;
-      } else if (failureDescription.isEmpty()) {
-        errorMessage = XmlStringUtil.wrapInHtml(StringUtil.join(err, "<br>"));
-      } else {
-        errorMessage = XmlStringUtil.wrapInHtml(failureDescription + "<br>" + StringUtil.join(err, "<br>"));
-      }
+    else {
+      sb.append(failureTitle);
     }
+    if (!err.isEmpty()) {
+      sb.br();
+      sb.appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(err, HtmlChunk::text));
+    }
+    String errorMessage = sb.wrapWithHtmlBody().toString();
+
     VcsNotifier.getInstance(myProject).notifyError(failureTitle, errorMessage, listener);
   }
 }

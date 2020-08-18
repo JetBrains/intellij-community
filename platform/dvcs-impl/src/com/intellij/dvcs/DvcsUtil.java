@@ -185,7 +185,7 @@ public final class DvcsUtil {
 
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
 
-  public static void assertFileExists(File file, String message) throws IllegalStateException {
+  public static void assertFileExists(File file, @NonNls String message) throws IllegalStateException {
     if (!file.exists()) {
       throw new IllegalStateException(message);
     }

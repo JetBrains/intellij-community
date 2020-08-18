@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -140,7 +141,7 @@ public final class HgErrorUtil {
   }
 
   public static void handleException(@Nullable Project project, @NotNull Exception e) {
-    handleException(project, "Error", e);
+    handleException(project, CommonBundle.message("title.error"), e);
   }
 
   public static void handleException(@Nullable Project project, @NotNull @NlsContexts.NotificationTitle String title, @NotNull Exception e) {

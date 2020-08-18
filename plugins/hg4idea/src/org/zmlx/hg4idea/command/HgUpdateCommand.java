@@ -83,7 +83,7 @@ public class HgUpdateCommand {
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
     HgCommandResult result;
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "VCS Update")) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.update"))) {
       result =
         executor.executeInCurrentThread(repo, "update", arguments);
       if (!clean && hasUncommittedChangesConflict(result)) {
