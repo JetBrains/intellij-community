@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -412,7 +411,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     final CompletableFuture<ProgressWindow> progress =
-      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow && !ApplicationManagerEx.getApplicationEx().isExitInProgress(), project, parentComponent, cancelText);
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
 
     ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
       .sync()
