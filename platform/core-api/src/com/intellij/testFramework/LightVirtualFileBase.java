@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   }
 
   private static final class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
-    private static final String PROTOCOL = "mock";
+    private static final @NonNls String PROTOCOL = "mock";
 
     private MyVirtualFileSystem() {
       startEventPropagation();

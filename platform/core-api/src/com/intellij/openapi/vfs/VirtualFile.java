@@ -56,7 +56,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_NAME = "name";
+  public static final @NonNls String PROP_NAME = "name";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a {@link VirtualFile} changes.
@@ -64,7 +64,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_ENCODING = "encoding";
+  public static final @NonNls String PROP_ENCODING = "encoding";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when write permission of a {@link VirtualFile} changes.
@@ -72,7 +72,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_WRITABLE = "writable";
+  public static final @NonNls String PROP_WRITABLE = "writable";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a {@link VirtualFile} changes.
@@ -80,7 +80,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_HIDDEN = "HIDDEN";
+  public static final @NonNls String PROP_HIDDEN = "HIDDEN";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a {@link VirtualFile} changes.
@@ -88,7 +88,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_SYMLINK_TARGET = "symlink";
+  public static final @NonNls String PROP_SYMLINK_TARGET = "symlink";
 
   /**
    * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.

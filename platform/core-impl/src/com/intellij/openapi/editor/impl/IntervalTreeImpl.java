@@ -382,7 +382,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
   private static boolean isAcquired(@NotNull Lock l) {
-    String s = l.toString();
+    @NonNls String s = l.toString();
     return s.contains("Locked by thread");
   }
 

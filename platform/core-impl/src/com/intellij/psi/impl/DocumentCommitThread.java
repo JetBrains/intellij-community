@@ -45,7 +45,7 @@ import java.util.concurrent.TimeoutException;
 
 public final class DocumentCommitThread implements Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
-  private static final String SYNC_COMMIT_REASON = "Sync commit";
+  private static final @NonNls String SYNC_COMMIT_REASON = "Sync commit";
 
   private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private volatile boolean isDisposed;

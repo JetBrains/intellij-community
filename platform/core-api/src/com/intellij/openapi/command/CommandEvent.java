@@ -24,7 +24,7 @@ public class CommandEvent extends EventObject {
 
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
-                      String commandName,
+                      @NlsContexts.Command String commandName,
                       Object commandGroupId,
                       Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
@@ -32,7 +32,7 @@ public class CommandEvent extends EventObject {
   }
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
-                      String commandName,
+                      @NlsContexts.Command String commandName,
                       Object commandGroupId,
                       Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,

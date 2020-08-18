@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ public class UiActivity implements ComparableObject {
     this(elements, null);
   }
 
-  protected UiActivity(String @NotNull [] elements1, String @Nullable [] elements2) {
+  protected UiActivity(@NonNls String @NotNull [] elements1, @NonNls String @Nullable [] elements2) {
     myElements.addAll(Arrays.asList(elements1));
     if (elements2 != null) {
       myElements.addAll(Arrays.asList(elements2));

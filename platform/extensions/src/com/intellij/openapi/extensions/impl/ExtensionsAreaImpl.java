@@ -228,7 +228,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
     PluginId id1 = getExtensionPoint(pointName).getPluginDescriptor().getPluginId();
     PluginId id2 = pluginDescriptor.getPluginId();
-    String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
+    @NonNls String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, epTraces.get(pointName));
     }

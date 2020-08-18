@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +150,7 @@ final class CachedValueStabilityChecker {
   }
 
   @NotNull
-  private static String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
+  private static @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
     return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
            "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
@@ -157,7 +158,7 @@ final class CachedValueStabilityChecker {
            "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
   }
 
-  private static void complain(String message, String key, @NotNull Class<?> pluginClass) {
+  private static void complain(@NonNls String message, String key, @NotNull Class<?> pluginClass) {
     if (ourReportedKeys.add(key)) {
       // curious why you've gotten this error? Maybe this class' javadoc will help.
       PluginException.logPluginError(LOG, message, null, pluginClass);
