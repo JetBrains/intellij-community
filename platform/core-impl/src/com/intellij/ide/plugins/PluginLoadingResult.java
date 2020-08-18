@@ -102,7 +102,7 @@ final class PluginLoadingResult {
   void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String reason,
                                 @Nullable @NlsSafe String since, @Nullable @NlsSafe String until) {
     // do not report if some compatible plugin were already added
-    // no race condition here — plugins from classpath are loaded before and not in parallel to loading from plugin dir
+    // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.getPluginId())) {
       return;
     }

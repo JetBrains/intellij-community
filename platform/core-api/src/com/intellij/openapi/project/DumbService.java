@@ -291,8 +291,7 @@ public abstract class DumbService {
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
-   * @param balloonText
-   * @param runWhenSmartAndBalloonStillShowing — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
+   * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
   public abstract void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
                                                  @NotNull Runnable runWhenSmartAndBalloonStillShowing);
@@ -397,7 +396,7 @@ public abstract class DumbService {
 
   /**
    * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.
-   * This should be called inside read action. The momentary system state is returned: there are no guarantees that the result won't change
+   * This should be called inside read action. The momentary system state is returned: there are no guarantees that the result won't change
    * in the next line of the calling code.
    */
   public abstract boolean isSuspendedDumbMode();
