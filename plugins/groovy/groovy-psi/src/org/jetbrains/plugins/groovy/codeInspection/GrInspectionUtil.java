@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -36,7 +37,7 @@ public final class GrInspectionUtil {
 
   public static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                      @NotNull HighlightDisplayLevel displayLevel,
-                                                     @NotNull String message) {
+                                                     @NotNull @DetailedDescription String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 

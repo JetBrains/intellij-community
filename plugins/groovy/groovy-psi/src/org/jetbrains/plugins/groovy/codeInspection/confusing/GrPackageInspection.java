@@ -65,8 +65,10 @@ public class GrPackageInspection extends BaseInspection {
           PsiElement toHighlight = getElementToHighlight((GroovyFile)file);
           if (toHighlight == null) return;
 
-          registerError(toHighlight, "Package name mismatch. Actual: '" + actual + "', expected: '" + expectedPackage+"'",
-                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage), GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
+          registerError(toHighlight,
+                        GroovyBundle.message("inspection.message.package.name.mismatch.actual.0.expected.1", actual, expectedPackage),
+                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage),
+                          GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }

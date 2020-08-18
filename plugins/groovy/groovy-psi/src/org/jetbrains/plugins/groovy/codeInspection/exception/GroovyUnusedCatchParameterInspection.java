@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
@@ -52,7 +53,8 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
       block.accept(visitor);
       if (!visitor.isUsed()) {
         final PsiElement nameIdentifier = parameter.getNameIdentifierGroovy();
-        registerError(nameIdentifier, "Unused catch parameter '#ref' #loc", new LocalQuickFix[]{QuickFixFactory.getInstance().createRenameElementFix(parameter, "ignored")},
+        registerError(nameIdentifier, GroovyBundle.message("inspection.message.unused.catch.parameter.ref"),
+                      new LocalQuickFix[]{QuickFixFactory.getInstance().createRenameElementFix(parameter, "ignored")},
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }

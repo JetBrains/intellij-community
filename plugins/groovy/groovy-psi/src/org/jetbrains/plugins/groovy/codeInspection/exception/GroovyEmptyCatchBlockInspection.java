@@ -23,6 +23,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -71,7 +72,8 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
       final LocalQuickFix[] fixes = myIgnore
                                     ? new LocalQuickFix[]{fix}
                                     : LocalQuickFix.EMPTY_ARRAY;
-      registerError(catchClause.getFirstChild(), "Empty '#ref' block #loc", fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      registerError(catchClause.getFirstChild(), GroovyBundle.message("inspection.message.empty.ref.block"), fixes,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
     private boolean isEmpty(@NotNull GrOpenBlock body) {

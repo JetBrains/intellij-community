@@ -130,7 +130,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   }
 
   protected void registerError(@NotNull final PsiElement location,
-                               @NotNull final String description,
+                               @NotNull @InspectionMessage final String description,
                                final IntentionAction @Nullable [] fixes,
                                final ProblemHighlightType highlightType) {
     if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;

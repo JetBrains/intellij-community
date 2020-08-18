@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
-  private fun error(typeArgumentList: PsiElement, msg: @InspectionMessage String) {
+  private fun error(typeArgumentList: PsiElement, @InspectionMessage msg: String) {
     holder.newAnnotation(HighlightSeverity.ERROR, msg).range(typeArgumentList).create()
   }
 

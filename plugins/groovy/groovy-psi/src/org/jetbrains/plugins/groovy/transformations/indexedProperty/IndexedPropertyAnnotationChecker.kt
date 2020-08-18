@@ -24,7 +24,8 @@ class IndexedPropertyAnnotationChecker : CustomAnnotationChecker() {
     }
 
     if (field.getIndexedComponentType() == null) {
-      val message = "Property is not indexable. Type must be array or list but found ${field.type.presentableText}"
+      val message = GroovyBundle.message("inspection.message.property.not.indexable.type.must.be.array.or.list.but.found.0",
+                                         field.type.presentableText)
       holder.newAnnotation(HighlightSeverity.ERROR, message).create()
     }
 

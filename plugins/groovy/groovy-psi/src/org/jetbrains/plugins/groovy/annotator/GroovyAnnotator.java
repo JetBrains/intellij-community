@@ -1431,7 +1431,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     GrAnnotation parent = (GrAnnotation)annotationArgumentList.getParent();
-    Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder);
+    Pair<PsiElement, @InspectionMessage String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder);
     if (r != null && r.getFirst() != null && r.getSecond() != null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, r.getSecond()).range(r.getFirst()).create();
     }
@@ -1451,7 +1451,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    Pair.NonNull<PsiElement, String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
+    Pair.NonNull<PsiElement, @InspectionMessage String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
     if (result != null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, result.getSecond()).range(result.getFirst()).create();
     }
@@ -1722,7 +1722,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static AnnotationBuilder registerImplementsMethodsFix(@NotNull GrTypeDefinition typeDefinition,
                                                                 @NotNull PsiMethod abstractMethod,
                                                                 @NotNull AnnotationBuilder builder,
-                                                                String message,
+                                                                @InspectionMessage String message,
                                                                 TextRange range) {
     if (!OverrideImplementExploreUtil.getMethodsToOverrideImplement(typeDefinition, true).isEmpty()) {
       builder = builder.withFix(QuickFixFactory.getInstance().createImplementMethodsFix(typeDefinition));
@@ -1754,7 +1754,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static AnnotationBuilder registerMakeAbstractMethodNotAbstractFix(AnnotationBuilder builder,
                                                                             GrMethod method,
                                                                             boolean makeClassAbstract,
-                                                                            String message, TextRange range) {
+                                                                            @InspectionMessage String message, TextRange range) {
     if (method.getBlock() == null) {
       builder = builder.withFix(QuickFixFactory.getInstance().createAddMethodBodyFix(method));
     }

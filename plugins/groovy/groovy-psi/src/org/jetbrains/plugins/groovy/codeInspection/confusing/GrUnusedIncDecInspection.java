@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -109,7 +110,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     }
 
     private static class RemoveIncOrDecFix implements LocalQuickFix {
-      private final String myMessage;
+      private final @IntentionFamilyName String myMessage;
 
       RemoveIncOrDecFix(GrUnaryExpression expression) {
         myMessage = GroovyInspectionBundle.message("remove.0", expression.getOperationToken().getText());
@@ -131,7 +132,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     }
 
     private static class ReplacePostfixIncWithPrefixFix implements LocalQuickFix {
-      private final String myMessage;
+      private final @IntentionFamilyName String myMessage;
 
       ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
         myMessage = GroovyInspectionBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
@@ -156,7 +157,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     }
 
     private static class ReplaceIncDecWithBinary implements LocalQuickFix {
-      private final String myMessage;
+      private final @IntentionFamilyName String myMessage;
 
       ReplaceIncDecWithBinary(GrUnaryExpression expression) {
         String opToken = expression.getOperationToken().getText();

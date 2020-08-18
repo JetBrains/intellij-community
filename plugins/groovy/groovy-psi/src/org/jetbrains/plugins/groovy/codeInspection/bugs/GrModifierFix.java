@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -49,7 +37,7 @@ public class GrModifierFix extends GroovyFix {
   };
 
   private final String myModifier;
-  private final String myText;
+  private final @IntentionName String myText;
   private final boolean myDoSet;
   private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
 
@@ -68,7 +56,7 @@ public class GrModifierFix extends GroovyFix {
     this(initText(doSet, getMemberName(member, showContainingClass), modifier), modifier, doSet, modifierListProvider);
   }
 
-  public GrModifierFix(@NotNull String text,
+  public GrModifierFix(@IntentionName @NotNull String text,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
                        @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
@@ -78,7 +66,7 @@ public class GrModifierFix extends GroovyFix {
     myDoSet = doSet;
   }
 
-  public static String initText(boolean doSet, @NotNull String name, @NotNull String modifier) {
+  public static @IntentionName String initText(boolean doSet, @NlsSafe @NotNull String name, @NlsSafe @NotNull String modifier) {
     return GroovyBundle.message(
       doSet ? "change.modifier" : "change.modifier.not",
       name,

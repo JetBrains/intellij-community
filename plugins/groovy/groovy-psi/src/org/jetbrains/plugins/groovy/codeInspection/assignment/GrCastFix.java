@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
@@ -29,7 +30,9 @@ public class GrCastFix extends GroovyFix {
 
   @NotNull
   private final SmartPsiElementPointer<GrExpression> pointer;
+
   @NotNull
+  @IntentionName
   private final String myName;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
@@ -37,10 +40,10 @@ public class GrCastFix extends GroovyFix {
   }
 
   public GrCastFix(PsiType expectedType, GrExpression expression, boolean safe) {
-    this(expectedType, expression, safe, "Cast to " + expectedType.getPresentableText());
+    this(expectedType, expression, safe, GroovyBundle.message("intention.name.cast.to.0", expectedType.getPresentableText()));
   }
 
-  public GrCastFix(PsiType expectedType, GrExpression expression, boolean safe, @NotNull String name) {
+  public GrCastFix(PsiType expectedType, GrExpression expression, boolean safe, @NotNull @IntentionName String name) {
     mySafe = safe;
     myName = name;
     myExpectedType = PsiImplUtil.normalizeWildcardTypeByPosition(expectedType, expression);

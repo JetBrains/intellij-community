@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -106,7 +107,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   private static final class ReplaceAssignmentWithOperatorAssignmentFix
       extends GroovyFix {
 
-    private final String m_name;
+    private final @IntentionName String m_name;
 
     private ReplaceAssignmentWithOperatorAssignmentFix(
         GrAssignmentExpression expression) {
@@ -122,7 +123,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       } else if ("||".equals(signText)) {
         signText = "|";
       }
-      m_name = "Replace '=' with '" + signText + "='";
+      m_name = GroovyBundle.message("intention.name.replace.eq.with.0.eq", signText);
     }
 
     @Nls
