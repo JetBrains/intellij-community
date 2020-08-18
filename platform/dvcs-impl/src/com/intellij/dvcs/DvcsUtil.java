@@ -102,14 +102,6 @@ public final class DvcsUtil {
     return StringUtil.join(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository), ", ");
   }
 
-  @NotNull
-  public static String fileOrFolder(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return "folder";
-    }
-    return "file";
-  }
-
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
     for (Repository repository : repositories) {
       if (repository.isFresh()) {
