@@ -26,7 +26,7 @@ public final class EncodingEnvironmentUtil {
    * <p/>
    * Unfortunately, Mac OSX has a special behavior:<br/>
    * These environment variables aren't passed to an IDE, if the IDE is launched from Spotlight.<br/>
-   * Unfortunately, even {@link EnvironmentUtil#getEnvironment()} doesn't have these variables.<p/>
+   * Unfortunately, even {@link EnvironmentUtil#getEnvironmentMap()} doesn't have these variables.<p/>
    * As a result, no encoding environment variables are passed to Ruby/Node.js/Python/other processes that are launched from IDE.
    * Thus, these processes wrongly assume that the default encoding is US-ASCII.
    * <p/>

@@ -54,54 +54,7 @@ public final class EnvironmentUtil {
 
   private static final AtomicReference<CompletableFuture<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
-  private static @NotNull Map<String, String> getSystemEnv() {
-    if (SystemInfoRt.isWindows) {
-      return Collections.unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
-    }
-    else if (SystemInfoRt.isXWindow) {
-      // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
-      // It shouldn't be passed to child processes as per 'Startup notification protocol'
-      // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
-      // Ideally, JDK should clear this variable, and it actually does, but the snapshot of the environment variables,
-      // returned by System.getenv(), is captured before the removal.
-      Map<String, String> env = System.getenv();
-      if (env.containsKey(DESKTOP_STARTUP_ID)) {
-        env = new HashMap<>(env);
-        env.remove(DESKTOP_STARTUP_ID);
-        env = Collections.unmodifiableMap(env);
-      }
-      return env;
-    }
-    else {
-      return System.getenv();
-    }
-  }
-
   private EnvironmentUtil() { }
-
-  @ApiStatus.Internal
-  public static void loadEnvironment(@NotNull Runnable callback) {
-    if (SystemInfoRt.isMac) {
-      ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
-        try {
-          Map<String, String> env = getShellEnv();
-          setCharsetVar(env);
-          return Collections.unmodifiableMap(env);
-        }
-        catch (Throwable t) {
-          LOG.warn("can't get shell environment", t);
-          return getSystemEnv();
-        }
-        finally {
-          callback.run();
-        }
-      }, AppExecutorUtil.getAppExecutorService()));
-    }
-    else {
-      ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
-      callback.run();
-    }
-  }
 
   /**
    * <p>A wrapper layer around {@link System#getenv()}.</p>
@@ -137,33 +90,61 @@ public final class EnvironmentUtil {
     }
   }
 
+  @ApiStatus.Internal
+  public static void loadEnvironment(@NotNull Runnable callback) {
+    if (SystemInfoRt.isMac) {
+      ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
+        try {
+          Map<String, String> env = getShellEnv();
+          setCharsetVar(env);
+          return Collections.unmodifiableMap(env);
+        }
+        catch (Throwable t) {
+          LOG.warn("can't get shell environment", t);
+          return getSystemEnv();
+        }
+        finally {
+          callback.run();
+        }
+      }, AppExecutorUtil.getAppExecutorService()));
+    }
+    else {
+      ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
+      callback.run();
+    }
+  }
+
+  private static @NotNull Map<String, String> getSystemEnv() {
+    if (SystemInfoRt.isWindows) {
+      return Collections.unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+    }
+    else if (SystemInfoRt.isXWindow) {
+      // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
+      // It shouldn't be passed to child processes as per 'Startup notification protocol'
+      // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
+      // Ideally, JDK should clear this variable, and it actually does, but the snapshot of the environment variables,
+      // returned by System.getenv(), is captured before the removal.
+      Map<String, String> env = System.getenv();
+      if (env.containsKey(DESKTOP_STARTUP_ID)) {
+        env = new HashMap<>(env);
+        env.remove(DESKTOP_STARTUP_ID);
+        env = Collections.unmodifiableMap(env);
+      }
+      return env;
+    }
+    else {
+      return System.getenv();
+    }
+  }
+
   /**
    * Same as {@code getEnvironmentMap().get(name)}.
    * Returns value for the passed environment variable name, or null if no such variable found.
    *
    * @see #getEnvironmentMap()
    */
-  public static @Nullable String getValue(@NonNls @NotNull String name) {
+  public static @Nullable String getValue(@NotNull String name) {
     return getEnvironmentMap().get(name);
-  }
-
-  /**
-   * Same as {@code flattenEnvironment(getEnvironmentMap())}.
-   * Returns an environment as an array of "NAME=VALUE" strings.
-   *
-   * @see #getEnvironmentMap()
-   */
-  public static String @NotNull [] getEnvironment() {
-    return flattenEnvironment(getEnvironmentMap());
-  }
-
-  public static String @NotNull [] flattenEnvironment(@NotNull Map<String, String> environment) {
-    String[] array = new String[environment.size()];
-    int i = 0;
-    for (Map.Entry<String, String> entry : environment.entrySet()) {
-      array[i++] = entry.getKey() + "=" + entry.getValue();
-    }
-    return array;
   }
 
   /**
