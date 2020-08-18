@@ -86,7 +86,6 @@ open class MergeDialogCustomizer {
    * This method takes precedence over methods like [getLeftPanelTitle].
    * If [DiffEditorTitleCustomizer] is null for the side, get(side)PanelTitle will be used as a fallback.
    */
-  @ApiStatus.Experimental
   open fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList = DEFAULT_CUSTOMIZER_LIST
 
   data class DiffEditorTitleCustomizerList(
