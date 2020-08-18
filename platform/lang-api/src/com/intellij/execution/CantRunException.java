@@ -5,17 +5,18 @@ package com.intellij.execution;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CantRunException extends ExecutionException {
-  public CantRunException(final String message) {
+  public CantRunException(@DialogMessage String message) {
     super(message);
   }
 
-  public CantRunException(String s, Throwable cause) {
-    super(s, cause);
+  public CantRunException(@DialogMessage String message, Throwable cause) {
+    super(message, cause);
   }
 
   public static CantRunException noModuleConfigured(@Nullable String moduleName) {

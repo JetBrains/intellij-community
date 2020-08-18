@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
@@ -93,7 +94,7 @@ public final class ExecutionUtil {
                                           @NotNull String toolWindowId,
                                           @NotNull String taskName,
                                           @NotNull Throwable e,
-                                          @Nullable String description,
+                                          @Nullable @DialogMessage String description,
                                           @Nullable HyperlinkListener listener) {
     String title = ExecutionBundle.message("error.running.configuration.message", taskName);
 
