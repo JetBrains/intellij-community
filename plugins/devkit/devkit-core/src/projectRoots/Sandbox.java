@@ -68,7 +68,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
     if (getJavaSdk() == null) {
-      throw new ConfigurationException(DevKitBundle.message("jdk.specification"));
+      throw new ConfigurationException(DevKitBundle.message("sandbox.no.sdk"));
     }
   }
 
