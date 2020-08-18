@@ -27,7 +27,7 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
               repository: GHRepositoryCoordinates,
               id: GHPRIdentifier,
               isDiff: Boolean = false): String =
-    serializePath(GHPRFilePath(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id), isDiff))
+    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id), isDiff))
 
   data class GHPRFilePath(override val sessionId: String,
                           override val projectHash: String,

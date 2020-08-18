@@ -13,31 +13,18 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Com
 ) : DeprecatedVirtualFileSystem() {
   protected abstract fun findFile(project: Project, path: P): VirtualFile?
 
-  protected fun serializePath(path: P): String = pathSerializer.serialize(path)
-  protected fun deserializePath(path: String): P = pathSerializer.deserialize(path)
+  fun getPath(path: P): String = pathSerializer.serialize(path)
 
-  fun serializePathSafe(path: P): String? {
-    try {
-      return serializePath(path)
-    }
-    catch (e: Exception) {
-      LOG.warn("Cannot serialize $path", e)
-      return null
-    }
-  }
+  fun getComplexPath(path: String): P = pathSerializer.deserialize(path)
 
-  fun deserializePathSafe(path: String): P? {
-    try {
-      return deserializePath(path)
+  override fun findFileByPath(path: String): VirtualFile? {
+    val parsedPath = try {
+      getComplexPath(path)
     }
     catch (e: Exception) {
       LOG.warn("Cannot deserialize $path", e)
       return null
     }
-  }
-
-  override fun findFileByPath(path: String): VirtualFile? {
-    val parsedPath = deserializePathSafe(path) ?: return null
     val project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(parsedPath.projectHash) ?: return null
     return findFile(project, parsedPath)
   }
