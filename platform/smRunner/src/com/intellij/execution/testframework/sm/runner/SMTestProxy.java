@@ -485,21 +485,24 @@ public class SMTestProxy extends AbstractTestProxy {
   public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
+    TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 
+                                            : new TestFailedState(localizedMessage, stackTrace);
+    updateFailedState(failedState);
+    fireOnNewPrintable(failedState);
+  }
+
+  public void updateFailedState(TestFailedState failedState) {
     if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(failedState);
-      fireOnNewPrintable(failedState);
     }
     else if (myState instanceof TestFailedState) {
       CompoundTestFailedState states = new CompoundTestFailedState();
       states.addFailure((TestFailedState)myState);
       states.addFailure(failedState);
-      fireOnNewPrintable(failedState);
       myState = states;
     }
     else {
-      myState = testError ? new TestErrorState(localizedMessage, stackTrace) : failedState;
-      fireOnNewPrintable(myState);
+      myState = failedState;
     }
   }
 
@@ -540,18 +543,7 @@ public class SMTestProxy extends AbstractTestProxy {
       hyperlink.setTestProxyName(getName());
     }
 
-    if (myState instanceof CompoundTestFailedState) {
-      ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
-    }
-    else if (myState instanceof TestFailedState) {
-      final CompoundTestFailedState states = new CompoundTestFailedState();
-      states.addFailure((TestFailedState)myState);
-      states.addFailure(comparisionFailedState);
-      myState = states;
-    }
-    else {
-      myState = comparisionFailedState;
-    }
+    updateFailedState(comparisionFailedState);
     fireOnNewPrintable(comparisionFailedState);
     return comparisionFailedState;
   }
