@@ -70,7 +70,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   val column = offset - startOffset
                   val shifted = factory.inset(presentation, left = column * width)
 
-                  sink.addBlockElement(offset, false, true, BlockInlayPriority.ANNOTATIONS, shifted)
+                  sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
                 else -> {
                   sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
