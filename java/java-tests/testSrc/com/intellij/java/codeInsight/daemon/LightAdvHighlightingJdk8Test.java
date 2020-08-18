@@ -55,6 +55,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testNoArraySuperType() { doTest(true, true);}
   public void testCaptureItself() { doTest(true, true); }
   public void testNestedConditionalWithOverloads() { doTest(true, true); }
+  public void testConditionalWithCompoundAssignment() { doTest(true, true); }
   public void testDeprecatedFunctionalInterface() {
     enableInspectionTool(new DeprecationInspection());
     doTest(true, true); 
