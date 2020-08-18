@@ -60,6 +60,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
 
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupPathKey"}, Holder.INSPECTION_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupPathKey", "groupBundle"));
+
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
                                                                   Holder.TYPE_NAME_EP),
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));

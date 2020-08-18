@@ -111,6 +111,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
   @Attribute("groupPath") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupPath;
+  @Attribute("groupPathKey") public String groupPathKey;
 
   protected InspectionEP() {
   }
@@ -124,10 +125,17 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
-    if (groupPath == null) {
+    String path = null;
+    if (groupPath != null) {
+      path = groupPath;
+    }
+    else if (groupPathKey != null) {
+      path = getLocalizedString(groupBundle, groupPathKey);
+    }
+    if (path == null) {
       return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
-    return ArrayUtil.append(groupPath.split(","), name);
+    return ArrayUtil.append(path.split(","), name);
   }
 
   @Attribute("enabledByDefault")
