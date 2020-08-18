@@ -35,10 +35,11 @@ public final class CommonJavaFragments {
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
-                                                                                                       ExecutionBundle.message("do.not.build.before.run"),
-                                                                                                       ExecutionBundle.message("group.java.options"),
-                                                                                                       jLabel, -1) {
+    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<>("doNotBuildBeforeRun",
+                                                                                              ExecutionBundle
+                                                                                                .message("do.not.build.before.run"),
+                                                                                              ExecutionBundle.message("group.java.options"),
+                                                                                              jLabel, -1) {
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);
