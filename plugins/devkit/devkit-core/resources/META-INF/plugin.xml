@@ -364,7 +364,7 @@
     <notificationGroup id="DevKit Errors" displayType="BALLOON"/>
     <notificationGroup id="Update from Sources" displayType="BALLOON"/>
     <notificationGroup id="testdata" displayType="BALLOON"/>
-    <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON" bundle="messages.DevKitBundle" key="convert.devkit.to.gradle.notification"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
