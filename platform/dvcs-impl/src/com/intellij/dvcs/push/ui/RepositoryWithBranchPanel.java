@@ -144,7 +144,7 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myDestPushTargetPanelComponent.addTargetEditorListener(new PushTargetEditorListener() {
 
       @Override
-      public void onTargetInEditModeChanged(@NotNull String value) {
+      public void onTargetInEditModeChanged(@NotNull @Nls String value) {
         for (RepositoryNodeListener listener : myListeners) {
           listener.onTargetInEditMode(value);
         }

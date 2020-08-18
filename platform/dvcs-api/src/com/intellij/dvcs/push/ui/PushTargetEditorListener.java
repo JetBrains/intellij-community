@@ -15,8 +15,9 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface PushTargetEditorListener {
-  void onTargetInEditModeChanged(@NotNull String value);
+  void onTargetInEditModeChanged(@NotNull @Nls String value);
 }

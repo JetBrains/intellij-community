@@ -165,7 +165,7 @@ public final class DvcsUtil {
   }
 
   @NotNull
-  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable String activityName) {
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable @Nls String activityName) {
     BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project, activityName);
     return new AccessToken() {
       @Override

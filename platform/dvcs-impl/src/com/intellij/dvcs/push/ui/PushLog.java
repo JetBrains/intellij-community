@@ -37,6 +37,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,7 @@ public final class PushLog extends JPanel implements DataProvider {
   private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
-  @Nullable private String mySyncRenderedText;
+  @Nullable private @Nls String mySyncRenderedText;
   private final boolean myAllowSyncStrategy;
 
   public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
@@ -574,11 +575,11 @@ public final class PushLog extends JPanel implements DataProvider {
     }
   }
 
-  private void setSyncText(String value) {
+  private void setSyncText(@Nls String value) {
     mySyncRenderedText = value;
   }
 
-  public void fireEditorUpdated(@NotNull String currentText) {
+  public void fireEditorUpdated(@NotNull @Nls String currentText) {
     if (mySyncStrategy) {
       //update ui model
       List<RepositoryNode> repositoryNodes =

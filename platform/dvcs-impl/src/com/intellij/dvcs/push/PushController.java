@@ -23,10 +23,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -233,7 +230,7 @@ public final class PushController implements Disposable {
       }
 
       @Override
-      public void onTargetInEditMode(@NotNull String currentValue) {
+      public void onTargetInEditMode(@NotNull @Nls String currentValue) {
         myPushLog.fireEditorUpdated(currentValue);
       }
     });

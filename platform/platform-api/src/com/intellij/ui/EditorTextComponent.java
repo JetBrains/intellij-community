@@ -17,12 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface EditorTextComponent {
 
+  @NlsSafe
   String getText();
 
   JComponent getComponent();

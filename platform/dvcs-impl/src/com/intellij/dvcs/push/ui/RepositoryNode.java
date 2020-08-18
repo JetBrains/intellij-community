@@ -58,7 +58,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     render(renderer, null);
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer, @Nullable String syncEditingText) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, @Nullable @Nls String syncEditingText) {
     int repoFixedWidth = 120;
     SimpleTextAttributes repositoryDetailsTextAttributes = PushLogTreeUtil
       .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isChecked());
