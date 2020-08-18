@@ -88,6 +88,7 @@ public abstract class HtmlChunk {
     private static final Element BODY = tag("body");
     private static final Element HTML = tag("html");
     private static final Element BR = tag("br");
+    private static final Element HR = tag("hr");
     private static final Element DIV = tag("div");
     private static final Element SPAN = tag("span");
 
@@ -276,6 +277,14 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull Element br() {
     return Element.BR;
+  }
+
+  /**
+   * @return a &lt;hr&gt; element.
+   */
+  @Contract(pure = true)
+  public static @NotNull Element hr() {
+    return Element.HR;
   }
 
   /**

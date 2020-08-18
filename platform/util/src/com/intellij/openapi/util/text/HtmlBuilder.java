@@ -125,6 +125,16 @@ public final class HtmlBuilder {
   }
 
   /**
+   * Appends a horizontal-rule ({@code <hr/>}).
+   *
+   * @return this builder
+   */
+  @Contract(" -> this")
+  public HtmlBuilder hr() {
+    return append(HtmlChunk.hr());
+  }
+
+  /**
    * Wraps this builder content with a specified tag
    * 
    * @param tag name of the tag to wrap with
