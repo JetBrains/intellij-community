@@ -20,10 +20,10 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Set;
 
 import static com.intellij.psi.JavaTokenType.*;
 
@@ -44,7 +43,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
    */
   public boolean m_ignoreExpressionsContainingConstants = true;
 
-  static final Set<IElementType> bitwiseTokens = ContainerUtil.immutableSet(AND, OR, XOR, LTLT, GTGT, GTGTGT);
+  static final @NotNull TokenSet bitwiseTokens = TokenSet.create(AND, OR, XOR, LTLT, GTGT, GTGTGT);
 
   @Override
   @NotNull

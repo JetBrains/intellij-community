@@ -41,11 +41,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
     @Override
     public String toString() { return "null"; }
   };
-  private static final Set<String> COLLECTIONS_WITH_SIZE_FIELD =
-    ContainerUtil.immutableSet(CommonClassNames.JAVA_UTIL_ARRAY_LIST,
-                               CommonClassNames.JAVA_UTIL_LINKED_LIST,
-                               CommonClassNames.JAVA_UTIL_HASH_MAP,
-                               "java.util.TreeMap");
+  private static final Set<String> COLLECTIONS_WITH_SIZE_FIELD = Set.of(
+    CommonClassNames.JAVA_UTIL_ARRAY_LIST, CommonClassNames.JAVA_UTIL_LINKED_LIST, CommonClassNames.JAVA_UTIL_HASH_MAP, "java.util.TreeMap");
   private final @NotNull PsiElement myBody;
   private final @NotNull PsiElement myAnchor;
   private final @NotNull Project myProject;

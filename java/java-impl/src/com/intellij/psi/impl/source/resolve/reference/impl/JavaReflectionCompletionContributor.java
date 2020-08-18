@@ -51,7 +51,7 @@ public class JavaReflectionCompletionContributor extends CompletionContributor i
   private static final String ANNOTATED_ELEMENT = "java.lang.reflect.AnnotatedElement";
 
   private static final Set<String> DECLARED_NAMES =
-    ContainerUtil.immutableSet(DECLARED_CONSTRUCTOR, DECLARED_ANNOTATION, DECLARED_ANNOTATIONS_BY_TYPE);
+    Set.of(DECLARED_CONSTRUCTOR, DECLARED_ANNOTATION, DECLARED_ANNOTATIONS_BY_TYPE);
   private static final ElementPattern<? extends PsiElement> CONSTRUCTOR_ARGUMENTS = psiElement(PsiExpressionList.class)
     .withParent(psiExpression().methodCall(
       psiMethod()

@@ -30,7 +30,7 @@ import java.util.stream.IntStream;
  * which may provide additional information.
  */
 public abstract class NlsInfo {
-  private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
+  private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
 
