@@ -56,7 +56,8 @@ internal abstract class SystemDarkThemeDetector {
     }
   }
 
-  private class WindowsDetector (override val detectionSupported: Boolean = JnaLoader.isLoaded()): AsyncDetector() {
+  private class WindowsDetector (override val detectionSupported: Boolean = JnaLoader.isLoaded() && SystemInfo.isWin10OrNewer)
+      : AsyncDetector() {
     companion object {
       @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
       @NonNls const val REGISTRY_VALUE = "AppsUseLightTheme"
