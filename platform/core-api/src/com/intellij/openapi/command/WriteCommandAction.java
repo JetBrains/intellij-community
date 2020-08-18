@@ -2,25 +2,31 @@
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.Command;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
-  private static final String DEFAULT_COMMAND_NAME = "Undefined";
+  private static final @Command String DEFAULT_COMMAND_NAME = CoreBundle.message("command.name.undefined");
   private static final String DEFAULT_GROUP_ID = null;
 
   public interface Builder {
@@ -52,7 +58,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final class BuilderImpl implements Builder {
     private final Project myProject;
     private final PsiFile[] myFiles;
-    private String myCommandName = DEFAULT_COMMAND_NAME;
+    private @Command String myCommandName = DEFAULT_COMMAND_NAME;
     private String myGroupId = DEFAULT_GROUP_ID;
     private UndoConfirmationPolicy myPolicy;
     private boolean myGlobalUndoAction;
@@ -160,7 +166,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return new BuilderImpl(project, files);
   }
 
-  private final String myCommandName;
+  private final @Command String myCommandName;
   private final String myGroupID;
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
@@ -177,7 +183,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, PsiFile @NotNull ... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable @Command String commandName, PsiFile @NotNull ... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
@@ -186,7 +192,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   protected WriteCommandAction(@Nullable Project project,
-                               @Nullable String commandName,
+                               @Nullable @Command String commandName,
                                @Nullable String groupID,
                                PsiFile @NotNull ... files) {
     myCommandName = commandName;
@@ -319,11 +325,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       super(project, files);
     }
 
-    protected Simple(Project project, String commandName, /*@NotNull*/ PsiFile... files) {
+    protected Simple(Project project, @Command String commandName, /*@NotNull*/ PsiFile... files) {
       super(project, commandName, files);
     }
 
-    protected Simple(Project project, String name, String groupID, /*@NotNull*/ PsiFile... files) {
+    protected Simple(Project project, @Command String name, String groupID, /*@NotNull*/ PsiFile... files) {
       super(project, name, groupID, files);
     }
 
@@ -346,7 +352,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project,
-                                           @Nls(capitalization = Nls.Capitalization.Title) @Nullable final String commandName,
+                                           @Nullable @Command final String commandName,
                                            @Nullable final String groupID,
                                            @NotNull final Runnable runnable,
                                            PsiFile @NotNull ... files) {
