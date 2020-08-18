@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.*;
 
 /**
  * @author Roman.Shein
@@ -104,7 +106,7 @@ public class CodeStyleSettingPresentation {
     //-----------------------------------BLANK_LINES_SETTINGS-----------------------------------------------------
 
     Map<SettingsGroup, List<CodeStyleSettingPresentation>> result = new LinkedHashMap<>();
-    result.put(new SettingsGroup(BLANK_LINES_KEEP), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("KEEP_BLANK_LINES_IN_DECLARATIONS",
                                        ApplicationBundle.message("editbox.keep.blanklines.in.declarations")),
       new CodeStyleSettingPresentation("KEEP_BLANK_LINES_IN_CODE", ApplicationBundle.message("editbox.keep.blanklines.in.code")),
@@ -114,7 +116,7 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("editbox.keep.blanklines.between.header.and.package"))
     ));
 
-    result.put(new SettingsGroup(BLANK_LINES), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.BLANK_LINES.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("BLANK_LINES_BEFORE_PACKAGE",
                                        ApplicationBundle.message("editbox.blanklines.before.package.statement")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_PACKAGE",
@@ -143,7 +145,7 @@ public class CodeStyleSettingPresentation {
     //-----------------------------------SPACING_SETTINGS-----------------------------------------------------
 
     result = new LinkedHashMap<>();
-    result.put(new SettingsGroup(SPACES_BEFORE_PARENTHESES), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_PARENTHESES.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_CALL_PARENTHESES",
@@ -163,7 +165,7 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("checkbox.spaces.annotation.parameters"))
     ));
 
-    result.put(new SettingsGroup(SPACES_AROUND_OPERATORS), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_AROUND_OPERATORS.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_AROUND_ASSIGNMENT_OPERATORS",
                                        ApplicationBundle.message("checkbox.spaces.assignment.operators")),
       new CodeStyleSettingPresentation("SPACE_AROUND_LOGICAL_OPERATORS",
@@ -186,7 +188,7 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("checkbox.spaces.around.method.ref.dbl.colon.arrow"))
     ));
 
-    result.put(new SettingsGroup(SPACES_BEFORE_LEFT_BRACE), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_LEFT_BRACE.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_CLASS_LBRACE", ApplicationBundle.message("checkbox.spaces.class.left.brace")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_LBRACE", ApplicationBundle.message("checkbox.spaces.method.left.brace")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_IF_LBRACE", ApplicationBundle.message("checkbox.spaces.if.left.brace")),
@@ -207,14 +209,14 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("checkbox.spaces.annotation.array.initializer.left.brace"))
     ));
 
-    result.put(new SettingsGroup(SPACES_BEFORE_KEYWORD), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_KEYWORD.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_ELSE_KEYWORD", ApplicationBundle.message("checkbox.spaces.else.keyword")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_WHILE_KEYWORD", ApplicationBundle.message("checkbox.spaces.while.keyword")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_CATCH_KEYWORD", ApplicationBundle.message("checkbox.spaces.catch.keyword")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_FINALLY_KEYWORD", ApplicationBundle.message("checkbox.spaces.finally.keyword"))
     ));
 
-    result.put(new SettingsGroup(SPACES_WITHIN), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_WITHIN.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_WITHIN_BRACES", ApplicationBundle.message("checkbox.spaces.within.braces")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES",
@@ -247,25 +249,26 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("checkbox.spaces.annotation.parentheses"))
     ));
 
-    result.put(new SettingsGroup(SPACES_IN_TERNARY_OPERATOR), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_IN_TERNARY_OPERATOR.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_QUEST", ApplicationBundle.message("checkbox.spaces.before.question")),
       new CodeStyleSettingPresentation("SPACE_AFTER_QUEST", ApplicationBundle.message("checkbox.spaces.after.question")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_COLON", ApplicationBundle.message("checkbox.spaces.before.colon")),
       new CodeStyleSettingPresentation("SPACE_AFTER_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"))
     ));
 
-    result.put(new SettingsGroup(SPACES_WITHIN_TYPE_ARGUMENTS), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_WITHIN_TYPE_ARGUMENTS.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
                                        ApplicationBundle.message("checkbox.spaces.after.comma"))
     ));
 
-    result.put(new SettingsGroup(SPACES_IN_TYPE_ARGUMENTS), ContainerUtil.immutableList(
-      new CodeStyleSettingPresentation("SPACE_BEFORE_TYPE_PARAMETER_LIST", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"))
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_IN_TYPE_ARGUMENTS.get()), ContainerUtil.immutableList(
+      new CodeStyleSettingPresentation("SPACE_BEFORE_TYPE_PARAMETER_LIST",
+                                       ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"))
     ));
 
-    result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.immutableList());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_IN_TYPE_PARAMETERS.get()), ContainerUtil.immutableList());
 
-    result.put(new SettingsGroup(SPACES_OTHER), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.SPACES_OTHER.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma")),
       new CodeStyleSettingPresentation("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon")),
@@ -282,11 +285,11 @@ public class CodeStyleSettingPresentation {
                                                      -1,
                                                      ApplicationBundle.message("settings.code.style.default.general")),
       new CodeStyleSelectSettingPresentation("WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), WRAP_ON_TYPING_VALUES,
-                                             WRAP_ON_TYPING_OPTIONS),
+                                             getWrapOnTypingOptions()),
       new CodeStyleSoftMarginsPresentation()
     ));
 
-    result.put(new SettingsGroup(WRAPPING_KEEP), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_KEEP.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks")),
       new CodeStyleSettingPresentation("KEEP_FIRST_COLUMN_COMMENT",
                                        ApplicationBundle.message("wrapping.keep.comment.at.first.column")),
@@ -308,40 +311,46 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_COMMENTS), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_COMMENTS.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("WRAP_COMMENTS", ApplicationBundle.message("wrapping.comments.wrap.at.right.margin"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_BRACES), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_BRACES.get()), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("CLASS_BRACE_STYLE",
                                              ApplicationBundle.message("wrapping.brace.placement.class.declaration"),
-                                             BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS),
+                                             BRACE_PLACEMENT_VALUES, getBraceReplacementOptions()),
       new CodeStyleSelectSettingPresentation("METHOD_BRACE_STYLE",
                                              ApplicationBundle.message("wrapping.brace.placement.method.declaration"),
-                                             BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS),
+                                             BRACE_PLACEMENT_VALUES, getBraceReplacementOptions()),
       new CodeStyleSelectSettingPresentation("LAMBDA_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.lambda"),
-                                             BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS),
+                                             BRACE_PLACEMENT_VALUES, getBraceReplacementOptions()),
       new CodeStyleSelectSettingPresentation("BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.other"),
-                                             BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS)
+                                             BRACE_PLACEMENT_VALUES, getBraceReplacementOptions())
     ));
 
-    putGroupTop(result, "EXTENDS_LIST_WRAP", WRAPPING_EXTENDS_LIST, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_EXTENDS_LIST), ContainerUtil.immutableList(
+    putGroupTop(result, "EXTENDS_LIST_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_EXTENDS_LIST.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_EXTENDS_LIST.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_EXTENDS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"))
     ));
 
-    putGroupTop(result, "EXTENDS_KEYWORD_WRAP", WRAPPING_EXTENDS_KEYWORD, WRAP_VALUES_FOR_SINGLETON, WRAP_OPTIONS_FOR_SINGLETON);
+    putGroupTop(result, "EXTENDS_KEYWORD_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_EXTENDS_KEYWORD.get(),
+                WRAP_VALUES_FOR_SINGLETON,
+                getWrapOptionsForSingleton());
 
-    putGroupTop(result, "THROWS_LIST_WRAP", WRAPPING_THROWS_LIST, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_THROWS_LIST), ContainerUtil.immutableList(
+    putGroupTop(result, "THROWS_LIST_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_THROWS_LIST.get(), WRAP_VALUES, getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_THROWS_LIST.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("ALIGN_THROWS_KEYWORD", ApplicationBundle.message("wrapping.align.throws.keyword"))
     ));
 
-    putGroupTop(result, "THROWS_KEYWORD_WRAP", WRAPPING_THROWS_KEYWORD, WRAP_VALUES_FOR_SINGLETON, WRAP_OPTIONS_FOR_SINGLETON);
+    putGroupTop(result, "THROWS_KEYWORD_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_THROWS_KEYWORD.get(),
+                WRAP_VALUES_FOR_SINGLETON,
+                getWrapOptionsForSingleton());
 
-    putGroupTop(result, "METHOD_PARAMETERS_WRAP", WRAPPING_METHOD_PARAMETERS, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_METHOD_PARAMETERS), ContainerUtil.immutableList(
+    putGroupTop(result, "METHOD_PARAMETERS_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARAMETERS.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARAMETERS.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.new.line.after.lpar")),
@@ -349,78 +358,84 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("wrapping.rpar.on.new.line"))
     ));
 
-    putGroupTop(result, "CALL_PARAMETERS_WRAP", WRAPPING_METHOD_ARGUMENTS_WRAPPING, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_METHOD_ARGUMENTS_WRAPPING), ContainerUtil.immutableList(
-      new CodeStyleSettingPresentation("ALIGN_MULTILINE_PARAMETERS_IN_CALLS",
-                                       ApplicationBundle.message("wrapping.align.when.multiline")),
-      new CodeStyleSettingPresentation("PREFER_PARAMETERS_WRAP",
-                                       ApplicationBundle.message("wrapping.take.priority.over.call.chain.wrapping")),
-      new CodeStyleSettingPresentation("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
-                                       ApplicationBundle.message("wrapping.new.line.after.lpar")),
-      new CodeStyleSettingPresentation("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"))
-    ));
+    putGroupTop(result, "CALL_PARAMETERS_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_ARGUMENTS_WRAPPING.get(), WRAP_VALUES,
+                getWrapOptions());
+    result
+      .put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_ARGUMENTS_WRAPPING.get()), ContainerUtil.immutableList(
+        new CodeStyleSettingPresentation("ALIGN_MULTILINE_PARAMETERS_IN_CALLS",
+                                         ApplicationBundle.message("wrapping.align.when.multiline")),
+        new CodeStyleSettingPresentation("PREFER_PARAMETERS_WRAP",
+                                         ApplicationBundle.message("wrapping.take.priority.over.call.chain.wrapping")),
+        new CodeStyleSettingPresentation("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                         ApplicationBundle.message("wrapping.new.line.after.lpar")),
+        new CodeStyleSettingPresentation("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"))
+      ));
 
-    result.put(new SettingsGroup(WRAPPING_METHOD_PARENTHESES), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARENTHESES.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"))
     ));
 
-    putGroupTop(result, "METHOD_CALL_CHAIN_WRAP", WRAPPING_CALL_CHAIN, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_CALL_CHAIN), ContainerUtil.immutableList(
+    putGroupTop(result, "METHOD_CALL_CHAIN_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_CALL_CHAIN.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_CALL_CHAIN.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                        ApplicationBundle.message("wrapping.chained.method.call.first.on.new.line")),
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_IF_STATEMENT), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_IF_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
-                                             BRACE_OPTIONS),
+                                             getBraceOptions()),
       new CodeStyleSettingPresentation("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line")),
       new CodeStyleSettingPresentation("SPECIAL_ELSE_IF_TREATMENT",
                                        ApplicationBundle.message("wrapping.special.else.if.braces.treatment"))
     ));
 
-    putGroupTop(result, "FOR_STATEMENT_WRAP", WRAPPING_FOR_STATEMENT, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_FOR_STATEMENT), ContainerUtil.immutableList(
+    putGroupTop(result, "FOR_STATEMENT_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_FOR_STATEMENT.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_FOR_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_FOR", ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("FOR_STATEMENT_LPAREN_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.new.line.after.lpar")),
       new CodeStyleSettingPresentation("FOR_STATEMENT_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line")),
       new CodeStyleSelectSettingPresentation("FOR_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
-                                             BRACE_OPTIONS)
+                                             getBraceOptions())
     ));
 
-    result.put(new SettingsGroup(WRAPPING_WHILE_STATEMENT), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_WHILE_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("WHILE_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
-                                             BRACE_OPTIONS)
+                                             getBraceOptions())
     ));
 
-    result.put(new SettingsGroup(WRAPPING_DOWHILE_STATEMENT), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_DOWHILE_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation("DOWHILE_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
-                                             BRACE_OPTIONS),
+                                             getBraceOptions()),
       new CodeStyleSettingPresentation("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_SWITCH_STATEMENT), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch")),
       new CodeStyleSettingPresentation("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case")),
       new CodeStyleSettingPresentation("CASE_STATEMENT_ON_NEW_LINE", ApplicationBundle.message("wrapping.case.statements.on.one.line"))
     ));
 
-    putGroupTop(result, "RESOURCE_LIST_WRAP", WRAPPING_TRY_RESOURCE_LIST, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_TRY_RESOURCE_LIST), ContainerUtil.immutableList(
+    putGroupTop(result, "RESOURCE_LIST_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_TRY_RESOURCE_LIST.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_TRY_RESOURCE_LIST.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_RESOURCES", ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.new.line.after.lpar")),
       new CodeStyleSettingPresentation("RESOURCE_LIST_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_TRY_STATEMENT), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_TRY_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("CATCH_ON_NEW_LINE", ApplicationBundle.message("wrapping.catch.on.new.line")),
       new CodeStyleSettingPresentation("FINALLY_ON_NEW_LINE", ApplicationBundle.message("wrapping.finally.on.new.line"))
     ));
 
-    putGroupTop(result, "BINARY_OPERATION_WRAP", WRAPPING_BINARY_OPERATION, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_BINARY_OPERATION), ContainerUtil.immutableList(
+    putGroupTop(result, "BINARY_OPERATION_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_BINARY_OPERATION.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_BINARY_OPERATION.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_BINARY_OPERATION",
                                        ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("BINARY_OPERATION_SIGN_ON_NEXT_LINE",
@@ -432,14 +447,14 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("PARENTHESES_EXPRESSION_RPAREN_WRAP", ApplicationBundle.message("wrapping.rpar.on.new.line"))
     ));
 
-    putGroupTop(result, "ASSIGNMENT_WRAP", WRAPPING_ASSIGNMENT, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_ASSIGNMENT), ContainerUtil.immutableList(
+    putGroupTop(result, "ASSIGNMENT_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_ASSIGNMENT.get(), WRAP_VALUES, getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_ASSIGNMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.assignment.sign.on.next.line"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_FIELDS_VARIABLES_GROUPS), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_FIELDS_VARIABLES_GROUPS.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_GROUP_FIELD_DECLARATIONS",
                                        ApplicationBundle.message("wrapping.align.fields.in.columns")),
       new CodeStyleSettingPresentation("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
@@ -450,16 +465,18 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("wrapping.align.simple.methods.in.columns"))
     ));
 
-    putGroupTop(result, "TERNARY_OPERATION_WRAP", WRAPPING_TERNARY_OPERATION, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_TERNARY_OPERATION), ContainerUtil.immutableList(
+    putGroupTop(result, "TERNARY_OPERATION_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_TERNARY_OPERATION.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_TERNARY_OPERATION.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_TERNARY_OPERATION",
                                        ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("TERNARY_OPERATION_SIGNS_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.quest.and.colon.signs.on.next.line"))
     ));
 
-    putGroupTop(result, "ARRAY_INITIALIZER_WRAP", WRAPPING_ARRAY_INITIALIZER, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_ARRAY_INITIALIZER), ContainerUtil.immutableList(
+    putGroupTop(result, "ARRAY_INITIALIZER_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_ARRAY_INITIALIZER.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_ARRAY_INITIALIZER.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
                                        ApplicationBundle.message("wrapping.align.when.multiline")),
       new CodeStyleSettingPresentation("ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
@@ -468,23 +485,25 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("wrapping.rbrace.on.new.line"))
     ));
 
-    result.put(new SettingsGroup(WRAPPING_MODIFIER_LIST), ContainerUtil.immutableList(
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_MODIFIER_LIST.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("MODIFIER_LIST_WRAP", ApplicationBundle.message("wrapping.after.modifier.list"))
     ));
 
-    putGroupTop(result, "ASSERT_STATEMENT_WRAP", WRAPPING_ASSERT_STATEMENT, WRAP_VALUES, WRAP_OPTIONS);
-    result.put(new SettingsGroup(WRAPPING_ASSERT_STATEMENT), ContainerUtil.immutableList(
+    putGroupTop(result, "ASSERT_STATEMENT_WRAP", CodeStyleSettingsCustomizableOptions.WRAPPING_ASSERT_STATEMENT.get(), WRAP_VALUES,
+                getWrapOptions());
+    result.put(new SettingsGroup(CodeStyleSettingsCustomizableOptions.WRAPPING_ASSERT_STATEMENT.get()), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("ASSERT_STATEMENT_COLON_ON_NEXT_LINE",
                                        ApplicationBundle.message("wrapping.colon.signs.on.next.line"))
     ));
 
-    putGroupTop(result, "ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_VALUES, WRAP_OPTIONS);
-    putGroupTop(result, "CLASS_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.classes.annotation"), WRAP_VALUES, WRAP_OPTIONS);
-    putGroupTop(result, "METHOD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.methods.annotation"), WRAP_VALUES, WRAP_OPTIONS);
-    putGroupTop(result, "FIELD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.fields.annotation"), WRAP_VALUES, WRAP_OPTIONS);
-    putGroupTop(result, "PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.parameters.annotation"), WRAP_VALUES, WRAP_OPTIONS);
+    putGroupTop(result, "ENUM_CONSTANTS_WRAP", ApplicationBundle.message("wrapping.enum.constants"), WRAP_VALUES, getWrapOptions());
+    putGroupTop(result, "CLASS_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.classes.annotation"), WRAP_VALUES, getWrapOptions());
+    putGroupTop(result, "METHOD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.methods.annotation"), WRAP_VALUES, getWrapOptions());
+    putGroupTop(result, "FIELD_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.fields.annotation"), WRAP_VALUES, getWrapOptions());
+    putGroupTop(result, "PARAMETER_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.parameters.annotation"), WRAP_VALUES,
+                getWrapOptions());
     putGroupTop(result, "VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_VALUES,
-                WRAP_OPTIONS);
+                getWrapOptions());
     WRAPPING_AND_BRACES_STANDARD_SETTINGS = Collections.unmodifiableMap(result);
 
     //-----------------------------------INDENT_SETTINGS-----------------------------------------------------

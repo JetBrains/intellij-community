@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
@@ -59,8 +56,12 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settings = CodeStyleSettingPresentation
       .getStandardSettings(getSettingsType());
 
-    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES_KEEP)));
-    OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES)));
+    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get(),
+                                                                settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+                                                                  CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get())));
+    OptionGroup blankLinesOptionsGroup = createOptionsGroup(CodeStyleSettingsCustomizableOptions.BLANK_LINES.get(),
+                                                            settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+                                                              CodeStyleSettingsCustomizableOptions.BLANK_LINES.get())));
     if (keepBlankLinesOptionsGroup != null) {
       keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
       optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),

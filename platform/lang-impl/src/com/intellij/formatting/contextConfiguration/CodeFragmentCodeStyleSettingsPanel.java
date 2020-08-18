@@ -218,7 +218,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         if (settingsGroup == null) {
           commonFields.add(fieldName);
         }
-        else if (settingsGroup.title != WRAPPING_KEEP) {
+        else if (settingsGroup.title != CodeStyleSettingsCustomizableOptions.WRAPPING_KEEP.get()) {
           commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
         }
       }
