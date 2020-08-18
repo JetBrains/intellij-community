@@ -5,10 +5,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
@@ -58,7 +55,8 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_WITHIN_BRACES", "SPACE_WITHIN_BRACKETS");
-      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'",
+                                CodeStyleSettingsCustomizableOptions.SPACES_OTHER.get());
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("KEEP_LINE_BREAKS");
