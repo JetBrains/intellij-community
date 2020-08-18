@@ -35,7 +35,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
-                               @NotNull String presentableText,
+                               @Nls @NotNull String presentableText,
                                final ViewSettings viewSettings, int weight) {
     super(module, viewSettings, directory, weight);
     myPresentableText = presentableText;

@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +60,7 @@ public abstract class AbstractConfigUtils {
     return version == null ? UNDEFINED_VERSION : version;
   }
 
-  public abstract @Nullable String getSDKVersionOrNull(@NotNull String path);
+  public abstract @NlsSafe @Nullable String getSDKVersionOrNull(@NotNull String path);
 
   /**
    * Return value of Implementation-Version attribute in jar manifest

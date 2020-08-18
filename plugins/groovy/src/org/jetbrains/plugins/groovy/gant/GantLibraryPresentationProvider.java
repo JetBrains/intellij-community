@@ -10,6 +10,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
@@ -31,7 +32,8 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
   @Override
   @Nls
   public String getLibraryVersion(final VirtualFile[] libraryFiles) {
-    return GantUtils.getGantVersion(GantUtils.getGantLibraryHome(libraryFiles));
+    String version = GantUtils.getGantVersionOrNull(GantUtils.getGantLibraryHome(libraryFiles));
+    return version == null ? GroovyBundle.message("undefined.library.version") : version;
   }
 
   @Override
@@ -54,7 +56,7 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return "Gant";
+    return GroovyBundle.message("framework.gant");
   }
 
   @Override

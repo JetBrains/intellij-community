@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -25,6 +25,8 @@ import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDia
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsContexts.LinkLabel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
@@ -90,15 +93,15 @@ public abstract class MvcFramework {
   }
 
   @NotNull
-  public Map<String, Runnable> createConfigureActions(final @NotNull Module module) {
-    return Collections.singletonMap("Configure " + getFrameworkName() + " SDK",
+  public Map<@LinkLabel String, Runnable> createConfigureActions(final @NotNull Module module) {
+    return Collections.singletonMap(GroovyBundle.message("mvc.framework.0.configure.sdk.label", getFrameworkName()),
                                     () -> configureAsLibraryDependency(module));
   }
 
   protected void configureAsLibraryDependency(@NotNull Module module) {
     final GroovyLibraryDescription description = createLibraryDescription();
     final AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(description, module, null);
-    dialog.setTitle("Change " + getDisplayName() + " SDK version");
+    dialog.setTitle(GroovyBundle.message("mvc.framework.0.change.sdk.version.title", getDisplayName()));
     if (dialog.showAndGet()) module.putUserData(UPGRADE, Boolean.TRUE);
   }
 
@@ -134,10 +137,9 @@ public abstract class MvcFramework {
   public void createApplicationIfNeeded(@NotNull final Module module) {
     if (findAppRoot(module) == null && module.getUserData(CREATE_APP_STRUCTURE) == Boolean.TRUE) {
       while (ModuleRootManager.getInstance(module).getSdk() == null) {
-        if (Messages.showYesNoDialog(module.getProject(), "Cannot generate " + getDisplayName() + " project structure because JDK is not specified for module \"" +
-                                                          module.getName() + "\".\n" +
-                                                          getDisplayName() + " project will not be created if you don't specify JDK.\nDo you want to specify JDK?",
-                                     "Error", Messages.getErrorIcon()) == Messages.NO) {
+        if (Messages.showYesNoDialog(module.getProject(),
+                                     GroovyBundle.message("mvc.no.jdk.found.error.message", getDisplayName(), module.getName(), getDisplayName()),
+                                     GroovyBundle.message("mvc.no.jdk.found.error.title"), Messages.getErrorIcon()) == Messages.NO) {
           return;
         }
         ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.getName());
@@ -344,7 +346,7 @@ public abstract class MvcFramework {
   @NotNull
   public abstract String getFrameworkName();
 
-  public String getDisplayName() {
+  public @NlsSafe String getDisplayName() {
     return getFrameworkName();
   }
 
@@ -372,7 +374,7 @@ public abstract class MvcFramework {
       return createCommand(module, forCreation, command);
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), "Failed to run grails command: " + command);
+      Messages.showErrorDialog(e.getMessage(), GroovyBundle.message("mvc.console.execution.error.title", command));
       return null;
     }
   }

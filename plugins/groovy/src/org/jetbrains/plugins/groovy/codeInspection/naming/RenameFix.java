@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
 public class RenameFix extends GroovyFix implements RefactoringQuickFix {
@@ -33,7 +34,7 @@ public class RenameFix extends GroovyFix implements RefactoringQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Rename";
+    return GroovyBundle.message("intention.family.name.rename");
   }
 
   @Override

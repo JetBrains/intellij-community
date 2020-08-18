@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +56,7 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
   @NotNull @Nls public abstract String getLibraryCategoryName();
 
   @NotNull
-  @Nls
+  @NlsSafe
   public String getLibraryPrefix() {
     return StringUtil.toLowerCase(getLibraryCategoryName());
   }

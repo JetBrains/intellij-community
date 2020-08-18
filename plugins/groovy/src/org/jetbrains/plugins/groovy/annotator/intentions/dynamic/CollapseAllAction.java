@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author Max Medvedev
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class CollapseAllAction extends AnAction {
 
   public CollapseAllAction() {
-    super("Collapse all", "Collapse all", AllIcons.Actions.Collapseall);
+    super(GroovyBundle.message("action.collapse.all.text"), GroovyBundle.message("action.collapse.all.description"), AllIcons.Actions.Collapseall);
   }
 
   @Override

@@ -11,6 +11,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -35,12 +36,18 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
   @Nls
   public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     String jarVersion = JarVersionDetectionUtil.detectJarVersion(SOME_GROOVY_CLASS, Arrays.asList(libraryFiles));
-    if (jarVersion != null) return jarVersion;
-
-    final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
-    if (home == null) return AbstractConfigUtils.UNDEFINED_VERSION;
-
-    return GroovyConfigUtils.getInstance().getSDKVersion(home);
+    if (jarVersion != null) {
+      return jarVersion;
+    }
+    String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
+    if (home == null) {
+      return GroovyBundle.message("undefined.library.version");
+    }
+    String version = GroovyConfigUtils.getInstance().getSDKVersionOrNull(home);
+    if (version == null) {
+      return GroovyBundle.message("undefined.library.version");
+    }
+    return version;
   }
 
   @Override
@@ -86,7 +93,6 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return "Groovy";
+    return GroovyBundle.message("language.groovy");
   }
-
 }

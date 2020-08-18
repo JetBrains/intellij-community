@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.openapi.ui.Messages;
@@ -12,6 +12,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -119,7 +120,7 @@ public class GrIntroduceConstantProcessor {
     if (errorString != null) {
       String message = RefactoringBundle.getCannotRefactorMessage(errorString);
       CommonRefactoringUtil
-        .showErrorMessage(GrIntroduceConstantHandler.REFACTORING_NAME, message, HelpID.INTRODUCE_CONSTANT, context.getProject());
+        .showErrorMessage(GroovyBundle.message("introduce.constant.title"), message, HelpID.INTRODUCE_CONSTANT, context.getProject());
       return true;
     }
 
@@ -127,7 +128,7 @@ public class GrIntroduceConstantProcessor {
     if (oldField != null) {
       String message = RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName());
       int answer = Messages
-        .showYesNoDialog(context.getProject(), message, GrIntroduceConstantHandler.REFACTORING_NAME, Messages.getWarningIcon());
+        .showYesNoDialog(context.getProject(), message, GroovyBundle.message("introduce.constant.title"), Messages.getWarningIcon());
       if (answer != Messages.YES) {
         return true;
       }

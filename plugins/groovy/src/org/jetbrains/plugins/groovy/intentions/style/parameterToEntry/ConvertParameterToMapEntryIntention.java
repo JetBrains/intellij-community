@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -22,9 +24,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -65,13 +67,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static final Logger LOG =
     Logger.getInstance(ConvertParameterToMapEntryIntention.class);
-  @NonNls private static final String CLOSURE_CAPTION = "closure";
-  @NonNls private static final String CLOSURE_CAPTION_CAP = "Closure";
-  @NonNls private static final String METHOD_CAPTION = "method";
-  @NonNls private static final String METHOD_CAPTION_CAP = "Method";
-  @NonNls private static final String REFACTORING_NAME = "Convert Parameter to Map Entry";
-  @NonNls private static final String MAP_TYPE_TEXT = "Map";
-  @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
+  @NlsSafe private static final String MAP_TYPE_TEXT = "Map";
+  @NlsSafe private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
   @Override
   protected void processIntention(@NotNull final PsiElement element, @NotNull final Project project, Editor editor) throws IncorrectOperationException {
@@ -92,9 +89,13 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       case ERROR: {
         final GrNamedElement namedElement = getReferencedElement(owner);
         LOG.assertTrue(namedElement != null);
-        final String msg = GroovyIntentionsBundle
-          .message("wrong.first.parameter.type", isClosure ? CLOSURE_CAPTION_CAP : METHOD_CAPTION_CAP, namedElement.getName(),
-                   firstParam.getName());
+        final String msg;
+        if (isClosure) {
+          msg = GroovyIntentionsBundle.message("wrong.closure.first.parameter.type", namedElement.getName(), firstParam.getName());
+        }
+        else {
+          msg = GroovyIntentionsBundle.message("wrong.method.first.parameter.type", namedElement.getName(), firstParam.getName());
+        }
         showErrorMessage(msg, project);
         return;
       }
@@ -109,7 +110,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
       case IS_NOT_MAP: {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
+          final @NlsSafe String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
 
           final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
             @Override
@@ -157,7 +158,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return false;
   }
 
-  private static String[] generateValidNames(final String[] names, final GrParameter param) {
+  private static @NlsSafe String[] generateValidNames(final @NlsSafe String[] names, final GrParameter param) {
     return ContainerUtil.map2Array(names, String.class, s -> (new GroovyValidationUtil.ParameterNameSuggester(s, param)).generateName());
   }
 
@@ -302,7 +303,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       param.delete();
     };
 
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(runnable), REFACTORING_NAME, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(runnable),
+                                                  GroovyBundle.message("convert.parameter.to.map.entry.title"), null);
   }
 
 
@@ -392,7 +394,10 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean checkOwnerOccurrences(final Project project, final Collection<PsiElement> occurrences, final boolean isClosure) {
     boolean result = true;
     final StringBuilder msg = new StringBuilder();
-    msg.append(GroovyIntentionsBundle.message("conversion.not.allowed.in.non.groovy.files", isClosure ? CLOSURE_CAPTION : METHOD_CAPTION));
+    msg.append(
+      isClosure ? GroovyIntentionsBundle.message("conversion.closure.not.allowed.in.non.groovy.files")
+                : GroovyIntentionsBundle.message("conversion.method.not.allowed.in.non.groovy.files")
+    );
     for (PsiElement element : occurrences) {
       final PsiFile file = element.getContainingFile();
       if (!(file instanceof GroovyFileBase)) {
@@ -401,7 +406,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
     }
     if (!result) {
-      showErrorMessage(msg.toString(), project);
+      @NlsSafe String message = msg.toString();
+      showErrorMessage(message, project);
       return false;
     }
     return true;
@@ -413,8 +419,12 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final PsiElement namedElem = getReferencedElement(owner);
     if (namedElem == null) return true;
     final Ref<Boolean> result = new Ref<>(true);
-    final Task task = new Task.Modal(project, GroovyIntentionsBundle
-      .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
+    final Task task = new Task.Modal(
+      project,
+      owner instanceof GrClosableBlock ? GroovyIntentionsBundle.message("find.method.ro.closure.usages")
+                                       : GroovyIntentionsBundle.message("find.method.ro.method.usages"),
+      true
+    ) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         final Collection<PsiReference> references = Collections.synchronizedSet(new HashSet<>());
@@ -502,8 +512,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return psiClass == null || !CommonClassNames.JAVA_UTIL_MAP.equals(psiClass.getQualifiedName());
   }
 
-  private static void showErrorMessage(String message, final Project project) {
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+  private static void showErrorMessage(@DialogMessage String message, final Project project) {
+    CommonRefactoringUtil.showErrorMessage(GroovyBundle.message("convert.parameter.to.map.entry.title"), message, null, project);
   }
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {

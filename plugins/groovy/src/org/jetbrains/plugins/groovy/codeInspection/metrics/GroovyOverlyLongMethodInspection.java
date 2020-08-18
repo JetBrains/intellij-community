@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -23,6 +24,6 @@ public class GroovyOverlyLongMethodInspection extends GroovyOverlyLongMethodInsp
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum statements per method:", this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel(GroovyBundle.message("overly.long.method.statements.limit.option"), this, "m_limit");
   }
 }
