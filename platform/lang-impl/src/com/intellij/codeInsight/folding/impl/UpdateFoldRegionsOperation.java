@@ -199,14 +199,16 @@ final class UpdateFoldRegionsOperation implements Runnable {
       List<FoldRegion> regionsToProcess = group == null ? Collections.singletonList(region) : foldingModel.getGroupedRegions(group);
       matchedInfos.clear();
       boolean shouldRemove = false;
+      boolean isLight = true;
       for (FoldRegion regionToProcess : regionsToProcess) {
         if (!regionToProcess.isValid() || shouldRemoveRegion(regionToProcess, info, rangeToExpandStatusMap, infoRef)) {
           shouldRemove = true;
         }
+        isLight &= regionToProcess.getUserData(SIGNATURE) == null;
         FoldingUpdate.RegionInfo regionInfo = infoRef.get();
         matchedInfos.add(regionInfo);
       }
-      if (!shouldRemove && group != null) {
+      if (!shouldRemove && group != null && !isLight) {
         FoldingGroup requestedGroup = null;
         for (FoldingUpdate.RegionInfo matchedInfo : matchedInfos) {
           if (matchedInfo == null) {
