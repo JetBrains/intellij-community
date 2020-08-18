@@ -2,10 +2,12 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +81,8 @@ public class FragmentHintManager {
     }
     if (fragment != null) {
       ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
-      if (shortcut != null) {
-        String text = KeymapUtil.getShortcutsText(shortcut.getShortcuts());
+      if (shortcut != null && shortcut.getShortcuts().length > 0) {
+        String text = KeymapUtil.getShortcutsText(new Shortcut[]{ArrayUtil.getLastElement(shortcut.getShortcuts())});
         hint = hint == null ? text : hint + ". " + text;
       }
     }
