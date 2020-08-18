@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -410,7 +412,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     final CompletableFuture<ProgressWindow> progress =
-      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow && !ApplicationManagerEx.getApplicationEx().isExitInProgress(), project, parentComponent, cancelText);
 
     ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
       .sync()
@@ -603,6 +605,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
 
       stopServicePreloading();
+
+      if (Registry.is("ide.instant.shutdown")) {
+        for (Frame frame : Frame.getFrames()) {
+          frame.setVisible(false);
+        }
+      }
 
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
