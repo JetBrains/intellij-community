@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.*;
 
 public interface CodeStyleSettingsCustomizable {
   enum OptionAnchor {NONE, BEFORE, AFTER}
@@ -214,57 +215,98 @@ public interface CodeStyleSettingsCustomizable {
     BLOCK_COMMENT_AT_FIRST_COLUMN
   }
 
-  String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
-  String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
-  String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
-  String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
-  String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
-  String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
-  String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
-  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
-  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
-  String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
+  /**
+   * All deprecated constants are not localization friendly. Please, use respective suppliers from {@link CodeStyleSettingsCustomizableOptions}
+   */
+  @Deprecated
+  String SPACES_AROUND_OPERATORS = CodeStyleSettingsCustomizableOptions.SPACES_AROUND_OPERATORS.get();
+  @Deprecated
+  String SPACES_BEFORE_PARENTHESES = CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_PARENTHESES.get();
+  @Deprecated
+  String SPACES_BEFORE_LEFT_BRACE = CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_LEFT_BRACE.get();
+  @Deprecated
+  String SPACES_BEFORE_KEYWORD = CodeStyleSettingsCustomizableOptions.SPACES_BEFORE_KEYWORD.get();
+  @Deprecated
+  String SPACES_WITHIN = CodeStyleSettingsCustomizableOptions.SPACES_WITHIN.get();
+  @Deprecated
+  String SPACES_IN_TERNARY_OPERATOR = CodeStyleSettingsCustomizableOptions.SPACES_IN_TERNARY_OPERATOR.get();
+  @Deprecated
+  String SPACES_WITHIN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.SPACES_WITHIN_TYPE_ARGUMENTS.get();
+  @Deprecated
+  String SPACES_IN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.SPACES_IN_TYPE_ARGUMENTS.get();
+  @Deprecated
+  String SPACES_IN_TYPE_PARAMETERS = CodeStyleSettingsCustomizableOptions.SPACES_IN_TYPE_PARAMETERS.get();
+  @Deprecated
+  String SPACES_OTHER = CodeStyleSettingsCustomizableOptions.SPACES_OTHER.get();
 
-  String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
-  String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
+  @Deprecated
+  String BLANK_LINES_KEEP = CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get();
+  @Deprecated
+  String BLANK_LINES = CodeStyleSettingsCustomizableOptions.BLANK_LINES.get();
 
-  String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
-  String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
-  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
-  String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
-  String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
-  String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
-  String WRAPPING_CALL_CHAIN = ApplicationBundle.message("wrapping.chained.method.calls");
-  String WRAPPING_IF_STATEMENT = ApplicationBundle.message("wrapping.if.statement");
-  String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
-  String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
-  String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
-  String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
-  String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
-  String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
-  String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
-  String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
-  String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");
-  String WRAPPING_THROWS_LIST = ApplicationBundle.message("wrapping.throws.list");
-  String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
-  String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
-  String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
-  String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
-  String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
-  String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
+  @Deprecated
+  String WRAPPING_KEEP = CodeStyleSettingsCustomizableOptions.WRAPPING_KEEP.get();
+  @Deprecated
+  String WRAPPING_BRACES = CodeStyleSettingsCustomizableOptions.WRAPPING_BRACES.get();
+  @Deprecated
+  String WRAPPING_COMMENTS = CodeStyleSettingsCustomizableOptions.WRAPPING_COMMENTS.get();
+  @Deprecated
+  String WRAPPING_METHOD_PARAMETERS = CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARAMETERS.get();
+  @Deprecated
+  String WRAPPING_METHOD_PARENTHESES = CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARENTHESES.get();
+  @Deprecated
+  String WRAPPING_METHOD_ARGUMENTS_WRAPPING = CodeStyleSettingsCustomizableOptions.WRAPPING_METHOD_ARGUMENTS_WRAPPING.get();
+  @Deprecated
+  String WRAPPING_CALL_CHAIN = CodeStyleSettingsCustomizableOptions.WRAPPING_CALL_CHAIN.get();
+  @Deprecated
+  String WRAPPING_IF_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_IF_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_FOR_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_FOR_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_WHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_WHILE_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_DOWHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_DOWHILE_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_SWITCH_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_TRY_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_TRY_STATEMENT.get();
+  @Deprecated
+  String WRAPPING_TRY_RESOURCE_LIST = CodeStyleSettingsCustomizableOptions.WRAPPING_TRY_RESOURCE_LIST.get();
+  @Deprecated
+  String WRAPPING_BINARY_OPERATION = CodeStyleSettingsCustomizableOptions.WRAPPING_BINARY_OPERATION.get();
+  @Deprecated
+  String WRAPPING_EXTENDS_LIST = CodeStyleSettingsCustomizableOptions.WRAPPING_EXTENDS_LIST.get();
+  @Deprecated
+  String WRAPPING_EXTENDS_KEYWORD = CodeStyleSettingsCustomizableOptions.WRAPPING_EXTENDS_KEYWORD.get();
+  @Deprecated
+  String WRAPPING_THROWS_LIST = CodeStyleSettingsCustomizableOptions.WRAPPING_THROWS_LIST.get();
+  @Deprecated
+  String WRAPPING_THROWS_KEYWORD = CodeStyleSettingsCustomizableOptions.WRAPPING_THROWS_KEYWORD.get();
+  @Deprecated
+  String WRAPPING_TERNARY_OPERATION = CodeStyleSettingsCustomizableOptions.WRAPPING_TERNARY_OPERATION.get();
+  @Deprecated
+  String WRAPPING_ASSIGNMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_ASSIGNMENT.get();
+  @Deprecated
+  String WRAPPING_FIELDS_VARIABLES_GROUPS = CodeStyleSettingsCustomizableOptions.WRAPPING_FIELDS_VARIABLES_GROUPS.get();
+  @Deprecated
+  String WRAPPING_ARRAY_INITIALIZER = CodeStyleSettingsCustomizableOptions.WRAPPING_ARRAY_INITIALIZER.get();
+  @Deprecated
+  String WRAPPING_MODIFIER_LIST = CodeStyleSettingsCustomizableOptions.WRAPPING_MODIFIER_LIST.get();
+  @Deprecated
+  String WRAPPING_ASSERT_STATEMENT = CodeStyleSettingsCustomizableOptions.WRAPPING_ASSERT_STATEMENT.get();
 
-  String[] WRAP_OPTIONS = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.chop.down.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#getWrapOptions()} instead
+   */
+  @Deprecated
+  String[] WRAP_OPTIONS = getWrapOptions();
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#getWrapOptionsForSingleton()} instead
+   */
+  @Deprecated
+  String[] WRAP_OPTIONS_FOR_SINGLETON = getWrapOptionsForSingleton();
+
   int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_AS_NEEDED |
@@ -274,23 +316,25 @@ public interface CodeStyleSettingsCustomizable {
   int[] WRAP_VALUES_FOR_SINGLETON = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_ALWAYS};
-  String[] BRACE_OPTIONS = {
-    ApplicationBundle.message("wrapping.force.braces.do.not.force"),
-    ApplicationBundle.message("wrapping.force.braces.when.multiline"),
-    ApplicationBundle.message("wrapping.force.braces.always")
-  };
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#getBraceOptions()} instead
+   */
+  @Deprecated
+  String[] BRACE_OPTIONS = getBraceOptions();
+
   int[] BRACE_VALUES = {
     CommonCodeStyleSettings.DO_NOT_FORCE,
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = {
-    ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
-  };
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#getBraceReplacementOptions()} instead
+   */
+  @Deprecated
+  String[] BRACE_PLACEMENT_OPTIONS = getBraceReplacementOptions();
+
   int[] BRACE_PLACEMENT_VALUES = {
     CommonCodeStyleSettings.END_OF_LINE,
     CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED,
@@ -299,11 +343,12 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
 
-  String[] WRAP_ON_TYPING_OPTIONS = {
-    ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.default")
-  };
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#getWrapOnTypingOptions()} instead
+   */
+  @Deprecated
+  String[] WRAP_ON_TYPING_OPTIONS = getWrapOnTypingOptions();
+
   int[] WRAP_ON_TYPING_VALUES = {
     CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
