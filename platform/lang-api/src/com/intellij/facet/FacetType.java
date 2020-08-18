@@ -91,8 +91,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    * Default name which will be used then user creates a facet of this type.
    */
   @NotNull
-  @NonNls
-  public String getDefaultFacetName() {
+  public @NlsSafe String getDefaultFacetName() {
     return myPresentableName;
   }
 
