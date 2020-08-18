@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,7 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class LocalPathCellEditor extends AbstractTableCellEditor {
-  private final String myTitle;
+  private final @DialogTitle String myTitle;
   private final Project myProject;
 
   private FileChooserDescriptor myFileChooserDescriptor;
@@ -28,7 +29,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
 
   protected CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
-  public LocalPathCellEditor(@Nullable String title, @Nullable Project project) {
+  public LocalPathCellEditor(@DialogTitle @Nullable String title, @Nullable Project project) {
     myTitle = title;
     myProject = project;
   }
