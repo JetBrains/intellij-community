@@ -87,6 +87,18 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTestConflict("Inlined field is used reflectively");
   }
 
+  public void testFieldInitializedWithParameter() {
+    doTestConflict("Field initializer is not accessible in method <b><code>Test.test()</code></b>");
+  }
+
+  public void testFieldInitializedWithParameter1() {
+    doTest();
+  }
+
+  public void testFieldInitializedWithConstant() {
+    doTest();
+  }
+
   public void testFieldUsedInJavadoc() {
     doTestConflict("Inlined field is used in javadoc");
   }

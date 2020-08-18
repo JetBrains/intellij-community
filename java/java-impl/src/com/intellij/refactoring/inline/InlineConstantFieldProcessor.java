@@ -25,6 +25,7 @@ import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,13 +219,40 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
     PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
+
+    boolean dependsOnContext = false;
+    if (!myField.hasInitializer()) {
+      PsiMethod[] constructors = Objects.requireNonNull(myField.getContainingClass()).getConstructors();
+      if (constructors.length == 1) {
+        dependsOnContext = !PsiTreeUtil.processElements(initializer, element -> {
+          if (element instanceof PsiReferenceExpression &&
+              ((PsiReferenceExpression)element).getQualifierExpression() == null) {
+            PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+            if (resolve == null ||
+                PsiTreeUtil.isAncestor(constructors[0], resolve, true)) {
+              return false;
+            }
+          }
+          return true;
+        });
+        if (dependsOnContext) {
+          for (UsageInfo usageInfo : usagesIn) {
+            PsiElement element = usageInfo.getElement();
+            if (element != null && !PsiTreeUtil.isAncestor(constructors[0], element, true)) {
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.initializer.is.not.accessible",
+                                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
+            }
+          }
+        }
+      }
+    }
 
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myField.getProject()).getResolveHelper();
     for (UsageInfo info : usagesIn) {
