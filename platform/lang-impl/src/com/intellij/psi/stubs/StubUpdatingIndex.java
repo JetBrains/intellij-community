@@ -454,6 +454,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       catch (StorageException e) {
         throw new RuntimeException(e);
       }
+
+      if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+        LOG.info("removing transient data for inputId = " + inputId + ", keys = " + keys + ", data = " + maps);
+      }
+
       super.removeTransientDataForKeys(inputId, keys);
       removeStubIndexKeys(inputId, maps);
     }
