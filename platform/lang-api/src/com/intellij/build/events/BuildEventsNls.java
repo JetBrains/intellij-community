@@ -24,13 +24,13 @@ public class BuildEventsNls {
 
   @NlsContext(prefix = "build.event.description")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
+  @Target({ElementType.TYPE_USE, ElementType.METHOD})
   public @interface Description {
   }
 
   @NlsContext(prefix = "build.event.title")
   @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
+  @Target({ElementType.TYPE_USE, ElementType.METHOD})
   public @interface Title {
   }
 
