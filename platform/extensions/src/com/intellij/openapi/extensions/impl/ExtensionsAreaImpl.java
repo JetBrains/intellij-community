@@ -160,6 +160,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
   }
 
+  @Override
+  @TestOnly
+  public void registerDynamicExtensionPoint(@NonNls @NotNull String extensionPointName,
+                                            @NotNull String extensionPointBeanClass,
+                                            ExtensionPoint.@NotNull Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, true);
+  }
+
   @TestOnly
   public void registerExtensionPoint(@NotNull BaseExtensionPointName<?> extensionPoint,
                                      @NotNull String extensionPointBeanClass,
@@ -172,8 +180,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, false);
+  }
+
+  @TestOnly
+  void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind, boolean dynamic) {
     PluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
-    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, false);
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, dynamic);
   }
 
   @TestOnly
