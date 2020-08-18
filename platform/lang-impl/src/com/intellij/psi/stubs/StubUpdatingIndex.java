@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
-  static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
   public static final boolean USE_SNAPSHOT_MAPPINGS = SystemProperties.is("stubs.use.snapshot.mappings");
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
