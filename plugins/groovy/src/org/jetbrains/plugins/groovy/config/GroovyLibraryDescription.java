@@ -112,7 +112,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
-    if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
+    if (sdkVersion == null) {
       Messages.showErrorDialog(parentComponent,
                                "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determine version.",
                                "Failed to Create Library");

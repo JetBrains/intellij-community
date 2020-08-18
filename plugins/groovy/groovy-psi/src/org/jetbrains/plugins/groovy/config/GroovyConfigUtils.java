@@ -57,8 +57,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Override
-  @NotNull
-  public String getSDKVersion(@NotNull final String path) {
+  public @Nullable String getSDKVersionOrNull(@NotNull String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
@@ -72,7 +71,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path, GROOVY_JAR_PATTERN, MANIFEST_PATH);
     }
-    return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
+    return groovyJarVersion;
   }
 
   @Override
