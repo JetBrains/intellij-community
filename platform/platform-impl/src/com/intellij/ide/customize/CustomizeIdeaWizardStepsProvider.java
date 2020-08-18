@@ -27,7 +27,7 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
         featuredPlugins.put("IntelliJ Light Theme", "Themes:A new light theme for IntelliJ-based IDEs:com.jetbrains.lightThemePreview");
         addAwsPlugin(featuredPlugins);
         featuredPlugins.put("Kubernetes", "Cloud Support:Kubernetes resource files support:com.intellij.kubernetes");
-        featuredPlugins.put("Big Data Tools", "Tools Integration:Zeppelin notebooks and Spark applications support:com.intellij.bigdatatools");
+        addBigDataToolsPlugin(featuredPlugins);
         featuredPlugins.put("EduTools", "Code tools:Learn and teach programming languages such as Kotlin, Java, and Python in the form of coding tasks and custom verification tests:com.jetbrains.edu");
         featuredPlugins.put("Key Promoter X", "Code tools:Learn the IntelliJ IDEA shortcuts:Key Promoter X");
         addTrainingPlugin(featuredPlugins);

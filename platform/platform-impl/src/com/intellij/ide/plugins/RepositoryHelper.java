@@ -157,9 +157,7 @@ public final class RepositoryHelper {
       build = PluginManagerCore.getBuildNumber();
     }
 
-    boolean isCommunityIDE = !ideContainsUltimateModule();
-    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
-    boolean isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
+    boolean isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
 
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
@@ -187,13 +185,31 @@ public final class RepositoryHelper {
         result.put(pluginId, node);
       }
 
-      //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
-      if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
-        node.addDepends(MARKETPLACE_PLUGIN_ID, false);
-      }
+      addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
     }
 
     return new ArrayList<>(result.values());
+  }
+
+  /**
+   * If plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+   */
+  public static void addMarketplacePluginDependencyIfRequired(@NotNull PluginNode node) {
+    boolean isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
+
+    addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
+  }
+
+  private static boolean isPaidPluginsRequireMarketplacePlugin() {
+    boolean isCommunityIDE = !ideContainsUltimateModule();
+    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    return isCommunityIDE || isVendorNotJetBrains;
+  }
+
+  private static void addMarketplacePluginDependencyIfRequired(@NotNull PluginNode node, boolean isPaidPluginsRequireMarketplacePlugin) {
+    if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
+      node.addDepends(MARKETPLACE_PLUGIN_ID, false);
+    }
   }
 
   private static boolean ideContainsUltimateModule() {

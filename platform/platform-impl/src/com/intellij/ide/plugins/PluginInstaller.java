@@ -121,10 +121,12 @@ public final class PluginInstaller {
         FileUtil.delete(pluginDescriptor.getPluginPath());
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.info("Failed to delete jar of dynamic plugin", e);
+        uninstalledWithoutRestart = false;
       }
     }
-    else {
+
+    if (!uninstalledWithoutRestart) {
       try {
         uninstallAfterRestart(pluginDescriptor);
       }

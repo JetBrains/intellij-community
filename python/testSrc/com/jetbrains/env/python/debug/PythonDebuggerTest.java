@@ -856,7 +856,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test1");
         setWaitForTermination(false);
 
-        myRunConfiguration.setModuleMode(true);
+        getRunConfiguration().setModuleMode(true);
       }
     });
   }
@@ -869,7 +869,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 6);
         setWaitForTermination(false);
 
-        myRunConfiguration.setShowCommandLineAfterwards(true);
+        getRunConfiguration().setShowCommandLineAfterwards(true);
       }
 
       @Override
@@ -883,7 +883,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void doFinally() {
-        myRunConfiguration.setShowCommandLineAfterwards(false);
+        getRunConfiguration().setShowCommandLineAfterwards(false);
       }
     });
   }
@@ -897,8 +897,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test2");
         setWaitForTermination(false);
 
-        myRunConfiguration.setShowCommandLineAfterwards(true);
-        myRunConfiguration.setModuleMode(true);
+        getRunConfiguration().setShowCommandLineAfterwards(true);
+        getRunConfiguration().setModuleMode(true);
       }
 
       @Override
@@ -912,8 +912,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void doFinally() {
-        myRunConfiguration.setShowCommandLineAfterwards(false);
-        myRunConfiguration.setModuleMode(false);
+        getRunConfiguration().setShowCommandLineAfterwards(false);
+        getRunConfiguration().setModuleMode(false);
       }
     });
   }

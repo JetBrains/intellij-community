@@ -11,8 +11,9 @@ import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
+import org.jetbrains.plugins.github.extensions.GHCreateAccountHttpAuthDataProvider.Companion.getOrRequestToken
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GithubUtil
+import org.jetbrains.plugins.github.util.GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
 import java.awt.Component
 
 internal class GHSelectAccountHttpAuthDataProvider(
@@ -20,25 +21,23 @@ internal class GHSelectAccountHttpAuthDataProvider(
   private val potentialAccounts: Collection<GithubAccount>
 ) : InteractiveGitHttpAuthDataProvider {
 
-  private val authenticationManager get() = GithubAuthenticationManager.getInstance()
-
   @CalledInAwt
   override fun getAuthData(parentComponent: Component?): AuthData? {
-    val dialog = GithubChooseAccountDialog(project,
-                                           parentComponent,
-                                           potentialAccounts,
-                                           null,
-                                           false,
-                                           true,
-                                           GithubBundle.message("account.choose.title"),
-                                           GitBundle.message("login.dialog.button.login"))
+    val (account, setDefault) = chooseAccount(parentComponent) ?: return null
+    val token = getOrRequestToken(account, project, parentComponent) ?: return null
+    if (setDefault) GithubAuthenticationManager.getInstance().setDefaultAccount(project, account)
+
+    return GHAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+  }
+
+  private fun chooseAccount(parentComponent: Component?): Pair<GithubAccount, Boolean>? {
+    val dialog = GithubChooseAccountDialog(
+      project, parentComponent,
+      potentialAccounts, null, false, true,
+      GithubBundle.message("account.choose.title"), GitBundle.message("login.dialog.button.login")
+    )
     DialogManager.show(dialog)
-    if (!dialog.isOK) return null
-    val account = dialog.account
-    val token = authenticationManager.getTokenForAccount(account)
-                ?: authenticationManager.requestNewToken(account, project, parentComponent)
-                ?: return null
-    if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
-    return GHAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+
+    return if (dialog.isOK) dialog.account to dialog.setDefault else null
   }
 }

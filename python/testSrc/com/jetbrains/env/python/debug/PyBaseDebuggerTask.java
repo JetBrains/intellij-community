@@ -2,6 +2,7 @@
 package com.jetbrains.env.python.debug;
 
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -36,14 +37,11 @@ import org.junit.Assert;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
-  private final Set<Pair<String, Integer>> myBreakpoints = new HashSet<Pair<String, Integer>>();
   protected PyDebugProcess myDebugProcess;
   protected XDebugSession mySession;
   protected Semaphore myPausedSemaphore;
@@ -87,7 +85,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void resume() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue("Resume called for session that is not in suspended state", currentSession.isSuspended());
+    Assert.assertNotNull("Resume called for a session that does not exist or has already been stopped", currentSession);
+    Assert.assertTrue("Resume called for a session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.resume();
@@ -96,7 +95,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepOver() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue("Step over called for session that is not in suspended state", currentSession.isSuspended());
+    Assert.assertNotNull("Step over called for a session that does not exist or has already been stopped", currentSession);
+    Assert.assertTrue("Step over called for a session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.stepOver(false);
@@ -105,6 +105,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepInto() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
+    Assert.assertNotNull("Step into called for the session that does not exist or has already been stopped", currentSession);
     Assert.assertTrue("Step into called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
@@ -234,11 +235,13 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @NotNull
   protected String output() {
+    String consoleNotAvailableMessage = "Console output not available.";
     if (mySession != null && mySession.getConsoleView() != null) {
       PythonDebugLanguageConsoleView pydevConsoleView = (PythonDebugLanguageConsoleView)mySession.getConsoleView();
-      return XDebuggerTestUtil.getConsoleText(pydevConsoleView.getTextConsole());
+      ConsoleViewImpl consoleView = pydevConsoleView.getTextConsole();
+      return consoleView != null ? XDebuggerTestUtil.getConsoleText(consoleView) : consoleNotAvailableMessage;
     }
-    return "Console output not available.";
+    return consoleNotAvailableMessage;
   }
 
   protected void input(String text) {
@@ -273,8 +276,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void toggleBreakpoint(final String file, final int line) {
     ApplicationManager.getApplication().invokeAndWait(() -> doToggleBreakpoint(file, line), ModalityState.defaultModalityState());
     setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
-
-    addBreakpointInfo(file, line);
   }
 
   /**
@@ -286,15 +287,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void removeBreakpoint(final String file, final int line) {
     ApplicationManager.getApplication().invokeAndWait(() -> XDebuggerTestUtil.removeBreakpoint(getProject(), getFileByPath(file), line),
                                                       ModalityState.defaultModalityState());
-    removeBreakpointInfo(file, line);
-  }
-
-  private void addBreakpointInfo(String file, int line) {
-    myBreakpoints.add(Pair.create(file, line));
-  }
-
-  private void removeBreakpointInfo(String file, int line) {
-    myBreakpoints.remove(Pair.create(file, line));
   }
 
   protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
@@ -307,8 +299,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       Assert.assertNotNull(innerFile);
       XDebuggerTestUtil.toggleBreakpoint(getProject(), innerFile, line);
     });
-
-    addBreakpointInfo(file, line);
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
@@ -552,7 +542,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   @Override
   public void tearDown() throws Exception {
     try {
-      EdtTestUtil.runInEdtAndWait(() ->finishSession());
+      EdtTestUtil.runInEdtAndWait(() -> finishSession());
     }
     finally {
       super.tearDown();
@@ -636,18 +626,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
 
     public Variable hasValue(String value) {
-      Assert.assertEquals(value, myValueNode.myValue);
+      Assert.assertEquals(value, getValue());
       return this;
     }
 
-    public Variable hasType(String type) {
-      Assert.assertEquals(type, myValueNode.myType);
-      return this;
-    }
-
-    public Variable hasName(String name) {
-      Assert.assertEquals(name, myValueNode.myName);
-      return this;
+    public String getValue() {
+      return myValueNode.myValue;
     }
   }
 

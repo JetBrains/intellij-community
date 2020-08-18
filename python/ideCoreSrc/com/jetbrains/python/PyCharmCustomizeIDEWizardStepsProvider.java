@@ -19,6 +19,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
         addVimPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
         addAwsPlugin(featuredPlugins);
+        addBigDataToolsPlugin(featuredPlugins);
       }
     };
 
