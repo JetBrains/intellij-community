@@ -214,8 +214,10 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
       }
       if (addRangeToLazyParseableCollector) {
         RangeCollectorImpl lazyParseableCollector = currentLeafOrLazyParseable.getUserData(OUTER_ELEMENT_RANGES);
-        assert lazyParseableCollector != null && lazyParseableCollector != this;
-        lazyParseableCollector.myOuterAndRemoveRanges.add(rangeToProcess.shiftLeft(currentLeafOffset));
+        if (lazyParseableCollector != null) {
+          assert lazyParseableCollector != this;
+          lazyParseableCollector.myOuterAndRemoveRanges.add(rangeToProcess.shiftLeft(currentLeafOffset));
+        }
       }
     }
 
