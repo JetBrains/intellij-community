@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
@@ -108,8 +108,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
     final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText("This project type is recommended for simple plugins, such as a custom UI theme. " +
-                          "For more complex plugins, a Gradle-based project is <a>recommended</a>.");
+    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.devkit.simple.plugin.label"));
     linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
     panel.addToCenter(linkLabel);
 
