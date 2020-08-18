@@ -245,7 +245,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @Override
   public PsiAnnotation @NotNull [] getApplicableAnnotations() {
-    return getAnnotations();
+    return getType().getAnnotations();
   }
 
   @Override
