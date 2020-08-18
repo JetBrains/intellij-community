@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 
-abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Path>(
-  private val pathSerializer: PathSerializer<P>
+abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.ComplexPath>(
+  private val pathSerializer: ComplexPathSerializer<P>
 ) : DeprecatedVirtualFileSystem() {
   protected abstract fun findFile(project: Project, path: P): VirtualFile?
 
@@ -48,7 +48,7 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Pat
 
   override fun refresh(asynchronous: Boolean) {}
 
-  interface Path {
+  interface ComplexPath {
     /**
      * [sessionId] is required to differentiate files between launches.
      * This is necessary to make the files appear in "Recent Files" correctly.
@@ -63,12 +63,12 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Pat
     val projectHash: String
   }
 
-  interface PathSerializer<P : Path> {
+  interface ComplexPathSerializer<P : ComplexPath> {
     fun serialize(path: P): String
     fun deserialize(rawPath: String): P
   }
 
   companion object {
-    private val LOG = logger<ComplexPathVirtualFileSystem<Path>>()
+    private val LOG = logger<ComplexPathVirtualFileSystem<ComplexPath>>()
   }
 }

@@ -8,26 +8,26 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
-import com.intellij.vcs.editor.GsonPathSerializer
+import com.intellij.vcs.editor.GsonComplexPathSerializer
 import com.intellij.vcs.log.VcsLogRangeFilter
 import java.lang.reflect.Type
 
-internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSystem<GitCompareBranchesVirtualFileSystem.Path>(
-  GsonPathSerializer(
-    pathClass = Path::class.java,
+internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSystem<GitCompareBranchesVirtualFileSystem.ComplexPath>(
+  GsonComplexPathSerializer(
+    pathClass = ComplexPath::class.java,
     gson = GsonBuilder().registerTypeAdapter(VirtualFile::class.java, VirtualFileSerializer()).create()
   )
 ) {
   override fun getProtocol(): String = PROTOCOL
 
-  override fun findFile(project: Project, path: Path): VirtualFile? {
+  override fun findFile(project: Project, path: ComplexPath): VirtualFile? {
     return GitCompareBranchesFilesManager.getInstance(project).findFile(path)
   }
 
-  data class Path(override val sessionId: String,
-                  override val projectHash: String,
-                  val ranges: List<VcsLogRangeFilter.RefRange>,
-                  val root: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.Path
+  data class ComplexPath(override val sessionId: String,
+                         override val projectHash: String,
+                         val ranges: List<VcsLogRangeFilter.RefRange>,
+                         val root: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.ComplexPath
 
   companion object {
     private const val PROTOCOL = "git-compare-branches"

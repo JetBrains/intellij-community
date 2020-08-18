@@ -3,10 +3,10 @@ package com.intellij.vcs.editor
 
 import com.google.gson.Gson
 
-class GsonPathSerializer<P : ComplexPathVirtualFileSystem.Path>(
+class GsonComplexPathSerializer<P : ComplexPathVirtualFileSystem.ComplexPath>(
   private val pathClass: Class<P>,
   private val gson: Gson = Gson()
-) : ComplexPathVirtualFileSystem.PathSerializer<P> {
+) : ComplexPathVirtualFileSystem.ComplexPathSerializer<P> {
   override fun serialize(path: P): String = gson.toJson(path)
 
   override fun deserialize(rawPath: String): P = gson.fromJson(rawPath, pathClass)
