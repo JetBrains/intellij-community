@@ -253,7 +253,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  public void addParameter(@NotNull @NonNls String parameter) {
+  public void addParameter(@NonNls @NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
