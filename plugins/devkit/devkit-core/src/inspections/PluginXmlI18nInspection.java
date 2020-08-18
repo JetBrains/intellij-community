@@ -78,13 +78,20 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      GenericAttributeValue displayNameAttr = getAttribute(element, "displayName");
-      if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
-        holder.createProblem(element, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                             DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name"),
-                             null,
-                             new InspectionI18NQuickFix());
-      }
+      checkInspectionDisplayName(holder, element, "displayName", new InspectionI18NQuickFix());
+      checkInspectionDisplayName(holder, element, "groupName", null);
+      //checkInspectionDisplayName(holder, element, "groupPath", null);
+    }
+  }
+
+  private static void checkInspectionDisplayName(DomElementAnnotationHolder holder,
+                                                 DomElement element,
+                                                 String attributeName, InspectionI18NQuickFix fix) {
+    GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
+    if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
+      holder.createProblem(element, 
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName), null, fix);
     }
   }
 
@@ -193,7 +200,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name");
+      return DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
     }
 
     @Override
