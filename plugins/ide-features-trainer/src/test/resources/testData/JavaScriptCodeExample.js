@@ -63,4 +63,14 @@ class AnotherClass {
         str += '11111' + '323' + 2
         return str.toString() + "1231" + str + '11'
     }
+
+    selfReturningFunction(arg) {
+        return this
+    }
+
+    functionForReplaceCompletion() {
+        let instance = new AnotherClass()
+        let ss = instance.selfReturningFunction(322).selfReturningFunction(instance.cyclesFunction(0))
+            .selfReturningFunction(1).field
+    }
 }

@@ -50,5 +50,17 @@ public class Main {
             return builder.toString() + "322" + "erer" +
                     "true" + "or false" + str;
         }
+
+        public StaticClass selfReturningFunction(int arg) {
+            return this;
+        }
+
+        public String nonStaticField = "123123123";
+
+        static {
+            StaticClass instance = new StaticClass();
+            String ss = instance.selfReturningFunction(322).selfReturningFunction(instance.cyclesFunction(0))
+                    .selfReturningFunction(1).nonStaticField;
+        }
     }
 }

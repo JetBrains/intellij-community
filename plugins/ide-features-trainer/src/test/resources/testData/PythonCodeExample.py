@@ -36,3 +36,19 @@ def string_function(sss, trrrr):
     string = '322' + "1" + '4444'
     print('eee' + 'rrr' + "33" + '22')
     return string + '32222' + '1111' + "1"
+
+
+class AnotherClass:
+    field = "field"
+
+    def self_returning_function(self, arg):
+        return self
+
+    def func(self, arg):
+        return arg
+
+
+def function_for_replace_completion():
+    instance = AnotherClass()
+    ss = instance.self_returning_function(322).self_returning_function(instance.func(0)) \
+        .self_returning_function(1).field

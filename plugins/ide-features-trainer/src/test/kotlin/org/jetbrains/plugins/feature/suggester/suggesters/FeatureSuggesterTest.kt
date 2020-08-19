@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import junit.framework.Assert
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.*
 import java.awt.event.FocusEvent
@@ -125,6 +126,16 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         editor.caretModel.moveToOffset(oldOffset)
     }
 
+    fun deleteTextBetweenLogicalPositions(
+        lineStartIndex: Int, columnStartIndex: Int,
+        lineEndIndex: Int, columnEndIndex: Int
+    ) {
+        val oldOffset = editor.caretModel.offset
+        selectBetweenLogicalPositions(lineStartIndex, columnStartIndex, lineEndIndex, columnEndIndex)
+        deleteSymbolAtCaret()
+        editor.caretModel.moveToOffset(oldOffset)
+    }
+
     fun pasteFromClipboard() {
         ApplicationManager.getApplication().runWriteAction {
             CommandProcessor.getInstance().executeCommand(
@@ -214,11 +225,48 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         type("\b")
     }
 
+    fun typeDelete() {
+        ApplicationManager.getApplication().invokeAndWait {
+            myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
+        }
+    }
+
     fun deleteSymbolsAtCaret(symbolsNumber: Int) {
         (0 until symbolsNumber).forEach { _ -> deleteSymbolAtCaret() }
     }
 
     fun logicalPositionToOffset(lineIndex: Int, columnIndex: Int): Int {
         return editor.logicalPositionToOffset(LogicalPosition(lineIndex, columnIndex))
+    }
+
+    fun completeBasic(): Array<LookupElement>? {
+        myFixture.performEditorAction("CodeCompletion")
+        return myFixture.lookupElements
+    }
+
+    enum class CompletionFinishType(val value: Char) {
+        NORMAL('\n'),
+        REPLACE('\t'),
+        AUTO_INSERT(Character.forDigit(0, 10)),
+        COMPLETE_STATEMENT('\r')
+    }
+
+    fun chooseCompletionItem(item: LookupElement, finishType: CompletionFinishType = CompletionFinishType.NORMAL) {
+        val lookup = getLookup() ?: return
+        lookup.currentItem = item
+        type(finishType.value.toString())
+    }
+
+    fun getLookup(): LookupImpl? {
+        return LookupManager.getInstance(project).activeLookup as LookupImpl?
+    }
+
+    fun getLookupElements(): Array<LookupElement>? {
+        return myFixture.lookupElements
+    }
+
+    fun fail(): Nothing {
+        Assert.fail()
+        throw Exception()
     }
 }

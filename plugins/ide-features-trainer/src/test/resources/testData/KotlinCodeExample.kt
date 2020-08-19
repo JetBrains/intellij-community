@@ -53,6 +53,18 @@ object Main {
 
             private const val function = true
         }
+
+        fun selfReturningFunction(arg: Int): StaticClass {
+            return this
+        }
+
+        var nonStaticField = "123123123"
+
+        init {
+            val instance = StaticClass()
+            val ss = instance.selfReturningFunction(322).selfReturningFunction(instance.cyclesFunction(0))
+                .selfReturningFunction(1).nonStaticField
+        }
     }
 }
 
