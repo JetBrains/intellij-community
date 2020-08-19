@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public interface RunAnythingProvider<V> {
    * @param value matching value
    */
   @NotNull
-  String getCommand(@NotNull V value);
+  @NlsSafe String getCommand(@NotNull V value);
 
   /**
    * Returns text that is painted on the popup bottom and changed according to the list selection.
