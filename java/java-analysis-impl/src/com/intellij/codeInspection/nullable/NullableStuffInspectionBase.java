@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -320,7 +321,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private String checkIndirectInheritance(PsiElement psiClass, PsiClass intf) {
+  private @InspectionMessage String checkIndirectInheritance(PsiElement psiClass, PsiClass intf) {
     for (PsiMethod intfMethod : intf.getAllMethods()) {
       PsiClass intfMethodClass = intfMethod.getContainingClass();
       PsiMethod overridingMethod = intfMethodClass == null ? null :
@@ -335,19 +336,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private String checkIndirectInheritance(PsiMethod intfMethod,
-                                          PsiClass intfMethodClass,
-                                          PsiMethod overridingMethod,
-                                          PsiClass overridingMethodClass) {
+  private @InspectionMessage String checkIndirectInheritance(PsiMethod intfMethod,
+                                                             PsiClass intfMethodClass,
+                                                             PsiMethod overridingMethod,
+                                                             PsiClass overridingMethodClass) {
     if (isNullableOverridingNotNull(Annotated.from(overridingMethod), intfMethod)) {
-      return "Nullable method '" + overridingMethod.getName() +
-             "' from '" + overridingMethodClass.getName() +
-             "' implements non-null method from '" + intfMethodClass.getName() + "'";
+      return JavaAnalysisBundle.message("inspection.message.nullable.method.implements.non.null.method", 
+                                        overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
     if (isNonAnnotatedOverridingNotNull(overridingMethod, intfMethod)) {
-      return "Non-annotated method '" + overridingMethod.getName() +
-             "' from '" + overridingMethodClass.getName() +
-             "' implements non-null method from '" + intfMethodClass.getName() + "'";
+      return JavaAnalysisBundle.message("inspection.message.non.annotated.method.implements.non.null.method", 
+                                        overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
 
     PsiParameter[] overridingParameters = overridingMethod.getParameterList().getParameters();
@@ -358,22 +357,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiParameter parameter = overridingParameters[i];
         List<PsiParameter> supers = Collections.singletonList(superParameters[i]);
         if (findNullableSuperForNotNullParameter(parameter, supers) != null) {
-          return "Non-null parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override nullable parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.nullable.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (findNotNullSuperForNonAnnotatedParameter(manager, parameter, supers) != null) {
-          return "Non-annotated parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override non-null parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.annotated.parameter.should.not.override.non.null.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (isNotNullParameterOverridingNonAnnotated(manager, parameter, supers)) {
-          return "Non-null parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override non-annotated parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.non.annotated.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
       }
     }

@@ -90,11 +90,11 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
                              new JBInsets(0, 0, 0, 0), 0, 0);
-    Predicate<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    Predicate<PsiClass> isApplicable = PsiClass::isAnnotationType;
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, myRepeatAnnotationsModel,
-                                                                                   isApplicable), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl(JavaBundle.message("separator.annotations.to.copy"), 
+                                                                                   false, myRepeatAnnotationsModel, isApplicable), gc);
     return myPanel;
   }
 

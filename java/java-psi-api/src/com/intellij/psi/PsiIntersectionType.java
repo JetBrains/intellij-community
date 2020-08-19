@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -170,7 +171,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
     return Arrays.stream(myConjuncts).map(PsiType::getPresentableText).collect(Collectors.joining(", ", "PsiIntersectionType: ", ""));
   }
 
-  public String getConflictingConjunctsMessage() {
+  public @Nls String getConflictingConjunctsMessage() {
     final PsiType[] conjuncts = getConjuncts();
     for (int i = 0; i < conjuncts.length; i++) {
       PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);

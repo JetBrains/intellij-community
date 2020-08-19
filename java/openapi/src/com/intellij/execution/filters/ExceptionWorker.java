@@ -467,7 +467,8 @@ public class ExceptionWorker {
         action = exceptionAnalysisProvider.getAnalysisAction(element, info, supplier);
       }
       if (action == null) return;
-      String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
+      String actionName = action.getTemplatePresentation().getDescription();
+      Objects.requireNonNull(actionName);
       Ref<Balloon> ref = Ref.create();
       Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {

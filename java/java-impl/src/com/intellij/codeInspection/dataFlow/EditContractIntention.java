@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
@@ -164,7 +165,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   private static JCheckBox createPureCheckBox(boolean selected) {
-    JCheckBox pureCB = new NonFocusableCheckBox("Method is pure (has no side effects)");
+    JCheckBox pureCB = new NonFocusableCheckBox(JavaBundle.message("edit.contract.dialog.checkbox.pure.method"));
     pureCB.setMnemonic('p');
     pureCB.setSelected(selected);
     return pureCB;
@@ -186,12 +187,12 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   @Nullable
-  private static String getMutatesErrorMessage(String mutates, PsiMethod method) {
+  private static @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
     return StringUtil.isEmpty(mutates) ? null : MutationSignature.checkSignature(mutates, method);
   }
 
   @Nullable
-  private static String getContractErrorMessage(String contract, PsiMethod method) {
+  private static @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
     if (StringUtil.isEmpty(contract)) {
       return null;
     }

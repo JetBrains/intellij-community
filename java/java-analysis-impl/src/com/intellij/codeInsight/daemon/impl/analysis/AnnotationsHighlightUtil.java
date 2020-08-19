@@ -604,7 +604,7 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
-  private static String doCheckRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
+  private static @NlsContexts.DetailedDescription String doCheckRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList)) return null;
     PsiElement target = ((PsiModifierList)owner).getParent();

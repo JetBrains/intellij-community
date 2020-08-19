@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -19,10 +20,8 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -536,10 +535,10 @@ public final class HighlightMethodUtil {
     }
   }
 
-  private static String createOneArgMismatchTooltip(MethodCandidateInfo candidateInfo,
-                                                    @NotNull List<? extends PsiExpression> mismatchedExpressions,
-                                                    PsiExpression[] expressions,
-                                                    PsiParameter[] parameters) {
+  private static @NlsContexts.Tooltip String createOneArgMismatchTooltip(MethodCandidateInfo candidateInfo,
+                                                                         @NotNull List<? extends PsiExpression> mismatchedExpressions,
+                                                                         PsiExpression[] expressions,
+                                                                         PsiParameter[] parameters) {
     final PsiExpression wrongArg = mismatchedExpressions.get(0);
     final PsiType argType = wrongArg.getType();
     if (argType != null) {
@@ -646,9 +645,9 @@ public final class HighlightMethodUtil {
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
-  private static String checkStaticInterfaceMethodCallQualifier(@NotNull PsiReferenceExpression ref,
-                                                                @Nullable PsiElement scope,
-                                                                @NotNull PsiClass containingClass) {
+  private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiReferenceExpression ref,
+                                                                                                 @Nullable PsiElement scope,
+                                                                                                 @NotNull PsiClass containingClass) {
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, ref, true))) {
       return null;
@@ -979,7 +978,7 @@ public final class HighlightMethodUtil {
   }
 
   @NotNull
-  private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo @NotNull [] methodCandidates) {
+  private static @NlsContexts.Tooltip String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo @NotNull [] methodCandidates) {
     return JavaErrorBundle.message("ambiguous.method.html.tooltip",
                                      methodCandidates[0].getElement().getParameterList().getParametersCount() + 2,
                                    createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
@@ -1015,7 +1014,7 @@ public final class HighlightMethodUtil {
   }
 
   @NotNull
-  private static String createMismatchedArgumentsHtmlTooltip(@NotNull MethodCandidateInfo info, @NotNull PsiExpressionList list) {
+  private static @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull MethodCandidateInfo info, @NotNull PsiExpressionList list) {
     PsiMethod method = info.getElement();
     PsiSubstitutor substitutor = info.getSubstitutor();
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -1024,14 +1023,15 @@ public final class HighlightMethodUtil {
 
   @Language("HTML")
   @NotNull
-  private static String createMismatchedArgumentsHtmlTooltip(@NotNull PsiExpressionList list,
-                                                             @Nullable MethodCandidateInfo info,
-                                                             PsiParameter @NotNull [] parameters,
-                                                             @NotNull PsiSubstitutor substitutor) {
+  private static @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull PsiExpressionList list,
+                                                                                  @Nullable MethodCandidateInfo info,
+                                                                                  PsiParameter @NotNull [] parameters,
+                                                                                  @NotNull PsiSubstitutor substitutor) {
     PsiExpression[] expressions = list.getExpressions();
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
         parameters.length != expressions.length) {
-      return "<html>Expected " + parameters.length + " arguments but found " + expressions.length + "</html>";
+      return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", parameters.length, expressions.length))
+        .wrapWith("html").toString();
     }
 
     String greyedColor = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());

@@ -82,7 +82,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Returns text of the type that can be presented to a user (references normally non-qualified).
    */
   @NotNull
-  public String getPresentableText(boolean annotated) {
+  public @NlsSafe String getPresentableText(boolean annotated) {
     return getPresentableText();
   }
 

@@ -340,7 +340,7 @@ class PostHighlightingVisitor {
   }
 
   @NotNull
-  private static String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
+  private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
     final String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
 
     final String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());

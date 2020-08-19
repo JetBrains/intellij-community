@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -118,7 +119,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
-    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(),
+                                             JavaPsiBundle.message("type.conforms.to.constraint", session.getPresentableText(myS), session.getPresentableText(myT)));
     return false;
   }
 

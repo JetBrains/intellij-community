@@ -1958,6 +1958,7 @@ public abstract class LongRangeSet {
         suffix = JavaAnalysisBundle.message("long.range.set.presentation.divisible.by", myMod);
       }
       else {
+        //noinspection HardCodedStringLiteral
         suffix = IntStreamEx.of(BitSet.valueOf(new long[]{myBits})).joining(", ", "<", "> mod " + myMod);
       }
       return suffix;
