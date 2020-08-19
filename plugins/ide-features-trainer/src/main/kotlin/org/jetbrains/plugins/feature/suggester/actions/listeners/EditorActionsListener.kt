@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.actions.listeners
 
+import com.intellij.codeInsight.completion.actions.CodeCompletionAction
+import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -83,6 +85,39 @@ object EditorActionsListener : AnActionListener {
                     )
                 )
             }
+            is CodeCompletionAction -> {
+                handleAction(
+                    project,
+                    EditorCodeCompletionAction(
+                        offset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
+            is ChooseItemAction.FocusedOnly -> {
+                handleAction(
+                    project,
+                    CompletionChooseItemAction(
+                        offset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
+            is EscapeAction -> {
+                handleAction(
+                    project,
+                    EditorEscapeAction(
+                        caretOffset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
         }
     }
 
@@ -151,6 +186,39 @@ object EditorActionsListener : AnActionListener {
                     )
                 )
             }
+            is CodeCompletionAction -> {
+                handleAction(
+                    project,
+                    BeforeEditorCodeCompletionAction(
+                        offset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
+            is ChooseItemAction.FocusedOnly -> {
+                handleAction(
+                    project,
+                    BeforeCompletionChooseItemAction(
+                        offset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
+            is EscapeAction -> {
+                handleAction(
+                    project,
+                    BeforeEditorEscapeAction(
+                        caretOffset = editor.caretModel.offset,
+                        psiFileRef = WeakReference(psiFile),
+                        documentRef = WeakReference(editor.document),
+                        timeMillis = System.currentTimeMillis()
+                    )
+                )
+            }
         }
     }
 
@@ -165,6 +233,7 @@ object EditorActionsListener : AnActionListener {
     private fun AnAction.isSupportedAction(): Boolean {
         return this is CopyAction || this is CutAction
                 || this is PasteAction || this is BackspaceAction
-                || this is IncrementalFindAction
+                || this is IncrementalFindAction || this is CodeCompletionAction
+                || this is ChooseItemAction.FocusedOnly || this is EscapeAction
     }
 }

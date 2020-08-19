@@ -157,6 +157,27 @@ data class EditorFindAction(
     override val timeMillis: Long
 ) : EditorAction(psiFileRef, documentRef, timeMillis)
 
+data class EditorCodeCompletionAction(
+    val offset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class CompletionChooseItemAction(
+    val offset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class EditorEscapeAction(
+    val caretOffset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
 //-------------------------------------BEFORE EDITOR ACTIONS-------------------------------------------------------------------------------
 data class BeforeEditorBackspaceAction(
     val selection: Selection?,
@@ -209,6 +230,28 @@ data class BeforeEditorFindAction(
     override val documentRef: WeakReference<Document>,
     override val timeMillis: Long
 ) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class BeforeEditorCodeCompletionAction(
+    val offset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class BeforeCompletionChooseItemAction(
+    val offset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
+data class BeforeEditorEscapeAction(
+    val caretOffset: Int,
+    override val psiFileRef: WeakReference<PsiFile>,
+    override val documentRef: WeakReference<Document>,
+    override val timeMillis: Long
+) : EditorAction(psiFileRef, documentRef, timeMillis)
+
 
 //-------------------------------------OTHER ACTIONS---------------------------------------------------------------------------------------
 
