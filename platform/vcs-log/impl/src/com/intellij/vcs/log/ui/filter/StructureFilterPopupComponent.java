@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,7 +123,7 @@ public class StructureFilterPopupComponent
   private static <F> String getText(@NotNull Collection<? extends F> files,
                                     @Nls @NotNull String categoryText,
                                     @NotNull Comparator<? super F> comparator,
-                                    @NotNull NotNullFunction<? super F, String> getText,
+                                    @NotNull NotNullFunction<? super F, @Nls String> getText,
                                     boolean full) {
     if (full) {
       return ALL.get();
@@ -262,6 +263,7 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
+  @NlsSafe
   private String path2Text(@NotNull FilePath filePath, boolean systemDependent) {
     VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
     String path;

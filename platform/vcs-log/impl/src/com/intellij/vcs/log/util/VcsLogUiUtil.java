@@ -152,7 +152,8 @@ public final class VcsLogUiUtil {
   }
 
   @NotNull
-  public static String shortenTextToFit(@NotNull String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+  @Nls
+  public static String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
                                         @NotNull String symbol) {
     if (fontMetrics.stringWidth(text) <= availableWidth) return text;
 

@@ -98,7 +98,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   protected abstract List<String> parseLocalizedValues(@NotNull Collection<String> values);
 
   @NotNull
-  protected abstract List<String> getLocalizedValues(@NotNull Collection<String> values);
+  protected abstract List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
 
   @NotNull
   protected AnAction createSelectMultipleValuesAction() {

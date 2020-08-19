@@ -21,6 +21,7 @@ import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,7 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
+  @NonNls
   private static String generateTabId(@NotNull Project project) {
     Set<String> existingIds = ContainerUtil.union(VcsLogContentUtil.getExistingLogIds(project),
                                                   VcsLogEditorUtilKt.getExistingLogIds(project));

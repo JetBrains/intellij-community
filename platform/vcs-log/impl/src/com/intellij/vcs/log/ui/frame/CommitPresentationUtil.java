@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +20,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,8 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String escapeMultipleSpaces(@NotNull String text) {
+  @Nls
+  private static String escapeMultipleSpaces(@NotNull @Nls String text) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       if (text.charAt(i) == ' ') {
@@ -227,6 +228,7 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
+  @NlsSafe
   private static String getAuthorName(@NotNull VcsUser user) {
     String username = VcsUserUtil.getShortPresentation(user);
     return user.getEmail().isEmpty() ? username : username + " " + getEmailLink(user);
@@ -257,7 +259,7 @@ public final class CommitPresentationUtil {
 
   @NotNull
   @Nls
-  public static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth,
+  public static String getBranchesText(@Nullable List<@NlsSafe String> branches, boolean expanded, int availableWidth,
                                        @NotNull FontMetrics metrics) {
     if (branches == null) {
       return VcsLogBundle.message("vcs.log.details.in.branches.loading");

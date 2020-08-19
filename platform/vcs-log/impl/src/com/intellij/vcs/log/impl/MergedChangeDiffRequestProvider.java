@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,10 +67,11 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   }
 
   @NotNull
+  @Nls
   private static String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
                                          @NotNull Key<String> key,
                                          @Nullable ContentRevision revision,
-                                         @NotNull String defaultTitle) {
+                                         @NotNull @Nls String defaultTitle) {
     String titleFromContext = (String)context.get(key);
     if (titleFromContext != null) return titleFromContext;
     return ChangeDiffRequestProducer.getRevisionTitle(revision, defaultTitle);
