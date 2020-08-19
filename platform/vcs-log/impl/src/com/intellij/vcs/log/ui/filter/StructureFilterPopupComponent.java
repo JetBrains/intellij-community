@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -167,16 +169,19 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private static String getTooltipTextForRoots(@NotNull Collection<? extends VirtualFile> files) {
     return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName);
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
     return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, filePath -> path2Text(filePath, true));
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private static <F> String getTooltipTextForFiles(@NotNull Collection<? extends F> files,
                                                    @NotNull Comparator<? super F> comparator,
                                                    @NotNull NotNullFunction<? super F, String> getText) {
@@ -258,6 +263,7 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
+  @NlsActions.ActionText
   private String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getTextFromFilePaths(filter.getFiles(), VcsLogBundle.message("vcs.log.filter.popup.no.items"), filter.getFiles().isEmpty());
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -177,7 +178,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
   }
 
-  protected void setErrorEmptyText(@NotNull Throwable error, @Nls @NotNull String defaultText) {
+  protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
     String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
     message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
     getEmptyText().setText(message);

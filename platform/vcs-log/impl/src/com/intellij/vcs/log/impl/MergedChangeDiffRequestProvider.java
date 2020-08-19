@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -54,9 +55,9 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   private static SimpleDiffRequest createTwoSideRequest(@Nullable Project project,
                                                         @Nullable ContentRevision leftRevision,
                                                         @Nullable ContentRevision rightRevision,
-                                                        @NotNull String requestTitle,
-                                                        @NotNull String leftTitle,
-                                                        @NotNull String rightTitle,
+                                                        @NotNull @NlsContexts.DialogTitle String requestTitle,
+                                                        @NotNull @NlsContexts.Label String leftTitle,
+                                                        @NotNull @NlsContexts.Label String rightTitle,
                                                         @NotNull UserDataHolder context,
                                                         @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {

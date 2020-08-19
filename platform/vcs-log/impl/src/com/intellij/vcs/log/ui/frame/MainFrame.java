@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -182,7 +183,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return processor;
   }
 
-  public void setExplanationHtml(@Nullable String text) {
+  public void setExplanationHtml(@Nullable @NlsContexts.LinkLabel String text) {
     myNotificationLabel.setText(text);
     myNotificationLabel.setVisible(text != null);
   }

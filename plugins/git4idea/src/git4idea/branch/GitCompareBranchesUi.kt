@@ -4,6 +4,7 @@ package git4idea.branch
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.Consumer
@@ -184,6 +185,7 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
   return fromRange(end, start)
 }
 
+@NlsContexts.LinkLabel
 private fun getExplanationText(dontExist: String, existIn: String): String =
   "<html>${GitBundle.message("git.compare.branches.explanation.message",
                              "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"

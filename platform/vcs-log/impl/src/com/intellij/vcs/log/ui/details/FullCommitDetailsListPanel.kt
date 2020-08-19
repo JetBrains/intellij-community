@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
@@ -96,7 +97,7 @@ private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Dispo
     changesBrowser.setChangesToDisplay(changes)
   }
 
-  fun setErrorText(error: String) {
+  fun setErrorText(@NlsContexts.StatusText error: String) {
     changesBrowser.setChangesToDisplay(emptyList())
     changesBrowser.viewer.emptyText.setText(error, SimpleTextAttributes.ERROR_ATTRIBUTES)
   }

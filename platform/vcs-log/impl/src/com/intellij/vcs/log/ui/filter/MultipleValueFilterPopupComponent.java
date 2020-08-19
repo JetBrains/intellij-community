@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -90,6 +91,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   protected String getTooltip(@NotNull Collection<String> values) {
     return StringUtil.join(getLocalizedValues(values), ", ");
   }
