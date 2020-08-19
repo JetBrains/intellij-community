@@ -2,6 +2,7 @@
 
 package com.intellij.find;
 
+import com.intellij.BundleBase;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.HelpID;
@@ -32,6 +33,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +48,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -413,9 +416,27 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
+  private static void checkOption(List<String> chosenOptions, boolean state, String key) {
+    if (state) chosenOptions.add(StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, "")));
+  }
+
   @NotNull
   private String getEmptyText() {
-    if (myFindModel.isGlobal() || !myFindModel.getStringToFind().isEmpty()) return "";
+    if (!myFindModel.getStringToFind().isEmpty()) return "";
+    if (myFindModel.isGlobal()) {
+      SmartList<String> chosenOptions = new SmartList<>();
+      checkOption(chosenOptions, myFindModel.isCaseSensitive(), "find.case.sensitive");
+      checkOption(chosenOptions, myFindModel.isWholeWordsOnly() && !myFindModel.isRegularExpressions(), "find.whole.words");
+      checkOption(chosenOptions, myFindModel.isRegularExpressions(), "find.regex");
+      if (chosenOptions.isEmpty()) {
+        return "";
+      }
+      if (chosenOptions.size() == 1) {
+        return FindBundle.message("emptyText.used.option", chosenOptions.get(0));
+      }
+      return FindBundle.message("emptyText.used.options", chosenOptions.get(0), chosenOptions.get(1));
+    }
+
     String text = getEditor().getSelectionModel().getSelectedText();
     if (text != null && text.contains("\n")) {
       boolean replaceState = myFindModel.isReplaceState();

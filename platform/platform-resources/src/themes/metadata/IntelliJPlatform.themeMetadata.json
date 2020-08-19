@@ -620,6 +620,10 @@
       "description": "The yellow rectangle under the search match text"
     },
     {
+      "key": "SearchOption.selectedBackground",
+      "description": "Button background to highlight chosen search option"
+    },
+    {
       "key": "SearchMatch.startBackground"
     },
     {

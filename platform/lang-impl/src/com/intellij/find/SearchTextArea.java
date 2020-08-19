@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
@@ -52,6 +53,7 @@ import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends JPanel implements PropertyChangeListener {
+  private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
@@ -73,6 +75,12 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     public void paintBackground(Graphics g, JComponent component, int state) {
       if (((MyActionButton)component).isRolloverState()) {
         super.paintBackground(g, component, state);
+        return;
+      }
+      if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
+        Rectangle rect = new Rectangle(component.getSize());
+        JBInsets.removeFrom(rect, component.getInsets());
+        paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
       }
     }
   };
