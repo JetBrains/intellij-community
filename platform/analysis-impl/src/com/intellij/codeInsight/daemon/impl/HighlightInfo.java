@@ -75,8 +75,8 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private final String description;
-  private final String toolTip;
+  private final @DetailedDescription String description;
+  private final @Tooltip String toolTip;
   @NotNull
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
@@ -102,8 +102,8 @@ public class HighlightInfo implements Segment {
                           @NotNull HighlightInfoType type,
                           int startOffset,
                           int endOffset,
-                          @Nullable String escapedDescription,
-                          @Nullable String escapedToolTip,
+                          @Nullable @DetailedDescription String escapedDescription,
+                          @Nullable @Tooltip String escapedToolTip,
                           @NotNull HighlightSeverity severity,
                           boolean afterEndOfLine,
                           @Nullable Boolean needsUpdateOnTyping,
@@ -176,7 +176,7 @@ public class HighlightInfo implements Segment {
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    *         or tooltip without changes.
    */
-  private static String encodeTooltip(String tooltip, String description) {
+  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);

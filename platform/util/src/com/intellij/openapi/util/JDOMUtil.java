@@ -597,14 +597,17 @@ public final class JDOMUtil {
     return null;
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text) {
     return escapeText(text, false, false);
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeSpaces, boolean escapeLineEnds) {
     return escapeText(text, false, escapeSpaces, escapeLineEnds);
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {

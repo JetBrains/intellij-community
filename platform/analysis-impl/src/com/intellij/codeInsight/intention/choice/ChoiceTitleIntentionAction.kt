@@ -7,9 +7,12 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithChoice
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 
 /**
  * Intention action that is used as a title of [IntentionActionWithChoice].
@@ -17,7 +20,7 @@ import com.intellij.psi.PsiFile
  * Note, that this action should be non-selectable in any UI, since it does
  * not have any implementation for invoke.
  */
-open class ChoiceTitleIntentionAction(private val family: String, private val title: String)
+open class ChoiceTitleIntentionAction(@IntentionFamilyName private val family: String, @IntentionName private val title: String)
   : AbstractEmptyIntentionAction(), CustomizableIntentionAction, LocalQuickFix, Comparable<IntentionAction>  {
   override fun isShowIcon(): Boolean = false
 

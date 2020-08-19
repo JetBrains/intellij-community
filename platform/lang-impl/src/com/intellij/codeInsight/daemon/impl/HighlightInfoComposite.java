@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,7 +47,7 @@ final class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
+  private static @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
@@ -66,7 +67,7 @@ final class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
+  private static @NlsSafe String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();

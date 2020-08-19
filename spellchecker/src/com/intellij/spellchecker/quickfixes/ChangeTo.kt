@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoic
 import com.intellij.codeInsight.intention.impl.config.LazyEditor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -36,6 +37,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
     override val index: Int
   ) : ChoiceVariantIntentionAction(), HighPriorityAction {
 
+    @NlsSafe
     private lateinit var suggestion: String
 
     override fun getName(): String = suggestion

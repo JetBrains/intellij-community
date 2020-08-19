@@ -55,7 +55,7 @@ public class OfflineProblemDescriptor {
     return myDescription;
   }
 
-  public void setDescription(final @InspectionMessage String description) {
+  public void setDescription(@InspectionMessage String description) {
     myDescription = description;
   }
 

@@ -16,8 +16,10 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lang.WhitespacesAndCommentsBinder;
+import com.intellij.openapi.util.NlsContexts;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +33,7 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
  */
 final class MarkerOptionalData extends BitSet {
   private final Int2ObjectOpenHashMap<Throwable> myDebugAllocationPositions = new Int2ObjectOpenHashMap<>();
-  private final Int2ObjectOpenHashMap<String> myDoneErrors = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectOpenHashMap<@Nls String> myDoneErrors = new Int2ObjectOpenHashMap<>();
   private final Int2ObjectOpenHashMap<WhitespacesAndCommentsBinder> myLeftBinders = new Int2ObjectOpenHashMap<>();
   private final Int2ObjectOpenHashMap<WhitespacesAndCommentsBinder> myRightBinders = new Int2ObjectOpenHashMap<>();
   private final IntOpenHashSet myCollapsed = new IntOpenHashSet();
@@ -47,7 +49,7 @@ final class MarkerOptionalData extends BitSet {
     }
   }
 
-  @Nullable
+  @Nullable @NlsContexts.DetailedDescription
   String getDoneError(int markerId) {
     return myDoneErrors.get(markerId);
   }
@@ -56,7 +58,7 @@ final class MarkerOptionalData extends BitSet {
     return myCollapsed.contains(markerId);
   }
 
-  void setErrorMessage(int markerId, @NotNull String message) {
+  void setErrorMessage(int markerId, @NotNull @Nls String message) {
     markAsHavingOptionalData(markerId);
     myDoneErrors.put(markerId, message);
   }
