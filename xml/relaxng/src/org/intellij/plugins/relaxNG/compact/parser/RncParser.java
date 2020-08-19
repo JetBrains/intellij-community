@@ -16,11 +16,11 @@
 
 package org.intellij.plugins.relaxNG.compact.parser;
 
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
-import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +28,14 @@ public class RncParser implements PsiParser {
 
   @Override
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
     final PsiBuilder.Marker docMarker = builder.mark();
 
     new PatternParsing(builder).parse();
 
     while (!builder.eof()) {
-      builder.error(RelaxngBundle.message("unexpected.token"));
+      builder.error(XmlErrorBundle.message("xml.parsing.unexpected.token"));
       builder.advanceLexer();
     }
 

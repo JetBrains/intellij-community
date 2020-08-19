@@ -100,7 +100,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
 
   private static String makeDocumentation(StringBuilder sb) {
     if (sb == null) return null;
-    String s = sb.toString().replaceAll("\n", "<br>");
+    String s = sb.toString().replaceAll("\n", "<br>"); //NON-NLS
     if (!s.startsWith("<html>")) {
       s = XmlStringUtil.wrapInHtml(s);
     }

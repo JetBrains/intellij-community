@@ -87,7 +87,8 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     myNamespaceMap.getColumnModel().getColumn(0).setMaxWidth((int)(new JLabel(CommonBundle.message("label.prefix")).getPreferredSize().width * 1.2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(Presentation.NULL_STRING, RelaxngBundle.messagePointer("action.AdvancedDtdOptions.Anonymous.text.remove.entry"),
+    group.add(new AnAction(Presentation.NULL_STRING, RelaxngBundle.messagePointer(
+      "relaxng.convert-schema.advanced-options.dtd.action.remove-entry.description"),
                            AllIcons.General.Remove) {
       @Override
       public void update(@NotNull AnActionEvent e) {
