@@ -25,37 +25,37 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizableOptions.BLANK_LINES_KEEP.get()
+          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
         )
       }
       SettingsType.SPACING_SETTINGS -> {

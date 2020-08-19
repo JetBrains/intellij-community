@@ -1,4 +1,3 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -7,7 +6,6 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.ArrayUtil;
@@ -17,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getWrapOptions;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OTHER;
 
 /**
  * @author Mikhail Golubev
@@ -49,10 +47,8 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_BEFORE_COMMA");
       consumer.renameStandardOption("SPACE_WITHIN_BRACES", "Braces");
-      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'",
-                                CodeStyleSettingsCustomizableOptions.SPACES_OTHER.get());
-      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_AFTER_COLON", "After ':'",
-                                CodeStyleSettingsCustomizableOptions.SPACES_OTHER.get());
+      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", SPACES_OTHER);
+      consumer.showCustomOption(JsonCodeStyleSettings.class, "SPACE_AFTER_COLON", "After ':'", SPACES_OTHER);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("KEEP_BLANK_LINES_IN_CODE");
@@ -62,24 +58,24 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WRAP_ON_TYPING",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES");
-
+      
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "KEEP_TRAILING_COMMA",
                                 "Trailing comma",
-                                CodeStyleSettingsCustomizableOptions.WRAPPING_KEEP.get());
+                                CodeStyleSettingsCustomizable.WRAPPING_KEEP);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "ARRAY_WRAPPING",
                                 "Arrays",
                                 null,
-                                getWrapOptions(),
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "OBJECT_WRAPPING",
                                 "Objects",
                                 null,
-                                getWrapOptions(),
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS,
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
