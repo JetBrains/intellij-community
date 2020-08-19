@@ -111,9 +111,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
         return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
-          @NotNull
           @Override
-          public Object getLock() {
+          public @NotNull Object getLock() {
             return map.getDataAccessLock();
           }
 
