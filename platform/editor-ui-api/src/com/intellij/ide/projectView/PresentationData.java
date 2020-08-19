@@ -47,7 +47,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   private Icon myIcon;
 
-  private String myLocationString;
+  private @NlsSafe String myLocationString;
   private @NlsSafe String myPresentableText;
 
   private String myTooltip;
@@ -60,8 +60,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   private boolean mySeparatorAbove = false;
 
   private boolean myChanged;
-  private String myLocationPrefix;
-  private String myLocationSuffix;
+  private @NlsSafe String myLocationPrefix;
+  private @NlsSafe String myLocationSuffix;
 
   /**
    * Creates an instance with the specified parameters.
@@ -133,7 +133,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param locationString the location of the object.
    */
 
-  public void setLocationString(String locationString) {
+  public void setLocationString(@NlsSafe String locationString) {
     myLocationString = locationString;
   }
 
@@ -142,7 +142,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param presentableText the name of the object.
    */
-  public void setPresentableText(@Nls String presentableText) {
+  public void setPresentableText(@NlsSafe String presentableText) {
     myPresentableText = presentableText;
   }
 
