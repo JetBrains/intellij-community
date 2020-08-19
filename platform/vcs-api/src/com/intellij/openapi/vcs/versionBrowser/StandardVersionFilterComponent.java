@@ -59,6 +59,16 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     return VcsBundle.message("border.changes.filter.change.number.filter");
   }
 
+  @Nls
+  protected String getChangeFromParseError() {
+    return VcsBundle.message("error.change.from.must.be.a.valid.number");
+  }
+
+  @Nls
+  protected String getChangeToParseError() {
+    return VcsBundle.message("error.change.to.must.be.a.valid.number");
+  }
+
   private void installCheckBoxesListeners() {
     final ActionListener filterListener = new ActionListener() {
       @Override
@@ -130,7 +140,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumAfter.getText());
       }
       catch(NumberFormatException ex) {
-        return getChangeNumberTitle() + " From must be a valid number";
+        return getChangeFromParseError();
       }
     }
     if (myUseNumBeforeFilter.isSelected()) {
@@ -138,7 +148,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumBefore.getText());
       }
       catch(NumberFormatException ex) {
-        return getChangeNumberTitle() + " To must be a valid number";
+        return getChangeToParseError();
       }
     }
     return myDateFilterComponent.validateInput();
