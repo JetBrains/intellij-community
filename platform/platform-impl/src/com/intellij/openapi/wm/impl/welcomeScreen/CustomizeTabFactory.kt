@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -34,6 +35,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
@@ -158,8 +160,12 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         }
       }
       blockRow {
-        component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link"))
-                  { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+        val action = ActionManager.getInstance().getAction("WelcomeScreen.Configure.Import")
+        component(ActionLink(action.templateText, null, action).apply { isFocusable = true })
+        row {
+          component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link"))
+                    { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+        }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
