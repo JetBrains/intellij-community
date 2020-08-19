@@ -179,7 +179,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
-    String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
+    String message = ObjectUtils.chooseNotNull(error.getLocalizedMessage(), defaultText);
     message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
     getEmptyText().setText(message);
   }
