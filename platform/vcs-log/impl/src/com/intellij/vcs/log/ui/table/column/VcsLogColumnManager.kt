@@ -21,12 +21,12 @@ import kotlin.collections.HashMap
  * [VcsLogColumn] indices are automatically updated on plugins loading/unloading.
  */
 @Service
-internal class VcsLogColumnModelIndices : Disposable {
+internal class VcsLogColumnManager : Disposable {
   companion object {
     private val defaultColumns = listOf(Root, Commit, Author, Date, Hash)
 
     @JvmStatic
-    fun getInstance() = service<VcsLogColumnModelIndices>()
+    fun getInstance() = service<VcsLogColumnManager>()
   }
 
   private val modelIndices = HashMap<String, Int>()

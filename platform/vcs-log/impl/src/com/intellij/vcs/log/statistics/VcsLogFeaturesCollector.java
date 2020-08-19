@@ -13,7 +13,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumn;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +80,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           }
         }
 
-        VcsLogColumnModelIndices modelIndices = VcsLogColumnModelIndices.getInstance();
+        VcsLogColumnManager modelIndices = VcsLogColumnManager.getInstance();
         Set<Integer> currentColumns = ContainerUtil.map2Set(getColumnsOrder(properties), it -> modelIndices.getModelIndex(it));
         Set<Integer> defaultColumns = ContainerUtil.map2Set(getColumnsOrder(defaultProperties), it -> modelIndices.getModelIndex(it));
         for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {

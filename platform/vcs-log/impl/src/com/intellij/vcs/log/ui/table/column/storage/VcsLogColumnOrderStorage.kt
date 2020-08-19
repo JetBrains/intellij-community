@@ -4,7 +4,7 @@ package com.intellij.vcs.log.ui.table.column.storage
 import com.intellij.vcs.log.impl.CommonUiProperties.COLUMN_ID_ORDER
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
 
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(COLUMN_ID_ORDER)
 
@@ -20,7 +20,7 @@ internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(COLUMN_ID_O
  * @see updateOrder
  */
 internal fun VcsLogUiProperties.getColumnsOrder(): List<VcsLogColumn<*>> {
-  val currentColumns = VcsLogColumnModelIndices.getInstance().getCurrentColumns()
+  val currentColumns = VcsLogColumnManager.getInstance().getCurrentColumns()
   val savedOrder = get(COLUMN_ID_ORDER).mapNotNull { id -> currentColumns.find { it.id == id } }
   val visibilityStorage = VcsLogColumnsVisibilityStorage.getInstance()
   val visibleColumns = (currentColumns - savedOrder).filter { visibilityStorage.isVisible(this, it) }

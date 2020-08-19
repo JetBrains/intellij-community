@@ -16,7 +16,7 @@ import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public final class GraphTableModel extends AbstractTableModel {
     myLogData = logData;
     myRequestMore = requestMore;
     myProperties = properties;
-    VcsLogColumnModelIndices.getInstance().addColumnModelListener(logData, (column, index) -> {
+    VcsLogColumnManager.getInstance().addColumnModelListener(logData, (column, index) -> {
       fireTableStructureChanged();
     });
   }
@@ -65,7 +65,7 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @Override
   public final int getColumnCount() {
-    return VcsLogColumnModelIndices.getInstance().getModelColumnsCount();
+    return VcsLogColumnManager.getInstance().getModelColumnsCount();
   }
 
   @Override
@@ -125,7 +125,7 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private static VcsLogColumn<?> getColumn(int modelIndex) {
-    return VcsLogColumnModelIndices.getInstance().getColumn(modelIndex);
+    return VcsLogColumnManager.getInstance().getColumn(modelIndex);
   }
 
   /**

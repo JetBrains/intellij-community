@@ -49,7 +49,7 @@ import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.ui.table.column.Root;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt;
 import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -125,7 +125,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     onColumnOrderSettingChanged();
     setRootColumnSize();
     myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
-    VcsLogColumnModelIndices.getInstance().addCurrentColumnsListener(disposable, new MyCurrentColumnsListener());
+    VcsLogColumnManager.getInstance().addCurrentColumnsListener(disposable, new MyCurrentColumnsListener());
 
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
@@ -133,7 +133,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setTableHeader(new InvisibleResizableHeader() {
       @Override
       protected boolean canMoveOrResizeColumn(int modelIndex) {
-        return modelIndex != VcsLogColumnModelIndices.getInstance().getModelIndex(Root.INSTANCE);
+        return modelIndex != VcsLogColumnManager.getInstance().getModelIndex(Root.INSTANCE);
       }
     });
 
@@ -225,7 +225,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
     VcsLogColumnOrderStorageKt.updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
-      VcsLogColumnModelIndices.getInstance().getColumn(it)
+      VcsLogColumnManager.getInstance().getColumn(it)
     ));
     return null;
   }
@@ -278,7 +278,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull
   private TableColumn createTableColumn(VcsLogColumn<?> column) {
-    TableColumn tableColumn = new TableColumn(VcsLogColumnModelIndices.getInstance().getModelIndex(column));
+    TableColumn tableColumn = new TableColumn(VcsLogColumnManager.getInstance().getModelIndex(column));
     tableColumn.setResizable(column.isResizable());
     tableColumn.setCellRenderer(column.createTableCellRenderer(this));
     return tableColumn;
@@ -300,7 +300,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void updateDynamicColumnsWidth() {
-    for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getCurrentDynamicColumns()) {
+    for (VcsLogColumn<?> logColumn : VcsLogColumnManager.getInstance().getCurrentDynamicColumns()) {
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
@@ -315,7 +315,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     int size = getWidth();
-    for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getCurrentColumns()) {
+    for (VcsLogColumn<?> logColumn : VcsLogColumnManager.getInstance().getCurrentColumns()) {
       if (logColumn == Commit.INSTANCE) continue;
       TableColumn column = getTableColumn(logColumn);
       if (column != null) size -= column.getPreferredWidth();
@@ -326,7 +326,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private int getColumnWidthFromData(@NotNull TableColumn column) {
     int index = column.getModelIndex();
-    VcsLogColumn<?> logColumn = VcsLogColumnModelIndices.getInstance().getColumn(index);
+    VcsLogColumn<?> logColumn = VcsLogColumnManager.getInstance().getColumn(index);
 
     TableCellRenderer columnRenderer = myTableColumns.get(logColumn).getCellRenderer();
     if (columnRenderer instanceof VcsLogCellRenderer) {
@@ -373,11 +373,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Nullable
   public VcsLogColumn<?> getVcsLogColumn(int viewIndex) {
     int modelIndex = convertColumnIndexToModel(viewIndex);
-    return modelIndex < 0 ? null : VcsLogColumnModelIndices.getInstance().getColumn(modelIndex);
+    return modelIndex < 0 ? null : VcsLogColumnManager.getInstance().getColumn(modelIndex);
   }
 
   public final int getColumnViewIndex(@NotNull VcsLogColumn<?> column) {
-    return convertColumnIndexToView(VcsLogColumnModelIndices.getInstance().getModelIndex(column));
+    return convertColumnIndexToView(VcsLogColumnManager.getInstance().getModelIndex(column));
   }
 
   @Nullable
@@ -413,7 +413,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int width = 0;
     for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
-      if (column.getModelIndex() == VcsLogColumnModelIndices.getInstance().getModelIndex(vcsLogColumn)) break;
+      if (column.getModelIndex() == VcsLogColumnManager.getInstance().getModelIndex(vcsLogColumn)) break;
       width += column.getWidth();
     }
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
@@ -465,7 +465,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       return null;
     }
     if (column == Root.INSTANCE) {
-      Object path = getValueAt(row, VcsLogColumnModelIndices.getInstance().getModelIndex(column));
+      Object path = getValueAt(row, VcsLogColumnManager.getInstance().getModelIndex(column));
       if (path instanceof FilePath) {
         String clickMessage = isShowRootNames()
                               ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
@@ -540,7 +540,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
       sb.append(StringUtil.join(visibleColumns, j -> {
-        if (j == VcsLogColumnModelIndices.getInstance().getModelIndex(Root.INSTANCE)) {
+        if (j == VcsLogColumnManager.getInstance().getModelIndex(Root.INSTANCE)) {
           return "";
         }
         else {
@@ -633,7 +633,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
         if (visibleRows.first >= 0) {
           TableModelEvent evt = new TableModelEvent(model, visibleRows.first, visibleRows.second,
-                                                    VcsLogColumnModelIndices.getInstance().getModelIndex(Root.INSTANCE));
+                                                    VcsLogColumnManager.getInstance().getModelIndex(Root.INSTANCE));
           model.fireTableChanged(evt);
         }
       }
@@ -985,7 +985,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        for (VcsLogColumn<?> logColumn : VcsLogColumnModelIndices.getInstance().getCurrentDynamicColumns()) {
+        for (VcsLogColumn<?> logColumn : VcsLogColumnManager.getInstance().getCurrentDynamicColumns()) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
             VcsLogColumnsWidthStorage.getInstance().saveColumnWidth(myProperties, logColumn, column.getWidth());
@@ -1030,7 +1030,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class MyCurrentColumnsListener implements VcsLogColumnModelIndices.CurrentColumnsListener {
+  private class MyCurrentColumnsListener implements VcsLogColumnManager.CurrentColumnsListener {
     @Override
     public void columnAdded(@NotNull VcsLogColumn<?> column) {
       onColumnOrderSettingChanged();

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
 import java.util.*
 
 internal class VcsLogColumnsPropertyStorage<T>(
@@ -16,7 +16,7 @@ internal class VcsLogColumnsPropertyStorage<T>(
   private val columnsProperty = HashMap<VcsLogColumn<*>, VcsLogUiProperty<T>>()
 
   init {
-    VcsLogColumnModelIndices.getInstance().addCurrentColumnsListener(parent, object : VcsLogColumnModelIndices.CurrentColumnsListener {
+    VcsLogColumnManager.getInstance().addCurrentColumnsListener(parent, object : VcsLogColumnManager.CurrentColumnsListener {
       override fun columnRemoved(column: VcsLogColumn<*>) {
         columnsProperty.remove(column)
       }
