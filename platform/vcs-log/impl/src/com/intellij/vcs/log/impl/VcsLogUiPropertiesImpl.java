@@ -4,12 +4,11 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 /**
  * Stores UI configuration based on user activity and preferences.

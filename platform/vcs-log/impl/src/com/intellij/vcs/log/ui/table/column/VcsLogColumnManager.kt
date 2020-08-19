@@ -12,13 +12,18 @@ import kotlin.collections.HashMap
 
 /**
  * Service stores information about the currently available [VcsLogColumn]s.
- * Allows to get the [VcsLogColumn] model index and the [VcsLogColumn] by index.
+ * Allows to get:
+ *   * [VcsLogColumn] model index,
+ *   * [VcsLogColumn] by index
+ *   * [VcsLogColumnProperties] by [VcsLogColumn]
  *
  * Model indices in the service are only incremented, i.e. each new [VcsLogColumn] will have an index greater than the previous ones.
  *
  * This model is used for all Logs (Log, FileHistory, Log tabs).
  *
  * [VcsLogColumn] indices are automatically updated on plugins loading/unloading.
+ *
+ * @see VcsLogColumnUtilKt with useful column operations
  */
 @Service
 internal class VcsLogColumnManager : Disposable {
@@ -38,6 +43,8 @@ internal class VcsLogColumnManager : Disposable {
   private val columnModelListeners = EventDispatcher.create(ColumnModelListener::class.java)
 
   private val currentColumnsListeners = EventDispatcher.create(CurrentColumnsListener::class.java)
+
+  private val currentColumnsProperties = HashMap<VcsLogColumn<*>, VcsLogColumnProperties>()
 
   init {
     defaultColumns.forEach { column ->
@@ -69,12 +76,15 @@ internal class VcsLogColumnManager : Disposable {
 
   fun getCurrentDynamicColumns() = currentColumns.filter { it.isDynamic }
 
+  fun getProperties(column: VcsLogColumn<*>): VcsLogColumnProperties = currentColumnsProperties[column]!!
+
   private fun newColumn(column: VcsLogColumn<*>) {
     val newIndex = modelIndices.size
     val modelIndex = modelIndices.getOrPut(column.id) { newIndex }
     if (modelIndex !in currentColumnIndices) {
       currentColumns.add(column)
       currentColumnIndices[modelIndex] = column
+      currentColumnsProperties[column] = VcsLogColumnProperties.create(column)
       currentColumnsListeners.multicaster.columnAdded(column)
     }
     if (modelIndex == newIndex) {
@@ -86,6 +96,7 @@ internal class VcsLogColumnManager : Disposable {
     val modelIndex = getModelIndex(column)
     currentColumns.remove(column)
     currentColumnIndices.remove(modelIndex)
+    currentColumnsProperties.remove(column)
     currentColumnsListeners.multicaster.columnRemoved(column)
   }
 

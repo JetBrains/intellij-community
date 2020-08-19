@@ -25,6 +25,7 @@ import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -36,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";

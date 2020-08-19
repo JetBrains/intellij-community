@@ -9,7 +9,6 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
-import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsVisibilityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.*;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
 
@@ -73,7 +72,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     public boolean isSelected(@NotNull AnActionEvent e) {
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       if (properties != null && supportsColumnsReordering(properties)) {
-        return VcsLogColumnsVisibilityStorage.getInstance().isVisible(properties, myColumn);
+        return isVisible(myColumn, properties);
       }
       return false;
     }
@@ -85,7 +84,6 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
       VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       assert supportsColumnsReordering(properties);
 
-      VcsLogColumnsVisibilityStorage.getInstance().changeVisibility(properties, myColumn, state);
       if (state) {
         addColumn(properties, myColumn);
       }

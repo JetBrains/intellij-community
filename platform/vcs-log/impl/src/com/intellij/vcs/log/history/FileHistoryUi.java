@@ -26,6 +26,7 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -40,7 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.ui.JBColor.namedColor;
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage.TableColumnWidthProperty;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";

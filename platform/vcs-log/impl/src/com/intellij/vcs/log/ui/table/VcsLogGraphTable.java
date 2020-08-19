@@ -46,12 +46,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
-import com.intellij.vcs.log.ui.table.column.Commit;
-import com.intellij.vcs.log.ui.table.column.Root;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
-import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
-import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt;
-import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage;
+import com.intellij.vcs.log.ui.table.column.*;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -77,8 +72,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
-import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.isValidColumnOrder;
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
@@ -224,7 +218,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    VcsLogColumnOrderStorageKt.updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
+    updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
       VcsLogColumnManager.getInstance().getColumn(it)
     ));
     return null;
@@ -267,9 +261,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void resetColumnWidth(@NotNull VcsLogColumn<?> column) {
     VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.COLUMN_RESET, null);
-    VcsLogColumnsWidthStorage widthStorage = VcsLogColumnsWidthStorage.getInstance();
-    if (widthStorage.getColumnWidth(myProperties, column) != -1) {
-      widthStorage.saveColumnWidth(myProperties, column, -1);
+    if (VcsLogColumnUtilKt.getWidth(column, myProperties) != -1) {
+      setWidth(column, myProperties, -1);
     }
     else {
       forceReLayout(column);
@@ -304,7 +297,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
-      int width = VcsLogColumnsWidthStorage.getInstance().getColumnWidth(myProperties, logColumn);
+      int width = VcsLogColumnUtilKt.getWidth(logColumn, myProperties);
       if (width <= 0 || width > getWidth()) {
         width = getColumnWidthFromData(column);
       }
@@ -988,7 +981,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         for (VcsLogColumn<?> logColumn : VcsLogColumnManager.getInstance().getCurrentDynamicColumns()) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
-            VcsLogColumnsWidthStorage.getInstance().saveColumnWidth(myProperties, logColumn, column.getWidth());
+            setWidth(logColumn, myProperties, column.getWidth());
           }
         }
       }
@@ -1002,7 +995,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       super.moveColumn(columnIndex, newIndex);
-      VcsLogColumnOrderStorageKt.moveColumn(myProperties, column, newIndex);
+      VcsLogColumnUtilKt.moveColumn(myProperties, column, newIndex);
     }
   }
 

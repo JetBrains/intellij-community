@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
-import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsVisibilityStorage.TableColumnVisibilityProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

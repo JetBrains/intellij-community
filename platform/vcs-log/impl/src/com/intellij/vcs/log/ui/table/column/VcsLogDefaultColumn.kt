@@ -25,10 +25,6 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 import javax.swing.table.TableCellRenderer
 
-internal fun isValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): Boolean {
-  return Root in columnOrder && Commit in columnOrder
-}
-
 internal fun getDefaultDynamicColumns() = listOf<VcsLogDefaultColumn<*>>(Author, Hash, Date)
 
 internal sealed class VcsLogDefaultColumn<T>(
