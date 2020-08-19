@@ -15,6 +15,7 @@ import com.intellij.util.io.exists
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 data class Targets(val targets: List<TargetDefinition>,
                    val inspections: List<InspectionMeta>
@@ -31,7 +32,7 @@ data class TargetDefinition(val id: String,
                             val inspections: Set<String>
 )
 
-fun parseTargets(path: Path): Targets? {
+private fun parseTargets(path: Path): Targets? {
   return Gson().fromJson(path.toFile().readText(), Targets::class.java)
 }
 
@@ -53,7 +54,7 @@ fun InspectionApplication.runAnalysisByTargets(path: Path,
   val converter = StaticAnalysisReportConverter()
   converter.projectData(project, myOutPath)
   writeDescriptions(baseProfile, converter)
-  StaticAnalysisReportConverter.writeInspectionsMeta(targetsFile, Paths.get(myOutPath).resolve("targets.json"))
+  Files.copy(targetsFile, Paths.get(myOutPath).resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
 
   targetDefinitions.forEach { target ->
     reportMessage(1, "Target ${target.id} (${target.description}) started")
@@ -72,37 +73,38 @@ fun InspectionApplication.runAnalysisByTargets(path: Path,
 
 private fun InspectionApplication.writeDescriptions(baseProfile: InspectionProfileImpl, converter: InspectionsReportConverter) {
   val descriptionsFile: Path = Paths.get(myOutPath).resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION)
-  describeInspections(descriptionsFile,
-                      if (myRunWithEditorSettings) null else baseProfile.name,
-                      baseProfile)
+  val profileName = if (myRunWithEditorSettings) null else baseProfile.name
+  describeInspections(descriptionsFile, profileName, baseProfile)
   converter.convert(myOutPath, myOutPath, emptyMap(), listOf(descriptionsFile.toFile()))
 }
 
-fun InspectionApplication.launchTarget(resultsPath: Path,
+private fun InspectionApplication.launchTarget(resultsPath: Path,
                                        context: GlobalInspectionContextEx,
                                        project: Project,
                                        scope: AnalysisScope): List<Path> {
-
   if (!GlobalInspectionContextUtil.canRunInspections(project, false) {}) {
     gracefulExit()
     return emptyList()
   }
   val inspectionsResults = mutableListOf<Path>()
-  ProgressManager.getInstance().runProcess({
-                                             context.launchInspectionsOffline(scope, resultsPath, myRunGlobalToolsOnly, inspectionsResults)
-                                           },
-                                           createProcessIndicator())
+
+  ProgressManager.getInstance().runProcess(
+    {
+      context.launchInspectionsOffline(scope, resultsPath, myRunGlobalToolsOnly, inspectionsResults)
+    },
+    createProcessIndicator()
+  )
+
   return inspectionsResults
 }
 
-fun forgottenTarget(targetDefinitions: List<TargetDefinition>, baseProfile: InspectionProfileImpl): TargetDefinition {
+private fun forgottenTarget(targetDefinitions: List<TargetDefinition>, baseProfile: InspectionProfileImpl): TargetDefinition {
   val usedInspections = targetDefinitions.flatMap { it.inspections }.toSet()
-
   val forgotten = baseProfile.allTools.map { it.tool.id }.toSet() - usedInspections
-  return TargetDefinition("Forgotten inspections", "All other inspections", forgotten)
+  return TargetDefinition("Without targets", "All other inspections", forgotten)
 }
 
-fun constructProfile(target: TargetDefinition, baseProfile: InspectionProfileImpl): InspectionProfileImpl {
+private fun constructProfile(target: TargetDefinition, baseProfile: InspectionProfileImpl): InspectionProfileImpl {
   val profile = InspectionProfileImpl(target.id)
   profile.copyFrom(baseProfile)
 

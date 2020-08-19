@@ -598,7 +598,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }, createProcessIndicator());
   }
 
-  public  @NotNull ProgressIndicatorBase createProcessIndicator() {
+  public @NotNull ProgressIndicatorBase createProcessIndicator() {
     return new ProgressIndicatorBase() {
       private String lastPrefix = "";
       private int myLastPercent = -1;
@@ -672,7 +672,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     });
   }
 
-  public  @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  private @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = null;
 
     //fetch profile by name from project file (project profiles can be disabled)
