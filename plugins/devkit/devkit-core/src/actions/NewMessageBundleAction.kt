@@ -38,14 +38,14 @@ class NewMessageBundleAction : CreateElementActionBase() {
   override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<Array<PsiElement>>) {
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return
     if (module.name.endsWith(".impl") && ModuleManager.getInstance(project).findModuleByName(module.name.removeSuffix(".impl")) != null) {
-      Messages.showErrorDialog(project, DevKitBundle.message("error.message.do.not.put.bundle.to.impl.module"), errorTitle)
+      Messages.showErrorDialog(project, DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.do.not.put.bundle.to.impl.module"), errorTitle)
       return
     }
 
     val validator = MyInputValidator(project, directory)
     val defaultName = generateDefaultBundleName(module)
-    val result = Messages.showInputDialog(project, DevKitBundle.message("label.bundle.name"),
-                                          DevKitBundle.message("title.create.new.message.bundle"), null, defaultName, validator)
+    val result = Messages.showInputDialog(project, DevKitBundle.message("action.DevKit.NewMessageBundle.label.bundle.name"),
+                                          DevKitBundle.message("action.DevKit.NewMessageBundle.title.create.new.message.bundle"), null, defaultName, validator)
     if (result != null) {
       elementsConsumer.accept(validator.createdElements)
     }
@@ -78,7 +78,9 @@ class NewMessageBundleAction : CreateElementActionBase() {
 
   private fun getOrCreateResourcesRoot(module: Module): PsiDirectory? {
     fun reportError(message: String): Nothing? {
-      val notification = Notification("DevKit Errors", errorTitle, "Cannot create resources root for properties file: " + message, NotificationType.ERROR)
+      val notification = Notification("DevKit Errors", errorTitle,
+                                      DevKitBundle.message("action.DevKit.NewMessageBundle.notification.content.cannot.create.resources.root.for.properties.file", message),
+                                      NotificationType.ERROR)
       Notifications.Bus.notify(notification, module.project)
       return null
     }
@@ -122,11 +124,11 @@ class NewMessageBundleAction : CreateElementActionBase() {
   }
 
   override fun getErrorTitle(): String {
-    return DevKitBundle.message("error.title.cannot.create.new.message.bundle")
+    return DevKitBundle.message("action.DevKit.NewMessageBundle.error.title.cannot.create.new.message.bundle")
   }
 
   override fun getActionName(directory: PsiDirectory?, newName: String?): String {
-    return DevKitBundle.message("action.name.create.new.message.bundle", newName)
+    return DevKitBundle.message("action.DevKit.NewMessageBundle.action.name.create.new.message.bundle", newName)
   }
 }
 
