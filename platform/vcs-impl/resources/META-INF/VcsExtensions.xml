@@ -172,6 +172,7 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory" id="todo"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory" id="codeCleanup"/>
 
+    <completion.preselectionBehaviourProvider implementation="com.intellij.openapi.vcs.CommitCompletionPreselectionBehaviourProvider"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
