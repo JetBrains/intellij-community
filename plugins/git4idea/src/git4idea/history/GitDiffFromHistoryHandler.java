@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -297,6 +298,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
   }
 
   @NotNull
+  @NlsSafe
   private static String getRevisionDescription(@NotNull GitFileRevision parent) {
     String hash = DvcsUtil.getShortHash(parent.getHash());
     String message = parent.getCommitMessage();
