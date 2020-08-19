@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class VcsKey {
@@ -22,10 +23,11 @@ public final class VcsKey {
   private final String myName;
 
   // to forbid creation outside AbstractVcs
-  VcsKey(@NotNull final String name) {
+  VcsKey(@NotNull @NonNls String name) {
     myName = name;
   }
 
+  @NonNls
   @NotNull
   public String getName() {
     return myName;

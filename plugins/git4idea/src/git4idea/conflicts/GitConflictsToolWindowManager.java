@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.content.Content;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public final class GitConflictsToolWindowManager implements Disposable {
-  public static final String TAB_NAME = "Conflicts";
+  public static final @NlsContexts.TabTitle String TAB_NAME = "Conflicts";
 
   @NotNull private final Project myProject;
 

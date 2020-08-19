@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.update.GitUpdateResult;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,6 +158,7 @@ public final class GitPushRepoResult {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("%s (%d, '%s'), update: %s}", myType, myCommits, mySourceBranch, myUpdateResult);

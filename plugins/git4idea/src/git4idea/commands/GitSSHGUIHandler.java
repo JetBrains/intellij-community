@@ -28,6 +28,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,17 +108,17 @@ public class GitSSHGUIHandler {
   }
 
   @NotNull
-  private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
+  private static CredentialAttributes oldCredentialAttributes(@NotNull @NonNls String key) {
     return CredentialAttributes(GitSSHGUIHandler.class, key);
   }
 
   @NotNull
-  private static CredentialAttributes passphraseCredentialAttributes(@NotNull String key) {
+  private static CredentialAttributes passphraseCredentialAttributes(@NotNull @NonNls String key) {
     return new CredentialAttributes(generateServiceName("Git SSH Passphrase", key), key, GitSSHGUIHandler.class);
   }
 
   @NotNull
-  private static CredentialAttributes passwordCredentialAttributes(@NotNull String key) {
+  private static CredentialAttributes passwordCredentialAttributes(@NotNull @NonNls String key) {
     return new CredentialAttributes(generateServiceName("Git SSH Password", key), key, GitSSHGUIHandler.class);
   }
 

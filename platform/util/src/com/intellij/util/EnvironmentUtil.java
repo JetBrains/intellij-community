@@ -143,7 +143,7 @@ public final class EnvironmentUtil {
    *
    * @see #getEnvironmentMap()
    */
-  public static @Nullable String getValue(@NotNull String name) {
+  public static @Nullable @NonNls String getValue(@NotNull @NonNls String name) {
     return getEnvironmentMap().get(name);
   }
 
@@ -156,7 +156,7 @@ public final class EnvironmentUtil {
    * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
    */
   @Contract(value = "null -> false", pure = true)
-  public static boolean isValidName(@Nullable String name) {
+  public static boolean isValidName(@Nullable @NonNls String name) {
     return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfoRt.isWindows ? 1 : 0) == -1;
   }
 
@@ -166,7 +166,7 @@ public final class EnvironmentUtil {
    * @see #isValidName(String)
    */
   @Contract(value = "null -> false", pure = true)
-  public static boolean isValidValue(@Nullable String value) {
+  public static boolean isValidValue(@Nullable @NonNls String value) {
     return value != null && value.indexOf('\0') == -1;
   }
 

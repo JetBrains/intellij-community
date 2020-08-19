@@ -18,6 +18,7 @@ import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,6 +218,7 @@ public class GitRebaseSpec {
     return true;
   }
 
+  @NonNls
   @Override
   public String toString() {
     String initialHeadPositions = StringUtil.join(myInitialHeadPositions.keySet(),

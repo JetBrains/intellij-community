@@ -27,6 +27,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.util.GitFileUtils
+import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -181,7 +182,7 @@ class GitIndexVirtualFile(private val project: Project,
     return result
   }
 
-  override fun toString(): String {
+  override fun toString(): @NonNls String {
     return "GitIndexVirtualFile: [${root.name}]/${VcsFileUtil.relativePath(root, filePath)}"
   }
 
@@ -197,7 +198,7 @@ class GitIndexVirtualFile(private val project: Project,
       return cachedData.compareAndSet(oldCachedData, newCachedData)
     }
 
-    override fun toString(): String {
+    override fun toString(): @NonNls String {
       return "GitIndexVirtualFile.Refresh: ${this@GitIndexVirtualFile}"
     }
   }

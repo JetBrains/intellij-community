@@ -101,6 +101,7 @@ public class GitNewResetDialog extends DialogWrapper {
     return DIALOG_ID;
   }
 
+  @Nls
   @NotNull
   private static String prepareDescription(@NotNull Project project, @NotNull Map<GitRepository, VcsFullCommitDetails> commits) {
     if (commits.size() == 1 && !isMultiRepo(project)) {

@@ -27,6 +27,7 @@ import git4idea.index.getFileStatus
 import git4idea.util.lastInstance
 import git4idea.util.toShortenedString
 import git4idea.util.without
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
@@ -215,18 +216,18 @@ class LightGitTracker : Disposable {
       val Blank = State()
     }
 
-    override fun toString(): String {
+    override fun toString(): @NonNls String {
       return "State(location=$location, statuses=${statuses.toShortenedString()})"
     }
   }
 
   private sealed class StateUpdater(val state: State) {
     object Clear : StateUpdater(State.Blank) {
-      override fun toString(): String = "Clear"
+      override fun toString(): @NonNls String = "Clear"
     }
 
     class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
-      override fun toString(): String {
+      override fun toString(): @NonNls String {
         return "Update(state=$state, updateLocation=$updateLocation)"
       }
     }
@@ -234,19 +235,19 @@ class LightGitTracker : Disposable {
 
   private sealed class Request {
     class Location(val file: VirtualFile) : Request() {
-      override fun toString(): String {
+      override fun toString(): @NonNls String {
         return "Location(file=$file)"
       }
     }
 
     class Status(val files: Collection<VirtualFile>) : Request() {
-      override fun toString(): String {
+      override fun toString(): @NonNls String {
         return "Status(files=${files.toShortenedString()}"
       }
     }
 
     object CheckGit : Request() {
-      override fun toString(): String = "CheckGit"
+      override fun toString(): @NonNls String = "CheckGit"
     }
   }
 

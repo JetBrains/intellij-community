@@ -25,10 +25,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -39,7 +36,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final Icon INCOMING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingLayer);
   private static final Icon INCOMING_OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingOutgoingLayer);
   private static final Icon OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer);
-  private static final String ID = "git";
+  private static final @NonNls String ID = "git";
   private final GitVcsSettings mySettings;
 
   public GitBranchWidget(@NotNull Project project) {

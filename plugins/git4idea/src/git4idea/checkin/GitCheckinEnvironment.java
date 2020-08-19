@@ -60,6 +60,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +143,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  private static String loadMessage(@NotNull File messageFile, @NotNull String encoding) throws IOException {
+  private static String loadMessage(@NotNull File messageFile, @NotNull @NonNls String encoding) throws IOException {
     return FileUtil.loadFile(messageFile, encoding);
   }
 
@@ -189,7 +190,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<? extends Change> changes,
-                                   @NotNull String commitMessage,
+                                   @NotNull @NonNls String commitMessage,
                                    @NotNull CommitContext commitContext,
                                    @NotNull Set<? super String> feedback) {
     updateState(commitContext);
@@ -246,7 +247,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   private List<VcsException> commitRepository(@NotNull GitRepository repository,
                                               @NotNull Collection<? extends CommitChange> changes,
-                                              @NotNull String message) {
+                                              @NotNull @NonNls String message) {
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
@@ -456,7 +457,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   private static byte @NotNull [] convertDocumentContentToBytes(@NotNull GitRepository repository,
-                                                                @NotNull String documentContent,
+                                                                @NotNull @NonNls String documentContent,
                                                                 @NotNull VirtualFile file) {
     String text;
 
@@ -567,6 +568,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
   }
 
+  @NonNls
   @NotNull
   private static String getLogString(@NotNull String root, @NotNull Collection<? extends ChangedPath> changes) {
     return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
@@ -575,7 +577,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   private Pair<Collection<CommitChange>, List<VcsException>> commitExplicitRenames(@NotNull GitRepository repository,
                                                                                    @NotNull Collection<CommitChange> changes,
-                                                                                   @NotNull String message) {
+                                                                                   @NotNull @NonNls String message) {
     List<GitCheckinExplicitMovementProvider> providers =
       filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
 
@@ -972,7 +974,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
    * @throws IOException if file cannot be created
    */
   @NotNull
-  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message)
+  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String message)
     throws IOException {
     // filter comment lines
     File file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
@@ -985,7 +987,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return file;
   }
 
-  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
+  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String message,
                                         @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
     File messageFile;
     try {
@@ -1091,12 +1093,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     MERGE("merge"),
     CHERRY_PICK("cherry-pick");
 
-    private final String myName;
+    private final @Nls String myName;
 
-    PartialOperation(String name) {
+    PartialOperation(@Nls String name) {
       myName = name;
     }
 
+    @Nls
     String getName() {
       return myName;
     }
@@ -1265,6 +1268,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       this.virtualFile = virtualFile;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return super.toString() + ", changelist: " + changelistId;
