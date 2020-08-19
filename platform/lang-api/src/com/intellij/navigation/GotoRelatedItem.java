@@ -93,6 +93,7 @@ public class GotoRelatedItem {
     return true;
   }
 
+  @Separator
   public String getGroup() {
     return myGroup;
   }
