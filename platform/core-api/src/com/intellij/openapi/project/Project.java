@@ -27,7 +27,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return project name
    */
   @NotNull
-  @Nls String getName();
+  @NlsSafe String getName();
 
   /**
    * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>
