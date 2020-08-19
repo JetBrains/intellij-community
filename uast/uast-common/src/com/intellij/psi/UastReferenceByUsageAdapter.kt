@@ -164,6 +164,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
       emptyList<PsiElement>()
     }
     .findAll()
+    .sortedWith(compareBy({ it.containingFile?.virtualFile?.canonicalPath ?: "" }, { it.textOffset }))
 }
 
 private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {
