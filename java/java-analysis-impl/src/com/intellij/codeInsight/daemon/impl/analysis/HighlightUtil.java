@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -2955,9 +2956,9 @@ public final class HighlightUtil {
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
     boolean shortType = showShortType(lRawType, rRawType);
-    return consumer.consume(redIfNotMatch(lRawType, true, shortType),
+    return consumer.consume(redIfNotMatch(lRawType, true, shortType).toString(),
                             requiredRow.toString(),
-                            redIfNotMatch(rRawType, assignable, shortType),
+                            redIfNotMatch(rRawType, assignable, shortType).toString(),
                             foundRow.toString());
   }
 
@@ -3001,10 +3002,11 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  static String redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
-    if (type == null) return "";
+  static @NlsSafe HtmlChunk redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
+    if (type == null) return HtmlChunk.empty();
     String color = ColorUtil.toHtmlColor(matches ? UIUtil.getToolTipForeground() : DialogWrapper.ERROR_FOREGROUND_COLOR);
-    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText()) + "</font>";
+    return HtmlChunk.tag("font").attr("color", color)
+      .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
   }
 
 

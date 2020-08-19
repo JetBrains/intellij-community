@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -180,7 +181,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
           PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
           if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
             if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
-              return conjuncts[i].getPresentableText() + " and " + conjuncts[i1].getPresentableText();
+              return JavaPsiBundle.message("conflicting.conjuncts", conjuncts[i].getPresentableText(), conjuncts[i1].getPresentableText());
             }
           }
         }

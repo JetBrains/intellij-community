@@ -104,7 +104,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Same as {@code getCanonicalText(false)}.
    */
   @NotNull
-  public abstract String getCanonicalText();
+  public abstract @NlsSafe String getCanonicalText();
 
   /**
    * Return canonical text of the type with some internal details added for presentational purposes. Use with care.

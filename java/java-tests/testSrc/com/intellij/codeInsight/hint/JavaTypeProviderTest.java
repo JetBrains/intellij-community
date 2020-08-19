@@ -60,7 +60,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Object</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
-           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>instanceof CharSequence\n" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>instanceof CharSequence<br/>" +
            "not instanceof Number, String</td></tr>" +
            "</table>");
   }

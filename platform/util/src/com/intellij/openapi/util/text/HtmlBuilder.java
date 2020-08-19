@@ -40,7 +40,8 @@ public final class HtmlBuilder {
   /**
    * Appends a text chunk to this builder
    *
-   * @param text text to append (must not be escaped by caller)
+   * @param text text to append (must not be escaped by caller).
+   *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return this builder
    */
   @Contract("_ -> this")

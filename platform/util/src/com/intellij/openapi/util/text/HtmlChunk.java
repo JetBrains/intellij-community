@@ -38,7 +38,7 @@ public abstract class HtmlChunk {
 
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
-      builder.append(StringUtil.escapeXmlEntities(myContent));
+      builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
     }
   }
   
@@ -330,7 +330,8 @@ public abstract class HtmlChunk {
   /**
    * Creates a HTML text node
    * 
-   * @param text text to display (no escaping should be done by caller).
+   * @param text text to display (no escaping should be done by caller). 
+   *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return HtmlChunk that represents a HTML text node.
    */
   @Contract(pure = true)
