@@ -5,10 +5,10 @@ import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class GitCommitTooltipLinkHandler extends TooltipLinkHandler {
   public static String createLink(@NotNull String text, @NotNull VcsRevisionNumber revisionNumber) {
     Hash hash = tryCreateHash(revisionNumber.asString());
     if (hash == null) return null;
-    return XmlStringUtil.formatLink("#git_commit/" + hash.asString(), XmlStringUtil.escapeString(text));
+    return HtmlChunk.link("#git_commit/" + hash.asString(), text).toString();
   }
 
   @Nullable

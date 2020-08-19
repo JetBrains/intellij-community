@@ -2,22 +2,22 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.CommonXmlStrings;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +98,7 @@ public final class CommitPresentationUtil {
       String hash = matcher.group();
 
       if (resolvedHashes.contains(hash)) {
-        hash = XmlStringUtil.formatLink(GO_TO_HASH + hash, hash);
+        hash = HtmlChunk.link(GO_TO_HASH + hash, hash).toString();
       }
       matcher.appendReplacement(result, hash);
     }
@@ -213,7 +213,7 @@ public final class CommitPresentationUtil {
     if (commitTime == null) {
       boolean withEmail = !committer.getEmail().isEmpty();
       String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
+                  (withEmail ? "</span>" + " " + getEmailLink(committer) + graySpan : "");
       builder.append(VcsLogBundle.message("vcs.log.details.committer.info.user", by));
       builder.append("</span>");
       return builder.toString();
@@ -225,7 +225,7 @@ public final class CommitPresentationUtil {
     if (committer != null) {
       boolean withEmail = !committer.getEmail().isEmpty();
       String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
+                  (withEmail ? "</span>" + (" " + getEmailLink(committer)) + graySpan : "");
       String committedBy = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
       builder.append(committedBy);
     }
@@ -240,13 +240,12 @@ public final class CommitPresentationUtil {
   @NotNull
   private static String getAuthorName(@NotNull VcsUser user) {
     String username = VcsUserUtil.getShortPresentation(user);
-    return user.getEmail().isEmpty() ? username : username + getEmailText(user);
+    return user.getEmail().isEmpty() ? username : username + " " + getEmailLink(user);
   }
 
   @NotNull
-  @NonNls
-  private static String getEmailText(@NotNull VcsUser user) {
-    return " " + XmlStringUtil.formatLink("mailto:" + user.getEmail(), CommonXmlStrings.LT + user.getEmail() + CommonXmlStrings.GT);
+  private static HtmlChunk.Element getEmailLink(@NotNull VcsUser user) {
+    return HtmlChunk.link("mailto:" + user.getEmail(), "<" + user.getEmail() + ">");
   }
 
   @NotNull
@@ -279,11 +278,13 @@ public final class CommitPresentationUtil {
     String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      return head + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")) +
-             UIUtil.BR + StringUtil.join(branches, UIUtil.BR);
+      return new HtmlBuilder().append(head)
+        .append(HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")))
+        .append(HtmlChunk.br())
+        .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(branches, s -> HtmlChunk.text(s))).toString();
     }
 
-    String tail = "… " + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all"));
+    String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all")).toString();
     int headWidth = metrics.stringWidth(head);
     int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
     if (availableWidth <= headWidth + tailWidth) {
