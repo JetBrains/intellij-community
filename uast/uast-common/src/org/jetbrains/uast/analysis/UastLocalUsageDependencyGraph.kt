@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.analysis
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
@@ -14,6 +16,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.castSafelyTo
+import com.intellij.util.text.VersionComparatorUtil
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -392,7 +395,7 @@ private val UExpression.lastExpression: UExpression?
   get() = when (this) {
     is USwitchClauseExpressionWithBody -> {
       //FIXME: workaround for KT-35574
-      if (lang.id == "kotlin" && getParentOfType<USwitchExpression>()?.getExpressionType() != null) {
+      if (lang.id == "kotlin" && getParentOfType<USwitchExpression>()?.getExpressionType() != null && isKotlinNeedsWorkaround()) {
         // skip last break statement, which doesn't make sense
         body.expressions.getOrNull(body.expressions.lastIndex - 1)
       } else {
@@ -408,6 +411,14 @@ private val UExpression.lastExpression: UExpression?
       else -> expression
     }
   }
+
+//FIXME: workaround for IDEA-248484, and fixed KT-35574
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated("hack")
+private fun isKotlinNeedsWorkaround(): Boolean {
+  val actualKotlinVersion = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin"))?.version
+  return VersionComparatorUtil.compare(actualKotlinVersion, "1.4") < 0
+}
 
 sealed class Dependent : UserDataHolderBase() {
   abstract val element: UElement
