@@ -227,16 +227,18 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
 
-    boolean dependsOnContext = false;
     if (!myField.hasInitializer()) {
+      boolean dependsOnContext;
       PsiMethod[] constructors = Objects.requireNonNull(myField.getContainingClass()).getConstructors();
       if (constructors.length == 1) {
+        Ref<PsiElement> reference = new Ref<>();
         dependsOnContext = !PsiTreeUtil.processElements(initializer, element -> {
-          if (element instanceof PsiReferenceExpression &&
-              ((PsiReferenceExpression)element).getQualifierExpression() == null) {
-            PsiElement resolve = ((PsiReferenceExpression)element).resolve();
-            if (resolve == null ||
-                PsiTreeUtil.isAncestor(constructors[0], resolve, true)) {
+          if (element instanceof PsiJavaCodeReferenceElement) {
+            PsiElement resolve = ((PsiJavaCodeReferenceElement)element).resolve();
+            if (resolve != null &&
+                PsiTreeUtil.isAncestor(constructors[0], resolve, true) && 
+                !PsiTreeUtil.isAncestor(initializer, resolve, true)) {
+              reference.set(resolve);
               return false;
             }
           }
@@ -247,6 +249,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
             PsiElement element = usageInfo.getElement();
             if (element != null && !PsiTreeUtil.isAncestor(constructors[0], element, true)) {
               conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.initializer.is.not.accessible",
+                                                                        RefactoringUIUtil.getDescription(reference.get(), false),
                                                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
             }
           }
