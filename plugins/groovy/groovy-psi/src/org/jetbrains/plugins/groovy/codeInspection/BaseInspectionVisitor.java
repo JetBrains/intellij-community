@@ -47,16 +47,12 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     registerError(statementToken, args);
   }
 
-  private static @InspectionMessage @NotNull String nlsNotNullize(@InspectionMessage @Nullable String s) {
-    return StringUtil.notNullize(s); // NON-NLS
-  }
-
   protected void registerError(PsiElement location) {
     if (location == null) {
       return;
     }
     final LocalQuickFix[] fix = createFixes(location);
-    String description = nlsNotNullize(inspection.buildErrorString(location));
+    String description = StringUtil.notNullize(inspection.buildErrorString(location));
 
     registerError(location, description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
@@ -66,7 +62,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
       return;
     }
     final LocalQuickFix[] fixes = createFixes(method);
-    String description = nlsNotNullize(inspection.buildErrorString(args));
+    String description = StringUtil.notNullize(inspection.buildErrorString(args));
 
     registerError(method.getNameIdentifierGroovy(), description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
@@ -76,7 +72,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
       return;
     }
     final LocalQuickFix[] fix = createFixes(variable);
-    final String description = nlsNotNullize(inspection.buildErrorString(args));
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
     registerError(variable.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
@@ -85,7 +81,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
       return;
     }
     final LocalQuickFix[] fixes = createFixes(method);
-    final String description = nlsNotNullize(inspection.buildErrorString(args));
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
 
     final GrExpression invoked = method.getInvokedExpression();
     final PsiElement nameElement = ((GrReferenceExpression)invoked).getReferenceNameElement();
@@ -108,7 +104,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
                                ProblemHighlightType highlightType,
                                Object... args) {
     final LocalQuickFix[] fix = createFixes(location);
-    final String description = nlsNotNullize(inspection.buildErrorString(args));
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
     registerError(location, description, fix, highlightType);
   }
 
