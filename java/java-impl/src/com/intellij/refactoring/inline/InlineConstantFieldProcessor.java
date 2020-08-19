@@ -38,20 +38,20 @@ import java.util.stream.Stream;
 public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineConstantFieldProcessor.class);
   private PsiField myField;
-  private final PsiReferenceExpression myRefExpr;
+  private final PsiElement myRefExpr;
   private final boolean myInlineThisOnly;
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
   private final boolean myDeleteDeclaration;
   private Map<Language, InlineHandler.Inliner> myInliners;
 
-  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
+  public InlineConstantFieldProcessor(PsiField field, Project project, PsiElement ref, boolean isInlineThisOnly) {
     this(field, project, ref, isInlineThisOnly, false, false, true);
   }
 
   public InlineConstantFieldProcessor(PsiField field,
                                       Project project,
-                                      PsiReferenceExpression ref,
+                                      PsiElement ref,
                                       boolean isInlineThisOnly,
                                       boolean searchInCommentsAndStrings,
                                       boolean searchForTextOccurrences,
