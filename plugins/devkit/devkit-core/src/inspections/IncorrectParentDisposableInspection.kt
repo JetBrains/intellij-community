@@ -6,9 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
@@ -26,7 +30,7 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       }
     }, arrayOf(UCallExpression::class.java))
 
-  private val sdkLink = "(<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html#choosing-a-disposable-parent\">Choosing a Disposable Parent</a>)"
+  private val sdkLink = "https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html#choosing-a-disposable-parent"
 
   private fun checkCallExpression(node: UCallExpression, holder: ProblemsHolder) {
     val psiMethod = node.resolve() ?: return
@@ -36,14 +40,23 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       val argumentForParameter = node.getArgumentForParameter(index) ?: return@forEachIndexed
       val argumentSourcePsi = argumentForParameter.sourcePsi ?: return@forEachIndexed
       val argumentType = (argumentForParameter.getExpressionType() as? PsiClassType)?.resolve() ?: return@forEachIndexed
-      if (argumentType.qualifiedName == Project::class.java.name) {
-        holder.registerProblem(argumentSourcePsi, "<html>Don't use Project as disposable in plugin code $sdkLink</html>")
+
+      var typeName: @NlsSafe String? = null
+      when (argumentType.qualifiedName) {
+        Project::class.java.name -> typeName = "Project"
+        Application::class.java.name -> typeName = "Application"
+        Module::class.java.name -> typeName = "Module"
       }
-      else if (argumentType.qualifiedName == Application::class.java.name) {
-        holder.registerProblem(argumentSourcePsi, "<html>Don't use Application as disposable in plugin code $sdkLink</html>")
-      }
-      else if (argumentType.qualifiedName == Module::class.java.name) {
-        holder.registerProblem(argumentSourcePsi, "<html>Don't use Module as disposable in plugin code $sdkLink</html>")
+      
+      if (typeName != null) {
+        holder.registerProblem(argumentSourcePsi, HtmlBuilder()
+          .append(DevKitBundle.message("inspections.IncorrectParentDisposableInspection.do.not.use.as.disposable", typeName))
+          .nbsp()
+          .append("(")
+          .appendLink(sdkLink, DevKitBundle.message("inspections.IncorrectParentDisposableInspection.documentation.link.title"))
+          .append(")")
+          .wrapWith(HtmlChunk.html())
+          .toString())
       }
     }
   }
