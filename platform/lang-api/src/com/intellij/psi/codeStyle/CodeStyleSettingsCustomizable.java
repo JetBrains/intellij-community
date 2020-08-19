@@ -214,53 +214,53 @@ public interface CodeStyleSettingsCustomizable {
     BLOCK_COMMENT_AT_FIRST_COLUMN
   }
 
-  String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
-  String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
-  String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
-  String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
-  String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
-  String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
-  String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
-  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
-  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
-  String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
+  @Nls String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
+  @Nls String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
+  @Nls String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
+  @Nls String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
+  @Nls String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
+  @Nls String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
+  @Nls String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
+  @Nls String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
+  @Nls String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
+  @Nls String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
 
-  String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
-  String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
+  @Nls String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
+  @Nls String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
 
-  String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
-  String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
-  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
-  String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
-  String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
-  String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
-  String WRAPPING_CALL_CHAIN = ApplicationBundle.message("wrapping.chained.method.calls");
-  String WRAPPING_IF_STATEMENT = ApplicationBundle.message("wrapping.if.statement");
-  String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
-  String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
-  String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
-  String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
-  String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
-  String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
-  String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
-  String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
-  String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");
-  String WRAPPING_THROWS_LIST = ApplicationBundle.message("wrapping.throws.list");
-  String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
-  String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
-  String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
-  String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
-  String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
-  String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
+  @Nls String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
+  @Nls String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
+  @Nls String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
+  @Nls String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
+  @Nls String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
+  @Nls String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
+  @Nls String WRAPPING_CALL_CHAIN = ApplicationBundle.message("wrapping.chained.method.calls");
+  @Nls String WRAPPING_IF_STATEMENT = ApplicationBundle.message("wrapping.if.statement");
+  @Nls String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
+  @Nls String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
+  @Nls String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
+  @Nls String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
+  @Nls String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
+  @Nls String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
+  @Nls String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
+  @Nls String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
+  @Nls String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");
+  @Nls String WRAPPING_THROWS_LIST = ApplicationBundle.message("wrapping.throws.list");
+  @Nls String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
+  @Nls String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
+  @Nls String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
+  @Nls String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
+  @Nls String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
+  @Nls String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
+  @Nls String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
 
-  String[] WRAP_OPTIONS = {
+  String @Nls [] WRAP_OPTIONS = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.chop.down.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
   };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = {
+  String @Nls [] WRAP_OPTIONS_FOR_SINGLETON = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
@@ -284,7 +284,7 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = {
+  String @Nls [] BRACE_PLACEMENT_OPTIONS = {
     ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
     ApplicationBundle.message("wrapping.brace.placement.next.line"),
@@ -299,7 +299,7 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
 
-  String[] WRAP_ON_TYPING_OPTIONS = {
+  String @Nls [] WRAP_ON_TYPING_OPTIONS = {
     ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
     ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
     ApplicationBundle.message("wrapping.wrap.on.typing.default")

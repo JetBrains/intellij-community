@@ -41,6 +41,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
@@ -138,6 +139,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     }
   }
 
+  @Nls
   private String getCommandName() {
     return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, DescriptiveNameUtil.getDescriptiveName(myClass));
   }

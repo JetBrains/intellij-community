@@ -49,6 +49,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -298,7 +299,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                 new ArrayList<>());
   }
 
-  private static @NotNull String getStatusMessage(final int duplicatesNo) {
+  private static @Nls @NotNull String getStatusMessage(final int duplicatesNo) {
     return JavaRefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 

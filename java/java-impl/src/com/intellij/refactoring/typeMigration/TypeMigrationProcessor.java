@@ -269,6 +269,6 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return "TypeMigration";
+    return JavaBundle.message("type.migration.command.name");
   }
 }

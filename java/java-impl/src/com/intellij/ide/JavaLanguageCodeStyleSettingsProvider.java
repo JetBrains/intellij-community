@@ -47,7 +47,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(settings, modelSettings, "Java") {
+    return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -90,17 +90,20 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS", "Angle brackets",CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS",
+                                JavaBundle.message("code.style.settings.angle.spacing.brackets"), CodeStyleSettingsCustomizable.SPACES_WITHIN);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"),CodeStyleSettingsCustomizable.SPACES_WITHIN);
 
       String groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT", "After closing angle bracket", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT",
+                                JavaBundle.message("code.style.settings.spacing.after.closing.angle.bracket"), groupName);
 
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS",
+                                JavaBundle.message("code.style.settings.spacing.around.type.bounds"), groupName);
 
       groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", JavaBundle.message(

@@ -324,9 +324,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private Pair<PsiElement, String> conflict;
+    private Pair<PsiElement, @Nls String> conflict;
 
-    public Pair<PsiElement, String> getConflict() {
+    public Pair<PsiElement, @Nls String> getConflict() {
       return conflict;
     }
 
@@ -341,7 +341,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = Pair.create(variable, StringUtil.capitalize(descr));
+        conflict = Pair.create(variable, descr);
       }
     }
 

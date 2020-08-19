@@ -229,8 +229,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
           boolean hasJavaModules = sources.stream().anyMatch(f -> PsiJavaModule.MODULE_INFO_FILE.equals(f.getName()));
           if (hasJavaModules && modules.size() > 1) {
-            throw new CantRunException("At the moment, IDEA cannot generate Javadoc for multiple modules" +
-                                       " with module-info.java files in them. Sorry. We're working on this.");
+            throw new CantRunException(JavaBundle.message("javadoc.gen.error.multiple.modules.with.module.info"));
           }
 
           OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);

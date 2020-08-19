@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.border.CustomLineBorder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,18 +166,22 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaLanguage.INSTANCE;
   }
 
+  @Nls
   public static String getOtherGroup() {
     return JavaBundle.message("group.javadoc.other");
   }
 
+  @Nls
   public static String getInvalidTagsGroup() {
     return JavaBundle.message("group.javadoc.invalid.tags");
   }
 
+  @Nls
   public static String getBlankLinesGroup() {
     return JavaBundle.message("group.javadoc.blank.lines");
   }
 
+  @Nls
   public static String getAlignmentGroup() {
     return JavaBundle.message("group.javadoc.alignment");
   }

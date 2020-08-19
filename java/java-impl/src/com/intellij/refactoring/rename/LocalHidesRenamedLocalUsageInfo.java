@@ -17,7 +17,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -35,9 +34,8 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
 
     PsiElement element = getElement();
     String type = element == null ? "element" : UsageViewUtil.getType(element);
-    final String descr = JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.the.renamed.1",
-                                                   RefactoringUIUtil.getDescription(myConflictingElement, true),
-                                                   type);
-    return StringUtil.capitalize(descr);
+    return JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.the.renamed.1",
+                                         RefactoringUIUtil.getDescription(myConflictingElement, true),
+                                         type);
   }
 }

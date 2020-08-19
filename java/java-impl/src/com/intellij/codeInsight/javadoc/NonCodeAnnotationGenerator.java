@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
@@ -77,7 +78,13 @@ public class NonCodeAnnotationGenerator {
     boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
     boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
 
-    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations";
+    if (hasExternal && hasInferred) {
+      return JavaBundle.message("non.code.annotations.explanation.external.and.inferred");
+    }
+    if (hasExternal) {
+      return JavaBundle.message("non.code.annotations.explanation.external");
+    }
+    return JavaBundle.message("non.code.annotations.explanation.inferred");
   }
 
   private static String getKind(PsiModifierListOwner owner) {

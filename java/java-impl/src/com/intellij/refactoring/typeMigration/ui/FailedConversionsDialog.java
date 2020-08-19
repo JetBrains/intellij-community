@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * created at Sep 12, 2001
@@ -63,12 +65,8 @@ public class FailedConversionsDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuilder buf = new StringBuilder();
-    for (String description : myConflictDescriptions) {
-      buf.append(description);
-      buf.append("<br><br>");
-    }
-    messagePane.setText(buf.toString());
+    String buf = Arrays.stream(myConflictDescriptions).map(description -> description + "<br><br>").collect(Collectors.joining());
+    messagePane.setText(buf);
     return panel;
   }
 

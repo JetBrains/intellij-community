@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -144,9 +145,9 @@ public class CreateTestDialog extends DialogWrapper {
                                     || descriptor.getLibraryPath() != null);
     }
 
-    String libraryDefaultSuperClass = descriptor.getDefaultSuperClass();
-    String lastSelectedSuperClass = getLastSelectedSuperClassName(descriptor);
-    String superClass = lastSelectedSuperClass != null ? lastSelectedSuperClass : libraryDefaultSuperClass;
+    @NlsSafe String libraryDefaultSuperClass = descriptor.getDefaultSuperClass();
+    @NlsSafe String lastSelectedSuperClass = getLastSelectedSuperClassName(descriptor);
+    @NlsSafe String superClass = lastSelectedSuperClass != null ? lastSelectedSuperClass : libraryDefaultSuperClass;
 
     if (isSuperclassSelectedManually()) {
       if (superClass != null) {
@@ -157,7 +158,7 @@ public class CreateTestDialog extends DialogWrapper {
     }
     else {
       mySuperClassField.appendItem(StringUtil.notNullize(superClass));
-      mySuperClassField.getChildComponent().setSelectedItem(StringUtil.notNullize(superClass));
+      mySuperClassField.getChildComponent().setSelectedItem(superClass == null ? "" : superClass);
     }
 
     mySelectedFramework = descriptor;
