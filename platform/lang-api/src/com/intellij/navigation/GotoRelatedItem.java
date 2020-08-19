@@ -2,6 +2,7 @@
 package com.intellij.navigation;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Separator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -24,7 +25,7 @@ public class GotoRelatedItem {
   @Nullable private final SmartPsiElementPointer<PsiElement> myElementPointer;
   public static final String DEFAULT_GROUP_NAME = "";
 
-  protected GotoRelatedItem(@Nullable PsiElement element, String group, final int mnemonic) {
+  protected GotoRelatedItem(@Nullable PsiElement element, @Separator String group, final int mnemonic) {
     myElementPointer = element == null ? null : SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     myGroup = group;
     myMnemonic = mnemonic;
