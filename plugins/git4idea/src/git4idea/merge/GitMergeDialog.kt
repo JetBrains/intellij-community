@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
@@ -135,6 +136,7 @@ class GitMergeDialog(private val project: Project,
     }
   }
 
+  @NlsSafe
   fun getCommitMessage(): String = commitMsgField.text
 
   fun getSelectedRoot(): VirtualFile = rootsByNames[rootField.item] ?: defaultRoot
@@ -151,7 +153,7 @@ class GitMergeDialog(private val project: Project,
     .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
     .forEach { option -> selectedOptions += option }
 
-  private fun collectAllBranches(): Map<GitRepository, List<String>?> {
+  private fun collectAllBranches(): Map<GitRepository, List<@NlsSafe String>?> {
     val branches = mutableMapOf<GitRepository, List<String>?>()
 
     for (root in roots) {
@@ -194,7 +196,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   @CalledInBackground
-  private fun loadUnmergedBranches(root: VirtualFile): List<String>? {
+  private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
 
     val handler = GitLineHandler(project, root, GitCommand.BRANCH).apply {
@@ -248,7 +250,7 @@ class GitMergeDialog(private val project: Project,
     model.selectedItem = matchingBranch
   }
 
-  private fun splitAndSortBranches(branches: List<String>): List<String> {
+  private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
     val local = mutableListOf<String>()
     val remote = mutableListOf<String>()
 
@@ -264,7 +266,7 @@ class GitMergeDialog(private val project: Project,
     return GitBranchUtil.sortBranchNames(local) + GitBranchUtil.sortBranchNames(remote)
   }
 
-  private fun getBranches(): List<String> {
+  private fun getBranches(): List<@NlsSafe String> {
     val repository = getSelectedRepository()
     return unmergedBranches[repository] ?: allBranches[repository] ?: emptyList()
   }
@@ -510,6 +512,8 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+
+    @NlsSafe
     private const val REMOTE_REF = "remotes/"
   }
 }
