@@ -41,14 +41,6 @@ interface VcsLogColumn<T> {
     get() = true
 
   /**
-   * Content sample to estimate the width of the column,
-   * or null if content width may vary significantly and width cannot be estimated from the sample.
-   */
-  @JvmDefault
-  val contentSample: String?
-    get() = null
-
-  /**
    * @return value for given [row] which will be displayed by [TableCellRenderer] created in [createTableCellRenderer]
    *
    * @see getStubValue
@@ -57,6 +49,9 @@ interface VcsLogColumn<T> {
 
   /**
    * @return [TableCellRenderer] which will be used to draw the column rows
+   *
+   * @see com.intellij.vcs.log.ui.table.VcsLogStringCellRenderer
+   * @see com.intellij.vcs.log.ui.table.VcsLogCellRenderer
    */
   fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer
 

@@ -306,12 +306,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
       int width = VcsLogColumnsWidthStorage.getInstance().getColumnWidth(myProperties, logColumn);
       if (width <= 0 || width > getWidth()) {
-        if (logColumn.getContentSample() != null || !myInitializedColumns.contains(logColumn)) {
-          width = getColumnWidthFromData(column);
-        }
-        else {
-          width = -1;
-        }
+        width = getColumnWidthFromData(column);
       }
 
       if (width > 0 && width != column.getPreferredWidth()) {
@@ -334,13 +329,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     VcsLogColumn<?> logColumn = VcsLogColumnModelIndices.getInstance().getColumn(index);
 
     TableCellRenderer columnRenderer = myTableColumns.get(logColumn).getCellRenderer();
-    int horizontalPadding = columnRenderer instanceof SimpleColoredComponent ?
-                            VcsLogUiUtil.getHorizontalTextPadding((SimpleColoredComponent)columnRenderer) : 0;
-    String contentSample = logColumn.getContentSample();
-    if (contentSample != null) {
-      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(contentSample) + horizontalPadding;
+    if (columnRenderer instanceof VcsLogCellRenderer) {
+      Integer width = ((VcsLogCellRenderer)columnRenderer).getPreferredWidth(this);
+      if (width != null) {
+        return width;
+      }
     }
-    if (getModel().getRowCount() <= 0 || !(getModel().getValueAt(0, logColumn) instanceof String)) {
+    if (getModel().getRowCount() <= 0 ||
+        !(getModel().getValueAt(0, logColumn) instanceof String) ||
+        myInitializedColumns.contains(logColumn)) {
       return column.getPreferredWidth();
     }
 
@@ -366,6 +363,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       maxValueWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxValueWidth);
     }
 
+    int horizontalPadding = columnRenderer instanceof SimpleColoredComponent ?
+                            VcsLogUiUtil.getHorizontalTextPadding((SimpleColoredComponent)columnRenderer) : 0;
     int width = Math.min(maxValueWidth + horizontalPadding, JBUIScale.scale(MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH));
     if (unloaded * 2 <= maxRowsToCheck) myInitializedColumns.add(logColumn);
     return width;

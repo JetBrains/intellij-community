@@ -83,13 +83,6 @@ internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBun
 }
 
 internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.message("vcs.log.column.date")) {
-  override val contentSample: String? = if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
-    null
-  }
-  else {
-    JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime())
-  }
-
   override fun getValue(model: GraphTableModel, row: Int): String {
     val properties = model.properties
     val commit = model.getCommitMetadata(row)
@@ -98,17 +91,26 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
     return if (timeStamp < 0) "" else JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp)
   }
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer()
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(
+    contentSampleProvider = {
+      if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
+        null
+      }
+      else {
+        JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime())
+      }
+    }
+  )
 
   override fun getStubValue(model: GraphTableModel): String = ""
 }
 
 internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.message("vcs.log.column.hash")) {
-  override val contentSample = "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH)
-
   override fun getValue(model: GraphTableModel, row: Int): String = model.getCommitMetadata(row).id.toShortString()
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer()
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(
+    contentSampleProvider = { "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH) }
+  )
 
   override fun getStubValue(model: GraphTableModel): String = ""
 }
