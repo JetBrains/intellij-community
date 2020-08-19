@@ -274,6 +274,12 @@ idea.fatal.error.notification=disabled
   @NotNull Path patchApplicationInfo() {
     Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
     Path targetFile = Paths.get(buildContext.paths.temp).resolve(sourceFile.fileName)
+
+    // Android Studio: don't patch ApplicationInfo.xml
+    FileUtil.createParentDirs(targetFile.toFile())
+    targetFile.text = sourceFile.text
+    return targetFile
+
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
