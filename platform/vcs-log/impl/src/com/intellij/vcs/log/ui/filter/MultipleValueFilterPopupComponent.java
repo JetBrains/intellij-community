@@ -125,7 +125,8 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  static String displayableText(@NotNull Collection<String> values, int maxLength) {
+  @Nls
+  static String displayableText(@NotNull Collection<@Nls String> values, int maxLength) {
     String text;
     if (values.size() == 1) {
       text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));

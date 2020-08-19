@@ -81,7 +81,7 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static Set<String> findHashes(@NotNull String text) {
+  private static Set<@NlsSafe String> findHashes(@NotNull @NlsSafe String text) {
     Set<String> result = new HashSet<>();
     Matcher matcher = HASH_PATTERN.matcher(text);
     while (matcher.find()) {
@@ -91,7 +91,8 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String replaceHashes(@NotNull String s, @NotNull Set<String> resolvedHashes) {
+  @NlsSafe
+  private static String replaceHashes(@NotNull @NlsSafe String s, @NotNull Set<@NlsSafe String> resolvedHashes) {
     Matcher matcher = HASH_PATTERN.matcher(s);
     StringBuffer result = new StringBuffer();
 
@@ -109,10 +110,10 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static Set<String> findHashes(@NotNull Project project,
-                                        @NotNull String message) {
+  private static Set<@NlsSafe String> findHashes(@NotNull Project project,
+                                                 @NotNull @NlsSafe String message) {
     Set<String> unresolvedHashes = new HashSet<>();
-    formatTextWithLinks(project, message, s -> {
+    formatTextWithLinks(project, message, (@NlsSafe var s) -> {
       unresolvedHashes.addAll(findHashes(s));
       return s;
     });
@@ -120,9 +121,10 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
+  @NlsSafe
   private static String formatCommitText(@NotNull Project project,
-                                         @NotNull String fullMessage,
-                                         @NotNull Set<String> resolvedHashes) {
+                                         @NotNull @NlsSafe String fullMessage,
+                                         @NotNull Set<@NlsSafe String> resolvedHashes) {
     fullMessage = VcsUtil.trimCommitMessageToSaneSize(fullMessage);
 
     Font font = getCommitMessageFont();
@@ -172,7 +174,7 @@ public final class CommitPresentationUtil {
 
   @NotNull
   private static String formatText(@NotNull Project project,
-                                   @NotNull String text,
+                                   @NotNull @Nls String text,
                                    @NotNull Font font,
                                    int style,
                                    @NotNull Convertor<? super String, String> convertor) {
@@ -327,8 +329,8 @@ public final class CommitPresentationUtil {
   private static class UnresolvedPresentation extends CommitPresentation {
     UnresolvedPresentation(@NotNull Project project,
                            @NotNull VirtualFile root,
-                           @NotNull String rawMessage,
-                           @NotNull String hashAndAuthor) {
+                           @NotNull @NlsSafe String rawMessage,
+                           @NotNull @Nls String hashAndAuthor) {
       super(project, root, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
@@ -346,16 +348,16 @@ public final class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final Project myProject;
-    @NotNull protected final String myRawMessage;
-    @NotNull protected final String myHashAndAuthor;
+    @NotNull @NlsSafe protected final String myRawMessage;
+    @NotNull @Nls protected final String myHashAndAuthor;
     @NotNull protected final VirtualFile myRoot;
-    @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
+    @NotNull private final MultiMap<@NlsSafe String, CommitId> myResolvedHashes;
 
     public CommitPresentation(@NotNull Project project,
                               @NotNull VirtualFile root,
-                              @NotNull String rawMessage,
-                              @NotNull String hashAndAuthor,
-                              @NotNull MultiMap<String, CommitId> resolvedHashes) {
+                              @NotNull @NlsSafe String rawMessage,
+                              @NotNull @Nls String hashAndAuthor,
+                              @NotNull MultiMap<@NlsSafe String, CommitId> resolvedHashes) {
       myProject = project;
       myRoot = root;
       myRawMessage = rawMessage;
@@ -364,11 +366,13 @@ public final class CommitPresentationUtil {
     }
 
     @NotNull
+    @NlsSafe
     public String getText() {
       return formatCommitText(myProject, myRawMessage, myResolvedHashes.keySet());
     }
 
     @NotNull
+    @Nls
     public String getHashAndAuthor() {
       return myHashAndAuthor;
     }
