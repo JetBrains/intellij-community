@@ -122,9 +122,12 @@ public class PushDownConflicts {
             if (unrelatedDefaults.size() > 1) {
               List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
               supers.sort(Comparator.comparing(PsiClass::getName));
+              PsiClass lastClass = supers.remove(supers.size() - 1);
               myConflicts.putValue(member, StringUtil
-                .capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
-                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false), " and ")));
+                .capitalize(JavaRefactoringBundle
+                              .message("push.down.unrelated.defaults.conflict", RefactoringUIUtil.getDescription(myClass, false),
+                                       StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false), ", "),
+                                       RefactoringUIUtil.getDescription(lastClass, false))));
               break;
             }
           }

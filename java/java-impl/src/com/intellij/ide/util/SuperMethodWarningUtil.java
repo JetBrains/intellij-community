@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -140,7 +141,6 @@ public final class SuperMethodWarningUtil {
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
-                                      @NotNull String actionString,
                                       @NotNull final PsiElementProcessor<? super PsiMethod> processor,
                                       @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -168,13 +168,18 @@ public final class SuperMethodWarningUtil {
     }
 
     final PsiMethod[] methods = {superMethods[0], method};
-    final String renameBase = actionString + " base method" + (superMethods.length > 1 ? "s" : "");
-    final String renameCurrent = actionString + " only current method";
-    String title = method.getName() +
-                   (superMethods.length > 1 ? " has super methods"
-                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements"
-                                                                                                      : " overrides") +
-                                              " method of " + SymbolPresentationUtil.getSymbolPresentableText(containingClass));
+    final String renameBase = JavaRefactoringBundle.message("refactor.base.method.choice", superMethods.length > 1 ? 0 : 1);
+    final String renameCurrent = JavaRefactoringBundle.message("refactor.only.current.method.choice");
+    String title;
+    if (superMethods.length > 1) {
+      title = JavaBundle.message("rename.super.methods.chooser.popup.title", method.getName());
+    }
+    else {
+      title = JavaBundle.message("rename.super.base.chooser.popup.title", 
+                                 method.getName(), 
+                                 containingClass.isInterface() && !aClass.isInterface() ? 0 : 1, 
+                                 SymbolPresentationUtil.getSymbolPresentableText(containingClass));
+    }
     JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)

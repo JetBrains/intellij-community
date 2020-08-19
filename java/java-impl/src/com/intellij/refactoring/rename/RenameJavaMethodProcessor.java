@@ -359,7 +359,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         renameCallback.pass(recordComponent);
         return;
       }
-      SuperMethodWarningUtil.checkSuperMethod(psiMethod, "Rename", new PsiElementProcessor<PsiMethod>() {
+      SuperMethodWarningUtil.checkSuperMethod(psiMethod, new PsiElementProcessor<PsiMethod>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {
           if (!PsiElementRenameHandler.canRename(method.getProject(), editor, method)) return false;

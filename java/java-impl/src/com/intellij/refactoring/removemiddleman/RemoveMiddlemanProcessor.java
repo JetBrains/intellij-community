@@ -16,6 +16,7 @@
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,7 +83,8 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
         final PsiMember psiMember = memberInfo.getMember();
         if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).findDeepestSuperMethods().length > 0) {
-          conflicts.putValue(psiMember, SymbolPresentationUtil.getSymbolPresentableText(psiMember) + " will be deleted. Hierarchy will be broken");
+          conflicts.putValue(psiMember, JavaRefactoringBundle
+            .message("remove.middleman.deleted.hierarchy.conflict", SymbolPresentationUtil.getSymbolPresentableText(psiMember)));
         }
       }
     }
