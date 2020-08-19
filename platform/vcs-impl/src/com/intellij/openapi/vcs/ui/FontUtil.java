@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -12,13 +13,15 @@ import java.awt.font.FontRenderContext;
 
 public final class FontUtil {
   @NotNull
-  public static String getHtmlWithFonts(@NotNull String input) {
+  @Nls
+  public static String getHtmlWithFonts(@NotNull @Nls String input) {
     Font font = UIUtil.getLabelFont();
     return getHtmlWithFonts(input, font.getStyle(), font);
   }
 
   @NotNull
-  public static String getHtmlWithFonts(@NotNull String input, int style, @NotNull Font baseFont) {
+  @Nls
+  public static String getHtmlWithFonts(@NotNull @Nls String input, int style, @NotNull Font baseFont) {
     int start = baseFont.canDisplayUpTo(input);
     if (start == -1) return input;
 

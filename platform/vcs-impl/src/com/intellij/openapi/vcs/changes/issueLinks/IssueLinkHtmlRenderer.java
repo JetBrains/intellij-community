@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,9 +30,10 @@ public final class IssueLinkHtmlRenderer {
   }
 
   @NotNull
+  @Nls
   public static String formatTextWithLinks(@NotNull Project project,
-                                           @NotNull String str,
-                                           @NotNull Convertor<? super String, String> convertor) {
+                                           @NotNull @Nls String str,
+                                           @NotNull Convertor<@Nls ? super String, @Nls String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
     String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
 
@@ -52,7 +54,8 @@ public final class IssueLinkHtmlRenderer {
   }
 
   @NotNull
-  public static String formatTextWithLinks(@NotNull Project project, @NotNull final String c) {
+  @Nls
+  public static String formatTextWithLinks(@NotNull Project project, @NotNull @Nls String c) {
     return formatTextWithLinks(project, c, Convertor.self());
   }
 }
