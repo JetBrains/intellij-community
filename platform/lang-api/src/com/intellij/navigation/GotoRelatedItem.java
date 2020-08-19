@@ -31,7 +31,7 @@ public class GotoRelatedItem {
     myMnemonic = mnemonic;
   }
   
-  public GotoRelatedItem(@NotNull PsiElement element, String group) {
+  public GotoRelatedItem(@NotNull PsiElement element, @Separator String group) {
     this(element, group, -1);
   }
 
