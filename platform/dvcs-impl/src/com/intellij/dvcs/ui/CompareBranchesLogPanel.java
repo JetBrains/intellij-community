@@ -20,6 +20,7 @@ import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.ui.components.JBLabel;
@@ -41,8 +42,8 @@ import java.util.List;
 class CompareBranchesLogPanel extends JPanel {
 
   private final CompareBranchesHelper myHelper;
-  private final String myBranchName;
-  private final String myCurrentBranchName;
+  private final @NlsSafe String myBranchName;
+  private final @NlsSafe String myCurrentBranchName;
   private final CommitCompareInfo myCompareInfo;
   private final Repository myInitialRepo;
 

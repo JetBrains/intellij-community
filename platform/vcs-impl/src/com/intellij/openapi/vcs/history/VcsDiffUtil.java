@@ -73,8 +73,9 @@ public final class VcsDiffUtil {
     return String.format("Difference between %s and %s versions in %s", revNumTitle1, revNumTitle2, filePath.getName());
   }
 
+  @Nls
   @NotNull
-  public static String getRevisionTitle(@NotNull String revision, boolean localMark) {
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision, boolean localMark) {
     return revision +
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
   }
