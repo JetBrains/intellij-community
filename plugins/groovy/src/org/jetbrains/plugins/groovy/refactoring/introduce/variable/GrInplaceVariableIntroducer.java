@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -59,7 +60,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   }
 
   @Nullable
-  private static String getAdvertisementText() {
+  private static @NlsContexts.PopupAdvertisement String getAdvertisementText() {
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
     if  (shortcut != null) {
       return "Press " + KeymapUtil.getShortcutText(shortcut) + " to change type";
