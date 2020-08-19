@@ -101,7 +101,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
       final PsiElement element = matchResult.getMatch();
-      if (holder.getFile() != element.getContainingFile()) return false;
       final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
       final Configuration mainConfiguration = getMainConfiguration(configuration);
       final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
