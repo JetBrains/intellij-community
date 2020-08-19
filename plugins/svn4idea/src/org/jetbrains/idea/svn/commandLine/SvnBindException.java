@@ -15,7 +15,7 @@ import org.jetbrains.idea.svn.api.ErrorCode;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.ObjectUtils.coalesce;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static org.jetbrains.idea.svn.api.ErrorCategory.categoryCodeOf;
 
 public class SvnBindException extends VcsException {
@@ -39,7 +39,7 @@ public class SvnBindException extends VcsException {
   }
 
   public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
-    super(coalesce(message, cause.getMessage(), cause.getLocalizedMessage()), cause);
+    super(chooseNotNull(message, VcsException.getMessage(cause)), cause);
 
     init(message);
   }

@@ -91,7 +91,7 @@ public class VcsException extends Exception {
 
   @NlsSafe
   @Nullable
-  private static String getMessage(@Nullable Throwable throwable) {
+  public static String getMessage(@Nullable Throwable throwable) {
     if (throwable == null) return null;
     String message = throwable.getMessage();
     if (message != null) return message;
