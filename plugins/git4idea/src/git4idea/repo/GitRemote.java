@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +89,7 @@ public final class GitRemote implements Comparable<GitRemote> {
   }
 
   @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
