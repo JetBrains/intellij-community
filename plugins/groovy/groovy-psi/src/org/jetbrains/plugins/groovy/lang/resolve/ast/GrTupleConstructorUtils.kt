@@ -30,6 +30,10 @@ interface TupleConstructorAttributes {
     const val POST = "post"
     @NlsSafe
     const val CALL_SUPER = "callSuper"
+    @NlsSafe
+    const val FORCE = "force"
+    @NlsSafe
+    const val DEFAULTS = "defaults"
   }
 }
 
