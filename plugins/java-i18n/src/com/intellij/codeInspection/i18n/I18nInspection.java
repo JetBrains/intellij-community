@@ -914,7 +914,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (ignoreForJUnitAsserts && isArgOfJUnitAssertion(usage)) {
       return true;
     }
-    if (ignoreForClassReferences && value != null && isClassRef(usage, value)) {
+    if (ignoreForClassReferences && value != null && isClassRef(project, usage, value)) {
       return true;
     }
     if (ignoreForPropertyKeyReferences && value != null && !PropertiesImplUtil.findPropertiesByKey(project, value).isEmpty()) {
@@ -952,12 +952,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  private static boolean isClassRef(final UExpression expression, String value) {
+  private static boolean isClassRef(@NotNull Project project,
+                                    final UExpression expression,
+                                    String value) {
     if (StringUtil.startsWithChar(value, '#')) {
       value = value.substring(1); // A favor for JetBrains team to catch common Logger usage practice.
     }
 
-    Project project = Objects.requireNonNull(expression.getSourcePsi()).getProject();
     return JavaPsiFacade.getInstance(project).findClass(value, GlobalSearchScope.allScope(project)) != null ||
            ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), value) != null;
   }
