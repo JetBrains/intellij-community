@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.VcsRootError.Type.EXTRA_MAPPING
 import com.intellij.openapi.vcs.VcsRootErrorImpl
@@ -175,7 +176,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     vcsManager.setDirectoryMapping(projectPath, vcs.name)
     notifier.rescanAndNotifyIfNeeded()
 
-    val rootError = VcsRootErrorImpl(EXTRA_MAPPING, projectPath, vcs.keyInstanceMethod.name)
+    val rootError = VcsRootErrorImpl(EXTRA_MAPPING, VcsDirectoryMapping(projectPath, vcs.keyInstanceMethod.name))
     assertErrorNotification("Invalid VCS root mapping", notifier.getInvalidRootDescriptionItem(rootError, vcs.name))
   }
 

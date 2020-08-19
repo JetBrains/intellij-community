@@ -546,6 +546,12 @@ public class VcsUtil {
   public static List<VcsDirectoryMapping> addMapping(@NotNull List<? extends VcsDirectoryMapping> existingMappings,
                                                      @NotNull @NonNls String path,
                                                      @NotNull @NonNls String vcs) {
+    return addMapping(existingMappings, new VcsDirectoryMapping(path, vcs));
+  }
+
+  @NotNull
+  public static List<VcsDirectoryMapping> addMapping(@NotNull List<? extends VcsDirectoryMapping> existingMappings,
+                                                     @NotNull VcsDirectoryMapping newMapping) {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
     for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
       VcsDirectoryMapping mapping = iterator.next();
@@ -553,17 +559,17 @@ public class VcsUtil {
         LOG.debug("Removing <Project> -> <None> mapping");
         iterator.remove();
       }
-      else if (FileUtil.pathsEqual(mapping.getDirectory(), path)) {
+      else if (FileUtil.pathsEqual(mapping.getDirectory(), newMapping.getDirectory())) {
         if (!StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
-          LOG.warn("Substituting existing mapping [" + path + "] -> [" + mapping.getVcs() + "] with [" + vcs + "]");
+          LOG.warn("Substituting existing mapping [" + mapping.getDirectory() + "] -> [" + mapping.getVcs() + "] with [" + mapping.getVcs() + "]");
         }
         else {
-          LOG.debug("Removing [" + path + "] -> <None> mapping");
+          LOG.debug("Removing [" + mapping.getDirectory() + "] -> <None> mapping");
         }
         iterator.remove();
       }
     }
-    mappings.add(new VcsDirectoryMapping(path, vcs));
+    mappings.add(newMapping);
     return mappings;
   }
 
