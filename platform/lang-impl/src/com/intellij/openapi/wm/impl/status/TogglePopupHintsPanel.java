@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -38,7 +39,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   public static final String ID = "InspectionProfile";
 
   private Icon myCurrentIcon;
-  private String myToolTipText;
+  private @NlsContexts.Tooltip String myToolTipText;
 
   public TogglePopupHintsPanel(@NotNull Project project) {
     super(project);

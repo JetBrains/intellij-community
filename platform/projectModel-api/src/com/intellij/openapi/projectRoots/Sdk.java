@@ -38,7 +38,7 @@ public interface Sdk extends UserDataHolder {
   @NlsSafe String getName();
 
   @Nullable
-  String getVersionString();
+  @NlsSafe String getVersionString();
 
   @Nullable
   String getHomePath();

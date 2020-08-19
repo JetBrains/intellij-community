@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -225,7 +226,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private final String myConflictDescription;
+      private final @NlsContexts.Tooltip String myConflictDescription;
 
       DescriptionOnlyUsage(@NotNull String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)

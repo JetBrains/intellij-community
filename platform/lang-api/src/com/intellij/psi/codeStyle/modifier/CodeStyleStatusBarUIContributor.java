@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +31,14 @@ public interface CodeStyleStatusBarUIContributor {
    * @return A title used for a group of actions opened from the status bar or {@code null} if no title is shown.
    */
   @Nullable
-  default String getActionGroupTitle() {
+  default @NlsContexts.PopupTitle String getActionGroupTitle() {
     return null;
   }
 
   /**
    * @return A status bar tooltip or null for default tooltip.
    */
-  @Nullable
+  @Nullable @NlsContexts.Tooltip
   String getTooltip();
 
   /**
@@ -87,7 +88,7 @@ public interface CodeStyleStatusBarUIContributor {
    * @return A status text to be shown in code style widget for the given {@code PsiFile}
    */
   @NotNull
-  default String getStatusText(@NotNull PsiFile psiFile) {
+  default @NlsContexts.StatusBarText String getStatusText(@NotNull PsiFile psiFile) {
     return "*";
   }
 }

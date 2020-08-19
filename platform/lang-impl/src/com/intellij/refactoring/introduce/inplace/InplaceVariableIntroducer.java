@@ -46,7 +46,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
                                    final Project project,
-                                   String title, E[] occurrences,
+                                   @NlsContexts.Command String title, E[] occurrences,
                                    @Nullable E expr) {
     super(editor, elementToRename, project);
     myTitle = title;
@@ -135,7 +135,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  protected @NlsContexts.Command String getCommandName() {
+  protected String getCommandName() {
     return myTitle;
   }
 

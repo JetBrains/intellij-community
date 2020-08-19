@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +52,13 @@ public final class AnalyzeStacktraceUtil {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle, String text) {
+  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final @NlsContexts.TabTitle String tabTitle, String text) {
     addConsole(project, consoleFactory, tabTitle, text, null);
   }
 
   public static RunContentDescriptor addConsole(Project project,
                                                 @Nullable ConsoleFactory consoleFactory,
-                                                final String tabTitle,
+                                                final @NlsContexts.TabTitle String tabTitle,
                                                 String text,
                                                 @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);

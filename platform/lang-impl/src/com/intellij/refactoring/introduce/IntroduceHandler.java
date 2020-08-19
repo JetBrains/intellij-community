@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -250,7 +247,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                                 @NotNull Project project);
 
   @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @NlsContexts.DialogTitle String getRefactoringName();
 
   @Nullable
   protected abstract String getHelpID();
@@ -260,7 +257,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * It will have this title.
    */
   @NotNull
-  protected abstract String getChooseScopeTitle();
+  protected abstract @NlsContexts.PopupTitle String getChooseScopeTitle();
 
   /**
    * If {@link IntroduceHandler#collectTargetScopes}() returns several possible scopes, the Choose Scope Popup will be shown.
@@ -282,12 +279,12 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                                                    @NotNull Project project);
 
   @NotNull
-  protected String getEmptyScopeErrorMessage() {
+  protected @NlsContexts.DialogMessage String getEmptyScopeErrorMessage() {
     return getRefactoringName() + " is not available in the current scope";
   }
 
 
-  protected void showErrorHint(@NotNull String errorMessage, @NotNull Editor editor, @NotNull Project project) {
+  protected void showErrorHint(@NotNull @NlsContexts.DialogMessage String errorMessage, @NotNull Editor editor, @NotNull Project project) {
     CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringName(), getHelpID());
   }
 

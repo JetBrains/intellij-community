@@ -469,7 +469,7 @@ public abstract class InplaceRefactoring {
     stopIntroduce(editor, myProject, getCommandName());
   }
 
-  public static void stopIntroduce(Editor editor, Project project, final String commandName) {
+  public static void stopIntroduce(Editor editor, Project project, final @NlsContexts.Command String commandName) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
       final Runnable runnable = () -> templateState.gotoEnd(true);
@@ -666,7 +666,7 @@ public abstract class InplaceRefactoring {
    *
    * @return command name
    */
-  protected abstract String getCommandName();
+  protected abstract @NlsContexts.Command String getCommandName();
 
   public void finish(boolean success) {
     if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {

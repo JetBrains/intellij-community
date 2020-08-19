@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
@@ -122,6 +123,7 @@ interface ImmediateConfigurable {
     val id: String,
     private val loadFromSettings: () -> Boolean,
     private val onUserChanged: (Boolean) -> Unit,
+    @NlsContexts.DetailedDescription
     val extendedDescription: String? = null
   ) {
     var value: Boolean

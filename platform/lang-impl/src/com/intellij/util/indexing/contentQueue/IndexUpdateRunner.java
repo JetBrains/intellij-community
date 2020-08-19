@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -391,7 +392,7 @@ public final class IndexUpdateRunner {
   }
 
   @NotNull
-  public static String getPresentableLocationBeingIndexed(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NlsSafe String getPresentableLocationBeingIndexed(@NotNull Project project, @NotNull VirtualFile file) {
     VirtualFile actualFile = file;
     if (actualFile.getFileSystem() instanceof ArchiveFileSystem) {
       actualFile = VfsUtil.getLocalFile(actualFile);

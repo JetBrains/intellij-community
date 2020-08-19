@@ -4,6 +4,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
@@ -43,13 +44,13 @@ public class RegistryValue {
   }
 
   @NotNull
-  public String getKey() {
+  public @NlsSafe String getKey() {
     return myKey;
   }
 
 
   @NotNull
-  public String asString() {
+  public @NlsSafe String asString() {
     final String value = get(myKey, null, true);
     assert value != null : myKey;
     return value;
@@ -105,7 +106,7 @@ public class RegistryValue {
   }
 
   @Nullable
-  public String getSelectedOption() {
+  public @NlsSafe String getSelectedOption() {
     for (String option : getOptions(asString())) {
       if (option.endsWith("*")) {
         return StringUtil.trimEnd(option, "*");

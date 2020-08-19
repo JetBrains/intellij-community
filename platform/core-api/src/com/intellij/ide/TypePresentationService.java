@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,11 +30,11 @@ public abstract class TypePresentationService {
   public abstract String getTypePresentableName(Class type);
 
   @Nullable
-  public abstract String getTypeName(@NotNull Object o);
+  public abstract @NlsSafe String getTypeName(@NotNull Object o);
 
   @ApiStatus.Internal
   @Nullable
-  public abstract String getObjectName(@NotNull Object o);
+  public abstract @NlsSafe String getObjectName(@NotNull Object o);
 
   @NotNull
   public static String getDefaultTypeName(@NotNull Class aClass) {

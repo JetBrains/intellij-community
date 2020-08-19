@@ -763,7 +763,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @Nullable
-  protected String getClearValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText String getClearValueText(@Nullable Object target) {
     return target == null ? getNullValueText(null) : null;
   }
 

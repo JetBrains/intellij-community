@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -21,6 +22,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -122,16 +124,16 @@ public class RenameHandlerRegistry {
     });
   }
 
-  public static String getHandlerTitle(RenameHandler renameHandler) {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getHandlerTitle(RenameHandler renameHandler) {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
   }
 
   private static class HandlersChooser extends DialogWrapper {
-    private final String[] myRenamers;
+    private final @NlsContexts.RadioButton String[] myRenamers;
     private String mySelection;
     private final JRadioButton[] myRButtons;
 
-    protected HandlersChooser(Project project, String [] renamers) {
+    protected HandlersChooser(Project project, @NlsContexts.RadioButton String [] renamers) {
       super(project);
       myRenamers = renamers;
       myRButtons = new JRadioButton[myRenamers.length];
@@ -150,7 +152,7 @@ public class RenameHandlerRegistry {
       final ButtonGroup bg = new ButtonGroup();
       boolean selected = true;
       int rIdx = 0;
-      for (final String renamer : myRenamers) {
+      for (final @NlsContexts.RadioButton String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
         final ItemListener listener = new ItemListener() {

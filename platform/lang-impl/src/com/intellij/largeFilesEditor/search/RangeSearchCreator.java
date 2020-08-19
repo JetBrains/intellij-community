@@ -3,6 +3,7 @@ package com.intellij.largeFilesEditor.search;
 
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,5 +12,5 @@ public interface RangeSearchCreator {
   @NotNull
   RangeSearch createContent(Project project,
                             VirtualFile virtualFile,
-                            String titleName);
+                            @NlsContexts.TabTitle String titleName);
 }
