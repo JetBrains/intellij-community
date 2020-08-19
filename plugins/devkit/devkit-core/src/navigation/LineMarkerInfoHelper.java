@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import icons.DevkitIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -61,18 +62,23 @@ final class LineMarkerInfoHelper {
   @NotNull
   static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
                                                                              @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.extension"),
+                                      EXTENSION_NAMER);
   }
 
   @NotNull
   static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
                                                                                   @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
+                                      EXTENSION_POINT_NAMER);
   }
 
   @NotNull
   private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                                  @NotNull PsiElement element, String popup,
+                                                                                  @NotNull PsiElement element,
+                                                                                  @Nls(capitalization = Nls.Capitalization.Title) String popup,
                                                                                   NullableFunction<PointableCandidate, String> namer) {
     return NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
