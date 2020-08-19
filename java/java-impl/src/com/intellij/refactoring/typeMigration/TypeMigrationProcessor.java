@@ -37,14 +37,14 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
   private PsiElement[] myRoots;
-  private final Function<PsiElement, PsiType> myRootTypes;
+  private final Function<? super PsiElement, ? extends PsiType> myRootTypes;
   private final boolean myAllowDependentRoots;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project,
                                 final PsiElement[] roots,
-                                final Function<PsiElement, PsiType> rootTypes,
+                                final Function<? super PsiElement, ? extends PsiType> rootTypes,
                                 final TypeMigrationRules rules,
                                 final boolean allowDependentRoots) {
     super(project);
@@ -77,7 +77,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final Editor editor,
                                                   final TypeMigrationRules rules,
                                                   final PsiElement[] roots,
-                                                  final Function<PsiElement, PsiType> migrationTypeFunction,
+                                                  final Function<? super PsiElement, ? extends PsiType> migrationTypeFunction,
                                                   final boolean optimizeImports,
                                                   boolean allowDependentRoots) {
     final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, PsiElement::getContainingFile);

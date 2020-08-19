@@ -48,7 +48,7 @@ open class ITNReporter : ErrorReportSubmitter() {
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
                       parentComponent: Component,
-                      consumer: Consumer<SubmittedReportInfo>): Boolean {
+                      consumer: Consumer<in SubmittedReportInfo>): Boolean {
     val event = events[0]
 
     val plugin = IdeErrorsDialog.getPlugin(event)
@@ -66,7 +66,7 @@ open class ITNReporter : ErrorReportSubmitter() {
 
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
 
-    return submit(errorBean, consumer, parentComponent, project)
+    return submit(project, errorBean, parentComponent, consumer)
   }
 
   /**
@@ -75,23 +75,27 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?): Boolean {
+private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: Consumer<in SubmittedReportInfo>): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
     credentials = askJBAccountCredentials(parentComponent, project)
     if (credentials == null) return false
   }
-  submit(credentials, errorBean, callback, parentComponent, project)
+  submit(project, credentials, errorBean, parentComponent, callback)
   return true
 }
 
-private fun submit(credentials: Credentials?, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
+private fun submit(project: Project?,
+                   credentials: Credentials?,
+                   errorBean: ErrorBean,
+                   parentComponent: Component,
+                   callback: Consumer<in SubmittedReportInfo>) {
   ITNProxy.sendError(project, credentials?.userName, credentials?.getPasswordAsString(), errorBean,
-                     { threadId -> onSuccess(threadId, errorBean.event.data, callback, project) },
-                     { e -> onError(e, errorBean, callback, parentComponent, project) })
+                     { threadId -> onSuccess(project, threadId, errorBean.event.data, callback) },
+                     { e -> onError(project, e, errorBean, parentComponent, callback) })
 }
 
-private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<SubmittedReportInfo>, project: Project?) {
+private fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callback: Consumer<in SubmittedReportInfo>) {
   previousReport = if (eventData is AbstractMessage) eventData.date.time to threadId else null
 
   val linkText = threadId.toString()
@@ -109,7 +113,11 @@ private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<Submitt
   }
 }
 
-private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
+private fun onError(project: Project?,
+                    e: Exception,
+                    errorBean: ErrorBean,
+                    parentComponent: Component,
+                    callback: Consumer<in SubmittedReportInfo>) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
@@ -123,7 +131,7 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
     else if (e is NoSuchEAPUserException) {
       val credentials = askJBAccountCredentials(parentComponent, project, true)
       if (credentials != null) {
-        submit(credentials, errorBean, callback, parentComponent, project)
+        submit(project, credentials, errorBean, parentComponent, callback)
       }
       else {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
@@ -132,7 +140,7 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
     else {
       val message = DiagnosticBundle.message("error.report.posting.failed", e.message)
       val result = MessageDialogBuilder.yesNo(ReportMessages.getErrorReport(), message).ask(project)
-      if (!result || !submit(errorBean, callback, parentComponent, project)) {
+      if (!result || !submit(project, errorBean, parentComponent, callback)) {
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
     }

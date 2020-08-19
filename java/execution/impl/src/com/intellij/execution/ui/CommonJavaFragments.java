@@ -93,7 +93,7 @@ public final class CommonJavaFragments {
   }
 
   public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
-    @Nullable ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
+    @Nullable ModuleClasspathCombo.Item option, Predicate<? super S> getter, BiConsumer<? super S, ? super Boolean> setter) {
     ModuleClasspathCombo comboBox = option == null ? new ModuleClasspathCombo() : new ModuleClasspathCombo(option);
     String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
     comboBox.getAccessibleContext().setAccessibleName(name);

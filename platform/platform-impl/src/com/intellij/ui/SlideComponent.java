@@ -41,7 +41,7 @@ class SlideComponent extends JComponent {
   private final boolean myVertical;
   private final String myTitle;
 
-  private final List<Consumer<Integer>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Consumer<? super Integer>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private LightweightHint myTooltipHint;
   private final JLabel myLabel = new JLabel();
   private Unit myUnit = Unit.LEVEL;
@@ -172,12 +172,12 @@ class SlideComponent extends JComponent {
     fireValueChanged();
   }
 
-  public void addListener(Consumer<Integer> listener) {
+  public void addListener(Consumer<? super Integer> listener) {
     myListeners.add(listener);
   }
 
   private void fireValueChanged() {
-    for (Consumer<Integer> listener : myListeners) {
+    for (Consumer<? super Integer> listener : myListeners) {
       listener.consume(myValue);
     }
   }

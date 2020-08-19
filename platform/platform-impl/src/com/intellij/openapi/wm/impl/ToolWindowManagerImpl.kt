@@ -708,7 +708,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override val lastActiveToolWindowId: String?
     get() = getLastActiveToolWindow(condition = null)?.id
 
-  override fun getLastActiveToolWindow(condition: Predicate<JComponent>?): ToolWindow? {
+  override fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow? {
     EDT.assertIsEdt()
     for (i in 0 until activeStack.persistentSize) {
       val toolWindow = activeStack.peekPersistent(i).toolWindow

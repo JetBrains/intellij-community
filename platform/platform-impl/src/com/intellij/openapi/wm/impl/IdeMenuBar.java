@@ -280,7 +280,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
-  private static void doWithLazyActionManager(@NotNull Consumer<ActionManager> whatToDo) {
+  private static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
     ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (created == null) {
       NonUrgentExecutor.getInstance().execute(() -> {

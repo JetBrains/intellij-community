@@ -538,15 +538,15 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, T... expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
     assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, T... expected) {
     assertOrderedElementsAreEqual(equalsPredicate(), actual, expected);
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<U, T> predicate, Collection<U> actual, T... expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(BiPredicate<? super U, ? super T> predicate, Collection<? extends U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
     assertEquals(s, expected.length, actual.size());
 
@@ -563,7 +563,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
   }
 
-  protected static <T> void assertDoNotContain(java.util.List<T> actual, T... expected) {
+  protected static <T> void assertDoNotContain(List<? extends T> actual, T... expected) {
     java.util.List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());

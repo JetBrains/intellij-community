@@ -582,7 +582,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  static void visitAnnotatedElements(String annotationFqn, Project project, BiConsumer<PsiModifierListOwner, PsiAnnotation> consumer) {
+  static void visitAnnotatedElements(String annotationFqn, Project project, BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
     JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project))
       .forEach(annotation -> {
         PsiElement parent = annotation.getContext();

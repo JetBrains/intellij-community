@@ -81,7 +81,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<? super SdkTypeId> sdkFilter) {
    return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

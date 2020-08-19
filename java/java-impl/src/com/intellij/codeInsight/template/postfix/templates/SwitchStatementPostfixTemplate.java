@@ -128,7 +128,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     };
   }
 
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
+  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {

@@ -262,11 +262,11 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     myListeners.add(listener);
   }
 
-  private static void sendSuccessEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<Result> resultConsumer) {
+  private static void sendSuccessEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<? super Result> resultConsumer) {
     resultConsumer.accept(new MyResult(context, Collections.emptyMap(), false, false));
   }
 
-  private static void sendAbortedEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<Result> resultConsumer) {
+  private static void sendAbortedEmptyResult(@NotNull ProjectTaskContext context, @NotNull Consumer<? super Result> resultConsumer) {
     resultConsumer.accept(new MyResult(context, Collections.emptyMap(), true, false));
   }
 

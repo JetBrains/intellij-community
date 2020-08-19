@@ -444,7 +444,7 @@ class VisiblePackBuilderTest {
 
     override fun getRefIndex(ref: VcsRef): Int = storagesByRoot.getValue(ref.root).refsReversed.getValue(ref)
 
-    override fun iterateCommits(consumer: Predicate<CommitId>) {
+    override fun iterateCommits(consumer: Predicate<in CommitId>) {
       storagesByRoot.entries.forEach { (root, storage) ->
         storage.hashes.values.forEach {
           if (!consumer.test(CommitId(it, root))) {

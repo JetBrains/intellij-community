@@ -142,7 +142,7 @@ public interface DocumentationProvider {
    * documentation view to work correctly.
    */
   @ApiStatus.Experimental
-  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {}
 
   /**
    * This method is needed to support rendered representation of documentation comments in editor. It should return doc comment located at

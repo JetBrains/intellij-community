@@ -153,7 +153,7 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queueStronglyReferencedValues(@NotNull Deque<BackLink> queue,
+  private static void queueStronglyReferencedValues(@NotNull Deque<? super BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Predicate<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
@@ -201,7 +201,7 @@ public final class DebugReflectionUtil {
   private static void queue(Object value,
                             Field field,
                             @NotNull BackLink backLink,
-                            @NotNull Deque<BackLink> queue,
+                            @NotNull Deque<? super BackLink> queue,
                             @NotNull Predicate<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) {
       return;

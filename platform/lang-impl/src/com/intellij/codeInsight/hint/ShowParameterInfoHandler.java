@@ -78,7 +78,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                             int lbraceOffset, PsiElement highlightedElement,
                             boolean requestFocus, boolean singleParameterHint,
                             @Nullable @NlsContexts.ProgressTitle String progressTitle,
-                            Consumer<IndexNotReadyException> indexNotReadyExceptionConsumer) {
+                            Consumer<? super IndexNotReadyException> indexNotReadyExceptionConsumer) {
     final DumbService dumbService = DumbService.getInstance(project);
 
     final int initialOffset = editor.getCaretModel().getOffset();

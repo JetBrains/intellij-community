@@ -82,7 +82,7 @@ final class ItemsContainer {
     myItems.clear();
   }
 
-  void remove(@Nullable Predicate<TBItem> filter) {
+  void remove(@Nullable Predicate<? super TBItem> filter) {
     if (filter == null) {
       releaseAll();
       return;

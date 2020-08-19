@@ -132,7 +132,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
+  public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
     checkDisposed();
     try {
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
@@ -251,7 +251,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
+    public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
     }
 
     @Override

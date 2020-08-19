@@ -155,7 +155,7 @@ abstract class ToolWindowManager {
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 
-  abstract fun getLastActiveToolWindow(condition: Predicate<JComponent>?): ToolWindow?
+  abstract fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow?
 }
 
 data class ToolWindowBalloonShowOptions(val toolWindowId: String,

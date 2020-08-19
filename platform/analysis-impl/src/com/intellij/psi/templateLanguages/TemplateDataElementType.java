@@ -301,7 +301,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   public static @NotNull ASTNode parseWithOuterAndRemoveRangesApplied(@NotNull ASTNode chameleon,
                                                                       @NotNull Language language,
-                                                                      @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
+                                                                      @NotNull Function<? super @NotNull CharSequence, ? extends @NotNull ASTNode> parser) {
     RangeCollectorImpl collector = chameleon.getUserData(RangeCollectorImpl.OUTER_ELEMENT_RANGES);
     return collector != null ? collector.applyRangeCollectorAndExpandChameleon(chameleon, language, parser)
                              : parser.apply(chameleon.getChars());

@@ -74,7 +74,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
-                        @NotNull Consumer<SubmittedReportInfo> consumer) {
+                        @NotNull Consumer<? super SubmittedReportInfo> consumer) {
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 
@@ -83,7 +83,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<? super SubmittedReportInfo> consumer) {
     submitAsync(events, info, parent, consumer);
     return true;
   }
@@ -92,7 +92,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
-  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<? super SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parent));
   }
 

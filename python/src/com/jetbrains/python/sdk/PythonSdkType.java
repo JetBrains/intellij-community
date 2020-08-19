@@ -183,7 +183,7 @@ public final class PythonSdkType extends SdkType {
   @Override
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull final JComponent parentComponent,
-                                 @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+                                 final @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
       if (sdk != null) {

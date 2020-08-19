@@ -23,7 +23,7 @@ public enum LoadingState {
 
   final String displayName;
 
-  private static BiConsumer<String, Throwable> errorHandler;
+  private static BiConsumer<? super String, ? super Throwable> errorHandler;
   private static boolean CHECK_LOADING_PHASE;
   private static Set<Throwable> stackTraces;
 
@@ -32,12 +32,12 @@ public enum LoadingState {
   }
 
   @Nullable
-  static BiConsumer<String, Throwable> getErrorHandler() {
+  static BiConsumer<? super String, ? super Throwable> getErrorHandler() {
     return errorHandler;
   }
 
   @ApiStatus.Internal
-  public static void setErrorHandler(@NotNull BiConsumer<String, Throwable> errorHandler) {
+  public static void setErrorHandler(@NotNull BiConsumer<? super String, ? super Throwable> errorHandler) {
     LoadingState.errorHandler = errorHandler;
   }
 
@@ -88,7 +88,7 @@ public enum LoadingState {
       return;
     }
 
-    BiConsumer<String, Throwable> errorHandler = getErrorHandler();
+    BiConsumer<? super String, ? super Throwable> errorHandler = getErrorHandler();
     if (errorHandler != null) {
       errorHandler.accept("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
                           "Current violators count: " + stackTraces.size() + "\n\n",

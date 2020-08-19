@@ -374,7 +374,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
   }
 
   private void executeFindElementForUpdatingParameterInfo(UpdateParameterInfoContext context,
-                                                          @NotNull Consumer<PsiElement> elementForUpdatingConsumer) {
+                                                          @NotNull Consumer<? super PsiElement> elementForUpdatingConsumer) {
     runTask(myProject,
             ReadAction
               .nonBlocking(() -> {

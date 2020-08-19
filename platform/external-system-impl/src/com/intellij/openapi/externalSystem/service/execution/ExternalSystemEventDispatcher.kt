@@ -61,7 +61,7 @@ class ExternalSystemEventDispatcher(taskId: ExternalSystemTaskId,
     outputMessageDispatcher.onEvent(buildId, event)
   }
 
-  override fun invokeOnCompletion(consumer: Consumer<Throwable?>) {
+  override fun invokeOnCompletion(consumer: Consumer<in Throwable?>) {
     outputMessageDispatcher.invokeOnCompletion(consumer)
   }
 
@@ -111,12 +111,12 @@ interface ExternalSystemOutputDispatcherFactory {
 
 interface ExternalSystemOutputMessageDispatcher : Closeable, Appendable, BuildProgressListener {
   var stdOut: Boolean
-  fun invokeOnCompletion(handler: Consumer<Throwable?>)
+  fun invokeOnCompletion(handler: Consumer<in Throwable?>)
 }
 
 @ApiStatus.Experimental
 abstract class AbstractOutputMessageDispatcher(private val buildProgressListener: BuildProgressListener) : ExternalSystemOutputMessageDispatcher {
-  private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<Throwable?>>()
+  private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<in Throwable?>>()
   @Volatile
   private var isClosed: Boolean = false
 
@@ -126,7 +126,7 @@ abstract class AbstractOutputMessageDispatcher(private val buildProgressListener
       else -> buildProgressListener.onEvent(buildId, event)
     }
 
-  override fun invokeOnCompletion(handler: Consumer<Throwable?>) {
+  override fun invokeOnCompletion(handler: Consumer<in Throwable?>) {
     if (isClosed) {
       LOG.warn("Attempt to add completion handler for closed output dispatcher, the handler will be ignored",
                if (LOG.isDebugEnabled) Throwable() else null)

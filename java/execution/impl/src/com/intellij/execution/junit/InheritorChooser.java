@@ -52,7 +52,7 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass,
-                                          final Condition<PsiClass> acceptAbstractCondition) {
+                                          final Condition<? super PsiClass> acceptAbstractCondition) {
     if (containingClass != null && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
       if (location instanceof MethodLocation) {

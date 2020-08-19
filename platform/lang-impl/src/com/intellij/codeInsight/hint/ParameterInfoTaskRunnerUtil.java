@@ -45,7 +45,7 @@ final class ParameterInfoTaskRunnerUtil {
    */
   static <T> void runTask(Project project,
                           NonBlockingReadAction<T> nonBlockingReadAction,
-                          Consumer<T> continuationConsumer,
+                          Consumer<? super T> continuationConsumer,
                           @Nullable @NlsContexts.ProgressTitle String progressTitle,
                           Editor editor) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();

@@ -15,7 +15,7 @@ public final class Processors {
   }
 
   @NotNull
-  public static <T, S> Processor<S> map(@NotNull Processor<T> processor,
+  public static <T, S> Processor<S> map(@NotNull Processor<? super T> processor,
                                         @NotNull Function<? super S, ? extends T> map) {
     return o -> processor.process(map.fun(o));
   }

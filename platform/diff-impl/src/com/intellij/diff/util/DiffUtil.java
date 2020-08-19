@@ -1771,7 +1771,7 @@ public final class DiffUtil {
       return size;
     }
 
-    private int getMaximumHeight(@NotNull Function<JComponent, Dimension> getter) {
+    private int getMaximumHeight(@NotNull Function<? super JComponent, ? extends Dimension> getter) {
       int height = 0;
       for (JComponent component : myComponents) {
         if (component != null) {

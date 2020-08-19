@@ -189,7 +189,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    *
    * @param condition the condition to check the nodes.
    */
-  public boolean canHaveChildrenMatching(Condition<PsiFile> condition) {
+  public boolean canHaveChildrenMatching(Condition<? super PsiFile> condition) {
     return true;
   }
 

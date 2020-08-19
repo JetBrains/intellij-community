@@ -31,7 +31,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
   protected BasicRendererProperties myProperties;
   private final String myDefaultName;
-  private Function<Type, CompletableFuture<Boolean>> myIsApplicableChecker = null;
+  private Function<? super Type, ? extends CompletableFuture<Boolean>> myIsApplicableChecker = null;
 
   protected NodeRendererImpl() {
     this(DEFAULT_NAME, false);
@@ -86,7 +86,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
   }
 
   @ApiStatus.Internal
-  public void setIsApplicableChecker(@NotNull Function<Type, CompletableFuture<Boolean>> isApplicableAsync) {
+  public void setIsApplicableChecker(@NotNull Function<? super Type, ? extends CompletableFuture<Boolean>> isApplicableAsync) {
     myIsApplicableChecker = isApplicableAsync;
   }
 

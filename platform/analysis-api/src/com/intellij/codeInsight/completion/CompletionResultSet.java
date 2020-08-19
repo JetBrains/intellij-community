@@ -139,14 +139,14 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    runRemainingContributors(parameters, (Consumer)consumer, true);
+    runRemainingContributors(parameters, consumer, true);
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop) {
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer, final boolean stop) {
     runRemainingContributors(parameters, consumer, stop, null);
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop,
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer, final boolean stop,
                                        CompletionSorter customSorter) {
     if (stop) {
       stopHere();

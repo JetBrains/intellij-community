@@ -129,7 +129,7 @@ final class ActionUpdater {
     });
   }
 
-  private static <T> T callAction(AnAction action, String operation, Supplier<T> call) {
+  private static <T> T callAction(AnAction action, String operation, Supplier<? extends T> call) {
     if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
       return call.get();
     }

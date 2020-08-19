@@ -25,10 +25,8 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +59,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    */
   @Deprecated
   public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
-                                                @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
+                                                @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
     myBuildDescriptor.withProcessHandler(processHandler, attachedConsoleConsumer);
     return this;
   }
@@ -88,7 +86,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
-  public StartBuildEventImpl withContentDescriptorSupplier(Supplier<RunContentDescriptor> contentDescriptorSupplier) {
+  public StartBuildEventImpl withContentDescriptorSupplier(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
     myBuildDescriptor.withContentDescriptor(contentDescriptorSupplier);
     return this;
   }

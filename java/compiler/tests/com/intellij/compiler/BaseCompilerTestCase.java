@@ -216,7 +216,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     return compile(false, compileStatusNotification -> getCompilerManager().rebuild(compileStatusNotification));
   }
 
-  protected CompilationLog compile(final boolean errorsExpected, final Consumer<CompileStatusNotification> action) {
+  protected CompilationLog compile(final boolean errorsExpected, final Consumer<? super CompileStatusNotification> action) {
     CompilationLog log = compile(action);
     if (errorsExpected && log.myErrors.length == 0) {
       Assert.fail("compilation finished without errors");
@@ -227,7 +227,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     return log;
   }
 
-  private CompilationLog compile(@NotNull Consumer<CompileStatusNotification> action) {
+  private CompilationLog compile(@NotNull Consumer<? super CompileStatusNotification> action) {
     final Ref<CompilationLog> result = new Ref<>(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

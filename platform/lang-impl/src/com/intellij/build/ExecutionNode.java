@@ -61,8 +61,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private volatile Navigatable myNavigatable;
   @Nullable
   private volatile NullableLazyValue<Icon> myPreferredIconValue;
-  @Nullable
-  private Predicate<ExecutionNode> myFilter;
+  private Predicate<? super ExecutionNode> myFilter;
   private boolean myAlwaysLeaf;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
@@ -193,7 +192,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (myParentNode != null) {
       List<ExecutionNode> parentVisibleChildrenList = myParentNode.myVisibleChildrenList;
       if (parentVisibleChildrenList != null) {
-        Predicate<ExecutionNode> filter = myParentNode.myFilter;
+        Predicate<? super ExecutionNode> filter = myParentNode.myFilter;
         if (filter != null) {
           boolean wasPresent = parentVisibleChildrenList.contains(this);
           boolean shouldBePresent = filter.test(this);
@@ -235,13 +234,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return this;
   }
 
-  @Nullable
-  public Predicate<ExecutionNode> getFilter() {
+  public Predicate<? super ExecutionNode> getFilter() {
     assert myIsCorrectThread.get();
     return myFilter;
   }
 
-  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+  public void setFilter(@Nullable Predicate<? super ExecutionNode> filter) {
     assert myIsCorrectThread.get();
     myFilter = filter;
     for (ExecutionNode node : myChildrenList) {

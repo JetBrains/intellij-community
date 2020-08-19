@@ -52,12 +52,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   private final @NotNull List<AnAction> myActions = new SmartList<>();
   private final @NotNull List<AnAction> myRestartActions = new SmartList<>();
   private final @NotNull List<Filter> myExecutionFilters = new SmartList<>();
-  private final @NotNull List<Function<ExecutionNode, AnAction>> myContextActions = new SmartList<>();
+  private final @NotNull List<Function<? super ExecutionNode, ? extends AnAction>> myContextActions = new SmartList<>();
 
   private @Nullable BuildProcessHandler myProcessHandler;
-  private @Nullable Consumer<ConsoleView> myAttachedConsoleConsumer;
+  private Consumer<? super ConsoleView> myAttachedConsoleConsumer;
   private @Nullable ExecutionEnvironment myExecutionEnvironment;
-  private @Nullable Supplier<RunContentDescriptor> myContentDescriptorSupplier;
+  private Supplier<? extends RunContentDescriptor> myContentDescriptorSupplier;
 
   public DefaultBuildDescriptor(@NotNull Object id,
                                 @NotNull @BuildEventsNls.Title String title,
@@ -171,12 +171,11 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @Nullable
-  public Supplier<RunContentDescriptor> getContentDescriptorSupplier() {
+  public Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
     return myContentDescriptorSupplier;
   }
 
-  @Nullable
-  public Consumer<ConsoleView> getAttachedConsoleConsumer() {
+  public Consumer<? super ConsoleView> getAttachedConsoleConsumer() {
     return myAttachedConsoleConsumer;
   }
 
@@ -199,7 +198,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  public DefaultBuildDescriptor withContextAction(Function<ExecutionNode, AnAction> contextAction) {
+  public DefaultBuildDescriptor withContextAction(Function<? super ExecutionNode, ? extends AnAction> contextAction) {
     myContextActions.add(contextAction);
     return this;
   }
@@ -218,13 +217,13 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return this;
   }
 
-  public DefaultBuildDescriptor withContentDescriptor(Supplier<RunContentDescriptor> contentDescriptorSupplier) {
+  public DefaultBuildDescriptor withContentDescriptor(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
     myContentDescriptorSupplier = contentDescriptorSupplier;
     return this;
   }
 
   public DefaultBuildDescriptor withProcessHandler(@Nullable BuildProcessHandler processHandler,
-                                                   @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
+                                                   @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
     myAttachedConsoleConsumer = attachedConsoleConsumer;
     return this;

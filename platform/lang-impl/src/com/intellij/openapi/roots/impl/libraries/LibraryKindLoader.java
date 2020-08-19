@@ -40,7 +40,7 @@ final class LibraryKindLoader implements ApplicationInitializedListener {
     }, null);
   }
 
-  private static void processAllLibraries(@NotNull Consumer<Library> processor) {
+  private static void processAllLibraries(@NotNull Consumer<? super Library> processor) {
     processLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(), processor);
     for (LibraryTable table : LibraryTablesRegistrar.getInstance().getCustomLibraryTables()) {
       processLibraries(table, processor);
@@ -55,7 +55,7 @@ final class LibraryKindLoader implements ApplicationInitializedListener {
     }
   }
 
-  private static void processLibraries(@NotNull LibraryTable table, Consumer<Library> processor) {
+  private static void processLibraries(@NotNull LibraryTable table, Consumer<? super Library> processor) {
     for (Library library : table.getLibraries()) {
       processor.accept(library);
     }

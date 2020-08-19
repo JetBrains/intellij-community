@@ -30,13 +30,13 @@ public class PluginUpdatesService {
   private static boolean myPreparing;
   private static boolean myReset;
 
-  private Consumer<Integer> myTreeCallback;
-  private Consumer<Integer> myTabCallback;
+  private Consumer<? super Integer> myTreeCallback;
+  private Consumer<? super Integer> myTabCallback;
   private Consumer<? super Collection<IdeaPluginDescriptor>> myInstalledPanelCallback;
   private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdatePanelCallback;
 
   @NotNull
-  public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<Integer> callback) {
+  public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<? super Integer> callback) {
     checkAccess();
 
     PluginUpdatesService service = new PluginUpdatesService();
@@ -54,7 +54,7 @@ public class PluginUpdatesService {
   }
 
   @NotNull
-  public static PluginUpdatesService connectConfigurable(@NotNull Consumer<Integer> callback) {
+  public static PluginUpdatesService connectConfigurable(@NotNull Consumer<? super Integer> callback) {
     checkAccess();
 
     PluginUpdatesService service = new PluginUpdatesService();

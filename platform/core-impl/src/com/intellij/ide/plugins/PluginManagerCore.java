@@ -622,7 +622,7 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                                         @NotNull Function<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                                                                         @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                                                                          boolean withOptional,
                                                                                          boolean hasAllModules) {
     IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.apply(JAVA_MODULE_ID);
@@ -698,7 +698,7 @@ public final class PluginManagerCore {
 
   private static void checkPluginCycles(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                        @NotNull List<PluginError> errors) {
+                                        @NotNull List<? super PluginError> errors) {
     CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap::get, true,
                                                                            idToDescriptorMap.containsKey(ALL_MODULES_MARKER));
     DFSTBuilder<IdeaPluginDescriptorImpl> builder = new DFSTBuilder<>(GraphGenerator.generate(graph));
@@ -743,8 +743,8 @@ public final class PluginManagerCore {
                                              @Nullable BuildNumber compatibleBuildNumber,
                                              @Nullable Path bundledPluginsPath,
                                              @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
-                                             List<IdeaPluginDescriptorImpl> pluginsToMigrate,
-                                             List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
+                                             List<? super IdeaPluginDescriptorImpl> pluginsToMigrate,
+                                             List<? super IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
     PluginLoadingResult loadingResult = new PluginLoadingResult(
       brokenPluginVersions != null ? brokenPluginVersions : getBrokenPluginVersions(),
       () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
@@ -1012,7 +1012,7 @@ public final class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull List<PluginError> errors) {
+                                                 @NotNull List<? super PluginError> errors) {
     boolean isNonBundledPluginDisabled = ourDisableNonBundledPlugins;
     if (isNonBundledPluginDisabled) {
       getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");
@@ -1350,7 +1350,7 @@ public final class PluginManagerCore {
                                               @NotNull Set<PluginId> loadedPluginIds,
                                               @NotNull Set<PluginId> loadedModuleIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                              @NotNull Set<PluginId> disabledRequiredIds,
+                                              @NotNull Set<? super PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull List<PluginError> errors) {
     if (descriptor.getPluginId() == CORE_ID) {
@@ -1552,7 +1552,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
-                                               @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+                                               @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
     return processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(), consumer);
   }
 
@@ -1560,7 +1560,7 @@ public final class PluginManagerCore {
   public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
-                                               @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+                                               @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
     return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), (id, descriptor) -> descriptor != null ? consumer.apply(descriptor) : FileVisitResult.SKIP_SUBTREE);
   }
 
@@ -1575,10 +1575,10 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   private static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                               boolean withOptionalDeps,
-                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
-                                               @NotNull Set<IdeaPluginDescriptor> depProcessed,
-                                               @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+                                                boolean withOptionalDeps,
+                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
+                                                @NotNull Set<? super IdeaPluginDescriptor> depProcessed,
+                                                @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
 
     if (rootDescriptor.pluginDependencies == null) {
       return true;
@@ -1611,7 +1611,7 @@ public final class PluginManagerCore {
 
   public static boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                        boolean withOptionalDeps,
-                                                       @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+                                                       @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
     CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = createPluginIdGraph(Arrays.asList(ourPlugins),
                                                                                (id) -> (IdeaPluginDescriptorImpl)getPlugin(id),
                                                                                withOptionalDeps,

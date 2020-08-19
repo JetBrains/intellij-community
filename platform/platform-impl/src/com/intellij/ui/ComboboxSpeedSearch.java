@@ -12,7 +12,7 @@ import java.util.function.Function;
  */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
 
-  public static <T> void  installSpeedSearch(JComboBox<T> comboBox, Function<T, String> textGetter) {
+  public static <T> void  installSpeedSearch(JComboBox<T> comboBox, Function<? super T, String> textGetter) {
     new ComboboxSpeedSearch(comboBox) {
       @Override
       protected String getElementText(Object element) {

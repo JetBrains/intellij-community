@@ -268,7 +268,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
 
   protected static void convertDescriptionsContents(@NotNull JsonWriter writer,
                                                     @NotNull Document descriptions,
-                                                    @Nullable Predicate<String> inspectionFilter) throws IOException {
+                                                    @Nullable Predicate<? super String> inspectionFilter) throws IOException {
     Element inspectionsElement = descriptions.getRootElement();
     writer.name(InspectionsResultUtil.PROFILE).value(inspectionsElement.getAttributeValue(InspectionsResultUtil.PROFILE));
     writer.name(GROUPS);
@@ -279,7 +279,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     writer.endArray();
   }
 
-  private static void convertGroup(@NotNull JsonWriter writer, @NotNull Element group, @Nullable Predicate<String> inspectionFilter) throws IOException {
+  private static void convertGroup(@NotNull JsonWriter writer, @NotNull Element group, @Nullable Predicate<? super String> inspectionFilter) throws IOException {
     if (inspectionFilter != null) {
       boolean anyInspectionsInFilter = false;
       for (Element inspection : group.getChildren(INSPECTION)) {

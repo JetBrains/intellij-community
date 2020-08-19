@@ -133,7 +133,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
     return artifactState;
   }
 
-  public void replaceArtifacts(@NotNull Collection<? extends Artifact> toReplace, Function<Artifact, ArtifactImpl> replacement) {
+  public void replaceArtifacts(@NotNull Collection<? extends Artifact> toReplace, Function<? super Artifact, ? extends ArtifactImpl> replacement) {
     if (toReplace.isEmpty()) return;
     
     ArtifactModelImpl model = createModifiableModel();

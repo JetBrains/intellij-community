@@ -73,7 +73,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private PluginUpdatesService myPluginUpdatesService;
 
   private Runnable myInvalidFixCallback;
-  private Consumer<IdeaPluginDescriptor> myCancelInstallCallback;
+  private Consumer<? super IdeaPluginDescriptor> myCancelInstallCallback;
 
   private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
@@ -877,7 +877,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myInvalidFixCallback = invalidFixCallback;
   }
 
-  public void setCancelInstallCallback(@NotNull Consumer<IdeaPluginDescriptor> callback) {
+  public void setCancelInstallCallback(@NotNull Consumer<? super IdeaPluginDescriptor> callback) {
     myCancelInstallCallback = callback;
   }
 

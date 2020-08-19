@@ -26,12 +26,12 @@ public final class SemanticEditorPosition {
   private final EditorEx myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
-  private final Function<IElementType, SyntaxElement> myTypeMapper;
+  private final Function<? super IElementType, ? extends SyntaxElement> myTypeMapper;
   private final BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
   private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
                                  @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
-                                 @NotNull Function<IElementType, SyntaxElement> typeMapper) {
+                                 @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
     myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
     myEditor = editor;
     myChars = myEditor.getDocument().getCharsSequence();
@@ -330,7 +330,7 @@ public final class SemanticEditorPosition {
   @NotNull
   public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
                                                             @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
-                                                            @NotNull Function<IElementType, SyntaxElement> typeMapper) {
+                                                            @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }
 }

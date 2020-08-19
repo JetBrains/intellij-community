@@ -27,13 +27,13 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final @Nls String myName;
   private final @Nls String myGroup;
   protected C myComponent;
-  private final BiConsumer<Settings, C> myReset;
-  private final BiConsumer<Settings, C> myApply;
+  private final BiConsumer<? super Settings, ? super C> myReset;
+  private final BiConsumer<? super Settings, ? super C> myApply;
   private final int myCommandLinePosition;
-  private final Predicate<Settings> myInitialSelection;
+  private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
-  private @Nullable Function<C, JComponent> myEditorGetter;
+  private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
 
   public SettingsEditorFragment(String id,
@@ -41,9 +41,9 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 int commandLinePosition,
-                                BiConsumer<Settings, C> reset,
-                                BiConsumer<Settings, C> apply,
-                                Predicate<Settings> initialSelection) {
+                                BiConsumer<? super Settings, ? super C> reset,
+                                BiConsumer<? super Settings, ? super C> apply,
+                                Predicate<? super Settings> initialSelection) {
     myId = id;
     myName = name;
     myGroup = group;
@@ -58,8 +58,9 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
-                                BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
-                                Predicate<Settings> initialSelection)  {
+                                BiConsumer<? super Settings, ? super C> reset,
+                                BiConsumer<? super Settings, ? super C> apply,
+                                Predicate<? super Settings> initialSelection)  {
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
@@ -81,7 +82,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public static <Settings> SettingsEditorFragment<Settings, ?> createTag(String id, @Nls String name, @Nls String group,
-                                                                         Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
+                                                                         Predicate<? super Settings> getter, BiConsumer<? super Settings, ? super Boolean> setter) {
     Ref<SettingsEditorFragment<Settings, ?>> ref = new Ref<>();
     TagButton tagButton = new TagButton(name, () -> ref.get().setSelected(false));
     SettingsEditorFragment<Settings, ?> fragment = new SettingsEditorFragment<Settings, JComponent>(id, name, group, tagButton,
@@ -155,7 +156,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     }
   }
 
-  public void setEditorGetter(@Nullable Function<C, JComponent> editorGetter) {
+  public void setEditorGetter(@Nullable Function<? super C, ? extends JComponent> editorGetter) {
     myEditorGetter = editorGetter;
   }
 

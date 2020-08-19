@@ -63,7 +63,7 @@ public class BaseTableView extends JBTable {
     }
   }
 
-  public static void storeWidth(@NotNull BiConsumer<String, String> consumer, @NotNull TableColumnModel columns) {
+  public static void storeWidth(@NotNull BiConsumer<? super String, ? super String> consumer, @NotNull TableColumnModel columns) {
     for (int i = 0; i < columns.getColumnCount(); i++) {
       consumer.accept(widthPropertyName(i), String.valueOf(columns.getColumn(i).getWidth()));
     }
@@ -109,7 +109,7 @@ public class BaseTableView extends JBTable {
     restoreWidth(s -> propertyComponent.getValue(prefix + s), columns);
   }
 
-  public static void restoreWidth(@NotNull Function<String, String> map, TableColumnModel columns) {
+  public static void restoreWidth(@NotNull Function<? super String, String> map, TableColumnModel columns) {
     for (int index = 0; true; index++) {
       String widthValue = map.fun(widthPropertyName(index));
       if (widthValue == null) {

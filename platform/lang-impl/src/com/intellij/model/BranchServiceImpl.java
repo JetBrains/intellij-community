@@ -37,7 +37,7 @@ class BranchServiceImpl extends BranchService implements Disposable {
   public void dispose() {}
 
   @Override
-  @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<ModelBranch> action) {
+  @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<? super ModelBranch> action) {
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ModelBranchImpl.performInBranch(action, new ModelBranchImpl(project) {
         @Override

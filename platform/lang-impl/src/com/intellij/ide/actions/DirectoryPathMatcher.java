@@ -120,7 +120,7 @@ final class DirectoryPathMatcher {
 
   }
 
-  private void processProjectFilesUnder(VirtualFile root, Processor<VirtualFile> consumer) {
+  private void processProjectFilesUnder(VirtualFile root, Processor<? super VirtualFile> consumer) {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
 
       @Override

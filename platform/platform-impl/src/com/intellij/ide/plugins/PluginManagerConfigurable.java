@@ -1362,7 +1362,7 @@ public class PluginManagerConfigurable
   }
 
   @Messages.YesNoResult
-  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<String, String> message) {
+  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<? super String, String> message) {
     String action =
       IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     return Messages

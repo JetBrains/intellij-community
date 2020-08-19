@@ -425,7 +425,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     });
   }
 
-  private void wrapAction(String shortcut, Predicate<JTable> predicate) {
+  private void wrapAction(String shortcut, Predicate<? super JTable> predicate) {
     Object actionKey = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(KeyStroke.getKeyStroke(shortcut));
     Action action = getActionMap().get(actionKey);
     getActionMap().put(actionKey, new AbstractAction() {

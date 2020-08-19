@@ -12,6 +12,6 @@ abstract class BranchService {
     return ApplicationManager.getApplication().getService(BranchService.class);
   }
 
-  abstract @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<ModelBranch> action);
+  abstract @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<? super ModelBranch> action);
 
 }

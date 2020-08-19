@@ -57,7 +57,7 @@ public class TypeMigrationLabeler {
   }
 
   private final TypeMigrationRules myRules;
-  private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
+  private final Function<? super PsiElement, ? extends PsiType> myMigrationRootTypeFunction;
   @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
@@ -80,7 +80,7 @@ public class TypeMigrationLabeler {
   }
 
   public TypeMigrationLabeler(TypeMigrationRules rules,
-                              Function<PsiElement, PsiType> migrationRootTypeFunction,
+                              Function<? super PsiElement, ? extends PsiType> migrationRootTypeFunction,
                               PsiElement @Nullable("any root accepted if null") [] allowedRoots,
                               Project project) {
     myRules = rules;
@@ -98,7 +98,7 @@ public class TypeMigrationLabeler {
     return !myFailedConversions.isEmpty();
   }
 
-  public Function<PsiElement, PsiType> getMigrationRootTypeFunction() {
+  public Function<? super PsiElement, ? extends PsiType> getMigrationRootTypeFunction() {
     return myMigrationRootTypeFunction;
   }
 

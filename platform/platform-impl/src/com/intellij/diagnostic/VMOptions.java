@@ -141,7 +141,7 @@ public final class VMOptions {
     };
   }
 
-  private static void writeGeneralOptions(@NotNull Function<String, String> transformContent) {
+  private static void writeGeneralOptions(@NotNull Function<? super String, String> transformContent) {
     Path path = getWriteFile();
     if (path == null) {
       LOG.warn("VM options file not configured");

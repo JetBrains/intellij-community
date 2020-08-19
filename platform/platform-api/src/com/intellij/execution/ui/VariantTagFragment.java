@@ -18,17 +18,17 @@ import java.util.function.Supplier;
 
 public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButton> {
 
-  public void setVariantNameProvider(Function<V, String> variantNameProvider) {
+  public void setVariantNameProvider(Function<? super V, String> variantNameProvider) {
     myVariantNameProvider = variantNameProvider;
   }
 
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
                                                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                                @Nls(capitalization = Nls.Capitalization.Title) String group,
-                                                               Supplier<V[]> variantsProvider,
-                                                               Function<T, V> getter,
-                                                               BiConsumer<T, V> setter,
-                                                               Predicate<T> initialSelection) {
+                                                               Supplier<? extends V[]> variantsProvider,
+                                                               Function<? super T, ? extends V> getter,
+                                                               BiConsumer<? super T, ? super V> setter,
+                                                               Predicate<? super T> initialSelection) {
     Ref<VariantTagFragment<T, V>> ref = new Ref<>();
     TagButton tagButton = new TagButton(name, () -> ref.get().toggle(false));
     VariantTagFragment<T, V> fragment = new VariantTagFragment<>(id, name, group, tagButton, variantsProvider, getter, setter, initialSelection);
@@ -38,19 +38,19 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   private V mySelectedVariant;
-  private final Supplier<V[]> myVariantsProvider;
-  private Function<V, String> myVariantNameProvider;
-  private final Function<T, V> myGetter;
-  private final BiConsumer<T, V> mySetter;
+  private final Supplier<? extends V[]> myVariantsProvider;
+  private Function<? super V, String> myVariantNameProvider;
+  private final Function<? super T, ? extends V> myGetter;
+  private final BiConsumer<? super T, ? super V> mySetter;
 
   public VariantTagFragment(String id,
                             @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                             @Nls(capitalization = Nls.Capitalization.Title) String group,
                             TagButton component,
-                            Supplier<V[]> variantsProvider,
-                            Function<T, V> getter,
-                            BiConsumer<T, V> setter,
-                            Predicate<T> initialSelection) {
+                            Supplier<? extends V[]> variantsProvider,
+                            Function<? super T, ? extends V> getter,
+                            BiConsumer<? super T, ? super V> setter,
+                            Predicate<? super T> initialSelection) {
     super(id, name, group, component, null, null, initialSelection);
     myVariantsProvider = variantsProvider;
     myGetter = getter;

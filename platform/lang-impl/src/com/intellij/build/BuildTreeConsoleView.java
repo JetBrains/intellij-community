@@ -116,7 +116,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final Tree myTree;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
-  private final Set<Predicate<ExecutionNode>> myNodeFilters;
+  private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
 
@@ -240,19 +240,19 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void addFilter(@NotNull Predicate<ExecutionNode> executionTreeFilter) {
+  public void addFilter(@NotNull Predicate<? super ExecutionNode> executionTreeFilter) {
     myNodeFilters.add(executionTreeFilter);
     updateFilter();
   }
 
   @Override
-  public void removeFilter(@NotNull Predicate<ExecutionNode> filter) {
+  public void removeFilter(@NotNull Predicate<? super ExecutionNode> filter) {
     myNodeFilters.remove(filter);
     updateFilter();
   }
 
   @Override
-  public boolean contains(@NotNull Predicate<ExecutionNode> filter) {
+  public boolean contains(@NotNull Predicate<? super ExecutionNode> filter) {
     return myNodeFilters.contains(filter);
   }
 
@@ -833,7 +833,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private final JPanel myPanel;
     private final CompositeView<ExecutionConsole> myView;
     private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
-    private final Map<String, List<Consumer<BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
+    private final Map<String, List<Consumer<? super BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
     private final @NotNull BuildViewSettingsProvider myViewSettingsProvider;
     private @Nullable ExecutionNode myExecutionNode;
     private @NotNull final List<Filter> myExecutionConsoleFilters;
@@ -913,7 +913,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myNodeConsoleViewName.set(nodeConsoleViewName);
       ExecutionConsole view = myView.getView(nodeConsoleViewName);
       if (view != null) {
-        List<Consumer<BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
+        List<Consumer<? super BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
         if (view instanceof BuildTextConsoleView && deferredOutput != null && !deferredOutput.isEmpty()) {
           deferredNodeOutput.remove(nodeConsoleViewName);
           deferredOutput.forEach(consumer -> consumer.accept((BuildTextConsoleView)view));
@@ -923,7 +923,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return true;
       }
 
-      List<Consumer<BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
+      List<Consumer<? super BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
       if (deferredOutput != null && !deferredOutput.isEmpty()) {
         BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
         deferredNodeOutput.remove(nodeConsoleViewName);
@@ -950,7 +950,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       addOutput(node, view -> view.append(failure));
     }
 
-    private void addOutput(@NotNull ExecutionNode node, Consumer<BuildTextConsoleView> consumer) {
+    private void addOutput(@NotNull ExecutionNode node, Consumer<? super BuildTextConsoleView> consumer) {
       String nodeConsoleViewName = getNodeConsoleViewName(node);
       ExecutionConsole viewView = myView.getView(nodeConsoleViewName);
       if (viewView instanceof BuildTextConsoleView) {

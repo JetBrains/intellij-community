@@ -225,7 +225,7 @@ public final class BackgroundTaskUtil {
   }
 
   @CalledInAny
-  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<T> task) {
+  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<? extends T> task) {
     Ref<T> ref = new Ref<>();
     runUnderDisposeAwareIndicator(parent, () -> {
       ref.set(task.get());

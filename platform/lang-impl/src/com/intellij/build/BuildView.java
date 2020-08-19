@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -121,7 +120,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       myViewSettingsProvider = () -> false;
     }
     if (myExecutionConsole == null) {
-      Supplier<RunContentDescriptor> descriptorSupplier = myBuildDescriptor.getContentDescriptorSupplier();
+      Supplier<? extends RunContentDescriptor> descriptorSupplier = myBuildDescriptor.getContentDescriptorSupplier();
       RunContentDescriptor runContentDescriptor = descriptorSupplier != null ? descriptorSupplier.get() : null;
       myExecutionConsole = runContentDescriptor != null &&
                            runContentDescriptor.getExecutionConsole() != null &&
@@ -161,7 +160,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       if (processHandler != null) {
         assert consoleView != null;
         consoleView.attachToProcess(processHandler);
-        Consumer<ConsoleView> attachedConsoleConsumer = myBuildDescriptor.getAttachedConsoleConsumer();
+        Consumer<? super ConsoleView> attachedConsoleConsumer = myBuildDescriptor.getAttachedConsoleConsumer();
         if (attachedConsoleConsumer != null) {
           attachedConsoleConsumer.consume(consoleView);
         }
@@ -294,7 +293,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       consoleView.getComponent(); //create editor to be able to add console editor actions
       if (stopAction == null) {
         final AnAction[] consoleActions = ((ConsoleView)consoleView).createConsoleActions();
-        stopAction = Arrays.stream(consoleActions).filter(StopAction.class::isInstance).findFirst().orElse(null);
+        stopAction = ContainerUtil.find(consoleActions, StopAction.class::isInstance);
       }
     }
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -358,7 +357,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public void addFilter(@NotNull Predicate<ExecutionNode> filter) {
+  public void addFilter(@NotNull Predicate<? super ExecutionNode> filter) {
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) {
       eventView.addFilter(filter);
@@ -366,7 +365,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public void removeFilter(@NotNull Predicate<ExecutionNode> filter) {
+  public void removeFilter(@NotNull Predicate<? super ExecutionNode> filter) {
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) {
       eventView.removeFilter(filter);
@@ -374,7 +373,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public boolean contains(@NotNull Predicate<ExecutionNode> filter) {
+  public boolean contains(@NotNull Predicate<? super ExecutionNode> filter) {
     BuildTreeConsoleView eventView = getEventView();
     return eventView != null && eventView.contains(filter);
   }

@@ -276,7 +276,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return findExternalAnnotationsFiles(((PsiClassOwner)containingFile).getPackageName(), virtualFile, f -> getExternalAnnotationsRoots(f));
   }
 
-  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<T, List<VirtualFile>> roots) {
+  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<? super T, ? extends List<VirtualFile>> roots) {
     final List<PsiFile> files = myExternalAnnotationsCache.get(key);
     if (files == NULL_LIST) return null;
 

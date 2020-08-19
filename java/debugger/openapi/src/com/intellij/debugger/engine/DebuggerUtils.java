@@ -128,7 +128,7 @@ public abstract class DebuggerUtils {
 
   public static <R, T extends Value> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
-    @NotNull Function<T, R> processor) throws EvaluateException {
+    @NotNull Function<? super T, ? extends R> processor) throws EvaluateException {
     int retries = 10;
     while (true) {
       T result = valueComputable.compute();

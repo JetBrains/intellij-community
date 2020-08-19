@@ -155,7 +155,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       continue;
                     }
                   }
-                  Consumer<Event> handler = getEventRequestHandler(event);
+                  Consumer<? super Event> handler = getEventRequestHandler(event);
                   if (handler != null) {
                     handler.consume(event);
                     processed++;
@@ -291,22 +291,22 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
-  private static Consumer<Event> getEventRequestHandler(Event event) {
+  private static Consumer<? super Event> getEventRequestHandler(Event event) {
     EventRequest request = event.request();
     Object property = request != null ? request.getProperty(REQUEST_HANDLER) : null;
     if (property instanceof Consumer) {
       //noinspection unchecked
-      return ((Consumer<Event>)property);
+      return ((Consumer<? super Event>)property);
     }
     return null;
   }
 
-  public static void enableRequestWithHandler(EventRequest request, Consumer<Event> handler) {
+  public static void enableRequestWithHandler(EventRequest request, Consumer<? super Event> handler) {
     request.putProperty(REQUEST_HANDLER, handler);
     request.enable();
   }
 
-  private static void enableNonSuspendingRequest(EventRequest request, Consumer<Event> handler) {
+  private static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
     request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
     enableRequestWithHandler(request, handler);
   }

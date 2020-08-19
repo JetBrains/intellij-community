@@ -267,7 +267,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   }
 
   @NotNull
-  private <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<PluginDescriptor> filter) {
+  private <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<? super PluginDescriptor> filter) {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
       if (filter == null || filter.test(plugin)) {

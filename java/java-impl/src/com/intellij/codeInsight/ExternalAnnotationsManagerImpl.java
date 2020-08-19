@@ -691,7 +691,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   private @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element,
-                                                          @NotNull Supplier<AnnotationPlace> confirmNewExternalAnnotationRoot) {
+                                                          @NotNull Supplier<? extends AnnotationPlace> confirmNewExternalAnnotationRoot) {
     if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) {
       return AnnotationPlace.IN_CODE; //element just created
     }

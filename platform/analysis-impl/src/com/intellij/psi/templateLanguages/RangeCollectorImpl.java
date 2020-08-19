@@ -374,7 +374,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
    */
   @NotNull ASTNode applyRangeCollectorAndExpandChameleon(@NotNull ASTNode chameleon,
                                                          @NotNull Language language,
-                                                         @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
+                                                         @NotNull Function<? super @NotNull CharSequence, ? extends @NotNull ASTNode> parser) {
     CharSequence chars = chameleon.getChars();
     if (myOuterAndRemoveRanges.isEmpty()) return parser.apply(chars);
 

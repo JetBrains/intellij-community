@@ -59,7 +59,7 @@ public final class CompoundRuntimeException extends RuntimeException {
     }, s::print);
   }
 
-  private @NotNull CharSequence processAll(@NotNull Function<Throwable, String> exceptionProcessor, @Nullable Consumer<String> stringProcessor) {
+  private @NotNull CharSequence processAll(@NotNull Function<? super Throwable, String> exceptionProcessor, @Nullable Consumer<? super String> stringProcessor) {
     if (myExceptions.size() == 1) {
       Throwable throwable = myExceptions.get(0);
       String s = exceptionProcessor.apply(throwable);

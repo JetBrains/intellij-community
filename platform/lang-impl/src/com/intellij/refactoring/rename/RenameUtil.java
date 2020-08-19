@@ -71,17 +71,11 @@ public final class RenameUtil {
 
     RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
 
-    processUsages(info -> {
+    processUsages(element, elementProcessor, newName, searchScope, true, searchInStringsAndComments, searchForTextOccurrences, info -> {
                     result.add(info);
                     return true;
-                  },
-                  element,
-                  elementProcessor,
-                  newName,
-                  searchScope,
-                  true,
-                  searchInStringsAndComments,
-                  searchForTextOccurrences);
+                  }
+    );
 
     elementProcessor.findCollisions(element, newName, allRenames, result);
 
@@ -94,19 +88,19 @@ public final class RenameUtil {
                                          boolean searchInStringsAndComments,
                                          boolean searchForTextOccurrences) {
     RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
-    return !processUsages(info -> false, element, elementProcessor, newName, searchScope,
-                          false, searchInStringsAndComments, searchForTextOccurrences);
+    return !processUsages(element, elementProcessor, newName, searchScope, false, searchInStringsAndComments, searchForTextOccurrences, info -> false
+    );
   }
 
   private static boolean processUsages(
-    @NotNull Processor<UsageInfo> processor,
     @NotNull PsiElement element,
     @NotNull RenamePsiElementProcessor elementProcessor,
     String newName,
     @NotNull SearchScope searchScope,
     boolean searchInCode,
     boolean searchInStringsAndComments,
-    boolean searchForTextOccurrences
+    boolean searchForTextOccurrences,
+    @NotNull Processor<? super UsageInfo> processor
   ) {
     SearchScope useScope = PsiSearchHelper.getInstance(element.getProject()).getUseScope(element);
     if (!(useScope instanceof LocalSearchScope)) {
@@ -141,13 +135,14 @@ public final class RenameUtil {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
       if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, true, elementProcessor);
-        if (!processTextOccurrences(processor, searchForInComments, searchScope, stringToSearch, stringToReplace)) return false;
+        if (!processTextOccurrences(searchForInComments, searchScope, stringToSearch, stringToReplace, processor)) return false;
       }
 
       final Pair<String, String> additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
       if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
-        if (!processTextOccurrences(processor, searchForInComments, searchScope,
-                                    additionalStringToSearch.first, additionalStringToSearch.second)) return false;
+        if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.first, additionalStringToSearch.second,
+                                    processor
+        )) return false;
       }
     }
 
@@ -155,11 +150,11 @@ public final class RenameUtil {
   }
 
   private static boolean processTextOccurrences(
-    @NotNull Processor<UsageInfo> processor,
     @NotNull PsiElement element,
     @NotNull SearchScope searchScope,
     @NotNull String stringToSearch,
-    String stringToReplace
+    String stringToReplace,
+    @NotNull Processor<? super UsageInfo> processor
   ) {
     UsageInfoFactory factory = new UsageInfoFactory() {
       @Override

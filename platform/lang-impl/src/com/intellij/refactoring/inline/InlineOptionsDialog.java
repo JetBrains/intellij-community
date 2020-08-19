@@ -181,7 +181,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
 
   protected static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
                                               Predicate<? super PsiReference> ignoreOccurrence,
-                                              Function<GlobalSearchScope, Query<PsiReference>> searcher) {
+                                              Function<? super GlobalSearchScope, ? extends Query<PsiReference>> searcher) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(nameIdentifierOwner.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());

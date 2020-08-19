@@ -43,7 +43,7 @@ public abstract class DependentSdkType extends SdkType {
   }
 
   @Override
-  public void showCustomCreateUI(@NotNull final SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull final SdkModel sdkModel, @NotNull JComponent parentComponent, final @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     if (!checkDependency(sdkModel)) {
       if (Messages.showOkCancelDialog(parentComponent, getUnsatisfiedDependencyMessage(),
                                       ProjectBundle.message("dialog.title.cannot.create.sdk"), Messages.getWarningIcon()) != Messages.OK) {

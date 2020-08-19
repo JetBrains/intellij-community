@@ -214,7 +214,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
                                          boolean skipSingleDefaultChangeList,
-                                         @Nullable Function<ChangeNodeDecorator, ChangeNodeDecorator> changeDecoratorProvider) {
+                                         @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
     assert myProject != null;
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);

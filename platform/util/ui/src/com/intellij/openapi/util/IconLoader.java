@@ -90,7 +90,7 @@ public final class IconLoader {
 
   private IconLoader() { }
 
-  public static <T> T performStrictly(@NotNull Supplier<T> computable) {
+  public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
     STRICT_LOCAL.set(true);
     try {
       return computable.get();

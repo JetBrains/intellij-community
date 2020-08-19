@@ -68,7 +68,7 @@ public final class JavaPostfixTemplatesUtils {
     return selectorTopmost(Conditions.alwaysTrue());
   }
 
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
+  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
@@ -89,7 +89,7 @@ public final class JavaPostfixTemplatesUtils {
   }
 
   @NotNull
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(@Nullable Condition<PsiElement> additionalFilter) {
+  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(@Nullable Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {

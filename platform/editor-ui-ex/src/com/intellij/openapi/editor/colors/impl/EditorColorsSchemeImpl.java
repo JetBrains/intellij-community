@@ -109,8 +109,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
-    Collection<Predicate<ColorKey>> filters = new ArrayList<>();
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
+    Collection<Predicate<? super ColorKey>> filters = new ArrayList<>();
     if (colorKeyFilter != null) {
       filters.add(colorKeyFilter);
     }
@@ -142,7 +142,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
-                                @NotNull Collection<Predicate<ColorKey>> filters) {
+                                @NotNull Collection<Predicate<? super ColorKey>> filters) {
     for (ColorKey key : myColorsMap.keySet()) {
       Color thisColor = getColor(key);
       Color otherColor = otherScheme.getColor(key);
@@ -158,8 +158,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isColorKeyAccepted(@NotNull Collection<? extends Predicate<ColorKey>> filters, @NotNull ColorKey key) {
-    for (Predicate<ColorKey> filter : filters) {
+  private static boolean isColorKeyAccepted(@NotNull Collection<? extends Predicate<? super ColorKey>> filters, @NotNull ColorKey key) {
+    for (Predicate<? super ColorKey> filter : filters) {
       if (!filter.test(key)) return false;
     }
     return true;
