@@ -13,6 +13,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
@@ -26,7 +28,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
@@ -157,12 +158,12 @@ public class StructureFilterPopupComponent
       tooltip += VcsLogBundle.message("vcs.log.filter.tooltip.no.roots.selected");
     }
     else if (roots.size() != getAllRoots().size()) {
-      tooltip += VcsLogBundle.message("vcs.log.filter.tooltip.roots") + UIUtil.BR + getTooltipTextForRoots(roots);
+      tooltip += VcsLogBundle.message("vcs.log.filter.tooltip.roots") + HtmlChunk.br() + getTooltipTextForRoots(roots);
     }
 
     if (!files.isEmpty()) {
-      if (!tooltip.isEmpty()) tooltip += UIUtil.BR;
-      tooltip += VcsLogBundle.message("vcs.log.filter.tooltip.folders") + UIUtil.BR + getTooltipTextForFilePaths(files);
+      if (!tooltip.isEmpty()) tooltip += HtmlChunk.br();
+      tooltip += VcsLogBundle.message("vcs.log.filter.tooltip.folders") + HtmlChunk.br() + getTooltipTextForFilePaths(files, HtmlChunk.br());
     }
 
     return tooltip;
@@ -171,27 +172,29 @@ public class StructureFilterPopupComponent
   @NotNull
   @NlsContexts.Tooltip
   private static String getTooltipTextForRoots(@NotNull Collection<? extends VirtualFile> files) {
-    return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName);
+    return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName, HtmlChunk.br());
   }
 
   @NotNull
   @NlsContexts.Tooltip
-  private String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
-    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, filePath -> path2Text(filePath, true));
+  private String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files, @NotNull HtmlChunk separator) {
+    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, filePath -> path2Text(filePath, true), separator);
   }
 
   @NotNull
   @NlsContexts.Tooltip
   private static <F> String getTooltipTextForFiles(@NotNull Collection<? extends F> files,
                                                    @NotNull Comparator<? super F> comparator,
-                                                   @NotNull NotNullFunction<? super F, String> getText) {
+                                                   @NotNull NotNullFunction<? super F, @Nls String> getText,
+                                                   @NotNull HtmlChunk separator) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
     filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
-    String tooltip = StringUtil.join(filesToDisplay, getText, UIUtil.BR);
+    HtmlBuilder tooltip = new HtmlBuilder().appendWithSeparators(separator,
+                                                                 ContainerUtil.map(filesToDisplay, f -> HtmlChunk.text(getText.fun(f))));
     if (files.size() > 10) {
-      tooltip += UIUtil.BR + "...";
+      tooltip.append(separator).append("...");
     }
-    return tooltip;
+    return tooltip.toString();
   }
 
   @Override
@@ -483,7 +486,7 @@ public class StructureFilterPopupComponent
     @NotNull private final Icon myEmptyIcon;
 
     private SelectFromHistoryAction(@NotNull VcsLogStructureFilter filter) {
-      super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles()).replace(UIUtil.BR, " "), null);
+      super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles(), HtmlChunk.text(" ")), null);
       myFilter = filter;
       myIcon = JBUIScale.scaleIcon(new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE));
       myEmptyIcon = JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE));
