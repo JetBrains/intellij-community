@@ -73,7 +73,7 @@ public class GotoRelatedItem {
     return createItems(elements, DEFAULT_GROUP_NAME);
   }
 
-  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, String group) {
+  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, @Separator String group) {
     List<GotoRelatedItem> items = new ArrayList<>(elements.size());
     for (PsiElement element : elements) {
       items.add(new GotoRelatedItem(element, group));
