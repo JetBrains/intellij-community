@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -137,13 +138,9 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     return HtmlChunk.tag("a").attr("href", link).child(text);
   }
 
-  private static HtmlChunk generateClassDoc(@Nullable PsiElement element) {
-    if (element == null) {
-      return HtmlChunk.text("??? not found ???");
-    }
-
+  private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    return HtmlChunk.raw(documentationProvider.generateDoc(element, null));
+    return HtmlChunk.raw(StringUtil.notNullize(documentationProvider.generateDoc(element, null)));
   }
 
   private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {
