@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.Consumer
@@ -186,6 +188,9 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
 }
 
 @NlsContexts.LinkLabel
-private fun getExplanationText(dontExist: String, existIn: String): String =
-  "<html>${GitBundle.message("git.compare.branches.explanation.message",
-                             "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"
+private fun getExplanationText(@NlsSafe dontExist: String, @NlsSafe existIn: String): String {
+  return HtmlChunk.raw(GitBundle.message("git.compare.branches.explanation.message",
+                                         HtmlChunk.tag("code").child(HtmlChunk.text(existIn).bold()),
+                                         HtmlChunk.tag("code").child(HtmlChunk.text(dontExist).bold())))
+    .wrapWith("html").toString()
+}
