@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
+import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -126,7 +127,7 @@ abstract class ToolWindowManager {
    * tool window with specified `id` then the method returns `null`.
    * @see ToolWindowId
    */
-  abstract fun getToolWindow(id: String?): ToolWindow?
+  abstract fun getToolWindow(@NonNls id: String?): ToolWindow?
 
   /**
    * Puts specified runnable to the tail of current command queue.
