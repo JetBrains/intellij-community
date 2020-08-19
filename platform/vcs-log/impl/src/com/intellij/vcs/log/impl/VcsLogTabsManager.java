@@ -87,7 +87,7 @@ public class VcsLogTabsManager {
 
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
-      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus);
+      ui = openLogEditorTab(myProject, manager, getFullName(tabId), factory, focus); //NON-NLS used for the file name, not displayed
       ui.getFilterUi().addFilterListener(() -> {
         VcsLogEditorUtilKt.updateTabName(myProject, ui);
       });
@@ -106,11 +106,11 @@ public class VcsLogTabsManager {
 
   @NotNull
   private static MainVcsLogUi openLogEditorTab(@NotNull Project project, @NotNull VcsLogManager manager,
-                                               @NotNull String name,
+                                               @NotNull String fileName,
                                                @NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
                                                boolean focus) {
     MainVcsLogUi ui = manager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR, true);
-    DefaultVcsLogFile file = new DefaultVcsLogFile(name, new VcsLogPanel(manager, ui));
+    DefaultVcsLogFile file = new DefaultVcsLogFile(fileName, new VcsLogPanel(manager, ui));
     FileEditorManager.getInstance(project).openFile(file, focus);
     manager.scheduleInitialization();
     return ui;
