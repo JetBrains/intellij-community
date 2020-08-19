@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -246,7 +247,9 @@ public class PySkeletonGenerator {
         return myWorkingDir;
       }
       final String binaryPath = mySdk.getHomePath();
-      if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+      if (binaryPath == null) {
+        throw new InvalidSdkException(PySdkBundle.message("python.skeleton.generator.broken.home.path", mySdk.getName()));
+      }
       return new File(binaryPath).getParent();
     }
 
@@ -485,8 +488,8 @@ public class PySkeletonGenerator {
     // unreliable in case of remote interpreters where target and host OS might differ.
 
     // Closing the underlying input stream should be handled by its owner.
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final BufferedWriter writer =
+      new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
     writer.write(line);
     writer.write('\n');
     writer.flush();
