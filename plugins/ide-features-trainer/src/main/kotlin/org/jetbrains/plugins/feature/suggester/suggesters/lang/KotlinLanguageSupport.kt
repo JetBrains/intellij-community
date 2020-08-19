@@ -73,4 +73,8 @@ class KotlinLanguageSupport : LanguageSupport {
     override fun isIdentifier(element: PsiElement): Boolean {
         return element is LeafPsiElement && element.elementType.toString() == "IDENTIFIER"
     }
+
+    override fun isLiteralExpression(element: PsiElement): Boolean {
+        return element is KtStringTemplateExpression
+    }
 }

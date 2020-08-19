@@ -71,4 +71,8 @@ class PythonLanguageSupport : LanguageSupport {
     override fun isIdentifier(element: PsiElement): Boolean {
         return element is LeafPsiElement && element.elementType.toString() == "Py:IDENTIFIER"
     }
+
+    override fun isLiteralExpression(element: PsiElement): Boolean {
+        return element is PyStringLiteralExpression
+    }
 }

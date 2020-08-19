@@ -54,4 +54,6 @@ interface LanguageSupport {
     fun isFileStructureElement(element: PsiElement): Boolean
 
     fun isIdentifier(element: PsiElement): Boolean
+
+    fun isLiteralExpression(element: PsiElement): Boolean
 }

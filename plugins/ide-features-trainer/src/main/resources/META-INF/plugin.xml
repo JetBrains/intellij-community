@@ -44,6 +44,8 @@
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.UnwrapSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.FileStructureSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

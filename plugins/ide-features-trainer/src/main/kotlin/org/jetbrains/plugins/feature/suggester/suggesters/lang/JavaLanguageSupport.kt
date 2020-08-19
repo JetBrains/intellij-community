@@ -70,4 +70,8 @@ class JavaLanguageSupport : LanguageSupport {
     override fun isIdentifier(element: PsiElement): Boolean {
         return element is PsiIdentifier
     }
+
+    override fun isLiteralExpression(element: PsiElement): Boolean {
+        return element is PsiLiteralExpression
+    }
 }
