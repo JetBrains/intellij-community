@@ -45,6 +45,8 @@
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.FileStructureSuggester"/>
         <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.CompletionPopupSuggester"/>
+        <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester"/>
     </extensions>
 
