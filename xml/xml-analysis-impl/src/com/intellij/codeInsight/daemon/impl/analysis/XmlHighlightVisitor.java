@@ -14,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -493,7 +494,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @NotNull
-  public static String getErrorDescription(@NotNull PsiReference reference) {
+  public static @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
