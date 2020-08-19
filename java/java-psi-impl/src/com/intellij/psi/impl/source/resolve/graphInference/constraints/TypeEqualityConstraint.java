@@ -67,14 +67,16 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
-      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+      session.registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean equal = Comparing.equal(myT, myS);
       if (!equal) {
-        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
       }
       return equal;
     }
@@ -107,7 +109,8 @@ public class TypeEqualityConstraint implements ConstraintFormula {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }
           if (tSubstituted == null ^ sSubstituted == null) {
-            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+            session.registerIncompatibleErrorMessage(
+              JavaPsiBundle.message("error.incompatible.type.incompatible.equality.constraint", session.getPresentableText(myT), session.getPresentableText(myS)));
             return false;
           }
         }

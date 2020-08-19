@@ -1974,7 +1974,7 @@ public class InferenceSession {
     return null;
   }
 
-  public List<String> getIncompatibleErrorMessages() {
+  public List<@Nls String> getIncompatibleErrorMessages() {
     return myErrorMessages;
   }
 
