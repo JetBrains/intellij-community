@@ -51,7 +51,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
    */
   @Deprecated
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                   @NotNull String analysisNoon,
+                                   @NotNull @NlsContexts.Separator String analysisNoon,
                                    @NotNull Project project,
                                    @NotNull final AnalysisScope scope,
                                    final String moduleName,

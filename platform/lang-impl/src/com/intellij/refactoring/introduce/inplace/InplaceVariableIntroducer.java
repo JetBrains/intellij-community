@@ -166,7 +166,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
                                        final LinkedHashSet<String> names,
                                        final PsiNamedElement elementToRename,
                                        final boolean shouldSelectAll,
-                                       final String advertisementText) {
+                                       final @NlsContexts.PopupAdvertisement String advertisementText) {
       super(initialName, names, elementToRename, elementToRename, shouldSelectAll, advertisementText);
       myPointer = SmartPointerManager.getInstance(elementToRename.getProject()).createSmartPsiElementPointer(elementToRename);
     }

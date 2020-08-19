@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -45,7 +46,7 @@ public class GotoRelatedItem {
   }
 
   @Nullable
-  public String getCustomName() {
+  public @NlsContexts.ListItem String getCustomName() {
     return null;
   }
 

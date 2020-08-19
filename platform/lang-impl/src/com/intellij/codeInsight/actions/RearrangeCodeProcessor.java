@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -114,7 +115,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     return new SmartList<>(file.getTextRange());
   }
 
-  public static String getProgressText() {
+  public static @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("process.rearrange.code");
   }
 }

@@ -22,6 +22,6 @@ public interface ListItemDescriptor<T> {
 
   boolean hasSeparatorAboveOf(T value);
 
-  @Nullable
+  @Nullable @NlsContexts.Separator
   String getCaptionAboveOf(T value);
 }

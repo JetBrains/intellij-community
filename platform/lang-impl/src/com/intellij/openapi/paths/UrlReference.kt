@@ -16,6 +16,7 @@ import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -38,7 +39,7 @@ class UrlReference(private val element: PsiElement,
 }
 
 private class UrlSymbol(
-  private val url: String
+  @NlsSafe private val url: String
 ) : Pointer<UrlSymbol>,
     PresentableSymbol,
     NavigatableSymbol,

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public abstract class Expression {
   public abstract LookupElement @Nullable [] calculateLookupItems(ExpressionContext context);
 
   @Nullable
-  public String getAdvertisingText() {
+  public @NlsContexts.PopupAdvertisement String getAdvertisingText() {
     return null;
   }
 

@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -252,7 +253,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               @NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
-                                              @NotNull String titlePattern,
+                                              @NotNull @NlsContexts.PopupTitle String titlePattern,
                                               PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;

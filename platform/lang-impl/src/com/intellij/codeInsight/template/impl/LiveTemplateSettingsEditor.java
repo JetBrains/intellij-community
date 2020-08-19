@@ -60,7 +60,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   private final Editor myTemplateEditor;
 
   private JComboBox myExpandByCombo;
-  private final String myDefaultShortcutItem;
+  private final @NlsContexts.ListItem String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
   private JButton myEditVariablesButton;

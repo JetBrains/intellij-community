@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public class RunDashboardFilterActionGroup extends DefaultActionGroup implements
     this(null, false);
   }
 
-  public RunDashboardFilterActionGroup(@Nullable String shortName, boolean popup) {
+  public RunDashboardFilterActionGroup(@Nullable @NlsActions.ActionText String shortName, boolean popup) {
     super(shortName, popup);
     RunDashboardRunConfigurationStatus[] statuses = new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED};
     for (RunDashboardRunConfigurationStatus status : statuses) {

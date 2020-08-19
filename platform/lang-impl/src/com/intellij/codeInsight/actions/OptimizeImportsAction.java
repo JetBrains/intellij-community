@@ -222,7 +222,7 @@ public class OptimizeImportsAction extends AnAction {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
-  private static Boolean isProcessVcsChangedText(Project project, String text, boolean hasChanges) {
+  private static Boolean isProcessVcsChangedText(Project project, @NlsContexts.Label String text, boolean hasChanges) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myProcessVcsChangedFilesInTests;
     }

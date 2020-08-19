@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -48,7 +49,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   private Document myDocument;
   private Commenter myCommenter;
   private CommenterDataHolder mySelfManagedCommenterData;
-  private String myWarning;
+  private @NlsContexts.HintText String myWarning;
   private RangeMarker myWarningLocation;
 
   @Override

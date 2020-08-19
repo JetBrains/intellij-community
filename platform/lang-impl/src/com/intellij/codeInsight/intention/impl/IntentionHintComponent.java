@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -588,7 +589,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup(text -> {
+    that.myPreviewPopupUpdateProcessor.setup((@NlsContexts.PopupAdvertisement var text) -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
       that.myPopup.setAdText(text, SwingConstants.LEFT);
       return Unit.INSTANCE;

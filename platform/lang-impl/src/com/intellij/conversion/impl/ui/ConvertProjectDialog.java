@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -156,7 +157,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
   }
 
-  private void showErrorMessage(@NotNull String message) {
+  private void showErrorMessage(@NotNull @NlsContexts.DialogMessage String message) {
     Messages.showErrorDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"));
   }
 

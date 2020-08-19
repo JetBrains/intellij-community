@@ -92,7 +92,7 @@ public abstract class InplaceRefactoring {
   protected final Editor myEditor;
   protected final Project myProject;
   protected RangeMarker myRenameOffset;
-  protected String myAdvertisementText;
+  protected @NlsContexts.PopupAdvertisement String myAdvertisementText;
   private ArrayList<RangeHighlighter> myHighlighters;
   protected String myInitialName;
   protected String myOldName;
@@ -161,7 +161,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  public void setAdvertisementText(String advertisementText) {
+  public void setAdvertisementText(@NlsContexts.PopupAdvertisement String advertisementText) {
     myAdvertisementText = advertisementText;
   }
 

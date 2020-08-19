@@ -3,6 +3,7 @@ package com.intellij.openapi.paths;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -128,7 +129,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @NotNull
-  protected abstract String getErrorMessage(@NotNull String url);
+  protected abstract @InspectionMessage String getErrorMessage(@NotNull String url);
 
   protected IntentionAction @NotNull [] getQuickFixes() {
     return IntentionAction.EMPTY_ARRAY;

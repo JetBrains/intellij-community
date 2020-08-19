@@ -663,7 +663,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return getName();
   }
 

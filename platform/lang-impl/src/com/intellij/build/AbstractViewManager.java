@@ -186,8 +186,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   @ApiStatus.Internal
   static class BuildInfo extends DefaultBuildDescriptor {
-    String message;
-    String statusMessage;
+    @BuildEventsNls.Message String message;
+    @BuildEventsNls.Message String statusMessage;
     long endTime = -1;
     EventResult result;
     Content content;

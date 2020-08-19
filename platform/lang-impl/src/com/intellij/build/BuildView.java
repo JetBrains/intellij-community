@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
 
   public BuildView(@NotNull Project project,
                    @NotNull BuildDescriptor buildDescriptor,
-                   @Nullable String selectionStateKey,
+                   @NonNls @Nullable String selectionStateKey,
                    @NotNull ViewManager viewManager) {
     this(project, null, buildDescriptor, selectionStateKey, viewManager);
   }
@@ -63,7 +64,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
   public BuildView(@NotNull Project project,
                    @Nullable ExecutionConsole executionConsole,
                    @NotNull BuildDescriptor buildDescriptor,
-                   @Nullable String selectionStateKey,
+                   @NonNls @Nullable String selectionStateKey,
                    @NotNull ViewManager viewManager) {
     super(selectionStateKey);
     myProject = project;

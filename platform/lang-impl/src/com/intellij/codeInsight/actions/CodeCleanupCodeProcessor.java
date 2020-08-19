@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -60,7 +61,7 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
     return false;
   }
 
-  public static String getProgressText() {
+  public static @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("process.cleanup.code");
   }
 }

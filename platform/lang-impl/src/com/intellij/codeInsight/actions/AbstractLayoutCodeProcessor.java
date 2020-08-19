@@ -71,7 +71,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private LayoutCodeInfoCollector myInfoCollector;
 
-  protected AbstractLayoutCodeProcessor(@NotNull Project project, String commandName, String progressText, boolean processChangedTextOnly) {
+  protected AbstractLayoutCodeProcessor(@NotNull Project project, @NlsContexts.Command String commandName, @NlsContexts.ProgressText String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
   }
 

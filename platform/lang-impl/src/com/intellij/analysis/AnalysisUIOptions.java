@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -34,7 +35,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   @Transient
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public volatile boolean SHOW_STRUCTURE = false;
-  public String FILE_MASK;
+  public @NlsSafe String FILE_MASK;
 
   public boolean ANALYSIS_IN_BACKGROUND = true;
 

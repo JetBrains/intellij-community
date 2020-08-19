@@ -186,7 +186,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  public static String renderSeverity(HighlightSeverity severity) {
+  public static @Nls String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
     return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
   }

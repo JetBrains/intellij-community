@@ -99,7 +99,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   public void addView(@NotNull InspectionResultsView view,
-                      @NotNull String title,
+                      @NotNull @NlsContexts.TabTitle String title,
                       boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myView = view;

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
@@ -44,7 +45,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
     this(project, title, null);
   }
 
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @NlsContexts.ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
   }
 

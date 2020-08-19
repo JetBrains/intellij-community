@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -76,7 +77,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   public static void invoke(final Project project, final Editor editor, PsiFile file,
                             int lbraceOffset, PsiElement highlightedElement,
                             boolean requestFocus, boolean singleParameterHint,
-                            @Nullable String progressTitle,
+                            @Nullable @NlsContexts.ProgressTitle String progressTitle,
                             Consumer<IndexNotReadyException> indexNotReadyExceptionConsumer) {
     final DumbService dumbService = DumbService.getInstance(project);
 

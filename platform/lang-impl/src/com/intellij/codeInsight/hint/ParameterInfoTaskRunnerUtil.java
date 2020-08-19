@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -45,7 +46,7 @@ final class ParameterInfoTaskRunnerUtil {
   static <T> void runTask(Project project,
                           NonBlockingReadAction<T> nonBlockingReadAction,
                           Consumer<T> continuationConsumer,
-                          @Nullable String progressTitle,
+                          @Nullable @NlsContexts.ProgressTitle String progressTitle,
                           Editor editor) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();
     Consumer<Boolean> stopAction =
@@ -80,7 +81,7 @@ final class ParameterInfoTaskRunnerUtil {
 
   @NotNull
   private static Consumer<Boolean> startProgressAndCreateStopAction(Project project,
-                                                                    String progressTitle,
+                                                                    @NlsContexts.ProgressTitle String progressTitle,
                                                                     AtomicReference<CancellablePromise<?>> promiseRef,
                                                                     Editor editor) {
     AtomicReference<Consumer<Boolean>> stopActionRef = new AtomicReference<>();
