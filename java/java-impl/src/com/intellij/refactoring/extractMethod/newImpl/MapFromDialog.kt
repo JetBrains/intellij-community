@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -14,10 +15,11 @@ import com.intellij.refactoring.extractMethod.InputVariables
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 object MapFromDialog {
-  fun mapFromDialog(extractOptions: ExtractOptions, title: String, helpId: String): ExtractOptions? {
+  fun mapFromDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle title: String, helpId: String): ExtractOptions? {
     val dialog = createDialog(extractOptions, title, helpId)
     val isOk = dialog.showAndGet()
     if (isOk){
@@ -28,7 +30,7 @@ object MapFromDialog {
     }
   }
 
-  private fun createDialog(extractOptions: ExtractOptions, refactoringName: String, helpId: String): ExtractMethodDialog {
+  private fun createDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle refactoringName: String, helpId: String): ExtractMethodDialog {
     val project = extractOptions.project
     val returnType = extractOptions.dataOutput.type
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()

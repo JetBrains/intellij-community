@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -91,7 +92,7 @@ public class CreateTestDialog extends DialogWrapper {
   private JLabel myFixLibraryLabel;
 
   public CreateTestDialog(@NotNull Project project,
-                          @NotNull String title,
+                          @NotNull @NlsContexts.DialogTitle String title,
                           PsiClass targetClass,
                           PsiPackage targetPackage,
                           Module targetModule) {

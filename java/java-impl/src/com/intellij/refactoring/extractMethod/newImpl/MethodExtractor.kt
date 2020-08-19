@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
@@ -41,7 +42,7 @@ class MethodExtractor {
 
   private val LOG = Logger.getInstance(MethodExtractor::class.java)
 
-  fun doExtract(file: PsiFile, range: TextRange, refactoringName: String, helpId: String) {
+  fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String) {
     val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
     try {
