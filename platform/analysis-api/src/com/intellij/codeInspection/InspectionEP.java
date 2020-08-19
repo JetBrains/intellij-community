@@ -182,7 +182,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("hasStaticDescription")
   public boolean hasStaticDescription;
 
-  private @Nullable String getLocalizedString(@Nullable String bundleName, String key) {
+  private @Nullable @Nls String getLocalizedString(@Nullable String bundleName, String key) {
     String baseName = bundleName != null ? bundleName :
                       bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {

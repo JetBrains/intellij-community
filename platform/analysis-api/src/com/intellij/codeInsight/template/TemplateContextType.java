@@ -25,7 +25,7 @@ public abstract class TemplateContextType {
   @NotNull
   private final String myContextId;
   @NotNull
-  private final String myPresentableName;
+  private final @Label String myPresentableName;
   private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
 
   protected TemplateContextType(@NotNull @NonNls String id, @Label @NotNull String presentableName) {
