@@ -16,9 +16,13 @@
 
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.projectModel.ProjectModelBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * The table below specifies which order entries are used during compilation and runtime.
@@ -42,20 +46,19 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public enum DependencyScope {
-  COMPILE("Compile", true, true, true, true),
-  TEST("Test", false, false, true, true),
-  RUNTIME("Runtime", false, true, false, true),
-  PROVIDED("Provided", true, false, true, true);
-  @NotNull
-  private final @Nls(capitalization = Nls.Capitalization.Title) String myDisplayName;
+  COMPILE(ProjectModelBundle.messagePointer("dependency.scope.compile"), true, true, true, true),
+  TEST(ProjectModelBundle.messagePointer("dependency.scope.test"), false, false, true, true),
+  RUNTIME(ProjectModelBundle.messagePointer("dependency.scope.runtime"), false, true, false, true),
+  PROVIDED(ProjectModelBundle.messagePointer("dependency.scope.provided"), true, false, true, true);
+  private final @NotNull Supplier<@NlsContexts.ListItem String> myDisplayName;
   private final boolean myForProductionCompile;
   private final boolean myForProductionRuntime;
   private final boolean myForTestCompile;
   private final boolean myForTestRuntime;
 
-  public static final String SCOPE_ATTR = "scope";
+  public static final @NonNls String SCOPE_ATTR = "scope";
 
-  DependencyScope(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String displayName,
+  DependencyScope(@NotNull Supplier<@NlsContexts.ListItem String> displayName,
                   boolean forProductionCompile,
                   boolean forProductionRuntime,
                   boolean forTestCompile,
@@ -90,8 +93,8 @@ public enum DependencyScope {
   }
 
   @NotNull
-  public String getDisplayName() {
-    return myDisplayName;
+  public @NlsContexts.ListItem String getDisplayName() {
+    return myDisplayName.get();
   }
 
   public boolean isForProductionCompile() {
@@ -111,7 +114,7 @@ public enum DependencyScope {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Title) String toString() {
-    return myDisplayName;
+  public @NlsContexts.ListItem String toString() {
+    return getDisplayName();
   }
 }
