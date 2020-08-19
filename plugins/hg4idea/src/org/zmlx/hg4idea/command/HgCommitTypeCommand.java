@@ -70,7 +70,7 @@ public abstract class HgCommitTypeCommand {
       FileUtil.writeToFile(tempFile, myMessage.getBytes(myCharset));
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't prepare commit message", e);
+      throw new VcsException(HgBundle.message("action.hg4idea.Commit.cant.prepare.commit.message.file"), e);
     }
     return tempFile;
   }

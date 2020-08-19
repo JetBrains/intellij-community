@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
@@ -493,7 +492,7 @@ public final class HgHistoryUtil {
     String template = HgChangesetUtil.makeTemplate("{branch}", "{bookmarks}");
     HgCommandResult logResult = hgLogCommand.execute(root, template, -1, null, params);
     if (logResult == null || logResult.getExitValue() != 0) {
-      throw new VcsException("Couldn't get commit details: log command execution error.");
+      throw new VcsException(HgBundle.message("error.history.cant.get.commit.details.log.command.error"));
     }
     String output = logResult.getRawOutput();
     List<String> changeSets = StringUtil.split(output, HgChangesetUtil.CHANGESET_SEPARATOR);

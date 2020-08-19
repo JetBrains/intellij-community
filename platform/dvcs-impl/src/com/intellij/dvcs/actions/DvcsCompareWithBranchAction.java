@@ -114,6 +114,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     }.queue();
   }
 
+  @NlsSafe
   protected static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
     return DvcsBundle.message("error.text.file.not.found.in.branch",
                               file.isDirectory() ? 1 : 0, file.getPresentableUrl(), branchToCompare);

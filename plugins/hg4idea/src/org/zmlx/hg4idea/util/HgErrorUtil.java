@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -42,7 +43,7 @@ public final class HgErrorUtil {
 
   public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
     if (result == null) {
-      throw new VcsException("Couldn't execute Mercurial command");
+      throw new VcsException(HgBundle.message("error.cannot.execute.command"));
     }
     // workaround for mercurial: trying to merge with ancestor is not important/fatal error but natively hg produces abort error.
     if (fatalErrorOccurred(result) && !isAncestorMergeError(result)) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -222,7 +223,7 @@ public class HgRegularUpdater implements HgUpdater {
     indicator.setText2(HgBundle.message("hg4idea.progress.rebase"));
     HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
     if (repository == null) {
-      throw new VcsException("Repository not found for root " + repoRoot);
+      throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", repoRoot.getPresentableUrl()));
     }
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
@@ -285,13 +286,13 @@ public class HgRegularUpdater implements HgUpdater {
     addUpdatedFiles(repo, updatedFiles, parentBeforeUpdate, parentAfterUpdate);
   }
 
-  private static void handlePossibleWarning(List<VcsException> exceptions, String possibleWarning) {
+  private static void handlePossibleWarning(List<VcsException> exceptions, @Nls String possibleWarning) {
     if (!StringUtil.isEmptyOrSpaces(possibleWarning)) {
       reportWarning(exceptions, possibleWarning);
     }
   }
 
-  private static void reportWarning(List<VcsException> exceptions, String warningMessage) {
+  private static void reportWarning(List<VcsException> exceptions, @Nls String warningMessage) {
     VcsException warningException = new VcsException(warningMessage);
     warningException.setIsWarning(true);
     exceptions.add(warningException);

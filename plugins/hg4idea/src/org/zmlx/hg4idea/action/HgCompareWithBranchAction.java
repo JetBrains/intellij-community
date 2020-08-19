@@ -14,11 +14,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgBundle;
-import org.zmlx.hg4idea.HgContentRevision;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgNameWithHashInfo;
-import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -100,7 +96,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
                                               @NotNull String branchToCompare) throws VcsException {
     HgRepository repository = getRepositoryManager(project).getRepositoryForFile(file);
     if (repository == null) {
-      throw new VcsException("Couldn't find repository for " + file.getName());
+      throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", file.getName()));
     }
     final FilePath filePath = VcsUtil.getFilePath(file);
     final VirtualFile repositoryRoot = repository.getRoot();
