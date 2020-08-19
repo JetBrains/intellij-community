@@ -5,12 +5,14 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 
-interface ClientIdValueStoreService {
+interface ClientIdService {
     companion object {
-        fun tryGetInstance(): ClientIdValueStoreService? {
+        fun tryGetInstance(): ClientIdService? {
             if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred || ApplicationManager.getApplication().isDisposed) return null
-            return ServiceManager.getService(ClientIdValueStoreService::class.java)
+            return ServiceManager.getService(ClientIdService::class.java)
         }
     }
-    var value: String?
+    var clientIdValue: String?
+
+    val checkLongActivity: Boolean
 }
