@@ -301,7 +301,8 @@ public class PyCompatibilityInspection extends PyInspection {
             final PyType type = context.getType(qualifier);
             final PyClassType dictType = PyBuiltinCache.getInstance(node).getDictType();
             if (PyTypeChecker.match(dictType, type, context)) {
-              registerProblem(node, "dict.iterkeys(), dict.iteritems() and dict.itervalues() methods are not available in py3");
+              //noinspection DialogTitleCapitalization
+              registerProblem(node, PyPsiBundle.message("INSP.compatibility.old.dict.methods.not.available.in.py3"));
             }
           }
         }
@@ -313,11 +314,13 @@ public class PyCompatibilityInspection extends PyInspection {
             if (file != null) {
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null && ProjectRootManager.getInstance(node.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-                registerProblem(node, "basestring type is not available in py3");
+                //noinspection DialogTitleCapitalization
+                registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
               }
             }
             else {
-              registerProblem(node, "basestring type is not available in py3");
+              //noinspection DialogTitleCapitalization
+              registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
             }
           }
         }
