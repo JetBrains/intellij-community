@@ -33,7 +33,7 @@
 
   <editor background-url="/artwork/studio_logo_background.png"/>
 
-  <plugins url="http://plugins.jetbrains.com"/>
+  <plugins url="https://plugins.jetbrains.com"/>
   <update-urls check="https://dl.google.com/android/studio/patches/updates.xml"
                patches="https://dl.google.com/android/studio/patches/"/>
 
