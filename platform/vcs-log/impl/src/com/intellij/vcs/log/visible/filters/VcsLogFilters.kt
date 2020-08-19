@@ -20,7 +20,7 @@ import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters") // NON-NLS
+private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
 object VcsLogFilterObject {
   const val ME = "*"

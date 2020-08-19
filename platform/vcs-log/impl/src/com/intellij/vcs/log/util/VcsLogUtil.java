@@ -348,7 +348,7 @@ public final class VcsLogUtil {
   @NotNull
   @NonNls
   public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]"; // NON-NLS
+    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
   }
 
   @NotNull

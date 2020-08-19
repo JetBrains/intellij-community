@@ -60,9 +60,9 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
-  private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion"; // NON-NLS
-  private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion"; // NON-NLS
-  private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion"; // NON-NLS
+  @NonNls private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
+  @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
+  @NonNls private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MainVcsLogUiProperties myUiProperties;

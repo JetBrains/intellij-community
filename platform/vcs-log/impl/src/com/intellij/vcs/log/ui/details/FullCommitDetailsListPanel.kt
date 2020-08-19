@@ -26,6 +26,7 @@ import com.intellij.vcs.log.data.SingleTaskController
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.border.Border
@@ -37,7 +38,8 @@ abstract class FullCommitDetailsListPanel(
   modalityState: ModalityState
 ) : BorderLayoutPanel() {
   companion object {
-    private const val DETAILS_SPLITTER = "Full.Commit.Details.List.Splitter" // NON-NLS
+    @NonNls
+    private const val DETAILS_SPLITTER = "Full.Commit.Details.List.Splitter"
   }
 
   private val changesBrowserWithLoadingPanel = ChangesBrowserWithLoadingPanel(project, parent)

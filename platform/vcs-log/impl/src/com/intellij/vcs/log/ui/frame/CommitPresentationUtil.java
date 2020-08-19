@@ -40,9 +40,9 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public final class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
-  @NotNull private static final String GO_TO_HASH = "go-to-hash:"; // NON-NLS
-  @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches"; // NON-NLS
-  private static final String ELLIPSIS = "..."; // NON-NLS
+  @NotNull @NlsSafe private static final String GO_TO_HASH = "go-to-hash:";
+  @NotNull @NlsSafe private static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
+  @NlsSafe private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
 

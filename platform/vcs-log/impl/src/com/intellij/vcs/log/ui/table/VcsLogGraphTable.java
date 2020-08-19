@@ -457,7 +457,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         String clickMessage = isShowRootNames()
                               ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                               : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-        return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>"; // NON-NLS
+        return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>";
       }
     }
     return null;
