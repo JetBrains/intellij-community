@@ -34,6 +34,7 @@ import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class PythonTask {
 
   @NotNull
   public static PythonTask create(@NotNull final Module module,
-                                  @NotNull final String runTabTitle,
+                                  @Nls @NotNull final String runTabTitle,
                                   @NotNull final Sdk sdk) {
     // Ctor throws checked exception which is not good, so this wrapper saves user from dumb code
     try {
@@ -88,7 +89,7 @@ public class PythonTask {
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
     if (mySdk == null) { // TODO: Get rid of such a weird contract
-      throw new ExecutionException("Cannot find Python interpreter for selected module");
+      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }
   }
 
