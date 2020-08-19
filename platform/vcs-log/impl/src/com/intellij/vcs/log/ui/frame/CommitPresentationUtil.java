@@ -188,53 +188,42 @@ public final class CommitPresentationUtil {
                                              DateFormatUtil.formatDate(authorTime),
                                              DateFormatUtil.formatTime(authorTime));
 
-    String committerText = null;
+    HtmlBuilder builder = new HtmlBuilder().appendRaw(authorText);
     if (!VcsUserUtil.isSamePerson(author, committer)) {
-      committerText = getCommitterText(committer, commitTime != authorTime ? commitTime : null);
+      builder.append(HtmlChunk.br()).append(getCommitterHtml(committer, commitTime != authorTime ? commitTime : null));
     }
     else if (authorTime != commitTime) {
-      committerText = getCommitterText(null, commitTime);
+      builder.append(HtmlChunk.br()).append(getCommitterHtml(null, commitTime));
     }
-    authorText += (committerText != null ? "<br/>" + committerText : "");
 
-    return authorText;
+    return builder.toString();
   }
 
   @NotNull
-  @Nls
-  private static String getCommitterText(@Nullable VcsUser committer, @Nullable Long commitTime) {
+  private static HtmlChunk getCommitterHtml(@Nullable VcsUser committer, @Nullable Long commitTime) {
     if (committer == null && commitTime == null) {
-      return "";
+      return HtmlChunk.empty();
     }
 
-    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
-    StringBuilder builder = new StringBuilder(graySpan);
+    HtmlChunk.Element graySpan = HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.GRAY));
 
-    if (commitTime == null) {
-      boolean withEmail = !committer.getEmail().isEmpty();
+    String committed;
+    if (committer == null) {
+      String date = DateFormatUtil.formatDate(commitTime);
+      String time = DateFormatUtil.formatTime(commitTime);
+      committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
+    } else {
       String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + " " + getEmailLink(committer) + graySpan : "");
-      builder.append(VcsLogBundle.message("vcs.log.details.committer.info.user", by));
-      builder.append("</span>");
-      return builder.toString();
+                  (!committer.getEmail().isEmpty() ? "</span> " + getEmailLink(committer) + graySpan : "");
+      if (commitTime == null) {
+        committed = VcsLogBundle.message("vcs.log.details.committer.info.user", by);
+      } else {
+        String date = DateFormatUtil.formatDate(commitTime);
+        String time = DateFormatUtil.formatTime(commitTime);
+        committed = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
+      }
     }
-
-    String date = DateFormatUtil.formatDate(commitTime);
-    String time = DateFormatUtil.formatTime(commitTime);
-
-    if (committer != null) {
-      boolean withEmail = !committer.getEmail().isEmpty();
-      String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + (" " + getEmailLink(committer)) + graySpan : "");
-      String committedBy = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
-      builder.append(committedBy);
-    }
-    else {
-      String committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
-      builder.append(committed);
-    }
-    builder.append("</span>");
-    return builder.toString();
+    return new HtmlBuilder().appendRaw(committed).wrapWith(graySpan);
   }
 
   @NotNull
