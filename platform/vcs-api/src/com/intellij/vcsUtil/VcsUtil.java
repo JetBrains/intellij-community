@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -598,10 +599,10 @@ public class VcsUtil {
     return message;
   }
 
-  private static String trimCommitMessageAt(@NotNull String message, int index) {
-    return String.format("%s\n\n... Commit message is too long and was truncated by %s ...",
-                         message.substring(0, index),
-                         ApplicationNamesInfo.getInstance().getProductName());
+  @NlsSafe
+  private static String trimCommitMessageAt(@NotNull @NlsSafe String message, int index) {
+    return VcsBundle.message("text.commit.message.truncated.by.ide.name", message.substring(0, index),
+                             ApplicationNamesInfo.getInstance().getProductName());
   }
 
   private static int nthIndexOf(@NotNull String text, char c, int n) {
