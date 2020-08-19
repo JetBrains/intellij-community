@@ -174,6 +174,14 @@ idea.fatal.error.notification=disabled
   File patchApplicationInfo() {
     def sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
+
+    // Android Studio: Don't patch application info
+    if (buildContext.options.studioSdk) {
+      FileUtil.createParentDirs(targetFile)
+      targetFile.text = sourceFile.text
+      return targetFile
+    }
+
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
