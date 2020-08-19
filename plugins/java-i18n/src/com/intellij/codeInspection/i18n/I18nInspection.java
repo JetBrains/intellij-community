@@ -645,6 +645,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       PsiMethod target = ref.resolve();
       if (target == null) return;
       if (IGNORED_METHODS.methodMatches(target)) return;
+      if (NlsInfo.isStringProcessingMethod(target)) return;
       UExpression expr = ref;
       if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
         expr = (UQualifiedReferenceExpression)ref.getUastParent();

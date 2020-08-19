@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import kotlin.Pair;
@@ -366,12 +366,41 @@ public abstract class NlsInfo {
       if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
       if (next instanceof UCallExpression) {
         if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
-          return parent;
+          PsiMethod method = ((UCallExpression)next).resolve();
+          if (!isStringProcessingMethod(method)) {
+            return parent;
+          }
         }
       }
       if (next instanceof UIfExpression && expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
       parent = next;
     }
+  }
+
+  /**
+   * Checks if the method is detected to be a string-processing method. A string processing method is a method that:
+   * <ul>
+   *   <li>Returns string</li>
+   *   <li>Pure (either explicitly marked or inferred)</li>
+   *   <li>Accepts parameters</li>
+   *   <li>No parameters are marked using Nls annotations</li>
+   *   <li>Return value is not marked using Nls annotations</li>
+   * </ul>
+   * 
+   * @param method method to check
+   * @return true if method is detected to be a string-processing method. A string processing method is a method that:
+   */
+  static boolean isStringProcessingMethod(PsiMethod method) {
+    if (method == null) return false;
+    if (!TypeUtils.isJavaLangString(method.getReturnType())) return false;
+    if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
+    if (!JavaMethodContractUtil.isPure(method)) return false;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 0) return false;
+    for (PsiParameter parameter : parameters) {
+      if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
+    }
+    return true;
   }
 
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
