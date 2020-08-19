@@ -27,6 +27,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ShowSettingsUtil.getSettingsMenuName
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
@@ -151,13 +152,13 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
-          component(Link(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
+          component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
         }
       }
       blockRow {
-        component(Link(IdeBundle.message("welcome.screen.all.settings.link"))
+        component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link"))
                   { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
@@ -178,7 +179,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
             PlatformEditorBundle.message(it?.key ?: "")
           }).comment(UIBundle.message("color.blindness.combobox.comment")).enableIf(checkBox.selected)
         }
-        component(Link(UIBundle.message("color.blindness.link.to.help"))
+        component(focusableLink(UIBundle.message("color.blindness.link.to.help"))
                   { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
           .withLargeLeftGap()
       }
@@ -198,6 +199,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(3)).deriveFont(Font.BOLD))
       }
     }
+  }
+
+  private fun focusableLink(@NlsContexts.Label text: String, action: () -> Unit): JComponent {
+    return Link(text, null, action).apply { isFocusable = true }
   }
 
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
