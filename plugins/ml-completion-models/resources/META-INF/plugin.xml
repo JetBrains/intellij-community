@@ -4,6 +4,11 @@
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
 
+  <description><![CDATA[
+      <p>The plugin contains experimental models for code completion based on machine learning.
+      These models are used in A/B experiments during EAP.</p>
+    ]]></description>
+
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.stats.completion</depends>
