@@ -916,6 +916,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   // caller is responsible to ensure no concurrent same document processing
   void indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project,
                             @NotNull final VirtualFile vFile) {
+    myStorageBufferingHandler.assertTransientMode();
+
     final PsiFile dominantContentFile = project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
 
     final DocumentContent content;
@@ -1376,6 +1378,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
       if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
+        myStorageBufferingHandler.assertOnTheDiskMode();
+
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {
