@@ -3,8 +3,10 @@ package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +77,7 @@ public interface Repository extends Disposable {
   @NotNull
   VirtualFile getRoot();
 
+  @NlsSafe
   @NotNull
   String getPresentableUrl();
 
@@ -84,6 +87,7 @@ public interface Repository extends Disposable {
   @NotNull
   State getState();
 
+  @NlsSafe
   @Nullable
   String getCurrentBranchName();
 
@@ -94,6 +98,7 @@ public interface Repository extends Disposable {
    * Returns the hash of the revision, which HEAD currently points to.
    * Returns null only in the case of a fresh repository, when no commit have been made.
    */
+  @NlsSafe
   @Nullable
   String getCurrentRevision();
 
@@ -110,6 +115,7 @@ public interface Repository extends Disposable {
   /**
    * Returns a detailed String representation suitable for logging purposes.
    */
+  @NonNls
   @NotNull
   String toLogString();
 }

@@ -32,6 +32,7 @@ public class HgPushSource implements PushSource {
     return myBranch;
   }
 
+  @NlsSafe
   @NotNull
   public String getBranch() {
     return myBranch;   // presentation may differ from branch
