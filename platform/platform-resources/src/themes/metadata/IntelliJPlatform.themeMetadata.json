@@ -624,6 +624,14 @@
       "description": "Button background to highlight chosen search option"
     },
     {
+      "key": "SearchResults.Ordinal.File.Foreground",
+      "description": "Filename foreground in 'Find in Path' (the first file row) and line number (all rows)"
+    },
+    {
+      "key": "SearchResults.Repeated.File.Foreground",
+      "description": "Filename foreground in 'Find in Path' (all file rows except the first one)"
+    },
+    {
       "key": "SearchMatch.startBackground"
     },
     {
