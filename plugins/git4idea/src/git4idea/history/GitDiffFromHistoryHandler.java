@@ -114,8 +114,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     List<VcsFileRevision> revisions = session != null ? session.getRevisionList() : null;
     checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, info -> {
       if (!info.wasFileTouched()) {
-        String message = String.format("There were no changes in %s in this merge commit, besides those which were made in both branches",
-                                       filePath.getName());
+        String message = GitBundle.message("git.history.diff.handler.no.changes.in.file.info", filePath.getName());
         VcsBalloonProblemNotifier.showOverVersionControlView(this.myProject, message, MessageType.INFO);
       }
       showPopup(event, rev, filePath, info.getParents());
