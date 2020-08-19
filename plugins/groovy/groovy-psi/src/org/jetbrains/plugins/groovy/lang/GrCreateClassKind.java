@@ -1,6 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind;
+import com.intellij.openapi.util.NlsSafe;
 
 public enum GrCreateClassKind implements ClassKind {
   CLASS     ("class"),
@@ -9,6 +11,7 @@ public enum GrCreateClassKind implements ClassKind {
   ENUM      ("enum"),
   ANNOTATION("annotation");
 
+  @NlsSafe
   private final String myDescription;
 
   GrCreateClassKind(final String description) {

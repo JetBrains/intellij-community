@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.findUsages
 
 import com.intellij.lang.cacheBuilder.WordsScanner
@@ -59,7 +59,7 @@ open class GroovyFindUsagesProvider : FindUsagesProvider {
           method
         }
         else {
-          "$method of ${getDescriptiveName(clazz)}"
+          message("find.usages.method.0.of.class.1", method,getDescriptiveName(clazz))
         }
       }
       is PsiVariable -> element.name

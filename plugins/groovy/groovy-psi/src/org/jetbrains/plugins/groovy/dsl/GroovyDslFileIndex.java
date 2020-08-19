@@ -32,6 +32,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GdslFileType;
@@ -134,7 +135,7 @@ public final class GroovyDslFileIndex {
 
       for (Object info : infos) {
         if (info instanceof Map) {
-          final Map map = (Map)info;
+          @NonNls final Map map = (Map)info;
 
           final Object _pattern = map.get("pattern");
           final Object _superClass = map.get("superClass");

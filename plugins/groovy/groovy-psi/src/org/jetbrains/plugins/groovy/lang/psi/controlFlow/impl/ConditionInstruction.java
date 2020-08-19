@@ -35,7 +35,7 @@ public class ConditionInstruction extends InstructionImpl implements Instruction
   @NotNull
   @Override
   protected String getElementPresentation() {
-    StringBuilder builder = new StringBuilder();
+    @NonNls StringBuilder builder = new StringBuilder();
     builder.append("Condition ").append(getElement());
     if (myNegated) builder.append(", negated");
     if (myDependent.size() > 1) {

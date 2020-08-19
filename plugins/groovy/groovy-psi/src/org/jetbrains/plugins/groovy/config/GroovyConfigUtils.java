@@ -28,19 +28,21 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
   @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
 
-  public static final String NO_VERSION = "<no version>";
-  public static final String GROOVY1_7 = "1.7";
-  public static final String GROOVY1_8 = "1.8";
-  public static final String GROOVY2_0 = "2.0";
-  public static final String GROOVY2_1 = "2.1";
-  public static final String GROOVY2_2 = "2.2";
-  public static final String GROOVY2_2_2 = "2.2.2";
-  public static final String GROOVY2_3 = "2.3";
-  public static final String GROOVY2_4 = "2.4";
-  public static final String GROOVY2_5 = "2.5";
-  public static final String GROOVY3_0 = "3.0";
+  @NlsSafe public static final String NO_VERSION = "<no version>";
+  @NlsSafe public static final String GROOVY1_7 = "1.7";
+  @NlsSafe public static final String GROOVY1_8 = "1.8";
+  @NlsSafe public static final String GROOVY2_0 = "2.0";
+  @NlsSafe public static final String GROOVY2_1 = "2.1";
+  @NlsSafe public static final String GROOVY2_2 = "2.2";
+  @NlsSafe public static final String GROOVY2_2_2 = "2.2.2";
+  @NlsSafe public static final String GROOVY2_3 = "2.3";
+  @NlsSafe public static final String GROOVY2_4 = "2.4";
+  @NlsSafe public static final String GROOVY2_5 = "2.5";
+  @NlsSafe public static final String GROOVY3_0 = "3.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
+  @NonNls private static final String LIB = "/lib";
+  @NonNls private static final String EMBEDDABLE = "/embeddable";
 
   private GroovyConfigUtils() {}
 
@@ -57,13 +59,14 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Override
-  public @Nullable String getSDKVersionOrNull(@NotNull String path) {
-    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
+  @NlsSafe
+  public @Nullable String getSDKVersionOrNull(@NlsSafe @NotNull String path) {
+    String groovyJarVersion = getSDKJarVersion(path + LIB, GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+      groovyJarVersion = getSDKJarVersion(path + LIB, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+      groovyJarVersion = getSDKJarVersion(path + EMBEDDABLE, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
@@ -114,8 +117,8 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
-      if (LibrariesUtil.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0 ||
+      if (LibrariesUtil.getFilesInDirectoryByPattern(path + LIB, GROOVY_JAR_PATTERN).length > 0 ||
+          LibrariesUtil.getFilesInDirectoryByPattern(path + EMBEDDABLE, GROOVY_ALL_JAR_PATTERN).length > 0 ||
           LibrariesUtil.getFilesInDirectoryByPattern(path, GROOVY_JAR_PATTERN).length > 0) {
         return true;
       }
