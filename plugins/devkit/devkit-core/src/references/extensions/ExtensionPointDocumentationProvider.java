@@ -23,6 +23,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -95,9 +96,9 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
           HtmlChunk hyperLink = createLink(JavaDocUtil.getReferenceText(field.getProject(), field), displayName);
 
           final String typeText = field.getType().getPresentableText();
+          final String requiredText = required ? " " + DevKitBundle.message("extension.point.documentation.field.required.suffix") : "";
           final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
-
-          bindingRows.append(createSectionRow(hyperLink, typeText + (required ? " (required)" : "") + initializer));
+          bindingRows.append(createSectionRow(hyperLink, typeText + requiredText + initializer));
         }
       });
 
@@ -113,7 +114,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
     if (extensionPointClass != null) { // e.g. ServiceDescriptor
       HtmlBuilder content = new HtmlBuilder();
-      content.append(HtmlChunk.text("Extension Point Implementation").wrapWith("h2"));
+      content.append(HtmlChunk.text(DevKitBundle.message("extension.point.documentation.implementation.section")).wrapWith("h2"));
       content.append(generateClassDoc(extensionPointClass));
       builder.append(content.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
     }
