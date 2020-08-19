@@ -22,6 +22,15 @@ public class TestFailedState extends AbstractState implements Disposable{
     myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
   }
 
+  @Nullable
+  public static String buildErrorPresentationText(@Nullable final String localizedMessage,
+                                                  @Nullable final String stackTrace)
+  {
+    final String text = (StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage + CompositePrintable.NEW_LINE) +
+                        (StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace + CompositePrintable.NEW_LINE);
+    return StringUtil.isEmptyOrSpaces(text) ? null : text;
+  }
+  
   @Override
   public void dispose() {}
 
@@ -30,13 +39,9 @@ public class TestFailedState extends AbstractState implements Disposable{
   public void printOn(final Printer printer) {
     printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.mark();
-    if (!StringUtil.isEmpty(myErrorMsgPresentation)) {
-      printer.printWithAnsiColoring(myErrorMsgPresentation, ProcessOutputTypes.STDERR);
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-    }
-    if (!StringUtil.isEmpty(myStacktracePresentation)) {
-      printer.printWithAnsiColoring(myStacktracePresentation, ProcessOutputTypes.STDERR);
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    String compoundMessage = buildErrorPresentationText(myErrorMsgPresentation, myStacktracePresentation);
+    if (compoundMessage != null) {
+      printer.printWithAnsiColoring(compoundMessage, ProcessOutputTypes.STDERR);
     }
   }
 
