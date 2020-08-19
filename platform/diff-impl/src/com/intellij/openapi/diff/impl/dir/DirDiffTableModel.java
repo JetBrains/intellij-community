@@ -72,7 +72,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private final List<DirDiffElementImpl> myElements = new ArrayList<>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
-  private final AtomicReference<String> text = new AtomicReference<>(prepareText(""));
+  private final AtomicReference<@Nls String> text = new AtomicReference<>(prepareText(""));
   private volatile Updater myUpdater;
   private final List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
@@ -194,6 +194,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return map != null ? map.get(source.getSourceName()) : null;
   }
 
+  @Nls
   private static String prepareText(String text) {
     final int LEN = EMPTY_STRING.length();
     String right;

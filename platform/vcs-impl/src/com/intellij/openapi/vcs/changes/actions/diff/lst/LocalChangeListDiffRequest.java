@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +23,7 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myVirtualFile;
   @NotNull private final String myChangelistId;
-  @NotNull private final String myChangelistName;
+  @NotNull private final @NlsSafe String myChangelistName;
   @NotNull private final ContentDiffRequest myRequest;
 
   private int myAssignments;

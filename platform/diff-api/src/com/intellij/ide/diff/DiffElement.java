@@ -18,6 +18,7 @@ package com.intellij.ide.diff;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -121,7 +122,7 @@ public abstract class DiffElement<T> {
       }
 
       byte[] content = getContent();
-      if (content == null) throw new DiffRequestProducerException("Can't get content");
+      if (content == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.dirdiff.preview.cant.load.content"));
 
       return DiffContentFactory.getInstance().create(project, new String(content, getCharset()), getFileType());
     }

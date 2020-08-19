@@ -69,10 +69,10 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   @NotNull
   @Nls
   private static String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
-                                         @NotNull Key<String> key,
+                                         @NotNull Key<@Nls String> key,
                                          @Nullable ContentRevision revision,
                                          @NotNull @Nls String defaultTitle) {
-    String titleFromContext = (String)context.get(key);
+    @Nls String titleFromContext = (String)context.get(key);
     if (titleFromContext != null) return titleFromContext;
     return ChangeDiffRequestProducer.getRevisionTitle(revision, defaultTitle);
   }

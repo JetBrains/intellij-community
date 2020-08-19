@@ -452,12 +452,14 @@ public final class DiffUtil {
     }
   }
 
+  @Nls
   @NotNull
   public static String getSettingsConfigurablePath() {
     return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
                             : DiffBundle.message("label.diff.settings.path");
   }
 
+  @Nls
   @NotNull
   public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     HtmlBuilder result = new HtmlBuilder();
@@ -469,6 +471,7 @@ public final class DiffUtil {
     return result.wrapWithHtmlBody().toString();
   }
 
+  @Nls
   @NotNull
   public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     HtmlBuilder result = new HtmlBuilder();
