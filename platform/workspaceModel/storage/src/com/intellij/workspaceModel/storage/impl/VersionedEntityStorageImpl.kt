@@ -51,29 +51,13 @@ internal class ValuesCache {
 class VersionedEntityStorageOnBuilder(private val builder: WorkspaceEntityStorageBuilder) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
-    get() {
-      val snapshotCache = currentSnapshot.get()
-      if (snapshotCache == null || builder.modificationCount != snapshotCache.storageVersion) {
-        val cache = ValuesCache()
-        currentSnapshot.set(StorageSnapshotCache(builder.modificationCount, cache, builder.toStorage()))
-        return cache
-      }
-      return snapshotCache.cache
-    }
+    get() = getCurrentSnapshot().cache
 
   override val version: Long
     get() = builder.modificationCount
 
   override val current: WorkspaceEntityStorage
-    get() {
-      val snapshotCache = currentSnapshot.get()
-      if (snapshotCache == null || builder.modificationCount != snapshotCache.storageVersion) {
-        val snapshot = builder.toStorage()
-        currentSnapshot.set(StorageSnapshotCache(builder.modificationCount, ValuesCache(), snapshot))
-        return snapshot
-      }
-      return snapshotCache.storage
-    }
+    get() = getCurrentSnapshot().storage
 
   override fun <R> cachedValue(value: CachedValue<R>): R = valuesCache.cachedValue(value, current)
 
@@ -83,6 +67,16 @@ class VersionedEntityStorageOnBuilder(private val builder: WorkspaceEntityStorag
   override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
     valuesCache.clearCachedValue(value, parameter)
+
+  private fun getCurrentSnapshot(): StorageSnapshotCache {
+    val snapshotCache = currentSnapshot.get()
+    if (snapshotCache == null || builder.modificationCount != snapshotCache.storageVersion) {
+      val storageSnapshotCache = StorageSnapshotCache(builder.modificationCount, ValuesCache(), builder.toStorage())
+      currentSnapshot.set(storageSnapshotCache)
+      return storageSnapshotCache
+    }
+    return snapshotCache
+  }
 }
 
 class VersionedEntityStorageOnStorage(private val storage: WorkspaceEntityStorage) : VersionedEntityStorage {
