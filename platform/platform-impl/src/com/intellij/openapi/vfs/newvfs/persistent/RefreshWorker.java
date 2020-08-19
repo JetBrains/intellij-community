@@ -177,10 +177,26 @@ public final class RefreshWorker {
       }
     }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.size());
-    for (VirtualFile child : children) {
-      checkCancelled(dir);
-      if (!deletedNames.contains(child.getName())) {
+    var updatedMap = new ArrayList<Pair<VirtualFile, FileAttributes>>(children.size() - deletedNames.size());
+    var chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
+
+    var map = fs instanceof BatchingFileSystem
+                                      ? ((BatchingFileSystem)fs).listWithAttributes(dir, ContainerUtil.map(chs, file -> file.getName()))
+                                      : null;
+    if (map != null) {
+      Map<String, VirtualFile> nameToFile = new HashMap<>();
+      for (var file : chs) {
+        nameToFile.put(file.getName(), file);
+      }
+      for (var e : map.entrySet()) {
+        String name = e.getKey();
+        FileAttributes attributes = e.getValue();
+        updatedMap.add(Pair.create(nameToFile.get(name), VfsImplUtil.getAttributesWithCaseSensitivity(fs, attributes)));
+      }
+    }
+    else {
+      for (VirtualFile child : chs) {
+        checkCancelled(dir);
         updatedMap.add(new Pair<>(child, VfsImplUtil.getAttributesWithCaseSensitivity(fs, child)));
       }
     }
