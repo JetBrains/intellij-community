@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -54,6 +55,14 @@ public class ShRunFileAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getProject() != null && e.getData(CommonDataKeys.PSI_FILE) != null;
+    if (e.getProject() != null) {
+      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+      if (file != null) {
+        if (file instanceof ShFile) return true;
+        PsiElement firstChild = file.getFirstChild();
+        return firstChild != null && firstChild.getText().startsWith("#!");
+      }
+    }
+    return false;
   }
 }
