@@ -2,6 +2,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,27 +30,27 @@ public class ProcessOutput {
     myStderrBuilder.append(text);
   }
 
-  public @NotNull String getStdout() {
+  public @NotNull @NlsSafe String getStdout() {
     return myStdoutBuilder.toString();
   }
 
-  public @NotNull String getStderr() {
+  public @NotNull @NlsSafe String getStderr() {
     return myStderrBuilder.toString();
   }
 
-  public @NotNull List<String> getStdoutLines() {
+  public @NotNull List<@NlsSafe String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
-  public @NotNull List<String> getStdoutLines(boolean excludeEmptyLines) {
+  public @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
-  public @NotNull List<String> getStderrLines() {
+  public @NotNull List<@NlsSafe String> getStderrLines() {
     return getStderrLines(true);
   }
 
-  public @NotNull List<String> getStderrLines(boolean excludeEmptyLines) {
+  public @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
