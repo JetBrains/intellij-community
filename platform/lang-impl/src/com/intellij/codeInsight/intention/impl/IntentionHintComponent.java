@@ -82,7 +82,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     void close();
   }
 
-  static class IntentionPopup implements Popup {
+  static class IntentionPopup implements Popup, Disposable.Parent {
     private final CachedIntentions myCachedIntentions;
     private final Editor myEditor;
     private final PsiFile myFile;
@@ -148,9 +148,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
+
+    @Override
+    public void beforeTreeDispose() {
+      // The flag has to be set early. Child's dispose() can call `cancelled` and it must be a no-op at this point.
+      myDisposed = true;
+    }
+
     @Override
     public void dispose() {
-      myDisposed = true;
       if (myOuterComboboxPopupListener != null) {
         JComboBox<?> ancestor = findAncestorCombo(myEditor);
         if (ancestor != null) {
