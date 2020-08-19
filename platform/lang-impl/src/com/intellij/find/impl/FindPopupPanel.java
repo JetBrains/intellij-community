@@ -869,7 +869,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   @Contract("_,!null,_->!null")
-  private static String getPresentablePath(@NotNull Project project, @Nullable VirtualFile virtualFile, int maxChars) {
+  private static @NlsSafe String getPresentablePath(@NotNull Project project, @Nullable VirtualFile virtualFile, int maxChars) {
     if (virtualFile == null) return null;
     String path = ScratchUtil.isScratch(virtualFile)
                ? ScratchUtil.getRelativePath(project, virtualFile)
@@ -1047,7 +1047,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myCbFileFilter.putClientProperty("dontRequestFocus", null);
     }
     myFileMaskField.removeAllItems();
-    List<String> variants = Arrays.asList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFileMasks()));
+    List<@NlsSafe String> variants = Arrays.asList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFileMasks()));
     for (String variant : variants) {
       myFileMaskField.addItem(variant);
     }
@@ -1431,7 +1431,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   @Nullable
-  private static String getOptionText(Object option, boolean full) {
+  private static @NlsContexts.StatusText String getOptionText(Object option, boolean full) {
     if (option instanceof AnAction) {
       String text = ((AnAction)option).getTemplateText();
       if (text == null) text = "";
@@ -1936,7 +1936,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
 
       @NotNull
-      private String getFilePath(@NotNull UsageInfo2UsageAdapter ua) {
+      private @NlsSafe String getFilePath(@NotNull UsageInfo2UsageAdapter ua) {
         VirtualFile file = ua.getFile();
         if (ScratchUtil.isScratch(file)) {
           return StringUtil.notNullize(getPresentablePath(ua.getUsageInfo().getProject(), ua.getFile(), 60));

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -152,7 +153,7 @@ public final class CopyReferenceUtil {
   }
 
   @NotNull
-  static String getFileFqn(final PsiFile file) {
+  static @NlsSafe String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
   }

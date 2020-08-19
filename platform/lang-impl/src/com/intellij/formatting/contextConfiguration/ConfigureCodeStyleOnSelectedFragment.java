@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -138,7 +139,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
 
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
-      String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
+      @NlsSafe String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + languageName);
 
       setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());

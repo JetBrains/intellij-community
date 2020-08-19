@@ -17,7 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +30,5 @@ public interface ElementDescriptionProvider {
   ExtensionPointName<ElementDescriptionProvider> EP_NAME = ExtensionPointName.create("com.intellij.elementDescriptionProvider");
   
   @Nullable
-  @NlsContexts.DetailedDescription
-  String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location);
+  @NlsSafe String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location);
 }

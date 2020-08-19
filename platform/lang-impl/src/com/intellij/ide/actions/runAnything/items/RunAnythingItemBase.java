@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
   }
 
   @Nullable
-  public String getDescription() {
+  public @Nls String getDescription() {
     return null;
   }
 
@@ -100,7 +101,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
   }
 
   protected static void appendDescription(@NotNull SimpleColoredComponent component,
-                                          @Nullable String description,
+                                          @Nls @Nullable String description,
                                           @NotNull Color foreground) {
     if (description != null) {
       SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, foreground);

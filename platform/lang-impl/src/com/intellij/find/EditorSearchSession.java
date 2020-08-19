@@ -28,6 +28,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -421,7 +423,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   @NotNull
-  private String getEmptyText() {
+  private @NlsContexts.StatusText String getEmptyText() {
     if (!myFindModel.getStringToFind().isEmpty()) return "";
     if (myFindModel.isGlobal()) {
       SmartList<String> chosenOptions = new SmartList<>();
@@ -620,10 +622,10 @@ public class EditorSearchSession implements SearchSession,
 
 
   private abstract static class ButtonAction extends DumbAwareAction implements CustomComponentAction, ActionListener {
-    private final String myTitle;
+    private final @NlsActions.ActionText String myTitle;
     private final char myMnemonic;
 
-    ButtonAction(@NotNull String title, char mnemonic) {
+    ButtonAction(@NotNull @NlsActions.ActionText String title, char mnemonic) {
       myTitle = title;
       myMnemonic = mnemonic;
     }

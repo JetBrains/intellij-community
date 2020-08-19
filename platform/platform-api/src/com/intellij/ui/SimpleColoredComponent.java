@@ -185,7 +185,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     revalidateAndRepaint();
   }
 
-  private void _append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
+  private void _append(@NotNull @Nls String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
     synchronized (myFragments) {
       myCurrentFragment = new ColoredFragment(fragment, attributes);
       myFragments.add(myCurrentFragment);
@@ -1164,8 +1164,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     int getEndOffset();
 
-    @NotNull
-    String getFragment();
+    @Nls @NotNull String getFragment();
 
     @NotNull
     SimpleTextAttributes getTextAttributes();
@@ -1295,12 +1294,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     volatile int padding;
     volatile int alignment;
 
-    ColoredFragment(@NotNull String text, @NotNull SimpleTextAttributes attributes) {
+    ColoredFragment(@Nls @NotNull String text, @NotNull SimpleTextAttributes attributes) {
       this.text = text;
       this.attributes = attributes;
     }
 
-    private void setText(@NotNull String text) {
+    private void setText(@Nls @NotNull String text) {
       if (!this.text.equals(text)) {
         this.text = text;
         invalidateLayout();

@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -270,7 +271,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     @Nullable
     public abstract Icon getIcon();
 
-    public abstract String getText();
+    public abstract @NlsActions.ActionText String getText();
 
     public boolean canBeDeleted() {
       return false;

@@ -114,7 +114,7 @@ public class CopyElementAction extends AnAction {
 
   protected void updateForToolWindow(DataContext dataContext, Presentation presentation) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    Ref<String> actionName = new Ref<>();
+    Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements, actionName));
     if (!actionName.isNull()) {
       presentation.setText(actionName.get());

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     return false;
   }
 
-  protected String getPopupTitle() {
+  protected @NlsContexts.PopupTitle String getPopupTitle() {
     return IdeBundle.message("title.popup.new.element");
   }
 
