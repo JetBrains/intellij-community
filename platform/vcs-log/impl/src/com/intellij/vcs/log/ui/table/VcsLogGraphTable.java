@@ -46,7 +46,10 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
-import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.column.Commit;
+import com.intellij.vcs.log.ui.table.column.Root;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnModelIndices;
 import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt;
 import com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnsWidthStorage;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -74,8 +77,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
-import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.isValidColumnOrder;
+import static com.intellij.vcs.log.ui.table.column.storage.VcsLogColumnOrderStorageKt.getColumnsOrder;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
@@ -337,7 +340,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (contentSample != null) {
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(contentSample) + horizontalPadding;
     }
-    if (getModel().getRowCount() <= 0 || logColumn.getContentClass() != String.class) {
+    if (getModel().getRowCount() <= 0 || !(getModel().getValueAt(0, logColumn) instanceof String)) {
       return column.getPreferredWidth();
     }
 

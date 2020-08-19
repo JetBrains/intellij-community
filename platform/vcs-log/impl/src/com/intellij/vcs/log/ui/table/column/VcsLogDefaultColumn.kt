@@ -34,7 +34,6 @@ internal fun getDefaultDynamicColumns() = listOf<VcsLogDefaultColumn<*>>(Author,
 internal sealed class VcsLogDefaultColumn<T>(
   @NonNls override val id: String,
   override val localizedName: @Nls String,
-  override val contentClass: Class<T>,
   override val isDynamic: Boolean = true
 ) : VcsLogColumn<T> {
   /**
@@ -44,12 +43,7 @@ internal sealed class VcsLogDefaultColumn<T>(
     get() = id.toLowerCase(Locale.ROOT)
 }
 
-internal object Root : VcsLogDefaultColumn<FilePath>(
-  "Default.Root",
-  "",
-  FilePath::class.java,
-  false
-) {
+internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
   override val isResizable = false
 
   override fun getValue(model: GraphTableModel, row: Int): FilePath = model.visiblePack.getFilePath(row)
@@ -59,12 +53,7 @@ internal object Root : VcsLogDefaultColumn<FilePath>(
   override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(ContainerUtil.getFirstItem(model.logData.roots))
 }
 
-internal object Commit : VcsLogDefaultColumn<GraphCommitCell>(
-  "Default.Subject",
-  VcsLogBundle.message("vcs.log.column.subject"),
-  GraphCommitCell::class.java,
-  false
-) {
+internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false) {
   override fun getValue(model: GraphTableModel, row: Int) =
     GraphCommitCell(
       model.getCommitMetadata(row).subject,
@@ -85,11 +74,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>(
 
 }
 
-internal object Author : VcsLogDefaultColumn<String>(
-  "Default.Author",
-  VcsLogBundle.message("vcs.log.column.author"),
-  String::class.java
-) {
+internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")) {
   override fun getValue(model: GraphTableModel, row: Int) = CommitPresentationUtil.getAuthorPresentation(model.getCommitMetadata(row))
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(true)
@@ -97,11 +82,7 @@ internal object Author : VcsLogDefaultColumn<String>(
   override fun getStubValue(model: GraphTableModel) = ""
 }
 
-internal object Date : VcsLogDefaultColumn<String>(
-  "Default.Date",
-  VcsLogBundle.message("vcs.log.column.date"),
-  String::class.java
-) {
+internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.message("vcs.log.column.date")) {
   override val contentSample: String? = if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
     null
   }
@@ -122,11 +103,7 @@ internal object Date : VcsLogDefaultColumn<String>(
   override fun getStubValue(model: GraphTableModel): String = ""
 }
 
-internal object Hash : VcsLogDefaultColumn<String>(
-  "Default.Hash",
-  VcsLogBundle.message("vcs.log.column.hash"),
-  String::class.java
-) {
+internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.message("vcs.log.column.hash")) {
   override val contentSample = "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH)
 
   override fun getValue(model: GraphTableModel, row: Int): String = model.getCommitMetadata(row).id.toShortString()

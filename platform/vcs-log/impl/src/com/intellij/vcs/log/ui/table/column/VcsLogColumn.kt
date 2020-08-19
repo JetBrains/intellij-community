@@ -41,13 +41,6 @@ interface VcsLogColumn<T> {
     get() = true
 
   /**
-   * [Class] of [T].
-   * If [contentSample] is null and [contentClass] is [String], Log will calculate the width of [VcsLogCustomColumn] using some top rows,
-   * otherwise preferred width will be used.
-   */
-  val contentClass: Class<*>
-
-  /**
    * Content sample to estimate the width of the column,
    * or null if content width may vary significantly and width cannot be estimated from the sample.
    */

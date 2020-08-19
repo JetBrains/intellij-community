@@ -69,11 +69,6 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   @Override
-  public Class<?> getColumnClass(int column) {
-    return getColumn(column).getContentClass();
-  }
-
-  @Override
   public String getColumnName(int column) {
     return getColumn(column).getId();
   }
