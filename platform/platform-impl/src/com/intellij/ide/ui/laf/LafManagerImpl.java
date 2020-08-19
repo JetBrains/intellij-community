@@ -274,7 +274,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
 
     if (SystemInfo.isWin10OrNewer) {
-      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.darkTheme.on", e -> syncLaf(e.getNewValue() == Boolean.TRUE));
+      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on", e -> syncLaf(e.getNewValue() == Boolean.FALSE));
     }
     detectAndSyncLaf();
   }
