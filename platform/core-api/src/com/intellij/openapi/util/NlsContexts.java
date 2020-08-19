@@ -124,7 +124,7 @@ public class NlsContexts {
 
   @NlsContext(prefix = "tab.title")
   @Nls(capitalization = Nls.Capitalization.Title)
-  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
   public @interface TabTitle {
   }
 
