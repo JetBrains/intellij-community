@@ -141,6 +141,7 @@ public final class XmlStringUtil {
            StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
+  @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String toolTip) {
     toolTip = StringUtil.trimStart(toolTip, HTML_START);
     toolTip = StringUtil.trimStart(toolTip, BODY_START);
