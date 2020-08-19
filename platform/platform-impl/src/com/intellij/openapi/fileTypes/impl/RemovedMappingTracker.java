@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 final class RemovedMappingTracker {
   static final class RemovedMapping {
@@ -17,9 +18,9 @@ final class RemovedMappingTracker {
     private final String myFileTypeName;
     private final boolean myApproved;
 
-    private RemovedMapping(@NotNull FileNameMatcher matcher, @NotNull String name, boolean approved) {
+    private RemovedMapping(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
       myFileNameMatcher = matcher;
-      myFileTypeName = name;
+      myFileTypeName = fileTypeName;
       myApproved = approved;
     }
 
@@ -114,14 +115,11 @@ final class RemovedMappingTracker {
     return new ArrayList<>(myRemovedMappings.values());
   }
 
-  @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String name) {
-    List<FileNameMatcher> result = new ArrayList<>();
-    for (RemovedMapping mapping : myRemovedMappings.values()) {
-      if (mapping.myFileTypeName.equals(name)) {
-        result.add(mapping.myFileNameMatcher);
-      }
-    }
-    return result;
+  @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
+    return myRemovedMappings.values().stream()
+      .filter(mapping -> mapping.myFileTypeName.equals(fileTypeName))
+      .map(mapping -> mapping.myFileNameMatcher)
+      .collect(Collectors.toList());
   }
 
   void removeMatching(@NotNull BiPredicate<? super FileNameMatcher, ? super String> predicate) {
