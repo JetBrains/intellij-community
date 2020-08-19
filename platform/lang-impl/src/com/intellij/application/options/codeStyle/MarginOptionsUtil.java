@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getWrapOnTypingOptions;
-
 final class MarginOptionsUtil {
   public static @NlsContexts.Label String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
     return getDefaultValueText(Integer.toString(settings.getDefaultRightMargin()));
@@ -36,7 +34,7 @@ final class MarginOptionsUtil {
     wrapOnTypingCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
       for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i++) {
         if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i] == CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
-          if (getWrapOnTypingOptions()[i].equals(value)) {
+          if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
             return getDefaultWrapOnTypingText(settings);
           }
         }
