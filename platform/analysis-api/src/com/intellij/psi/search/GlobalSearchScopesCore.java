@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -169,7 +170,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return AnalysisBundle.message("psi.search.scope.production.files");
+      return getProjectProductionFilesScopeName();
     }
   }
 
@@ -201,7 +202,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return AnalysisBundle.message("psi.search.scope.test.files");
+      return getProjectTestFilesScopeName();
     }
   }
 
@@ -409,6 +410,13 @@ public final class GlobalSearchScopesCore {
       Iterable<VirtualFile> allDirs = ContainerUtil.concat(myDirectories, myDirectoriesWithSubdirectories);
       return AnalysisBundle.message("display.name.directories.0", StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", "));
     }
+  }
 
+  public static @NotNull @Nls String getProjectProductionFilesScopeName() {
+    return AnalysisBundle.message("psi.search.scope.production.files");
+  }
+
+  public static @NotNull @Nls String getProjectTestFilesScopeName() {
+    return AnalysisBundle.message("psi.search.scope.test.files");
   }
 }

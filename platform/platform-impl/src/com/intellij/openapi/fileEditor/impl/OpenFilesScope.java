@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -35,7 +36,7 @@ public final class OpenFilesScope extends NamedScope {
     }
   }
 
-  public static String getNameText() {
+  public static @NotNull @Nls String getNameText() {
     return IdeBundle.message("scope.open.files");
   }
 }
