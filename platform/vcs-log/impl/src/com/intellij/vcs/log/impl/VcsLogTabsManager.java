@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,6 +117,7 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
+  @NlsContexts.TabTitle
   private static String generateShortDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "";
@@ -123,11 +125,13 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  private static String getFullName(@NotNull String shortName) {
+  @NlsContexts.TabTitle
+  private static String getFullName(@NotNull @NlsContexts.TabTitle String shortName) {
     return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName);
   }
 
   @NotNull
+  @NlsContexts.TabTitle
   public static String generateDisplayName(@NotNull VcsLogUi ui) {
     return getFullName(generateShortDisplayName(ui));
   }
