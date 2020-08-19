@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
 public class ProcessOutput {
   private final StringBuilder myStdoutBuilder = new StringBuilder();
   private final StringBuilder myStderrBuilder = new StringBuilder();
@@ -32,33 +29,27 @@ public class ProcessOutput {
     myStderrBuilder.append(text);
   }
 
-  @NotNull
-  public String getStdout() {
+  public @NotNull String getStdout() {
     return myStdoutBuilder.toString();
   }
 
-  @NotNull
-  public String getStderr() {
+  public @NotNull String getStderr() {
     return myStderrBuilder.toString();
   }
 
-  @NotNull
-  public List<String> getStdoutLines() {
+  public @NotNull List<String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
-  @NotNull
-  public List<String> getStdoutLines(boolean excludeEmptyLines) {
+  public @NotNull List<String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
-  @NotNull
-  public List<String> getStderrLines() {
+  public @NotNull List<String> getStderrLines() {
     return getStderrLines(true);
   }
 
-  @NotNull
-  public List<String> getStderrLines(boolean excludeEmptyLines) {
+  public @NotNull List<String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
